@@ -49,7 +49,7 @@ This workflow is an example of leveraging data stored in a vector database along
 
 
 
-## 3rd party tools and data sources
+## Third-party tools and data sources
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
@@ -100,7 +100,7 @@ sh run.sh
 # Customizing the template
 
 
-The provided example template can be further customized based on the use-case.
+The provided example template can be further customized based on the use case.
 
 
 ## Import Data
@@ -108,7 +108,7 @@ The provided example template can be further customized based on the use-case.
 
 
 
-**PDF Format:** Different packages are available to extract text out of pdf files. They can be broadly categorized in two classes, as below
+**PDF Format:** Different packages are available to extract text out of PDF files. They can be broadly categorized in two classes, as below
 - OCR-based: [pytesseract](https://pypi.org/project/pytesseract/)
 - Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
 Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
@@ -124,7 +124,7 @@ function: get_data_for_splitting
 ## Split Data
 
 
-You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. Langchain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
+You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
 The **RecursiveCharacterTextSplitter**, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
@@ -148,7 +148,7 @@ function: get_text_chunks
 ## Embed data
 
 
-There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models will be available on SambaStudio to choose from which could be further fine-tuned on use-case specific datasets to improve performance.
+There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
 
 
 This modification can be done in the following location:

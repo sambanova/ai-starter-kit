@@ -8,6 +8,7 @@ To run these examples, you’ll need access to a SambaStudio environment with yo
 
 Most code examples are written in Python, though the concepts can be applied in any language.
 
+**Note:** Code samples are provided as-is, and may use third-party open-source software. We recommend performing due diligence per your organization policies for use in your applications.
 # Available AI Starter Kits
 |  Starter Kit | About |
 | ------------ | ------------ |
