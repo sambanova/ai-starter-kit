@@ -180,9 +180,9 @@ class SambaNovaEndpoint(LLM):
         """
         sdk = SSEndpointHandler(self.base_url)
         _model_kwargs = self.model_kwargs or {}
-        _stop_sequences = _model_kwargs.get("stop_sequences", [])
-        _stop_sequences = stop or _stop_sequences
-        _model_kwargs["stop_sequences"] = ",".join(f"'{x}'" for x in _stop_sequences)
+        # _stop_sequences = _model_kwargs.get("stop_sequences", [])
+        # _stop_sequences = stop or _stop_sequences
+        # _model_kwargs["stop_sequences"] = ",".join(f"'{x}'" for x in _stop_sequences)
         tuning_params = {
             k: {"type": type(v).__name__, "value": str(v)}
             for k, v in _model_kwargs.items()
