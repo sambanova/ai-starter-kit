@@ -1,0 +1,4 @@
+.env
+export.env
+enterprise_knowledge_retriever/doc_demo
+__pycache__
