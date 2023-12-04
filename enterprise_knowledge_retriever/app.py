@@ -167,8 +167,8 @@ def get_custom_prompt():
     PromptTemplate: A custom prompt template for contextual question answering.
     """
 
-    custom_prompt_template = """Use the following pieces of context to answer the question at the end. 
-    If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. 
+    custom_prompt_template = """Use the following pieces of context to answer the question at the end.
+    If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
     Cross check if the answer is contained in provided context. If not than say "I do not have information regarding this."
 
     {context}
@@ -231,7 +231,7 @@ def main():
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
 
-    st.header(":orange[SambaNova] analyst assitant")
+    st.header(":orange[SambaNova] analyst assistant")
     user_question = st.chat_input("Upload your PDFs and ask questions about them")
     handle_userinput(user_question)
 
