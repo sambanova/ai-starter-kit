@@ -110,7 +110,7 @@ def get_conversation_chain(vectorstore):
         model_kwargs={
             "do_sample": False,
             "temperature": 0.0,
-            "max_tokens_to_generate": 1500,
+            "max_tokens_to_generate": 2500,
         }
     )
 
