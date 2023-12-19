@@ -20,7 +20,7 @@ This workflow is an example of downloading and indexing data for subsequent Q&A.
 1. **Download data:** This workflow begins with pulling 10K reports from the EDGAR dataset to be chunked, indexed and stored for future retrieval. EDGAR data is downloaded using the [SEC DATA DOWNLOADER](https://llamahub.ai/l/sec_filings), which retrieves the data as text.
 2.  **Split data:** Once the data has been downloaded, we need to split the data into chunks of text to be embedded and stored in a vector database. This size of the chunk of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
 3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content based on the user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
-4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [chromadb](https://www.trychroma.com/) or [QDrant](https://qdrant.tech/) as the vector database, but can easily be updated to use any other.
+4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [chromadb](https://www.trychroma.com/) or [QDrant](https://qdrant.tech/) as the vector database because they are free, open-source options with straightforward setup, but can easily be updated to use another if desired. 
 
 
 ### Retrieval
@@ -52,8 +52,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 # Getting started
 ## 1. Deploy your model in SambaStudio
-Begin by deploying your LLM of choice to an endpoint for inference in SambaStudio either through the GUI or CLI. 
-Refer to the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for help on deploying endpoints.
+Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ## 2. Integrate your model in the starter kit
 Integrate your LLM deployed on SambaStudio with this AI starter kit  in two simple steps:
@@ -61,12 +60,14 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit  in two simp
 ```
   git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the export.env file in the project directory. The variable names are listed below as an example.
+2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/edgar_assistant/export.env. For example, an endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the config file (with no spaces) as:
 ```
-BASE_URL="http://...."
-PROJECT_ID=""
-ENDPOINT_ID=""
-API_KEY=""
+BASE_URL="https://api-stage.sambanova.net"
+PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 VECTOR_DB_URL=http://host.docker.internal:6333
 ```
 
@@ -78,9 +79,9 @@ Running through local install is the simplest option and includes a simple Strea
 ![](edgar_assistant_demo.png)
 
 
-Begin by installing dependencies. It is recommended to use virtual env or `conda` environment for installation.
+Begin by updating pip and installing dependencies. It is recommended to use virtual env or `conda` environment for installation.
 ```
-cd  edgar_qna/edgar_qna_streamlit
+cd ai_starter_kit/edgar_qna/edgar_qna_streamlit
 python3  -m  venv  edgar_demo
 source  edgar_demo/bin/activate
 pip  install  -r  requirements.txt
@@ -118,7 +119,7 @@ docker pull qdrant/qdrant
 
 Run qdrant on local host
 ```
-docker run -p 6333:6333 -p 6334:6334 \
+docker run -p 6333:6333 \
 -v $(pwd)/qdrant_storage:/qdrant/storage:z \
 qdrant/qdrant
 ```

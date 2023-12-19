@@ -30,7 +30,7 @@ This workflow is an example of parsing and indexing data for subsequent Q&A. The
 3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
 
-4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database, but can easily be updated to use any other. In terms of metadata, ```filename``` and ```page``` are also attached to the embeddings which are extracted during document parsing of the pdf documents.
+4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```filename``` and ```page``` are also attached to the embeddings which are extracted during document parsing of the pdf documents.
 
 
 ### Retrieval
@@ -66,9 +66,8 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 # Getting started
 
-## 1. Deploy your model to an endpoint
-Begin by deploying your LLM of choice to an endpoint for inference in SambaStudio either through the GUI or CLI. 
-Refer to the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for help on deploying endpoints.
+## 1. Deploy your model in SambaStudio
+Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ## 2. Integrate your model
 Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
@@ -76,16 +75,19 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit in two simpl
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM and optionally, the vector database. These are represented as configurable variables in the export.env file in the project directory. The variable names are listed below as an example.
+2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/enterprise_knowledge_retriever/export.env. For example, an endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the config file (with no spaces) as:
 ```
-BASE_URL="http://...."
-PROJECT_ID=""
-ENDPOINT_ID=""
-API_KEY=""
+BASE_URL="https://api-stage.sambanova.net"
+PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+VECTOR_DB_URL=http://host.docker.internal:6333
 ```
-3. Install requirements: It is recommended to use virtualenv or conda environment for installation.
+3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
-cd enterprise_knowledge_retriever
+cd ai_starter_kit/enterprise_knowledge_retriever
 python3 -m venv doc_demo
 source doc_demo/bin/activate
 pip install -r requirements.txt
