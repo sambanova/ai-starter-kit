@@ -102,3 +102,6 @@ urllib3==2.0.6
 uvicorn==0.23.2
 wcwidth==0.2.8
 yarl==1.9.2
+unstructured_inference==0.7.21
+unstructured==0.12.0
+pikepdf==8.11.2
