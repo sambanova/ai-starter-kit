@@ -12,6 +12,8 @@ LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
 # temp debug json on cloud
 st.write("Current directory:", os.getcwd())
 st.write("Directory contents:", os.listdir('.'))
+if STREAMLIT_SERVER_RUN_ON_SAVE:
+    st.write STREAMLIT_SERVER_RUN_ON_SAVE
 
 
 # load the json prompt example config file
