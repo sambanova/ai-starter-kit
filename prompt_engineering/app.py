@@ -19,7 +19,9 @@ prompt_use_cases = [key for key in data.keys() if key != "Model Architecture" an
 # Retrieve the task-agnostic prompt for the given model
 #task_agnostic_prompt = data[prompt_type][model_name]
 
-
+# temp debug json on cloud
+st.write("Current directory:", os.getcwd())
+st.write("Directory contents:", os.listdir('.'))
 
  
 
