@@ -1,24 +1,21 @@
 # import dependencies
 import streamlit as st      # for gui elements
 import json                 # for loading prompt example config file
-import os #for json debug
+import os
 
 # populate variables from secrets file
 LLAMA27B_LLM_ENDPOINT = st.secrets["LLAMA27B_LLM_ENDPOINT"]
 LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
 
-
-
-# temp debug json on cloud
-st.write("Current directory:", os.getcwd())
-st.write("Directory contents:", os.listdir('.'))
+# if streamlit cloud, change down to prompt_engineering working directory (streamlit cloud runs from repo root always)
 IS_STREAMLIT_CLOUD = os.getenv('USER') == 'appuser'
 if IS_STREAMLIT_CLOUD:
     path = os.getcwd()
-    path += 'prompt_engineering'
+    path += '/prompt_engineering'
     os.chdir(path)
-    st.write("Current directory:", os.getcwd())
-    st.write("Directory contents:", os.listdir('.'))
+
+
+
 
 
 # load the json prompt example config file
