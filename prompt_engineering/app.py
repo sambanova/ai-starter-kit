@@ -13,7 +13,7 @@ LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
 st.write("Current directory:", os.getcwd())
 st.write("Directory contents:", os.listdir('.'))
 IS_STREAMLIT_SHARING = os.getenv('USER') == 'appuser'
-st.write IS_STREAMLIT_SHARING
+st.write(IS_STREAMLIT_SHARING)
 
 
 # load the json prompt example config file
