@@ -12,8 +12,9 @@ LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
 # temp debug json on cloud
 st.write("Current directory:", os.getcwd())
 st.write("Directory contents:", os.listdir('.'))
-IS_STREAMLIT_SHARING = os.getenv('USER') == 'appuser'
-st.write(IS_STREAMLIT_SHARING)
+IS_STREAMLIT_CLOUD = os.getenv('USER') == 'appuser'
+if IS_STREAMLIT_CLOUD:
+    os.chdir(prompt_engineering)
 
 
 # load the json prompt example config file
