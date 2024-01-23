@@ -14,7 +14,9 @@ st.write("Current directory:", os.getcwd())
 st.write("Directory contents:", os.listdir('.'))
 IS_STREAMLIT_CLOUD = os.getenv('USER') == 'appuser'
 if IS_STREAMLIT_CLOUD:
-    os.chdir(prompt_engineering)
+    os.chdir(os.getcwd() = 'prompt_engineering')
+    st.write("Current directory:", os.getcwd())
+    st.write("Directory contents:", os.listdir('.'))
 
 
 # load the json prompt example config file
