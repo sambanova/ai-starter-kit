@@ -14,7 +14,9 @@ st.write("Current directory:", os.getcwd())
 st.write("Directory contents:", os.listdir('.'))
 IS_STREAMLIT_CLOUD = os.getenv('USER') == 'appuser'
 if IS_STREAMLIT_CLOUD:
-    os.chdir(os.getcwd() = 'prompt_engineering')
+    path = os.getcwd()
+    path += 'prompt_engineering'
+    os.chdir(path)
     st.write("Current directory:", os.getcwd())
     st.write("Directory contents:", os.listdir('.'))
 
