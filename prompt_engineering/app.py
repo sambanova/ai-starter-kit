@@ -1,10 +1,18 @@
 # import dependencies
 import streamlit as st      # for gui elements
 import json                 # for loading prompt example config file
+import os #for json debug
 
 # populate variables from secrets file
 LLAMA27B_LLM_ENDPOINT = st.secrets["LLAMA27B_LLM_ENDPOINT"]
 LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
+
+
+
+# temp debug json on cloud
+st.write("Current directory:", os.getcwd())
+st.write("Directory contents:", os.listdir('.'))
+
 
 # load the json prompt example config file
 json_file_path = 'model_prompt_data.json'
@@ -19,9 +27,6 @@ prompt_use_cases = [key for key in data.keys() if key != "Model Architecture" an
 # Retrieve the task-agnostic prompt for the given model
 #task_agnostic_prompt = data[prompt_type][model_name]
 
-# temp debug json on cloud
-st.write("Current directory:", os.getcwd())
-st.write("Directory contents:", os.listdir('.'))
 
  
 
