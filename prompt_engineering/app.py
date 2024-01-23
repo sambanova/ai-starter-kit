@@ -8,13 +8,10 @@ LLAMA27B_LLM_ENDPOINT = st.secrets["LLAMA27B_LLM_ENDPOINT"]
 LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
 
 # if streamlit cloud, change down to prompt_engineering working directory (streamlit cloud runs from repo root always)
-IS_STREAMLIT_CLOUD = os.getenv('USER') == 'appuser'
-if IS_STREAMLIT_CLOUD:
+if os.getcwd() == "/mount/src/ai-starter-kit":
     path = os.getcwd()
     path += '/prompt_engineering'
     os.chdir(path)
-
-
 
 
 
