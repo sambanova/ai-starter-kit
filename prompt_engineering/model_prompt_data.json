@@ -4,69 +4,79 @@
     "Mistral 7B": "Features Grouped-Query Attention and a Byte-fallback BPE tokenizer, focusing on efficiency and response quality.\nDesigned to optimize computational resources using innovative attention mechanisms.\nBased on a transformer architecture, enhancing its performance in handling longer contexts.",
     "DeepSeek Coder": "Follows LLaMA's Pre-Norm structure with RMSNorm and SwiGLU in its FFN, focusing on optimization and efficiency.\nIncorporates Rotary Embedding for positional encoding.\nAdjusts layers (30-layer for 7B and 95-layer for 67B) while maintaining parameter consistency, facilitating model pipeline partitioning.",
     "Falcon 180B": "Encompasses a massive 180 billion parameter model, making it one of the largest in its category.\nTrained on 3.5 trillion tokens from RefinedWeb, supplemented with curated corpora for a comprehensive knowledge base.",
-    "Bloom": "Decoder-only transformer model.\nUtilizes ALiBi for positional embeddings, optimizing attention based on the distance between keys and queries.\nEnhanced zero-shot generalization, enabling it to perform various tasks effectively with minimal in-context instructions and without specific training on supervised data."
+    "Bloom": "Decoder-only transformer model.\nUtilizes ALiBi for positional embeddings, optimizing attention based on the distance between keys and queries.\nEnhanced zero-shot generalization, enabling it to perform various tasks effectively with minimal in-context instructions and without specific training on supervised data.",
+    "GPT 3.5T": "Employs an enhanced transformer architecture with adaptive attention spans for better long-context management. It introduces refined tokenization to improve text comprehension and is optimized for performance across diverse tasks."
   },
   "Architecture Prompting Implications": {
     "Llama 2": "Prompts should be structured to take advantage of its supervised fine-tuning and reinforcement learning from human feedback. This means prompts that are more aligned with human conversational styles and preferences in helpfulness and safety will likely yield better responses.",
     "Mistral 7B": "Efficiency-focused prompts would work well, given Mistral's design to optimize computational resources. This means being concise and clear in your requests.",
     "DeepSeek Coder": "Leveraging its Rotary Embedding for positional encoding suggests that prompts with more structured and positionally significant information might be handled more effectively.",
     "Falcon 180B": "Given high parameter count, prompts can be more complex and multifaceted, expecting detailed and nuanced responses.\nThe model’s extensive training on a broad range of tokens suggests it can handle a wide variety of topics, so prompts can be diverse and cover less common or more specialized subjects.",
-    "Bloom": "Prompting for BLOOM should leverage its zero-shot generalization by providing concise, context-rich queries. Its ALiBi positional embeddings allow for effective handling of longer and more complex sequences, enabling nuanced and in-depth responses."
+    "Bloom": "Prompting for BLOOM should leverage its zero-shot generalization by providing concise, context-rich queries. Its ALiBi positional embeddings allow for effective handling of longer and more complex sequences, enabling nuanced and in-depth responses.",
+    "GPT 3.5T": "Allows for effective handling of complex prompts and nuanced contexts, supporting more natural interactions. Its ability to process detailed inputs makes it suitable for a variety of conversational and content generation applications."
   },
   "Heuristic Guidance": {
     "Llama 2": "Llama 2 responds effectively to concise system prompts that direct its persona or response boundaries. This includes prompts like \"Act as if…\", \"You are…\", \"Always/Never…\", or \"Speak like…\". ",
     "Mistral 7B": "Mistral has specific requirements for its prompt structure to achieve optimal outputs. When using Mistral-7B-Instruct, it is recommended to use a chat template that includes special tokens for the beginning and end of strings (BOS and EOS), along with regular strings for instructions. For example, the template might look like <s>[INST] Instruction [/INST] Model answer</s>[INST] Follow-up instruction [/INST]. This structure helps the model understand the context and respond appropriately. ",
     "DeepSeek Coder": "TBC",
     "Falcon 180B": "TBC",
-    "Bloom": "TBC"
+    "Bloom": "TBC",
+    "GPT 3.5T": "Prompts should be clear and contextual, taking advantage of GPT-3.5 Turbo's improved comprehension. It performs well with detailed instructions and can manage complex scenarios, making it a solid generalist."
   },
   "References": {
     "Llama 2": "https://replicate.com/blog/how-to-prompt-llama\nhttps://arxiv.org/pdf/2307.09288.pdf\nhttps://huggingface.co/blog/llama2#how-to-prompt-llama-2\nhttps://huggingface.co/docs/transformers/main/model_doc/llama2",
     "Mistral 7B": "https://medium.com/dair-ai/papers-explained-mistral-7b-b9632dedf580\nhttps://arxiv.org/pdf/2310.06825.pdf\nhttps://www.promptingguide.ai/models/mistral-7b",
     "DeepSeek Coder": "https://arxiv.org/pdf/2401.02954v1.pdf",
     "Falcon 180B": "https://arxiv.org/pdf/2311.16867.pdf\nhttps://www.prompthub.us/blog/10-best-practices-for-prompt-engineering-with-any-model",
-    "Bloom": "https://arxiv.org/pdf/2211.05100.pdf"
+    "Bloom": "https://arxiv.org/pdf/2211.05100.pdf",
+    "GPT 3.5T": ""
   },
   "Meta Tag Format": {
     "Llama 2": "[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n{user_prompt}\n[/INST]",
     "Mistral 7B": "<s>[INST] \n{system_prompt}\n{few_shot_example_input}\n[/INST]\n{few_shot_example_ouput}\n</s>\n[INST]\n{user_prompt}\n[/INST]",
     "DeepSeek Coder": "[{\"role\": \"user\", \"content\": \"please create a rust enum named prediction status, with three variants starting, in progress and complete\"}]",
     "Falcon 180B": "No formatting guidelines found, references only mentioned natural language input classification",
-    "Bloom": "No formatting guidelines found, references only mentioned natural language input classification"
+    "Bloom": "No formatting guidelines found, references only mentioned natural language input classification",
+    "GPT 3.5T": ""
   },
   "Task Agnostic": {
     "Llama 2": "[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\nThere's a llama in my garden! What should I do? \n[/INST]",
     "Mistral 7B": "",
     "DeepSeek Coder": "",
     "Falcon 180B": "",
-    "Bloom": ""
+    "Bloom": "",
+    "GPT 3.5T": "System: You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\nUser:\nThere's a llama in my garden! What should I do?"
   },
   "RAG Document Assistant": {
     "Llama 2": "\"\"\"Use the following pieces of context to answer the question at the end. \n    If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. \n    Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n\n    {context}\n\n    Question: {question}\n    Helpful Answer:\"\"\"",
     "Mistral 7B": "",
     "DeepSeek Coder": "NA (Code Generation Model)",
     "Falcon 180B": "",
-    "Bloom": ""
+    "Bloom": "",
+    "GPT 3.5T": "Use the following pieces of context to answer the question at the end. \n    If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. \n    Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n\n    {context}\n\n    Question: {question}\n    Helpful Answer:"
   },
   "Product Selection Assitant": {
     "Llama 2": "[INST]<<SYS>> \nYou are an electrical engineer ai assistant.  You will be given context that will help answer a questions.  You will interpret the context for useful information that will answer the question.  Provides concise, helpful, technical information (focusing on numerical information).  <</SYS>>\n\n    You will be given context that will help you answer a question: [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching frequency of max20710?'\n    contexts: {context}\n\n    [INST] Given the context you received, answer the question.  Please do not infer anything if the question cannot be deduced from the context or make anything up; simply state you cannot find the information. [/INST]\n\n    Sure, here is the answer to the question:",
     "Mistral 7B": "",
     "DeepSeek Coder": "",
     "Falcon 180B": "",
-    "Bloom": ""
+    "Bloom": "",
+    "GPT 3.5T": "You are an electrical engineer ai assistant.  You will be given context that will help answer a questions.  You will interpret the context for useful information that will answer the question.  Provides concise, helpful, technical information (focusing on numerical information).  <</SYS>>\n\n    You will be given context that will help you answer a question: [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching frequency of max20710?'\n    contexts: {context}\n\n     Given the context you received, answer the question.  Please do not infer anything if the question cannot be deduced from the context or make anything up; simply state you cannot find the information. \n\n    Sure, here is the answer to the question:"
   },
   "Code Generation": {
     "Llama 2": "[INST] <<SYS>>\nYou are a helpful code assistant. Your task is to generate a valid JSON object based on the given information. So for instance the following:\nname: John\nlastname: Smith\naddress: #1 Samuel St.\nwould be converted to:\n{\n\"\"address\"\": \"\"#1 Samuel St.\"\",\n\"\"lastname\"\": \"\"Smith\"\",\n\"\"name\"\": \"\"John\"\"\n}\n<</SYS>>\n[INST]\nname: Ted\nlastname: Pot\naddress: #1 Bisson St.\n[/INST]",
     "Mistral 7B": "<s>[INST] You are a helpful code assistant. Your task is to generate a valid JSON object based on the given information. So for instance the following:\nname: John\nlastname: Smith\naddress: #1 Samuel St.\nwould be converted to:[/INST]\n{\n\"address\": \"#1 Samuel St.\",\n\"lastname\": \"Smith\",\n\"name\": \"John\"\n}\n</s>\n[INST]\nname: Ted\nlastname: Pot\naddress: #1 Bisson St.\n[/INST]",
     "DeepSeek Coder": "[{\"role\": \"user\", \n\"content\": \"please create a rust enum named prediction status, with three variants starting, in progress and complete\"\n}]",
     "Falcon 180B": "",
-    "Bloom": ""
+    "Bloom": "",
+    "GPT 3.5T": "You are a helpful code assistant. Your task is to generate a valid JSON object based on the given information. So for instance the following:\nname: John\nlastname: Smith\naddress: #1 Samuel St.\nwould be converted to:\n{\n\"\"address\"\": \"\"#1 Samuel St.\"\",\n\"\"lastname\"\": \"\"Smith\"\",\n\"\"name\"\": \"\"John\"\"\n}\n<</SYS>>\n[INST]\nname: Ted\nlastname: Pot\naddress: #1 Bisson St."
   },
   "Prompt Engineering Assistant": {
     "Llama 2": "Help me design an LLM prompt (a system prompt and a sample user prompt) to instruct an llm to create tailored customer content. start by listing the questions a good system and user prompt would answer, allowing me to respond to the questions, and then give me the resulting system prompt, with a sample user input and response. ",
     "Mistral 7B": "",
     "DeepSeek Coder": "NA (Code Generation Model)",
     "Falcon 180B": "",
-    "Bloom": ""
+    "Bloom": "",
+    "GPT 3.5T": "Help me design an LLM prompt (a system prompt and a sample user prompt) to instruct an llm to create tailored customer content. start by listing the questions a good system and user prompt would answer, allowing me to respond to the questions, and then give me the resulting system prompt, with a sample user input and response. "
   }
 }
