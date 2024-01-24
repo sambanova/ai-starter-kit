@@ -15,7 +15,6 @@ if os.getcwd() == "/mount/src/ai-starter-kit":
     path = os.getcwd()
     path += '/prompt_engineering'
     os.chdir(path)
-
 # note: if streamlit cloud, consider mixpanel event
 # note: if streamlit cloud, confirm externally facing endpoints
 
@@ -81,9 +80,13 @@ st.title('Prompt Engineering Starter Kit')
 
 # get model type user selection
 selected_model = st.selectbox(
-    "Model",
+    "Select Model",
     model_names,
 )
+
+st.write(f"**Model Architecture --** {model_prompt_data['Model Architecture'][selected_model]}")
+st.write(f"**How to Prompt --** {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
+
 
 # get use case user selection
 selected_prompt_use_case = st.selectbox(
@@ -98,7 +101,7 @@ prompt = st.text_area(
     height=280,
     )
 
-if st.button('Submit Query'):
+if st.button('Send'):
 
     response_content = query_model(prompt)
 
