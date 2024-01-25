@@ -23,9 +23,6 @@ if os.getcwd() == "/mount/src/ai-starter-kit":
     path = os.getcwd()
     path += '/prompt_engineering'
     os.chdir(path)
-# note: if streamlit cloud, consider mixpanel event
-# note: if streamlit cloud, confirm externally facing endpoints
-
 
 # load the json prompt example config file
 json_file_path = 'model_prompt_data.json'
@@ -205,14 +202,16 @@ with st.expander("Provide Feedback"):
         session_id = "Unknown"
         session_id = headers.get("Sec-Websocket-Key")
 
-        mixpanel.track(f"AISK: {user_email}", 'TEST_AISK:FEEDBACK_SUBMITTED',  {
+        mixpanel.track(f"$aisk:{os.getlogin()}:{user_email}", 'TEST_AISK:FEEDBACK_SUBMITTED',  {
         'Feedback: User Goal': f'{goals_feedback}',
         'Feedback: Are We Helping': f'{helpfulness_feedback}',
         'Feedback: Freetext': f'{freetext_feedback}',
-        'Feedback: Email': f'{user_email}',
+        'Feedback: Email Entry': f'{user_email}',
+        'Feedback: Streamlit Email': f'{st.experimental_user.email}',
         'Feedback: Session ID': f'{session_id}',
+        'Feedback: Working Directory': f'{os.getcwd()}',
+        'Feedback: Login': f'{os.getlogin()}',
         })
-        
         # Print the response
         st.write("Thank you, your feedback is a big deal to us!")
 
