@@ -146,16 +146,19 @@ def query_model_replicate(prompt):
         }
     )
 
-    st.write(output)
 
-    # The mistralai/mistral-7b-instruct-v0.1 model can stream output as it's running.
-    # The predict method returns an iterator, and you can iterate over that output.
+    # Initialize an empty string to accumulate the response
+    response_content = ""
+
+    # Iterate over the output generator
     for item in output:
-        # https://replicate.com/mistralai/mistral-7b-instruct-v0.1/api#output-schema
-        st.write(item)
+        # Check if item is a string and append it to response_content
+        if isinstance(item, str):
+            response_content += item
 
 
-    return output
+    # Return the accumulated response content
+    return response_content
 
 
 
