@@ -6,14 +6,19 @@ import os                       # for validating run/working directory to allow 
 import requests                 # for calling web APIs
 from mixpanel import Mixpanel   # to allow gathering of feedback
 from streamlit.web.server.websocket_headers import _get_websocket_headers # to allow reporting session id to mixpanel
+import replicate
 
 
 # populate variables from secrets file
 LLAMA27B_LLM_ENDPOINT = st.secrets["LLAMA27B_LLM_ENDPOINT"]
 LLAMA27B_LLM_API_KEY = st.secrets["LLAMA27B_LLM_API_KEY"]
+# for deployment mixpanel will require adjustment, inclusion in secrets sample
+MIXPANEL_TOKEN = st.secrets["MIXPANEL_TOKEN"]
+# for deployment these debugging endpoints will be removed, as will the secrets references, as will some includes and requirements
 OPENAI_API_ENDPOINT = 'https://api.openai.com/v1/chat/completions'
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-MIXPANEL_TOKEN = st.secrets["MIXPANEL_TOKEN"]
+REPLICATE_API_TOKEN = st.secrets["REPLICATE_API_TOKEN"]
+
 
 # initialize mixpanel object for feedback gathering
 mixpanel = Mixpanel(MIXPANEL_TOKEN)
@@ -129,45 +134,31 @@ def query_model_sn(prompt):
 
     return completion_text
 
- #   st.write(response.text)
 
 
- #   return response
+@st.cache_data
+def query_model_replicate(prompt):
 
-
-
-## gui 
-st.title('Prompt Engineering Starter Kit')
-
-# get model type user selection
-selected_model = st.selectbox(
-    "Select Model",
-    model_names,
-)
-
-st.write(f"**Model Architecture --** {model_prompt_data['Model Architecture'][selected_model]}")
-st.write(f"**How to Prompt --** {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
-
-
-# get use case user selection
-selected_prompt_use_case = st.selectbox(
-    "Use Case Example",
-    prompt_use_cases,
-)
-
-
-prompt = st.text_area(
-    "Prompt",
-    model_prompt_data[selected_prompt_use_case][selected_model],
-    height=280,
+    output = replicate.run(
+        "mistralai/mistral-7b-instruct-v0.1:5fe0a3d7ac2852264a25279d1dfb798acbc4d49711d126646594e212cb821749",
+        input={
+            "prompt": f"{prompt}"
+        }
     )
 
-if st.button('Send'):
+    st.write(output)
 
-    response_content = query_model_sn(prompt)
+    # The mistralai/mistral-7b-instruct-v0.1 model can stream output as it's running.
+    # The predict method returns an iterator, and you can iterate over that output.
+    for item in output:
+        # https://replicate.com/mistralai/mistral-7b-instruct-v0.1/api#output-schema
+        st.write(item)
 
-    # Print the response
-    st.write(response_content)
+
+    return output
+
+
+
 
 
 
@@ -222,11 +213,49 @@ with st.expander("Provide Feedback"):
         st.write("Thank you, your feedback is a big deal to us!")
 
 
-# evolutionary task prompt design automation
 
-# add feedmack to more starter kits - AISK mixpanel
+## gui 
+st.title('Prompt Engineering Starter Kit')
+
+# get model type user selection
+selected_model = st.selectbox(
+    "Select Model",
+    model_names,
+)
+
+st.write(f"**Model Architecture --** {model_prompt_data['Model Architecture'][selected_model]}")
+st.write(f"**How to Prompt --** {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
+
+
+# get use case user selection
+selected_prompt_use_case = st.selectbox(
+    "Use Case Example",
+    prompt_use_cases,
+)
+
+
+prompt = st.text_area(
+    "Prompt",
+    model_prompt_data[selected_prompt_use_case][selected_model],
+    height=280,
+    )
+
+if st.button('Send'):
+
+    response_content = query_model_replicate(prompt)
+
+    # Print the response
+    st.write(response_content)
+
+
+
+
+
+
+# evolutionary task prompt design automation
     
-# beginner's mind, declutter with config file? how to make what they need to lear fit on a page
+# beginner's mind, declutter with config file? how to make what they need to learn fit on a page. 
+    # defenitely remove the feedback form to another file for centralization and reuse
 
 # use cases as radio buttons? as it grow
         
