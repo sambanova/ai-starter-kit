@@ -1,1 +1,2 @@
-streamlit==1.25.0
+streamlit==1.30.0
+mixpanel==4.10.0
