@@ -105,3 +105,15 @@ yarl==1.9.2
 unstructured_inference==0.7.21
 unstructured==0.12.0
 pikepdf==8.11.2
+python-dotenv==1.0.1
+xlrd==2.0.1
+python-docx==1.1.0
+pypandoc==1.12
+markdown==3.5.2
+InstructorEmbedding==1.0.1
+scikit-learn==1.4.0 
+sentencepiece==0.1.99 
+threadpoolctl==3.2.0
+sentence_transformers==2.2.2 
+faiss-cpu==1.7.4
+html2text==2020.1.16
