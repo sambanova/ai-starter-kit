@@ -19,8 +19,8 @@ MIXPANEL_TOKEN = st.secrets["MIXPANEL_TOKEN"]
 mixpanel = Mixpanel(MIXPANEL_TOKEN)
 
 # if streamlit cloud, change down to prompt_engineering working directory (streamlit cloud runs from repo root always)
-if os.getcwd() == "/mount/src/ai-starter-kit":
-    path = os.getcwd()
+path = os.getcwd()
+if path == "/mount/src/ai-starter-kit":
     path += '/prompt_engineering'
     os.chdir(path)
 
@@ -202,15 +202,21 @@ with st.expander("Provide Feedback"):
         session_id = "Unknown"
         session_id = headers.get("Sec-Websocket-Key")
 
-        mixpanel.track(f"$aisk:{os.getlogin()}:{user_email}", 'TEST_AISK:FEEDBACK_SUBMITTED',  {
+        user_id = "streamlitcloud"
+        try:
+            user_id = os.getlogin()
+        except:
+            user_id = "streamlitcloud"
+
+        mixpanel.track(f"$aisk:{user_id}:{user_email}", 'TEST_AISK:FEEDBACK_SUBMITTED',  {
         'Feedback: User Goal': f'{goals_feedback}',
         'Feedback: Are We Helping': f'{helpfulness_feedback}',
         'Feedback: Freetext': f'{freetext_feedback}',
         'Feedback: Email Entry': f'{user_email}',
         'Feedback: Streamlit Email': f'{st.experimental_user.email}',
         'Feedback: Session ID': f'{session_id}',
-        'Feedback: Working Directory': f'{os.getcwd()}',
-        'Feedback: Login': f'{os.getlogin()}',
+        'Feedback: Path': f'{path}',
+        'Feedback: Login': f'{user_id}',
         })
         # Print the response
         st.write("Thank you, your feedback is a big deal to us!")
