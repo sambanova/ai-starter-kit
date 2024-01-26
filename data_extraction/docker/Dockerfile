@@ -1,5 +1,3 @@
-# Use the base image from downloads.unstructured.io/unstructured-io/unstructured with the latest tag
-#FROM --platform=linux/amd64 downloads.unstructured.io/unstructured-io/unstructured:latest
 FROM python:3.9
 RUN python3 -m pip install -U pip
 RUN apt update \
