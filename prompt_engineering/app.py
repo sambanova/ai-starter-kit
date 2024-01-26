@@ -6,7 +6,7 @@ import os                       # for validating run/working directory to allow 
 import requests                 # for calling web APIs
 from mixpanel import Mixpanel   # to allow gathering of feedback
 from streamlit.web.server.websocket_headers import _get_websocket_headers # to allow reporting session id to mixpanel
-import replicate
+import replicate                # to allow calling non-sn endpoints
 
 
 # populate variables from secrets file
@@ -41,7 +41,7 @@ prompt_use_cases = [key for key in model_prompt_data.keys() if key != "Model Arc
 
 
 @st.cache_data
-def query_model_oa(prompt):
+def query_model_openai(prompt,model):
     # Headers including Content-Type and Authorization with your API key
     headers = {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ def query_model_oa(prompt):
 
     # Data payload
     payload_data = {
-        "model": "gpt-3.5-turbo",
+        "model": model,
         "messages": [
             {
                 "role": "system",
@@ -66,8 +66,11 @@ def query_model_oa(prompt):
     # Convert the data payload to JSON
     json_data = json.dumps(payload_data)
 
+
     # Make the POST request
     response = requests.post(OPENAI_API_ENDPOINT, headers=headers, data=json_data)
+
+
 
     # Load as json
     response_json = response.json() 
@@ -137,10 +140,10 @@ def query_model_sn(prompt):
 
 
 @st.cache_data
-def query_model_replicate(prompt):
+def query_model_replicate(prompt,model):
 
     output = replicate.run(
-        "mistralai/mistral-7b-instruct-v0.1:5fe0a3d7ac2852264a25279d1dfb798acbc4d49711d126646594e212cb821749",
+        model,
         input={
             "prompt": f"{prompt}"
         }
@@ -165,13 +168,74 @@ def query_model_replicate(prompt):
 
 
 
-with st.expander("Provide Feedback"):
-    goals_feedback = st.radio(
-    "What are you trying to accomplish by using this AI Starter Kit?",
-    ["Build a PoC", "General learning", "Something else", "No Answer"],
-    index=3,
-    horizontal=True
+
+
+## gui 
+st.title('Prompt Engineering Starter Kit')
+
+col1, col2 = st.columns([1, 1])
+
+# get model type user selection
+with col1:
+    selected_model = st.selectbox(
+        "Model Selection",
+        model_names,
+        index=1,
     )
+    st.write(f":red[**Architecture:**] {model_prompt_data['Model Architecture'][selected_model]}  \n:red[**Prompting Tips:**] {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
+
+# get use case user selection
+with col2:
+    selected_prompt_use_case = st.radio(
+        "Use Case for Sample Prompt",
+        prompt_use_cases,
+    )
+    st.write(f":red[**Meta Tag Format:**]  \n {model_prompt_data['Meta Tag Format'][selected_model]}")
+
+
+ 
+
+ 
+#st.write(f"**Model Architecture --** {model_prompt_data['Model Architecture'][selected_model]}")
+#st.write(f"**How to Prompt --** {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
+
+
+
+
+prompt = st.text_area(
+    "Prompt",
+    model_prompt_data[selected_prompt_use_case][selected_model],
+    height=210,
+    )
+
+if st.button('Send'):
+    if selected_model == "Llama 2 7B":
+        response_content = query_model_sn(prompt)
+    elif selected_model == "Mistral 7B":
+        response_content = query_model_replicate(prompt, "mistralai/mistral-7b-instruct-v0.1:5fe0a3d7ac2852264a25279d1dfb798acbc4d49711d126646594e212cb821749")
+    elif selected_model == "DeepSeek Coder":
+        response_content = query_model_replicate(prompt, "kcaverly/deepseek-coder-33b-instruct-gguf:ea964345066a8868e43aca432f314822660b72e29cab6b4b904b779014fe58fd")
+    elif selected_model == "Falcon 40B":
+        response_content = query_model_replicate(prompt, "joehoover/falcon-40b-instruct:7d58d6bddc53c23fa451c403b2b5373b1e0fa094e4e0d1b98c3d02931aa07173")
+#    elif selected_model == "Bloom":
+#        response_content = query_model_replicate(prompt)
+    elif selected_model == "GPT 3.5T":
+        response_content = query_model_openai(prompt, "gpt-3.5-turbo")
+
+    # Print the response
+    st.write(response_content)
+
+ 
+ 
+
+
+with st.expander("Provide Feedback"):
+    #goals_feedback = st.radio(
+    #"What are you trying to accomplish by using this AI Starter Kit?",
+    #["Build a PoC", "General learning", "Something else", "No Answer"],
+    #index=3,
+    #horizontal=True
+    #)
 
     helpfulness_feedback = st.radio(
     "Is this AI Starter Kit helping you accomplish your goal?", 
@@ -180,7 +244,7 @@ with st.expander("Provide Feedback"):
     horizontal=True
     )
 
-    freetext_feedback = st.text_input("What should we start, stop, or continue doing?")
+    freetext_feedback = st.text_input("What are your goals with the kit, and what should we start, stop, or continue doing to help?")
     user_email = st.text_input("What's your email address?",f"{st.experimental_user.email}")
 
     #nps_feedback = st.radio(
@@ -217,43 +281,6 @@ with st.expander("Provide Feedback"):
 
 
 
-## gui 
-st.title('Prompt Engineering Starter Kit')
-
-# get model type user selection
-selected_model = st.selectbox(
-    "Select Model",
-    model_names,
-)
-
-st.write(f"**Model Architecture --** {model_prompt_data['Model Architecture'][selected_model]}")
-st.write(f"**How to Prompt --** {model_prompt_data['Architecture Prompting Implications'][selected_model]}")
-
-
-# get use case user selection
-selected_prompt_use_case = st.selectbox(
-    "Use Case Example",
-    prompt_use_cases,
-)
-
-
-prompt = st.text_area(
-    "Prompt",
-    model_prompt_data[selected_prompt_use_case][selected_model],
-    height=280,
-    )
-
-if st.button('Send'):
-
-    response_content = query_model_replicate(prompt)
-
-    # Print the response
-    st.write(response_content)
-
-
-
-
-
 
 # evolutionary task prompt design automation
     
@@ -263,3 +290,7 @@ if st.button('Send'):
 # use cases as radio buttons? as it grow
         
 
+# replicate for all models
+# more specific model names?
+# model selection - not really, will need 
+# prompt quality
