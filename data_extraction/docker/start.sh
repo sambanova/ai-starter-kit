@@ -6,4 +6,4 @@ docker run -it \
         --rm \
         -p 8888:8888 \
         --name="data_extraction" \
-        data_extraction
+        data_extraction:v1
