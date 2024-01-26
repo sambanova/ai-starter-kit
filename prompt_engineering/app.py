@@ -26,6 +26,11 @@ mixpanel = Mixpanel(MIXPANEL_TOKEN)
 # if streamlit cloud, change down to prompt_engineering working directory (streamlit cloud runs from repo root always)
 path = os.getcwd()
 if path == "/mount/src/ai-starter-kit":
+    mixpanel.track(f"$aisk:cloud:{st.experimental_user.email}", 'AISK:STREAMLIT_CLOUD_RUN',  {
+#        'Feedback: User Goal': f'{goals_feedback}',
+        'CloudRun: Streamlit Email': f'{st.experimental_user.email}',
+        'CloudRun: Path': f'{path}',
+        })
     path += '/prompt_engineering'
     os.chdir(path)
 
@@ -267,7 +272,7 @@ with st.expander("Provide Feedback"):
             user_id = "streamlitcloud"
 
         mixpanel.track(f"$aisk:{user_id}:{user_email}", 'TEST_AISK:FEEDBACK_SUBMITTED',  {
-        'Feedback: User Goal': f'{goals_feedback}',
+#        'Feedback: User Goal': f'{goals_feedback}',
         'Feedback: Are We Helping': f'{helpfulness_feedback}',
         'Feedback: Freetext': f'{freetext_feedback}',
         'Feedback: Email Entry': f'{user_email}',
