@@ -190,6 +190,12 @@ with col2:
     selected_prompt_use_case = st.radio(
         "Use Case for Sample Prompt",
         prompt_use_cases,
+        help='''
+        \n:red[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including answering questions, offering explanations, and giving advice. It's ideal for general knowledge, trivia, educational support, and everyday inquiries.
+        \n:red[**Document Search:**] Specializes in locating and summarizing relevant information from large documents or databases. Useful for research, data analysis, and extracting key points from extensive text sources.
+        \n:red[**Product Selection:**] Assists in choosing products by comparing features, prices, and reviews. Ideal for shopping decisions, product comparisons, and understanding the pros and cons of different items.
+        \n:red[**Code Generation:**] Helps in writing, debugging, and explaining code. Useful for software development, learning programming languages, and automating simple tasks through scripting.
+        ''',
     )
     st.write(f":red[**Meta Tag Format:**]  \n {model_prompt_data['Meta Tag Format'][selected_model]}")
 

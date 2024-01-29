@@ -32,7 +32,7 @@
   },
   "Meta Tag Format": {
     "Llama 2 7B": "[INST] <<SYS>>  \n{system_prompt}  \n<</SYS>>  \n{user_prompt}  \n[/INST]",
-    "Mistral 7B": "<s> [INST] {system_prompt}  \n{few_shot_example_input}  \n[/INST]  \n{few_shot_example_ouput}  \n</s> [INST] {user_prompt}  \n[/INST]",
+    "Mistral 7B": "<s> [INST] {system_prompt}  \n{few_shot_example_input}  [/INST]  \n{few_shot_example_ouput}  \n</s> [INST] {user_prompt}  [/INST]",
     "DeepSeek Coder": "[{\"role\": \"user\", \"content\": \"instruction\"}]",
     "Falcon 40B": "No special meta tags known; classify input with natural language, e.g.  \nInstructions:  \nQuestion:",
     "Bloom": "No formatting guidelines found, references only mentioned natural language input classification",
