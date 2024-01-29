@@ -172,11 +172,17 @@ def query_model_replicate(prompt,model):
 
 
 ## gui 
-st.title('Prompt Engineering Starter Kit')
+st.set_page_config(page_title='Prompt Engineering - SambaNova Starter Kits', page_icon="sambanova-ai.svg", layout="centered", initial_sidebar_state="auto", menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'})  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:, 
+col1, mid, col2 = st.columns([1,1,20])
+with col1:
+    st.image('sambanova-ai.svg', width=60)
+with col2:
+    st.title('Prompt Engineering Starter Kit')
 
-col1, col2 = st.columns([1, 1])
+
 
 # get model type user selection
+col1, col2 = st.columns([1, 1])
 with col1:
     selected_model = st.selectbox(
         "Model Selection",
@@ -287,6 +293,7 @@ with st.expander("Provide Feedback"):
         st.write("Thank you, your feedback is a big deal to us!")
 
 
+    st.write("You can also [submit an issue on GitHub](https://github.com/sambanova/ai-starter-kit/issues/new).")
 
 
 # evolutionary task prompt design automation
