@@ -19,6 +19,13 @@ from src.models.sambanova_endpoint import SambaNovaEndpoint
 nest_asyncio.apply()
 
 def load_htmls(urls):
+    """
+    Load HTML documents from the given URLs.
+    Args:
+        urls (list): A list of URLs to load HTML documents from.
+    Returns:
+        list: A list of loaded HTML documents.
+    """
     docs=[]
     for url in urls:
         #print(url)
@@ -27,6 +34,14 @@ def load_htmls(urls):
     return docs
 
 def link_filter(all_links, excluded_links):
+    """
+    Filters a list of links based on a list of excluded links.
+    Args:
+        all_links (List[str]): A list of links to filter.
+        excluded_links (List[str]): A list of excluded links.
+    Returns:
+        Set[str]: A list of filtered links.
+    """
     clean_excluded_links=set()
     for excluded_link in excluded_links:
         parsed_link=urlparse(excluded_link)
@@ -39,11 +54,18 @@ def link_filter(all_links, excluded_links):
     return filtered_links
 
 def find_links(docs, excluded_links=None):
+    """
+    Find links in the given HTML documents, excluding specified links and not text content links.
+    Args:
+        docs (list): A list of documents with html content to search for links.
+        excluded_links (list, optional): A list of links to exclude from the search. Defaults to None.
+    Returns:
+        set: A set of unique links found in the HTML documents.
+    """
     if excluded_links is None:
         excluded_links = []
     all_links = set()  
     excluded_link_suffixes = {".ico", ".svg", ".jpg", ".png", ".jpeg", "."}
-    
     for doc in docs:
         page_content = doc.page_content
         base_url = doc.metadata["source"]
@@ -51,7 +73,6 @@ def find_links(docs, excluded_links=None):
         soup = BeautifulSoup(page_content, 'html.parser')
         # Identify the main content section (customize based on HTML structure)
         main_content = soup.find('main') or soup.find('article') or soup.find('div', class_='content')
-        
         if main_content:
             links = main_content.find_all('a', href=True)
             for link in links:
@@ -62,18 +83,33 @@ def find_links(docs, excluded_links=None):
                     not any(href.endswith(suffix) for suffix in excluded_link_suffixes)
                 ):
                     full_url, _ = urldefrag(urljoin(base_url, href))
-                    all_links.add(full_url)
-                    
+                    all_links.add(full_url)  
     all_links=link_filter(all_links, set(excluded_links))
     return all_links
 
 def clean_docs(docs):
+    """
+    Clean the given HTML documents by transforming them into plain text.
+    Args:
+        docs (list): A list of langchain documents with html content to clean.
+    Returns:
+        list: A list of cleaned plain text documents.
+    """
     html2text_transformer = Html2TextTransformer()
     docs=html2text_transformer.transform_documents(documents=docs)
     return docs
 
 def web_crawl(urls, excluded_links=None, depth = 1):
-    if excluded_links == None:
+    """
+    Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth of exploration.
+    Args:
+        urls (list): A list of URLs to crawl.
+        excluded_links (list, optional): A list of links to exclude from crawling. Defaults to None.
+        depth (int, optional): The depth of crawling, determining how many layers of internal links to explore. Defaults to 1
+    Returns:
+        tuple: A tuple containing the langchain documents (list) and the scrapped URLs (list).
+    """
+    if excluded_links is None:
         excluded_links = []
     excluded_links.extend(["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "telagram.me", "reddit.com", "whatsapp.com", "wa.me"])
     if depth > 3:
@@ -89,26 +125,29 @@ def web_crawl(urls, excluded_links=None, depth = 1):
     docs=clean_docs(scraped_docs)
     return docs, scrapped_urls
 
-def get_text_chunks(text):
+def get_text_chunks(docs):
+    """
+    Split the given docuemnts into smaller chunks.
+    Args:
+        docs (list): The documents to be split into chunks.
+    Returns:
+        list: A list of documents with text chunks.
+    """
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, chunk_overlap=200, length_function=len
     )
-    chunks = text_splitter.split_documents(text)
+    chunks = text_splitter.split_documents(docs)
     return chunks
 
 def build_vectorstore(text_chunks):
     """
     Create and return a Vector Store for a collection of text chunks.
-
     This function generates a vector store using the FAISS library, which allows efficient similarity search
     over a collection of text chunks by representing them as embeddings.
-
-    Parameters:
-    text_chunks (list of str): A list of text chunks or sentences to be stored and indexed for similarity search.
-
+    Args:
+        text_chunks (list of str): A list of text chunks or sentences to be stored and indexed for similarity search.
     Returns:
-    FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks,
-                     suitable for similarity search operations.
+        FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks, suitable for similarity search operations.
     """
     encode_kwargs = {"normalize_embeddings": True}
     embeddings = HuggingFaceInstructEmbeddings(
@@ -124,10 +163,10 @@ def build_vectorstore(text_chunks):
 def load_vectorstore(faiss_location):
     """
     Loads an existing vector store generated with the FAISS library
-    Parameters:
-    faiss_location (str): Path to the vector store
+    Args:
+        faiss_location (str): Path to the vector store
     Returns:
-    FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks, suitable for similarity search operations.
+        FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks, suitable for similarity search operations.
     """
     encode_kwargs = {"normalize_embeddings": True}
     embeddings = HuggingFaceInstructEmbeddings(
@@ -142,13 +181,11 @@ def load_vectorstore(faiss_location):
 def get_custom_prompt():
     """
     Generate a custom prompt template for contextual question answering.
-
     This function creates and returns a custom prompt template that instructs the model on how to answer a question
     based on the provided context. The template includes placeholders for the context and question to be filled in
     when generating prompts.
-
     Returns:
-    PromptTemplate: A custom prompt template for contextual question answering.
+        PromptTemplate: A custom prompt template for contextual question answering.
     """
     # llama prompt template
     custom_prompt_template = """<s>[INST] <<SYS>>\n"Use the following pieces of context to answer the question at the end. 
@@ -172,16 +209,13 @@ def get_custom_prompt():
 def get_qa_retrieval_chain(vectorstore):
     """
     Generate a qa_retrieval chain using a language model.
-
     This function uses a language model, specifically a SambaNovaEndpoint, to generate a qa_retrieval chain
     based on the input vector store of text chunks.
-
-    Parameters:
-    vectorstore (FAISSVectorStore): A Vector Store containing embeddings of text chunks used as context
+    Args:
+        vectorstore (FAISSVectorStore): A Vector Store containing embeddings of text chunks used as context
                                     for generating the conversation chain.
-
     Returns:
-    RetrievalQA: A chain ready for QA without memory
+        RetrievalQA: A chain ready for QA without memory
     """
     llm = SambaNovaEndpoint(
         model_kwargs={
@@ -208,11 +242,17 @@ def get_qa_retrieval_chain(vectorstore):
     return qa_chain
 
 def handle_userinput(user_question):
+    """
+    Handle user input and generate a response with sources, also update chat UI in streamlit app
+    Args:
+        user_question (str): The user's question or input.
+    Returns:
+        None
+    """
     if user_question:
         response = st.session_state.conversation({"question": user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
-
         # List of sources
         sources = set(f'{doc.metadata["source"]}'for doc in response["source_documents"])
         # Create a Markdown string with each source on a new line as a numbered list with links
@@ -223,7 +263,6 @@ def handle_userinput(user_question):
                 f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
             )
         st.session_state.sources_history.append(sources_text)
-
     for ques, ans, source in zip(
         st.session_state.chat_history[::2],
         st.session_state.chat_history[1::2],
@@ -252,6 +291,7 @@ def main():
         page_icon="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
     )
 
+    #set session state variables
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
@@ -271,15 +311,17 @@ def main():
     user_question = st.chat_input("Ask questions about data in provided sites")
     handle_userinput(user_question)
 
+    #setup of the application
     with st.sidebar:
         st.title("Setup")
-        
+        # selecction of datasource urls, or vector database folder
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("**1. Pick a datasource**")
         datasource = st.selectbox(
             "", ("Select websites(create new vector db)", "Use existing vector db")
         )
-        
+        # if urls selected as datasource
+        # imput text area for urls
         if "websites" in datasource:
             st.markdown("<hr>", unsafe_allow_html=True)
             st.markdown("**2. Include the Urls to crawl**")
@@ -305,7 +347,7 @@ def main():
                 st.session_state.base_urls_list = []
                 st.session_state.full_urls_list = []
                 st.experimental_rerun()
-             
+            # selection of crawling depth and crawling process
             st.markdown("<hr>", unsafe_allow_html=True)   
             st.markdown("**3. Choose the crawling depth**")
             depth = st.number_input("Depth for web crawling:", min_value=1, max_value=2, value=1)
@@ -317,7 +359,7 @@ def main():
                     st.experimental_rerun()
             with st.expander(f"{len(st.session_state.full_urls_list)} crawled URLs",expanded=False):
                 st.write(st.session_state.full_urls_list)
-                
+            # Processing of crawled documents, storing them in vector database and creating retrival chain  
             st.markdown("<hr>", unsafe_allow_html=True)
             st.markdown("**4. Load sites and create vectorstore**")
             if st.button("Process"):
@@ -332,7 +374,7 @@ def main():
                     st.session_state.conversation = get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     )
-                
+            # storing vector database in disk  
             st.markdown("**[Optional] Save database for reuse**")
             save_location = st.text_input("Save location", "./my-vector-db").strip()
             if st.button("Save database"):
@@ -343,7 +385,7 @@ def main():
                     st.error(
                         "You need to process your files before saving the database"
                     )
-                    
+        # if vector database folder selected as datasource     
         else:
             db_path = st.text_input(
                 "Absolute path to your FAISS Vector DB folder",
@@ -373,7 +415,7 @@ def main():
                             )
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
-                            
+        # show sources and reset conversation controls                   
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("**Ask questions about your data!**")
 
