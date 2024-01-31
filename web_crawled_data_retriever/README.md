@@ -8,8 +8,33 @@
 
 Web Crawled Data Retrieval
 ======================
+<!-- TOC -->
 
+- [Web Crawled Data Retrieval](#web-crawled-data-retrieval)
+- [Overview](#overview)
+    - [About this template](#about-this-template)
+- [Getting started](#getting-started)
+    - [Deploy your model in SambaStudio](#deploy-your-model-in-sambastudio)
+    - [Integrate your model](#integrate-your-model)
+    - [Deploy the starter kit](#deploy-the-starter-kit)
+    - [Starterkit usage](#starterkit-usage)
+- [Workflow](#workflow)
+    - [Ingestion](#ingestion)
+    - [Retrieval](#retrieval)
+    - [Response](#response)
+- [Customizing the template](#customizing-the-template)
+    - [Crawl websites](#crawl-websites)
+    - [Split Data](#split-data)
+    - [Embed data](#embed-data)
+    - [Store embeddings](#store-embeddings)
+    - [Retrieval](#retrieval)
+    - [Large language model LLM](#large-language-model-llm)
+        - [Prompt engineering](#prompt-engineering)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
 # Overview
+
 ## About this template
 This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using website-crawled information as the source. 
 
@@ -21,10 +46,10 @@ This sample is ready to use. We provide instructions to help you run this demo b
 
 # Getting started
 
-## 1. Deploy your model in SambaStudio
+## Deploy your model in SambaStudio
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-## 2. Integrate your model
+## Integrate your model
 Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
 1. Clone repo.
 ```
@@ -47,7 +72,8 @@ python3 -m venv web_crawling_env
 source web_crawling_env/bin/activate
 pip install -r requirements.txt
 ```
-## 3. Deploy the starter kit
+
+## Deploy the starter kit
 To run the demo, run the following commands:
 ```
 sh run.sh
@@ -56,7 +82,8 @@ sh run.sh
 After deploying the starter kit you should see the following application user interface
 
 ![capture of web_crawled_retriever_demo](./web_crawled_app.png)
-## 4. Starterkit usage 
+
+## Starterkit usage 
 
 1- Pick the data source, that could be previous stored [FAISS](https://github.com/facebookresearch/faiss) vectorstore or a list of website URLs
 
@@ -74,7 +101,7 @@ After deploying the starter kit you should see the following application user in
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.
 
 
-## 1. Ingestion
+## Ingestion
 This workflow is an example of crawling, parsing and indexing data for subsequent Q&A. The steps are:
 
 1. **Website crawling**: 
@@ -102,7 +129,7 @@ This workflow is an example of crawling, parsing and indexing data for subsequen
     Embeddings for each chunk, along with content and relevant metadata (such as source website) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```website source```  is also attached to the embeddings which are stored during  webcrawling process.
 
 
-## 2. Retrieval
+## Retrieval
 This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
 
  1.  **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model  in the ingestion workflow.
@@ -114,7 +141,7 @@ This workflow is an example of leveraging data stored in a vector database along
  
  *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
-## 3. Response  
+## Response  
 **SambaNova Large language model (LLM):** Once the relevant information is retrieved, the content is sent to a SambaNova LLM to generate the final response to the user query. 
 
    - **Prompt engineering:** The user's query is combined with the retrieved content along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part in ensuring quality output. In this AI template, customized prompts are provided to the LLM to improve the quality of response for this use case.
@@ -233,7 +260,7 @@ function: get_conversation_chain
 ```
 > *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
 
-## Third-party tools and data sources
+# Third-party tools and data sources
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
