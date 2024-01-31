@@ -297,6 +297,7 @@ def main():
                     st.session_state.conversation = get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     )
+                    st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
 
             st.markdown("**[Optional] Save database for reuse**")
             save_location = st.text_input("Save location", "./my-vector-db").strip()
