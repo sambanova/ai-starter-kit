@@ -1,15 +1,18 @@
 llama-hub==0.0.25
-langchain==0.0.266
-llama-index==0.8.20
+langchain==0.1.4
+llama-index==0.9.39
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 beautifulsoup4==4.12.2
 qdrant-client==1.5.2
 uvicorn==0.23.2
 fastapi==0.99.1
-# https://github.com/emptycrown/llama-hub/blob/77b0e7e20c5a3031cf79588dec66b9cfa4673fce/llama_hub/sec_filings/requirements.txt
-aiohttp==3.8.4
+aiohttp==3.9.1
 Faker==19.1.0
 #urllib3==2.0.4
 ratelimit==2.2.1
 unstructured==0.8.1
+python-xbrl==1.1.1
+sec-edgar-downloader==5.0.2
+python-dotenv==1.0.0
+chromadb==0.4.8
