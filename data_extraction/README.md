@@ -44,13 +44,22 @@ This kit include a series of Notebooks that demonstrates various methods for ext
 ```
 git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
-2. Install requirements: It is recommended to use virtualenv or conda environment for installation.
+2.1 Install requirements: It is recommended to use virtualenv or conda environment for installation.
 ```
 cd ai-starter-kit
 python3 -m venv data_extract_env
 source data_extract_env/bin/activate
 cd data_extraction
 pip install -r requirements.txt
+```
+2.2 Install requirements for paddle utility: ,It is recommended to use virtualenv or conda environment for installation.
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the requirementsPaddle file instead
+```
+cd ai-starter-kit
+python3 -m venv data_extract_env
+source data_extract_env/bin/activate
+cd data_extraction
+pip install -r requirementsPaddle.txt
 ```
 3. Some text extraction examples use Unstructured lib. Please register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API Key. then create an enviroment file to store the APIkey and URL provided.
 ```
@@ -70,16 +79,26 @@ git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > export.env
 ```
-3. Build data extraction AI starter kit docker image
+3.1 Build data extraction AI starter kit docker image
 ```
 cd ai-starter-kit
 sudo docker build -t data_extraction:v1 -f data_extraction/docker/Dockerfile . 
 ```
-4. Run data extraction docker container
+3.2 Build data extraction AI starter kit docker image for Paddle utility
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the PaddleDockerfile file instead
+```
+cd ai-starter-kit
+sudo docker build -t data_extraction_paddle:v1 -f data_extraction/docker/PaddleDockerfile . 
+```
+4.1 Run data extraction docker container
 ```
 sudo ./data_extraction/docker/start.sh    
 ```
-
+4.2 Run data extraction docker container for Paddle utility
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the startPaddle script instead
+```
+sudo ./data_extraction/docker/startPaddle.sh    
+```
 
 
 ### File loaders 
