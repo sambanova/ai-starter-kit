@@ -6,3 +6,4 @@ faiss-cpu==1.7.4
 PyPDF2==3.0.1
 python-dotenv==1.0.0
 streamlit-extras
+pillow==9.1.0
