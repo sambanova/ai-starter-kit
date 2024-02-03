@@ -39,7 +39,7 @@ python -m generative_data_prep pipeline \
 
 ### Basic QA-QC
 
-One can do basic QA-QC by loading the HDF5 and jsonl files as shown in the notebook [qa_data.ipynb](notebooks/qa_data.ipynb).
+One can do basic QA-QC by loading the HDF5 and jsonl files as shown in the notebook [2_qa_data.ipynb](notebooks/2_qa_data.ipynb).
 
 
 ## Load the dataset on Sambastudio
