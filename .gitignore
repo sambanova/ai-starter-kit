@@ -1,3 +1,8 @@
+# Data
+*.bin
+*.parquet
+*.sqlite3
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -169,9 +174,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
 # Edgar Local Data
-edgar_qna/edgar_qna_streamlit/data/
+edgar_qna/data/
 
 # Fine tuning Data
 fine_tuning_sql/data/

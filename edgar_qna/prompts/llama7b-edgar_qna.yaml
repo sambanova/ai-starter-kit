@@ -1,0 +1,16 @@
+_type: prompt
+input_types: {}
+input_variables:
+- context
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template: "\n        <s>[INST] <<SYS>>\nYou're a helpful assistant in filing reports.\n\
+  <</SYS>>\n        Given the following context and the following question in the next sections.\n\
+  \        Context:\n        {context}\n        \n        Question:  \n        {question}\n\
+  \        \n        Answer the question using only the information from the context. However, \
+  \ if you don't know the answer, then say that you do not have\
+  \ information about it.\n        Helpful Answer: [/INST]"
+template_format: f-string
+validate_template: false
