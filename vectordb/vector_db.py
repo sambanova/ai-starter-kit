@@ -100,7 +100,7 @@ class VectorDb():
         
         return embeddings
     
-    def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, output_db: str, db_type: str) -> None:
+    def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str, output_db: str = None ):
         """Creates a vector store
 
         Args:
@@ -115,28 +115,42 @@ class VectorDb():
                 documents=chunks, 
                 embedding=embeddings
             )
-            vector_store.save_local(output_db)
+            if output_db:
+                vector_store.save_local(output_db)
             
         elif db_type == "chroma":
-            vector_store = Chroma.from_documents(
-                documents=chunks, 
-                embedding=embeddings, 
-                persist_directory=output_db
-            )
+            if output_db:
+                vector_store = Chroma.from_documents(
+                    documents=chunks, 
+                    embedding=embeddings, 
+                    persist_directory=output_db
+                )
+            else:
+                vector_store = Chroma.from_documents(
+                    documents=chunks, 
+                    embedding=embeddings
+                )
             
         elif db_type == "qdrant":
-            vector_store = Qdrant.from_documents(
-                documents=chunks,
-                embedding=embeddings,
-                path=output_db,
-                collection_name="test_collection",
-            )
+            if output_db:
+                vector_store = Qdrant.from_documents(
+                    documents=chunks,
+                    embedding=embeddings,
+                    path=output_db,
+                    collection_name="test_collection",
+                )
+            else:
+                vector_store = Qdrant.from_documents(
+                    documents=chunks,
+                    embedding=embeddings,
+                    collection_name="test_collection",
+                )
 
         logger.info(f"Vector store saved to {output_db}")
         
         return vector_store
 
-    def create_vdb(self, input_path, output_db, chunk_size, chunk_overlap, db_type):
+    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None):
         
         docs = self.load_files(input_path)
 
@@ -144,13 +158,14 @@ class VectorDb():
 
         embeddings = self.load_embedding_model()
 
-        _ = self.create_vector_store(chunks, embeddings, output_db, db_type)
+        vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
+        
+        return vector_store
         
     def load_vdb(self, persist_directory, embedding_model, db_type = "chroma"):
 
         if db_type == "faiss":
-            # TO-DO: vector_store = FAISS...
-            pass
+             vector_store = FAISS.load_local(persist_directory, embedding_model)
         elif db_type == "chroma":
             vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
         elif db_type == "qdrant":
