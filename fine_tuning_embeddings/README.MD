@@ -1,52 +1,5 @@
 # Embedding Fine-Tuning Starter Kit
-# Embedding Fine-Tuning Starter Kit
 
-This starter kit is designed to guide users through the process of fine-tuning embeddings from unstructured data. Leveraging the power of Large Language Models (LLMs) and open-source embedding models, we aim to enhance the performance of embeddings for various NLP tasks. This kit is structured into three main parts:
-
-## Part 1: Generating Synthetic Query-Answer Pairs
-
-The first part focuses on generating synthetic query-answer pairs from unstructured data using an LLM. This process involves:
-
-- Loading and processing a corpus of documents.
-- Utilizing a pre-trained LLM to generate relevant queries based on the context of each document.
-- Saving the generated query-answer pairs for use in fine-tuning.
-
-### Key Features:
-
-- Automated query generation from unstructured text.
-- Customizable query generation based on document context.
-
-## Part 2: Fine-Tuning an Open-Source Embedding Model
-
-In the second part, we fine-tune an open-source embedding model using the synthetic query-answer pairs generated in Part 1. This involves:
-
-- Loading the Sentence Transformers library for embedding fine-tuning.
-- Preparing the synthetic dataset for training.
-- Fine-tuning the embedding model on the synthetic dataset.
-- Saving the fine-tuned model for downstream tasks.
-
-### Key Features:
-
-- Easy-to-use fine-tuning workflow with Sentence Transformers.
-- Enhanced embedding quality for NLP tasks.
-
-## Part 3: Evaluating Embedding Performance
-
-The final part involves evaluating the performance of the fine-tuned embeddings. We compare:
-
-- Closed-source embeddings.
-- Open-source embeddings without fine-tuning.
-- Open-source embeddings with fine-tuning (as performed in Part 2).
-
-### Evaluation Metrics:
-
-- Similarity scores.
-- Task-specific performance metrics (e.g., F1 score for question answering).
-
-### Key Features:
-
-- Comprehensive evaluation framework.
-- Insights into the benefits of embedding fine-tuning.
 This starter kit is designed to guide users through the process of fine-tuning embeddings from unstructured data. Leveraging the power of Large Language Models (LLMs) and open-source embedding models, we aim to enhance the performance of embeddings for various NLP tasks. This kit is structured into three main parts:
 
 ## Part 1: Generating Synthetic Query-Answer Pairs
