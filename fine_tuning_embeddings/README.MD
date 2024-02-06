@@ -1,5 +1,4 @@
 # Embedding Fine-Tuning Starter Kit
-# Embedding Fine-Tuning Starter Kit
 
 This starter kit is designed to guide users through the process of fine-tuning embeddings from unstructured data. Leveraging the power of Large Language Models (LLMs) and open-source embedding models, we aim to enhance the performance of embeddings for various NLP tasks. This kit is structured into three main parts:
 
