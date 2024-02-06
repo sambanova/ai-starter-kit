@@ -60,7 +60,7 @@ def main():
     parser.add_argument("--model_id", type=str, default="intfloat/e5-large-v2", help="Model identifier from SentenceTransformers")
     parser.add_argument("--train_dataset_path", type=str, default="./data/train_dataset.json", help="Path to the training dataset")
     parser.add_argument("--val_dataset_path", type=str, default="./data/val_dataset.json", help="Path to the validation dataset")
-    parser.add_argument("--batch_size", type=int, default=2, help="Training batch size")
+    parser.add_argument("--batch_size", type=int, default=8, help="Training batch size")
     parser.add_argument("--epochs", type=int, default=2, help="Number of epochs for training")
     parser.add_argument("--output_path", type=str, default="exp_finetune", help="Output path for the fine-tuned model")
     parser.add_argument("--checkpoint_path", type=str, default="checkpoints", help="Path to the checkpoint to resume training")
