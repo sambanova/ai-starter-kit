@@ -61,20 +61,30 @@ class VectorDb():
         
         return docs
     
-    def get_text_chunks(self, docs: list, chunk_size, chunk_overlap) -> list:
-        """Gets text chunks
+    def get_text_chunks(self, docs: list, chunk_size: int, chunk_overlap: int, meta_data: list = None) -> list:
+        """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
 
         Args:
-            docs (list): list of documents
+            docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
+            If metadata is passed, this parameter is a list of texts.
+            chunk_size (int): chunk size in number of tokens
+            chunk_overlap (int): chunk overlap in number of tokens
+            metadata (list, optional): list of metadata in dictionary format. Defaults to None.
 
         Returns:
-            list: list of chunks
+            list: list of documents 
         """
         
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
         )
-        chunks = text_splitter.split_documents(docs)
+        
+        if meta_data is None:
+            chunks = text_splitter.split_documents(docs)
+        else:
+            print("splitter: create_documents")
+            chunks = text_splitter.create_documents(docs, meta_data)
+            
         logger.info(f"Total {len(chunks)} chunks created")
         
         return chunks
@@ -106,8 +116,8 @@ class VectorDb():
         Args:
             chunks (list): list of chunks
             embeddings (HuggingFaceInstructEmbeddings): embedding model
-            output_db (str): output path to save the vector db
             db_type (str): vector db type
+            output_db (str, optional): output path to save the vector db. Defaults to None.
         """
         
         if db_type == "faiss":
