@@ -134,7 +134,7 @@ class SecFiling:
             documents = self.download_sec_data(ticker)
             complete_document = self.parse_xbrl_data(documents)
             chunks = vectordb.get_text_chunks([complete_document], CHUNK_SIZE, CHUNK_OVERLAP)
-            self.vector_store = vectordb.create_vector_store(chunks, embeddings, persist_directory, DB_TYPE)
+            self.vector_store = vectordb.create_vector_store(chunks, embeddings, DB_TYPE, persist_directory)
 
     def retrieval_qa_chain(self) -> None:
         """Defines the retrieval chain
