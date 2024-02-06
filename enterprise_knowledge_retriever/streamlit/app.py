@@ -2,18 +2,21 @@ import os
 import sys
 
 sys.path.append("../")
+sys.path.append("../../")
 import streamlit as st
 from dotenv import load_dotenv
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate, load_prompt
 from PyPDF2 import PdfReader
 
-from src.models.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint
+from vectordb.vector_db import VectorDb
 
+from dotenv import load_dotenv
+load_dotenv('../../export.env')
+
+DB_TYPE = "chroma"
+PERSIST_DIRECTORY = f"../data/vectordbs/{DB_TYPE}_default"
 
 def get_pdf_text_and_metadata(pdf_doc):
     """Extract text and metadata from pdf document
@@ -29,7 +32,7 @@ def get_pdf_text_and_metadata(pdf_doc):
     pdf_reader = PdfReader(pdf_doc)
     for page in pdf_reader.pages:
         text.append(page.extract_text())
-        metadata.append({"filename": pdf_doc, "page": pdf_reader.get_page_number(page)})
+        metadata.append({"filename": pdf_doc.name, "page": pdf_reader.get_page_number(page)})
     return text, metadata
 
 
@@ -51,67 +54,6 @@ def get_data_for_splitting(pdf_docs):
     return files_data, files_metadatas
 
 
-def get_text_chunks(text, metadata):
-    """Chunks the text
-
-    Args:
-        text (list): text data
-        metadata (list): metadata
-
-    Returns:
-        list: chunks of text based on the RecursiveCharacterTextSplitter
-    """
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000, chunk_overlap=200, length_function=len
-    )
-    chunks = text_splitter.create_documents(text, metadata)
-    return chunks
-
-
-def build_vectorstore(text_chunks):
-    """
-    Create and return a Vector Store for a collection of text chunks.
-
-    This function generates a vector store using the FAISS library, which allows efficient similarity search
-    over a collection of text chunks by representing them as embeddings.
-
-    Parameters:
-    text_chunks (list of str): A list of text chunks or sentences to be stored and indexed for similarity search.
-
-    Returns:
-    FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks,
-                     suitable for similarity search operations.
-    """
-    encode_kwargs = {"normalize_embeddings": True}
-    embeddings = HuggingFaceInstructEmbeddings(
-        model_name="BAAI/bge-large-en",
-        embed_instruction="",  # no instruction is needed for candidate passages
-        query_instruction="Represent this sentence for searching relevant passages: ",
-        encode_kwargs=encode_kwargs,
-    )
-    vectorstore = FAISS.from_documents(documents=text_chunks, embedding=embeddings)
-    return vectorstore
-
-
-def load_vectorstore(faiss_location):
-    """
-    Loads an existing vector store generated with the FAISS library
-    Parameters:
-    faiss_location (str): Path to the vector store
-    Returns:
-    FAISSVectorStore: A Vector Store containing the embeddings of the input text chunks, suitable for similarity search operations.
-    """
-    encode_kwargs = {"normalize_embeddings": True}
-    embeddings = HuggingFaceInstructEmbeddings(
-        model_name="BAAI/bge-large-en",
-        embed_instruction="",  # no instruction is needed for candidate passages
-        query_instruction="Represent this sentence for searching relevant passages: ",
-        encode_kwargs=encode_kwargs,
-    )
-    vectorstore = FAISS.load_local(faiss_location, embeddings)
-    return vectorstore
-
-
 def get_qa_retrieval_chain(vectorstore):
     """
     Generate a qa_retrieval chain using a language model.
@@ -120,8 +62,8 @@ def get_qa_retrieval_chain(vectorstore):
     based on the input vector store of text chunks.
 
     Parameters:
-    vectorstore (FAISSVectorStore): A Vector Store containing embeddings of text chunks used as context
-                                    for generating the conversation chain.
+    vectorstore (Chroma): A Vector Store containing embeddings of text chunks used as context
+                          for generating the conversation chain.
 
     Returns:
     RetrievalQA: A chain ready for QA without memory
@@ -141,9 +83,11 @@ def get_qa_retrieval_chain(vectorstore):
         input_key="question",
         output_key="answer",
     )
+    
+    customprompt = load_prompt("../prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml")
 
     ## Inject custom prompt
-    qa_chain.combine_documents_chain.llm_chain.prompt = get_custom_prompt()
+    qa_chain.combine_documents_chain.llm_chain.prompt = customprompt
     return qa_chain
 
 
@@ -155,49 +99,12 @@ def get_conversational_qa_retrieval_chain(vectorstore):
     based on the chat history and the relevant retrieved content from the input vector store of text chunks.
 
     Parameters:
-    vectorstore (FAISSVectorStore): A Vector Store containing embeddings of text chunks used as context
+    vectorstore (Chroma): A Vector Store containing embeddings of text chunks used as context
                                     for generating the conversation chain.
 
     Returns:
     RetrievalQA: A chain ready for QA with memory
     """
-
-
-def get_custom_prompt():
-    """
-    Generate a custom prompt template for contextual question answering.
-
-    This function creates and returns a custom prompt template that instructs the model on how to answer a question
-    based on the provided context. The template includes placeholders for the context and question to be filled in
-    when generating prompts.
-
-    Returns:
-    PromptTemplate: A custom prompt template for contextual question answering.
-    """
-
-    # custom_prompt_template = """Use the following pieces of context to answer the question at the end.
-    # If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
-    # Cross check if the answer is contained in provided context. If not than say "I do not have information regarding this."
-
-    # {context}
-
-    # Question: {question}
-    # Helpful Answer:"""
-
-    # llama prompt template
-    custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question.
-    If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say "I do not have information regarding this.
-    Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
-
-    {context} 
-    
-    Question: {question} 
-    Helpful answer: [/INST]"""
-
-    CUSTOMPROMPT = PromptTemplate(
-        template=custom_prompt_template, input_variables=["context", "question"]
-    )
-    return CUSTOMPROMPT
 
 
 def handle_userinput(user_question):
@@ -208,7 +115,7 @@ def handle_userinput(user_question):
 
         # List of sources
         sources = [
-            f'{sd.metadata["filename"].name} (page {sd.metadata["page"]})'
+            f'{sd.metadata["filename"]} (page {sd.metadata["page"]})'
             for sd in response["source_documents"]
         ]
         # Create a Markdown string with each source on a new line as a numbered list with links
@@ -241,7 +148,6 @@ def handle_userinput(user_question):
                         unsafe_allow_html=True,
                     )
 
-
 def main():
     load_dotenv()
     st.set_page_config(
@@ -264,6 +170,7 @@ def main():
     user_question = st.chat_input("Ask questions about your data")
     handle_userinput(user_question)
 
+    vectordb = VectorDb()
     with st.sidebar:
         st.title("Setup")
         st.markdown("**1. Pick a datasource**")
@@ -281,39 +188,28 @@ def main():
 
             if st.button("Process"):
                 with st.spinner("Processing"):
+                    
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
 
                     # get the text chunks
-                    text_chunks = get_text_chunks(raw_text, meta_data)
+                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
 
                     # create vector store
-                    vectorstore = build_vectorstore(text_chunks)
-
-                    # assign vectorstore to session
+                    embeddings = vectordb.load_embedding_model()
+                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=PERSIST_DIRECTORY, db_type=DB_TYPE)
                     st.session_state.vectorstore = vectorstore
-
+                    
                     # create conversation chain
                     st.session_state.conversation = get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     )
-                    st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
-
-            st.markdown("**[Optional] Save database for reuse**")
-            save_location = st.text_input("Save location", "./my-vector-db").strip()
-            if st.button("Save database"):
-                if st.session_state.vectorstore is not None:
-                    st.session_state.vectorstore.save_local(save_location)
-                    st.toast("Database saved to " + save_location)
-                else:
-                    st.error(
-                        "You need to process your files before saving the database"
-                    )
+                    st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
 
         else:
             db_path = st.text_input(
-                "Absolute path to your FAISS Vector DB folder",
-                placeholder="E.g., /Users/<username>/Downloads/<vectordb_folder>",
+                f"Absolute path to your {DB_TYPE} DB folder",
+                placeholder="E.g., /Users/<username>/path/to/your/vectordb",
             ).strip()
             st.markdown("**2. Load your datasource**")
             st.markdown(
@@ -326,7 +222,8 @@ def main():
                     else:
                         if os.path.exists(db_path):
                             # load the vectorstore
-                            vectorstore = load_vectorstore(db_path)
+                            embeddings = vectordb.load_embedding_model()
+                            vectorstore = vectordb.load_vdb(db_path, embeddings, db_type=DB_TYPE)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session
