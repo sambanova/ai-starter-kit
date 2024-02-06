@@ -28,8 +28,6 @@ sentence-transformers = "^2.2.2"
 chromadb = "^0.4.22"
 ipywidgets = "^8.1.1"
 setuptools-scm = "^8.0.4"
-pandas = "^2.2.0"
-pydantic = "1.10.14"
 
 
 [build-system]
