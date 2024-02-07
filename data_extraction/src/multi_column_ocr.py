@@ -10,25 +10,29 @@ from paddleocr import PaddleOCR,  PPStructure
 ocr = PaddleOCR(use_angle_cls=False, lang='en') # need to run only once to download and load model into memory
 layout_engine = PPStructure(recovery=False, layout=True, table=True, ocr=False, show_log=False) # need to run only once to download and load model into memory
 
+
+
 class PaddleOCRLoader():
     """
     This class loads a PDF document and extracts its content using PaddleOCR and PaddleStructure.
     """
-    def __init__(self, document_path, output_folder='extraction', save_intermediate=True, header_height = 0, footer_height = 0):
+    def __init__(self, document_path, output_folder='data/extraction', save_intermediate=True, header_height = 0, footer_height = 0, font_path="../data/fonts/simfang.ttf"):
         """
         Initialize the PaddleOCRLoader class.
         Args:
             document_path (str): Path to the PDF document to load.
-            output_folder (str, optional): Output folder for saving intermediate files. Defaults to 'extraction'.
+            output_folder (str, optional): Output folder for saving intermediate files. Defaults to 'data/extraction'.
             save_intermediate (bool, optional): Whether to save intermediate files for debugging purpouses . Defaults to True.
             header_height (int, optional): Height of the header in pixels. Defaults to 0.
             footer_height (int, optional): Height of the footer in pixels. Defaults to 0.
+            font_path (str, optional): Path to the font file. Defaults to '../data/fonts/simfang.ttf'.
         """
         self.document_path = document_path
         self.output_folder = output_folder
         self.save_intermediate = save_intermediate
         self.header_height = header_height
         self.footer_height = footer_height
+        self.font_path = font_path
         
     def load(self):
         """get langchain documens from PDF file
@@ -36,6 +40,7 @@ class PaddleOCRLoader():
             list: langchain docs
         """
         self.documents = []
+        print(self.save_intermediate)
         texts=self.load_pdf(self.document_path, 
                        output_folder=self.output_folder, 
                        save_intermediate=self.save_intermediate, 
@@ -51,18 +56,18 @@ class PaddleOCRLoader():
     
     #PDF Conversion
     
-    def convert_pdf_to_images(self, pdf_file_path, output_folder='extraction'):
+    def convert_pdf_to_images(self, pdf_file_path, output_folder='data/extraction'):
         """
             this method converts a pdf file to a series of images of each page
         Args:
             pdf_file_path (str): pdf file path
-            output_folder (str, optional): output directory. Defaults to 'extraction'.
+            output_folder (str, optional): output directory. Defaults to 'data/extraction'.
 
         Returns:
             str: _description_ output directory
         """
         images = convert_from_path(pdf_file_path)
-        output_folder=f"{output_folder}/{os.path.basename(pdf_file_path).split('.')[0]}"
+        output_folder=os.path.join(output_folder,os.path.basename(pdf_file_path).split('.')[0])
         os.makedirs(output_folder, exist_ok=True)
         for i, image in enumerate(images):
             img_name=f"{os.path.basename(pdf_file_path).split('.')[0]}_page_{i}.jpg"
@@ -131,7 +136,8 @@ class PaddleOCRLoader():
             cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
             cv2.putText(image, bbox[1], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
         if save:
-            bbox_image_path=f"{''.join(image_path.split('.')[:-1])}_bboxs.jpg"
+            path=os.path.join(os.path.dirname(image_path), "".join(os.path.basename(image_path).split('.')[:-1]))
+            bbox_image_path=f"{path}_bboxs.jpg"
             cv2.imwrite(bbox_image_path,image)
         return image
 
@@ -151,7 +157,8 @@ class PaddleOCRLoader():
             cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
             cv2.putText(image, str(i), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
         if save: 
-            bbox_image_path=f"{''.join(image_path.split('.')[:-1])}_bboxs_{tag}.jpg"
+            path=os.path.join(os.path.dirname(image_path), "".join(os.path.basename(image_path).split('.')[:-1]))
+            bbox_image_path=f"{path}_bboxs_{tag}.jpg"
             cv2.imwrite(bbox_image_path, image)
         return image
         
@@ -183,7 +190,7 @@ class PaddleOCRLoader():
         Returns:
             (str): json output path
         """
-        path="".join(path.split('.')[:-1])
+        path=os.path.join(os.path.dirname(path), "".join(os.path.basename(path).split('.')[:-1]))
         tables_dict = {}
         for i, table in enumerate(tables):
             tables_dict[f'{tag} {i}']=table
@@ -222,7 +229,7 @@ class PaddleOCRLoader():
         Returns:
             (str): json output path
         """
-        path="".join(path.split('.')[:-1])
+        path=os.path.join(os.path.dirname(path), "".join(os.path.basename(path).split('.')[:-1]))
         figures_dict = {}
         for i, figure in enumerate(figures):
             figure_path=f"{path}_figure_{i}.jpg"
@@ -261,7 +268,7 @@ class PaddleOCRLoader():
         Returns:
             (str): json output path
         """
-        path="".join(path.split('.')[:-1])
+        path=os.path.join(os.path.dirname(path), "".join(os.path.basename(path).split('.')[:-1]))
         equations_dict = {}
         for i, equation in enumerate(equations):
             equation_path=f"{path}_equation_{i}.jpg"
@@ -297,7 +304,7 @@ class PaddleOCRLoader():
         erased_image = Image.composite(image, Image.new('RGB', image.size, (255, 255, 255)), mask)
         # Create a drawing object for the erased image
         draw_erased = ImageDraw.Draw(erased_image)
-        font = ImageFont.truetype("fonts/simfang.ttf", 30)
+        font = ImageFont.truetype(self.font_path, 30)
         # Draw the text in the middle of each bounding box
         for i,box in enumerate(bboxs):
             text=f'**{tag} {i}**'
@@ -310,7 +317,8 @@ class PaddleOCRLoader():
             # Draw the text on the erased image
             draw_erased.text(text_position, text, fill=(0, 0, 0), font=font)
         if save:
-            mask_image_path=f"{''.join(image_path.split('.')[:-1])}_mask.jpg"
+            path=os.path.join(os.path.dirname(image_path), "".join(os.path.basename(image_path).split('.')[:-1]))
+            mask_image_path=f"{path}_mask.jpg"
             erased_image.save(mask_image_path)
         else:
             mask_image_path=None
@@ -576,7 +584,8 @@ class PaddleOCRLoader():
         # Save or display the resulting image
         # new_image.show()
         # Alternatively, you can save the image using the following line
-        save_path = f"{''.join(image_path.split('.')[:-1])}_{tag}.jpg"
+        path=os.path.join(os.path.dirname(image_path), "".join(os.path.basename(image_path).split('.')[:-1]))
+        save_path = f"{path}_{tag}.jpg"
         new_image.save(save_path)
         return save_path 
 
@@ -605,12 +614,12 @@ class PaddleOCRLoader():
             text=text.replace(f'**{key}**', value)
         return text
     
-    def load_pdf(self, pdf_path, output_folder='extraction', save_intermediate=False, header_height = 0, footer_height = 0):
+    def load_pdf(self, pdf_path, output_folder='data/extraction', save_intermediate=False, header_height = 0, footer_height = 0):
         """this metod thakes a pdf file and extracts the text, table and images from it
 
         Args:
             pdf_path (str): file path
-            output_folder (str, optional): pat for storing intermediate files. Defaults to 'extraction'.
+            output_folder (str, optional): pat for storing intermediate files. Defaults to '../data.extraction'.
             save_intermediate (bool, optional): if is required to save some intermediuate results for debug purpouses. Defaults to False.
             header_height (int, optional): header height in pixels. Defaults to 0.
             footer_height (int, optional): footer height in pixels. Defaults to 0.
@@ -648,6 +657,7 @@ class PaddleOCRLoader():
             img_size = (img.getbbox()[2],img.getbbox()[3])
             bboxes = self.order_paragraphs(bboxes, img_size, header_height=header_height,footer_height=footer_height)
             bboxes = self.expand_bounding_boxes(bboxes, img_size, 3)
+            print(save_intermediate)
             _paragraph_bboxes_image = self.show_simple_bboxes(file_path, bboxes, save=save_intermediate, tag="ordered")
             # create new in line image from masked image and ordered bboxes
             final_image_path = self.crop_and_concat(mask_img_path, bboxes, tag="vertical")
