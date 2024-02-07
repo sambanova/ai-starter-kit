@@ -102,41 +102,34 @@ You will find several data extraction recipes and pipelines in the [notebooks](n
 
 - [csv_extraction.ipynb](notebooks/csv_extraction.ipynb): This notebook provides examples of text extraction from CSV files using different packages. Depending on your specific use case, some packages may perform better than others.
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 1 includes two loading examples first one using unstructured API and the other using local unstructured loader
-
 #### XLS/XLSX Documents
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 2 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [xls_extraction.ipynb](notebooks/xls_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 2 includes two loading examples first one using unstructured API and the other using local unstructured loader
 
 #### DOC/DOCX Documents
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 3 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [docx_extraction.ipynb](notebooks/docx_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 3 includes two loading examples first one using unstructured API and the other using local unstructured loader
 
 #### RTF Documents
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 4 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [rtf_extraction.ipynb](notebooks/rtf_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 4 includes two loading examples first one using unstructured API and the other using local unstructured loader
 
 #### Markdown Documents
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 5 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [markdown_extraction.ipynb](notebooks/markdown_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 5 includes two loading examples first one using unstructured API and the other using local unstructured loader
 
 #### HTML Documents
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 6 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [web_extraction.ipynb](notebooks/web_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 6 includes two loading examples first one using unstructured API and the other using local unstructured loader
 
 #### PDF Documents
 
-- [pdf_extraction_non_OCR.ipynb](notebooks/pdf_extraction_non_ocr.ipynb): This notebook provides examples of text extraction from PDF documents using different packages. Depending on your specific use case, some packages may perform better than others.
+- [pdf_extraction.ipynb](notebooks/pdf_extraction.ipynb): This notebook provides examples of text extraction from PDF documents using different packages including different OCR and non-OCR packages. Depending on your specific use case, some packages may perform better than others.
 
-- [pdf_extraction_ocr_tables.ipynb](notebooks/pdf_extraction_ocr_tables.ipynb): This notebook provides examples of text and tables extraction from PDF documents using different OCR packages. Depending on your specific use case, some packages may perform better than others. It also provides an example of a simple RAG retiever an an example of a multivector RAG retriever. For SambaNova model endpoint usage refer [here](../README.md) 
+- [retrieval_from_pdf_tables.ipynb](notebooks/retrieval_from_pdf_tables.ipynb):  This notebook provides an example of a simple RAG retiever and an example of a multivector RAG retriever for pdf with tables retrieval. For SambaNova model endpoint usage refer to the [ai-starter-kit docs](../README.md) 
 
-- [qa_qc_util.ipynb](notebooks/qa_qc_util.ipynb): This notebook offers a simple utility for visualizing text boxes extracted using the PyMuPDF or Fitz package. This visualization can be particularly helpful when dealing with complex multi-column PDF documents, aiding in the debugging process.
+- [qa_qc_util.ipynb](notebooks/qa_qc_util.ipynb): This notebook offers a simple utility for visualizing text boxes extracted using the Fitz package. This visualization can be particularly helpful when dealing with complex multi-column PDF documents, and in the debugging process.
 
-- [unstructured_extraction.ipynb](notebooks/unstructured_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 7 includes two loading examples first one using unstructured API and the other using local unstructured loader
-
-#### Multidocument 
-
-- [multidocs_extraction.ipynb](notebooks/multidocs_extraction.ipynb): This notebook provides examples of text extraction from multiple docs using Unstructured.io as file loader. The input format could be a mixed of formats.
 
 ### Included files
 - [data](data): Contains sample data for running the notebooks, and is used as storage for intermediate steps for recipes.
