@@ -30,7 +30,7 @@ This workflow is an example of parsing and indexing data for subsequent Q&A. The
 3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
 
-4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```filename``` and ```page``` are also attached to the embeddings which are extracted during document parsing of the pdf documents.
+4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```filename``` and ```page``` are also attached to the embeddings which are extracted during document parsing of the pdf documents.
 
 
 ### Retrieval
@@ -58,7 +58,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - langchain (version 0.0.252)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
-- faiss-cpu (version 1.7.4)
+- chromadb (version 0.4.8)
 - PyPDF2 (version 3.0.1)
 - python-dotenv (version 1.0.0)
 
@@ -75,7 +75,7 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit in two simpl
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/enterprise_knowledge_retriever/export.env. For example, an endpoint with the URL
+2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/export.env. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 would be entered in the config file (with no spaces) as:
 ```
@@ -88,14 +88,15 @@ VECTOR_DB_URL=http://host.docker.internal:6333
 3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
 cd ai_starter_kit/enterprise_knowledge_retriever
-python3 -m venv doc_demo
-source doc_demo/bin/activate
-pip install -r requirements.txt
+conda create -n py310 python=3.10
+conda activate py310
+pip  install  -r  requirements.txt
 ```
 ## 3. Deploy the starter kit
 To run the demo, run the following commands:
 ```
-sh run.sh
+cd ai-starter-kit/enterprise_knowledge_retriever/streamlit
+streamlit run app.py
 ```
 
 
@@ -129,14 +130,12 @@ function: get_data_for_splitting
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
-The **RecursiveCharacterTextSplitter**, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
+The **RecursiveCharacterTextSplitter** inside the vectordb class, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
 
 ```python
-text_splitter = RecursiveCharacterTextSplitter(
-chunk_size=100,
-chunk_overlap=20
-)
+text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
+
 ```
 
 
@@ -155,8 +154,8 @@ There are several open-source embedding models available on HuggingFace. [This l
 
 This modification can be done in the following location:
 ```
-file: app.py
-function: get_vectorstore
+file: ai-starter-kit/vectordb/vector_db.py
+function: load_embedding_model
 ```
 
 
@@ -169,7 +168,7 @@ The template can be customized to use different vector databases to store the em
 This modification can be done in the following location:
 ```
 file: app.py
-function: get_vectorstore
+function: create_vector_store
 ```
 
 
@@ -184,7 +183,7 @@ Similar to the vector stores, a wide collection of retriever options is also ava
 This modification can be done in the following location:
 ```
 file: app.py
-function: get_conversation_chain
+function: get_qa_retrieval_chain 
 ```
 
 
@@ -203,18 +202,14 @@ The template uses the SN LLM model, which can be further fine-tuned to improve r
 
 Finally, prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
 ```python
-custom_prompt_template = """Use the following pieces of context to answer the question at the end. If the answer to the question cannot be extracted from given CONTEXT than say I do not have information regarding this.
-{context}
+custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
 
-
-
-
-
-
-
+{context}    
 
 Question: {question}
-Helpful Answer:"""
+
+Helpful answer: [/INST]"""
+
 CUSTOMPROMPT = PromptTemplate(
 template=custom_prompt_template, input_variables=["context", "question"]
 )
@@ -223,8 +218,7 @@ template=custom_prompt_template, input_variables=["context", "question"]
 
 This modification can be done in the following location:
 ```
-file: app.py
-function: get_conversation_chain
+file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
 ```
 
 
