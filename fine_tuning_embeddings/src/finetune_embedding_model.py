@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from sentence_transformers import SentenceTransformer, InputExample, losses
 from sentence_transformers.evaluation import InformationRetrievalEvaluator
 
+
 class DatasetLoader:
     def __init__(self, dataset_path):
         self.dataset_path = dataset_path

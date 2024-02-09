@@ -65,8 +65,8 @@ To get started with this starter kit, follow these steps:
 - [Hugging Face Transformers](https://huggingface.co/transformers/)
 - Additional requirements are listed in `requirements.txt`.
 - Simpest Way to to get started is:
-    - Create a venv with Python 3.11
-    - install using poetry (recommended) via "poetry install --no-root" from this root dir
+    - Create a venv with Python 3.11 and activate it
+    - install the dependencies using poetry (recommended) via running "poetry install --no-root" from this root dir
     - Pip can also be used to install req's with the supplied requirements.txt file  
 
 ## Contributing
