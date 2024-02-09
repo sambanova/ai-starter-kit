@@ -1,0 +1,313 @@
+import argparse
+import csv
+import glob
+import json
+import logging
+import os
+from pathlib import Path
+import pandas as pd
+from random import shuffle
+from tqdm.auto import tqdm
+from typing import List, Tuple
+from llama_index.finetuning import generate_qa_embedding_pairs, EmbeddingQAFinetuneDataset, SentenceTransformersFinetuneEngine
+from llama_index.embeddings import OpenAIEmbedding
+from sentence_transformers.evaluation import InformationRetrievalEvaluator
+from sentence_transformers import SentenceTransformer
+from llama_index import SimpleDirectoryReader, ServiceContext, VectorStoreIndex
+from llama_index.node_parser import SentenceSplitter
+from llama_index.schema import MetadataMode, TextNode
+from llama_index.llms import LangChainLLM, OpenAI
+from typing import List, Union
+import pickle  # Import for saving and loading .pkl files
+import os
+from pathlib import Path
+
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def split_files_into_datasets(input_data_directory: str, output_data_directory: str, file_extension: str = 'pdf', split_ratio: float = 0.8) -> Tuple[str, str]:
+    """
+    Split files in the given directory into training and validation datasets based on the split ratio and save them to the specified output directory.
+
+    Args:
+    - input_data_directory: The directory path to search for files.
+    - file_extension: The type of files to search for, defaults to 'pdf'.
+    - split_ratio: The ratio to split the files for training, with the rest for validation.
+    - output_data_directory: The directory where processed files are stored.
+
+    Returns:
+    - Tuple containing paths to the generated CSV files for training and validation datasets.
+    """
+
+    
+
+
+    files = glob.glob(f"{input_data_directory}/**/*.{file_extension}", recursive=True)
+    shuffle(files)
+
+    print(files)
+
+
+    split_index = int(len(files) * split_ratio)
+    train_files = files[:split_index]
+    val_files = files[split_index:]
+
+    train_csv_path = os.path.join(output_data_directory, 'train_files.csv')
+    val_csv_path = os.path.join(output_data_directory, 'val_files.csv')
+    
+    # Make output dir
+    Path(output_data_directory).mkdir(parents=True, exist_ok=True)
+
+    for dataset, path in [(train_files, train_csv_path), (val_files, val_csv_path)]:
+        with open(path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['path', 'filename'])
+            for file in dataset:
+                writer.writerow([file, os.path.basename(file)])
+    
+    logging.info(f"Datasets generated: Train - {train_csv_path}, Val - {val_csv_path}")
+    return train_csv_path, val_csv_path
+
+# Function to instantiate LLM (Example with OpenAI, can be modified for others)
+def instantiate_llm():
+       # Initialize LLM
+    # Example LLM instantiation:
+    # For a Sambanova LLM:
+    # base_url="YOUR_BASE_URL"
+    # project_id="YOUR_PROJECT_ID"
+    # endpoint_id="YOUR_ENDPOINT_ID"
+    # api_key="YOUR_API_KEY"
+
+    # llm = SambaNovaEndpoint(
+    # base_url=base_url,
+    # project_id=project_id,
+    # endpoint_id=endpoint_id,
+    # api_key=api_key,
+    # model_kwargs={"do_sample": True, "temperature": 0.01, 'max_tokens_to_generate': 512},
+    # )
+
+    # # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
+    # llm = LangChainLLM(llm=llm)
+    llm = OpenAI(model='gpt-3.5-turbo')
+    return llm
+
+
+def save_nodes_to_pkl(nodes, file_path):
+    with open(file_path, 'wb') as f:
+        pickle.dump(nodes, f)
+
+def load_nodes_from_pkl(file_path):
+    with open(file_path, 'rb') as f:
+        nodes = pickle.load(f)
+    return nodes
+
+def generate_corpus(input_data_directory: str, output_data_directory: str, file_extension: str, split_ratio: float):
+    # Existing implementation to generate train_csv and val_csv
+    # After generating CSVs, load the corpus and save nodes as .pkl
+    train_csv, val_csv = split_files_into_datasets(input_data_directory,output_data_directory, file_extension, split_ratio)
+    
+    # Load corpus from CSV files
+    train_loader = CorpusLoader(train_csv, verbose=True)
+    val_loader = CorpusLoader(val_csv, verbose=True)
+    train_nodes = train_loader.load_corpus()
+    val_nodes = val_loader.load_corpus()
+
+    # Save nodes as .pkl for both train and validation datasets
+    train_pkl_path = os.path.join(output_data_directory, 'train_nodes.pkl')
+    val_pkl_path = os.path.join(output_data_directory, 'val_nodes.pkl')
+    save_nodes_to_pkl(train_nodes, train_pkl_path)
+    save_nodes_to_pkl(val_nodes, val_pkl_path)
+
+    return train_pkl_path, val_pkl_path
+
+
+
+def finetune(train_dataset_path: str, val_dataset_path: str, model_id: str, model_output_path: str, force_retrain: bool):
+    # Check if model output path exists and is not empty
+    if not force_retrain and os.path.exists(model_output_path) and os.listdir(model_output_path):
+        logging.info(f"Found finetuned model at {model_output_path}. Will use this model without retraining.")
+        return
+    else:
+        if not force_retrain:
+            logging.info("No finetuned model found or directory is empty. Proceeding with finetuning.")
+        
+        train_dataset = EmbeddingQAFinetuneDataset.from_json(train_dataset_path)
+        val_dataset = EmbeddingQAFinetuneDataset.from_json(val_dataset_path)
+        finetune_wrapper = FinetuneEngineWrapper(train_dataset, val_dataset, model_id, model_output_path)
+        finetune_wrapper.finetune()
+
+
+def evaluate_all(val_dataset_path: str, model_ids: List[Union[str, OpenAIEmbedding]], baseline_model_id: str, finetuned_model_path: str):
+    val_dataset = EmbeddingQAFinetuneDataset.from_json(val_dataset_path)
+    results = []
+    st_results = []
+
+    for model in model_ids:
+        if isinstance(model, str):
+            # Prefix with "local:" for string IDs when using evaluate
+            embed_model = "local:" + model
+            eval_results = evaluate(val_dataset, embed_model, verbose=True)
+            results.append(pd.DataFrame(eval_results))
+            
+            # Use string IDs for evaluate_st, explicitly checking for baseline and finetuned models
+            if model == baseline_model_id:
+                name_prefix = "baseline"
+            elif model == finetuned_model_path.strip("./"):
+                name_prefix = "finetuned"
+            else:
+                name_prefix = "other"  # This can be adjusted as needed
+            eval_st_result = evaluate_st(val_dataset, model, name=f"{name_prefix}+{model}")
+            st_results.append(pd.DataFrame({"model_id": [model], "evaluation_result": [eval_st_result]}))
+            
+        elif isinstance(model, OpenAIEmbedding):
+            # Use OpenAIEmbedding object directly with evaluate
+            eval_results = evaluate(val_dataset, model, verbose=True)
+            results.append(pd.DataFrame(eval_results))
+
+    # Concatenate and save results from evaluate
+    concat_results_df = pd.concat(results, ignore_index=True)
+    concat_results_df.to_csv("results/eval_1_results.csv", index=False)
+
+    # Concatenate and save results from evaluate_st
+    concat_st_results_df = pd.concat(st_results, ignore_index=True)
+    concat_st_results_df.to_csv("results/Information-Retrieval_evaluation__results_concat.csv", index=False)
+
+
+class CorpusLoader:
+    def __init__(self, csv_file: str, verbose: bool = False):
+        self.csv_file = csv_file
+        self.verbose = verbose
+
+    def load_corpus(self):
+        files = []
+        with open(self.csv_file, mode='r', encoding='utf-8') as infile:
+            reader = csv.DictReader(infile)
+            for row in reader:
+                files.append(row['path'])
+        
+        reader = SimpleDirectoryReader(input_files=files)
+        docs = reader.load_data()
+        parser = SentenceSplitter()
+        nodes = parser.get_nodes_from_documents(docs, show_progress=self.verbose)
+        return nodes
+
+class DatasetGenerator:
+    def __init__(self, llm, nodes_pkl_path):
+        self.llm_model = llm
+        self.nodes = load_nodes_from_pkl(nodes_pkl_path)  # Now loads nodes from a .pkl file
+
+    def generate_dataset(self):
+        dataset = generate_qa_embedding_pairs(llm=self.llm_model, nodes=self.nodes)
+        return dataset
+
+class FinetuneEngineWrapper:
+    def __init__(self, train_dataset: EmbeddingQAFinetuneDataset, val_dataset: EmbeddingQAFinetuneDataset, model_id: str, model_output_path: str):
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.model_id = model_id
+        self.model_output_path = model_output_path
+
+    def finetune(self):
+        finetune_engine = SentenceTransformersFinetuneEngine(
+            self.train_dataset,
+            model_id=self.model_id,
+            model_output_path=self.model_output_path,
+            val_dataset=self.val_dataset,
+        )
+        finetune_engine.finetune()
+
+def evaluate(dataset, embed_model, top_k=5, verbose=False):
+    service_context = ServiceContext.from_defaults(embed_model=embed_model)
+    nodes = [TextNode(id_=id_, text=text) for id_, text in dataset.corpus.items()]
+    index = VectorStoreIndex(nodes, service_context=service_context, show_progress=verbose)
+    retriever = index.as_retriever(similarity_top_k=top_k)
+
+    eval_results = []
+    for query_id, query in tqdm(dataset.queries.items(), desc="Evaluating"):
+        retrieved_nodes = retriever.retrieve(query)
+        retrieved_ids = [node.node.node_id for node in retrieved_nodes]
+        expected_id = dataset.relevant_docs[query_id][0]
+        is_hit = expected_id in retrieved_ids
+        eval_result = {"is_hit": is_hit, "retrieved": retrieved_ids, "expected": expected_id, "query": query_id}
+        eval_results.append(eval_result)
+    return eval_results
+
+def evaluate_st(dataset, model_id, name):
+    corpus = dataset.corpus
+    queries = dataset.queries
+    relevant_docs = dataset.relevant_docs
+
+    evaluator = InformationRetrievalEvaluator(queries, corpus, relevant_docs, name=name)
+    model = SentenceTransformer(model_id)
+    output_path = "results/"
+    Path(output_path).mkdir(exist_ok=True, parents=True)
+    evaluator(model, output_path=output_path)
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Script to finetune embeddings.")
+    parser.add_argument("--input_data_directory", default='./sample_data', help="Directory containing the raw files for dataset creation.")
+    parser.add_argument("--output_data_directory", default='./processed_data', help="Directory where the processed files will be stored.")
+    parser.add_argument("--train_dataset_path", default=None, help="Path to the already generated train dataset, skips dataset generation if provided.")
+    parser.add_argument("--val_dataset_path", default=None, help="Path to the already generated validation dataset, skips dataset generation if provided.")
+    parser.add_argument("--train_nodes_pkl_file", default=None, help="Path to the already loaded train nodes .pkl file, skips node loading if provided.")
+    parser.add_argument("--val_nodes_pkl_file", default=None, help="Path to the already loaded validation nodes .pkl file, skips node loading if provided.")
+    parser.add_argument("--file_extension", default="pdf", help="File extension to filter by, defaults to 'pdf'.")
+    parser.add_argument("--split_ratio", type=float, default=0.8, help="Ratio for splitting data into train and validation sets.")
+    parser.add_argument("--model_id", default="BAAI/bge-small-en", help="Model identifier for finetuning.")
+    parser.add_argument("--model_output_path", default="finetuned_model", help="Path to save the finetuned model.")
+    parser.add_argument("--force_retrain", action='store_true', help="Force retraining even if a finetuned model already exists.")
+    return parser.parse_args()
+    
+    
+   
+
+def generate_data(args):
+    if args.train_nodes_pkl_file is None or args.val_nodes_pkl_file is None:
+        train_nodes_pkl, val_nodes_pkl = generate_corpus(args.input_data_directory, args.output_data_directory, args.file_extension, args.split_ratio)
+    else:
+        train_nodes_pkl = load_nodes_from_pkl(args.train_nodes_pkl_file)
+        val_nodes_pkl = load_nodes_from_pkl(args.val_nodes_pkl_file)
+
+    # Instantiate LLM
+    llm = instantiate_llm()
+
+    if args.train_dataset_path is None or args.val_dataset_path is None:
+        # Generate datasets using loaded nodes
+        train_dataset_generator = DatasetGenerator(llm=llm, nodes_pkl_path=train_nodes_pkl)
+        val_dataset_generator = DatasetGenerator(llm=llm, nodes_pkl_path=val_nodes_pkl)
+        train_dataset = train_dataset_generator.generate_dataset()
+        val_dataset = val_dataset_generator.generate_dataset()
+
+        # Save datasets
+        train_dataset_path = os.path.join(args.output_data_directory, 'train_dataset.json')
+        val_dataset_path = os.path.join(args.output_data_directory, 'val_dataset.json')
+        train_dataset.save_json(train_dataset_path)
+        val_dataset.save_json(val_dataset_path)
+    else:
+        train_dataset_path = args.train_dataset_path
+        val_dataset_path = args.val_dataset_path
+
+    return train_dataset_path, val_dataset_path
+
+def main():
+    args = parse_arguments()
+
+    train_csv, val_csv = generate_data(args)
+
+    # Pass force_retrain flag to the finetune function
+    finetune(train_csv, val_csv, args.model_id, args.model_output_path, args.force_retrain)
+
+    openai_embedding = OpenAIEmbedding()
+    model_ids = [
+    args.model_id,  # Baseline model ID
+    args.model_output_path,  # Finetuned model path, stripped for consistency
+    openai_embedding  # OpenAIEmbedding object
+]
+
+    evaluate_all(val_csv, model_ids, args.model_id, args.model_output_path)
+
+    logging.info("Script finished successfully.")
+
+if __name__ == "__main__":
+    main()
