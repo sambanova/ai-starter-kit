@@ -4,17 +4,10 @@ Prompt Engineering Starter Kit
 ======================
 
 # Overview
-## About this template
-This AI Starter Kit 
-
-Preview at https://promptask.streamlit.app/
 
 ### Prompt engineering
 
-
-
-
-Finally, prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. 
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. 
 
 For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
 ```python
