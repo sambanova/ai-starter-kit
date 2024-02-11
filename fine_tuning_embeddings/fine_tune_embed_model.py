@@ -88,25 +88,29 @@ def split_files_into_datasets(
 
 # Function to instantiate LLM (Example with OpenAI, can be modified for others)
 def instantiate_llm():
-    # Initialize LLM
+    # Initialize LLM to be used in generating queries for fine tuning.
     # Example LLM instantiation:
     # For a Sambanova LLM:
-    # base_url="YOUR_BASE_URL"
-    # project_id="YOUR_PROJECT_ID"
-    # endpoint_id="YOUR_ENDPOINT_ID"
-    # api_key="YOUR_API_KEY"
+    base_url = "YOUR_BASE_URL"
+    project_id = "YOUR_PROJECT_ID"
+    endpoint_id = "YOUR_ENDPOINT_ID"
+    api_key = "YOUR_API_KEY"
 
-    # llm = SambaNovaEndpoint(
-    # base_url=base_url,
-    # project_id=project_id,
-    # endpoint_id=endpoint_id,
-    # api_key=api_key,
-    # model_kwargs={"do_sample": True, "temperature": 0.01, 'max_tokens_to_generate': 512},
-    # )
+    llm = SambaNovaEndpoint(
+        base_url=base_url,
+        project_id=project_id,
+        endpoint_id=endpoint_id,
+        api_key=api_key,
+        model_kwargs={
+            "do_sample": True,
+            "temperature": 0.01,
+            "max_tokens_to_generate": 512,
+        },
+    )
 
     # # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
-    # llm = LangChainLLM(llm=llm)
-    llm = OpenAI(model="gpt-3.5-turbo")
+    llm = LangChainLLM(llm=llm)
+    # llm = OpenAI(model="gpt-3.5-turbo")
     return llm
 
 
