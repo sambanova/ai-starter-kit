@@ -1,6 +1,6 @@
 {
   "models": {
-    "Llama2 7B": {
+    "Llama2 70B": {
       "Model Architecture": "Advanced architecture with Grouped-Query Attention, optimized for alignment with human preferences.",
       "Architecture Prompting Implications": "Prompts should be structured to take advantage of its supervised fine-tuning and reinforcement learning from human feedback. Prompts that are more aligned with human conversational styles and preferences work well.",
       "Heuristic Guidance": "Llama 2 responds effectively to concise system prompts that direct its persona or response boundaries. This includes prompts like \"Act as if…\", \"You are…\", \"Always/Never…\", or \"Speak like…\". ",
