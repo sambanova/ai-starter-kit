@@ -181,9 +181,6 @@ edgar_qna/data/
 # Fine tuning Data
 fine_tuning_sql/data/
 
-# Fine tuning Data
-fine_tuning_sql/data/
-
 
 # FineTune Local Data
 fine_tuning_embeddings/sample_data
@@ -192,6 +189,3 @@ fine_tuning_embeddings/processed_data
 fine_tuning_embeddings/results
 fine_tuning_embeddings/finetuned_model
 
-# FineTune Local Data
-fine_tuning_embeddings/sample_data
-fine_tuning_embeddings/data
