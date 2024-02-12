@@ -25,11 +25,11 @@ from typing import List, Union
 import pickle  # Import for saving and loading .pkl files
 import os
 from pathlib import Path
-import dotenv
+from dotenv import load_dotenv
 import sys
 
 sys.path.append("..")
-import src.models.sambanova_endpoint
+from src.models.sambanova_endpoint import SambaNovaEndpoint
 
 
 # Setup logging
@@ -38,7 +38,7 @@ logging.basicConfig(
 )
 
 # Process Environment Variables
-dotenv.load_dotenv()
+load_dotenv("export.env")
 
 
 def split_files_into_datasets(
@@ -86,21 +86,13 @@ def split_files_into_datasets(
     return train_csv_path, val_csv_path
 
 
-# Function to instantiate LLM (Example with OpenAI, can be modified for others)
+# Function to instantiate SambaNova LLM
 def instantiate_llm():
     # Initialize LLM to be used in generating queries for fine tuning.
     # Example LLM instantiation:
     # For a Sambanova LLM:
-    base_url = "YOUR_BASE_URL"
-    project_id = "YOUR_PROJECT_ID"
-    endpoint_id = "YOUR_ENDPOINT_ID"
-    api_key = "YOUR_API_KEY"
 
     llm = SambaNovaEndpoint(
-        base_url=base_url,
-        project_id=project_id,
-        endpoint_id=endpoint_id,
-        api_key=api_key,
         model_kwargs={
             "do_sample": True,
             "temperature": 0.01,
@@ -110,7 +102,7 @@ def instantiate_llm():
 
     # # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
     llm = LangChainLLM(llm=llm)
-    # llm = OpenAI(model="gpt-3.5-turbo")
+
     return llm
 
 
@@ -134,8 +126,6 @@ def generate_corpus(
     # Existing implementation to generate train_csv and val_csv
     # After generating CSVs, load the corpus and save nodes as .pkl
 
-    # Check that the output directory has exits and has files in it. If it doesn't, raise an error telling the user
-    # the directory is empty to add files to it then exit the program
     if (
         not os.path.exists(input_data_directory)
         or not len(os.listdir(input_data_directory)) > 0
@@ -483,11 +473,9 @@ def main():
         train_csv, val_csv, args.model_id, args.model_output_path, args.force_retrain
     )
 
-    openai_embedding = OpenAIEmbedding()
     model_ids = [
         args.model_id,  # Baseline model ID
         args.model_output_path,  # Finetuned model path, stripped for consistency
-        # openai_embedding  # OpenAIEmbedding object
     ]
 
     evaluate_all(val_csv, model_ids, args.model_id, args.model_output_path)
