@@ -8,8 +8,33 @@
 
 Web Crawled Data Retrieval
 ======================
+<!-- TOC -->
 
+- [Web Crawled Data Retrieval](#web-crawled-data-retrieval)
+- [Overview](#overview)
+    - [About this template](#about-this-template)
+- [Getting started](#getting-started)
+    - [Deploy your model in SambaStudio](#deploy-your-model-in-sambastudio)
+    - [Integrate your model](#integrate-your-model)
+    - [Deploy the starter kit](#deploy-the-starter-kit)
+    - [Starterkit usage](#starterkit-usage)
+- [Workflow](#workflow)
+    - [Ingestion](#ingestion)
+    - [Retrieval](#retrieval)
+    - [Response](#response)
+- [Customizing the template](#customizing-the-template)
+    - [Crawl websites](#crawl-websites)
+    - [Split Data](#split-data)
+    - [Embed data](#embed-data)
+    - [Store embeddings](#store-embeddings)
+    - [Retrieval](#retrieval)
+    - [Large language model LLM](#large-language-model-llm)
+        - [Prompt engineering](#prompt-engineering)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
 # Overview
+
 ## About this template
 This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using website-crawled information as the source. 
 
@@ -21,16 +46,16 @@ This sample is ready to use. We provide instructions to help you run this demo b
 
 # Getting started
 
-## 1. Deploy your model in SambaStudio
+## Deploy your model in SambaStudio
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-## 2. Integrate your model
+## Integrate your model
 Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
 1. Clone repo.
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/web_crawled_data_retriever/export.env. For example, an endpoint with the URL
+2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/export.env. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 would be entered in the config file (with no spaces) as:
 ```
@@ -45,18 +70,21 @@ VECTOR_DB_URL=http://host.docker.internal:6333
 cd ai_starter_kit/web_crawled_data_retriever
 python3 -m venv web_crawling_env
 source web_crawling_env/bin/activate
-pip install -r requirements.txt
+pip install -r web_crawled_data_retriever/requirements.txt
 ```
-## 3. Deploy the starter kit
+
+## Deploy the starter kit
 To run the demo, run the following commands:
 ```
-sh run.sh
+cd web_crawled_data_retriever
+sh streamlit/run.sh
 ```
 
 After deploying the starter kit you should see the following application user interface
 
-![capture of web_crawled_retriever_demo](./web_crawled_app.png)
-## 4. Starterkit usage 
+![capture of web_crawled_retriever_demo](./docs/web_crawled_app.png)
+
+## Starterkit usage 
 
 1- Pick the data source, that could be previous stored [FAISS](https://github.com/facebookresearch/faiss) vectorstore or a list of website URLs
 
@@ -74,7 +102,7 @@ After deploying the starter kit you should see the following application user in
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.
 
 
-## 1. Ingestion
+## Ingestion
 This workflow is an example of crawling, parsing and indexing data for subsequent Q&A. The steps are:
 
 1. **Website crawling**: 
@@ -102,7 +130,7 @@ This workflow is an example of crawling, parsing and indexing data for subsequen
     Embeddings for each chunk, along with content and relevant metadata (such as source website) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```website source```  is also attached to the embeddings which are stored during  webcrawling process.
 
 
-## 2. Retrieval
+## Retrieval
 This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
 
  1.  **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model  in the ingestion workflow.
@@ -114,7 +142,7 @@ This workflow is an example of leveraging data stored in a vector database along
  
  *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
-## 3. Response  
+## Response  
 **SambaNova Large language model (LLM):** Once the relevant information is retrieved, the content is sent to a SambaNova LLM to generate the final response to the user query. 
 
    - **Prompt engineering:** The user's query is combined with the retrieved content along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part in ensuring quality output. In this AI template, customized prompts are provided to the LLM to improve the quality of response for this use case.
@@ -132,23 +160,25 @@ The provided example template can be further customized based on the use case.
 
 **website scraping** Different packages are available to crawl and extract out of websites. In the demo app it is implemented the [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html), langchain also includes a cople of [HTML loaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/html) that can be used.
 This modification can be done in the following location:
-```
-file: [app.py](app.py)
-function: load_htmls
-```
+
+> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+>```
+>function: load_htmls
+>```
 
 **Iterative web crawling:** for each provided site after the scraping, all the referenced links are saved and filtered using [beautifulSoup](https://www.crummy.com/software/BeautifulSoup/) package, then the web crawling method iterates 'n' times scraping this sites and finding referenced links, this depth is limited to 2 maximum depth, but you can modify this limit, and the behavior of the web crawling in the following location:
-```
-file: [app.py](app.py)
-function: web_crawl
-```
+> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+>```
+>function: web_crawl
+>```
+
 > Be cautious as the crawling depth increases, leading to exponential growth in the number of processed sites. Consider resource implications for efficient workflow performance.
 
 **Document transformations** Depending on the loader used for scraping the sites, you may want or not to use some transformation method to clean up the downloaded documents. , this could be done in the following location:
-```
-file: [app.py](app.py)
-function: clean_docs
-```
+> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+>```
+>function: clean_docs
+>```
 *[LangChain](https://python.langchain.com/docs/integrations/document_transformers) provides several document transformers that can be used with you data*
 
 ## Split Data
@@ -168,10 +198,12 @@ chunk_overlap=20
 
 
 This modification can be done in the following location:
-```
-file: app.py
-function: get_text_chunks
-```
+> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+>```
+>Atributes: 
+> - LLM_MAX_TOKENS_TO_GENERATE = 500
+> - CHUNK_SIZE = 1200
+>```
 
 
 ## Embed data
@@ -179,10 +211,10 @@ function: get_text_chunks
 There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
 
 This modification can be done in the following location:
-```
-file: app.py
-function: get_vectorstore
-```
+> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
+>```
+> function: load_embedding_model
+>```
 
 
 ## Store embeddings
@@ -190,10 +222,10 @@ function: get_vectorstore
 The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/docs/integrations/vectorstores) provides a broad collection of vector stores that can be easily integrated.
 
 This modification can be done in the following location:
-```
-file: app.py
-function: get_vectorstore
-```
+> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
+>```
+> function: create_vector_store
+>```
 
 
 ## Retrieval
@@ -202,10 +234,10 @@ Similar to the vector stores, a wide collection of retriever options is also ava
 
 
 This modification can be done in the following location:
-```
-file: app.py
-function: get_conversation_chain
-```
+> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+>```
+>function: retrieval_qa_chain
+>```
 
 
 ## Large language model (LLM)
@@ -216,24 +248,25 @@ The template uses the SN LLM model, which can be further fine-tuned to improve r
 ### Prompt engineering
 
 Finally, prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
-```python
-custom_prompt_template = """Use the following pieces of context to answer the question at the end. If the answer to the question cannot be extracted from given CONTEXT than say I do not have information regarding this.
-{context}
-
-Question: {question}
-Helpful Answer:"""
-CUSTOMPROMPT = PromptTemplate(
-template=custom_prompt_template, input_variables=["context", "question"]
+```yaml
+template: |
+          <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
+          If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
+          Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n
+          context
+          {context}
+          end of context
+          <</SYS>>/n
+          Question: {question}
+          Helpful Answer: [/INST]
 )
 ```
 This modification can be done in the following location:
-```
-file: app.py
-function: get_conversation_chain
-```
+> file: [prompts/llama7b-web_crwling_data_retriever.yaml](prompts/llama7b-web_crwling_data_retriever.yaml)
+
 > *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
 
-## Third-party tools and data sources
+# Third-party tools and data sources
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 

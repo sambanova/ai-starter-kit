@@ -1,0 +1,19 @@
+{
+  "models": {
+    "Llama2 7B": {
+      "Model Architecture": "Advanced architecture with Grouped-Query Attention, optimized for alignment with human preferences.",
+      "Architecture Prompting Implications": "Prompts should be structured to take advantage of its supervised fine-tuning and reinforcement learning from human feedback. Prompts that are more aligned with human conversational styles and preferences work well.",
+      "Heuristic Guidance": "Llama 2 responds effectively to concise system prompts that direct its persona or response boundaries. This includes prompts like \"Act as if…\", \"You are…\", \"Always/Never…\", or \"Speak like…\". ",
+      "References": "https://replicate.com/blog/how-to-prompt-llama\nhttps://arxiv.org/pdf/2307.09288.pdf\nhttps://huggingface.co/blog/llama2#how-to-prompt-llama-2\nhttps://huggingface.co/docs/transformers/main/model_doc/llama2",
+      "Meta Tag Format": "[INST] <<SYS>>  \n{system_prompt}  \n<</SYS>>  \n{user_prompt}  \n[/INST]"
+    }
+  }, 
+
+  "use_cases":[
+    "General Assistant",
+    "Document Search",
+    "Product Selection", 
+    "Code Generation"
+  ]
+}
+  

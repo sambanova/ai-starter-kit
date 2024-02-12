@@ -1,0 +1,8 @@
+version: '1'
+services:
+  sec_qa:
+    build: 
+      context: ../
+      dockerfile: edgar_qna/docker/Dockerfile
+    ports:
+      - "8000:80"

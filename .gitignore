@@ -1,3 +1,8 @@
+# Data
+*.bin
+*.parquet
+*.sqlite3
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -105,6 +110,7 @@ celerybeat.pid
 .env
 *.env
 .venv
+secrets.toml
 env/
 venv/
 ENV/
@@ -169,13 +175,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
 # Edgar Local Data
-edgar_qna/edgar_qna_streamlit/data/
+edgar_qna/data/
 
 # Fine tuning Data
 fine_tuning_sql/data/
-
 
 # FineTune Local Data
 fine_tuning_embeddings/sample_data
@@ -183,4 +187,3 @@ fine_tuning_embeddings/data
 fine_tuning_embeddings/processed_data
 fine_tuning_embeddings/results
 fine_tuning_embeddings/finetuned_model
-
