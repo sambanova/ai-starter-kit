@@ -173,9 +173,14 @@ next-env.d.ts
 # Edgar Local Data
 edgar_qna/edgar_qna_streamlit/data/
 
+# Fine tuning Data
+fine_tuning_sql/data/
+
+
 # FineTune Local Data
 fine_tuning_embeddings/sample_data
 fine_tuning_embeddings/data
 fine_tuning_embeddings/processed_data
 fine_tuning_embeddings/results
 fine_tuning_embeddings/finetuned_model
+
