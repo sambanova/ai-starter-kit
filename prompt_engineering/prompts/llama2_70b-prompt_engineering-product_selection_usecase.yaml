@@ -24,7 +24,7 @@ template: "[INST] <<SYS>> You are an electrical engineer ai assistant.  You will
   \ V | | Falling VDDH VDDH  UVLO Threshold | | | 3.7 | 3.9 | | | | Hysteresis | |\
   \ | | 350 | | mV mV |\n\n    [INST] Given the context you received, answer the question.\
   \  Please do not infer anything if the question cannot be deduced from the context\
-  \ or make anything up; simply state you cannot find the information. [/INST]\n\n\
-  \    Sure, here is the answer to the question:"
+  \ or make anything up; simply state you cannot find the information.\n\n    Sure,\
+  \ here is the answer to the question:[/INST]"
 template_format: f-string
 validate_template: false
