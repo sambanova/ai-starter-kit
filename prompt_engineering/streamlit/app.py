@@ -1,4 +1,6 @@
 # import dependencies
+import sys                                                  # for appending more paths
+sys.path.append("../../")
 import os                                                   # for using env variables
 import streamlit as st                                      # for gui elements, secrets management
 import json                                                 # for loading prompt example config file
@@ -8,20 +10,22 @@ from typing import Tuple                                    # for type hint
 from langchain.prompts import PromptTemplate, load_prompt   # for creating and loading prompting yaml files
 from dotenv import load_dotenv                              # for loading env variables
 
-# load env variables in this AISK
-load_dotenv('../prompt_engineering.env')
+from utils.sambanova_endpoint import SambaNovaEndpoint      # for calling Sambanova LLM endpoint
+
+# load env variables 
+load_dotenv('../../export.env')
 
 # populate variables from secrets file
-LLAMA2_7B_LLM_ENDPOINT = os.getenv("LLAMA2_7B_LLM_ENDPOINT") 
-LLAMA2_7B_LLM_API_KEY = os.getenv("LLAMA2_7B_LLM_API_KEY") 
+LLAMA2_70B_LLM_ENDPOINT = os.getenv("LLAMA2_70B_LLM_ENDPOINT") 
+LLAMA2_70B_LLM_API_KEY = os.getenv("LLAMA2_70B_LLM_API_KEY") 
 
 # define config path
 CONFIG_PATH = '../config.json'
 
 
 @st.cache_data
-def call_sambanova_llama2_7b_api(prompt: str) -> str:
-    """Calls a LLama2-7B Sambanova endpoint. Uses an input prompt and returns a completion of it.
+def call_sambanova_llama2_70b_api(prompt: str) -> str:
+    """Calls a LLama2-70B Sambanova endpoint. Uses an input prompt and returns a completion of it.
 
     Args:
         prompt (str): prompt text
@@ -30,56 +34,25 @@ def call_sambanova_llama2_7b_api(prompt: str) -> str:
         str: completion of the input prompt
     """
     
-    # Headers including Content-Type and Authorization with your API key
-    headers = {
-        'Content-Type': 'application/json',
-        'key': LLAMA2_7B_LLM_API_KEY
-    }
-
-    # Data payload
-    payload_data = {
-        "inputs": [f"{prompt}"],
-        "params": {                                             
-#            "do_sample": {"type": "bool", "value": "false"},
-            "max_tokens_to_generate": {"type": "int", "value": "200"},
-#            "repetition_penalty": {"type": "float", "value": "1"},
-#            "temperature": {"type": "float", "value": "1"},
-#            "top_k": {"type": "int", "value": "50"},
-#            "top_logprobs": {"type": "int", "value": "0"},
-#            "top_p": {"type": "float", "value": "1"}
-        }
-    }
-
-    # Convert the data payload to JSON
-    json_data = json.dumps(payload_data)
-
-    # Make the POST request
-    response = requests.post(LLAMA2_7B_LLM_ENDPOINT, headers=headers, data=json_data)
-
-    # Get text from response
-    response_text = response.text
-
-    # Split the response text into lines
-    lines = response_text.split('\n')
-
-    # Initialize a variable to hold the completion text
-    completion_text = ""
-
-    # Iterate through each line
-    for line in lines:
-        # Check if this line signifies the end event
-        if 'event: end_event' in line:
-            # The next line should contain the data with completion
-            data_line_index = lines.index(line) + 1  # Get the index of the next line
-            if data_line_index < len(lines):
-                data_line = lines[data_line_index]
-                # Extract the JSON part after 'data: '
-                data_json_str = data_line.split('data: ', 1)[1] if 'data: ' in data_line else '{}'
-                # Parse the JSON string
-                data_json = json.loads(data_json_str)
-                # Extract the 'completion' field from the JSON
-                completion_text = data_json.get('completion', '')
-                break  # Exit the loop as we've found the completion text
+    # SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.
+    llm = SambaNovaEndpoint(
+        base_url=os.getenv('BASE_URL'),
+        project_id=os.getenv('PROJECT_ID'),
+        endpoint_id=os.getenv('ENDPOINT_ID'),
+        api_key=os.getenv('API_KEY'),
+        model_kwargs={
+            "do_sample": False, 
+            "temperature": 0.0,
+            "max_tokens_to_generate": 500,
+            # "repetition_penalty": {"type": "float", "value": "1"},
+            # "top_k": {"type": "int", "value": "50"},
+            # "top_logprobs": {"type": "int", "value": "0"},
+            # "top_p": {"type": "float", "value": "1"}
+        },
+    )
+    
+    # Get completion from llm
+    completion_text = llm(prompt)
 
     return completion_text
 
@@ -136,16 +109,25 @@ def create_prompt_yamls() -> None:
     # Given a set of prompts based on the use case and model used
     prompts_templates = {
         "General Assistant": {
-            "Llama2 7B": "[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers should not include any unsafe, unethical, or illegal content. If you don't understand the question or don't know the answer, please don't share false information. <</SYS>>\n\nHow can I write better prompts for large language models? [/INST]"        
+            "Llama2 70B": "[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers should not include any unsafe, unethical, or illegal content. If you don't understand the question or don't know the answer, please don't share false information. <</SYS>>\n\nHow can I write better prompts for large language models? [/INST]"        
         },
         "Document Search": {
-            "Llama2 7B": "[INST] <<SYS>> Use the following pieces of context to answer the question at the end. If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. <</SYS>>\nContext: Early Account Closure Fee $30 (if account is closed within 6 months of opening) \nReplacement of ATM Card $5 per card \nReplacement Of Lost Passbook $15 per passbook \nQuestion: I lost my ATM card. How much will it cost to replace it? [/INST]"
+            "Llama2 70B": "[INST] <<SYS>> Use the following pieces of context to answer the question at the end. If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. <</SYS>>\nContext: Early Account Closure Fee $30 (if account is closed within 6 months of opening) \nReplacement of ATM Card $5 per card \nReplacement Of Lost Passbook $15 per passbook \nQuestion: I lost my ATM card. How much will it cost to replace it? [/INST]"
         },
         "Product Selection": {
-            "Llama2 7B": "[INST] <<SYS>> You are an electrical engineer ai assistant.  You will be given context that will help answer a question.  You will interpret the context for useful information that will answer the question.  Provide concise, helpful, technical information (focusing on numerical information).  <</SYS>> [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching frequency of max20710?'\n    contexts: VREF  Range | | See Table 8 for accuracy vs. �REF VREF (Note 6 ) | 0.6016 | | 1.0 | V | | FEEDBACK LOOP | | | | | | | | Integrator Recovery-Time Constant | tREC tREC  | | | 20 | | �s μs | | Gain (see the Control Loop Stability section for details) | RGAIN RGAIN  | Selected by R_SELB or PMBus ( ( Note 5,6,7,8) 5,6,7,8) | 0.72 | 0.9 | 1.1 | mV/A mV/A | | | | | 1.4 | 1.8 | 2.2 | | | | | | 2.9 | 3.6 | 4.3 | | | SWITCHING FREQUENCY | | | | | | | | Switching Frequency | ��� fSW  | 400kHz/600kHz/800kHz 400kHz/600kHz/800kHz selected by C_SELB; other values are set through PMBus (Note 6 ) | | 400 | | kHz kHz | | | | | | 500 | | | | | | | | 600 | | | | | | | | 700 | | | | | | | | 800 | | | | | | | | 900 | | | | Switching Frequency Accuracy | | ( ( Note 5,7,8) 5,7,8) | -20 | | +20 | % % | | INPUT PROTECTION | | | | | | | | Rising VDDH VDDH  UVLO Threshold | VDDH UVLO | (Note 5) | | 4.25 | 4.47 | V | | Falling VDDH VDDH  UVLO Threshold | | | 3.7 | 3.9 | | | | Hysteresis | | | | 350 | | mV mV |\n\n    [INST] Given the context you received, answer the question.  Please do not infer anything if the question cannot be deduced from the context or make anything up; simply state you cannot find the information. [/INST]\n\n    Sure, here is the answer to the question:"
+            "Llama2 70B": "[INST] <<SYS>> You are an electrical engineer ai assistant.  You will be given context that will help answer a question.  You will interpret the context for useful information that will answer the question.  Provide concise, helpful, technical information (focusing on numerical information).  <</SYS>> [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching frequency of max20710?'\n    contexts: VREF  Range | | See Table 8 for accuracy vs. �REF VREF (Note 6 ) | 0.6016 | | 1.0 | V | | FEEDBACK LOOP | | | | | | | | Integrator Recovery-Time Constant | tREC tREC  | | | 20 | | �s μs | | Gain (see the Control Loop Stability section for details) | RGAIN RGAIN  | Selected by R_SELB or PMBus ( ( Note 5,6,7,8) 5,6,7,8) | 0.72 | 0.9 | 1.1 | mV/A mV/A | | | | | 1.4 | 1.8 | 2.2 | | | | | | 2.9 | 3.6 | 4.3 | | | SWITCHING FREQUENCY | | | | | | | | Switching Frequency | ��� fSW  | 400kHz/600kHz/800kHz 400kHz/600kHz/800kHz selected by C_SELB; other values are set through PMBus (Note 6 ) | | 400 | | kHz kHz | | | | | | 500 | | | | | | | | 600 | | | | | | | | 700 | | | | | | | | 800 | | | | | | | | 900 | | | | Switching Frequency Accuracy | | ( ( Note 5,7,8) 5,7,8) | -20 | | +20 | % % | | INPUT PROTECTION | | | | | | | | Rising VDDH VDDH  UVLO Threshold | VDDH UVLO | (Note 5) | | 4.25 | 4.47 | V | | Falling VDDH VDDH  UVLO Threshold | | | 3.7 | 3.9 | | | | Hysteresis | | | | 350 | | mV mV |\n\n    [INST] Given the context you received, answer the question.  Please do not infer anything if the question cannot be deduced from the context or make anything up; simply state you cannot find the information.\n\n    Sure, here is the answer to the question:[/INST]"
         },
         "Code Generation": {
-            "Llama2 7B": "[INST] <<SYS>> You are a helpful code assistant. Generate a valid JSON object based on the inpput. \nExample: name: John lastname: Smith address: #1 Samuel St. would be converted to:\n{\n\"\"address\"\": \"\"#1 Samuel St.\"\",\n\"\"lastname\"\": \"\"Smith\"\",\n\"\"name\"\": \"\"John\"\"\n} <</SYS>>\n[INST] Input: name: Ted lastname: Pot address: #1 Bisson St. [/INST]"
+            "Llama2 70B": "[INST] <<SYS>> You are a helpful code assistant. Generate a valid JSON object based on the inpput. \nExample: name: John lastname: Smith address: #1 Samuel St. would be converted to:\n{\n\"\"address\"\": \"\"#1 Samuel St.\"\",\n\"\"lastname\"\": \"\"Smith\"\",\n\"\"name\"\": \"\"John\"\"\n} <</SYS>>\n[INST] Input: name: Ted lastname: Pot address: #1 Bisson St. [/INST]"
+        },
+        "Summarization": {
+            "Llama2 70B": "[INST] <<SYS>> You are a helpful assistant. Your answers should not include any unsafe, unethical, or illegal content. <</SYS>>\n\nSummarize the customer support call transcript below:\n\nCustomer: Hi, I'm having trouble accessing my account.\n\nSupport Agent: Sure, can you please provide me with your account username?\n\nCustomer: It's 'example123'.\n\nSupport Agent: Thank you. I see that there was a recent security update that might have affected access. Let me check on that for you.\n\nCustomer: Okay, thank you.\n\nSupport Agent: It seems like there was a temporary glitch in the system. I've fixed it, and you should be able to access your account now.\n\nCustomer: Great, thank you so much for your help!\n\nSupport Agent: You're welcome. Is there anything else I can assist you with today?\n\nCustomer: No, that's all. Thank you again.\n\nSummarize the conversation highlighting the customer's issue, the steps taken by the support agent to resolve it, and the resolution outcome. [/INST]"
+        },
+        "Question & Answering": {
+            "Llama2 70B": "[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers should not include any unsafe, unethical, or illegal content. If you don't understand the question or don't know the answer, please don't share false information. <</SYS>>\n\nBased on the following excerpt extraction from an Amazon revenue report, answer the question.\n\nExcerpt:\n\nTotal revenue for Q4 2023 reached $150 billion, marking a 20% increase compared to the same period last year. The largest contributor to this revenue growth was the North American market, which saw a 25% increase in sales, reaching $90 billion. International sales also showed significant growth, with a 15% increase, totaling $60 billion.\n\nQuestion:\n\nWhat was the percentage increase in total revenue for Amazon in Q4 2023 compared to the same period last year? [/INST]"
+        },
+        "Query decomposition": {
+            "Llama2 70B": "[INST] <<SYS>> Decompose a complex query into a list of questions that can be addressed individually. Follow these rules: 1. Only use the information given in the query. 2. The output is in JSON format. 3. No explanation or conclusions are necessary. <</SYS>>\n\nQuery example:\n\n'''Compare the prices, security features, engines, and overall user experience of Ford Escape and Toyota Rav4.'''\n\nOutput:\n\n<<<{questions: ['1. What is the price of the Ford Escape and how does it vary across different trim levels?','2. What is the price of the Toyota Rav4 and how does it vary across different trim levels?','3. What are the security features offered in the Ford Escape?','4. What are the security features offered in the Toyota Rav4?','5. What are the engine specifications of the Ford Escape?','6. What are the engine specifications of the Toyota Rav4?','7. What is the overall user experience of the Ford Escape?','8. What is the overall user experience of the Toyota Rav4?']}>>>\n\nNew query:\n\n'''Compare the features, performance, and prices of the iPhone models iPhone 12, iPhone 12 Pro, and iPhone 12 Pro Max, including differences in camera capabilities, display specifications, battery life, and overall user experience.'''\n\nOuput: [/INST]"
         }
     }
     
@@ -181,21 +163,24 @@ def main():
             model_names,
             index=0,
             help='''
-            \nNote: Working only with Llam2 7B for now.
+            \nNote: Working only with Llam2 70B for now.
             ''',
         )
         st.write(f":red[**Architecture:**] {st.session_state.model_info[selected_model]['Model Architecture']}  \n:red[**Prompting Tips:**] {st.session_state.model_info[selected_model]['Architecture Prompting Implications']}")
 
     # Set up use case drop box
     with col2:
-        selected_prompt_use_case = st.radio(
+        selected_prompt_use_case = st.selectbox(
             "Use Case for Sample Prompt",
             prompt_use_cases,
             help='''
             \n:red[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including answering questions, offering explanations, and giving advice. It's ideal for general knowledge, trivia, educational support, and everyday inquiries.
-            \n:red[**Document Search:**] Specializes in locating and summarizing relevant information from large documents or databases. Useful for research, data analysis, and extracting key points from extensive text sources.
+            \n:red[**Document Search:**] Specializes in locating and briefing relevant information from large documents or databases. Useful for research, data analysis, and extracting key points from extensive text sources.
             \n:red[**Product Selection:**] Assists in choosing products by comparing features, prices, and reviews. Ideal for shopping decisions, product comparisons, and understanding the pros and cons of different items.
             \n:red[**Code Generation:**] Helps in writing, debugging, and explaining code. Useful for software development, learning programming languages, and automating simple tasks through scripting.
+            \n:red[**Summarization:**] Outputs a summary based on a given context. Essential for condensing large volumes of text into concise representations, aiding efficient information retrieval and comprehension.
+            \n:red[**Question & Answering:**] Answers questions regarding different topics given in a previous context. Crucial for enabling users to directly obtain relevant information from textual data, facilitating efficient access to knowledge and aiding decision-making processes.
+            \n:red[**Query decomposition:**] Aids on simplyfying complex queries into small and precise sub-questions. Vital for breaking down complex queries into more manageable sub-tasks, facilitating more effective information retrieval and generation processes.
             ''',
         )
         st.write(f":red[**Meta Tag Format:**]  \n {st.session_state.model_info[selected_model]['Meta Tag Format']}")
@@ -212,8 +197,8 @@ def main():
     if st.button('Send'):
         response_content = ""
         # Call Llama2 endpoint and show the response content
-        if selected_model == "Llama2 7B":
-            response_content = call_sambanova_llama2_7b_api(prompt)
+        if selected_model == "Llama2 70B":
+            response_content = call_sambanova_llama2_70b_api(prompt)
         st.write(response_content)
 
 if __name__ == "__main__":

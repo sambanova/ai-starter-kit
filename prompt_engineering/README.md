@@ -12,13 +12,9 @@ Prompting has a significant effect on the quality of LLM responses. Prompts can 
 For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
 ```python
 custom_prompt_template = """Use the following pieces of context to answer the question at the end. If the answer to the question cannot be extracted from given CONTEXT than say I do not have information regarding this.
+
+
 {context}
-
-
-
-
-
-
 
 
 Question: {question}
@@ -35,6 +31,7 @@ file: app.py
 function: get_conversation_chain
 ```
 
-
-
+For further examples, we encourage you to visit any of the following resources:
+- [Awesome chatgpt prompts](https://github.com/f/awesome-chatgpt-prompts)
+- [Smith - Langchain hub](https://smith.langchain.com/hub)
 

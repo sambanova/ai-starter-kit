@@ -83,6 +83,11 @@ echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_u
 sudo docker-compose up data_extraction_service 
 ```
 3.2 Run data extraction docker container for Paddle utility
+3.1 Run data extraction docker container
+```
+sudo docker-compose up data_extraction_service 
+```
+3.2 Run data extraction docker container for Paddle utility
 >Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the startPaddle script instead
 ```
 sudo docker-compose up data_extraction_paddle_service  
