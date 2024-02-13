@@ -13,7 +13,10 @@
     "General Assistant",
     "Document Search",
     "Product Selection", 
-    "Code Generation"
+    "Code Generation",
+    "Summarization",
+    "Question & Answering",
+    "Query decomposition"
   ]
 }
   
