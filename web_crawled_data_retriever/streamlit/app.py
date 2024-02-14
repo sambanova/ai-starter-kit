@@ -29,7 +29,7 @@ def handle_userinput(user_question):
     """
     if user_question:
         with st.spinner("Processing..."):
-            response = st.session_state.conversation.qa_chain({"query": user_question})
+            response = st.session_state.conversation.qa_chain({"question": user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
         
