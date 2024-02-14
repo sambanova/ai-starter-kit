@@ -55,7 +55,7 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit in two simpl
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/export.env. For example, an endpoint with the URL
+2. Update API information for the SambaNova LLM and, optionally, the vector database.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/export.env```**. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 would be entered in the config file (with no spaces) as:
 ```
@@ -67,17 +67,16 @@ VECTOR_DB_URL=http://host.docker.internal:6333
 ```
 3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
-cd ai_starter_kit/web_crawled_data_retriever
+cd ai-starter-kit/web_crawled_data_retriever
 python3 -m venv web_crawling_env
 source web_crawling_env/bin/activate
-pip install -r web_crawled_data_retriever/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Deploy the starter kit
 To run the demo, run the following commands:
 ```
-cd web_crawled_data_retriever
-sh streamlit/run.sh
+streamlit run streamlit/app.py   
 ```
 
 After deploying the starter kit you should see the following application user interface
