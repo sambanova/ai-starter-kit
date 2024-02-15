@@ -10,3 +10,5 @@ pydantic_core==2.10.1
 beautifulsoup4==4.12.3
 html2text==2020.1.16
 nest_asyncio==1.6.0
+fake_useragent==1.4.0
+unstructured[pdf]==0.12.4

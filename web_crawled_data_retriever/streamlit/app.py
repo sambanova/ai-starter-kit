@@ -8,14 +8,18 @@ from dotenv import load_dotenv
 
 load_dotenv('../export.env')
 
-def set_retrieval_qa_chain(documents=None, config=None):
+def set_retrieval_qa_chain(documents=None, config=None, save=False):
     if config is None:
         config = {}
     if documents is None:
         documents = []
+    print(documents)
     web_crawling_retrieval = WebCrawlingRetrieval(documents, config)
     web_crawling_retrieval.init_llm_model()
-    web_crawling_retrieval.create_load_vector_store(force_reload=config.get("force_reload",False))
+    if save:
+        web_crawling_retrieval.create_and_save_local(input_directory=config.get("input_directory",None) , persist_directory=config.get("persist_directory"), update=config.get("update",False))
+    else:
+        web_crawling_retrieval.create_load_vector_store(force_reload=config.get("force_reload",False), update = config.get("update",False))
     web_crawling_retrieval.retrieval_qa_chain()
     return web_crawling_retrieval
 
@@ -97,14 +101,33 @@ handle_userinput(user_question)
 with st.sidebar:
     st.title("Setup")
     # selecction of datasource urls, or vector database folder
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("**1. Pick a datasource**")
     datasource = st.selectbox(
-        "", ("Select websites(create new vector db)", "Use existing vector db")
+        "**1. Pick a datasource**", ("Select websites(create new vector db)", "Use existing vector db", "Add new websites to an existing vector db")
     )
-    # if urls selected as datasource
-    # imput text area for urls
-    if "websites" in datasource:
+    # input text area for urls
+    if "Select websites" in datasource or "Add new" in datasource:
+        if "Add new" in datasource:
+            st.session_state.db_path = st.text_input(
+                "Absolute path to your FAISS Vector DB folder",
+                placeholder="E.g., /Users/<username>/Downloads/<vectordb_folder>",
+            ).strip()
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("**Load your datasource**")
+            st.markdown(
+                "**Note:** Depending on the size of your vector database, this could take a few seconds"
+            )
+            if st.button("Load"):
+                with st.spinner("Loading vector DB..."):
+                    if st.session_state.db_path == "":
+                        st.error("You must provide a provide a path", icon="🚨")
+                    else:
+                        if os.path.exists(st.session_state.db_path):
+                            config={"persist_directory": st.session_state.db_path}
+                            # create conversation chain
+                            st.session_state.conversation = set_retrieval_qa_chain(config=config)
+                        else:
+                            st.error("database not present at " + st.session_state.db_path, icon="🚨")      
+        # Select    
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("**2. Include the Urls to crawl**")
         col_a1, col_a2 = st.columns((3,2))
@@ -141,34 +164,59 @@ with st.sidebar:
                 st.experimental_rerun()
         with st.expander(f"{len(st.session_state.full_urls_list)} crawled URLs",expanded=False):
             st.write(st.session_state.full_urls_list)
+        if "Select websites" in datasource:
         # Processing of crawled documents, storing them in vector database and creating retrival chain  
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("**4. Load sites and create vectorstore**")
-        if st.button("Process"):
-            with st.spinner("Processing"):
-                # create conversation chain
-                st.session_state.db_path = None
-                config = config ={"force_reload":True}
-                st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
-        # storing vector database in disk  
-        st.markdown("**[Optional] Save database for reuse**")
-        save_location = st.text_input("Save location", "./data/my-vector-db").strip()
-        if st.button("Save database"):
-            if st.session_state.conversation is not None:
-                st.session_state.conversation.save_local(save_location)
-                st.toast("Database saved to " + save_location)
-            else:
-                st.error(
-                    "You need to process your files before saving the database"
-                )
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("**4. Load sites and create vectorstore**")
+            st.markdown("Create database")
+            if st.button("Process"):
+                with st.spinner("Processing"):
+                    # create conversation chain
+                    st.session_state.db_path = None
+                    config = config ={"force_reload":True}
+                    st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
+                            # storing vector database in disk  
+            st.markdown("[Optional] Save database for reuse")
+            save_location = st.text_input("Save location", "./data/my-vector-db").strip()
+            if st.button("Process and Save database"):
+                with st.spinner("Processing"):
+                    config = config ={
+                                    "persist_directory": save_location,
+                                    }
+                    st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config, save=True)
+                    st.toast("Database with new sites saved in " + save_location)
+
+        elif "Add new" in datasource:
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("**4. Load sites and update vectorstore**")
+            st.markdown("Create database")
+            if st.button("Process"):
+                with st.spinner("Processing"):
+                    config = config ={
+                                    "persist_directory": st.session_state.db_path,
+                                    "update":True
+                                    }
+                    st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)  
+            st.markdown("[Optional] Save database with new scraped sites for reuse")
+            save_location = st.text_input("Save location", "./data/my-vector-db").strip()
+            if st.button("Process and Save database"):
+                with st.spinner("Processing"):
+                    config = config ={
+                                        "input_directory":st.session_state.db_path,
+                                        "persist_directory": save_location,
+                                        "update":True
+                                        }
+                    st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config, save=True)
+                    st.toast("Database with new sites saved in " + save_location)
+
     # if vector database folder selected as datasource     
-    else:
+    elif "Use existing" in datasource:
         st.session_state.db_path = st.text_input(
             "Absolute path to your FAISS Vector DB folder",
             placeholder="E.g., /Users/<username>/Downloads/<vectordb_folder>",
         ).strip()
         st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("**2. Load your datasource**")
+        st.markdown("**Load your datasource**")
         st.markdown(
             "**Note:** Depending on the size of your vector database, this could take a few seconds"
         )
@@ -183,6 +231,7 @@ with st.sidebar:
                         st.session_state.conversation = set_retrieval_qa_chain(config=config)
                     else:
                         st.error("database not present at " + st.session_state.db_path, icon="🚨")
+                        
     # show sources and reset conversation controls                   
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("**Ask questions about your data!**")
@@ -196,7 +245,7 @@ with st.sidebar:
 
         st.markdown("**Reset chat**")
         st.markdown(
-            "**Note:** Resetting the chat will clear all conversation history"
+            "**Note:** Resetting the chat will clear all conversation history and not updated documents."
         )
         if st.button("Reset conversation"):
             # reset create conversation chain
