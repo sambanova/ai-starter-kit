@@ -159,7 +159,39 @@ class VectorDb():
         logger.info(f"Vector store saved to {output_db}")
         
         return vector_store
+        
+    def load_vdb(self, persist_directory, embedding_model, db_type = "chroma"):
 
+        if db_type == "faiss":
+             vector_store = FAISS.load_local(persist_directory, embedding_model)
+        elif db_type == "chroma":
+            vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
+        elif db_type == "qdrant":
+            # TODO: vector_store = Qdrant...
+            pass
+        
+        return vector_store
+    
+    def update_vdb(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str, input_db: str = None, output_db: str = None):
+        
+        embeddings = self.load_embedding_model()
+        
+        if db_type == "faiss":
+             vector_store = FAISS.load_local(input_db, embeddings)
+             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
+             vector_store.merge_from(new_vector_store)
+             if output_db:
+                 vector_store.save_local(output_db)         
+             
+        elif db_type == "chroma":
+            # TODO implement update method for chroma
+            pass
+        elif db_type == "qdrant":
+            # TODO implement update method for qdrant
+            pass
+        
+        return vector_store
+    
     def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None):
         
         docs = self.load_files(input_path)
@@ -171,20 +203,7 @@ class VectorDb():
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
         
         return vector_store
-        
-    def load_vdb(self, persist_directory, embedding_model, db_type = "chroma"):
 
-        if db_type == "faiss":
-             vector_store = FAISS.load_local(persist_directory, embedding_model)
-        elif db_type == "chroma":
-            vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
-        elif db_type == "qdrant":
-            # TO-DO: vector_store = Qdrant...
-            pass
-        
-        return vector_store
-
-# Check valid path
 def dir_path(path):
     if os.path.isdir(path):
         return path
