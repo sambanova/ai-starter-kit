@@ -88,15 +88,14 @@ VECTOR_DB_URL=http://host.docker.internal:6333
 3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
 cd ai_starter_kit/enterprise_knowledge_retriever
-conda create -n py310 python=3.10
-conda activate py310
+python3 -m venv enterprise_knowledge_env
+source enterprise_knowledge_env/bin/activate
 pip  install  -r  requirements.txt
 ```
 ## 3. Deploy the starter kit
 To run the demo, run the following commands:
 ```
-cd ai-starter-kit/enterprise_knowledge_retriever/streamlit
-streamlit run app.py
+streamlit run streamlit/app.py
 ```
 
 
