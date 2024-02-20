@@ -16,3 +16,4 @@ python-xbrl==1.1.1
 sec-edgar-downloader==5.0.2
 python-dotenv==1.0.0
 chromadb==0.4.8
+sseclient==0.0.27

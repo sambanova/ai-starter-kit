@@ -9,3 +9,4 @@ python-dotenv==1.0.0
 streamlit-extras
 pillow==9.1.0
 chromadb==0.4.8
+sseclient==0.0.27
