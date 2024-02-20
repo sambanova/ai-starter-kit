@@ -136,6 +136,13 @@ class VectorDb():
                     persist_directory=output_db
                 )
             else:
+                try: 
+                    vector_store=Chroma()
+                    vector_store.delete_collection()
+                    print("colelction deleted")
+                except Exception as e:
+                    print("colelction not deleted")
+                    pass
                 vector_store = Chroma.from_documents(
                     documents=chunks, 
                     embedding=embeddings
