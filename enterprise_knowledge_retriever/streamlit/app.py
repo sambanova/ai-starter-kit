@@ -16,8 +16,10 @@ load_dotenv('../export.env')
 
 DB_TYPE = "chroma"
 PERSIST_DIRECTORY = f"data/vectordbs/{DB_TYPE}_default"
+K_RETRIEVED_DOCUMENTS = 3
+SCORE_TRESHOLD = 0.4
 
-def get_pdf_text_and_metadata(pdf_doc):
+def get_pdf_text_and_metadata(pdf_doc, extra_tags=None):
     """Extract text and metadata from pdf document
 
     Args:
@@ -29,9 +31,12 @@ def get_pdf_text_and_metadata(pdf_doc):
     text = []
     metadata = []
     pdf_reader = PdfReader(pdf_doc)
+    doc_name = pdf_doc.name
     for page in pdf_reader.pages:
-        text.append(page.extract_text())
-        metadata.append({"filename": pdf_doc.name, "page": pdf_reader.get_page_number(page)})
+        page_number =pdf_reader.get_page_number(page)+1
+        text.append(f"Source: {doc_name.split('.')[0]} - page {page_number}, Text: {page.extract_text()}/n")
+        metadata.append({"filename": doc_name, "page": page_number})
+    print(f"\n {text}\n {metadata}\n\n")
     return text, metadata
 
 
@@ -46,10 +51,11 @@ def get_data_for_splitting(pdf_docs):
     """
     files_data = []
     files_metadatas = []
-    for file in pdf_docs:
-        text, meta = get_pdf_text_and_metadata(file)
+    for i in range(len(pdf_docs)):
+        text, meta = get_pdf_text_and_metadata(pdf_docs[i])
         files_data.extend(text)
         files_metadatas.extend(meta)
+    #print(files_data)
     return files_data, files_metadatas
 
 
@@ -71,13 +77,16 @@ def get_qa_retrieval_chain(vectorstore):
         model_kwargs={
             "do_sample": False,
             "temperature": 0.0,
-            "max_tokens_to_generate": 2500,
+            "max_tokens_to_generate": 1200,
         }
     )
-
+    retriever = vectorstore.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={"score_threshold": SCORE_TRESHOLD, "k": K_RETRIEVED_DOCUMENTS},
+    )
     qa_chain = RetrievalQA.from_llm(
         llm=llm,
-        retriever=vectorstore.as_retriever(),
+        retriever=retriever,
         return_source_documents=True,
         input_key="question",
         output_key="answer",
@@ -191,7 +200,7 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
+                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
                     vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=DB_TYPE)
@@ -208,7 +217,7 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
+                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
                     vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=DB_TYPE)
