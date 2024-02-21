@@ -11,6 +11,9 @@ from langchain.document_loaders import UnstructuredPDFLoader
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from vectordb.vector_db import VectorDb
 
+import fitz
+from data_extraction.src.multi_column import column_boxes
+
 load_dotenv('../export.env')
 
 DB_TYPE = "chroma"
@@ -32,11 +35,30 @@ def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
     pdf_reader = PdfReader(pdf_doc)
     doc_name = pdf_doc.name
     for page in pdf_reader.pages:
-        page_number =pdf_reader.get_page_number(page)+1
-        text.append(f"Source: {doc_name.split('.')[0]} - page {page_number}, Text: {page.extract_text()}\n")
-        metadata.append({"filename": doc_name, "page": page_number})
+        #page_number =pdf_reader.get_page_number(page)+1
+        text.append(page.extract_text())
+        metadata.append({"filename": doc_name})#, "page": page_number})
     return text, metadata
 
+
+def get_pdf_text_and_metadata_fitz(pdf_doc):    
+    text = []
+    metadata = []
+    temp_folder = "./data/tmp"
+    temp_file = os.path.join(temp_folder,"file.pdf")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    with open(temp_file, "wb") as f:
+        f.write(pdf_doc.getvalue())
+    docs = fitz.open(temp_file)  
+    for page, page in enumerate(docs):
+        full_text = ''
+        bboxes = column_boxes(page, footer_margin=100, no_image_text=True)
+        for rect in bboxes:
+            full_text += page.get_text(clip=rect, sort=True)
+        text.append(full_text)
+        metadata.append({"filename": pdf_doc.name})
+    return text, metadata
 
 def get_pdf_text_and_metadata_unstructured(pdf_doc):
     """Extract text and metadata from pdf document with unstructured loader
@@ -167,10 +189,10 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append(response["answer"])
 
         # List of sources
-        sources = [
+        sources =set([
             f'{sd.metadata["filename"]}'
             for sd in response["source_documents"]
-        ]
+        ])
         # Create a Markdown string with each source on a new line as a numbered list with links
         sources_text = ""
         for index, source in enumerate(sources, start=1):
