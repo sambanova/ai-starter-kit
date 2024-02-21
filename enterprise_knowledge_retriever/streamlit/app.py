@@ -1,26 +1,25 @@
 import os
 import sys
-
 sys.path.append("../")
 import streamlit as st
 from dotenv import load_dotenv
+from PyPDF2 import PdfReader
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
-from PyPDF2 import PdfReader
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import UnstructuredPDFLoader
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from vectordb.vector_db import VectorDb
 
-from dotenv import load_dotenv
 load_dotenv('../export.env')
 
 DB_TYPE = "chroma"
 PERSIST_DIRECTORY = f"data/vectordbs/{DB_TYPE}_default"
 K_RETRIEVED_DOCUMENTS = 3
-SCORE_TRESHOLD = 0.4
+SCORE_TRESHOLD = 0.6
 
-def get_pdf_text_and_metadata(pdf_doc, extra_tags=None):
-    """Extract text and metadata from pdf document
+def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
+    """Extract text and metadata from pdf document with pypdf2 loader
 
     Args:
         pdf_doc: path to pdf document
@@ -34,11 +33,34 @@ def get_pdf_text_and_metadata(pdf_doc, extra_tags=None):
     doc_name = pdf_doc.name
     for page in pdf_reader.pages:
         page_number =pdf_reader.get_page_number(page)+1
-        text.append(f"Source: {doc_name.split('.')[0]} - page {page_number}, Text: {page.extract_text()}/n")
+        text.append(f"Source: {doc_name.split('.')[0]} - page {page_number}, Text: {page.extract_text()}\n")
         metadata.append({"filename": doc_name, "page": page_number})
-    print(f"\n {text}\n {metadata}\n\n")
     return text, metadata
 
+
+def get_pdf_text_and_metadata_unstructured(pdf_doc):
+    """Extract text and metadata from pdf document with unstructured loader
+
+    Args:
+        pdf_doc: path to pdf document
+
+    Returns:
+        list, list: list of extracted text and metadata per page
+    """
+    text = []
+    metadata = []
+    temp_folder = "./data/tmp"
+    temp_file = os.path.join(temp_folder,"file.pdf")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    with open(temp_file, "wb") as f:
+        f.write(pdf_doc.getvalue())
+    loader = UnstructuredPDFLoader(temp_file)
+    docs_unstructured = loader.load()
+    for doc in docs_unstructured:
+        text.append(doc.page_content)
+        metadata.append({"filename": pdf_doc.name})
+    return text, metadata
 
 def get_data_for_splitting(pdf_docs):
     """Extract text and metadata from all the pdf files
@@ -52,12 +74,34 @@ def get_data_for_splitting(pdf_docs):
     files_data = []
     files_metadatas = []
     for i in range(len(pdf_docs)):
-        text, meta = get_pdf_text_and_metadata(pdf_docs[i])
+        text, meta = get_pdf_text_and_metadata_unstructured(pdf_docs[i])
         files_data.extend(text)
         files_metadatas.extend(meta)
-    #print(files_data)
     return files_data, files_metadatas
 
+
+def get_text_chunks_with_metadata(docs, chunk_size, chunk_overlap, meta_data):
+    """Gets text chunks. .
+
+    Args:
+    doc (list): list of strings with text to split 
+    chunk_size (int): chunk size in number of tokens
+    chunk_overlap (int): chunk overlap in numb8er of tokens
+    metadata (list, optional): list of metadata in dictionary format.
+
+    Returns:
+        list: list of documents 
+    """
+    chunks_list = []
+    text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+        )
+    for doc, meta in zip(docs, meta_data):
+        chunks = text_splitter.create_documents([doc], [meta])
+        for chunk in chunks:
+            chunk.page_content = f"Source: {meta['filename'].split('.')[0]}, Text: \n{chunk.page_content}\n"
+            chunks_list.append(chunk)
+    return chunks_list
 
 def get_qa_retrieval_chain(vectorstore):
     """
@@ -124,7 +168,7 @@ def handle_userinput(user_question):
 
         # List of sources
         sources = [
-            f'{sd.metadata["filename"]} (page {sd.metadata["page"]})'
+            f'{sd.metadata["filename"]}'
             for sd in response["source_documents"]
         ]
         # Create a Markdown string with each source on a new line as a numbered list with links
@@ -200,7 +244,7 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
                     vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=DB_TYPE)
@@ -217,7 +261,7 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
                     vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=DB_TYPE)
