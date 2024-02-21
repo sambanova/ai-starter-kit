@@ -11,3 +11,5 @@ pillow==9.1.0
 chromadb==0.4.8
 sseclient==0.0.27
 unstructured[pdf]==0.12.4
+PyMuPDF==1.23.4
+PyMuPDFb==1.23.3
