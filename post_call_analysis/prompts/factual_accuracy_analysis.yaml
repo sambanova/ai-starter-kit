@@ -1,0 +1,26 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - context
+  - input
+  - format_instructions
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>
+          Check if the information provided by the agent during the following conversation is correct only based in the context
+
+          <conversation>
+          {input}
+          </conversation>
+          
+          <context>
+          {context}
+          </context>
+
+          {format_instructions}
+          <</SYS>> 
+          [/INST]
+template_format: f-string
+validate_template: false

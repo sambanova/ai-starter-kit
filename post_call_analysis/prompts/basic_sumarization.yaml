@@ -1,0 +1,13 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - conversation
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>Sumarize the following call {conversation}.
+          <</SYS>>/n
+          Summary: [/INST]
+template_format: f-string
+validate_template: false

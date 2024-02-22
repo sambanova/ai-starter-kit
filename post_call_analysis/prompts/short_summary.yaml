@@ -1,0 +1,19 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - conversation
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>\Use the following conversation extrated from a call trascription to do a brief summary of what happened, for a call quallity ensurance persone,
+          Dont focus on details, only put the main idea of the conversation as brief as posible
+          some times there could be some wrong translated words so be carefull and adhere to the context
+          do not include anything that is not given in the conversation, don try to make up details that are not part of the conversation
+          conversation
+          {conversation}
+          end of conversation
+          <</SYS>>/n
+          Summary: [/INST]
+template_format: f-string
+validate_template: false
