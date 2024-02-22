@@ -42,6 +42,14 @@ def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
 
 
 def get_pdf_text_and_metadata_fitz(pdf_doc):    
+    """Extract text and metadata from pdf document with fitz loader
+
+    Args:
+        pdf_doc: path to pdf document
+
+    Returns:
+        list, list: list of extracted text and metadata per page
+    """
     text = []
     metadata = []
     temp_folder = "./data/tmp"
