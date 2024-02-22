@@ -187,3 +187,4 @@ fine_tuning_embeddings/data
 fine_tuning_embeddings/processed_data
 fine_tuning_embeddings/results
 fine_tuning_embeddings/finetuned_model
+fine_tuning_embeddings/ProductsUK.json

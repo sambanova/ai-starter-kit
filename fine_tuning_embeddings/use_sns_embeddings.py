@@ -16,13 +16,17 @@ from langchain_community.vectorstores import FAISS, Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
+from langchain_community.document_loaders import JSONLoader
+from tqdm import tqdm
 
-
-# Use embeddings As Part of Langchain
-from langchain.vectorstores import FAISS, Chroma
 
 sys.path.append("..")
 from src.models.sambanova_endpoint import SambaNovaEndpoint
+
+# Surpress HTTPS warnings
+import urllib3
+
+urllib3.disable_warnings()
 
 # load dot_env
 
@@ -45,7 +49,7 @@ class SNSDKModel(Embeddings):
         self.endpoint_id = endpoint_id
         self.key = key
 
-    def embed_documents(self, texts, batch_size=32, **kwargs):
+    def embed_documents(self, texts, batch_size=128, **kwargs):
         """Returns a list of embeddings for the given sentences.
         Args:
             sentences (`List[str]`): List of sentences to encode
@@ -64,7 +68,7 @@ class SNSDKModel(Embeddings):
             embeddings.append(embedding)
         return embeddings
 
-    def embed_query(self, text, batch_size=32, **kwargs):
+    def embed_query(self, text, batch_size=64, **kwargs):
         """Returns a list of embeddings for the given sentences.
         Args:
             sentences (`List[str]`): List of sentences to encode
@@ -127,13 +131,22 @@ def main():
         },
     )
 
+
     loader = WebBaseLoader("https://docs.smith.langchain.com")
 
     docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter()
-    documents = text_splitter.split_documents(docs)
-    vector = Chroma.from_documents(documents, embeddings)
+
+    print(f"Starting split")
+    documents = tqdm(text_splitter.split_documents(docs))
+    print(f"Ending split")
+
+    print(f"Starting vec upload")
+    vector = Chroma.from_documents(
+        documents, embeddings, persist_directory="./chroma_db"
+    )
+    print(f"Ending vec upload")
 
     prompt = ChatPromptTemplate.from_template(
         """Answer the following question based only on the provided context:
