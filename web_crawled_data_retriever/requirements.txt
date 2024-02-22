@@ -12,3 +12,4 @@ html2text==2020.1.16
 nest_asyncio==1.6.0
 fake_useragent==1.4.0
 unstructured[pdf]==0.12.4
+sseclient==0.0.27

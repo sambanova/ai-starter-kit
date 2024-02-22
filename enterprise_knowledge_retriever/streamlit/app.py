@@ -1,25 +1,28 @@
 import os
 import sys
-
 sys.path.append("../")
-sys.path.append("../../")
 import streamlit as st
 from dotenv import load_dotenv
+from PyPDF2 import PdfReader
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
-from PyPDF2 import PdfReader
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import UnstructuredPDFLoader
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from vectordb.vector_db import VectorDb
 
-from dotenv import load_dotenv
-load_dotenv('../../export.env')
+import fitz
+from data_extraction.src.multi_column import column_boxes
+
+load_dotenv('../export.env')
 
 DB_TYPE = "chroma"
-PERSIST_DIRECTORY = f"../data/vectordbs/{DB_TYPE}_default"
+PERSIST_DIRECTORY = f"data/vectordbs/{DB_TYPE}_default"
+K_RETRIEVED_DOCUMENTS = 3
+SCORE_TRESHOLD = 0.6
 
-def get_pdf_text_and_metadata(pdf_doc):
-    """Extract text and metadata from pdf document
+def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
+    """Extract text and metadata from pdf document with pypdf2 loader
 
     Args:
         pdf_doc: path to pdf document
@@ -30,11 +33,56 @@ def get_pdf_text_and_metadata(pdf_doc):
     text = []
     metadata = []
     pdf_reader = PdfReader(pdf_doc)
+    doc_name = pdf_doc.name
     for page in pdf_reader.pages:
+        #page_number =pdf_reader.get_page_number(page)+1
         text.append(page.extract_text())
-        metadata.append({"filename": pdf_doc.name, "page": pdf_reader.get_page_number(page)})
+        metadata.append({"filename": doc_name})#, "page": page_number})
     return text, metadata
 
+
+def get_pdf_text_and_metadata_fitz(pdf_doc):    
+    text = []
+    metadata = []
+    temp_folder = "./data/tmp"
+    temp_file = os.path.join(temp_folder,"file.pdf")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    with open(temp_file, "wb") as f:
+        f.write(pdf_doc.getvalue())
+    docs = fitz.open(temp_file)  
+    for page, page in enumerate(docs):
+        full_text = ''
+        bboxes = column_boxes(page, footer_margin=100, no_image_text=True)
+        for rect in bboxes:
+            full_text += page.get_text(clip=rect, sort=True)
+        text.append(full_text)
+        metadata.append({"filename": pdf_doc.name})
+    return text, metadata
+
+def get_pdf_text_and_metadata_unstructured(pdf_doc):
+    """Extract text and metadata from pdf document with unstructured loader
+
+    Args:
+        pdf_doc: path to pdf document
+
+    Returns:
+        list, list: list of extracted text and metadata per page
+    """
+    text = []
+    metadata = []
+    temp_folder = "./data/tmp"
+    temp_file = os.path.join(temp_folder,"file.pdf")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    with open(temp_file, "wb") as f:
+        f.write(pdf_doc.getvalue())
+    loader = UnstructuredPDFLoader(temp_file)
+    docs_unstructured = loader.load()
+    for doc in docs_unstructured:
+        text.append(doc.page_content)
+        metadata.append({"filename": pdf_doc.name})
+    return text, metadata
 
 def get_data_for_splitting(pdf_docs):
     """Extract text and metadata from all the pdf files
@@ -47,12 +95,35 @@ def get_data_for_splitting(pdf_docs):
     """
     files_data = []
     files_metadatas = []
-    for file in pdf_docs:
-        text, meta = get_pdf_text_and_metadata(file)
+    for i in range(len(pdf_docs)):
+        text, meta = get_pdf_text_and_metadata_unstructured(pdf_docs[i])
         files_data.extend(text)
         files_metadatas.extend(meta)
     return files_data, files_metadatas
 
+
+def get_text_chunks_with_metadata(docs, chunk_size, chunk_overlap, meta_data):
+    """Gets text chunks. .
+
+    Args:
+    doc (list): list of strings with text to split 
+    chunk_size (int): chunk size in number of tokens
+    chunk_overlap (int): chunk overlap in numb8er of tokens
+    metadata (list, optional): list of metadata in dictionary format.
+
+    Returns:
+        list: list of documents 
+    """
+    chunks_list = []
+    text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+        )
+    for doc, meta in zip(docs, meta_data):
+        chunks = text_splitter.create_documents([doc], [meta])
+        for chunk in chunks:
+            chunk.page_content = f"Source: {meta['filename'].split('.')[0]}, Text: \n{chunk.page_content}\n"
+            chunks_list.append(chunk)
+    return chunks_list
 
 def get_qa_retrieval_chain(vectorstore):
     """
@@ -72,19 +143,22 @@ def get_qa_retrieval_chain(vectorstore):
         model_kwargs={
             "do_sample": False,
             "temperature": 0.0,
-            "max_tokens_to_generate": 2500,
+            "max_tokens_to_generate": 1200,
         }
     )
-
+    retriever = vectorstore.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={"score_threshold": SCORE_TRESHOLD, "k": K_RETRIEVED_DOCUMENTS},
+    )
     qa_chain = RetrievalQA.from_llm(
         llm=llm,
-        retriever=vectorstore.as_retriever(),
+        retriever=retriever,
         return_source_documents=True,
         input_key="question",
         output_key="answer",
     )
     
-    customprompt = load_prompt("../prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml")
+    customprompt = load_prompt("prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml")
 
     ## Inject custom prompt
     qa_chain.combine_documents_chain.llm_chain.prompt = customprompt
@@ -109,15 +183,16 @@ def get_conversational_qa_retrieval_chain(vectorstore):
 
 def handle_userinput(user_question):
     if user_question:
-        response = st.session_state.conversation({"question": user_question})
+        with st.spinner("Processing..."):
+            response = st.session_state.conversation({"question": user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 
         # List of sources
-        sources = [
-            f'{sd.metadata["filename"]} (page {sd.metadata["page"]})'
+        sources =set([
+            f'{sd.metadata["filename"]}'
             for sd in response["source_documents"]
-        ]
+        ])
         # Create a Markdown string with each source on a new line as a numbered list with links
         sources_text = ""
         for index, source in enumerate(sources, start=1):
@@ -181,29 +256,42 @@ def main():
             pdf_docs = st.file_uploader(
                 "Add PDF files", accept_multiple_files=True, type="pdf"
             )
-            st.markdown("**2. Process your documents**")
+            st.markdown("**2. Process your documents and create vector store**")
             st.markdown(
                 "**Note:** Depending on the size and number of your documents, this could take several minutes"
             )
-
+            st.markdown("Create database")
             if st.button("Process"):
                 with st.spinner("Processing"):
-                    
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
-
                     # get the text chunks
-                    text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
-
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
-                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=PERSIST_DIRECTORY, db_type=DB_TYPE)
+                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=DB_TYPE)
                     st.session_state.vectorstore = vectorstore
-                    
                     # create conversation chain
                     st.session_state.conversation = get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     )
+                    st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
+            st.markdown("[Optional] Save database for reuse")
+            save_location = st.text_input("Save location", "./data/my-vector-db").strip()
+            if st.button("Process and Save database"):
+                with st.spinner("Processing"):
+                    # get pdf text
+                    raw_text, meta_data = get_data_for_splitting(pdf_docs)
+                    # get the text chunks
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
+                    # create vector store
+                    embeddings = vectordb.load_embedding_model()
+                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=DB_TYPE)
+                    st.session_state.vectorstore = vectorstore
+                    # create conversation chain
+                    st.session_state.conversation = get_qa_retrieval_chain(
+                        st.session_state.vectorstore
+                    ) 
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
 
         else:
@@ -211,7 +299,7 @@ def main():
                 f"Absolute path to your {DB_TYPE} DB folder",
                 placeholder="E.g., /Users/<username>/path/to/your/vectordb",
             ).strip()
-            st.markdown("**2. Load your datasource**")
+            st.markdown("**2. Load your datasource and create vectorstore**")
             st.markdown(
                 "**Note:** Depending on the size of your vector database, this could take a few seconds"
             )
