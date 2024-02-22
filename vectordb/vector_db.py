@@ -80,9 +80,10 @@ class VectorDb():
         )
         
         if meta_data is None:
+            logger.info(f"Splitter: splitting documents")
             chunks = text_splitter.split_documents(docs)
         else:
-            print("splitter: create_documents")
+            logger.info(f"Splitter: creating documents with metadata")
             chunks = text_splitter.create_documents(docs, meta_data)
             
         logger.info(f"Total {len(chunks)} chunks created")
