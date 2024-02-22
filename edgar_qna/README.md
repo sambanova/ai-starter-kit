@@ -41,6 +41,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - streamlit (version 1.25.0)
 - llama-hub (version 0.0.25)
 - langchain (version 0.0.266)
+- langchain_community (version 0.0.16)
 - llama-index (version 0.8.20)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
@@ -51,6 +52,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - unstructured (version 0.8.1)
 - sec-edgar-downloader (version 5.0.2)
 - python-xbrl (version 1.1.1)
+- sseclient (version 0.0.27)
 
 
 # Getting started
@@ -116,7 +118,28 @@ streamlit run app_chat.py
 ```
 This will open the demo in your default browser at port 8501.
 
-### Option 3: Run via Docker
+### Option 3: Run through local install a Comparative-Q&A-chat streamlit app
+This is a Streamlit based UI to experiment with a comparative question and answering assistant. 
+
+> **Important:** The workflow to interact with the system starts by picking a pair of companies to compare with using the drop down boxes. Then, click on `Load` and a vector data base with both reports will be used. If the vector store was previously generated, it will load it quickly. In case you want to force a reload, there's an option to do that too. Finally, you have an up-and-running chatbot assitant that is more than happy to help you with any comparative questions that you may have about the filing report stored. 
+![](docs/edgar_comparative_qa_demo.png)
+
+
+Begin by updating pip and installing dependencies. It is recommended to use virtual env or `conda` environment for installation.
+```
+cd ai_starter_kit/edgar_qna/
+conda create -n py310 python=3.10
+conda activate py310
+pip  install  -r  requirements.txt
+```
+
+To run the demo through local install, run the following commands:
+```
+streamlit run app_comparative_chat.py
+```
+This will open the demo in your default browser at port 8501.
+
+### Option 4: Run via Docker
 Running through Docker is the most scalable approach for running this AI Starter Kit, and one that provides a path to production deployment.
 
 
