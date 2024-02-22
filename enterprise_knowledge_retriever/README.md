@@ -85,7 +85,23 @@ ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 VECTOR_DB_URL=http://host.docker.internal:6333
 ```
-3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
+3.  Install system dependencies
+      
+
+   - Ubuntu instalation:
+      ```
+      sudo apt install tesseract-ocr
+      ```
+   - Mac Homebrew instalation:
+      ```
+      brew install tesseract
+      ```
+  - Windows instalation:
+      > [Windows tessearc instalation](https://github.com/UB-Mannheim/tesseract/wiki)
+
+   - For other linux dstributions follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html) 
+
+4. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
 cd ai_starter_kit/enterprise_knowledge_retriever
 python3 -m venv enterprise_knowledge_env
