@@ -1,7 +1,7 @@
 speaker1: fire paramedic thirty three what is the address of your emergency
 speaker2: ys sir I need to: I: uh hh I need an ambulance as soon as possible sir
 speaker1: Ok sir what's your address
-speaker2: Los Angeles speaker2ifornia
+speaker2: Los Angeles california
 speaker2: nine zero zero seven seven
 speaker1: 's it Carolwood
 speaker2: Carolwood Drive yes hh ∙hh
