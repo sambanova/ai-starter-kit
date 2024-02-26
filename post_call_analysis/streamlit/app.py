@@ -5,8 +5,7 @@ import streamlit as st
 import glob
 import time
 import pandas as pd
-from dotenv import load_dotenv
-load_dotenv("../export.env")
+from post_call_analysis.src import analysis
 
 
 audio_save_location=("./data/conversations/audio")
@@ -14,7 +13,7 @@ transcript_save_location=("./data/conversations/transcription")
 
 def convert_to_dialogue_structure(transcription):
     dialogue = ''  
-    for index, row in transcription.iterrows():
+    for _, row in transcription.iterrows():
         speaker = 'speaker' + str(row['speaker'])
         text = row['text']
         dialogue += speaker + ': ' + text + '\n'   
@@ -26,10 +25,11 @@ def process_audio(audio_path):
     #TODO save transcription csv
     return pd.read_csv("./data/conversations/transcription/911_transcript.csv")
 
-def analyse_transcription(trancription):
-    dialogue = convert_to_dialogue_structure(trancription) 
-    #TODO execute src for dialoge analysis
-    return dialogue
+def analyse_transcription(transcription, transcription_path, facts_path ,classes, entities):
+    dialogue = convert_to_dialogue_structure(transcription) 
+    conversation = analysis.load_conversation(dialogue, transcription_path)
+    result=analysis.call_analysis_parallel(conversation.page_content, documents_path=facts_path, classes_list=classes, entities_list=entities)
+    return result
 
 def handle_userinput():
     # display block
@@ -37,16 +37,23 @@ def handle_userinput():
     if st.session_state.transcription is None:
         st.info("Start selecting and processing the input in the side bar ")
     if st.session_state.audio_path:
+        st.title("Call audio to process")
         st.audio(st.session_state.audio_path)
     if st.session_state.transcription is not None:
+        st.title("Call transcript to process")
         st.dataframe(st.session_state.transcription)
         if st.button("Analyse transcription"):
-            if st.session_state.entities_list:
-                with st.spinner("Processing"):
-                    st.session_state.analysis_result=analyse_transcription(st.session_state.transcription)
+            if st.session_state.entities_list and st.session_state.facts_path and st.session_state.classes_list:
+                with st.spinner("**Processing** this could take some minutes"):
+                    st.session_state.analysis_result=analyse_transcription(st.session_state.transcription,
+                                                                           st.session_state.transcript_path,
+                                                                           st.session_state.facts_path ,
+                                                                           st.session_state.classes_list,
+                                                                           st.session_state.entities_list)
             else:
-                st.error("You must set classes and entities in Analysis setting sidebar", icon="🚨")
+                st.error("You must set classes, entities and factual check documents path in Analysis setting sidebar", icon="🚨")
     if st.session_state.analysis_result:
+        st.title("Analysis Results")
         st.write(st.session_state.analysis_result)
                 
 
@@ -68,6 +75,8 @@ def main():
         st.session_state.classes_list = ["undefined"]
     if "entities_list" not in st.session_state:
         st.session_state.entities_list = []
+    if "facts_path" not in st.session_state:
+        st.session_state.facts_path = None
     if "analysis_result" not in st.session_state:
         st.session_state.analysis_result = None
         
@@ -141,47 +150,66 @@ def main():
                 
         # Analysis setup
         st.title("Analysis Setings")
-        st.markdown("**1. Include the main topic classes to classify**")
-        col_a1, col_a2 = st.columns((3,2))
-        new_class = col_a1.text_input("Add class:", "general information request")
-        col_a2.markdown(
-            """
-            <style>
-                div[data-testid="column"]:nth-of-type(2)
-                {
-                    padding-top: 3%;
-                } 
-            </style>
-            """,unsafe_allow_html=True
-        )
-        if col_a2.button("Include class") and new_class:
-            st.session_state.classes_list.append(new_class) 
-        with st.expander(f"{len(st.session_state.classes_list)} Classes",expanded=True):
+        with st.expander("Audio input settings"):
+            st.markdown("**1. Include the main topic classes to classify**")
+            col_a1, col_a2 = st.columns((3,2))
+            new_class = col_a1.text_input("Add class:", "general information request")
+            col_a2.markdown(
+                """
+                <style>
+                    div[data-testid="column"]:nth-of-type(2)
+                    {
+                        padding-top: 3%;
+                    } 
+                </style>
+                """,unsafe_allow_html=True
+            )
+            if col_a2.button("Include class") and new_class:
+                st.session_state.classes_list.append(new_class) 
             st.write(st.session_state.classes_list)
-        if st.button("Clear Classes List"):
-            st.session_state.classes_list = ["undefined"]
-            st.experimental_rerun()
-            
-        st.markdown("**2. Include entities to extract**")
-        col_b1, col_b2 = st.columns((3,2))
-        new_entity = col_b1.text_input("Add entity:", "names")
-        col_b2.markdown(
-            """
-            <style>
-                div[data-testid="column"]:nth-of-type(2)
-                {
-                    padding-top: 3%;
-                } 
-            </style>
-            """,unsafe_allow_html=True
-        )
-        if col_b2.button("Include entity") and new_entity:
-            st.session_state.entities_list.append(new_entity) 
-        with st.expander(f"{len(st.session_state.entities_list)} Entities",expanded=True):
+            if st.button("Clear Classes List"):
+                st.session_state.classes_list = ["undefined"]
+                st.experimental_rerun()
+                
+            st.markdown("**2. Include entities to extract**")
+            col_b1, col_b2 = st.columns((3,2))
+            new_entity = col_b1.text_input("Add entity:", "names")
+            col_b2.markdown(
+                """
+                <style>
+                    div[data-testid="column"]:nth-of-type(2)
+                    {
+                        padding-top: 3%;
+                    } 
+                </style>
+                """,unsafe_allow_html=True
+            )
+            if col_b2.button("Include entity") and new_entity:
+                st.session_state.entities_list.append(new_entity) 
             st.write(st.session_state.entities_list)
-        if st.button("Clear Entities List"):
-            st.session_state.entities_list = []
-            st.experimental_rerun()
+            if st.button("Clear Entities List"):
+                st.session_state.entities_list = []
+                st.experimental_rerun()
+                
+            st.markdown("**3. Select path with documents for factual check**")
+            col_c1, col_c2 = st.columns((3,2))
+            facts_path = col_c1.text_input("set factual check documents path", "./data/documents")
+            col_c2.markdown(
+                """
+                <style>
+                    div[data-testid="column"]:nth-of-type(2)
+                    {
+                        padding-top: 3%;
+                    } 
+                </style>
+                """,unsafe_allow_html=True
+            )
+            if col_c2.button("set path") and facts_path:
+                if os.path.exists(facts_path):
+                    st.session_state.facts_path=(facts_path) 
+                else:
+                    st.error(f"{facts_path} does not exist", icon="🚨")
+
                                 
     handle_userinput()
 if __name__ == "__main__":
