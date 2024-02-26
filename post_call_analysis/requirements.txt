@@ -9,3 +9,5 @@ faiss-cpu==1.7.4
 streamlit==1.25.0
 streamlit-extras==0.3.6
 watchdog
+sseclient
+sseclient==0.0.27
