@@ -1,0 +1,21 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - conversation
+  - entities
+  - format_instructions
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>> Given the following conversation
+          {conversation}
+          extract th following named entities
+          {entities}
+          if there is not a given value for one entity in the list keep it blank
+                    
+          {format_instructions}
+          <</SYS>>\n
+          NER: [/INST]
+template_format: f-string
+validate_template: false
