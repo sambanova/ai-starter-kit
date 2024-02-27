@@ -1,7 +1,7 @@
 asr:
   datasets:
     datasets_path: ../data/datasets
-    dataset_name: PCA_dataset_1
+    dataset_name: PCA_dataset
     dataset_description: Dataset for Post Call Analysis AISK
     dataset_source_file: ../data/datasets/source.json
     dataset_source_type: localMachine
