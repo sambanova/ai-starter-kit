@@ -108,12 +108,11 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
 def call_analysis_parallel(conversation, documents_path, classes_list, entities_list):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submitting tasks to executor
-        retriever_future = executor.submit(set_retriever, documents_path=documents_path)
+        retriever = set_retriever(documents_path=documents_path)
         summary_future = executor.submit(get_summary, conversation=conversation)
         classification_future = executor.submit(classify_main_topic, conversation=conversation, classes=classes_list)
         entities_future = executor.submit(get_entities, conversation=conversation, entities=entities_list)
         sentiment_future = executor.submit(get_sentiment, conversation=conversation)
-        retriever=retriever_future.result()
         factual_analysis_future = executor.submit(factual_accuracy_analysis, conversation=conversation, retriever = retriever)
 
         # Retrieving results
@@ -123,7 +122,7 @@ def call_analysis_parallel(conversation, documents_path, classes_list, entities_
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
 
-    quality_score = None  # Assuming this doesn't require parallel execution
+    quality_score = 58  # Assuming this doesn't require parallel execution
 
     return {
         "summary": summary,

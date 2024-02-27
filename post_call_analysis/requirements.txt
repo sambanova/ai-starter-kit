@@ -6,8 +6,12 @@ unstructured
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 faiss-cpu==1.7.4
-streamlit==1.25.0
+streamlit==1.31.1
 streamlit-extras==0.3.6
 watchdog
 sseclient
 sseclient==0.0.27
+plotly==5.19.0
+nbformat==5.9.2
+librosa==0.10.1
+streamlit_javascript==0.1.5
