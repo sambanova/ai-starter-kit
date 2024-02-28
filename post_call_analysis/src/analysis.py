@@ -110,7 +110,10 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
                                                                  ),
                                                   ResponseSchema(name="errors",
                                                                  description="list of summarized errors made by the agent, if there is no errors, emplty list" ,
-                                                                 type="list")
+                                                                 type="list"),
+                                                  ResponseSchema(name="score",
+                                                                 description="puntuation from 1 to 100 of the overall quallity of the agent" ,
+                                                                 type="int")
                                                 ]
     factual_accuracy_analysis_output_parser = StructuredOutputParser.from_response_schemas(factual_accuracy_analysis_response_schemas)
     format_instructions=factual_accuracy_analysis_output_parser.get_format_instructions()
@@ -152,7 +155,7 @@ def call_analysis_parallel(conversation, documents_path, classes_list, entities_
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
 
-    quality_score = 58  # TO-DO create method
+    quality_score = factual_analysis["score"] 
 
     return {
         "summary": summary,
