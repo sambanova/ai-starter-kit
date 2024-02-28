@@ -1,6 +1,6 @@
 # import dependencies
 import sys                                                  # for appending more paths
-sys.path.append("../../")
+sys.path.append("../")
 import os                                                   # for using env variables
 import streamlit as st                                      # for gui elements, secrets management
 import json                                                 # for loading prompt example config file
@@ -13,14 +13,14 @@ from dotenv import load_dotenv                              # for loading env va
 from utils.sambanova_endpoint import SambaNovaEndpoint      # for calling Sambanova LLM endpoint
 
 # load env variables 
-load_dotenv('../../export.env')
+load_dotenv('../export.env')
 
 # populate variables from secrets file
 LLAMA2_70B_LLM_ENDPOINT = os.getenv("LLAMA2_70B_LLM_ENDPOINT") 
 LLAMA2_70B_LLM_API_KEY = os.getenv("LLAMA2_70B_LLM_API_KEY") 
 
 # define config path
-CONFIG_PATH = '../config.json'
+CONFIG_PATH = './config.json'
 
 
 @st.cache_data
@@ -82,7 +82,7 @@ def get_prompt_template(model: str, prompt_use_case: str) -> str:
     
     # Load prompt from the corresponding yaml file
     prompt_file_name = f"{model.lower().replace(' ','_')}-prompt_engineering-{prompt_use_case.lower().replace(' ','_')}_usecase.yaml"
-    prompt = load_prompt(f'../prompts/{prompt_file_name}')
+    prompt = load_prompt(f'./prompts/{prompt_file_name}')
     
     return prompt.template
     
@@ -136,7 +136,7 @@ def create_prompt_yamls() -> None:
         for model_key, prommpt_template in usecase_value.items():
             prompt_file_name = f"{model_key.lower().replace(' ','_')}-prompt_engineering-{usecase_key.lower().replace(' ','_')}_usecase"
             prompt = PromptTemplate.from_template(prommpt_template)
-            prompt.save(f"../prompts/{prompt_file_name}.yaml")
+            prompt.save(f"./prompts/{prompt_file_name}.yaml")
             
 
 def main():
@@ -145,7 +145,7 @@ def main():
     st.set_page_config(page_title='Prompt Engineering - SambaNova Starter Kits',  layout="centered", initial_sidebar_state="auto", menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'})  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:, 
     col1, mid, col2 = st.columns([1,1,20])
     with col1:
-        render_svg('../docs/sambanova-ai.svg')
+        render_svg('./docs/sambanova-ai.svg')
     with col2:
         st.title('Prompt Engineering Starter Kit')
 
