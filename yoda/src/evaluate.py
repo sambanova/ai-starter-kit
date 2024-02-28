@@ -24,6 +24,17 @@ llm = SambaNovaEndpoint(
             },
             )
 
+llm_baseline = SambaNovaEndpoint(
+    base_url=os.getenv('YODA_BASE_URL'),
+    project_id=os.getenv('YODA_PROJECT_ID'),
+    endpoint_id=os.getenv('BASELINE_ENDPOINT_ID'),
+    api_key=os.getenv('BASELINE_API_KEY'),
+    model_kwargs={
+                'do_sample': False,
+                'max_tokens_to_generate': 256
+            },
+            )
+
 # Prompt prefix and postfix for llama chat model
 prompt_prefix = "[INST] "
 prompt_postfix = " [\INST]"
@@ -91,7 +102,7 @@ if __name__ == '__main__':
 
         # Ignorant baseline with out-of-the-box llama-7b
         prompt = example["question"]
-        ignorant_pred_answer = llm(prompt=prompt_prefix + prompt + prompt_postfix)
+        ignorant_pred_answer = llm_baseline(prompt=prompt_prefix + prompt + prompt_postfix)
 
 
         # Generate answer with question and golden context
