@@ -95,9 +95,3 @@ python -m src.evaluate
     --config /path/to/config.yaml 
 ```
 Please replace  `/path/to/config.yaml`  with your actual paths.
-
-
-- add baseline for normal llama 7b model
-- light refactoring - tokenizer - can I safely delete helper.py
-- dont push datasets yet - upload to gdrive
-- top_k lower and chunking within article
