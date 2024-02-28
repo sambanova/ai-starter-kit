@@ -1,0 +1,13 @@
+# Yoda Data Configuration
+src_folder: "/Users/imranr/Documents/Snova/ai-starter-kit/yoda_old/txts/"
+src_subfolders:
+  - sambanova_resources_blogs
+  - sambanova_industries_solutions
+  - sambaflow
+  - sambaruntime
+  - sambastudio
+  - sambatune
+  - converted_pdfs
+  - converted_papers
+dest_folder: "/Users/imranr/Documents/Snova/ai-starter-kit/yoda/data"
+tokenizer_path: "/Users/imranr/Documents/Snova/ai-starter-kit/yoda_old/7btokeniser/Llama-2-7b-hf"
