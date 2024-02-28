@@ -29,7 +29,8 @@ def process_audio(audio_path):
 def analyse_transcription(transcription, transcription_path, facts_path ,classes, entities):
     dialogue = convert_to_dialogue_structure(transcription) 
     conversation = analysis.load_conversation(dialogue, transcription_path)
-    result=analysis.call_analysis_parallel(conversation.page_content, documents_path=facts_path, classes_list=classes, entities_list=entities)
+    conversation_chunks = analysis.get_chunks(conversation)
+    result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, classes_list=classes, entities_list=entities)
     return result
 
 def handle_userinput():
@@ -192,7 +193,7 @@ def main():
         with st.expander("Audio input settings"):
             st.markdown("**1. Include the main topic classes to classify**")
             col_a1, col_a2 = st.columns((3,2))
-            new_class = col_a1.text_input("Add class:", "general information request")
+            new_class = col_a1.text_input("Add class:", "other")
             col_a2.markdown('#')
             if col_a2.button("Include class") and new_class:
                 st.session_state.classes_list.append(new_class) 
@@ -203,7 +204,7 @@ def main():
                 
             st.markdown("**2. Include entities to extract**")
             col_b1, col_b2 = st.columns((3,2))
-            new_entity = col_b1.text_input("Add entity:", "names")
+            new_entity = col_b1.text_input("Add entity:", "id")
             col_b2.markdown('#')
             if col_b2.button("Include entity") and new_entity:
                 st.session_state.entities_list.append(new_entity) 

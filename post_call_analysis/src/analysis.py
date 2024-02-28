@@ -7,6 +7,9 @@ load_dotenv("../export.env")
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from langchain.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
+from langchain.chains import ReduceDocumentsChain, LLMChain
+from langchain.chains.combine_documents.stuff import StuffDocumentsChain
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.output_parsers import CommaSeparatedListOutputParser, StructuredOutputParser, ResponseSchema
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -24,7 +27,27 @@ model = SambaNovaEndpoint(
 
 def load_conversation(transcription, transcription_path):
     doc = Document(page_content=transcription, metadata={"source": transcription_path})
-    return doc
+    return [doc]
+
+def reduce_call(conversation):
+    reduce_prompt = load_prompt("./prompts/reduce.yaml")
+    reduce_chain = LLMChain(llm=model, prompt=reduce_prompt)  
+    combine_documents_chain = StuffDocumentsChain(
+        llm_chain=reduce_chain, document_variable_name="transcription_chunks"
+    )
+    # Combines and iteravely reduces the documents
+    reduce_documents_chain = ReduceDocumentsChain(
+        # This is final chain that is called.
+        combine_documents_chain=combine_documents_chain,
+        # If documents exceed context for `StuffDocumentsChain`
+        collapse_documents_chain=combine_documents_chain,
+        # The maximum number of tokens to group documents into.
+        token_max=1200,  
+    )
+    print("reducing call")
+    new_document = reduce_documents_chain.invoke(conversation)["output_text"]
+    print("call reduced")
+    return new_document
 
 def get_summary(conversation, model=model):
     summarization_prompt=load_prompt("./prompts/summarization.yaml")
@@ -105,15 +128,22 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
     print("factual check done")
     return factual_accuracy_analysis_response
 
+def get_chunks(documents):
+    #split long document
+    splitter = RecursiveCharacterTextSplitter(chunk_size= 800, chunk_overlap= 200)
+    return  splitter.split_documents(documents)
+
 def call_analysis_parallel(conversation, documents_path, classes_list, entities_list):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submitting tasks to executor
+        reduced_conversation_future = executor.submit(reduce_call, conversation=conversation)
         retriever = set_retriever(documents_path=documents_path)
-        summary_future = executor.submit(get_summary, conversation=conversation)
-        classification_future = executor.submit(classify_main_topic, conversation=conversation, classes=classes_list)
-        entities_future = executor.submit(get_entities, conversation=conversation, entities=entities_list)
-        sentiment_future = executor.submit(get_sentiment, conversation=conversation)
-        factual_analysis_future = executor.submit(factual_accuracy_analysis, conversation=conversation, retriever = retriever)
+        reduced_conversation = reduced_conversation_future.result()
+        summary_future = executor.submit(get_summary, conversation=reduced_conversation)
+        classification_future = executor.submit(classify_main_topic, conversation=reduced_conversation, classes=classes_list)
+        entities_future = executor.submit(get_entities, conversation=reduced_conversation, entities=entities_list)
+        sentiment_future = executor.submit(get_sentiment, conversation=reduced_conversation)
+        factual_analysis_future = executor.submit(factual_accuracy_analysis, conversation=reduced_conversation, retriever = retriever)
 
         # Retrieving results
         summary = summary_future.result()
@@ -122,7 +152,7 @@ def call_analysis_parallel(conversation, documents_path, classes_list, entities_
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
 
-    quality_score = 58  # Assuming this doesn't require parallel execution
+    quality_score = 58  # TO-DO create method
 
     return {
         "summary": summary,
