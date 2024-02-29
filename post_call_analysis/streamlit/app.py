@@ -2,11 +2,10 @@ import os
 import sys
 sys.path.append("../")
 import streamlit as st
-from streamlit_javascript import st_javascript
 import glob
-import time
 import pandas as pd
-from post_call_analysis.src import analysis, plot
+from streamlit_javascript import st_javascript
+from post_call_analysis.src import analysis, plot, asr
 
 
 audio_save_location=("./data/conversations/audio")
@@ -21,10 +20,11 @@ def convert_to_dialogue_structure(transcription):
     return dialogue
 
 def process_audio(audio_path):
-    time.sleep(0.5)
-    #TODO make transcription
-    #TODO save transcription csv
-    return pd.read_csv("./data/conversations/transcription/911_transcript.csv")
+    audio_processor = asr.BatchASRProcessor()
+    df = audio_processor.process_audio(audio_path)
+    filename, _ = os.path.splitext(os.path.basename(audio_path))
+    df.to_csv(os.path.join(transcript_save_location,f'{filename}.csv'))
+    return df
 
 def analyse_transcription(transcription, transcription_path, facts_path ,classes, entities):
     dialogue = convert_to_dialogue_structure(transcription) 
@@ -153,7 +153,7 @@ def main():
             st.markdown("**3. Get transcription**")
             if st.button("process audio"):
                 if st.session_state.audio_path:
-                    with st.spinner("Processing"):
+                    with st.spinner("Processing this could take some minutes..."):
                         st.session_state.transcription=process_audio(st.session_state.audio_path)
                 else:
                     st.error("You must provide an audio file", icon="🚨")

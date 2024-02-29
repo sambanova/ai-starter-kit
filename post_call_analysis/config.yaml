@@ -1,9 +1,9 @@
 asr:
   datasets:
-    datasets_path: ../data/datasets
+    datasets_path: ./data/datasets
     dataset_name: PCA_dataset
     dataset_description: Dataset for Post Call Analysis AISK
-    dataset_source_file: ../data/datasets/source.json
+    dataset_source_file: ./data/datasets/source.json
     dataset_source_type: localMachine
     dataset_language: english
     
@@ -23,7 +23,7 @@ asr:
     project_description: This project will process ASR with diarization jobs regarding Post Call Analysis AISK.
   
   jobs:
-    job_name: PCA job pipeline test 4
+    job_name: PCA job pipeline
     job_description: PCA - ASR with diarization and batch prediction
     job_task: ASR With Diarization
     job_type: batch_predict
