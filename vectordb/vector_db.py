@@ -20,7 +20,7 @@ import os
 
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
 
 EMBEDDING_MODEL = "hkunlp/instructor-large"
@@ -68,8 +68,8 @@ class VectorDb():
         Args:
             docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
             If metadata is passed, this parameter is a list of texts.
-            chunk_size (int): chunk size in number of tokens
-            chunk_overlap (int): chunk overlap in number of tokens
+            chunk_size (int): chunk size in number of characters
+            chunk_overlap (int): chunk overlap in number of characters
             metadata (list, optional): list of metadata in dictionary format. Defaults to None.
 
         Returns:
@@ -86,6 +86,30 @@ class VectorDb():
         else:
             logger.info(f"Splitter: creating documents with metadata")
             chunks = text_splitter.create_documents(docs, meta_data)
+
+        logger.info(f"Total {len(chunks)} chunks created")
+
+        return chunks
+
+    def get_token_chunks(self, docs: list, chunk_size: int, chunk_overlap: int, tokenizer) -> list:
+        """Gets token chunks. If metadata is not None, it will create chunks with metadata elements.
+
+        Args:
+            docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
+            If metadata is passed, this parameter is a list of texts.
+            chunk_size (int): chunk size in number of tokens
+            chunk_overlap (int): chunk overlap in number of tokens
+
+        Returns:
+            list: list of documents
+        """
+
+        text_splitter = CharacterTextSplitter.from_huggingface_tokenizer(
+            tokenizer, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+
+        logger.info(f"Splitter: splitting documents")
+        chunks = text_splitter.split_documents(docs)
 
         logger.info(f"Total {len(chunks)} chunks created")
 
@@ -203,11 +227,14 @@ class VectorDb():
 
         return vector_store
 
-    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False):
+    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False, tokenizer=None):
 
         docs = self.load_files(input_path, recursive=recursive)
 
-        chunks = self.get_text_chunks(docs, chunk_size, chunk_overlap)
+        if tokenizer is None:
+            chunks = self.get_text_chunks(docs, chunk_size, chunk_overlap)
+        else:
+            chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
         embeddings = self.load_embedding_model()
 
