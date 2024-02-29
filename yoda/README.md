@@ -53,14 +53,14 @@ and this iss set as the default parameter for the data generation scripts below.
 
 #### To Generate pretraining data
 ```
-python -m src.gen_data
+python -m src/gen_data.py
     --config /path/to/config
     --purpose pretrain 
 ```
 
 #### To generate finetuning data
 ```
-python -m src.gen_data
+python src/gen_data.py
     --config /path/to/config
     --purpose finetune 
 ```
@@ -99,7 +99,7 @@ a golden context.\
 \
 To assess the trained model, execute the following script:
 ```
-python -m src.evaluate 
+python src/evaluate.py 
     --config /path/to/config.yaml 
 ```
 Please replace  `/path/to/config.yaml`  with your actual paths.
