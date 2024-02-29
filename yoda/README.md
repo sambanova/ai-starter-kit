@@ -13,15 +13,23 @@ These instructions will guide you on how to generate training data, preprocess i
 
 In the example below 
 ```
-BASE_URL="https://sjc3-demo2.sambanova.net"
-PROJECT_ID="60774d44-3cc3-47eb-aa91-87fae2e8655e"
-ENDPOINT_ID="b0e414eb-4863-4a8c-9839-3c2dfa718ae5"
+#SambaStudio config for LLAMA 70B model
+BASE_URL=""
+PROJECT_ID=""
+ENDPOINT_ID=""
 API_KEY=""
 
-FINETUNED_BASE_URL="https://sjc1-demo1.sambanova.net"
-FINETUNED_PROJECT_ID=""
+#SambaStudio config for LLAMA 7B model finetuned model to complete once training complete
+YODA_BASE_URL=""
+YODA_PROJECT_ID=""
+
 FINETUNED_ENDPOINT_ID=""
 FINETUNED_API_KEY=""
+
+#SambaStudio config for off-the-shelf LLAMA 7B model for evaluation
+BASELINE_ENDPOINT_ID=""
+BASELINE_API_KEY=""
+
 DEMO1_API_KEY=""
 ``` 
 
