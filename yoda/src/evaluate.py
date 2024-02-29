@@ -100,9 +100,11 @@ if __name__ == '__main__':
     else:
         vectordb = VectorDb().create_vdb(input_path=base_dir,
                                          output_db=PERSIST_DIRECTORY,
-                                         chunk_size=1000,
-                                         chunk_overlap=200,
-                                         db_type="chroma", recursive=True
+                                         chunk_size=config["chunk_size"],
+                                         chunk_overlap=config["chunk_overlap"],
+                                         db_type="chroma",
+                                         recursive=True,
+                                         tokenizer = tokenizer
                                          )
 
     retriever = vectordb.as_retriever(search_kwargs={"k": RAG_CONTEXT_TOP_K})
