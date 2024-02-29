@@ -27,7 +27,7 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 from tqdm.auto import tqdm
 
 sys.path.append("..")
-from src.models.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint
 
 
 # Setup logging
