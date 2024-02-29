@@ -8,10 +8,15 @@ import tqdm
 import yaml
 from transformers import AutoTokenizer
 
-from utils import qa_processing, data_reader
+import sys
 
 from dotenv import load_dotenv
 load_dotenv('.env')
+
+sys.path.append("../")
+from yoda.utils import qa_processing, data_reader
+from yoda.prompts.prompts import QA_GEN_TEMPLATE
+
 
 # set the log format to stdout
 logging.basicConfig(level=logging.INFO,
@@ -60,22 +65,7 @@ def pretrain(articles, data_dir: str, processed_data_folder: str = 'processed_da
 
 
 # create training data for finetuning
-def finetune(articles, data_dir, tokenizer, pretrain_data=None) -> None:
-    QA_GEN_TEMPLATE = """
-
-    Based on the previous context article, please generate 10 question-answer pairs in the format of:
-    <human>:{question}\n<bot>:{answer}
-
-    Phrase the question so that it does NOT refer to specific context. \
-    For instance, do NOT put phrases like "given provided context" or \
-    "in this work" in the question, because if the question is asked elsewhere \
-    it wouldn't be provided specific context. \
-    Replace these terms with specific details.
-
-    Separate the question-answer pairs with '###'.
-
-    Generate the question-answer pairs below:
-    """
+def finetune(articles, data_dir, tokenizer, pretrain_data=None, n_eval_samples = 50) -> None:
 
     # Get LLM response for each article
     for doc in tqdm.tqdm(articles):
@@ -107,8 +97,6 @@ def finetune(articles, data_dir, tokenizer, pretrain_data=None) -> None:
     regeneration_list_file = os.path.join(
         data_dir, "response_data", "response_needed_regeneration.jsonl")
 
-    # specify the size of evaluation set
-    n_eval_samples = 50
 
     # process the responses data into QA data
     response_data = data_reader.read_jsonl_data(response_file)
@@ -166,11 +154,14 @@ if __name__ == '__main__':
         [os.path.join(base_dir, folder) for folder in subfolders])
     logging.info("number of articles: {}".format(len(articles)))
 
+    n_eval_samples = config['n_eval_samples']
+
     if args.purpose == "pretrain":
         pretrain(articles, data_dir)
     elif args.purpose == "finetune":
-        finetune(articles, tokenizer_path=tokenizer_path, data_dir=data_dir)
+        finetune(articles, tokenizer=tokenizer, data_dir=data_dir,n_eval_samples=n_eval_samples)
     else:
         assert args.purpose == "both"
         pretrain_data = pretrain(articles)
-        finetune(articles, tokenizer_path=tokenizer_path, data_dir=data_dir, pretrain_data=pretrain_data)
+        finetune(articles, tokenizer=tokenizer, data_dir=data_dir, pretrain_data=pretrain_data,
+                 n_eval_samples=n_eval_samples)
