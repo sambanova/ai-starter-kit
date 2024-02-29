@@ -2,7 +2,7 @@
 import logging
 
 from .data_reader import read_txt_data, format_text
-from .sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint
 
 
 def process_response_data(response_data):
@@ -70,7 +70,9 @@ def format_qa_data(qa_data):
         assert "\n\n<human>" not in d["answer"]
         answer = d["answer"].replace("?", "'")
 
-        question_with_context = f'Here is some relevant context that might assist in answering the SambaNova-related question.\n\n{d["article"]}\n\nAnswer the following SambaNova-related question: {question}\nAnswer:'
+        question_with_context = (f'Here is some relevant context that might assist in answering the SambaNova-related'
+                                 f' question.\n\n{d["article"]}\n\nAnswer the following'
+                                 f' SambaNova-related question: {question}\nAnswer:')
 
         completion = answer
         training_data.append({"question": question,
