@@ -1,35 +1,33 @@
 import argparse
 import csv
 import glob
-import json
 import logging
 import os
+import pickle  # Import for saving and loading .pkl files
+import sys
 from pathlib import Path
-import pandas as pd
 from random import shuffle
-from tqdm.auto import tqdm
-from typing import List, Tuple
+from typing import List, Union
+from typing import Tuple
+
+import pandas as pd
+from dotenv import load_dotenv
+from llama_index import SimpleDirectoryReader, ServiceContext, VectorStoreIndex
+from llama_index.embeddings import OpenAIEmbedding
 from llama_index.finetuning import (
     generate_qa_embedding_pairs,
     EmbeddingQAFinetuneDataset,
     SentenceTransformersFinetuneEngine,
 )
-from llama_index.embeddings import OpenAIEmbedding
-from sentence_transformers.evaluation import InformationRetrievalEvaluator
-from sentence_transformers import SentenceTransformer
-from llama_index import SimpleDirectoryReader, ServiceContext, VectorStoreIndex
+from llama_index.llms import LangChainLLM
 from llama_index.node_parser import SentenceSplitter
-from llama_index.schema import MetadataMode, TextNode
-from llama_index.llms import LangChainLLM, OpenAI
-from typing import List, Union
-import pickle  # Import for saving and loading .pkl files
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-import sys
+from llama_index.schema import TextNode
+from sentence_transformers import SentenceTransformer
+from sentence_transformers.evaluation import InformationRetrievalEvaluator
+from tqdm.auto import tqdm
 
 sys.path.append("..")
-from src.models.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint
 
 
 # Setup logging

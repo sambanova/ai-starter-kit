@@ -20,7 +20,7 @@ import os
 
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
 
 EMBEDDING_MODEL = "hkunlp/instructor-large"
@@ -40,12 +40,13 @@ logging.basicConfig(
 # Create a logger object
 logger = logging.getLogger(__name__)
 
+
 class VectorDb():
-    
+
     def __init__(self) -> None:
         pass
-    
-    def load_files(self, input_path: str) -> list:
+
+    def load_files(self, input_path: str, recursive=False) -> list:
         """Load files from input location
 
         Args:
@@ -54,42 +55,66 @@ class VectorDb():
         Returns:
             list: list of documents
         """
-        
-        loader = DirectoryLoader(input_path, glob="*.txt")
+
+        loader = DirectoryLoader(input_path, glob="*.txt", recursive=recursive, show_progress=True)
         docs = loader.load()
         logger.info(f"Total {len(docs)} files loaded")
-        
+
         return docs
-    
+
     def get_text_chunks(self, docs: list, chunk_size: int, chunk_overlap: int, meta_data: list = None) -> list:
         """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
 
         Args:
             docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
             If metadata is passed, this parameter is a list of texts.
-            chunk_size (int): chunk size in number of tokens
-            chunk_overlap (int): chunk overlap in number of tokens
+            chunk_size (int): chunk size in number of characters
+            chunk_overlap (int): chunk overlap in number of characters
             metadata (list, optional): list of metadata in dictionary format. Defaults to None.
 
         Returns:
-            list: list of documents 
+            list: list of documents
         """
-        
+
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
         )
-        
+
         if meta_data is None:
             logger.info(f"Splitter: splitting documents")
             chunks = text_splitter.split_documents(docs)
         else:
             logger.info(f"Splitter: creating documents with metadata")
             chunks = text_splitter.create_documents(docs, meta_data)
-            
+
         logger.info(f"Total {len(chunks)} chunks created")
-        
+
         return chunks
-    
+
+    def get_token_chunks(self, docs: list, chunk_size: int, chunk_overlap: int, tokenizer) -> list:
+        """Gets token chunks. If metadata is not None, it will create chunks with metadata elements.
+
+        Args:
+            docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
+            If metadata is passed, this parameter is a list of texts.
+            chunk_size (int): chunk size in number of tokens
+            chunk_overlap (int): chunk overlap in number of tokens
+
+        Returns:
+            list: list of documents
+        """
+
+        text_splitter = CharacterTextSplitter.from_huggingface_tokenizer(
+            tokenizer, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+
+        logger.info(f"Splitter: splitting documents")
+        chunks = text_splitter.split_documents(docs)
+
+        logger.info(f"Total {len(chunks)} chunks created")
+
+        return chunks
+
     def load_embedding_model(self) -> HuggingFaceInstructEmbeddings:
         """Loads embedding model
 
@@ -104,14 +129,15 @@ class VectorDb():
             query_instruction="Represent this sentence for searching relevant passages: ",
             encode_kwargs=encode_kwargs,
         )
-        
+
         logger.info(
             f"Processing embeddings using {embedding_model}. This could take time depending on the number of chunks ..."
         )
-        
+
         return embeddings
-    
-    def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str, output_db: str = None ):
+
+    def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str,
+                            output_db: str = None):
         """Creates a vector store
 
         Args:
@@ -120,35 +146,35 @@ class VectorDb():
             db_type (str): vector db type
             output_db (str, optional): output path to save the vector db. Defaults to None.
         """
-        
+
         if db_type == "faiss":
             vector_store = FAISS.from_documents(
-                documents=chunks, 
+                documents=chunks,
                 embedding=embeddings
             )
             if output_db:
                 vector_store.save_local(output_db)
-            
+
         elif db_type == "chroma":
             if output_db:
                 vector_store = Chroma.from_documents(
-                    documents=chunks, 
-                    embedding=embeddings, 
+                    documents=chunks,
+                    embedding=embeddings,
                     persist_directory=output_db
                 )
             else:
-                try: 
-                    vector_store=Chroma()
+                try:
+                    vector_store = Chroma()
                     vector_store.delete_collection()
                     print("colelction deleted")
                 except Exception as e:
                     print("colelction not deleted")
                     pass
                 vector_store = Chroma.from_documents(
-                    documents=chunks, 
+                    documents=chunks,
                     embedding=embeddings
                 )
-            
+
         elif db_type == "qdrant":
             if output_db:
                 vector_store = Qdrant.from_documents(
@@ -165,58 +191,64 @@ class VectorDb():
                 )
 
         logger.info(f"Vector store saved to {output_db}")
-        
+
         return vector_store
-        
-    def load_vdb(self, persist_directory, embedding_model, db_type = "chroma"):
+
+    def load_vdb(self, persist_directory, embedding_model, db_type="chroma"):
 
         if db_type == "faiss":
-             vector_store = FAISS.load_local(persist_directory, embedding_model)
+            vector_store = FAISS.load_local(persist_directory, embedding_model)
         elif db_type == "chroma":
             vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
         elif db_type == "qdrant":
             # TODO: vector_store = Qdrant...
             pass
-        
+
         return vector_store
-    
-    def update_vdb(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str, input_db: str = None, output_db: str = None):
-        
+
+    def update_vdb(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str, input_db: str = None,
+                   output_db: str = None):
+
         embeddings = self.load_embedding_model()
-        
+
         if db_type == "faiss":
-             vector_store = FAISS.load_local(input_db, embeddings)
-             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
-             vector_store.merge_from(new_vector_store)
-             if output_db:
-                 vector_store.save_local(output_db)         
-             
+            vector_store = FAISS.load_local(input_db, embeddings)
+            new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
+            vector_store.merge_from(new_vector_store)
+            if output_db:
+                vector_store.save_local(output_db)
+
         elif db_type == "chroma":
             # TODO implement update method for chroma
             pass
         elif db_type == "qdrant":
             # TODO implement update method for qdrant
             pass
-        
-        return vector_store
-    
-    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None):
-        
-        docs = self.load_files(input_path)
 
-        chunks = self.get_text_chunks(docs, chunk_size, chunk_overlap)
+        return vector_store
+
+    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False, tokenizer=None):
+
+        docs = self.load_files(input_path, recursive=recursive)
+
+        if tokenizer is None:
+            chunks = self.get_text_chunks(docs, chunk_size, chunk_overlap)
+        else:
+            chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
         embeddings = self.load_embedding_model()
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
-        
+
         return vector_store
+
 
 def dir_path(path):
     if os.path.isdir(path):
         return path
     else:
         raise argparse.ArgumentTypeError(f"readable_dir:{path} is not a valid path")
+
 
 # Parse the arguments
 def parse_arguments():
@@ -227,6 +259,7 @@ def parse_arguments():
     parser.add_argument("-output_path", type=dir_path, help="path to input directory")
 
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process data with optional chunking")
@@ -250,9 +283,9 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    
+
     vectordb = VectorDb()
-    
+
     vectordb.create_vdb(
         args.input_path,
         args.output_db,

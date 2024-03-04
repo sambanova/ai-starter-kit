@@ -1,0 +1,23 @@
+# Yoda Data Configuration
+src_folder: ""
+src_subfolders:
+  - sambanova_resources_blogs
+  - sambanova_industries_solutions
+  - sambaflow
+  - sambaruntime
+  - sambastudio
+  - sambatune
+  - converted_pdfs
+  - converted_papers
+dest_folder: ""
+tokenizer_path: ""
+
+
+#Evaluation
+# specify the size of evaluation set during data generation
+n_eval_samples: 50
+vector_db_path: ""
+RAG_CONTEXT_TOP_K: 2
+chunk_size: 300
+chunk_overlap: 15
+
