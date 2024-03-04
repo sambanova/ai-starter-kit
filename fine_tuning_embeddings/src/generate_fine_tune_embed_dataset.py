@@ -1,22 +1,22 @@
-
-import sys
 import argparse
 import glob
 import json
+import logging
 import os
-import pickle
 import random
 import re
+import sys
 import uuid
-import logging
 from typing import Tuple, Dict, List
-from tqdm import tqdm
 
 from llama_index import SimpleDirectoryReader
+from llama_index.llms import LangChainLLM
 from llama_index.node_parser import SimpleNodeParser
 from llama_index.schema import MetadataMode
-from llama_index.llms import LangChainLLM, OpenAI
-from .sambanova_endpoint import SambaNovaEndpoint
+from tqdm import tqdm
+
+sys.path.append("..")
+from utils.sambanova_endpoint import SambaNovaEndpoint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

@@ -1,25 +1,18 @@
-import requests
 import numpy as np
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
 from langchain_core.embeddings import Embeddings
-from langchain_core.pydantic_v1 import BaseModel, Extra, root_validator
 import sys
-import re
-import sys
-import glob
-from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.vectorstores import FAISS, Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 
 
 # Use embeddings As Part of Langchain
-from langchain.vectorstores import FAISS, Chroma
+from langchain.vectorstores import Chroma
 
 sys.path.append("..")
 from src.models.sambanova_endpoint import SambaNovaEndpoint
