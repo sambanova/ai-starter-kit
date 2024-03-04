@@ -156,19 +156,20 @@ def get_sentiment(conversation, model=model):
     print("sentiment analysis done")
     return sentiment_analysis_response
 
-def set_retriever(documents_path):
+def set_retriever(documents_path, urls):
     """
     Set up a Faiss vector database for document retrieval.
 
     Args:
         documents_path (str): The path to the directory containing the documents.
+        urls (List[str]: The list of Urls to scrape and load)
 
     Returns:
         langchain retirver: The Faiss retrievr to be used whit lang chain retrieval chains.
     """
     print("setting retriever") 
     vdb=VectorDb()
-    retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None, load_txt=True, load_pdf=True).as_retriever()
+    retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None, load_txt=True, load_pdf=True, urls=urls).as_retriever()
     print("retriever set")
     return retriever
 
@@ -227,13 +228,14 @@ def get_chunks(documents):
     splitter = RecursiveCharacterTextSplitter(chunk_size= 800, chunk_overlap= 200)
     return  splitter.split_documents(documents)
 
-def call_analysis_parallel(conversation, documents_path, classes_list, entities_list):
+def call_analysis_parallel(conversation, documents_path, facts_urls, classes_list, entities_list):
     """
     Runs analysis steps in parallel.
 
     Args:
         conversation (str): The conversation to analyse.
         documents_path (str): The path to the directory containing the fact or procedure documents.
+        facts_urls (List[str]): The list of URL to load facts from
         classes_list (List[str]): The list of classes to classify the conversation into.
         entities_list (List[str]): The list of entities to extract.
 
@@ -249,7 +251,7 @@ def call_analysis_parallel(conversation, documents_path, classes_list, entities_
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submitting tasks to executor
         reduced_conversation_future = executor.submit(reduce_call, conversation=conversation)
-        retriever = set_retriever(documents_path=documents_path)
+        retriever = set_retriever(documents_path=documents_path, urls=facts_urls)
         reduced_conversation = reduced_conversation_future.result()
         summary_future = executor.submit(get_summary, conversation=reduced_conversation)
         classification_future = executor.submit(classify_main_topic, conversation=reduced_conversation, classes=classes_list)
