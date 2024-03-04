@@ -168,7 +168,7 @@ def set_retriever(documents_path):
     """
     print("setting retriever") 
     vdb=VectorDb()
-    retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None).as_retriever()
+    retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None, load_txt=True, load_pdf=True).as_retriever()
     print("retriever set")
     return retriever
 

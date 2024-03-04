@@ -2,7 +2,7 @@ python-dotenv==1.0.1
 requests==2.31.0
 langchain == 0.1.2
 pydantic==1.10.14
-unstructured==0.12.4
+unstructured[pdf]==0.12.4
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 faiss-cpu==1.7.4
