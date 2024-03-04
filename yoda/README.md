@@ -2,7 +2,7 @@
 YoDa is an acronym for "Your Data, Your Model". This project aims to train a Language Model (LLM) using customer's private data. The goal is to compete with general solutions on tasks that are related to the customer's data.
 
 <p align="center">
-  <img src="YoDa.png" alt="YoDa" width="300">
+  <img src="./docs/YoDa.png" alt="YoDa" width="300">
 </p>
 
 ## Getting Started
