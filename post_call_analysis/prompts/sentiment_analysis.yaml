@@ -9,22 +9,21 @@ template: |
           <s>[INST] <<SYS>>
           input conversation:
           I had to compare two versions of Hamlet for my Shakespeare class and unfortunately I picked this version…
-          
-          Classify the overall customer's mood throughout the call in only one adjective: negative
-
+          <</SYS>> 
+          Classify the overall customer's mood throughout the call in only one adjective: [/INST]negative
+          <s>[INST] <<SYS>>
           input conversation: 
           This Charles outing is decent but this is a pretty low-key performance…
-          
-          Classify the overall customer's mood throughout the call in only one adjective: negative
-
+          <</SYS>> 
+          Classify the overall customer's mood throughout the call in only one adjective: [/INST]negative
+          <s>[INST] <<SYS>>
           input conversation: 
           My family has watched Arthur Bach stumble and stammer since the movie first came out. We have most lines memorized…
-          
-          Classify the overall customer's mood throughout the call in only one adjective: positive
-
+          <</SYS>> 
+          Classify the overall customer's mood throughout the call in only one adjective: [/INST]positive
+          <s>[INST] <<SYS>>
           input conversation:
           {conversation}
-
           <</SYS>> 
           Classify the overall customer's mood throughout the call in only one adjective: [/INST]
 template_format: f-string

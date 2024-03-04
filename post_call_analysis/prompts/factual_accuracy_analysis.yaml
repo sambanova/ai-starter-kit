@@ -19,6 +19,7 @@ template: |
           {context}
           </context>
 
+          Then give an overall score of the quiallity of the call if there is no errors and agent followed the procedures given in the context the sacore will be 100, if there are simple errors discount 10 points per error, and if there is any critical error the score will be 0
           {format_instructions}
           <</SYS>> 
           [/INST]

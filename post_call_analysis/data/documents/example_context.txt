@@ -1,1 +1,0 @@
-no emergency call agent should give madical instructions and should only instruct the users to go to the nearest hospital, if there is a medical emergency 
