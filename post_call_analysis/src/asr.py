@@ -22,7 +22,12 @@ SUCCESS_JOB_STATUS = 'EXIT_WITH_0'
 class BatchASRProcessor():
     
     def __init__(self, config_path='./config.yaml') -> None:
+        """
+        Initialize the BatchASRProcessor class.
 
+        Args:
+            config_path (str, optional): Path to the YAML configuration file. Defaults to './config.yaml'.
+        """
         self.config = self._load_config(config_path) 
                
         self.headers = {
@@ -59,11 +64,32 @@ class BatchASRProcessor():
         self.output_path = self.config['asr']['output']['output_path']
      
     def _load_config(self, file_path):
+        """Loads a YAML configuration file.
+
+        Args:
+            file_path (str): Path to the YAML configuration file.
+
+        Returns:
+            dict: The configuration data loaded from the YAML file.
+        """
         with open(file_path, 'r') as file:
             config = yaml.safe_load(file)
         return config   
         
     def _get_call(self, url, params = None, success_message = None):
+        """Make a GET request to the specified URL.
+
+        Args:
+            url (str): The URL to make the GET request to.
+            params (Optional[Dict], optional): A dictionary of parameters to pass to the URL.
+                Defaults to None.
+            success_message (Optional[str], optional): A message to log upon successful completion of the
+                GET request. Defaults to None.
+
+        Returns:
+            requests.Response: The response from the GET request.
+
+        """
         response = requests.get(url, params=params, headers=self.headers)
 
         if response.status_code == 200:
@@ -76,6 +102,19 @@ class BatchASRProcessor():
         return response
 
     def _post_call(self, url, params, success_message = None):
+        """Make a POST request to the specified URL.
+
+        Args:
+            url (str): The URL to make the POST request to.
+            params (Optional[Dict], optional): A dictionary of parameters to pass to the URL.
+                Defaults to None.
+            success_message (Optional[str], optional): A message to log upon successful completion of the
+                POST request. Defaults to None.
+
+        Returns:
+            requests.Response: The response from the POST request.
+
+        """
         response = requests.post(url, json=params, headers=self.headers)
 
         if response.status_code == 200:
@@ -88,6 +127,15 @@ class BatchASRProcessor():
         return response
     
     def _delete_call(self, url):
+        """Make a Delete request to the specified URL.
+
+        Args:
+            url (str): The URL to make the Delete request to.
+
+        Returns:
+            requests.Response: The response from the Delete request.
+
+        """
         response = requests.delete(url, headers=self.headers)    
         if response.status_code == 200:
             logging.info(f'Dataset {self.dataset_name} deleted successfully.')
@@ -98,10 +146,26 @@ class BatchASRProcessor():
         return response
 
     def _time_to_seconds(self, time_str):
+        """Convert a time string to seconds.
+
+        Args:
+            time_str (str): The time string to convert.
+            
+        Returns:
+            int: The time in seconds.
+        """
         minutes, seconds = map(int, time_str.split(':'))
         return  minutes * 60 + seconds
 
     def _get_df_output(self, response_content: str) -> DataFrame:
+        """Parse the response from the ASR job.
+
+        Args:
+            response_content (str): The response from the ASR job.
+            
+        Returns:
+            DataFrame: A DataFrame containing the parsed output from the ASR job.
+        """
         compressed_bytes = io.BytesIO(response_content)
         
         with tarfile.open(fileobj=compressed_bytes, mode="r:gz") as tar:
@@ -115,6 +179,13 @@ class BatchASRProcessor():
         return output_df
 
     def search_dataset(self, dataset_name):
+        """Search for a dataset in SambaStudio.
+
+        Args:
+            dataset_name (str): The name of the dataset to search for.
+        Returns:
+            dataset_id (str): The id of the searched dataset
+        """
         url = self.base_url + self.datasets_url + '/search'
         params = {
             'dataset_name': dataset_name
@@ -124,6 +195,10 @@ class BatchASRProcessor():
         return parsed_reponse['data']['dataset_id']
 
     def delete_dataset(self, dataset_name):
+        """Delete a dataset from SambaStudio.
+        Args:
+            dataset_name (str): The name of the dataset to delete.
+        """
         dataset_id = self.search_dataset(dataset_name)
         url = self.base_url + self.datasets_url + '/' + dataset_id
         response = self._delete_call(url)
@@ -131,6 +206,14 @@ class BatchASRProcessor():
         
         
     def create_dataset(self, path):
+        """Create a dataset in SambaStudio.
+
+        Args:
+            path (str): The path to the audio files to create the dataset from.
+            
+        Returns:
+            dataset_name (str): The name of the created dataset.
+        """
                 
         dataset_name = f'{self.dataset_name}_{int(time.time())}'
         
@@ -179,6 +262,14 @@ class BatchASRProcessor():
         return dataset_name
                 
     def check_dataset_creation_progress(self, dataset_name):
+        """Check dataset creation progress of a given dataset
+        
+        Args:
+            dataset_name (str): The name of the dataset to check.
+            
+        Returns:
+            bool: True if the dataset is created, False otherwise.
+        """
         url = self.base_url + self.datasets_url + '/' + dataset_name
         response = self._get_call(url)
         if response.json()["data"]["status"]=="Available": 
@@ -187,7 +278,11 @@ class BatchASRProcessor():
             return False
             
     def create_load_project(self):
+        """Create or load project in SambaStudio.
 
+        Returns:
+            project_id (str): The id of the created project.
+        """
         url = self.base_url + self.projects_url + '/' + self.project_name
 
         response = self._get_call(url, success_message=f'Project {self.project_name} found in SambaStudio')
@@ -211,6 +306,13 @@ class BatchASRProcessor():
         return self.project_id
     
     def run_job(self, dataset_name):
+        """Run a batch inference job in SambaStudio.
+
+        Args:
+            dataset_name (str): The name of the dataset to run the job on.
+        Returns:
+            job_id (str): The id of the created job.    
+        """
         
         url = self.base_url + self.projects_url + self.jobs_url.format(project_id=self.project_id)
         
@@ -231,6 +333,14 @@ class BatchASRProcessor():
         return job_id
     
     def check_job_progress(self, job_id):
+        """Check job progress of a given job.
+
+        Args:
+            job_id (str): The id of the job to check.
+            
+        Returns:
+            bool: True when the job is finished.
+        """
 
         url = self.base_url + self.projects_url + self.jobs_url.format(project_id=self.project_id) + '/' + job_id
 
@@ -248,17 +358,36 @@ class BatchASRProcessor():
         return True
     
     def delete_job(self, job_id):
+        """Delete a job from SambaStudio.
+
+        Args:
+            job_id (str): The id of the job to delete.
+        """
         url = self.base_url +  self.projects_url + self.jobs_url.format(project_id=self.project_id) + '/' + job_id
         response = self._delete_call(url)
         logging.info(response.text)
         
     def retrieve_results(self, job_id):
+        """Retrieve results from a finished batch inference job
+        
+        Args:
+            job_id (str): The id of the job to retrieve results of.
+        Returns:
+            df (pandas.DataFrame): The results of the batch inference job.
+        """
         url = self.base_url + self.projects_url + self.jobs_url.format(project_id=self.project_id) + '/' + job_id + self.download_results_url
         response = self._get_call(url, success_message='Results downloaded!')
         df = self._get_df_output(response.content)
         return df
     
     def process_audio(self, path):
+        """Process an audio file in SambaStudio.
+
+        Args:
+            path (str): The path to the audio file to process.
+        Returns:
+            df (pandas.DataFrame): The results of the batch inference job.
+        """
         self.create_load_project()
         dataset_name = self.create_dataset(path=path)
         while not self.check_dataset_creation_progress(dataset_name):

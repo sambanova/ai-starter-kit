@@ -26,10 +26,28 @@ model = SambaNovaEndpoint(
         ) 
 
 def load_conversation(transcription, transcription_path):
+    """Load a conversation as langchain Document
+
+    Args:
+        transcription (str): The transcription of the conversation.
+        transcription_path (str): The path of the transcription file.
+
+    Returns:
+        List[Document]: The conversation as a list of Documents.
+    """
     doc = Document(page_content=transcription, metadata={"source": transcription_path})
     return [doc]
 
 def reduce_call(conversation):
+    """
+    Reduce the conversation by applying the ReduceDocumentsChain.
+
+    Args:
+        conversation (List[Document]): The conversation to reduce.
+
+    Returns:
+        str: The reduced conversation.
+    """
     reduce_prompt = load_prompt("./prompts/reduce.yaml")
     reduce_chain = LLMChain(llm=model, prompt=reduce_prompt)  
     combine_documents_chain = StuffDocumentsChain(
@@ -50,6 +68,16 @@ def reduce_call(conversation):
     return new_document
 
 def get_summary(conversation, model=model):
+    """
+    Summarizes a conversation.
+
+    Args:
+        conversation (str): The conversation to summarize.
+        model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaNovaEndpoint model.
+
+    Returns:
+        str: The summary of the conversation.
+    """
     summarization_prompt=load_prompt("./prompts/summarization.yaml")
     output_parser = StrOutputParser()
     summarization_chain = summarization_prompt | model | output_parser
@@ -60,7 +88,18 @@ def get_summary(conversation, model=model):
     return summarization_response
 
 def classify_main_topic(conversation, classes, model=model):
-    topic_classification_prompt=load_prompt("./prompts/topic_classifications.yaml")
+    """
+    Classify the topic of a conversation.
+
+    Args:
+        conversation (str): The conversation to classify.
+        classes (List[str]): The list of classes to classify the conversation into.
+        model (Langchain LLM Model, optional): The language model to use for classification. Defaults to a SambaNovaEndpoint model.
+
+    Returns:
+        List[str]: The list of classes that the conversation was classified into.
+    """
+    topic_classification_prompt=load_prompt("./prompts/topic_classification.yaml")
     list_output_parser = CommaSeparatedListOutputParser()
     list_format_instructions = list_output_parser.get_format_instructions()
     topic_classifcation_chain = topic_classification_prompt | model | list_output_parser
@@ -71,6 +110,17 @@ def classify_main_topic(conversation, classes, model=model):
     return topic_classifcation_response
     
 def get_entities(conversation, entities, model=model):
+    """
+    Extract entities from a conversation.
+
+    Args:
+        conversation (str): The conversation to extract entities from.
+        entities (List[str]): The list of entities to extract.
+        model (Langchain LLM Model, optional): The LLM model to use for extraction. Defaults to a SambaNovaEndpoint model.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the extracted entities. The keys are the entity names, and the values are the extracted entities.
+    """
     ner_prompt = load_prompt("./prompts/ner.yaml")
     response_schemas = []
     for entity in entities:
@@ -87,7 +137,17 @@ def get_entities(conversation, entities, model=model):
     return ner_response
 
 def get_sentiment(conversation, model=model):
-    sentiment_analysis_prompt = load_prompt("./prompts/sentiment_analysis2.yaml")
+    """
+    get the overall sentiment of the user in a conversation.
+
+    Args:
+        conversation (str): The conversation to analyse.
+        model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaNovaEndpoint model.
+
+    Returns:
+        str: The overall sentiment of the user.
+    """
+    sentiment_analysis_prompt = load_prompt("./prompts/sentiment_analysis.yaml")
     output_parser = StrOutputParser()
     sentiment_analysis_chain = sentiment_analysis_prompt | model | output_parser
     input_variables={"conversation":conversation}
@@ -97,13 +157,36 @@ def get_sentiment(conversation, model=model):
     return sentiment_analysis_response
 
 def set_retriever(documents_path):
-    print("setting retriever")
+    """
+    Set up a Faiss vector database for document retrieval.
+
+    Args:
+        documents_path (str): The path to the directory containing the documents.
+
+    Returns:
+        langchain retirver: The Faiss retrievr to be used whit lang chain retrieval chains.
+    """
+    print("setting retriever") 
     vdb=VectorDb()
     retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None).as_retriever()
-    print("retriever")
+    print("retriever set")
     return retriever
 
 def factual_accuracy_analysis(conversation, retriever, model=model):
+    """
+    Analyse the factual accuracy of the given conversation.
+
+    Args:
+        conversation (str): The conversation to analyse.
+        retriever (langchain Retriever): The langchain retriever to use for document similarity retrieval.
+        model (Langchain LLM Model, optional): The language model to use for summarization and classification. Defaults to a SambaNovaEndpoint model.
+
+    Returns:
+        dict: A dictionary containing the factual accuracy analysis results. The keys are:
+            - "correct": A boolean indicating whether the provided information is correct.
+            - "errors": A list of summarized errors made by the agent, if any.
+            - "score": A score from 1 to 100 indicating the overall quality of the agent's response.
+    """
     factual_accuracy_analysis_response_schemas = [ResponseSchema(name="correct",
                                                                  description="wether or not the provided information is correct",
                                                                  type="bool"
@@ -125,18 +208,44 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
     input_variables={"input":conversation,
                      "format_instructions":format_instructions
                     }
-    model_response=retrieval_chain.invoke(input_variables)["answer"]
+    model_response = retrieval_chain.invoke(input_variables)["answer"]
     print("factual check")
-    factual_accuracy_analysis_response=factual_accuracy_analysis_output_parser.invoke(model_response)
+    factual_accuracy_analysis_response = factual_accuracy_analysis_output_parser.invoke(model_response)
     print("factual check done")
     return factual_accuracy_analysis_response
 
 def get_chunks(documents):
-    #split long document
+    """
+    Split document in smaler documents.
+
+    Args:
+        documents List[Document]: The documents to split.
+
+    Returns:
+        documents List[Document]: The splitted documents.
+    """
     splitter = RecursiveCharacterTextSplitter(chunk_size= 800, chunk_overlap= 200)
     return  splitter.split_documents(documents)
 
 def call_analysis_parallel(conversation, documents_path, classes_list, entities_list):
+    """
+    Runs analysis steps in parallel.
+
+    Args:
+        conversation (str): The conversation to analyse.
+        documents_path (str): The path to the directory containing the fact or procedure documents.
+        classes_list (List[str]): The list of classes to classify the conversation into.
+        entities_list (List[str]): The list of entities to extract.
+
+    Returns:
+        dict: A dictionary containing the analysis results. The keys are:
+            - "summary": The summary of the conversation.
+            - "classification": The classes that the conversation was classified into.
+            - "entities": The extracted entities.
+            - "sentiment": The overall sentiment of the user.
+            - "factual_analysis": The factual accuracy analysis results.
+            - "quality_score": A score from 1 to 100 indicating the overall quality of the agent's response.
+    """
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submitting tasks to executor
         reduced_conversation_future = executor.submit(reduce_call, conversation=conversation)
