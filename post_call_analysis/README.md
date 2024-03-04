@@ -131,7 +131,7 @@ After deploying the starter kit you should see the following streamlit user inte
 
 1- Pick your source (Audio or Transcription). You can upload your call audio recording or a CSV file containing the call transcription with diarization. Alternatively, you can select a preset/preloaded audio recording or a preset/processed call transcription.
 
-> The audio recording should be in .wav format and with a sample rate of 16000 Hz
+> The audio recording should be in .wav format
 
 2- Save the file and process it. If the input is an audio file, the processing step could take a couple of minutes to initialize the bash inference job in SambaStudio. Then you will see the following output structure.
 
@@ -139,9 +139,11 @@ After deploying the starter kit you should see the following streamlit user inte
 
 > Be sure to have at least 3 RDUs available in your SambaStudio environment
 
-3- Set the analysis parameters. Here, you can define a list of classes for classification, specify entities for extraction, and provide the input path containing your facts and procedures knowledge bases.
+3- Set the analysis parameters. Here, you can define a list of classes for classification, specify entities for extraction.
 
-> With this default template only plain text files will be used for factual and procedures check.  
+Also you should provide the input path containing your facts and procedures knowledge bases, or you can include a list of urls you want to scrape to include it as facts and procedures knowledge bases
+
+> With this default template only txt and pdf files or urls will be used for factual and procedures check.  
 
 4- Click the Analyse transcription button an this will execute the analysis steps over the transcription, this step could take a copule of minutes, Then you will see the following output structure.
 
