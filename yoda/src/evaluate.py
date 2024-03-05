@@ -21,7 +21,7 @@ from yoda.prompts.prompts import RAG_prompt_template, LLAMA_CHAT_PROMPT_PREFIX, 
 
 
 
-load_dotenv('.env')
+load_dotenv('../export.env')
 
 llm = SambaNovaEndpoint(
     base_url=os.getenv('YODA_BASE_URL'),

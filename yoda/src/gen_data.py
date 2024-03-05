@@ -10,10 +10,11 @@ from transformers import AutoTokenizer
 
 import sys
 
-from dotenv import load_dotenv
-load_dotenv('.env')
-
 sys.path.append("../")
+
+from dotenv import load_dotenv
+load_dotenv('../export.env')
+
 from yoda.utils import qa_processing, data_reader
 from yoda.prompts.prompts import QA_GEN_TEMPLATE
 
@@ -162,6 +163,6 @@ if __name__ == '__main__':
         finetune(articles, tokenizer=tokenizer, data_dir=data_dir,n_eval_samples=n_eval_samples)
     else:
         assert args.purpose == "both"
-        pretrain_data = pretrain(articles)
+        pretrain_data = pretrain(articles, data_dir)
         finetune(articles, tokenizer=tokenizer, data_dir=data_dir, pretrain_data=pretrain_data,
                  n_eval_samples=n_eval_samples)
