@@ -13,7 +13,7 @@ import sys
 sys.path.append("../")
 
 from dotenv import load_dotenv
-load_dotenv('../export.env')
+load_dotenv('../.env')
 
 from yoda.utils import qa_processing, data_reader
 from yoda.prompts.prompts import QA_GEN_TEMPLATE
