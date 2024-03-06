@@ -31,7 +31,7 @@ If you have any issues with the examples or would be willing to provide feedback
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ## 2. Integrate your model in the starter kit
-Integrate your LLM deployed on SambaStudio with this AI starter kit  in two simple steps:
+Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
 1. Clone this repo.
 ```
   git clone https://github.com/sambanova/ai-starter-kit.git
@@ -47,9 +47,9 @@ PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ``` 
-3.  Import in your starterkit the samabanova_endponit  lanchain whaper 
+3.  Import in your starterkit the samabanova_endpoint langchain wrapper
 ``` python
-from src.models.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint
 
 load_dotenv('export.env')
 
@@ -58,4 +58,4 @@ llm = SambaNovaEndpoint(
 )
 ```
 
-**Note:** These AI Starter Kit cade samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. We recommend performing due diligence per your organization policies for use in your applications.
+**Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. We recommend performing due diligence per your organization policies for use in your applications.
