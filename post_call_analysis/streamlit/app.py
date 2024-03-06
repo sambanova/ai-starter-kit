@@ -26,11 +26,11 @@ def process_audio(audio_path):
     df.to_csv(os.path.join(transcript_save_location,f'{filename}.csv'))
     return df
 
-def analyse_transcription(transcription, transcription_path, facts_path ,classes, entities):
+def analyse_transcription(transcription, transcription_path, facts_path , facts_urls, classes, entities):
     dialogue = convert_to_dialogue_structure(transcription) 
     conversation = analysis.load_conversation(dialogue, transcription_path)
     conversation_chunks = analysis.get_chunks(conversation)
-    result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, classes_list=classes, entities_list=entities)
+    result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, facts_urls=facts_urls, classes_list=classes, entities_list=entities)
     return result
 
 def handle_userinput():
@@ -55,11 +55,12 @@ def handle_userinput():
         st.markdown("**Transcription**")
         st.dataframe(st.session_state.transcription, use_container_width=True)
         if st.button("Analyse transcription"):
-            if st.session_state.entities_list and st.session_state.facts_path and st.session_state.classes_list:
+            if st.session_state.entities_list and st.session_state.classes_list and (st.session_state.facts_path or st.session_state.urls_list):
                 with st.spinner("**Processing** this could take some minutes"):
                     st.session_state.analysis_result=analyse_transcription(st.session_state.transcription,
                                                                            st.session_state.transcript_path,
-                                                                           st.session_state.facts_path ,
+                                                                           st.session_state.facts_path,
+                                                                           st.session_state.urls_list,
                                                                            st.session_state.classes_list,
                                                                            st.session_state.entities_list)
             else:
@@ -119,6 +120,8 @@ def main():
         st.session_state.facts_path = None
     if "analysis_result" not in st.session_state:
         st.session_state.analysis_result = None
+    if "urls_list" not in st.session_state:
+        st.session_state.urls_list = []
         
     # Sidebar
     with st.sidebar:
@@ -190,7 +193,7 @@ def main():
                 
         # Analysis setup
         st.title("Analysis Setings")
-        with st.expander("Audio input settings"):
+        with st.expander("Analys settings"):
             st.markdown("**1. Include the main topic classes to classify**")
             col_a1, col_a2 = st.columns((3,2))
             new_class = col_a1.text_input("Add class:", "other")
@@ -216,12 +219,24 @@ def main():
             st.markdown("**3. Select path with documents for factual check**")
             col_c1, col_c2 = st.columns((3,2))
             facts_path = col_c1.text_input("set factual check documents path", "./data/documents")
-            col_c2.markdown('#')
+            col_c2.markdown('#')            
             if col_c2.button("set path") and facts_path:
                 if os.path.exists(facts_path):
                     st.session_state.facts_path=(facts_path) 
                 else:
-                    st.error(f"{facts_path} does not exist", icon="🚨")                            
+                    st.error(f"{facts_path} does not exist", icon="🚨")          
+            st.markdown("**4. [optional] Set websites for factual check**")  
+            col_d1, col_d2 = st.columns((3,2))  
+            new_url = col_d1.text_input("Add URL:", "")
+            col_d2.markdown('#')
+            if col_d2.button("Include URL") and new_url:
+                st.session_state.urls_list.append(new_url)
+             # Display the list of URLs
+            st.write(st.session_state.urls_list)
+            if st.button("Clear List"):
+                st.session_state.urls_list = []
+                st.experimental_rerun()
+                                           
     handle_userinput()
     
 if __name__ == "__main__":

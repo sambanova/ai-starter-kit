@@ -18,7 +18,7 @@ import argparse
 import logging
 import os
 
-from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
@@ -46,18 +46,32 @@ class VectorDb():
     def __init__(self) -> None:
         pass
 
-    def load_files(self, input_path: str, recursive=False) -> list:
+    def load_files(self, input_path, recursive=False, load_txt=True, load_pdf=False, urls = None) -> list:
         """Load files from input location
 
         Args:
-            input_path (str): input location of files
+            input_path : input location of files
+            recursive (bool, optional): flag to load files recursively. Defaults to False.
+            load_txt (bool, optional): flag to load txt files. Defaults to True.
+            load_pdf (bool, optional): flag to load pdf files. Defaults to False.
+            urls (list, optional): list of urls to load. Defaults to None.
 
         Returns:
             list: list of documents
         """
-
-        loader = DirectoryLoader(input_path, glob="*.txt", recursive=recursive, show_progress=True)
-        docs = loader.load()
+        docs=[]
+        text_loader_kwargs={'autodetect_encoding': True}
+        if input_path is not None:
+            if load_txt:
+                loader = DirectoryLoader(input_path, glob="*.txt", recursive=recursive, show_progress=True, loader_kwargs=text_loader_kwargs)
+                docs.extend(loader.load())
+            if load_pdf:
+                loader = DirectoryLoader(input_path, glob="*.pdf", recursive=recursive, show_progress=True, loader_kwargs=text_loader_kwargs)
+                docs.extend(loader.load())
+        if urls:
+            loader = UnstructuredURLLoader(urls=urls)
+            docs.extend(loader.load())
+        
         logger.info(f"Total {len(docs)} files loaded")
 
         return docs
@@ -227,9 +241,9 @@ class VectorDb():
 
         return vector_store
 
-    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False, tokenizer=None):
+    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False, tokenizer=None, load_txt=True, load_pdf=False, urls=None):
 
-        docs = self.load_files(input_path, recursive=recursive)
+        docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
 
         if tokenizer is None:
             chunks = self.get_text_chunks(docs, chunk_size, chunk_overlap)

@@ -18,6 +18,7 @@ logger.setLevel(logging.INFO)
 
 PENDING_RDU_JOB_STATUS = 'PENDING_RDU'
 SUCCESS_JOB_STATUS = 'EXIT_WITH_0'
+FAILED_JOB_STATUS = 'FAILED'
 
 class BatchASRProcessor():
     
@@ -353,6 +354,9 @@ class BatchASRProcessor():
             if status == SUCCESS_JOB_STATUS:
                 logging.info('Job finished!')
                 break
+            elif status == FAILED_JOB_STATUS:
+                logging.info('Job failed!')
+                return False
             time.sleep(10)
         
         return True
@@ -394,8 +398,13 @@ class BatchASRProcessor():
             print("waiting for dataset available")
             time.sleep(5)
         job_id = self.run_job(dataset_name)
-        self.check_job_progress(job_id) 
-        df = self.retrieve_results(job_id)
-        self.delete_job(job_id)
-        self.delete_dataset(dataset_name)
-        return df
+        job_finished = self.check_job_progress(job_id)
+        if job_finished:    
+            df = self.retrieve_results(job_id)
+            self.delete_job(job_id)
+            self.delete_dataset(dataset_name)
+            return df
+        else:
+            self.delete_job(job_id)
+            self.delete_dataset(dataset_name)
+            raise Exception('Job failed!')
