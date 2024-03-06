@@ -1,0 +1,49 @@
+
+1. Introduction
+
+This document serves as a comprehensive guide outlining the facts and procedures for evaluating the efficiency
+and effectiveness of an agent in emergency call handling. The primary objective is to ensure that the agent 
+accurately assesses emergency calls and provides appropriate instructions to the callers.
+
+2. Facts and procedures
+
+2.1 Emergency Call Handling Protocol
+
+Emergency call agents must adhere strictly to predefined protocols when handling emergency calls.
+Calls are categorized based on urgency and severity to prioritize response.
+
+2.2 Medical Instructions
+
+It is imperative that emergency call agents refrain from providing medical instructions over the phone.
+Callers reporting medical emergencies should only be instructed to proceed immediately to the nearest hospital or medical facility for prompt assistance.
+
+2.3 Legal Obligations
+
+Emergency call agents must operate within the confines of legal regulations and organizational policies.
+Providing unauthorized medical advice may result in legal liabilities for both the agent and the organization.
+
+2.4 Caller Verification
+
+Agents must verify the identity and location of the caller to ensure accurate dispatch of emergency services.
+Callers should provide essential details such as name, address, and nature of the emergency for effective response.
+
+2.5 Call Assessment
+
+Upon receiving an emergency call, the Agent will analyze the data and assign a priority score based on predefined criteria.
+The agent will consider factors such as the reported emergency type, caller's location, and available resources for accurate assessment.
+
+2.6 Response 
+
+Based on the priority, emergency call agents will proceed to generate an appropriate response.
+Agents will follow established protocols to provide instructions or dispatch emergency services as deemed necessary.
+
+2.7 Non-Medical Instructions
+
+If the emergency call pertains to a medical situation, agents will refrain from offering medical advice.
+Instead, callers will be instructed to seek immediate medical attention at the nearest hospital or medical facility.
+
+2.8 Documentation and Feedback
+
+All interactions with callers and actions taken by emergency call agents will be documented for review and analysis.
+Feedback mechanisms will be in place to continuously evaluate the performance of the agent and refine protocols as needed.
+

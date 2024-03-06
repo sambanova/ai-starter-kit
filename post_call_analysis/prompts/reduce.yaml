@@ -1,0 +1,15 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - transcription_chunks
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>The following is trascript of a conversation
+          {transcription_chunks}
+          Take these and distill it into a final, consolidated shortened conversation contaning main ideas, don't omit entities in the new shortened conversation. 
+          <</SYS>>\n
+          Shortened conversation: [/INST]
+template_format: f-string
+validate_template: false
