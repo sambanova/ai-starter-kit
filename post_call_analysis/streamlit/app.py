@@ -26,11 +26,11 @@ def process_audio(audio_path):
     df.to_csv(os.path.join(transcript_save_location,f'{filename}.csv'))
     return df
 
-def analyse_transcription(transcription, transcription_path, facts_path , facts_urls, classes, entities):
+def analyse_transcription(transcription, transcription_path, facts_path , facts_urls, classes, entities, sentiments):
     dialogue = convert_to_dialogue_structure(transcription) 
     conversation = analysis.load_conversation(dialogue, transcription_path)
     conversation_chunks = analysis.get_chunks(conversation)
-    result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, facts_urls=facts_urls, classes_list=classes, entities_list=entities)
+    result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, facts_urls=facts_urls, classes_list=classes, entities_list=entities, sentiment_list=sentiments)
     return result
 
 def handle_userinput():
@@ -62,7 +62,8 @@ def handle_userinput():
                                                                            st.session_state.facts_path,
                                                                            st.session_state.urls_list,
                                                                            st.session_state.classes_list,
-                                                                           st.session_state.entities_list)
+                                                                           st.session_state.entities_list,
+                                                                           st.session_state.sentiment_list)
             else:
                 st.error("You must set classes, entities and factual check documents path in Analysis setting sidebar", icon="🚨")
     if st.session_state.analysis_result:
@@ -122,6 +123,9 @@ def main():
         st.session_state.analysis_result = None
     if "urls_list" not in st.session_state:
         st.session_state.urls_list = []
+    if "sentiment_list" not in st.session_state:
+        st.session_state.sentiment_list = ["positive", "neutral" ,"negative"] 
+        
         
     # Sidebar
     with st.sidebar:
@@ -216,7 +220,18 @@ def main():
                 st.session_state.entities_list = []
                 st.experimental_rerun()
                 
-            st.markdown("**3. Select path with documents for factual check**")
+            st.markdown("**3. Include sentiment list to classify**")
+            col_e1, col_e2 = st.columns((3,2))
+            new_sentiment = col_e1.text_input("Add sentiment:", "")
+            col_e2.markdown('#')
+            if col_e2.button("Include sentiment") and new_sentiment:
+                st.session_state.sentiment_list.append(new_sentiment) 
+            st.write(st.session_state.sentiment_list)
+            if st.button("Clear Sentiment List"):
+                st.session_state.sentiment_list = []
+                st.experimental_rerun()
+                
+            st.markdown("**4. Select path with documents for factual check**")
             col_c1, col_c2 = st.columns((3,2))
             facts_path = col_c1.text_input("set factual check documents path", "./data/documents")
             col_c2.markdown('#')            
@@ -225,7 +240,7 @@ def main():
                     st.session_state.facts_path=(facts_path) 
                 else:
                     st.error(f"{facts_path} does not exist", icon="🚨")          
-            st.markdown("**4. [optional] Set websites for factual check**")  
+            st.markdown("**5. [optional] Set websites for factual check**")  
             col_d1, col_d2 = st.columns((3,2))  
             new_url = col_d1.text_input("Add URL:", "")
             col_d2.markdown('#')

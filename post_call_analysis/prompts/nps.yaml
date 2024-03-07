@@ -1,0 +1,17 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - conversation
+  - format_instructions
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>
+          input conversation:
+          {conversation}
+          {format_instructions}
+          <</SYS>> 
+          You are the customer in the input conversation your task is set a net promoter score betwen 0 and 10 given the atention recibed by the agent during the call [/INST]
+template_format: f-string
+validate_template: false

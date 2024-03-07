@@ -10,12 +10,12 @@ template: |
           <s>[INST] <<SYS>>given the folowing transcription of a call conversation:
           {conversation}.
           \n
-          classify it in one of the following main topic classes:
+          classify it in one or more of the following main topic classes:
           {topic_classes}
           \n
           {format_instructions}
-          there is no need to include a class if is not apropiated, in this casa only use "undefined" class instead
-          try if posible to casify it in only one class
+          if there is not an apropiated class in the topic classes lisit, only use "undefined" as the main topic class
+          try when posible to cassify it in only one class, do not provide any explaination of your choise
           <</SYS>> [/INST]
 template_format: f-string
 validate_template: false
