@@ -1,9 +1,9 @@
-NUM_DP_WORKERS=
+NUM_DP_WORKERS=1
 MAX_SEQ_LEN=4096
-ROOT_GEN_DATA_PREP_DIR=
-INPUT_FILE=
-OUTPUT_DIR=
-PATH_TO_TOKENIZER=
+ROOT_GEN_DATA_PREP_DIR=/your/path/generative_data_prep
+INPUT_FILE=/your/path/ai-starter-kit/yoda/data/output/processed_data/synthetic_qa_eval.jsonl
+OUTPUT_DIR=/your/path/ai-starter-kit/yoda/data/output/preprocessed
+PATH_TO_TOKENIZER=/your/path/ai-starter-kit/yoda/data/output/preprocessed/tokenizer
 
 cd $ROOT_GEN_DATA_PREP_DIR && python -m generative_data_prep pipeline \
 --input_file_path=$INPUT_FILE \

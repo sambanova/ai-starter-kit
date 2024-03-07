@@ -11,6 +11,7 @@ def process_response_data(response_data):
     need_to_regenerate = []
     question_set = set()
     for d in response_data:
+        qa_pairs=[]
         response_content = d["response_text"].strip("#")
         response_content = response_content.replace(
             "</human>", "<human>").replace("</bot>", "<bot>")
@@ -95,7 +96,8 @@ def generate_qa_pairs(sample, template, base_url, project_id, endpoint_id, api_k
     # hacky way to control output length so that the endpoint can survive
 
     prompt_length = len(tokenizer.encode(prompt))
-    max_output_token = min(4096 - prompt_length, 2000)
+    max_output_token = min(4096 - prompt_length, 1000)
+    print(max_output_token)
     if max_output_token <= 20:
         # too few tokens left for generation, skip this article
         return "", prompt_length
@@ -107,6 +109,7 @@ def generate_qa_pairs(sample, template, base_url, project_id, endpoint_id, api_k
         api_key=api_key,
         model_kwargs={
                 'do_sample': False,
+                "temperature": 0.0,
                 'max_tokens_to_generate': max_output_token
             },
             )
