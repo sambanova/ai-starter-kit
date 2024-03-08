@@ -76,7 +76,7 @@ if __name__ == '__main__':
         template=RAG_prompt_template, input_variables=["context", "question"]
     )
 
-    LLAMA_2_70B_CHAT_PATH = config["tokenizer_path"]
+    LLAMA_2_70B_CHAT_PATH = config["tokenizer"]
     tokenizer = AutoTokenizer.from_pretrained(LLAMA_2_70B_CHAT_PATH)
 
     # read in evaluation samples

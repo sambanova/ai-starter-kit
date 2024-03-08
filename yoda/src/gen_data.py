@@ -148,7 +148,7 @@ if __name__ == '__main__':
     # Source folder for the raw data
     base_dir = config['src_folder']
     subfolders = config["src_subfolders"]
-    tokenizer_path = config['tokenizer_path']
+    tokenizer_path = config['tokenizer']
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
     articles = data_reader.collect_articles(

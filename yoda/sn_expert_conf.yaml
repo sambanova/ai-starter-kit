@@ -10,7 +10,7 @@ src_subfolders:
   - converted_pdfs
   - converted_papers
 dest_folder: "./data/output"
-tokenizer_path: "meta-llama/Llama-2-70b-hf"
+tokenizer: "meta-llama/Llama-2-70b-hf"
 
 
 #Evaluation
