@@ -128,3 +128,4 @@ InstructorEmbedding==1.0.1
 scikit-learn==1.4.0 
 sentencepiece==0.1.99 
 sentence_transformers==2.2.2 
+sseclient==0.0.27

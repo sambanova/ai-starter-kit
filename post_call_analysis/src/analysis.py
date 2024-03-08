@@ -136,25 +136,83 @@ def get_entities(conversation, entities, model=model):
     print("extracting entities done")
     return ner_response
 
-def get_sentiment(conversation, model=model):
+def get_sentiment(conversation, sentiments, model=model):
     """
     get the overall sentiment of the user in a conversation.
 
     Args:
         conversation (str): The conversation to analyse.
+        setiments (list): Listo of posible sentioments to clasiffy
         model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaNovaEndpoint model.
 
     Returns:
         str: The overall sentiment of the user.
     """
     sentiment_analysis_prompt = load_prompt("./prompts/sentiment_analysis.yaml")
-    output_parser = StrOutputParser()
-    sentiment_analysis_chain = sentiment_analysis_prompt | model | output_parser
-    input_variables={"conversation":conversation}
+    list_output_parser = CommaSeparatedListOutputParser()
+    list_format_instructions = list_output_parser.get_format_instructions()
+    sentiment_analysis_chain = sentiment_analysis_prompt | model | list_output_parser
+    input_variables={"conversation":conversation, "sentiments":sentiments, "format_instructions":list_format_instructions}
     print("sentiment analysis")
     sentiment_analysis_response = sentiment_analysis_chain.invoke(input_variables)
     print("sentiment analysis done")
-    return sentiment_analysis_response
+    return sentiment_analysis_response[0]
+
+def get_nps(conversation, model=model):
+    """ get a prediction of a posible net promoter score for a given conversation
+
+    Args:
+        conversation (str): The conversation to analyse.
+        model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaNovaEndpoint model.
+
+    Returns: 
+        nps (Dict): description of the predicted score and the corresponding score
+    """
+    nps_response_schemas = [ResponseSchema(name="description",
+                                            description="reazoning",
+                                            type="str"
+                                            ),
+                            ResponseSchema(name="score",
+                                            description="puntuation from 1 to 10 of the NPS" ,
+                                            type="int")
+                        ]
+    nps_output_parser = StructuredOutputParser.from_response_schemas(nps_response_schemas)
+    format_instructions=nps_output_parser.get_format_instructions()
+    nps_prompt = load_prompt("./prompts/nps.yaml")
+    nps_chain = nps_prompt | model | nps_output_parser
+    input_variables={"conversation":conversation, "format_instructions":format_instructions}
+    print(f"predicting nps")
+    nps = nps_chain.invoke(input_variables)
+    print(f"nps chain finished")
+    return nps
+
+def get_call_quallity_assesment(conversation, factual_result, procedures_result):
+    """
+    Return the calculated quallity assement of the given conversation.
+
+    Args:
+        conversation (str): The conversation to analyse.
+        factual_result (Dict): The factual analysis result of the conversation.
+        procedures_result (Dict): The procedures analysis result of the conversation.
+        
+    Returns:
+        float: The calculated quallity assement of the given conversation.
+    """
+    #initialize the score
+    total_score = 0
+    # predict a NPS of the call
+    nps = get_nps(conversation)
+    total_score += nps["score"]*10
+    # include the factual analysis score
+    total_score += factual_result["score"]
+    # include the procedures analysis score
+    if len(procedures_result["evaluation"])==0:
+        total_score += 1
+    else:
+        total_score += procedures_result["evaluation"].count(True)/len(procedures_result["evaluation"])
+    # Simple average
+    overall_score = total_score / 3
+    return overall_score   
 
 def set_retriever(documents_path, urls):
     """
@@ -196,7 +254,7 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
                                                                  description="list of summarized errors made by the agent, if there is no errors, emplty list" ,
                                                                  type="list"),
                                                   ResponseSchema(name="score",
-                                                                 description="puntuation from 1 to 100 of the overall quallity of the agent" ,
+                                                                 description="puntuation from 0 to 100 of the overall quallity of the agent" ,
                                                                  type="int")
                                                 ]
     factual_accuracy_analysis_output_parser = StructuredOutputParser.from_response_schemas(factual_accuracy_analysis_response_schemas)
@@ -215,6 +273,46 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
     print("factual check done")
     return factual_accuracy_analysis_response
 
+def procedural_accuracy_analysis(conversation, procedures_path, model=model):
+    """
+    Analyse the procedural accuracy of the given conversation.
+
+    Args:
+        conversation (str): The conversation to analyse.
+        procedures_path (str): The path to the file containing the procedures.
+        model (Langchain LLM Model, optional): The language model to use for summarization and classification. Defaults to a SambaNovaEndpoint model.
+    Returns:
+        dict: A dictionary containing the procedural accuracy analysis results. The keys are:
+            - "correct": A boolean indicating whether the agent followed all the procedures.
+            - "errors": A list of summarized errors made by the agent, if any.
+            - "evaluation": A list of booleans evaluating if the agent followed each one of the procedures listed.
+    """
+    procedures_analysis_response_schemas = [ResponseSchema(name="correct",
+                                                                 description="wether or not the agent followed all the procedures",
+                                                                 type="bool"
+                                                                 ),
+                                                  ResponseSchema(name="errors",
+                                                                 description="list of summarized errors made by the agent, if there is no errors, emplty list" ,
+                                                                 type="list"),
+                                                  ResponseSchema(name="evaluation",
+                                                                 description="list of booleans evaluating if the agent followed each one of the procedures listed" ,
+                                                                 type="list[bool]")
+                                                ]
+    procedures_analysis_output_parser = StructuredOutputParser.from_response_schemas(procedures_analysis_response_schemas)
+    format_instructions=procedures_analysis_output_parser.get_format_instructions()
+    procedures_prompt = load_prompt("./prompts/procedures_analysis.yaml")
+    with open(procedures_path, 'r') as file:
+        procedures = file.readlines()
+    procedures_chain = procedures_prompt | model | procedures_analysis_output_parser
+    input_variables={"input":conversation,
+                     "procedures":procedures,
+                     "format_instructions":format_instructions
+                    }
+    print("proceduress check")
+    procedures_analysis_response = procedures_chain.invoke(input_variables)
+    print("proceduress check done")
+    return procedures_analysis_response
+
 def get_chunks(documents):
     """
     Split document in smaler documents.
@@ -228,16 +326,18 @@ def get_chunks(documents):
     splitter = RecursiveCharacterTextSplitter(chunk_size= 800, chunk_overlap= 200)
     return  splitter.split_documents(documents)
 
-def call_analysis_parallel(conversation, documents_path, facts_urls, classes_list, entities_list):
+def call_analysis_parallel(conversation, documents_path, facts_urls, procedures_path, classes_list, entities_list, sentiment_list):
     """
     Runs analysis steps in parallel.
 
     Args:
         conversation (str): The conversation to analyse.
         documents_path (str): The path to the directory containing the fact or procedure documents.
+        procedures_path (str): The path to the file containing the procedures.
         facts_urls (List[str]): The list of URL to load facts from
         classes_list (List[str]): The list of classes to classify the conversation into.
         entities_list (List[str]): The list of entities to extract.
+        sentiment_list (List[str]): The list of sentiments to analyse.
 
     Returns:
         dict: A dictionary containing the analysis results. The keys are:
@@ -246,6 +346,7 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, classes_lis
             - "entities": The extracted entities.
             - "sentiment": The overall sentiment of the user.
             - "factual_analysis": The factual accuracy analysis results.
+            - "procedural_analysis": The procedures accuracy analysis results.
             - "quality_score": A score from 1 to 100 indicating the overall quality of the agent's response.
     """
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -256,8 +357,9 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, classes_lis
         summary_future = executor.submit(get_summary, conversation=reduced_conversation)
         classification_future = executor.submit(classify_main_topic, conversation=reduced_conversation, classes=classes_list)
         entities_future = executor.submit(get_entities, conversation=reduced_conversation, entities=entities_list)
-        sentiment_future = executor.submit(get_sentiment, conversation=reduced_conversation)
+        sentiment_future = executor.submit(get_sentiment, conversation=reduced_conversation, sentiments=sentiment_list)
         factual_analysis_future = executor.submit(factual_accuracy_analysis, conversation=reduced_conversation, retriever = retriever)
+        procedural_analysis_future = executor.submit(procedural_accuracy_analysis, conversation=reduced_conversation, procedures_path=procedures_path)
 
         # Retrieving results
         summary = summary_future.result()
@@ -265,8 +367,8 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, classes_lis
         entities = entities_future.result()
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
-
-    quality_score = factual_analysis["score"] 
+        procedural_analysis = procedural_analysis_future.result()
+    quality_score = get_call_quallity_assesment(reduced_conversation, factual_analysis, procedural_analysis)
 
     return {
         "summary": summary,
@@ -274,5 +376,6 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, classes_lis
         "entities": entities,
         "sentiment": sentiment,
         "factual_analysis": factual_analysis,
+        "procedural_analysis": procedural_analysis,
         "quality_score": quality_score
     }

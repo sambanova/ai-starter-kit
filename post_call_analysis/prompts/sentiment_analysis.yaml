@@ -2,6 +2,8 @@ _type: prompt
 input_types: {}
 input_variables:
   - conversation
+  - sentiments
+  - format_instructions
 name: null
 output_parser: null
 partial_variables: {}
@@ -9,22 +11,30 @@ template: |
           <s>[INST] <<SYS>>
           input conversation:
           I had to compare two versions of Hamlet for my Shakespeare class and unfortunately I picked this version…
+          sentiment list: ['positive', 'neutral', 'negative']
           <</SYS>> 
-          Classify the overall customer's mood throughout the call in only one adjective: [/INST]negative
+          Classify the overall customer's mood throughout the call in only one of the sentiments in the list: [/INST]negative
+
           <s>[INST] <<SYS>>
           input conversation: 
-          This Charles outing is decent but this is a pretty low-key performance…
+          This Charles outing is pretty good, I felt it is a pretty good-key performance…
+          sentiment list: ['positive', 'neutral', 'negative']
           <</SYS>> 
-          Classify the overall customer's mood throughout the call in only one adjective: [/INST]negative
+          Classify the overall customer's mood throughout the call in only one of the sentiments in the list: [/INST]positive
+
           <s>[INST] <<SYS>>
           input conversation: 
           My family has watched Arthur Bach stumble and stammer since the movie first came out. We have most lines memorized…
+          sentiment list: ['exited', 'neutral', 'disappointed']
           <</SYS>> 
-          Classify the overall customer's mood throughout the call in only one adjective: [/INST]positive
+          Classify the overall customer's mood throughout the call in only one of the sentiments in the list: [/INST]exited
+
           <s>[INST] <<SYS>>
           input conversation:
           {conversation}
+          sentiment list: {sentiments}
+          {format_instructions}
           <</SYS>> 
-          Classify the overall customer's mood throughout the call in only one adjective: [/INST]
+          Classify the overall customer's mood throughout the call in only one of the sentiments in the list: [/INST]
 template_format: f-string
 validate_template: false

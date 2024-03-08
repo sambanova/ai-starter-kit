@@ -190,16 +190,21 @@ Sentiment Analysis determines the overall sentiment expressed in the conversatio
 ### Factual Accuracy Analysis
 
 
-Factual Accuracy Analysis evaluates the factual correctness of statements made during the conversation by the agent, also ensuring that the agent's procedures correspond with procedural guidelines. This is achieved using a RAG methodology, in which:
+Factual Accuracy Analysis evaluates the factual correctness of statements made during the conversation by the agent,  This is achieved using a RAG methodology, in which:
 
 - A series of documents are loaded, chunked, embedded, and stored in a vectorstore database.
 - Using the [```Factual Accuracy Analysis prompt template```](./prompts/factual_accuracy_analysis.yaml) and a [retrieval](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval.create_retrieval_chain.html) langchain chain, relevant documents for factual checks and procedures are retrieved and contrasted with the call transcription.
 - The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a 'correctness' field, an 'error' field containing a description of the errors evidenced in the transcription, and a 'score' field.
 
+### Procedure Analysis
+
+Procedures Analysis evaluates if the agent follows some given proceduresduring the conversation, also ensuring that the agent's procedures correspond with procedural guidelines. is achived using the [```procedures analysis prompt template```](./prompts/procedures_analysis.yaml)
+
+- The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a 'correctness' field, an 'error' field containing a description of the errors evidenced in the transcription, and a 'score' field.
+
 ### Call Quality Assessment
 
-Call Quality Assessment evaluates agent accuracy aspects in the call. It helps in identifying areas for improvement in call handling processes. In this template, a basic analysis is performed alongside the [Factual Accuracy Analysis](#factual-accuracy-analysis) step, in which a score is given according to the errors made by the agent in the call. This is achieved using the [```Factual Accuracy Analysis prompt template```](./prompts/factual_accuracy_analysis.yaml) and the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured).
-
+Call Quality Assessment evaluates agent accuracy aspects in the call. It helps in identifying areas for improvement in call handling processes. In this template, a basic analysis is performed alongside the [Factual Accuracy Analysis](#factual-accuracy-analysis) and [Procedure Analysis](#procedure-analysis) steps, in which a score is given according to the errors made by the agent in the call, and a prdiction of a score (NPS) the user could give to the attention receibed. This is achieved using the get_call_quallity_assesment method in the [Analysis script](./src/analysis.py).
 # Customizing the template
 
 ## Large language model (LLM)
