@@ -1,14 +1,20 @@
 import os
 import sys
 
-sys.path.append("../") 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import streamlit as st
 from src.edgar_sec import SecFiling
 from dotenv import load_dotenv
 
-PERSIST_DIRECTORY = "../data/vectordbs"
+PERSIST_DIRECTORY = os.path.join(kit_dir,"data/vectordbs")
 
-load_dotenv('../../export.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 @st.cache_resource
 def set_retrieval_conversational_chain(config):

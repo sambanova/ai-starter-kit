@@ -26,7 +26,13 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.evaluation import InformationRetrievalEvaluator
 from tqdm.auto import tqdm
 
-sys.path.append("..")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from utils.sambanova_endpoint import SambaNovaEndpoint
 
 
@@ -36,7 +42,7 @@ logging.basicConfig(
 )
 
 # Process Environment Variables
-load_dotenv("export.env")
+load_dotenv(os.path.join(repo_dir,".env"))
 
 
 def split_files_into_datasets(
@@ -238,17 +244,17 @@ def evaluate_all(
 
     # Concatenate and save results from evaluate
     concat_results_df = pd.concat(results, ignore_index=True)
-    concat_results_df.to_csv("results/eval_1_results.csv", index=False)
+    concat_results_df.to_csv(os.path.join(kit_dir,"results/eval_1_results.csv"), index=False)
 
     # Concatenate and save results from evaluate_st
     concat_st_results_df = pd.concat(st_results, ignore_index=True)
     concat_st_results_df.to_csv(
-        "results/Information-Retrieval_evaluation__results_concat.csv", index=False
+        os.path.join(kit_dir,"results/Information-Retrieval_evaluation__results_concat.csv"), index=False
     )
 
     # Concatenate and save hit rate results
     concat_hit_rate_results_df = pd.concat(hit_rate_results, ignore_index=True)
-    concat_hit_rate_results_df.to_csv("results/hit_rate_results.csv", index=False)
+    concat_hit_rate_results_df.to_csv(os.path.join(kit_dir,"results/hit_rate_results.csv"), index=False)
 
 
 class CorpusLoader:
@@ -334,7 +340,7 @@ def evaluate_st(dataset, model_id, name):
 
     evaluator = InformationRetrievalEvaluator(queries, corpus, relevant_docs, name=name)
     model = SentenceTransformer(model_id)
-    output_path = "results/"
+    output_path = os.path.join(kit_dir,"results/")
     Path(output_path).mkdir(exist_ok=True, parents=True)
     return evaluator(model, output_path=output_path)
 
@@ -343,12 +349,12 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Script to finetune embeddings.")
     parser.add_argument(
         "--input_data_directory",
-        default="./sample_data",
+        default=os.path.join(kit_dir,"sample_data"),
         help="Directory containing the raw files for dataset creation.",
     )
     parser.add_argument(
         "--output_data_directory",
-        default="./processed_data",
+        default=os.path.join(kit_dir,"processed_data"),
         help="Directory where the processed files will be stored.",
     )
     parser.add_argument(

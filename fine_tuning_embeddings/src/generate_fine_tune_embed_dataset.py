@@ -15,7 +15,13 @@ from llama_index.node_parser import SimpleNodeParser
 from llama_index.schema import MetadataMode
 from tqdm import tqdm
 
-sys.path.append("..")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from utils.sambanova_endpoint import SambaNovaEndpoint
 
 # Configure logging

@@ -14,12 +14,18 @@ from langchain.chains import create_retrieval_chain
 # Use embeddings As Part of Langchain
 from langchain.vectorstores import Chroma
 
-sys.path.append("..")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from src.models.sambanova_endpoint import SambaNovaEndpoint
 
 # load dot_env
 
-load_dotenv("export.env")
+load_dotenv(os.path.join(repo_dir,".env"))
 
 try:
     from snsdk import SnSdk

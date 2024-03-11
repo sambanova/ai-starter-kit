@@ -114,7 +114,7 @@ pip  install  -r  requirements.txt
 
 To run the demo through local install, run the following commands:
 ```
-streamlit run app_chat.py
+streamlit run app_chat.py --browser.gatherUsageStats false 
 ```
 This will open the demo in your default browser at port 8501.
 

@@ -1,19 +1,23 @@
+
+import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import argparse
 import logging
-import os
 import random
-
 import jsonlines
 import tqdm
 import yaml
 from transformers import AutoTokenizer
-
-import sys
-
-sys.path.append("../")
-
 from dotenv import load_dotenv
-load_dotenv('../.env')
+
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 from yoda.utils import qa_processing, data_reader
 from yoda.prompts.prompts import QA_GEN_TEMPLATE
