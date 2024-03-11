@@ -1,4 +1,3 @@
-
 <a href="https://sambanova.ai/">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
@@ -31,13 +30,15 @@ Post Call Analysis
         - [Named entity recognition](#named-entity-recognition)
         - [Sentiment Analysis](#sentiment-analysis)
         - [Factual Accuracy Analysis](#factual-accuracy-analysis)
+        - [Procedure Analysis](#procedure-analysis)
         - [Call Quality Assessment](#call-quality-assessment)
 - [Customizing the template](#customizing-the-template)
-    - [Factual Accuracy Analysis](#factual-accuracy-analysis)
-    - [Call Quality Assessment](#call-quality-assessment)
     - [Large language model LLM](#large-language-model-llm)
         - [Fine tune your model](#fine-tune-your-model)
         - [Prompt engineering](#prompt-engineering)
+        - [Factual Accuracy Analysis](#factual-accuracy-analysis)
+        - [Call Quality Assessment](#call-quality-assessment)
+        - [Batch Inference](#batch-inference)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
