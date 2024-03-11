@@ -62,7 +62,7 @@ pip install -r requirementsPaddle.txt
 ```
 3. Some text extraction examples use Unstructured lib. Please register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API Key. then create an enviroment file to store the APIkey and URL provided.
 ```
-echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > export.env
+echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
 
 #### Option 2: Run via Docker
@@ -76,7 +76,7 @@ git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
 2. Some text extraction examples use Unstructured lib. Please register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API Key. then create an enviroment file to store the APIkey and URL provided.
 ```
-echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > export.env
+echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
 3.1 Run data extraction docker container
 ```
