@@ -76,7 +76,7 @@ pip install -r requirements.txt
 ## Deploy the starter kit
 To run the demo, run the following commands:
 ```
-streamlit run streamlit/app.py   
+streamlit run streamlit/app.py --browser.gatherUsageStats false   
 ```
 
 After deploying the starter kit you should see the following application user interface

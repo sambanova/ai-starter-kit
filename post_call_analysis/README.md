@@ -120,7 +120,7 @@ Set your local environment and Integrate your LLM deployed on SambaStudio with t
 To run the demo, run the following command
 
 ```
-streamlit run streamlit/app.py   
+streamlit run streamlit/app.py --browser.gatherUsageStats false  
 ```
 
 After deploying the starter kit you should see the following streamlit user interface
