@@ -81,7 +81,7 @@ Set your local environment and Integrate your LLM deployed on SambaStudio with t
     ```
 2. Update API information for the SambaNova LLM and your environment [sambastudio key](#use-the-automatic-speech-recognition-pipleine). 
     
-    These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/export.env```**. For example, an endpoint with the URL
+    These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
     and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
     would be entered in the environment file (with no spaces) as:

@@ -38,7 +38,7 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit in two simpl
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/export.env```**. For example, an endpoint with the URL
+2. Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 would be entered in the config file (with no spaces) as:
 ```
