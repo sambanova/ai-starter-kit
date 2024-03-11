@@ -1,9 +1,15 @@
 import os
 import sys
-sys.path.append("../")
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
 
 from dotenv import load_dotenv
-load_dotenv('../export.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 from vectordb.vector_db import VectorDb
 from utils.sambanova_endpoint import SambaNovaEndpoint
@@ -23,7 +29,7 @@ from utils.sambanova_endpoint import SambaNovaEndpoint
 
 nest_asyncio.apply()
 
-DATA_DIRECTORY = "../data"
+DATA_DIRECTORY = os.path.join(kit_dir,"data")
 
 LAST_N_DOCUMENTS = 1
 LLM_TEMPERATURE = 0.1
@@ -213,7 +219,7 @@ class WebCrawlingRetrieval:
 
        
     def retrieval_qa_chain(self):
-        prompt = load_prompt("./prompts/llama7b-web_crwling_data_retriever.yaml")
+        prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_crwling_data_retriever.yaml"))
         retriever = self.vector_store.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={"score_threshold": SCORE_TRESHOLD, "k": K_RETRIEVED_DOCUMENTS},

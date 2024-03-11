@@ -1,9 +1,15 @@
 import os
 import sys
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from typing import List 
 from pydantic import BaseModel, Field
-sys.path.append("../../")
 
 from langchain.memory import ConversationSummaryMemory
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain, LLMChain
@@ -18,7 +24,7 @@ from sec_edgar_downloader import Downloader
 from xbrl import XBRLParser
 
 from dotenv import load_dotenv
-load_dotenv('../../export.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 from vectordb.vector_db import VectorDb
 from utils.sambanova_endpoint import SambaNovaEndpoint
@@ -26,7 +32,7 @@ from utils.sambanova_endpoint import SambaNovaEndpoint
 EMAIL = "mlengineer@snova_dummy.ai"
 COMPANY = "snova_dummy"
 REPORT_TYPE = "10-K"
-DATA_DIRECTORY = "../data"
+DATA_DIRECTORY = os.path.join(kit_dir,"data")
 
 LAST_N_DOCUMENTS = 1
 LLM_TEMPERATURE = 0.1
@@ -172,7 +178,7 @@ class SecFiling:
             return_source_documents=True,
         )
 
-        custom_prompt = load_prompt("../prompts/llama70b-edgar_qna.yaml")
+        custom_prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-edgar_qna.yaml"))
 
         self.qa_chain.combine_documents_chain.llm_chain.prompt = custom_prompt
         
@@ -180,8 +186,8 @@ class SecFiling:
         """Defines the conversational retrieval chain
         """
         
-        custom_condensed_question_prompt = load_prompt("../prompts/llama70b-edgar_multiturn-custom_condensed_question.yaml")
-        custom_qa_prompt = load_prompt("../prompts/llama70b-edgar_multiturn-custom_qa_prompt.yaml")
+        custom_condensed_question_prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-edgar_multiturn-custom_condensed_question.yaml"))
+        custom_qa_prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-edgar_multiturn-custom_qa_prompt.yaml"))
 
         memory = ConversationSummaryMemory(
             llm=self.llm, 
@@ -231,7 +237,7 @@ class SecFiling:
         output_parser = QuestionListOutputParser()
 
         # load prompt for query decomposition
-        query_decomposition_prompt = load_prompt('../prompts/llama70b-edgar_comparative_qna-query_decomposition_prompt.yaml')        
+        query_decomposition_prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-edgar_comparative_qna-query_decomposition_prompt.yaml"))        
 
         # define chain and retriever
         llm_chain = LLMChain(llm=self.llm, prompt=query_decomposition_prompt, output_parser=output_parser)
@@ -267,7 +273,7 @@ class SecFiling:
         """
         
         # load prompt for answer summarization
-        summarization_prompt = load_prompt('../prompts/llama70b-edgar_comparative_qna-answering_and_summarization_prompt.yaml')
+        summarization_prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-edgar_comparative_qna-answering_and_summarization_prompt.yaml"))
 
         # define chain
         llm_chain = LLMChain(llm=self.llm, prompt=summarization_prompt)
@@ -322,7 +328,7 @@ class SecFiling:
         return response
 
 if __name__ == '__main__':
-    persist_vdb = "../data/vectordbs/tsla"
+    persist_vdb = os.path.join(kit_dir,"data/vectordbs/tsla")
     config = {'persist_directory': persist_vdb, 'ticker': 'tsla'}
     sec_qa = SecFiling(config)
     sec_qa.init_llm_model()

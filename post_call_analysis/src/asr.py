@@ -1,5 +1,14 @@
 
 import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import io
 import time
 import shutil
@@ -12,7 +21,7 @@ from pandas import DataFrame
 from dotenv import load_dotenv
 import logging
 
-load_dotenv('../export.env')
+load_dotenv(os.path.join(repo_dir,".env"))
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -22,13 +31,16 @@ FAILED_JOB_STATUS = 'FAILED'
 
 class BatchASRProcessor():
     
-    def __init__(self, config_path='./config.yaml') -> None:
+    def __init__(self, config_path=None) -> None:
         """
         Initialize the BatchASRProcessor class.
 
         Args:
             config_path (str, optional): Path to the YAML configuration file. Defaults to './config.yaml'.
         """
+        if config_path is None:
+            config_path=os.path.join(kit_dir,'config.yaml')
+            
         self.config = self._load_config(config_path) 
                
         self.headers = {

@@ -1,5 +1,10 @@
 import os
 import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
 import cv2
 import json
 from langchain.schema import Document
@@ -16,7 +21,7 @@ class PaddleOCRLoader():
     """
     This class loads a PDF document and extracts its content using PaddleOCR and PaddleStructure.
     """
-    def __init__(self, document_path, output_folder='data/extraction', save_intermediate=True, header_height = 0, footer_height = 0, font_path="../data/fonts/simfang.ttf"):
+    def __init__(self, document_path, output_folder=None, save_intermediate=True, header_height = 0, footer_height = 0, font_path=None):
         """
         Initialize the PaddleOCRLoader class.
         Args:
@@ -27,12 +32,19 @@ class PaddleOCRLoader():
             footer_height (int, optional): Height of the footer in pixels. Defaults to 0.
             font_path (str, optional): Path to the font file. Defaults to '../data/fonts/simfang.ttf'.
         """
+        if output_folder is None:
+            self.output_folder = os.path.join(kit_dir,"data/extraction")
+        else: 
+            self.output_folder = output_folder
+        if font_path is None:
+            self.font_path = os.path.join(kit_dir,"data/fonts/simfang.ttf")
+        else:
+            self.font_path = font_path 
         self.document_path = document_path
-        self.output_folder = output_folder
         self.save_intermediate = save_intermediate
         self.header_height = header_height
         self.footer_height = footer_height
-        self.font_path = font_path
+
         
     def load(self):
         """get langchain documens from PDF file

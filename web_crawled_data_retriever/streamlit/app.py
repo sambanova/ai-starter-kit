@@ -1,12 +1,18 @@
 import os
 import sys
 
-sys.path.append("../")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import streamlit as st
 from web_crawled_data_retriever.src.web_crawling_retriever import WebCrawlingRetrieval
 from dotenv import load_dotenv
 
-load_dotenv('../export.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 def set_retrieval_qa_chain(documents=None, config=None, save=False):
     if config is None:

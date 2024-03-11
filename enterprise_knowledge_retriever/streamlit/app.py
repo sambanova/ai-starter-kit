@@ -1,6 +1,13 @@
 import os
 import sys
-sys.path.append("../")
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -14,10 +21,11 @@ from vectordb.vector_db import VectorDb
 import fitz
 from data_extraction.src.multi_column import column_boxes
 
-load_dotenv('../export.env')
+load_dotenv(os.path.join(repo_dir,'export.env'))
+
 
 DB_TYPE = "chroma"
-PERSIST_DIRECTORY = f"data/vectordbs/{DB_TYPE}_default"
+PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/vectordbs/{DB_TYPE}_default")
 K_RETRIEVED_DOCUMENTS = 3
 SCORE_TRESHOLD = 0.6
 
@@ -52,7 +60,7 @@ def get_pdf_text_and_metadata_fitz(pdf_doc):
     """
     text = []
     metadata = []
-    temp_folder = "./data/tmp"
+    temp_folder = os.path.join(kit_dir,"data/tmp")
     temp_file = os.path.join(temp_folder,"file.pdf")
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
@@ -79,7 +87,7 @@ def get_pdf_text_and_metadata_unstructured(pdf_doc):
     """
     text = []
     metadata = []
-    temp_folder = "./data/tmp"
+    temp_folder = os.path.join(kit_dir,"data/tmp")
     temp_file = os.path.join(temp_folder,"file.pdf")
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
@@ -166,7 +174,7 @@ def get_qa_retrieval_chain(vectorstore):
         output_key="answer",
     )
     
-    customprompt = load_prompt("prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml")
+    customprompt = load_prompt(os.path.join(kit_dir, "prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml"))
 
     ## Inject custom prompt
     qa_chain.combine_documents_chain.llm_chain.prompt = customprompt

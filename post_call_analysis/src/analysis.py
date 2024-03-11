@@ -1,8 +1,15 @@
 import os
 import sys
-sys.path.append("../")
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from dotenv import load_dotenv
-load_dotenv("../export.env")
+load_dotenv(os.path.join(repo_dir,".env"))
 
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from langchain.prompts import load_prompt
@@ -48,7 +55,7 @@ def reduce_call(conversation):
     Returns:
         str: The reduced conversation.
     """
-    reduce_prompt = load_prompt("./prompts/reduce.yaml")
+    reduce_prompt = load_prompt(os.path.join(kit_dir,"prompts/reduce.yaml"))
     reduce_chain = LLMChain(llm=model, prompt=reduce_prompt)  
     combine_documents_chain = StuffDocumentsChain(
         llm_chain=reduce_chain, document_variable_name="transcription_chunks"
@@ -78,7 +85,7 @@ def get_summary(conversation, model=model):
     Returns:
         str: The summary of the conversation.
     """
-    summarization_prompt=load_prompt("./prompts/summarization.yaml")
+    summarization_prompt=load_prompt(os.path.join(kit_dir,"prompts/summarization.yaml"))
     output_parser = StrOutputParser()
     summarization_chain = summarization_prompt | model | output_parser
     input_variables={"conversation": conversation}
@@ -99,7 +106,7 @@ def classify_main_topic(conversation, classes, model=model):
     Returns:
         List[str]: The list of classes that the conversation was classified into.
     """
-    topic_classification_prompt=load_prompt("./prompts/topic_classification.yaml")
+    topic_classification_prompt=load_prompt(os.path.join(kit_dir,"prompts/topic_classification.yaml"))
     list_output_parser = CommaSeparatedListOutputParser()
     list_format_instructions = list_output_parser.get_format_instructions()
     topic_classifcation_chain = topic_classification_prompt | model | list_output_parser
@@ -121,7 +128,7 @@ def get_entities(conversation, entities, model=model):
     Returns:
         Dict[str, Any]: A dictionary containing the extracted entities. The keys are the entity names, and the values are the extracted entities.
     """
-    ner_prompt = load_prompt("./prompts/ner.yaml")
+    ner_prompt = load_prompt(os.path.join(kit_dir,"prompts/ner.yaml"))
     response_schemas = []
     for entity in entities:
         response_schemas.append(ResponseSchema(name=entity, description=f"{entity}s find in conversation", type="list"))
@@ -148,7 +155,7 @@ def get_sentiment(conversation, sentiments, model=model):
     Returns:
         str: The overall sentiment of the user.
     """
-    sentiment_analysis_prompt = load_prompt("./prompts/sentiment_analysis.yaml")
+    sentiment_analysis_prompt = load_prompt(os.path.join(kit_dir,"prompts/sentiment_analysis.yaml"))
     list_output_parser = CommaSeparatedListOutputParser()
     list_format_instructions = list_output_parser.get_format_instructions()
     sentiment_analysis_chain = sentiment_analysis_prompt | model | list_output_parser
@@ -178,7 +185,7 @@ def get_nps(conversation, model=model):
                         ]
     nps_output_parser = StructuredOutputParser.from_response_schemas(nps_response_schemas)
     format_instructions=nps_output_parser.get_format_instructions()
-    nps_prompt = load_prompt("./prompts/nps.yaml")
+    nps_prompt = load_prompt(os.path.join(kit_dir,"prompts/nps.yaml"))
     nps_chain = nps_prompt | model | nps_output_parser
     input_variables={"conversation":conversation, "format_instructions":format_instructions}
     print(f"predicting nps")
@@ -259,7 +266,7 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
                                                 ]
     factual_accuracy_analysis_output_parser = StructuredOutputParser.from_response_schemas(factual_accuracy_analysis_response_schemas)
     format_instructions=factual_accuracy_analysis_output_parser.get_format_instructions()
-    retrieval_qa_chat_prompt = load_prompt("./prompts/factual_accuracy_analysis.yaml")
+    retrieval_qa_chat_prompt = load_prompt(os.path.join(kit_dir,"prompts/factual_accuracy_analysis.yaml"))
     combine_docs_chain = create_stuff_documents_chain(
         model, retrieval_qa_chat_prompt
     )
@@ -300,7 +307,7 @@ def procedural_accuracy_analysis(conversation, procedures_path, model=model):
                                                 ]
     procedures_analysis_output_parser = StructuredOutputParser.from_response_schemas(procedures_analysis_response_schemas)
     format_instructions=procedures_analysis_output_parser.get_format_instructions()
-    procedures_prompt = load_prompt("./prompts/procedures_analysis.yaml")
+    procedures_prompt = load_prompt(os.path.join(kit_dir,"prompts/procedures_analysis.yaml"))
     with open(procedures_path, 'r') as file:
         procedures = file.readlines()
     procedures_chain = procedures_prompt | model | procedures_analysis_output_parser

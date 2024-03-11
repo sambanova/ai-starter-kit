@@ -1,7 +1,13 @@
-# import dependencies
-import sys                                                  # for appending more paths
-sys.path.append("../")
 import os                                                   # for using env variables
+import sys                                                  # for appending more paths
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import streamlit as st                                      # for gui elements, secrets management
 import json                                                 # for loading prompt example config file
 import requests                                             # for calling web APIs
@@ -13,14 +19,14 @@ from dotenv import load_dotenv                              # for loading env va
 from utils.sambanova_endpoint import SambaNovaEndpoint      # for calling Sambanova LLM endpoint
 
 # load env variables 
-load_dotenv('../export.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 # populate variables from secrets file
 LLAMA2_70B_LLM_ENDPOINT = os.getenv("LLAMA2_70B_LLM_ENDPOINT") 
 LLAMA2_70B_LLM_API_KEY = os.getenv("LLAMA2_70B_LLM_API_KEY") 
 
 # define config path
-CONFIG_PATH = './config.json'
+CONFIG_PATH = os.path.join(repo_dir,'config.json')
 
 
 @st.cache_data
@@ -145,7 +151,7 @@ def main():
     st.set_page_config(page_title='Prompt Engineering - SambaNova Starter Kits',  layout="centered", initial_sidebar_state="auto", menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'})  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:, 
     col1, mid, col2 = st.columns([1,1,20])
     with col1:
-        render_svg('./docs/sambanova-ai.svg')
+        render_svg(os.path.join(repo_dir,'docs/sambanova-ai.svg'))
     with col2:
         st.title('Prompt Engineering Starter Kit')
 

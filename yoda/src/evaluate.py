@@ -1,7 +1,15 @@
+import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 import argparse
 import json
-import os
-
 import numpy as np
 from tqdm import tqdm
 import yaml
@@ -11,17 +19,11 @@ from transformers import AutoTokenizer
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 
-
-import sys
-
-sys.path.append("../")
 from utils.sambanova_endpoint import SambaNovaEndpoint
 from vectordb.vector_db import VectorDb
 from yoda.prompts.prompts import RAG_prompt_template, LLAMA_CHAT_PROMPT_PREFIX, LLAMA_CHAT_PROMPT_POSTFIX
 
-
-
-load_dotenv('../.env')
+load_dotenv(os.path.join(repo_dir,'.env'))
 
 llm = SambaNovaEndpoint(
     base_url=os.getenv('YODA_BASE_URL'),
@@ -48,7 +50,7 @@ llm_baseline = SambaNovaEndpoint(
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/sn_expert_conf.yaml",
+    parser.add_argument("--config", default=os.path.join(kit_dir,"sn_expert_conf.yaml"),
                         type=str, help="Path to config file")
     args = parser.parse_args()
     return args
@@ -68,7 +70,7 @@ if __name__ == '__main__':
 
     RAG_CONTEXT_TOP_K = config['RAG_CONTEXT_TOP_K']
 
-    RESULTS_DIR = "./results"
+    RESULTS_DIR = os.path.join(kit_dir,"data","results")
     os.makedirs(RESULTS_DIR, exist_ok=True)
     RESULTS_FILE_PATH = os.path.join(RESULTS_DIR, "generations.json")
 
