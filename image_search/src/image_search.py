@@ -13,6 +13,7 @@ import io
 from PIL import Image
 from chromadb.api.types import is_image, is_document, Images,  Documents, EmbeddingFunction, Embeddings
 from typing import cast, Union, TypeVar
+from src.clip_batch_inference import BatchClipProcessor
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,".env"))
@@ -75,9 +76,11 @@ class ImageSearch():
         print(f"got {len (images)} images")
         return paths,images
 
-    def add_images(self, paths, images):
-        #TODO: implement batch inference method for getting images embeddings
-        embeddings = None 
+    def add_images(self, path):
+        clip = BatchClipProcessor(config_path=os.path.join(kit_dir,"config.yaml"))
+        df = clip.process_images(path)
+        embeddings = list(df["predictions"]) 
+        paths = list(df["input"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
         self.collection.add(
             embeddings=embeddings,
             metadatas=[{"source": path} for path in paths],
