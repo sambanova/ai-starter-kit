@@ -12,7 +12,7 @@ asr:
     application_field: language
 
   urls:
-    base_url: https://sjc1-demo1.sambanova.net
+    base_url: https://your.sambastrudio.environment.com
     datasets_url: /api/datasets
     projects_url: /api/projects
     jobs_url: /{project_id}/jobs
