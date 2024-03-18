@@ -16,18 +16,13 @@ from typing import Tuple                                    # for type hint
 from langchain.prompts import PromptTemplate, load_prompt   # for creating and loading prompting yaml files
 from dotenv import load_dotenv                              # for loading env variables
 
-from utils.sambanova_endpoint import SambaNovaEndpoint      # for calling Sambanova LLM endpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint   # for calling Sambanova LLM endpoint
 
 # load env variables 
 load_dotenv(os.path.join(repo_dir,'.env'))
 
-# populate variables from secrets file
-LLAMA2_70B_LLM_ENDPOINT = os.getenv("LLAMA2_70B_LLM_ENDPOINT") 
-LLAMA2_70B_LLM_API_KEY = os.getenv("LLAMA2_70B_LLM_API_KEY") 
-
 # define config path
-CONFIG_PATH = os.path.join(repo_dir,'config.json')
-
+CONFIG_PATH = os.path.join(kit_dir,'config.json')
 
 @st.cache_data
 def call_sambanova_llama2_70b_api(prompt: str) -> str:
@@ -39,8 +34,7 @@ def call_sambanova_llama2_70b_api(prompt: str) -> str:
     Returns:
         str: completion of the input prompt
     """
-    
-    # SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.
+    #SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.
     llm = SambaNovaEndpoint(
         base_url=os.getenv('BASE_URL'),
         project_id=os.getenv('PROJECT_ID'),
@@ -56,12 +50,40 @@ def call_sambanova_llama2_70b_api(prompt: str) -> str:
             # "top_p": {"type": "float", "value": "1"}
         },
     )
-    
     # Get completion from llm
-    completion_text = llm(prompt)
-
+    completion_text = llm.invoke(prompt)
     return completion_text
 
+
+@st.cache_data
+def call_sambaverse_llama2_70b_api(prompt: str) -> str:
+    """Calls a LLama2-70B Sambaverse endpoint. Uses an input prompt and returns a completion of it.
+
+    Args:
+        prompt (str): prompt text
+
+    Returns:
+        str: completion of the input prompt
+    """
+    #SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.    
+    llm = SambaverseEndpoint(
+        sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+        sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+        model_kwargs={
+            "do_sample": False, 
+            "max_tokens_to_generate": 500,
+            "temperature": 0.0,
+            "process_prompt": True,
+            "select_expert": "llama-2-70b-chat-hf"
+            #"stop_sequences": { "type":"str", "value":""},
+            # "repetition_penalty": {"type": "float", "value": "1"},
+            # "top_k": {"type": "int", "value": "50"},
+            # "top_p": {"type": "float", "value": "1"}
+        }
+    )
+    # Get completion from llm
+    completion_text = llm.invoke(prompt)
+    return completion_text
 
 def get_config_info() -> Tuple[dict, list]:
     """Loads json config file
@@ -71,9 +93,10 @@ def get_config_info() -> Tuple[dict, list]:
     with open(CONFIG_PATH, 'r', encoding='utf-8') as file:
         config = json.load(file)
     model_info = config["models"]
+    api_info = config["api"]
     prompt_use_cases = config["use_cases"]
     
-    return model_info, prompt_use_cases
+    return api_info, model_info, prompt_use_cases
 
 def get_prompt_template(model: str, prompt_use_case: str) -> str:
     """Reads a prompt template from an specified model and use case
@@ -151,12 +174,12 @@ def main():
     st.set_page_config(page_title='Prompt Engineering - SambaNova Starter Kits',  layout="centered", initial_sidebar_state="auto", menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'})  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:, 
     col1, mid, col2 = st.columns([1,1,20])
     with col1:
-        render_svg(os.path.join(repo_dir,'docs/sambanova-ai.svg'))
+        render_svg(os.path.join(kit_dir,'docs/sambanova-ai.svg'))
     with col2:
         st.title('Prompt Engineering Starter Kit')
 
     # Get model information and prompt use cases from config file
-    model_info, prompt_use_cases = get_config_info()
+    api_info, model_info, prompt_use_cases = get_config_info()
     model_names = [key for key, _ in model_info.items()]
     
     st.session_state["model_info"] = model_info
@@ -204,8 +227,14 @@ def main():
         response_content = ""
         # Call Llama2 endpoint and show the response content
         if selected_model == "Llama2 70B":
-            response_content = call_sambanova_llama2_70b_api(prompt)
-        st.write(response_content)
+            if api_info=="sambastudio":
+                response_content = call_sambanova_llama2_70b_api(prompt)
+                st.write(response_content)
+            elif api_info == "sambaverse":
+                response_content = call_sambaverse_llama2_70b_api(prompt)
+                st.write(response_content)
+            else:
+                st.error('Please select a valid API in your config file "sambastudio" or "sambaverse" ')
 
 if __name__ == "__main__":
     # run following method if you want to know how prompt yaml files were created.

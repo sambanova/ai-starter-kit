@@ -17,6 +17,8 @@
     "Summarization",
     "Question & Answering",
     "Query decomposition"
-  ]
+  ],
+
+  "api": "sambaverse"
 }
   
