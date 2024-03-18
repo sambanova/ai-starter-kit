@@ -30,35 +30,76 @@ If you have any issues with the examples or would be willing to provide feedback
 
 # SambaNova Large language model endpoints usage:
 
-## 1. Deploy your model in SambaStudio
+## 1. Setting your model
+
+### (Option 1) Deploy your model in SambaStudio
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+
+### (Option 2) Use Sambaverse models
+Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
 
 ## 2. Integrate your model in the starter kit
 Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
-1. Clone this repo.
+### 1. Clone this repo.
 ```
   git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM.
-
- These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/<starter_kit>/export.env. For example, an endpoint with the URL
+### 2. Update API information for the SambaNova LLM.
+ These are represented as configurable variables in the environment variables file in sn-ai-starter-kit/.env. 
+#### With Sambastudio deployed model:
+An endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the config file (with no spaces) as:
+would be entered in the env file (with no spaces) as:
 ```
 BASE_URL="https://api-stage.sambanova.net"
 PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ``` 
-3.  Import in your starterkit the samabanova_endpoint langchain wrapper
+#### With Sambaverse model: 
+A Sambaverse API key
+"456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the env file (with no spaces) as:
+```
+SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+```
+### 3.  Use Samabnova's LLMs
+
+#### Import in your starterkit the **samabanova_endpoint** langchain wrapper
 ``` python
 from utils.sambanova_endpoint import SambaNovaEndpoint
 
-load_dotenv('export.env')
+load_dotenv('.env')
 
 llm = SambaNovaEndpoint(
-    model_kwargs={"do_sample": False, "temperature": 0.0},
+    model_kwargs={
+      "do_sample": False, 
+      "max_tokens_to_generate": 512,
+      "temperature": 0.0
+      },
 )
+```
+
+#### Import in your starterkit the **samabaverse_endpoint** langchain wrapper
+``` python
+from utils.sambanova_endpoint import SambaverseEndpoint
+
+load_dotenv('.env')
+
+llm = SambaverseEndpoint(
+    sambaverse_model_name="Meta/llama-2-7b-chat-hf",
+    model_kwargs={
+      "do_sample": False, 
+      "temperature": 0.0,
+      "max_tokens_to_generate": 512,
+      "select_expert": "llama-2-7b-chat-hf"
+      },
+)
+```
+
+#### Use the Lanchaig SambaNova's LLM wrapper
+```python
+llm.invoke("your prompt")
 ```
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. We recommend performing due diligence per your organization policies for use in your applications.
