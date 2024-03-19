@@ -1,13 +1,38 @@
 
 <a href="https://sambanova.ai/">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
   <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
 </a>
 
 Enterprise Knowledge Retrieval
 ======================
+
+<!-- TOC -->
+
+- [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
+- [Overview](#overview)
+    - [About this template](#about-this-template)
+- [Getting started](#getting-started)
+    - [Deploy your model](#deploy-your-model)
+    - [Integrate your model](#integrate-your-model)
+    - [Deploy the starter kit](#deploy-the-starter-kit)
+- [Workflow](#workflow)
+    - [Ingestion](#ingestion)
+    - [Retrieval](#retrieval)
+    - [Response](#response)
+- [Customizing the template](#customizing-the-template)
+    - [Import Data](#import-data)
+    - [Split Data](#split-data)
+    - [Embed data](#embed-data)
+    - [Store embeddings](#store-embeddings)
+    - [Retrieval](#retrieval)
+    - [Large language model LLM](#large-language-model-llm)
+        - [Prompt engineering](#prompt-engineering)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC --> 
 
 # Overview
 ## About this template
