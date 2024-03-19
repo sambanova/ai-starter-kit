@@ -29,24 +29,39 @@ Prompt Engineering Starter Kit
 
 ## Deploy your model in SambaStudio
 
-Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
+
+Alternatively begin by deploying your LLM (e.g. Llama 2 70B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ## Integrate your model
 
-Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
+Integrate your LLM deployed on SambaStudio or connect your Sambaverse API key with this AI starter kit in two simple steps:
 1. Clone repo.
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
-2. Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+
+2. **Sambaverse Endpoint:**  Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
+"456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the env file (with no spaces) as:
+```
+SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+```
+
+Set in the [config file](./config.json), the variable *api* as: "sambaverse"
+
+2. **SambaStudio Endpoint:**  Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the config file (with no spaces) as:
+would be entered in the env file (with no spaces) as:
 ```
 BASE_URL="https://api-stage.sambanova.net"
 PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
+
+Set in the [config file](./config.json), the variable *api* as: "sambastudio"
+
 
 3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
@@ -91,11 +106,21 @@ After deploying the starter kit you should see the following application user in
 ## Include model
 
 You can include more models to the kit 
+
+If using Sambastudio:
+
 - First [set your model] in Sambastudio (#integrate-your-model)
 - Include your model description in the model section in the ```config.json``` file
 - Populate key variables from your env file in ```streamlit/app.py```
 - Define the method for calling the model, you can see the example *call_sambanova_llama2_70b_api* in ```streamlit/app.py```
 - Include the method usage in ```st.buton(send)``` copletition section in the ```streamlit/app.py```
+
+If using Sambaverse endpoint:
+
+- Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
+- Define the method for calling the model, you can see the example *call_sambaverse_llama2_70b_api* in ```streamlit/app.py``` setting the values of  `sambaverse_model_name` and the keyword argument `select_expert` 
+- Include the method usage in ```st.buton(send)``` copletition section in the ```streamlit/app.py```
+
 
 ## Edit a template
 

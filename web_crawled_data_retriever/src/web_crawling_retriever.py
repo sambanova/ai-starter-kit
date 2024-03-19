@@ -12,9 +12,11 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,'.env'))
 
 from vectordb.vector_db import VectorDb
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
+import yaml
 import nest_asyncio
+from typing import Tuple      
 from langchain.chains import RetrievalQA
 from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain.prompts import PromptTemplate, load_prompt
@@ -41,6 +43,8 @@ DB_TYPE = "faiss"
 K_RETRIEVED_DOCUMENTS = 4
 SCORE_TRESHOLD = 0.5
 
+CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+
 class WebCrawlingRetrieval:
     
     def __init__(self, documents=None, config=None):
@@ -49,7 +53,20 @@ class WebCrawlingRetrieval:
         self.documents = documents
         self.config = config
         self.vectordb = VectorDb()
+     
+    @staticmethod   
+    def _get_config_info() -> Tuple[str, list]:
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        api_info = config["api"]
+        extra_loaders = config["extra_loaders"]
         
+        return api_info, extra_loaders
+            
     @staticmethod
     def load_remote_pdf(url):
         """
@@ -64,7 +81,7 @@ class WebCrawlingRetrieval:
         return docs
     
     @staticmethod
-    def load_htmls(urls):
+    def load_htmls(urls, extra_loaders=None):
         """
         Load HTML documents from the given URLs.
         Args:
@@ -72,10 +89,15 @@ class WebCrawlingRetrieval:
         Returns:
             list: A list of loaded HTML documents.
         """
+        if extra_loaders is None:
+            extra_loaders = []
         docs=[]
         for url in urls:
             if url.endswith(".pdf"):
-                docs.extend(WebCrawlingRetrieval.load_remote_pdf(url))
+                if "pdf" in extra_loaders:
+                    docs.extend(WebCrawlingRetrieval.load_remote_pdf(url))
+                else:
+                    continue
             else:
                 loader = AsyncHtmlLoader(url, verify_ssl=False)
                 docs.extend(loader.load())
@@ -114,7 +136,7 @@ class WebCrawlingRetrieval:
         if excluded_links is None:
             excluded_links = []
         all_links = set()  
-        excluded_link_suffixes = {".ico", ".svg", ".jpg", ".png", ".jpeg", ".", ".docx", ".xls", ".xlsx", ".pdf"}
+        excluded_link_suffixes = {".ico", ".svg", ".jpg", ".png", ".jpeg", ".", ".docx", ".xls", ".xlsx"}
         for doc in docs:
             page_content = doc.page_content
             base_url = doc.metadata["source"]
@@ -148,7 +170,7 @@ class WebCrawlingRetrieval:
         html2text_transformer = Html2TextTransformer()
         docs=html2text_transformer.transform_documents(documents=docs)
         return docs
-
+    
     @staticmethod
     def web_crawl(urls, excluded_links=None, depth = 1):
         """
@@ -160,6 +182,7 @@ class WebCrawlingRetrieval:
         Returns:
             tuple: A tuple containing the langchain documents (list) and the scrapped URLs (list).
         """
+        _, extra_loaders = WebCrawlingRetrieval._get_config_info()
         if excluded_links is None:
             excluded_links = []
         excluded_links.extend(["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "telagram.me", "reddit.com", "whatsapp.com", "wa.me"])
@@ -168,7 +191,7 @@ class WebCrawlingRetrieval:
         scrapped_urls=[]
         raw_docs=[]
         for _ in range(depth):
-            scraped_docs = WebCrawlingRetrieval.load_htmls(urls)
+            scraped_docs = WebCrawlingRetrieval.load_htmls(urls, extra_loaders)
             scrapped_urls.extend(urls)
             urls=WebCrawlingRetrieval.find_links(scraped_docs, excluded_links)
             
@@ -181,13 +204,35 @@ class WebCrawlingRetrieval:
     def init_llm_model(self) -> None:
         """Initializes the LLM endpoint
         """
-        self.llm = SambaNovaEndpoint(
-            model_kwargs={
-                "do_sample": True, 
-                "temperature": LLM_TEMPERATURE,
-                "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
-            }
-        ) 
+        api_info, _ = WebCrawlingRetrieval._get_config_info()
+        if api_info=="sambaverse":
+            self.llm = SambaverseEndpoint(
+                sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+                model_kwargs={
+                    "do_sample": True, 
+                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                    "temperature": LLM_TEMPERATURE,
+                    "process_prompt": True,
+                    "select_expert": "llama-2-70b-chat-hf"
+                    #"stop_sequences": { "type":"str", "value":""},
+                    # "repetition_penalty": {"type": "float", "value": "1"},
+                    # "top_k": {"type": "int", "value": "50"},
+                    # "top_p": {"type": "float", "value": "1"}
+                }
+            )
+        elif api_info=="sambastudio":
+            self.llm = SambaNovaEndpoint(
+                model_kwargs={
+                    "do_sample": True, 
+                    "temperature": LLM_TEMPERATURE,
+                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                    #"stop_sequences": { "type":"str", "value":""},
+                    # "repetition_penalty": {"type": "float", "value": "1"},
+                    # "top_k": {"type": "int", "value": "50"},
+                    # "top_p": {"type": "float", "value": "1"}
+                }
+            ) 
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
         
