@@ -85,7 +85,7 @@ def call_sambaverse_llama2_70b_api(prompt: str) -> str:
     completion_text = llm.invoke(prompt)
     return completion_text
 
-def get_config_info() -> Tuple[dict, list]:
+def get_config_info() -> Tuple[str, dict, list]:
     """Loads json config file
     """
     
