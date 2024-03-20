@@ -235,7 +235,7 @@ Call Quality Assessment evaluates agent accuracy aspects in the call. It helps i
 You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
 
 - Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the method for calling the model, it is *init_llm_model* in ```src/web_crawling_retriever.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+- Modify the method for calling the model, in ```src/analysis.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
 
 **If using Sambastudio:**
 
