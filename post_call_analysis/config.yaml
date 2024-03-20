@@ -31,3 +31,5 @@ asr:
 
   output:
     output_path: results/output.csv
+    
+api: sambaverse

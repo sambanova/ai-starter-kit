@@ -66,7 +66,9 @@ This sample is ready to use. We provide instructions to help you run this demo b
 
 ### Deploy your LLM
 
-Begin by deploying your LLM of choice (e.g. Llama 2 70B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
+
+Alternatively by deploying your LLM of choice (e.g. Llama 2 70B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ### Use the automatic Speech Recognition Pipleine
 
@@ -80,29 +82,45 @@ Set your local environment and Integrate your LLM deployed on SambaStudio with t
     ```
     git clone https://github.com/sambanova/ai-starter-kit.git
     ```
-2. Update API information for the SambaNova LLM and your environment [sambastudio key](#use-the-automatic-speech-recognition-pipleine). 
+
+2. **Sambaverse Endpoint:**  Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
+"456789ab-cdef-0123-4567-89abcdef0123"
+and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
+would be entered in the env file (with no spaces) as:
+    ```yaml
+    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
+    ```
+
+Set in the [config file](./config.yaml), the variable *api* as: "sambaverse"
+
+2. **SambaStudio Endpoint:**  Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo dir Update API information for the SambaNova LLM and your environment [sambastudio key](#use-the-automatic-speech-recognition-pipleine). 
     
     These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
+    and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
     would be entered in the environment file (with no spaces) as:
-    ```
+    ```yaml
     BASE_URL="https://api-stage.sambanova.net"
     PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
     ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
     API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    VECTOR_DB_URL=http://host.docker.internal:6333
     SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
+
+    Set in the [config file](./config.yaml), the variable *api* as: "sambastudio"
+
+
 3. Install requirements.
 
     It is recommended to use virtualenv or conda environment for installation, and to update pip.
-    ```
+    ```bash
     cd ai-starter-kit/post_call_analysis
     python3 -m venv post_call_analysis_env
     source post_call_analysis_env/bin/activate
     pip install -r requirements.txt
     ```
+
 4. Download and install Sambanova CLI.
 
     Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing Sambanova SNSDK and SNAPI, (you can omit the *Create a virtual environment* step since you are using the just created ```post_call_analysis_env``` environment)
@@ -114,7 +132,8 @@ Set your local environment and Integrate your LLM deployed on SambaStudio with t
         ```
         snapi app list 
         ```
-    - Search for the ```ASR With Diarization``` section in the oputput and copy in the config file the ID value.
+    - Search for the ```ASR With Diarization``` section in the oputput and copy in the [```config.yaml``](./config.yaml) the ID value.
+    - Set in the [```config.yaml``](./config.yaml), the variable *api* as: "sambaverse" or "sambanova" depending of which endpoint you are using to the LLM calls.
 
 ## Deploy the starter kit
 
@@ -206,11 +225,20 @@ Procedures Analysis evaluates if the agent follows some given proceduresduring t
 ### Call Quality Assessment
 
 Call Quality Assessment evaluates agent accuracy aspects in the call. It helps in identifying areas for improvement in call handling processes. In this template, a basic analysis is performed alongside the [Factual Accuracy Analysis](#factual-accuracy-analysis) and [Procedure Analysis](#procedure-analysis) steps, in which a score is given according to the errors made by the agent in the call, and a prdiction of a score (NPS) the user could give to the attention receibed. This is achieved using the get_call_quallity_assesment method in the [Analysis script](./src/analysis.py).
+
 # Customizing the template
 
 ## Large language model (LLM)
 
-### Fine tune your model
+**If using Sambaverse endpoint**
+
+You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
+
+- Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
+- Modify the method for calling the model, in ```src/analysis.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+
+**If using Sambastudio:**
+
 The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
 
 ### Prompt engineering

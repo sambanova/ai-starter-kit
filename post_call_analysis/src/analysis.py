@@ -11,7 +11,8 @@ sys.path.append(repo_dir)
 from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,".env"))
 
-from utils.sambanova_endpoint import SambaNovaEndpoint
+import yaml
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from langchain.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import ReduceDocumentsChain, LLMChain
@@ -24,13 +25,44 @@ from vectordb.vector_db import VectorDb
 from langchain.schema import Document
 import concurrent.futures
 
-model = SambaNovaEndpoint(
-            model_kwargs={
-                "do_sample": True, 
-                "temperature": 0.01,
-                "max_tokens_to_generate": 1500,
-            }
-        ) 
+
+LLM_TEMPERATURE = 0.01
+LLM_MAX_TOKENS_TO_GENERATE = 1500
+CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+api_info = config["api"]
+
+if api_info == "sambaverse":
+    model = SambaverseEndpoint(
+        sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+        sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+        model_kwargs={
+            "do_sample": False, 
+            "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+            "temperature": LLM_TEMPERATURE,
+            "process_prompt": True,
+            "select_expert": "llama-2-70b-chat-hf"
+            #"stop_sequences": { "type":"str", "value":""},
+            # "repetition_penalty": {"type": "float", "value": "1"},
+            # "top_k": {"type": "int", "value": "50"},
+            # "top_p": {"type": "float", "value": "1"}
+        }
+    )
+    
+elif api_info == "sambastudio":
+    model = SambaNovaEndpoint(
+        model_kwargs={
+            "do_sample": True, 
+            "temperature": LLM_TEMPERATURE,
+            "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                        #"stop_sequences": { "type":"str", "value":""},
+        # "repetition_penalty": {"type": "float", "value": "1"},
+        # "top_k": {"type": "int", "value": "50"},
+        # "top_p": {"type": "float", "value": "1"}
+        }
+    ) 
 
 def load_conversation(transcription, transcription_path):
     """Load a conversation as langchain Document
@@ -214,12 +246,12 @@ def get_call_quallity_assesment(conversation, factual_result, procedures_result)
     total_score += factual_result["score"]
     # include the procedures analysis score
     if len(procedures_result["evaluation"])==0:
-        total_score += 1
+        total_score += 100
     else:
-        total_score += procedures_result["evaluation"].count(True)/len(procedures_result["evaluation"])
+        total_score += procedures_result["evaluation"].count(True)/len(procedures_result["evaluation"])*100
     # Simple average
     overall_score = total_score / 3
-    return overall_score   
+    return overall_score, nps["description"], nps["score"]
 
 def set_retriever(documents_path, urls):
     """
@@ -375,7 +407,7 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, procedures_
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
         procedural_analysis = procedural_analysis_future.result()
-    quality_score = get_call_quallity_assesment(reduced_conversation, factual_analysis, procedural_analysis)
+    quality_score, nps_analysis, nps_score = get_call_quallity_assesment(reduced_conversation, factual_analysis, procedural_analysis)
 
     return {
         "summary": summary,
@@ -384,5 +416,7 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, procedures_
         "sentiment": sentiment,
         "factual_analysis": factual_analysis,
         "procedural_analysis": procedural_analysis,
+        "nps_analysis": nps_analysis,
+        "nps_score": nps_score,
         "quality_score": quality_score
     }
