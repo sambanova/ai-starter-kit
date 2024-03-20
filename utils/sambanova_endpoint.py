@@ -11,6 +11,7 @@ from langchain.callbacks.manager import CallbackManagerForLLMRun  # type: ignore
 from langchain.llms.base import LLM  # type: ignore
 from langchain.utils import get_from_dict_or_env  # type: ignore
 from langchain.callbacks.base import BaseCallbackHandler  # type: ignore
+from langchain_core.embeddings import Embeddings
 
 
 class SSEndpointHandler:
@@ -690,3 +691,83 @@ class SambaverseEndpoint(LLM):
         except Exception as e:
             # Handle any errors raised by the inference endpoint
             raise ValueError(f"Error raised by the inference endpoint: {e}") from e
+        
+class SambaNovaEmbeddingModel(Embeddings):
+    '''def __init__(self, url_domain = None, project_id = None, endpoint_id = None, key = None):
+        self.url_domain = get_from_dict_or_env 
+        self.project_id = project_id
+        self.endpoint_id = endpoint_id
+        self.key = key
+    ''' 
+    def __init__(self, 
+                embed_base_url: Optional[str] = None,
+                embed_project_id: Optional[str] = None,
+                embed_endpoint_id: Optional[str] = None,
+                embed_api_key: Optional[str] = None) -> None:
+        self.API_BASE_PATH = "/api/predict/nlp/"
+        values = {"embed_base_url": embed_base_url,
+                  "embed_project_id": embed_project_id,
+                  "embed_endpoint_id": embed_endpoint_id,
+                  "embed_api_key": embed_api_key}
+        self.embed_base_url = get_from_dict_or_env(values, "embed_base_url", "EMBED_BASE_URL")
+        self.embed_project_id = get_from_dict_or_env(values, "embed_project_id", "EMBED_PROJECT_ID")
+        self.embed_endpoint_id = get_from_dict_or_env(values, "embed_endpoint_id", "EMBED_ENDPOINT_ID") 
+        self.embed_api_key = get_from_dict_or_env(values, "embed_api_key", "EMBED_API_KEY")
+
+    def _get_full_url(self, path: str) -> str:
+        """
+        Return the full API URL for a given path.
+
+        :param str path: the sub-path
+        :returns: the full API URL for the sub-path
+        :rtype: str
+        """
+        return f"{self.embed_base_url}{self.API_BASE_PATH}{path}"
+    
+    def embed_documents(self, texts, batch_size=32, **kwargs):
+        """Returns a list of embeddings for the given sentences.
+        Args:
+            sentences (`List[str]`): List of sentences to encode
+            batch_size (`int`): Batch size for the encoding
+
+        Returns:
+            `List[np.ndarray]` or `List[tensor]`: List of embeddings for the given sentences
+        """
+        http_session = requests.Session()
+        url = self._get_full_url(f"{self.embed_project_id}/{self.embed_endpoint_id}")
+
+        embeddings = []
+        for sentence in texts:
+            data = {"inputs": [sentence]}
+            response =http_session.post(
+                url,
+                headers={"key": self.embed_api_key},
+                json=data,
+                )
+            embedding = response.json()["data"][0]
+            embeddings.append(embedding)
+        return embeddings
+    
+    def embed_query(self, text, batch_size=32, **kwargs):
+        """Returns a list of embeddings for the given sentences.
+        Args:
+            sentences (`List[str]`): List of sentences to encode
+            batch_size (`int`): Batch size for the encoding
+
+        Returns:
+            `List[np.ndarray]` or `List[tensor]`: List of embeddings for the given sentences
+        """
+        http_session = requests.Session()
+        url = self._get_full_url(f"{self.embed_project_id}/{self.embed_endpoint_id}")
+        
+        data = {"inputs": [text]}
+        
+        response =http_session.post(
+            url,
+            headers={"key": self.embed_api_key},
+            json=data,
+            )
+        embedding = response.json()["data"][0]
+        
+        return embedding
+    
