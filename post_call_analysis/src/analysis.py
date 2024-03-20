@@ -246,12 +246,12 @@ def get_call_quallity_assesment(conversation, factual_result, procedures_result)
     total_score += factual_result["score"]
     # include the procedures analysis score
     if len(procedures_result["evaluation"])==0:
-        total_score += 1
+        total_score += 100
     else:
-        total_score += procedures_result["evaluation"].count(True)/len(procedures_result["evaluation"])
+        total_score += procedures_result["evaluation"].count(True)/len(procedures_result["evaluation"])*100
     # Simple average
     overall_score = total_score / 3
-    return overall_score   
+    return overall_score, nps["description"], nps["score"]
 
 def set_retriever(documents_path, urls):
     """
@@ -407,7 +407,7 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, procedures_
         sentiment = sentiment_future.result()
         factual_analysis = factual_analysis_future.result()
         procedural_analysis = procedural_analysis_future.result()
-    quality_score = get_call_quallity_assesment(reduced_conversation, factual_analysis, procedural_analysis)
+    quality_score, nps_analysis, nps_score = get_call_quallity_assesment(reduced_conversation, factual_analysis, procedural_analysis)
 
     return {
         "summary": summary,
@@ -416,5 +416,7 @@ def call_analysis_parallel(conversation, documents_path, facts_urls, procedures_
         "sentiment": sentiment,
         "factual_analysis": factual_analysis,
         "procedural_analysis": procedural_analysis,
+        "nps_analysis": nps_analysis,
+        "nps_score": nps_score,
         "quality_score": quality_score
     }

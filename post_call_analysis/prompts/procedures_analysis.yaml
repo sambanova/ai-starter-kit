@@ -19,6 +19,8 @@ template: |
           {procedures}
           </procedures>
 
+
+          First do the explaination of your anaysis and at the end you must finish with output in the requested format and nothing else
           {format_instructions}
           <</SYS>> 
           [/INST]

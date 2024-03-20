@@ -21,6 +21,8 @@ template: |
           </facts>
 
           Then give an overall score of the context following of the call if there is no factual errors the score will be 100, if there are errors discount 20 points per error
+          
+          First do the explaination of your anaysis and at the end finish with output in the requested format
           {format_instructions}
           <</SYS>> 
           [/INST]

@@ -15,7 +15,7 @@ template: |
           \n
           {format_instructions}
           if there is not an apropiated class in the topic classes lisit, only use "undefined" as the main topic class
-          try when posible to cassify it in only one class, do not provide any explaination of your choise
+          try when posible to cassify it in only one class, you must not provide any explaination of your choise
           <</SYS>> [/INST]
 template_format: f-string
 validate_template: false
