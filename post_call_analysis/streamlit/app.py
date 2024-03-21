@@ -102,6 +102,10 @@ def handle_userinput():
                     with tab:
                         st.write(item[1])
             with st.container(border=True):
+                st.markdown("**NPS prediction**")
+                st.write(st.session_state.analysis_result["nps_analysis"])
+                st.write(f"Predicted NPS: {st.session_state.analysis_result['nps_score']}")
+            with st.container(border=True):
                 st.markdown("**Call quality Assessment**")
                 quallity_gague = plot.plot_quallity_gauge(st.session_state.analysis_result["quality_score"])
                 st.plotly_chart(quallity_gague)         

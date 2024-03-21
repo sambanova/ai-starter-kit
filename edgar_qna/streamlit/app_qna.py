@@ -48,7 +48,7 @@ with st.sidebar.form(key="Form1"):
     if submitted1 and ticker:
         st.session_state["config"] = {
             "persist_directory": None,
-            "tickers": ticker,
+            "tickers": [ticker],
         }
         with st.spinner(text="Fetching Edgar data..."):
             config = st.session_state["config"]

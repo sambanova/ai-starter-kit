@@ -8,14 +8,16 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+import yaml
 import streamlit as st
 from dotenv import load_dotenv
+from typing import Tuple   
 from PyPDF2 import PdfReader
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import UnstructuredPDFLoader
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from vectordb.vector_db import VectorDb
 
 import fitz
@@ -28,6 +30,21 @@ DB_TYPE = "chroma"
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/vectordbs/{DB_TYPE}_default")
 K_RETRIEVED_DOCUMENTS = 3
 SCORE_TRESHOLD = 0.6
+LLM_TEMPERATURE = 0.0
+LLM_MAX_TOKENS_TO_GENERATE = 1200
+CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+
+def get_config_info() -> Tuple[str, list]:
+    """
+    Loads json config file
+    """
+    # Read config file
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+    api_info = config["api"]
+    loader = config["loader"]
+    
+    return api_info, loader
 
 def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
     """Extract text and metadata from pdf document with pypdf2 loader
@@ -109,10 +126,16 @@ def get_data_for_splitting(pdf_docs):
     Returns:
         list, list: list of extracted text and metadata per file
     """
+    _, loader = get_config_info()
     files_data = []
     files_metadatas = []
     for i in range(len(pdf_docs)):
-        text, meta = get_pdf_text_and_metadata_unstructured(pdf_docs[i])
+        if loader == "unstructured":
+            text, meta = get_pdf_text_and_metadata_unstructured(pdf_docs[i])
+        elif loader == "pypdf2":
+            text, meta = get_pdf_text_and_metadata_pypdf2(pdf_docs[i])
+        elif loader == "fitz":
+            text, meta = get_pdf_text_and_metadata_fitz(pdf_docs[i])
         files_data.extend(text)
         files_metadatas.extend(meta)
     return files_data, files_metadatas
@@ -155,13 +178,38 @@ def get_qa_retrieval_chain(vectorstore):
     Returns:
     RetrievalQA: A chain ready for QA without memory
     """
-    llm = SambaNovaEndpoint(
-        model_kwargs={
-            "do_sample": False,
-            "temperature": 0.0,
-            "max_tokens_to_generate": 1200,
-        }
-    )
+    api_info, _ = get_config_info()
+    
+    if api_info == "sambaverse":
+        llm = SambaverseEndpoint(
+                sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+                model_kwargs={
+                    "do_sample": False, 
+                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                    "temperature": LLM_TEMPERATURE,
+                    "process_prompt": True,
+                    "select_expert": "llama-2-70b-chat-hf"
+                    #"stop_sequences": { "type":"str", "value":""},
+                    # "repetition_penalty": {"type": "float", "value": "1"},
+                    # "top_k": {"type": "int", "value": "50"},
+                    # "top_p": {"type": "float", "value": "1"}
+                }
+            )
+        
+    elif api_info == "sambastudio":
+        llm = SambaNovaEndpoint(
+            model_kwargs={
+                "do_sample": False,
+                "temperature": LLM_TEMPERATURE,
+                "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                #"stop_sequences": { "type":"str", "value":""},
+                # "repetition_penalty": {"type": "float", "value": "1"},
+                # "top_k": {"type": "int", "value": "50"},
+                # "top_p": {"type": "float", "value": "1"}
+            }
+        )
+        
     retriever = vectorstore.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={"score_threshold": SCORE_TRESHOLD, "k": K_RETRIEVED_DOCUMENTS},
