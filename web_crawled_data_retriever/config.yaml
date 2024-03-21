@@ -1,3 +1,21 @@
-"api": "sambaverse"
-"extra_loaders":
+api: "sambaverse"
+
+llm: 
+    "temperature": 0.1
+    "max_tokens_to_generate": 500
+    "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
+    "smabaverse_select_expert": "llama-2-70b-chat-hf"
+
+retrieval:
+    "chunk_size": 1200
+    "chunk_overlap": 240
+    "db_type": "faiss"
+    "k_retrieved_documents": 4
+    "score_treshold": 0.5
+
+web_crawling:
+    "max_depth": 2
+    "max_scraped_websites": 20
+
+extra_loaders:
     - "pdf"
