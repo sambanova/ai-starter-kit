@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -13,6 +14,19 @@ from web_crawled_data_retriever.src.web_crawling_retriever import WebCrawlingRet
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(repo_dir,'.env'))
+CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+
+def get_config_info():
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        web_crawling_params = config["web_crawling"]
+        
+        return  web_crawling_params
+            
 
 def set_retrieval_qa_chain(documents=None, config=None, save=False):
     if config is None:
@@ -65,7 +79,7 @@ def handle_userinput(user_question):
 
         with st.chat_message(
             "ai",
-            avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+            avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
             st.write(f"{ans}")
             if st.session_state.show_sources:
@@ -75,6 +89,8 @@ def handle_userinput(user_question):
                         unsafe_allow_html=True,
                     )
 
+
+web_crawling_params = get_config_info()
 
 st.set_page_config(
     page_title="AI Starter Kit",
@@ -138,7 +154,7 @@ with st.sidebar:
         st.markdown("**2. Include the Urls to crawl**")
         col_a1, col_a2 = st.columns((3,2))
         # Single-line input for adding URLs
-        new_url = col_a1.text_input("Add URL:", "")
+        new_url = col_a1.text_input("Add URL:", "", help= "Each time you press Add URL button, the url will be included in URLs to crawl list" )
         col_a2.markdown(
             """
             <style>
@@ -161,7 +177,13 @@ with st.sidebar:
         # selection of crawling depth and crawling process
         st.markdown("<hr>", unsafe_allow_html=True)   
         st.markdown("**3. Choose the crawling depth**")
-        depth = st.number_input("Depth for web crawling:", min_value=1, max_value=2, value=1)
+        depth = st.number_input(
+            "Depth for web crawling:",
+            min_value=1, 
+            max_value=web_crawling_params["max_depth"], 
+            value=1, 
+            help=f'Maximum depth to crawl limited to {web_crawling_params["max_depth"]} / Maximum crawled sites limited to {web_crawling_params["max_scraped_websites"]}'
+            )
         if st.button("Scrape sites"):
             with st.spinner("Processing"):
                 # get pdf text

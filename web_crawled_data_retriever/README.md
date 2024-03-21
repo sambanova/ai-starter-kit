@@ -184,7 +184,14 @@ This modification can be done in the following location:
 >function: load_htmls
 >```
 
-**Iterative web crawling:** for each provided site after the scraping, all the referenced links are saved and filtered using [beautifulSoup](https://www.crummy.com/software/BeautifulSoup/) package, then the web crawling method iterates 'n' times scraping this sites and finding referenced links, this depth is limited to 2 maximum depth, but you can modify this limit, and the behavior of the web crawling in the following location:
+**Iterative web crawling:** for each provided site after the scraping, all the referenced links are saved and filtered using [beautifulSoup](https://www.crummy.com/software/BeautifulSoup/) package, then the web crawling method iterates 'n' times scraping this sites and finding referenced links, this depth is limited to 2 maximum depth, and an maximum absolute number of crawled sites to 20 crawled sited, but you can modify these limits, and the behavior of the web crawling in the following location:
+> file: [config.yaml](config.yaml)
+>```yaml
+>web_crawling:
+>    "max_depth": 2
+>    "max_scraped_websites": 20
+>```
+
 > file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
 >```
 >function: web_crawl
@@ -204,29 +211,23 @@ This modification can be done in the following location:
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
-The **RecursiveCharacterTextSplitter**, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
-
-
-```python
-text_splitter = RecursiveCharacterTextSplitter(
-chunk_size=100,
-chunk_overlap=20
-)
-```
-
+The **RecursiveCharacterTextSplitter** in the [kit src file](src/web_crawling_retriever.py), which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
 This modification can be done in the following location:
-> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
->```
->Atributes: 
-> - LLM_MAX_TOKENS_TO_GENERATE = 500
-> - CHUNK_SIZE = 1200
+> file: [config.yaml](config.yaml)
+>```yaml
+>retrieval:
+>    "chunk_size": 1200
+>    "chunk_overlap": 240
+>    "db_type": "faiss"
+>    "k_retrieved_documents": 4
+>    "score_treshold": 0.5
 >```
 
 
 ## Embed data
 
-There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
+There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be used or further fine-tuned on specific datasets to improve performance.
 
 This modification can be done in the following location:
 > file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
@@ -265,11 +266,12 @@ This modification can be done in the following location:
 You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
 
 - Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the method for calling the model, it is *init_llm_model* in ```src/web_crawling_retriever.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
 
 **If using Sambastudio:**
 
 The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
+Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
 
 
 ### Prompt engineering
