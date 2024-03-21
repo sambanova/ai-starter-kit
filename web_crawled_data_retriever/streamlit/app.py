@@ -65,7 +65,7 @@ def handle_userinput(user_question):
 
         with st.chat_message(
             "ai",
-            avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+            avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
             st.write(f"{ans}")
             if st.session_state.show_sources:
