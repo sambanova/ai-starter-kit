@@ -19,7 +19,7 @@ YoDa
 - [Workflow](#workflow)
     - [Data generation](#data-generation)
     - [Data preparation](#data-preparation)
-    - [Trainign / Finetuning](#trainign--finetuning)
+    - [Training / Finetuning](#trainign--finetuning)
     - [Evaluation](#evaluation)
 - [Getting Started](#getting-started)
     - [Deploy your models in SambaStudio](#deploy-your-models-in-sambastudio)
@@ -29,7 +29,7 @@ YoDa
     - [Data Generation](#data-generation)
         - [To Generate pretraining data](#to-generate-pretraining-data)
         - [To generate finetuning data](#to-generate-finetuning-data)
-        - [Both pretraining and fine tuning data generation](#both-pretraining-and-fine-tuning-data-generation)
+        - [Both pretraining and fine-tuning data generation](#both-pretraining-and-fine-tuning-data-generation)
     - [Data Preprocessing](#data-preprocessing)
     - [Launching pretraining/finetuning and hosting endpoints on SambaStudio](#launching-pretrainingfinetuning-and-hosting-endpoints-on-sambastudio)
     - [Evaluation](#evaluation)
@@ -55,7 +55,7 @@ Finetuning Generation: Utilizing a powerful LLM `Llama 2 70B` and a pipeline com
 
 Data preparation involves preprocessing and formatting the generated data to make it suitable for training. This step transforms the data into the required format and structure necessary for training the large language model.
 
-## Trainign / Finetuning
+## Training / Finetuning
 
 In this stage, the large language model is finetuned in SambaStudio using your data. Finetuning includes updating the model's parameters to adapt it to the specific characteristics and patterns present in the prepared dataset.
 
@@ -67,7 +67,7 @@ It involves using the set of evaluation queries for:
 
 - Obtaining responses from a baseline model.
 - Obtaining responses from your custom model.
-- Obtaining responses from your custom model giving them in the promop the exact context used in question generation of the evaluation querys.
+- Obtaining responses from your custom model giving them in the exact context used in question generation of the evaluation queries.
 - Obtaining responses from your custom model employing a simple RAG pipeline for response generation.
 
 This will facilitate further analysis of your model's effectiveness in solving the domain specific tasks.
@@ -78,13 +78,13 @@ These instructions will guide you on how to generate training data, preprocess i
 
 ## Deploy your models in SambaStudio
 
-Begin by deploying an powerfull LLM (e.g. Llama 2 70B chat) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin by deploying a powerful LLM (e.g. Llama 2 70B chat) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 Then deploy your baseline model (e.g. Llama 2 7B) to an endpoint for inference in SambaStudio either through the GUI or CLI
 
 ## Get your SambaStudio API key
 >Optional 
-In this Starter kit you can use the Sambanova SDK `SKSDK` to run training inference jobs in SambaStudio, you will only need to set your environment API Authorization Key (The Authorization Key will be used to access to the API Resources on SambaStudio), the steps for getting this key is decribed [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key)
+In this Starter kit you can use the Sambanova SDK `SKSDK` to run training inference jobs in SambaStudio, you will only need to set your environment API Authorization Key (The Authorization Key will be used to access to the API Resources on SambaStudio), the steps for getting this key is described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key)
 
 ## Set the starter kit environment
 
@@ -100,11 +100,11 @@ In this Starter kit you can use the Sambanova SDK `SKSDK` to run training infere
 
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 
-    a Lama7B basekline model with the URL 
+    a Lama7B baseline model with the URL 
     
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/987654ef-fedc-9876-1234-01fedbac9876"
 
-    and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
+    and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
     would be entered in the environment file (with no spaces) as:
     ```yaml
     BASE_URL="https://api-stage.sambanova.net"
@@ -129,10 +129,10 @@ In this Starter kit you can use the Sambanova SDK `SKSDK` to run training infere
     pip install -r requirements.txt
     ```
 
-4. Download the exaple dataset from [here](https://drive.google.com/drive/folders/10chGQIgJJgBNvIdj8RL2sVwh8txnNkpO) and update
+4. Download your dataset and update
 the `src_folder` variable in your [sn expert config file](./sn_expert_conf.yaml) with the path of the folder and sub folders in `src_subfolders`, for including your own data follow the same step.
 
-5. Optionaly Download and install Sambanova SNDK.
+5. Optionally Download and install Sambanova SNSDK.
     Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing Sambanova SNSDK and SNAPI, (you can omit the *Create a virtual environment* step since you are using the just created ```yoda_env``` environment)
 
 6. Download the [Samabnova data preparation repository](https://github.com/sambanova/generative_data_prep)
@@ -145,17 +145,17 @@ the `src_folder` variable in your [sn expert config file](./sn_expert_conf.yaml)
     source/generative_data_prep_env/bin/activate
    ```
 
-    Then follow the [instalation guide](https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#installation)
+    Then follow the [installation guide](https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#installation)
 
 # Starterkit: Usage
 
 ## Data Generation 
 
-For Domain adaptive pre-training and Instruction Finetune dtaa generation run une of the following scripts
+For Domain adaptive pre-training and Instruction Finetune data generation run une of the following scripts
 
 > Note: You will need a SambaStudio endpoint to the LLAMA 70B Chat model and add the configurations to your env file, which is used for synthetic data generation.
 
-> you shold have requested access to the meta Llama2 tokenizer and have a [local copy](https://llama.meta.com/llama-downloads/) or [Hugging Face model granted access](https://huggingface.co/meta-llama/Llama-2-70b), then put the path of the tokenizer or name of the HF model in the config file
+> you should have requested access to the meta Llama2 tokenizer and have a [local copy](https://llama.meta.com/llama-downloads/) or [Hugging Face model granted access](https://huggingface.co/meta-llama/Llama-2-70b), then put the path of the tokenizer or name of the HF model in the config file
 
 Please replace the value of --config param with your actual config file path. An example config is shown in `./sn_expert_conf.yaml`
 and this is set as the default parameter for the data generation scripts below.
@@ -198,7 +198,7 @@ In order to pretrain and finetune on SambaStudio,
 we fist need the data to be in the format of hdf5 files that we can upload as dataset in SambaStudio
 To preprocess the data, open `scripts/preprocess.sh` and replace
 the variables `ROOT_GEN_DATA_PREP_DIR` with the path to your [generative data preparation](https://github.com/sambanova/generative_data_prep)
-directory, set absoluthe path of the output JSONL from [pretraining/finetuning](#data-generation-1) In the `INPUT_FILE` parameter of the `scripts/preprocess.sh; and 
+directory, set absolute path of the output JSONL from [pretraining/finetuning](#data-generation-1) In the `INPUT_FILE` parameter of the `scripts/preprocess.sh; and 
 an `OUTPUT_DIR` where you want your hdf5 files to be dumped before you upload them to 
 SambaStudio Datasets.
 
@@ -220,15 +220,15 @@ sh scripts/preprocess.sh
 Then is needed to create and host your model checkpoints which needs to be done on SambaStudio. 
 This can be done on the [**SambaStudio GUI**](https://docs.sambanova.ai/sambastudio/latest/dashboard.html) following the next steps
 
-1. First upload your genrated Dataset from [gen_data_prep](#data-preparation) step
+1. First upload your generated Dataset from [gen_data_prep](#data-preparation) step
 
 2. Create a [project](https://docs.sambanova.ai/sambastudio/latest/projects.html)
 
-3. Run a [trainin job](https://docs.sambanova.ai/sambastudio/latest/training.html) 
+3. Run a [training job](https://docs.sambanova.ai/sambastudio/latest/training.html) 
 
 4. [Create an endpoint](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for your trained model
 
-5. Add the enpoind details to the ```.env``` file, now your .env file should look like this:
+5. Add the endpoint details to the ```.env``` file, now your .env file should look like this:
     ```yaml
     BASE_URL="https://api-stage.sambanova.net"
     PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
@@ -270,27 +270,27 @@ python src/evaluate.py
     --config sn_expert_conf.yaml
 ```
 
-Please replace  `--config` paramether with your actual config file path.
+Please replace  `--config` parameter with your actual config file path.
 
 # Third-party tools and data sources
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-scikit-learn  (version 1.4.1.post1)
-jsonlines  (version 4.0.0)
-transformers (version4.33)
-wordcloud  (version 1.9.3)
-sacrebleu  (version 2.4.0)
-datasets  (version 2.18.0)
-sqlitedict  (version 2.1.0)
-accelerate  (version 0.27.2)
-omegaconf  (version 2.3.0)
-evaluate  (version 0.4.1)
-pycountry  (version 23.12.11)
-rouge_score  (version 0.1.2)
-parallelformers  (version 1.2.7)
-peft  (version 0.9.0)
-plotly (version 5.18.0)
-langchain (version 0.1.2)
-pydantic (version1.10.13)
-python-dotenv (version 1.0.0)
-sseclient (version 0.0.27)
+- scikit-learn  (version 1.4.1.post1)
+- jsonlines  (version 4.0.0)
+- transformers (version4.33)
+- wordcloud  (version 1.9.3)
+- sacrebleu  (version 2.4.0)
+- datasets  (version 2.18.0)
+- sqlitedict  (version 2.1.0)
+- accelerate  (version 0.27.2)
+- omegaconf  (version 2.3.0)
+- evaluate  (version 0.4.1)
+- pycountry  (version 23.12.11)
+- rouge_score  (version 0.1.2)
+- parallelformers  (version 1.2.7)
+- peft  (version 0.9.0)
+- plotly (version 5.18.0)
+- langchain (version 0.1.2)
+- pydantic (version1.10.13)
+- python-dotenv (version 1.0.0)
+- sseclient (version 0.0.27)
