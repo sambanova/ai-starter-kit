@@ -235,6 +235,7 @@ This modification can be done in the following location:
 > function: load_embedding_model
 >```
 
+> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
 
 ## Store embeddings
 
