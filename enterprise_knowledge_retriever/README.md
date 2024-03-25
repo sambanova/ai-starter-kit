@@ -101,11 +101,25 @@ python3 -m venv enterprise_knowledge_env
 source enterprise_knowledge_env/bin/activate
 pip  install  -r  requirements.txt
 ```
-## 3. Deploy the starter kit
+## Deploy the starter kit
 To run the demo, run the following commands:
 ```
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
+
+After deploying the starter kit you should see the following application user interface
+
+![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
+
+## Starterkit usage 
+
+1- Pick the data source, that could be previous stored [Chroma](https://docs.trychroma.com/getting-started) vectorstore or a series of PDF files
+
+2- Icude PDF, put each of the docuemnts you want to load in the input area
+
+3- Process loaded PDFs, there will be created a vectorstore in memory that you can also store on disk if you want.
+
+5- Ask questions about website data!
 
 # Workflow
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.
@@ -117,7 +131,10 @@ This workflow is an example of parsing and indexing data for subsequent Q&A. The
 
 2.  **Split data:** Once the data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. This size of the chunk of text depends on the context (sequence) length offered by the model, and generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
 
-3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+3. **Embed data:** 
+For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+
+*For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
 
 4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```filename``` and ```page``` are also attached to the embeddings which are extracted during document parsing of the pdf documents.
 
@@ -129,10 +146,16 @@ This workflow is an example of leveraging data stored in a vector database along
  
  2.  **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
 
+*More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
+ 
+ *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
+
 ## Response
 **SambaNova Large language model (LLM):** Once the relevant information is retrieved, the content is sent to a SambaNova LLM to generate the final response to the user query. 
 
    - **Prompt engineering:** The user's query is combined with the retrieved content along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part in ensuring quality output. In this AI template, customized prompts are provided to the LLM to improve the quality of response for this use case.
+
+   *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
 
 # Customizing the template
 
@@ -163,15 +186,14 @@ You can experiment with different ways of splitting the data, such as splitting 
 
 The **RecursiveCharacterTextSplitter** inside the vectordb class, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
-```python
-text_chunks = vectordb.get_text_chunks(docs=raw_text, chunk_size=1000, chunk_overlap=200, meta_data=meta_data)
-
-```
 
 This modification can be done in the following location:
-```
-file: app.py
-function: get_text_chunks
+file: [config.yaml](config.yaml)
+```yaml
+retrieval:
+    "chunk_size": 1200
+    "chunk_overlap": 240
+    ...
 ```
 
 ## Embed data
@@ -199,8 +221,15 @@ function: create_vector_store
 Similar to the vector stores, a wide collection of retriever options is also available depending on the use case. In this template, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://js.langchain.com/docs/modules/data_connection/retrievers/).
 
 This modification can be done in the following location:
+file: [config.yaml](config.yaml)
+```yaml
+    "db_type": "chroma"
+    "k_retrieved_documents": 3
+    "score_treshold": 0.6
 ```
-file: app.py
+and
+file: [app.py](strematil/app.py)
+```
 function: get_qa_retrieval_chain 
 ```
 
@@ -211,15 +240,14 @@ function: get_qa_retrieval_chain
 You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
 
 - Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the method for calling the model, it is *get_qa_retrieval_chain* in ```streamlit/app.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
 
 **If using Sambastudio:**
 
 The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
-
+Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
 
 ### Prompt engineering
-
 
 Finally, prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
 ```python
