@@ -11,7 +11,8 @@ sys.path.append(repo_dir)
 import yaml
 from typing import List 
 from pydantic import BaseModel, Field
-
+from sec_edgar_downloader import Downloader
+from xbrl import XBRLParser
 from langchain.memory import ConversationSummaryMemory
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain, LLMChain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
@@ -20,47 +21,18 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.prompts import PromptTemplate, load_prompt
 from langchain.docstore.document import Document
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-
-from sec_edgar_downloader import Downloader
-from xbrl import XBRLParser
+from vectordb.vector_db import VectorDb
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,'.env'))
 
-from vectordb.vector_db import VectorDb
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
-
-EMAIL = "mlengineer@snova_dummy.ai"
-COMPANY = "snova_dummy"
-REPORT_TYPE = "10-K"
 DATA_DIRECTORY = os.path.join(kit_dir,"data")
-
-LAST_N_DOCUMENTS = 1
-LLM_TEMPERATURE = 0.1
-LLM_MAX_TOKENS_TO_GENERATE = 1000
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
-DB_TYPE = "chroma"
-
-N_RETRIEVED_DOCUMENTS = 3
-N_GENERATED_SUBQUESTIONS = 3
-
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 
 class SecFiling:
     """Class that handles SEC Filing data set creation as vector database and retrieving information in different ways.
     """
-
-    def _get_config_info(self) -> str:
-        """
-        Loads json config file
-        """
-        # Read config file
-        with open(CONFIG_PATH, 'r') as yaml_file:
-            config = yaml.safe_load(yaml_file)
-        api_info = config["api"]
-        
-        return api_info
 
     def __init__(self, config: dict = {}):
         """Initializes SecFiling class
@@ -76,33 +48,53 @@ class SecFiling:
         self.conversational_chain = None
         self.comparative_process = None
         self.retriever = None
+        
+        params = self._get_config_info()
+        self.api_info = params[0]
+        self.llm_info = params[1]
+        self.retrieval_info = params[2]
+        self.query_decomposition_info = params[3]
+        self.sec_info = params[4]
 
+    def _get_config_info(self) -> str:
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        api_info = config["api"]
+        llm_info = config["llm"]
+        retrieval_info = config["retrieval"]
+        query_decomposition_info = config["query_decomposition"]
+        sec_info = config["sec"]
+        
+        return api_info, llm_info, retrieval_info, query_decomposition_info, sec_info
     def init_llm_model(self) -> None:
         """Initializes the LLM endpoint
         """
-        api_info = self._get_config_info()
-        if api_info=="sambaverse":
+        if self.api_info=="sambaverse":
             self.llm = SambaverseEndpoint(
-                sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+                sambaverse_model_name=self.llm_info["sambaverse_model_name"],
                 sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                 model_kwargs={
                     "do_sample": True, 
-                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
-                    "temperature": LLM_TEMPERATURE,
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                    "temperature": self.llm_info["temperature"],
                     "process_prompt": True,
-                    "select_expert": "llama-2-70b-chat-hf"
+                    "select_expert": self.llm_info["sambaverse_select_expert"]
                     #"stop_sequences": { "type":"str", "value":""},
                     # "repetition_penalty": {"type": "float", "value": "1"},
                     # "top_k": {"type": "int", "value": "50"},
                     # "top_p": {"type": "float", "value": "1"}
                 }
             )
-        elif api_info=="sambastudio":
+        elif self.api_info=="sambastudio":
             self.llm = SambaNovaEndpoint(
                 model_kwargs={
                     "do_sample": True, 
-                    "temperature": LLM_TEMPERATURE,
-                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                    "temperature": self.llm_info["temperature"],
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     #"stop_sequences": { "type":"str", "value":""},
                     # "repetition_penalty": {"type": "float", "value": "1"},
                     # "top_k": {"type": "int", "value": "50"},
@@ -126,14 +118,14 @@ class SecFiling:
         """
         
         try:
-            dl = Downloader(COMPANY, EMAIL, DATA_DIRECTORY)
-            dl.get(REPORT_TYPE, ticker, limit=LAST_N_DOCUMENTS)
+            dl = Downloader(self.sec_info["company"], self.sec_info["email"], DATA_DIRECTORY)
+            dl.get(self.sec_info['report_type'], ticker, limit=self.sec_info["last_n_documents"])
         except Exception as ex:
             raise Exception(
                 f"Failed to fetch data for {ticker} from Edgar database"
             ) from ex
             
-        sec_dir = f"{DATA_DIRECTORY}/sec-edgar-filings/{ticker}/{REPORT_TYPE}"
+        sec_dir = f"{DATA_DIRECTORY}/sec-edgar-filings/{ticker}/{self.sec_info['report_type']}"
         dir_loader = DirectoryLoader(
             sec_dir, glob="**/*.txt", loader_cls=TextLoader
         )
@@ -141,9 +133,6 @@ class SecFiling:
         
         return documents
     
-
-
-
     def parse_xbrl_data(self, raw_documents: list) -> list:
         """Parses XBRL data from a list of documents
 
@@ -193,16 +182,16 @@ class SecFiling:
             for ticker in tickers:
                 documents = self.download_sec_data(ticker)
                 parsed_documents = self.parse_xbrl_data(documents)
-                chunks = vectordb.get_text_chunks(parsed_documents, CHUNK_SIZE, CHUNK_OVERLAP)
+                chunks = vectordb.get_text_chunks(parsed_documents, self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
                 all_chunks.extend(chunks)
           
-            self.vector_store = vectordb.create_vector_store(all_chunks, embeddings, DB_TYPE, persist_directory)
+            self.vector_store = vectordb.create_vector_store(all_chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
 
     def retrieval_qa_chain(self) -> None:
         """Defines the retrieval chain
         """
         
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": N_RETRIEVED_DOCUMENTS})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": self.retrieval_info["n_retrieved_documents"]})
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             chain_type="stuff",
@@ -257,6 +246,8 @@ class SecFiling:
         """
         
         # customize output parser. Splits the LLM result into a list of questions
+        
+        n_generated_subquestions=self.query_decomposition_info["n_generated_subquestions"]
         class LineList(BaseModel):
             lines: List[str] = Field(description="Lines of text")
         class QuestionListOutputParser(PydanticOutputParser):
@@ -266,7 +257,7 @@ class SecFiling:
             def parse(self, text: str) -> LineList:
                 lines = text.strip().split("\n")
                 subquestions = [subquestion for subquestion in lines if '?' in subquestion[-2:]]
-                return LineList(lines=subquestions[:N_GENERATED_SUBQUESTIONS])
+                return LineList(lines=subquestions[:n_generated_subquestions])
 
         output_parser = QuestionListOutputParser()
 
@@ -280,7 +271,7 @@ class SecFiling:
         filter_rule = [{'company_ticker': {'$eq': ticker}} for ticker in tickers]
         multiquery_retriever = MultiQueryRetriever(
             retriever=self.vector_store.as_retriever(search_kwargs={
-                'k': N_RETRIEVED_DOCUMENTS,
+                'k': self.retrieval_info["n_retrieved_documents"],
                 'filter': {'$or': filter_rule},
             }), 
             llm_chain=llm_chain, 
