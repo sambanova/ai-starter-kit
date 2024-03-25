@@ -546,7 +546,7 @@ class SambaverseEndpoint(LLM):
         )
     """
 
-    sambaverse_url: Optional[str] = "https://sambaverse.sambanova.net"
+    sambaverse_url: Optional[str] = "https://sambaverse.sambanova.ai"
     """Sambaverse url to use"""
     
     sambaverse_api_key: Optional[str] = None
