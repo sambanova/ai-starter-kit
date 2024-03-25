@@ -25,25 +25,24 @@ from vectordb.vector_db import VectorDb
 from langchain.schema import Document
 import concurrent.futures
 
-
-LLM_TEMPERATURE = 0.01
-LLM_MAX_TOKENS_TO_GENERATE = 1500
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 
 with open(CONFIG_PATH, 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 api_info = config["api"]
+llm_info = config["llm"]
+retrieval_info = config["retrieval"]
 
 if api_info == "sambaverse":
     model = SambaverseEndpoint(
-        sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+        sambaverse_model_name=llm_info["sambaverse_model_name"],
         sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
         model_kwargs={
             "do_sample": False, 
-            "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
-            "temperature": LLM_TEMPERATURE,
+            "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+            "temperature": llm_info["temperature"],
             "process_prompt": True,
-            "select_expert": "llama-2-70b-chat-hf"
+            "select_expert": llm_info["smabaverse_select_expert"]
             #"stop_sequences": { "type":"str", "value":""},
             # "repetition_penalty": {"type": "float", "value": "1"},
             # "top_k": {"type": "int", "value": "50"},
@@ -55,8 +54,8 @@ elif api_info == "sambastudio":
     model = SambaNovaEndpoint(
         model_kwargs={
             "do_sample": True, 
-            "temperature": LLM_TEMPERATURE,
-            "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+            "temperature": llm_info["temperature"],
+            "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
                         #"stop_sequences": { "type":"str", "value":""},
         # "repetition_penalty": {"type": "float", "value": "1"},
         # "top_k": {"type": "int", "value": "50"},
@@ -266,7 +265,15 @@ def set_retriever(documents_path, urls):
     """
     print("setting retriever") 
     vdb=VectorDb()
-    retriever = vdb.create_vdb(documents_path,1000,200,"faiss",None, load_txt=True, load_pdf=True, urls=urls).as_retriever()
+    retriever = vdb.create_vdb(
+        documents_path,
+        retrieval_info["chunk_size"],
+        retrieval_info["chunk_overlap"],
+        retrieval_info["db_type"],
+        None, 
+        load_txt=True, 
+        load_pdf=True, 
+        urls=urls).as_retriever()
     print("retriever set")
     return retriever
 
