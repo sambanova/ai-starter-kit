@@ -9,7 +9,7 @@ llm:
 retrieval:
     "chunk_size": 500
     "chunk_overlap": 50
-    "db_type": "choroma"
+    "db_type": "chroma"
     "n_retrieved_documents": 3
 
 query_decomposition:
