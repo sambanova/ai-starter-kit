@@ -25,14 +25,8 @@ from data_extraction.src.multi_column import column_boxes
 
 load_dotenv(os.path.join(repo_dir,'export.env'))
 
-
-DB_TYPE = "chroma"
-PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/vectordbs/{DB_TYPE}_default")
-K_RETRIEVED_DOCUMENTS = 3
-SCORE_TRESHOLD = 0.6
-LLM_TEMPERATURE = 0.0
-LLM_MAX_TOKENS_TO_GENERATE = 1200
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
 
 def get_config_info() -> Tuple[str, list]:
     """
@@ -42,9 +36,11 @@ def get_config_info() -> Tuple[str, list]:
     with open(CONFIG_PATH, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
     api_info = config["api"]
+    llm_info =  config["llm"]
+    retreival_info = config["retrieval"]
     loader = config["loader"]
     
-    return api_info, loader
+    return api_info, llm_info, retreival_info, loader
 
 def get_pdf_text_and_metadata_pypdf2(pdf_doc, extra_tags=None):
     """Extract text and metadata from pdf document with pypdf2 loader
@@ -126,7 +122,7 @@ def get_data_for_splitting(pdf_docs):
     Returns:
         list, list: list of extracted text and metadata per file
     """
-    _, loader = get_config_info()
+    *_, loader = get_config_info()
     files_data = []
     files_metadatas = []
     for i in range(len(pdf_docs)):
@@ -178,18 +174,18 @@ def get_qa_retrieval_chain(vectorstore):
     Returns:
     RetrievalQA: A chain ready for QA without memory
     """
-    api_info, _ = get_config_info()
+    api_info, llm_info, retrieval_info, _ = get_config_info()
     
     if api_info == "sambaverse":
         llm = SambaverseEndpoint(
-                sambaverse_model_name="Meta/llama-2-70b-chat-hf",
+                sambaverse_model_name=llm_info["sambaverse_model_name"],
                 sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                 model_kwargs={
                     "do_sample": False, 
-                    "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
-                    "temperature": LLM_TEMPERATURE,
+                    "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                    "temperature": llm_info["temperature"],
                     "process_prompt": True,
-                    "select_expert": "llama-2-70b-chat-hf"
+                    "select_expert": llm_info["sambaverse_select_expert"]
                     #"stop_sequences": { "type":"str", "value":""},
                     # "repetition_penalty": {"type": "float", "value": "1"},
                     # "top_k": {"type": "int", "value": "50"},
@@ -201,8 +197,8 @@ def get_qa_retrieval_chain(vectorstore):
         llm = SambaNovaEndpoint(
             model_kwargs={
                 "do_sample": False,
-                "temperature": LLM_TEMPERATURE,
-                "max_tokens_to_generate": LLM_MAX_TOKENS_TO_GENERATE,
+                "temperature": llm_info["temperature"],
+                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
                 #"stop_sequences": { "type":"str", "value":""},
                 # "repetition_penalty": {"type": "float", "value": "1"},
                 # "top_k": {"type": "int", "value": "50"},
@@ -212,7 +208,7 @@ def get_qa_retrieval_chain(vectorstore):
         
     retriever = vectorstore.as_retriever(
         search_type="similarity_score_threshold",
-        search_kwargs={"score_threshold": SCORE_TRESHOLD, "k": K_RETRIEVED_DOCUMENTS},
+        search_kwargs={"score_threshold": retrieval_info["score_treshold"], "k": retrieval_info["k_retrieved_documents"]},
     )
     qa_chain = RetrievalQA.from_llm(
         llm=llm,
@@ -289,6 +285,8 @@ def handle_userinput(user_question):
 
 def main():
     load_dotenv()
+    api_info, llm_info, retrieval_info, loader = get_config_info()
+
     st.set_page_config(
         page_title="AI Starter Kit",
         page_icon="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
@@ -330,10 +328,10 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=retrieval_info["chunk_size"], chunk_overlap=retrieval_info["chunk_overlap"], meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
-                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=DB_TYPE)
+                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=retrieval_info["db_type"])
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     st.session_state.conversation = get_qa_retrieval_chain(
@@ -347,10 +345,10 @@ def main():
                     # get pdf text
                     raw_text, meta_data = get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=1200, chunk_overlap=150, meta_data=meta_data)
+                    text_chunks = get_text_chunks_with_metadata(docs=raw_text, chunk_size=retrieval_info["chunk_size"], chunk_overlap=retrieval_info["chunk_overlap"], meta_data=meta_data)
                     # create vector store
                     embeddings = vectordb.load_embedding_model()
-                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=DB_TYPE)
+                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=retrieval_info["db_type"])
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     st.session_state.conversation = get_qa_retrieval_chain(
@@ -360,7 +358,7 @@ def main():
 
         else:
             db_path = st.text_input(
-                f"Absolute path to your {DB_TYPE} DB folder",
+                f"Absolute path to your {retrieval_info['db_type']} DB folder",
                 placeholder="E.g., /Users/<username>/path/to/your/vectordb",
             ).strip()
             st.markdown("**2. Load your datasource and create vectorstore**")
@@ -375,7 +373,7 @@ def main():
                         if os.path.exists(db_path):
                             # load the vectorstore
                             embeddings = vectordb.load_embedding_model()
-                            vectorstore = vectordb.load_vdb(db_path, embeddings, db_type=DB_TYPE)
+                            vectorstore = vectordb.load_vdb(db_path, embeddings, db_type=retrieval_info["db_type"])
                             st.toast("Database loaded")
 
                             # assign vectorstore to session
