@@ -235,11 +235,12 @@ Call Quality Assessment evaluates agent accuracy aspects in the call. It helps i
 You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
 
 - Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the method for calling the model, in ```src/analysis.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
 
 **If using Sambastudio:**
 
 The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
+Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
 
 ### Prompt engineering
 Finally, prompting has a significant effect on the quality of LLM responses. All Prompts used in [Analysis section](#analysis) can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
