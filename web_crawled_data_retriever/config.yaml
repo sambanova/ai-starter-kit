@@ -4,7 +4,7 @@ llm:
     "temperature": 0.1
     "max_tokens_to_generate": 500
     "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
-    "smabaverse_select_expert": "llama-2-70b-chat-hf"
+    "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
 retrieval:
     "chunk_size": 1200

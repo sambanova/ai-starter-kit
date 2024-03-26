@@ -235,6 +235,7 @@ This modification can be done in the following location:
 > function: load_embedding_model
 >```
 
+> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
 
 ## Store embeddings
 
@@ -251,8 +252,15 @@ This modification can be done in the following location:
 
 Similar to the vector stores, a wide collection of retriever options is also available depending on the use case. In this template, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/docs/integrations/retrievers).
 
-
+file: [config.yaml](config.yaml)
+```yaml
+    "db_type": "chroma"
+    "k_retrieved_documents": 3
+    "score_treshold": 0.6
+```
 This modification can be done in the following location:
+
+and
 > file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
 >```
 >function: retrieval_qa_chain
@@ -272,7 +280,6 @@ You can test the performace of multiple models avalable in sambaverse, for chang
 
 The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
 Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
-
 
 ### Prompt engineering
 
