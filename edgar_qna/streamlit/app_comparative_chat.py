@@ -39,26 +39,10 @@ def handle_userinput(user_question: str):
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["output_text"])
 
-        # List of sources
-        sources = [
-            f'{document.metadata["company_ticker"]} (report {document.metadata["report_type"]})'
-            for document in response["input_documents"]
-        ]
-        
-        # Create a Markdown string with each source on a new line as a numbered list with links
-        sources_text = ""
-        for index, source in enumerate(sources, start=1):
-            source_link = source
-            sources_text += (
-                f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
-            )
-            
-        st.session_state.sources_history.append(sources_text)
 
-    for question, answer, source in zip(
+    for question, answer, in zip(
         st.session_state.chat_history[::2],
         st.session_state.chat_history[1::2],
-        st.session_state.sources_history,
     ):
         with st.chat_message("user"):
             st.write(f"{question}")
@@ -68,12 +52,6 @@ def handle_userinput(user_question: str):
             avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
         ):
             st.write(f"{answer}")
-            if st.session_state.show_sources:
-                with st.expander("Sources"):
-                    st.markdown(
-                        f'<font size="2" color="grey">{source}</font>',
-                        unsafe_allow_html=True,
-                    )
                     
 def get_ticker_options() -> dict:
     """Gets the list of tickers supported by Edgar filing reports
@@ -96,8 +74,6 @@ if "conversation" not in st.session_state:
     st.session_state.conversation = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if "sources_history" not in st.session_state:
-    st.session_state.sources_history = []
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
 

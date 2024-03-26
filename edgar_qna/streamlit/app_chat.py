@@ -36,27 +36,10 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 
-        # List of sources
-        sources = [
-            # f'{sd.metadata["filename"].name} (page {sd.metadata["page"]})' # original
-            'metadata' # temporal
-            for sd in response["source_documents"]
-        ]
-        
-        # Create a Markdown string with each source on a new line as a numbered list with links
-        sources_text = ""
-        for index, source in enumerate(sources, start=1):
-            source_link = source
-            sources_text += (
-                f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
-            )
-            
-        st.session_state.sources_history.append(sources_text)
 
-    for question, answer, source in zip(
+    for question, answer in zip(
         st.session_state.chat_history[::2],
         st.session_state.chat_history[1::2],
-        st.session_state.sources_history,
     ):
         with st.chat_message("user"):
             st.write(f"{question}")
@@ -66,12 +49,6 @@ def handle_userinput(user_question):
             avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
         ):
             st.write(f"{answer}")
-            if st.session_state.show_sources:
-                with st.expander("Sources"):
-                    st.markdown(
-                        f'<font size="2" color="grey">{source}</font>',
-                        unsafe_allow_html=True,
-                    )
                     
 
 st.set_page_config(
@@ -83,8 +60,6 @@ if "conversation" not in st.session_state:
     st.session_state.conversation = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if "sources_history" not in st.session_state:
-    st.session_state.sources_history = []
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
 
@@ -122,12 +97,6 @@ with st.sidebar:
     st.markdown("**3. Ask questions about your data!**")
 
     with st.expander("Additional settings", expanded=True):
-        st.markdown("**Interaction options**")
-        st.markdown(
-            "**Note:** Toggle these at any time to change your interaction experience"
-        )
-        show_sources = st.checkbox("Show sources", value=True, key="show_sources")
-
         st.markdown("**Reset chat**")
         st.markdown(
             "**Note:** Resetting the chat will clear all conversation history"

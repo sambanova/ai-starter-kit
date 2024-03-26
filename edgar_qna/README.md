@@ -219,36 +219,36 @@ The provided example template can be further customized based on the use case.
 
 Depending on the format of input data files (e.g., .pdf, .docx, .rtf), different packages can be used to convert them into plain text files.
 
-**PDF Format:**
-- OCR-based: [pytesseract](https://pypi.org/project/pytesseract/)
-- Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
-Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
+this kit parses the information downloaded from SEC as xlbr file
 
 This modification can be done in a separate method in the following location:
 ```
 file: edgar_sec.py
+methods: download_sec_data, parse_xbrl_data
 ```
 
 ## Split Data
 
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
-This modification can be done in the following location:
-```
-file: edgar_sec.py
-function: create_load_vector_store
-```
-
 The **RecursiveCharacterTextSplitter**, which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
-```python
-chunks = vectordb.get_text_chunks([complete_document], CHUNK_SIZE, CHUNK_OVERLAP)
+This modification can be done setting this paramaters in the following location:
+
+file: [config.yaml](./config.yaml)
+```yaml
+retrieval:
+    "chunk_size": 500
+    "chunk_overlap": 50
 ```
-This modification can be done in the following location:
+
+or modifying the following method
+
 ```
 file: edgar_sec.py
 function: create_load_vector_store
 ```
+
 ## Embed data
 
 There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
@@ -278,9 +278,20 @@ Similar to the vector stores, a wide collection of retriever options are availab
 
 
 This modification can be done in a separate retrieval method in the following location:
+
 ```
-file: edgar_sec.py
+file: src/edgar_sec.py
+methods: retrieval_qa_chain, retrieval_conversational_chain, retrieval_comparative_process
 ```
+
+and their parameteres can be updated in the following location
+file: [config.yaml](./config.yaml)
+```yaml
+retrieval:
+    "db_type": "chroma"
+    "n_retrieved_documents": 3
+```
+
 
 ## Large language model (LLM)
 
@@ -289,7 +300,7 @@ file: edgar_sec.py
 You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
 
 - Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the method for calling the model, it is *init_llm_model* in ```src/edgar_sec.py``` setting the values of `sambaverse_model_name` and the keyword argument `select_expert`
+- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
 
 **If using Sambastudio:**
 
