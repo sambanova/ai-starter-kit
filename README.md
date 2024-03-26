@@ -28,17 +28,17 @@ If you have any issues with the examples or would be willing to provide feedback
 | [Web Crawled Data Retrieval](web_crawled_data_retriever/README.md) | A sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.  |
 | [YoDA: Your Data Your model](yoda/README.md) | A sample training recipe to train a Language Model (LLM) using customer's private data. |
 
-# SambaNova Large language model endpoints usage:
+# Get started with SambaNova AI starter kit:
 
-## 1. Setting your model
+## Setting your model
 
-### (Option 1) Deploy your model in SambaStudio
+### (Option 1) Use Sambaverse models
+Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), then [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the username button
+
+### (Option 2) Deploy your model in SambaStudio
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-### (Option 2) Use Sambaverse models
-Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
-
-## 2. Integrate your model in the starter kit
+## Integrate your model in the starter kit
 Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
 ### 1. Clone this repo.
 ```
@@ -63,24 +63,19 @@ would be entered in the env file (with no spaces) as:
 ```
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
-### 3.  Use Samabnova's LLMs
+### 3. Run the desired starter kit
+Go to the `README.md` of the satarter kit you want to use, see [Available AI Starter Kits](#available-ai-starter-kits)
 
-#### Import in your starterkit the **samabanova_endpoint** langchain wrapper
-``` python
-from utils.sambanova_endpoint import SambaNovaEndpoint
+## Use Sambanova's LLMs and Embeddings **Langchain** wrappers 
 
-load_dotenv('.env')
+### LLM Wrappers
 
-llm = SambaNovaEndpoint(
-    model_kwargs={
-      "do_sample": False, 
-      "max_tokens_to_generate": 512,
-      "temperature": 0.0
-      },
-)
-```
+Set your environment as shown in [integrate your model](#integrate-your-model-in-the-starter-kit)
 
-#### Import in your starterkit the **samabaverse_endpoint** langchain wrapper
+#### Using Sambaverse LLMs 
+
+1- Import in your project the **samabanova_endpoint** langchain wrapper and define your **SambaverseEndpoint** LLM
+
 ``` python
 from utils.sambanova_endpoint import SambaverseEndpoint
 
@@ -96,10 +91,66 @@ llm = SambaverseEndpoint(
       },
 )
 ```
+2- Use the model
 
-#### Use the Lanchaig SambaNova's LLM wrapper
 ```python
 llm.invoke("your prompt")
 ```
+
+#### Using Sambastudio LLMs
+1- Import in your project the **samabanova_endpoint** langchain wrapper and define your **SambaNovaEndpoint** LLM
+``` python
+from utils.sambanova_endpoint import SambaNovaEndpoint
+
+load_dotenv('.env')
+
+llm = SambaNovaEndpoint(
+    model_kwargs={
+      "do_sample": False, 
+      "max_tokens_to_generate": 512,
+      "temperature": 0.0
+      },
+)
+```
+
+2- Use the model
+
+```python
+llm.invoke("your prompt")
+```
+
+> An example of the usage is shown in [utils/usage.ipynb](./utils/usage.ipynb)
+
+### Embedding Wrapper
+
+#### Use Sambastudio Embedding models
+
+1- Set the embeddding model endpoint variables in your env file:
+An embeding endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the env file (with no spaces) as:
+
+```yaml
+EMBED_BASE_URL="https://api-stage.sambanova.net"
+EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+```
+
+2- Import in your project the **samabanova_endpoint** langchain wrapper and define your **SambaNovaEmbeddingModel** embedding
+
+``` python
+from utils.sambanova_endpoint import SambaNovaEndpoint
+
+load_dotenv('.env')
+
+embedding = SambaNovaEmbeddingModel()
+```
+
+3- Use your embedding model in your langchain pipeline
+
+> An example of the usage is shown in [utils/usage.ipynb](./utils/usage.ipynb)
+
+***
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. We recommend performing due diligence per your organization policies for use in your applications.
