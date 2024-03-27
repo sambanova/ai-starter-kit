@@ -28,7 +28,7 @@ python -m generative_data_prep pipeline \
 Sample command:
 ```python
 python -m generative_data_prep pipeline \
---input_file_path={input_path}/fine-tune-nstext2sql_test.jsonl \
+--input_file_path={input_path}/fine-tune-nstext2_test.jsonl \
 --output_path={output_path} \
 --pretrained_tokenizer=meta-llama/Llama-2-7b-hf \
 --max_seq_length=4096 \
@@ -76,7 +76,7 @@ The final fine-tuned model can then be hosted on SambaStudio. Once hosted, the A
 
 ## Inference
 
-The notebook [3_inference_sql_model.ipynb](notebooks/3_inference_sql_model.ipynb) uses the fine-tuned model in langchain to generate a sql query from user input and then executes the query against the database.
+The notebook [3_inference__model.ipynb](notebooks/3_inference__model.ipynb) uses the fine-tuned model in langchain to generate a SQL query from user input and then executes the query against the database.
 
 ## Benchmarking
 

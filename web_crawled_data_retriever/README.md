@@ -42,7 +42,7 @@ This AI Starter Kit is an example of a semantic search workflow that can be buil
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
 
-This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. it also includes a simple explanation with useful resources for understanding what is happening in each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
+This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. It also includes straightforward explanations and useful resources to help you understand each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
 
 # Getting started
 
@@ -102,9 +102,9 @@ After deploying the starter kit you should see the following application user in
 
 1- Pick the data source, that could be previous stored [FAISS](https://github.com/facebookresearch/faiss) vectorstore or a list of website URLs
 
-2- Icude URLs, put each of the sites you want to crawl in the text area and press include URL, you also can clear the list if you want.
+2- Include URLs: Enter each site you want to crawl in the text area and press 'Include URL'. You can also clear the list if needed.
 
-3-Chosse the crawling depth determining how many layers of internal links to explore. (limited to 2)
+3- Choose the crawling depth determining how many layers of internal links to explore. (limited to 2)
 
 > Be cautious as the crawling depth increases, leading to exponential growth in the number of processed sites. Consider resource implications for efficient workflow performance.
 
