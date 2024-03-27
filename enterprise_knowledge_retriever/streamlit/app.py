@@ -20,6 +20,8 @@ from langchain.document_loaders import UnstructuredPDFLoader
 from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from vectordb.vector_db import VectorDb
 
+from enterprise_knowledge_retriever.src.pdf_retrieval import PDFRetrieval
+
 import fitz
 from data_extraction.src.multi_column import column_boxes
 
@@ -28,7 +30,7 @@ load_dotenv(os.path.join(repo_dir,'export.env'))
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
 
-def get_config_info() -> Tuple[str, list]:
+def get_config_info():
     """
     Loads json config file
     """
@@ -273,7 +275,7 @@ def handle_userinput(user_question):
 
         with st.chat_message(
             "ai",
-            avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+            avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
             st.write(f"{ans}")
             if st.session_state.show_sources:
@@ -289,7 +291,7 @@ def main():
 
     st.set_page_config(
         page_title="AI Starter Kit",
-        page_icon="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+        page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
     )
 
     if "conversation" not in st.session_state:
