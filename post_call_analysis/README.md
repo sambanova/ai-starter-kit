@@ -46,12 +46,12 @@ Post Call Analysis
 # Overview
 ## About this template
 
-This AI Starter Kit exemplifies a systematic approach to post-call analysis starting with Automatic Speech Recognition (ASR), diarization, large lenguage model analysis, and retrieval augmented generation (RAG) workflows that are built using the SambaNova platform, this template provides:
+This AI Starter Kit exemplifies a systematic approach to post-call analysis starting with Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows that are built using the SambaNova platform, this template provides:
 
 -   A customizable SambaStudio connector facilitating LLM inference from deployed models.
 -   A configurable SambaStudio connector enabling ASR pipeline inference from deployed models.
 -   Implementation of the RAG workflow alongside prompt construction strategies tailored for call analysis, including:
-    - Call Sumarization
+    - Call Summarization
     - Classification
     - Named Entity recognition
     - Sentiment Analysis
@@ -175,7 +175,7 @@ Also you should provide the input path containing your facts and procedures know
 
 This step is made by the SambaStudio batch inference pipeline for ASR and Diarization and is composed of these models.
 
-### Trascription
+### Transcription
 
 In the Transcription step involves converting the audio data from the call into text format. This step utilizes Automatic Speech Recognition (ASR) technology to accurately transcribe spoken words into written text.
 
