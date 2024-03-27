@@ -7,4 +7,4 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - ../enterprise_knowledge_retriever/data:/app/enterprise_knowledge_retriever/data
+      - ./data:/app/enterprise_knowledge_retriever/data
