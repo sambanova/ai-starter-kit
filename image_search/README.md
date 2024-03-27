@@ -33,9 +33,9 @@ SambaNova AI Starter Kits
 ## About this template
 This AI Starter Kit exemplifies a simple approach to image search by image description or image similarity leveraging [Open Clip](https://github.com/mlfoundations/open_clip) embedding models that are deployed using the SambaNova platform, this template provides:
 
-- Batch ingestion / inference for image collestions
-- Serach image method with text as imput
-- Search image method with image as imput
+- Batch ingestion / inference for image collections
+- Serach image method with text as input
+- Search image method with image as input
 - Notebook and scripts for custom multimodal [Chroma](https://docs.trychroma.com/multi-modal) data base
 - Notebook for downloading test images from [pixbay](https://pixabay.com/)  
 
@@ -61,7 +61,7 @@ Set your local environment and Integrate your endpoind deployed on SambaStudio w
     
     These are represented as configurable variables in the environment variables file in the root repo directory **```ai-starter-kit/.env```**. For example, an endpoint with the URL
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
+    and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
     would be entered in the environment file (with no spaces) as:
     ```yaml
     BASE_URL="https://api-stage.sambanova.net"
