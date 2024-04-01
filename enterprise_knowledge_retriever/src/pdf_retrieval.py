@@ -2,9 +2,10 @@ import os
 import sys
 import yaml
 import fitz
-from data_extraction.src.multi_column import column_boxes
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
+from vectordb.vector_db import VectorDb
+from data_extraction.src.multi_column import column_boxes
 from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
@@ -25,7 +26,13 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 class PDFRetrieval():
     def __init__(self):
-        pass
+        self.vectordb = VectorDb()
+        config_info = self.get_config_info()
+        self.api_info =config_info[0] 
+        self.llm_info =config_info[1] 
+        self.embedding_model_info =config_info[2] 
+        self.retrieval_info =config_info[3] 
+        self.loader = config_info[4] 
 
     def get_config_info(self):
         """
@@ -36,10 +43,11 @@ class PDFRetrieval():
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
         llm_info =  config["llm"]
-        retreival_info = config["retrieval"]
+        embedding_model_info = config["embedding_model"]
+        retrieval_info = config["retrieval"]
         loader = config["loader"]
         
-        return api_info, llm_info, retreival_info, loader
+        return api_info, llm_info, embedding_model_info, retrieval_info, loader
     
     def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
         """Extract text and metadata from pdf document with pypdf2 loader
@@ -121,32 +129,33 @@ class PDFRetrieval():
         Returns:
             list, list: list of extracted text and metadata per file
         """
-        *_, loader = self.get_config_info()
         files_data = []
         files_metadatas = []
         for i in range(len(pdf_docs)):
-            if loader == "unstructured":
+            if self.loader == "unstructured":
                 text, meta = self.get_pdf_text_and_metadata_unstructured(pdf_docs[i])
-            elif loader == "pypdf2":
+            elif self.loader == "pypdf2":
                 text, meta = self.get_pdf_text_and_metadata_pypdf2(pdf_docs[i])
-            elif loader == "fitz":
+            elif self.loader == "fitz":
                 text, meta = self.get_pdf_text_and_metadata_fitz(pdf_docs[i])
             files_data.extend(text)
             files_metadatas.extend(meta)
         return files_data, files_metadatas      
             
-    def get_text_chunks_with_metadata(self, docs, chunk_size, chunk_overlap, meta_data):
+    def get_text_chunks_with_metadata(self, docs, meta_data):
         """Gets text chunks. .
 
         Args:
         doc (list): list of strings with text to split 
         chunk_size (int): chunk size in number of tokens
-        chunk_overlap (int): chunk overlap in numb8er of tokens
+        chunk_overlap (int): chunk overlap in number of tokens
         metadata (list, optional): list of metadata in dictionary format.
 
         Returns:
             list: list of documents 
         """
+        chunk_size = self.retrieval_info["chunk_size"]
+        chunk_overlap = self.retrieval_info["chunk_overlap"]
         chunks_list = []
         text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
@@ -158,6 +167,18 @@ class PDFRetrieval():
                 chunks_list.append(chunk)
         return chunks_list
 
+    def load_embedding_model(self):
+        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info) 
+        return embeddings  
+
+    def create_vector_store(self, text_chunks, embeddings, output_db=None):
+        vectorstore = self.vectordb.create_vector_store(text_chunks, embeddings, output_db=output_db, db_type=self.retrieval_info["db_type"])
+        return vectorstore
+    
+    def load_vdb(self, db_path, embeddings):
+        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type=self.retrieval_info["db_type"])
+        return vectorstore
+    
     def get_qa_retrieval_chain(self, vectorstore):
         """
         Generate a qa_retrieval chain using a language model.
@@ -172,18 +193,17 @@ class PDFRetrieval():
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
-        api_info, llm_info, retrieval_info, _ = self.get_config_info()
         
-        if api_info == "sambaverse":
+        if self.api_info == "sambaverse":
             llm = SambaverseEndpoint(
-                    sambaverse_model_name=llm_info["sambaverse_model_name"],
+                    sambaverse_model_name=self.llm_info["sambaverse_model_name"],
                     sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                     model_kwargs={
                         "do_sample": False, 
-                        "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                        "temperature": llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "temperature": self.llm_info["temperature"],
                         "process_prompt": True,
-                        "select_expert": llm_info["sambaverse_select_expert"]
+                        "select_expert": self.llm_info["sambaverse_select_expert"]
                         #"stop_sequences": { "type":"str", "value":""},
                         # "repetition_penalty": {"type": "float", "value": "1"},
                         # "top_k": {"type": "int", "value": "50"},
@@ -191,12 +211,12 @@ class PDFRetrieval():
                     }
                 )
             
-        elif api_info == "sambastudio":
+        elif self.api_info == "sambastudio":
             llm = SambaNovaEndpoint(
                 model_kwargs={
                     "do_sample": False,
-                    "temperature": llm_info["temperature"],
-                    "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                    "temperature": self.llm_info["temperature"],
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     #"stop_sequences": { "type":"str", "value":""},
                     # "repetition_penalty": {"type": "float", "value": "1"},
                     # "top_k": {"type": "int", "value": "50"},
@@ -206,7 +226,7 @@ class PDFRetrieval():
             
         retriever = vectorstore.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": retrieval_info["score_treshold"], "k": retrieval_info["k_retrieved_documents"]},
+            search_kwargs={"score_threshold": self.retrieval_info["score_treshold"], "k": self.retrieval_info["k_retrieved_documents"]},
         )
         qa_chain = RetrievalQA.from_llm(
             llm=llm,

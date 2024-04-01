@@ -9,8 +9,6 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from dotenv import load_dotenv
-from vectordb.vector_db import VectorDb
 from enterprise_knowledge_retriever.src.pdf_retrieval import PDFRetrieval
 from data_extraction.src.multi_column import column_boxes
  
@@ -61,7 +59,7 @@ def handle_userinput(user_question):
 
 def main():  
     pdfRetrieval =  PDFRetrieval()
-    *_, retrieval_info, _ = pdfRetrieval.get_config_info()
+    *_, embedding_model_info ,retrieval_info, _ = pdfRetrieval.get_config_info()
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -83,7 +81,6 @@ def main():
     user_question = st.chat_input("Ask questions about your data")
     handle_userinput(user_question)
 
-    vectordb = VectorDb()
     with st.sidebar:
         st.title("Setup")
         st.markdown("**1. Pick a datasource**")
@@ -104,10 +101,10 @@ def main():
                     # get pdf text
                     raw_text, meta_data = pdfRetrieval.get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, chunk_size=retrieval_info["chunk_size"], chunk_overlap=retrieval_info["chunk_overlap"], meta_data=meta_data)
+                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
-                    embeddings = vectordb.load_embedding_model()
-                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=None, db_type=retrieval_info["db_type"])
+                    embeddings = pdfRetrieval.load_embedding_model()
+                    vectorstore = pdfRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
@@ -121,10 +118,10 @@ def main():
                     # get pdf text
                     raw_text, meta_data = pdfRetrieval.get_data_for_splitting(pdf_docs)
                     # get the text chunks
-                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, chunk_size=retrieval_info["chunk_size"], chunk_overlap=retrieval_info["chunk_overlap"], meta_data=meta_data)
+                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
-                    embeddings = vectordb.load_embedding_model()
-                    vectorstore = vectordb.create_vector_store(text_chunks, embeddings, output_db=save_location, db_type=retrieval_info["db_type"])
+                    embeddings = pdfRetrieval.load_embedding_model()
+                    vectorstore = pdfRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
@@ -134,7 +131,7 @@ def main():
 
         else:
             db_path = st.text_input(
-                f"Absolute path to your {retrieval_info['db_type']} DB folder",
+                f"Absolute path to your DB folder",
                 placeholder="E.g., /Users/<username>/path/to/your/vectordb",
             ).strip()
             st.markdown("**2. Load your datasource and create vectorstore**")
@@ -148,8 +145,8 @@ def main():
                     else:
                         if os.path.exists(db_path):
                             # load the vectorstore
-                            embeddings = vectordb.load_embedding_model()
-                            vectorstore = vectordb.load_vdb(db_path, embeddings, db_type=retrieval_info["db_type"])
+                            embeddings = pdfRetrieval.load_embedding_model()
+                            vectorstore = pdfRetrieval.load_vdb(db_path, embeddings)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session

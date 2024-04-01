@@ -1,5 +1,7 @@
 api: "sambaverse"
 
+embedding_model: "sambastudio"
+
 loader: "unstructured"
 
 llm: 
