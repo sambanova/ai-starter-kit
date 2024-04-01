@@ -58,26 +58,51 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit in two simpl
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-2. **Sambaverse Endpoint:**  Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
-"456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the env file (with no spaces) as:
-```
-SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+2. Set the LLM to use
 
-Set in the [config file](./config.yaml), the variable *api* as: "sambaverse"
+    - Option 1 **Sambaverse Endpoint:**
 
-2.  **SambaStudio Endpoint:**  Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the env file (with no spaces) as:
-```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
+        Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
+        "456789ab-cdef-0123-4567-89abcdef0123"
+        would be entered in the env file (with no spaces) as:
+        ```
+        SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+        ```
 
-Set in the [config file](./config.yaml), the variable *api* as: "sambastudio"
+        Set in the [config.yaml file](./config.yaml), the variable *api* as: "sambaverse"
+
+    - Option 2 **SambaStudio Endpoint:**: 
+
+        Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+        would be entered in the env file (with no spaces) as:
+        ```
+        BASE_URL="https://api-stage.sambanova.net"
+        PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+
+        Set in the [config.yaml file](./config.yaml), the variable *api* as: "sambastudio"
+
+3. Set the embedding model to use:
+
+    - Option 1 **Set a local embedding model**:
+
+        Set in the [config.yaml file](./config.yaml), the variable *embedding_model:* as: "cpu" 
+
+    - Option 2 **Set a sambastudio embedding model**
+
+        Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+        would be entered in the env file (with no spaces) as:
+        ```
+        EMBED_BASE_URL="https://api-stage.sambanova.net"
+        EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+        Set in the [config.yaml file](./config.yaml), the variable *embedding_model:* as: "sambastudio"
 
 3.  Install system dependencies
       
