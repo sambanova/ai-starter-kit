@@ -8,9 +8,6 @@
 
 YoDa
 ======================
-<p align="left">
-  <img src="./docs/YoDa.png" alt="YoDa" width="200">
-</p> 
 
 <!-- TOC -->
 

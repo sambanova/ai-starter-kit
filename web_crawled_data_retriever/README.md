@@ -44,6 +44,11 @@ This AI Starter Kit is an example of a semantic search workflow that can be buil
 
 This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. It also includes straightforward explanations and useful resources to help you understand each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
 
+You can also view a demo video of deploying and using the starter kit:
+
+https://github.com/sambanova/ai-starter-kit/assets/150964187/818a7ff8-f478-4899-8ebf-5b0c935d46d2
+
+
 # Getting started
 
 ## Deploy your model
