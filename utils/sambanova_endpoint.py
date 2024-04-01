@@ -724,6 +724,18 @@ class SambaNovaEmbeddingModel(Embeddings):
         """
         return f"{self.embed_base_url}{self.API_BASE_PATH}{path}"
     
+    def _iterate_over_batches(self, texts: List[str], batch_size: int = 32):
+        """Generator for creating batches in the embed documents method
+        Args:
+            texts (List[str]): list of strings to embedd
+            batch_size (int, optional): batch size to be used for the embedding model.  Will depend on the RDU endpoint used. Defaults to 32.
+        Yields:
+            List[str]: list (batch) of strings of size batch size
+        """
+
+        for i in range(0, len(texts), batch_size):
+            yield texts[i : i + batch_size]
+    
     def embed_documents(self, texts, batch_size=32, **kwargs):
         """Returns a list of embeddings for the given sentences.
         Args:
@@ -737,15 +749,17 @@ class SambaNovaEmbeddingModel(Embeddings):
         url = self._get_full_url(f"{self.embed_project_id}/{self.embed_endpoint_id}")
 
         embeddings = []
-        for sentence in texts:
-            data = {"inputs": [sentence]}
+        
+        for batch in self._iterate_over_batches(texts, batch_size):
+            data = {"inputs": batch}
             response =http_session.post(
-                url,
-                headers={"key": self.embed_api_key},
-                json=data,
-                )
-            embedding = response.json()["data"][0]
-            embeddings.append(embedding)
+                 url,
+                 headers={"key": self.embed_api_key},
+                 json=data,
+                 )
+            embedding = response.json()["data"]
+            embeddings.extend(embedding)
+
         return embeddings
     
     def embed_query(self, text, batch_size=32, **kwargs):
