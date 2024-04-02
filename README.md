@@ -70,7 +70,19 @@ in the env file (with no spaces) as:
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
-### 3. Run the desired starter kit
+### 3. Update API information for SambaNova Embeddings model (optional).
+
+Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+would be entered in the env file (with no spaces) as:
+```
+EMBED_BASE_URL="https://api-stage.sambanova.net"
+EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+```
+
+### 4. Run the desired starter kit
 
 Go to the `README.md` of the starter kit you want to use and follow the instructions. See [Available AI Starter Kits](#available-ai-starter-kits).
 
