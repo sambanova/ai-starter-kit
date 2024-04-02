@@ -5,4 +5,4 @@ services:
       context: ../
       dockerfile: edgar_qna/docker/Dockerfile
     ports:
-      - "8000:80"
+      - "8501:8501"

@@ -171,46 +171,15 @@ This will open the demo in your default browser at port 8501.
 
 ### Option 4: Run via Docker
 Running through Docker is the most scalable approach for running this AI Starter Kit, and one that provides a path to production deployment.
+We execute the comparative chat demo as in option 3.
 
-
-> **Important:** This approach does not include a UI, but allows inference via API to be connected to custom user experiences. As in Option 2, at least a 10-K for any organization has to be pre-indexed. You can follow the steps in Option 1 to create the index of a 10-k report of available organizations. After setting up the vector data base separately, it's a better Q&A experience as there are no delays due to fetching and indexing data on-the-fly.
-
-#### Run Q&A api
-
-Run AI starter kit container with image
+To run the AI starter kit container with image, enter the following command:
 ```
 docker-compose up --build
 ```
 
-#### Make a request to the API
+You will be prompted to run the link (http://0.0.0.0:8501/) in your browser where you will be greeted with an identical page as Option 3.
 
-The app can be accessed at
-```
-http://localhost:8000/docs
-```
-
-Click the drop-down menu next to ```POST``` and click the ```Try it out``` button.
-
-Edit the following JSON input for the ```ticker``` and ```query```.
-```
-{
-"ticker": "string",
-"query": "string"
-}
-```
-For example, below is an edited version for a query regarding Tesla.
-```
-{
-"ticker": "tsla",
-"query": "What was the increase in R&D expenses in 2023 compared to 2022?"
-}
-```
-Once you click the execute button, the LLM response will be populated in the ```Response body```. Here is an example for the query above.
-```
-{
-"message": " The increase in R&D expenses in 2023 compared to 2022 was $894 million, or 29%. This information can be found in the section discussing Research and Development Expense."
-}
-```
 # Customizing the template
 
 The provided example template can be further customized based on the use case.
