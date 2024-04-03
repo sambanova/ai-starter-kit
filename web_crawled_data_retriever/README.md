@@ -18,6 +18,7 @@ Web Crawled Data Retrieval
     - [Integrate your model](#integrate-your-model)
     - [Deploy the starter kit](#deploy-the-starter-kit)
     - [Starterkit usage](#starterkit-usage)
+    - [Docker usage](#docker-usage)
 - [Workflow](#workflow)
     - [Ingestion](#ingestion)
     - [Retrieval](#retrieval)
@@ -116,6 +117,14 @@ After deploying the starter kit you should see the following application user in
 4- Process Crawled websites, there will be created a vectorstore in memory that you can also store on disk if you want.
 
 5- Ask questions about website data!
+
+## docker-usage
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://0.0.0.0:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 # Workflow
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.

@@ -762,11 +762,10 @@ class SambaNovaEmbeddingModel(Embeddings):
 
         return embeddings
     
-    def embed_query(self, text, batch_size=32, **kwargs):
+    def embed_query(self, text, **kwargs):
         """Returns a list of embeddings for the given sentences.
         Args:
             sentences (`List[str]`): List of sentences to encode
-            batch_size (`int`): Batch size for the encoding
 
         Returns:
             `List[np.ndarray]` or `List[tensor]`: List of embeddings for the given sentences

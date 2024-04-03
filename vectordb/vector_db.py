@@ -20,6 +20,7 @@ import os
 
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from utils.sambanova_endpoint import SambaNovaEmbeddingModel
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
 
@@ -129,24 +130,27 @@ class VectorDb():
 
         return chunks
 
-    def load_embedding_model(self) -> HuggingFaceInstructEmbeddings:
+    def load_embedding_model(self, type = "cpu"):
         """Loads embedding model
-
+        Args:
+            type (str): wether to use sambastudio embedding model or in local cpu model
         Returns:
-            HuggingFaceInstructEmbeddings: a type of HF instruct embedding model
+            langchain embedding model
         """
-        encode_kwargs = {"normalize_embeddings": NORMALIZE_EMBEDDINGS}
-        embedding_model = EMBEDDING_MODEL
-        embeddings = HuggingFaceInstructEmbeddings(
-            model_name=embedding_model,
-            embed_instruction="",  # no instruction is needed for candidate passages
-            query_instruction="Represent this sentence for searching relevant passages: ",
-            encode_kwargs=encode_kwargs,
-        )
-
-        logger.info(
-            f"Processing embeddings using {embedding_model}. This could take time depending on the number of chunks ..."
-        )
+        
+        if type == "sambastudio":
+            embeddings = SambaNovaEmbeddingModel()
+        elif type == "cpu":
+            encode_kwargs = {"normalize_embeddings": NORMALIZE_EMBEDDINGS}
+            embedding_model = EMBEDDING_MODEL
+            embeddings = HuggingFaceInstructEmbeddings(
+                model_name=embedding_model,
+                embed_instruction="",  # no instruction is needed for candidate passages
+                query_instruction="Represent this sentence for searching relevant passages: ",
+                encode_kwargs=encode_kwargs,
+            )
+        else:
+            raise ValueError(f"{type} is not a valid embedding model type")
 
         return embeddings
 
