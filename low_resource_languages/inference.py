@@ -18,4 +18,8 @@ llm = SambaNovaEndpoint(
 )
 
 def translate(sentence):
-    return llm(CUSTOM_PROMPT_TEMPLATE + sentence)
+    return llm(CUSTOM_PROMPT_TEMPLATE + sentence + '=')
+
+
+if __name__ == '__main__':
+    print(translate('The cat sat on the mat'))

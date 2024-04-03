@@ -1,0 +1,14 @@
+vocab_size: # the desired tokenizer vocabulary size for the target-language
+input_data_file: # path to the input data file
+num_threads: # number of CPU threads to run in parallel for tokenizer training
+character_coverage: # amount of characters covered by the model, good defaults are: 0.9995 for languages with rich character set like Japanese or Chinese and 1.0 for other languages with small character set.
+
+base_tokenizer: # path to local tokenizer or huggingface name if you want to download it directly from HF e.g 'llama_2/Llama-2-7b-hf'
+sp_model_file: # path to the sentencepiece tokenizer model file generated from step 1 (training the target language tokenizer)
+output_dir: # path to save the merged tokenizer model
+
+model_path: # path to local model or huggingface name if you want to download it directly from HF e.g 'llama_2/Llama-2-7b-hf'
+output_model_path: # path to save the augmented model
+tokenizer_path: #path to merged tokenizer - this should be the same as `output_dir`.
+target_config: #path to configuration file for base model.
+init_method: #choice of initialization method for model parameters
