@@ -72,6 +72,9 @@ SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 
 ### 3. Update API information for SambaNova Embeddings model (optional).
 
+You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+> *be sure to set batch size model parameter to 32*
+
 Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 would be entered in the env file (with no spaces) as:
@@ -81,6 +84,22 @@ EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
+
+> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
+>
+> with **CPU Huggingface embeddings**:
+> ```python
+>            embeddings = HuggingFaceInstructEmbeddings(
+>                model_name="hkunlp/instructor-large",
+>                embed_instruction="",
+>                query_instruction="Represent this sentence for searching relevant passages:",
+>                encode_kwargs={"normalize_embeddings": True},
+>            )
+> ```
+> with **Sambastudio embeddings**:
+> ```pyhton
+> embeddings = SambaNovaEmbeddingModel()
+> ```
 
 ### 4. Run the desired starter kit
 
@@ -144,21 +163,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Embedding Wrapper
 
-#### Use SambaStudio Embedding models
-
-1. Set the embeddding model endpoint variables in your env file.
-For example, enter an embeding endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-in the `env` file (with no spaces) as:
-
-```yaml
-EMBED_BASE_URL="https://api-stage.sambanova.net"
-EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-
-2. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
+1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
 
 ``` python
 from utils.sambanova_endpoint import SambaNovaEndpoint
@@ -168,7 +173,7 @@ load_dotenv('.env')
 embedding = SambaNovaEmbeddingModel()
 ```
 
-3. Use your embedding model in your langchain pipeline
+2. Use your embedding model in your langchain pipeline
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example. 
 

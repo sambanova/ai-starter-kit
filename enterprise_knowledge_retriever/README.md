@@ -93,6 +93,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
     - Option 2 **Set a sambastudio embedding model**
 
+        You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+        > *be sure to set batch size model parameter to 32*
+        
         Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
         "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
         would be entered in the env file (with no spaces) as:
@@ -103,6 +106,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
         EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
         ```
         Set in the [config.yaml file](./config.yaml), the variable *embedding_model:* as: "sambastudio"
+
+        > Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
+        > 
+        > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  *(load_embedding_model method)*
 
 3.  Install system dependencies
       
