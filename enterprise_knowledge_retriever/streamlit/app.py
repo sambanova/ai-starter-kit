@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -14,6 +15,9 @@ from data_extraction.src.multi_column import column_boxes
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
+
+logging.basicConfig(level=logging.INFO)
+logging.info("URL: http://localhost:8501")
 
 def handle_userinput(user_question):
     if user_question:
@@ -57,7 +61,7 @@ def handle_userinput(user_question):
                         unsafe_allow_html=True,
                     )
 
-def main():  
+def main(): 
     pdfRetrieval =  PDFRetrieval()
     *_, embedding_model_info ,retrieval_info, _ = pdfRetrieval.get_config_info()
 
