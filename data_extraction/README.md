@@ -11,39 +11,35 @@ SambaNova AI Starter Kits
 # Data Extraction Examples
 
 - [Data Extraction Examples](#data-extraction-examples)
-    - [Overview](#overview)
-    - [Getting started](#getting-started)
-        - [Deploy in vitual environment](#option-1-run-through-local-virtual-environment)
-        - [Deploy in Docker container](#option-2-run-via-docker)
+    - [Deploy the starter kit](#deploy-the-starter-kit)
+      - [Deploy in a virtual environment](#option-1-run-through-local-virtual-environment)
+      - [Deploy in aDocker container](#option-2-run-via-docker)
     - [File Loaders](#file-loaders)
-        - [CSV Documents](#csv-documents)
-        - [XLS/XLSX Documents](#xlsxlsx-documents)
-        - [DOC/DOCX Documents](#docdocx-documents)
-        - [RTF Documents](#rtf-documents)
-        - [Markdown Documents](#markdown-documents)
-        - [HTML Documents](#html-documents)
-        - [PDF Documents](#pdf-documents)
+      - [CSV Documents](#csv-documents)
+      - [XLS/XLSX Documents](#xlsxlsx-documents)
+      - [DOC/DOCX Documents](#docdocx-documents)
+      - [RTF Documents](#rtf-documents)
+      - [Markdown Documents](#markdown-documents)
+      - [HTML Documents](#html-documents)
+      - [PDF Documents](#pdf-documents)
     - [Included Files](#included-files)
 
-## Overview
 This kit include a series of Notebooks that demonstrates various methods for extracting text from documents in different input formats. including Markdown, PDF, CSV, RTF, DOCX, XLS, HTML
 
-## Getting started
+## Deploy the starter kit
 
-### Deploy the starter kit
+### Option 1: Run through local virtual environment
 
-#### Option 1: Run through local virtual environment
-
-> **Important:** With this option some funcionalities requires to install some pakges directly in your system
+> **Important:** With this option you have to install some packages directly in your system:
 >- [pandoc](https://pandoc.org/installing.html) (for local rtf files loading)
 >- [tesseract-ocr](https://tesseract-ocr.github.io/tessdoc/Installation.html) (for PDF ocr and table extraction)
 >- [poppler-utils](https://pdf2image.readthedocs.io/en/latest/installation.html) (for PDF ocr and table extraction)
 
-1. Clone repo.
+1. Clone the repo.
 ```
 git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
-2.1 Install requirements: It is recommended to use virtualenv or conda environment for installation.
+2. (Recommended) Set up a `venv` or `conda` environment for installation.
 ```
 cd ai-starter-kit
 python3 -m venv data_extract_env
@@ -51,8 +47,8 @@ source data_extract_env/bin/activate
 cd data_extraction
 pip install -r requirements.txt
 ```
-2.2 Install requirements for paddle utility: ,It is recommended to use virtualenv or conda environment for installation.
->Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the requirementsPaddle file instead
+3. Install files required for the paddle utility: ,It is recommended to use virtualenv or conda environment for installation.
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you should use the requirementsPaddle file instead
 ```
 cd ai-starter-kit
 python3 -m venv data_extract_env
@@ -60,80 +56,85 @@ source data_extract_env/bin/activate
 cd data_extraction
 pip install -r requirementsPaddle.txt
 ```
-3. Some text extraction examples use Unstructured lib. Please register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API Key. then create an enviroment file to store the APIkey and URL provided.
+4. Some text extraction examples use the `Unstructured` library. Register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API key and create an enviroment file to store the API key and URL:
 ```
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
 
 #### Option 2: Run via Docker
->With this option all funcionalities and notebook are ready to use 
 
->You need to have the Docker engine installed [Docker installation](https://docs.docker.com/engine/install/)
+With this option, all functionality and Jupyter notebooks are ready to use 
 
-1. Clone repo.
+1. Ensure that you have the Docker engine installed [Docker installation](https://docs.docker.com/engine/install/).
+
+2. Clone the repo.
 ```
 git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
-2. Some text extraction examples use Unstructured lib. Please register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API Key. then create an enviroment file to store the APIkey and URL provided.
+3. Some text extraction examples use the `Unstructured` library. Register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API key and create an enviroment file to store the API key and URL:
 ```
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
-3.1 Run data extraction docker container
+
+4. Run the data extraction Docker container:
 ```
 sudo docker-compose up data_extraction_service 
 ```
-3.2 Run data extraction docker container for Paddle utility
-3.1 Run data extraction docker container
+
+5. Run data extraction docker container for Paddle utility.
+6. Run data extraction docker container.
 ```
 sudo docker-compose up data_extraction_service 
 ```
-3.2 Run data extraction docker container for Paddle utility
->Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you shold use the startPaddle script instead
+
+7. Run data extraction docker container for Paddle utility.
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb), use the `startPaddle` script instead
+
 ```
 sudo docker-compose up data_extraction_paddle_service  
 ```
 
 
-### File loaders 
+## File loaders 
 
-You will find several data extraction recipes and pipelines in the [notebooks](notebooks) folder as follows:
+The [notebooks](notebooks) folder has several data extraction recipes and pipelines: 
 
-#### CSV Documents
+### CSV Documents
 
-- [csv_extraction.ipynb](notebooks/csv_extraction.ipynb): This notebook provides examples of text extraction from CSV files using different packages. Depending on your specific use case, some packages may perform better than others.
+- [csv_extraction.ipynb](notebooks/csv_extraction.ipynb): Examples of text extraction from CSV files using different packages. Depending on your use case, some packages may perform better than others.
 
-#### XLS/XLSX Documents
+### XLS/XLSX Documents
 
-- [xls_extraction.ipynb](notebooks/xls_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 2 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [xls_extraction.ipynb](notebooks/xls_extraction.ipynb): Examples of text extraction from files in different input formats using the `Unstructured` library. Section 2 includes two examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
-#### DOC/DOCX Documents
+### DOC/DOCX Documents
 
-- [docx_extraction.ipynb](notebooks/docx_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 3 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [docx_extraction.ipynb](notebooks/docx_extraction.ipynb): Examples of text extraction from files in different input formats using the `Unstructured` library. Section 3 includes two examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
-#### RTF Documents
+### RTF Documents
 
-- [rtf_extraction.ipynb](notebooks/rtf_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 4 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [rtf_extraction.ipynb](notebooks/rtf_extraction.ipynb): Examples of text extraction from files in different input formats using the `Unstructured` library. Section 4 includes two examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
-#### Markdown Documents
+### Markdown Documents
 
-- [markdown_extraction.ipynb](notebooks/markdown_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 5 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [markdown_extraction.ipynb](notebooks/markdown_extraction.ipynb): Examples of text extraction from files in different input formats using the `Unstructured` library. Section 5 includes two examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
-#### HTML Documents
+### HTML Documents
 
-- [web_extraction.ipynb](notebooks/web_extraction.ipynb): This notebook provides examples of text extraction from files in different input format using Unstructured lib. Section 6 includes two loading examples first one using unstructured API and the other using local unstructured loader
+- [web_extraction.ipynb](notebooks/web_extraction.ipynb): Examples of text extraction from files in different input format using the `Unstructured` library. Section 6 includes two loading examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
 #### PDF Documents
 
-- [pdf_extraction.ipynb](notebooks/pdf_extraction.ipynb): This notebook provides examples of text extraction from PDF documents using different packages including different OCR and non-OCR packages. Depending on your specific use case, some packages may perform better than others.
+- [pdf_extraction.ipynb](notebooks/pdf_extraction.ipynb): Examples of text extraction from PDF documents using different packages including different OCR and non-OCR packages. Depending on your specific use case, some packages may perform better than others.
 
-- [retrieval_from_pdf_tables.ipynb](notebooks/retrieval_from_pdf_tables.ipynb):  This notebook provides an example of a simple RAG retiever and an example of a multivector RAG retriever for pdf with tables retrieval. For SambaNova model endpoint usage refer to the [ai-starter-kit docs](../README.md) 
+- [retrieval_from_pdf_tables.ipynb](notebooks/retrieval_from_pdf_tables.ipynb): Example of a simple RAG retiever and an example of a multivector RAG retriever for PDF with tables retrieval. For SambaNova model endpoint usage, refer to the [top-level ai-starter-kit README](../README.md) 
 
-- [qa_qc_util.ipynb](notebooks/qa_qc_util.ipynb): This notebook offers a simple utility for visualizing text boxes extracted using the Fitz package. This visualization can be particularly helpful when dealing with complex multi-column PDF documents, and in the debugging process.
+- [qa_qc_util.ipynb](notebooks/qa_qc_util.ipynb): Simple utility for visualizing text boxes extracted using the Fitz package. This visualization can be particularly helpful when dealing with complex multi-column PDF documents, and in the debugging process.
 
 
-### Included files
-- [data](data): Contains sample data for running the notebooks, and is used as storage for intermediate steps for recipes.
+## Included files
+- [data](data): Sample data for running the notebooks. Used as storage for intermediate steps.
 
-- [src](src): contains the source code for some functionalities used in the notebooks.
+- [src](src): Source code for some functionalities used in the notebooks.
 
-- [docker](docker): contains Dockerfile for data extraction starter kit
+- [docker](docker): Docker file for the data extraction starter kit.
