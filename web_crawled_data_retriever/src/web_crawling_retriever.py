@@ -199,7 +199,7 @@ class WebCrawlingRetrieval:
             if len(scrapped_urls) == web_crawling_params["max_scraped_websites"]:
                 break
             
-        docs=WebCrawlingRetrieval.clean_docs(scraped_docs)
+        docs=WebCrawlingRetrieval.clean_docs(raw_docs)
         return docs, scrapped_urls
 
 

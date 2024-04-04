@@ -33,7 +33,6 @@ def set_retrieval_qa_chain(documents=None, config=None, save=False):
         config = {}
     if documents is None:
         documents = []
-    print(documents)
     web_crawling_retrieval = WebCrawlingRetrieval(documents, config)
     web_crawling_retrieval.init_llm_model()
     if save:
