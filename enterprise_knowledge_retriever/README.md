@@ -61,8 +61,8 @@ To integrate your LLM with this AI starter kit, follow these steps:
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-2. Update the API information in your target SambaNova application. 
-*  **Sambaverse Endpoint:**
+2. Update the LLM API information in your target SambaNova application. 
+- Option 1 **Sambaverse Endpoint:**
     (Step 1): Update the `sn-ai-starter-kit/.env` file in the root repo directory to include your API key. For example, enter an API key "456789ab-cdef-0123-4567-89abcdef0123" in the env file (with no spaces) as:
 
    ```
@@ -70,7 +70,8 @@ git clone https://github.com/sambanova/ai-starter-kit.git
    ```
 
     (Step 2) In the [config file](./config.yaml) file, set the variable `api` to `"sambaverse"`
-  *  **SambaStudio Endpoint:**
+    
+- Option 2 **SambaStudio Endpoint:**
      (Step 1) Update the environment variables file in the root repo directory `sn-ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
    ```
    BASE_URL="https://api-stage.sambanova.net"
@@ -81,8 +82,34 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 (Step 2) In the [config file](./config.yaml) file, set the variable `api` to `"sambastudio"`
 
-3.  Install system dependencies:
-      
+3. Update the Embedding API information in your target SambaNova application.
+
+- Option 1 **In CPU embedding model**
+
+    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
+
+- Option 2 **Set a sambastudio embedding model**
+
+    You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+    > *Be sure to set batch size model parameter to 32*
+
+    (Step 1) Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+    "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    would be entered in the env file (with no spaces) as:
+    ```
+    EMBED_BASE_URL="https://api-stage.sambanova.net"
+    EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    ```
+    (Step 1) In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+
+  > Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
+  > 
+  > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  *(load_embedding_model method)*
+
+3.  Install system dependencies
+
    - Ubuntu instalation:
       ```
       sudo apt install tesseract-ocr
