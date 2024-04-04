@@ -6,3 +6,5 @@ services:
       dockerfile: edgar_qna/docker/Dockerfile
     ports:
       - "8501:8501"
+    volumes:
+      - ./data:/app/edgar_qna/data
