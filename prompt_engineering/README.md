@@ -81,6 +81,14 @@ After deploying the starter kit you should see the following application user in
 
 ![capture of prompt_engineering_demo](./docs/prompt_enginnering_app.png)
 
+## Docker-usage
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
 ## Starterkit usage 
 
 1- Choose the LLM to use from the options available under ***Model Selection*** (Currently, only Llama2 70B is available) Upon selection, you'll see a description of the architecture, along with prompting tips and the Meta tag format required to optimize the model's performance.
