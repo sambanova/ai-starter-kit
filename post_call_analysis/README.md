@@ -147,6 +147,14 @@ After deploying the starter kit you should see the following streamlit user inte
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_base.png)
 
+## Docker usage
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
 # Starterkit usage 
 
 1- Pick your source (Audio or Transcription). You can upload your call audio recording or a CSV file containing the call transcription with diarization. Alternatively, you can select a preset/preloaded audio recording or a preset/processed call transcription.
