@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -18,6 +19,9 @@ PERSIST_DIRECTORY = os.path.join(kit_dir,"data/vectordbs")
 COMPANY_TICKERS_PATH = os.path.join(kit_dir,'data/company_tickers.json')
 
 load_dotenv(os.path.join(repo_dir,'.env'))
+
+logging.basicConfig(level=logging.INFO)
+logging.info("URL: http://localhost:8501")
 
 @st.cache_resource
 def set_retrieval_comparative_process(config):
