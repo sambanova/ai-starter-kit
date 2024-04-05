@@ -181,8 +181,7 @@ fine_tuning_sql/data/
 
 #snapi and snsdk
 SambaStudio_API_Client-*
-snsdk-#
-
+snsdk-*
 # FineTune Local Data
 fine_tuning_embeddings/sample_data
 fine_tuning_embeddings/data
