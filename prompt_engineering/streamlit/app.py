@@ -1,5 +1,6 @@
 import os                                                   # for using env variables
 import sys                                                  # for appending more paths
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -23,6 +24,9 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 # define config path
 CONFIG_PATH = os.path.join(kit_dir,'config.json')
+
+logging.basicConfig(level=logging.INFO)
+logging.info("URL: https://localhost:8501")
 
 @st.cache_data
 def call_sambanova_llama2_70b_api(prompt: str) -> str:

@@ -124,7 +124,7 @@ To run this with docker, run the command:
 
     docker-compose up --build
 
-You will be prompted to go to the link (http://0.0.0.0:8501/) in your browser where you will be greeted with the streamlit page as above.
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 # Workflow
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.

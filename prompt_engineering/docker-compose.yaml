@@ -1,0 +1,8 @@
+version: '1'
+services:
+  prompt_engineering:
+    build: 
+      context: ../
+      dockerfile: prompt_engineering/docker/Dockerfile
+    ports:
+      - "8501:8501"

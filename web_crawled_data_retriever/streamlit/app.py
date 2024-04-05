@@ -1,6 +1,7 @@
 import os
 import sys
 import yaml
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -15,6 +16,9 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(repo_dir,'.env'))
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
+
+logging.basicConfig(level=logging.INFO)
+logging.info("URL: http://localhost:8501")
 
 def get_config_info():
         """
@@ -33,7 +37,6 @@ def set_retrieval_qa_chain(documents=None, config=None, save=False):
         config = {}
     if documents is None:
         documents = []
-    print(documents)
     web_crawling_retrieval = WebCrawlingRetrieval(documents, config)
     web_crawling_retrieval.init_llm_model()
     if save:

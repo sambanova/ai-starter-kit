@@ -140,6 +140,15 @@ After deploying the starter kit you see the following user interface:
 
 ![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
 
+
+## Docker-usage
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
 ## Use the starter kit 
 
 1. In the **Pick a data source** pane, drag and drop or browse for files. The data source can be a [Chroma](https://docs.trychroma.com/getting-started) vectorstore or a series of PDF files.
