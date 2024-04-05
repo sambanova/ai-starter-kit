@@ -147,12 +147,17 @@ After deploying the starter kit you should see the following streamlit user inte
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_base.png)
 
-## Docker usage
+## Deploy the starter kit in a Docker container 
 
-To run this with docker, run the command:
+To run this with docker
 
-    docker-compose up --build
+- 1. update the `SAMBASTUDIO_KEY`, `SNAPI`, `SNSDK` args in [docker-compose.yaml file](docker-compose.yaml)
 
+- 2. run the command:
+
+    ```bash
+        docker-compose up --build
+    ```
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 # Starterkit usage 
