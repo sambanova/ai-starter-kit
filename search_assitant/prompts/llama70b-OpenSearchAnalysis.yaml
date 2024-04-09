@@ -1,0 +1,21 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - question
+  - context
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST]
+          You are a helpful assistant, you will receive a user question and a context with a scraped google results of the user query.
+
+          You should give a concise answer to the question based in the scraped context, if the information to give an answer is not in the context reply: 
+          "answer not fount in the context try another query"
+
+          context: {context}
+
+          Question: {question}
+          Search result: [/INST]
+template_format: f-string
+validate_template: false
