@@ -188,3 +188,8 @@ fine_tuning_embeddings/processed_data
 fine_tuning_embeddings/results
 fine_tuning_embeddings/finetuned_model
 fine_tuning_embeddings/ProductsUK.json
+fine_tuning_embeddings/sql_inf_test.ipynb
+fine_tuning_embeddings/sql_test.ipynb
+fine_tuning_embeddings/TPC-H.db
+fine_tuning_sql/notebooks/3_inference_sql_model.ipynb
+fine_tuning_sql/notebooks/3_inference_sql_model.ipynb

@@ -1926,6 +1926,17 @@ files = [
 ]
 
 [[package]]
+name = "json-normalize"
+version = "1.0.1"
+description = "Recursively flattens a JSON-like structure into a list of flat dicts."
+optional = false
+python-versions = "*"
+files = [
+    {file = "json-normalize-1.0.1.tar.gz", hash = "sha256:131edd803c8ab753df0cb3cc5375848a307d11246903c085d3f18668c72ac89e"},
+    {file = "json_normalize-1.0.1-py3-none-any.whl", hash = "sha256:30b8fc725c729c0202d6f317f83f1191e3da8e07d99f77b47affd8641a20699a"},
+]
+
+[[package]]
 name = "jsonpatch"
 version = "1.33"
 description = "Apply JSON-Patches (RFC 6902)"
@@ -6641,4 +6652,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "f3114a04fc5af72f844a9f1286c986649ab951fea12cecabf701e3c6f332bccb"
+content-hash = "d3a349d31b6a92b2f8f76e19a6184d9bc6bd8bc7bfe001860fff6a7bcd3f6f24"
