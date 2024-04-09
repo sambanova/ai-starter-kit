@@ -1,0 +1,14 @@
+_type: prompt
+input_types: {}
+input_variables:
+  - question
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+          <s>[INST] <<SYS>>
+          <</SYS>>/n
+          Question: {question}
+          Helpful Answer: [/INST]
+template_format: f-string
+validate_template: false
