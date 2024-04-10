@@ -375,7 +375,7 @@ class SVEndpointHandler:
         result = {}
         try:
             result = response.text.strip().split('\n')[-1]
-            result = {"data": json.loads(result.split("data: ")[-1])}
+            result = {"data": json.loads("".join(result.split("data: ")[1:]))}
         except Exception as e:
             result["detail"] = str(e)
         if "status_code" not in result:
