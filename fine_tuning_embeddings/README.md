@@ -30,7 +30,7 @@ This comprehensive starter kit guides users through fine-tuning embeddings from 
 2. **Script Execution**: Run the script with necessary parameters. For example:
 
    ```bash
-   python script_name.py --input_data_directory ./your_data_directory --output_data_directory ./processed_data
+   python scriptfine_tune_embed_model_name.py --input_data_directory ./your_data_directory --output_data_directory ./processed_data
    ```
 
 #### Using Pre-generated Data for Fine-Tuning
@@ -41,7 +41,7 @@ If you've previously generated synthetic data and wish to proceed directly to fi
 2. **Execute Fine-Tuning**: Run the script with the model and output directory parameters. Example:
 
    ```bash
-   python script_name.py --train_dataset_path ./processed_data/train_dataset.json --val_dataset_path ./processed_data/val_dataset.json --model_id "your_model_id" --model_output_path ./finetuned_model
+   python fine_tune_embed_model.py --train_dataset_path ./processed_data/train_dataset.json --val_dataset_path ./processed_data/val_dataset.json --model_id "your_model_id" --model_output_path ./finetuned_model
    ```
 
 #### Evaluating a Pre-Finetuned Model
@@ -52,7 +52,7 @@ To evaluate an existing finetuned model without re-running the entire process:
 2. **Run Evaluation Only**: Ensure the dataset paths are specified if they are not in the default location. Example:
 
    ```bash
-   python script_name.py --val_dataset_path ./processed_data/val_dataset.json --model_output_path ./finetuned_model --evaluate_only
+   python fine_tune_embed_model.py --val_dataset_path ./processed_data/val_dataset.json --model_output_path ./finetuned_model --evaluate_only
    ```
 
 ### Using SNS Embeddings
@@ -78,7 +78,7 @@ The script supports various arguments to customize the process, including:
 - `--split_ratio` to adjust the train-validation dataset split.
 - `--force_retrain` to force retraining even if a finetuned model exists.
 
-Refer to the script's help (`python script_name.py --help`) for a full list of arguments and their descriptions.
+Refer to the script's help (`python fine_tune_embed_model.py --help`) for a full list of arguments and their descriptions.
 
 ## Contributing
 
