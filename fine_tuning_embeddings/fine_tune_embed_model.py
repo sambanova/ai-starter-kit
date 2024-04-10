@@ -27,14 +27,21 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 from tqdm.auto import tqdm
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+kit_dir = current_dir
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
+import yaml
 
+CONFIG_PATH = os.path.join(current_dir,'config.yaml')
+
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+api_info = config["api"]
+llm_info = config["llm"]
 
 # Setup logging
 logging.basicConfig(
@@ -42,7 +49,7 @@ logging.basicConfig(
 )
 
 # Process Environment Variables
-load_dotenv(os.path.join(repo_dir,".env"))
+load_dotenv(os.path.join(kit_dir,".env"))
 
 
 def split_files_into_datasets(
@@ -96,13 +103,36 @@ def instantiate_llm():
     # Example LLM instantiation:
     # For a Sambanova LLM:
 
-    llm = SambaNovaEndpoint(
-        model_kwargs={
-            "do_sample": True,
-            "temperature": 0.01,
-            "max_tokens_to_generate": 512,
-        },
-    )
+    if api_info == "sambaverse":
+        llm = SambaverseEndpoint(
+            sambaverse_model_name=llm_info["sambaverse_model_name"],
+            #sambaverse_url=os.getenv("SAMBAVERSE_URL"),
+            sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+            model_kwargs={
+                "do_sample": False, 
+                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                "temperature": llm_info["temperature"],
+                "process_prompt": True,
+                "select_expert": llm_info["smabaverse_select_expert"]
+                #"stop_sequences": { "type":"str", "value":""},
+                # "repetition_penalty": {"type": "float", "value": "1"},
+                # "top_k": {"type": "int", "value": "50"},
+                # "top_p": {"type": "float", "value": "1"}
+            }
+        )
+    
+    elif api_info == "sambastudio":
+        llm = SambaNovaEndpoint(
+            model_kwargs={
+                "do_sample": True, 
+                "temperature": llm_info["temperature"],
+                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                            #"stop_sequences": { "type":"str", "value":""},
+            # "repetition_penalty": {"type": "float", "value": "1"},
+            # "top_k": {"type": "int", "value": "50"},
+            # "top_p": {"type": "float", "value": "1"}
+            }
+        ) 
 
     # # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
     llm = LangChainLLM(llm=llm)

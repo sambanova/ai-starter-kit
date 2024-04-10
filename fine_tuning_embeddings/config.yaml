@@ -36,7 +36,7 @@ api: sambaverse
 
 llm: 
     "temperature": 0.1
-    "max_tokens_to_generate": 500
+    "max_tokens_to_generate": 1024
     "sambaverse_model_name": "Mistral/Mistral-7B-Instruct-v0.2"
     "smabaverse_select_expert": "Mistral-7B-Instruct-v0.2"
 

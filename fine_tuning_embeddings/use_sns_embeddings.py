@@ -81,6 +81,7 @@ def main():
     if api_info == "sambaverse":
         llm = SambaverseEndpoint(
             sambaverse_model_name=llm_info["sambaverse_model_name"],
+            #sambaverse_url=os.getenv("SAMBAVERSE_URL"),
             sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
             model_kwargs={
                 "do_sample": False, 
