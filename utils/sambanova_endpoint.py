@@ -757,6 +757,7 @@ class SambaNovaEmbeddingModel(Embeddings):
                  headers={"key": self.embed_api_key},
                  json=data,
                  )
+            print(response.json)
             embedding = response.json()["data"]
             embeddings.extend(embedding)
 
