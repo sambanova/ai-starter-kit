@@ -14,7 +14,6 @@ retrieval:
     "score_treshold": 0.5
 
 web_crawling:
-    "max_depth": 2
     "max_scraped_websites": 20
 
 extra_loaders:
