@@ -10,7 +10,7 @@ retrieval:
     "chunk_size": 1200
     "chunk_overlap": 240
     "db_type": "faiss"
-    "k_retrieved_documents": 4
+    "k_retrieved_documents": 3
     "score_treshold": 0.5
 
 web_crawling:

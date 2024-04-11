@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import yaml
+from pprint import pprint
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -178,7 +179,6 @@ class SearchAssistant():
             if knowledge_graph:
                 knowledge_graph_str = json.dumps(knowledge_graph)
                 knowledge_graph = self.remove_links(knowledge_graph_str)
-                print(knowledge_graph)
                 formatted_prompt = prompt.format(question=query, context=json.dumps(knowledge_graph))
             else:
                 results_str = json.dumps(results)
@@ -332,7 +332,7 @@ class SearchAssistant():
                 engine=search_engine,
                 do_analysis=True
                 )
-        return {"answer": answer, "metadata": {"source":links}}
+        return {"answer": answer, "sources": links}
             
     def set_retrieval_qa_chain(self):
         prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_scraped_data_retriever.yaml"))
