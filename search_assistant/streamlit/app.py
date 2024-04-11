@@ -11,10 +11,6 @@ sys.path.append(repo_dir)
 import streamlit as st
 from search_assistant.src.search_assistant import SearchAssistant
 
-def set_agent(tools, max_iterations):
-    agent = SearchAssistant(tools, max_iterations)
-    return agent
-
 def handle_user_input(user_question):
     if user_question:
         with st.spinner("Processing..."):
@@ -23,7 +19,11 @@ def handle_user_input(user_question):
                 response = st.session_state.search_assistant.retrieval_call(user_question)
             elif st.session_state.method=="basic_query":
                 print(st.session_state.tool)
-                response = st.session_state.search_assistant.basic_call(user_question, st.session_state.tool[0])
+                response = st.session_state.search_assistant.basic_call(
+                    query = user_question,
+                    search_method = st.session_state.tool[0],
+                    max_results = st.session_state.max_results,
+                    search_engine = st.session_state.search_engine)
             st.session_state.chat_history.append(user_question)
             st.session_state.chat_history.append(response["answer"])
 
@@ -53,6 +53,8 @@ def main():
         st.session_state.chat_history = []
     if "tool" not in st.session_state:
         st.session_state.tool = "serpapi"
+    if "search_engine" not in st.session_state:
+        st.session_state.search_engine="google"
     if "max_results" not in st.session_state:
         st.session_state.max_results = 5
     if "method" not in st.session_state:
@@ -68,7 +70,6 @@ def main():
     if "input_disabled" not in st.session_state:
         st.session_state.input_disabled = True
     
-    
     st.title(":orange[SambaNova] Search Assistant")
     
     with st.sidebar:
@@ -77,12 +78,13 @@ def main():
         tool=st.radio("Select Search Tool to use", ["serpapi","serper","openserp"])
         if tool == "serpapi":
             st.session_state.tool = ["serpapi"]
+            st.session_state.search_engine=st.selectbox("Method for retrieval", ["google","bing"])
         elif tool == "serper":
             st.session_state.tool = ["serper"]
+            st.session_state.search_engine=st.selectbox("Method for retrieval", ["google"])
         elif tool == "openserp":
             st.session_state.tool = ["openserp"]
-            
-        #TODO add browser selection    
+            st.session_state.search_engine=st.selectbox("Method for retrieval", ["google","baidu"])
             
         st.session_state.max_results=st.slider("Max number of results to retrieve", 1, 20, 5)
         
@@ -99,7 +101,11 @@ def main():
                     if not st.session_state.query:
                         st.error("Please enter a query")
                     else:
-                        st.session_state.search_assistant.search_and_scrape(st.session_state.query, search_method=st.session_state.tool[0])
+                        st.session_state.search_assistant.search_and_scrape(
+                            query=st.session_state.query,
+                            search_method=st.session_state.tool[0],
+                            max_results=st.session_state.max_results,
+                            search_engine=st.session_state.search_engine)
                         with st.expander("Scraped sites", expanded=True):
                             st.write(st.session_state.search_assistant.urls)
                         st.session_state.input_disabled=False

@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import yaml
-from pprint import pprint
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -17,7 +16,6 @@ from dotenv import load_dotenv
 from serpapi import GoogleSearch
 
 from langchain.prompts import PromptTemplate, load_prompt
-from langchain.pydantic_v1 import BaseModel, Field
 from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
@@ -313,13 +311,27 @@ class SearchAssistant():
         else:
             self.vector_store = self.vectordb.create_vector_store(chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
           
-    def basic_call(self, query, search_method="serpapi"):
+    def basic_call(self, query, search_method="serpapi", max_results=5, search_engine="google"):
         if search_method == "serpapi":
-            answer, links = self.querySerpapi(query, do_analysis=True)
+            answer, links = self.querySerpapi(
+                query=query, 
+                limit=max_results,
+                engine=search_engine,
+                do_analysis=True
+                )
         elif search_method == "serper":
-            answer, links = self.querySerper(query, do_analysis=True)
+            answer, links = self.querySerper( 
+                query=query, 
+                limit=max_results,
+                do_analysis=True
+                )
         elif search_method == "openserp":
-            answer, links = self.queryOpenserp(query, do_analysis=True)
+            answer, links = self.queryOpenSerp(                
+                query=query, 
+                limit=max_results,
+                engine=search_engine,
+                do_analysis=True
+                )
         return {"answer": answer, "metadata": {"source":links}}
             
     def set_retrieval_qa_chain(self):
@@ -338,19 +350,31 @@ class SearchAssistant():
             prompt=prompt
         )
     
-    def search_and_scrape(self, query, search_method="serpapi"):
+    def search_and_scrape(self, query, search_method="serpapi", max_results=5, search_engine="google"):
         if search_method == "serpapi":
-            _, links = self.querySerpapi(query, do_analysis=False)
+            _, links = self.querySerpapi(
+                query=query, 
+                limit=max_results,
+                engine=search_engine,
+                do_analysis=False
+                )
         elif search_method == "serper":
-            _, links = self.querySerper(query, do_analysis=False)
+            _, links = self.querySerper(
+                query=query, 
+                limit=max_results,
+                do_analysis=False
+                )
         elif search_method == "openserp":
-            _, links = self.queryOpenserp(query, do_analysis=False)
+            _, links = self.queryOpenSerp(
+                query=query, 
+                limit=max_results,
+                engine=search_engine,
+                do_analysis=False
+                )
         self.web_crawl(urls=links)
         self.create_load_vector_store()
         self.set_retrieval_qa_chain()
         
     def retrieval_call(self, query):
-        print("\n\nwuuuuuuuuu##@#@@##@#@##@#@#\n\n")
         result = self.qa_chain.invoke(query)
-        print(result)
         return result
