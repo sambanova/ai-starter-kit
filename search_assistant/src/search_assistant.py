@@ -155,6 +155,7 @@ class SearchAssistant():
         return re.sub(url_pattern, '', text)
 
     def querySerpapi(self, query: str, limit: int = 1, do_analysis: bool = True, engine="google") -> str:
+        """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
         if engine not in ["google", "bing"]:
             raise ValueError("engine must be either google or bing")
         params = {
@@ -282,25 +283,38 @@ class SearchAssistant():
         self.urls=scrapped_urls
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
+        """
+        Create a vector store based on the given documents.
+        Args:
+            force_reload (bool, optional): Whether to force reloading the vector store. Defaults to False.
+            update (bool, optional): Whether to update the vector store. Defaults to False.
+        """
             
-            persist_directory = self.config.get("persist_directory", "NoneDirectory")
+        persist_directory = self.config.get("persist_directory", "NoneDirectory")
+        
+        embeddings = self.vectordb.load_embedding_model()
+        
+        if os.path.exists(persist_directory) and not force_reload and not update:
+            self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
+        
+        elif os.path.exists(persist_directory) and update:
+            chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
+            self.vector_store = self.vectordb.update_vdb(chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
             
-            embeddings = self.vectordb.load_embedding_model()
-            
-            if os.path.exists(persist_directory) and not force_reload and not update:
-                self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
-            
-            elif os.path.exists(persist_directory) and update:
-                chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
-                self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
-                self.vector_store = self.vectordb.update_vdb(chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
-                
-            else:
-                chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
-                self.vector_store = self.vectordb.create_vector_store(chunks, embeddings, self.retrieval_info["db_type"], None)
+        else:
+            chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            self.vector_store = self.vectordb.create_vector_store(chunks, embeddings, self.retrieval_info["db_type"], None)
                 
         
     def create_and_save_local(self, input_directory, persist_directory, update=False):
+        """
+        Create a vector store based on the given documents.
+        Args:
+            input_directory: The directory containing the previously created vectorstore.
+            persist_directory: The directory to save the vectorstore.
+            update (bool, optional): Whether to update the vector store. Defaults to False.
+        """
         
         chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
         embeddings = self.vectordb.load_embedding_model()
@@ -312,6 +326,15 @@ class SearchAssistant():
             self.vector_store = self.vectordb.create_vector_store(chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
           
     def basic_call(self, query, search_method="serpapi", max_results=5, search_engine="google"):
+        """ 
+        Do a basic call to the llm using the query result snippets as context
+        Args:
+            query (str): The query to search.
+            search_method (str, optional): The search method to use. Defaults to "serpapi".
+            max_results (int, optional): The maximum number of search results to retrieve. Defaults to 5.
+            search_engine (str, optional): The search engine to use. Defaults to "google".
+        """
+        
         if search_method == "serpapi":
             answer, links = self.querySerpapi(
                 query=query, 
@@ -335,6 +358,9 @@ class SearchAssistant():
         return {"answer": answer, "sources": links}
             
     def set_retrieval_qa_chain(self):
+        """
+        Set a retrieval chain for queries that use as retriever a previously created vectorstore
+        """
         prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_scraped_data_retriever.yaml"))
         retriever = self.vector_store.as_retriever(
             search_type="similarity_score_threshold",
@@ -351,6 +377,14 @@ class SearchAssistant():
         )
     
     def search_and_scrape(self, query, search_method="serpapi", max_results=5, search_engine="google"):
+        """ 
+        Do a call to the serp tool, scrape the url results, and save the scraped data in a a vectorstore 
+        Args:
+            query (str): The query to search.
+            max_results (int): The maximum number of search results. Default is 5  
+            search_method (str, optional): The search method to use. Defaults to "serpapi".
+            search_engine (str, optional): The search engine to use. Defaults to "google".
+        """
         if search_method == "serpapi":
             _, links = self.querySerpapi(
                 query=query, 
@@ -376,5 +410,10 @@ class SearchAssistant():
         self.set_retrieval_qa_chain()
         
     def retrieval_call(self, query):
+        """ 
+        Do a call to the retriever chain
+        Args:
+            query (str): The query to search.
+        """
         result = self.qa_chain.invoke(query)
         return result

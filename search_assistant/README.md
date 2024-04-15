@@ -111,6 +111,15 @@ After deploying the starter kit you should see the following application user in
 
 ![capture of search_assistant_kit](./docs/search_assitant.png)
 
+
+## Docker-usage
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
 ## Starterkit usage 
 
 1. select the Serp tool to use for searching information on the internet
