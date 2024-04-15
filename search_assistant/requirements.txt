@@ -1,13 +1,14 @@
 streamlit==1.32.2
 streamlit-extras==0.3.6
-langchain==0.1.2
+pydantic==2.7.0
+pydantic_core==2.18.1
+langchain==0.1.16
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 faiss-cpu==1.7.4
 python-dotenv==1.0.0
-pydantic==1.10.14
-pydantic_core==2.10.1
 sseclient-py==1.8.0
 google-search-results==2.4.2
 html2text==2024.2.26
 unstructured[pdf]==0.12.4
+fake-useragent==1.5.1
