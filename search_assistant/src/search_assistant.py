@@ -17,12 +17,12 @@ from dotenv import load_dotenv
 from serpapi import GoogleSearch
 
 from langchain.prompts import PromptTemplate, load_prompt
-from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain.document_loaders import AsyncHtmlLoader
-from langchain.document_transformers import Html2TextTransformer
+from langchain_community.document_loaders import UnstructuredURLLoader,  AsyncHtmlLoader
+from langchain_community.document_transformers import Html2TextTransformer
 from urllib.parse import urljoin, urlparse, urldefrag
 from vectordb.vector_db import VectorDb
 from langchain.chains import RetrievalQA
+from langchain.output_parsers import CommaSeparatedListOutputParser, StructuredOutputParser, ResponseSchema
 
 from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
@@ -361,7 +361,7 @@ class SearchAssistant():
         """
         Set a retrieval chain for queries that use as retriever a previously created vectorstore
         """
-        prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_scraped_data_retriever.yaml"))
+        prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-web_scraped_data_retriever.yaml"))
         retriever = self.vector_store.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={"score_threshold": self.retrieval_info["score_treshold"], "k": self.retrieval_info["k_retrieved_documents"]},
@@ -408,6 +408,15 @@ class SearchAssistant():
         self.web_crawl(urls=links)
         self.create_load_vector_store()
         self.set_retrieval_qa_chain()
+        
+    def get_relevant_queries(self, query):
+        prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-related_questions.yaml"))
+        response_schemas=[ResponseSchema(name="related_queries", description=f"related search queries", type="list")]
+        list_output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+        list_format_instructions = list_output_parser.get_format_instructions()
+        relevant_queries_chain = prompt | self.llm | list_output_parser
+        input_variables = {"question":query, "format_instructions":list_format_instructions}
+        return relevant_queries_chain.invoke(input_variables).get("related_queries",[])
         
     def retrieval_call(self, query):
         """ 

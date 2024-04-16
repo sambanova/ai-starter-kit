@@ -11,7 +11,7 @@ retrieval:
     "chunk_overlap": 240
     "db_type": "faiss"
     "k_retrieved_documents": 3
-    "score_treshold": 0.5
+    "score_treshold": 0.3
 
 web_crawling:
     "max_scraped_websites": 20
