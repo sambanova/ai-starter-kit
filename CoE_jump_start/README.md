@@ -127,7 +127,7 @@ The script and notebook support various models for calling CoE\, including\:
 \- medicine\-chat
 \- law\-chat
 
-For a full list of supported models\, please refer to the \[Supported Models\]\(https\:\/\/link\-to\-supported\-models\) documentation\.
+For a full list of supported models\, please refer to the \[Supported Models\]\(https://docs.sambanova.ai/sambastudio/latest/samba-1.html#_samba_1_expert_models) documentation\.
 
 ## Contributing
 
