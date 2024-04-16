@@ -344,11 +344,11 @@ class SecFiling:
         """
         
         if self.qa_chain is not None:
-            response = self.qa_chain(question)
+            response = self.qa_chain.invoke(question)
         elif self.conversational_chain is not None:
-            response = self.conversational_chain(question)
+            response = self.conversational_chain.invoke(question)
         elif self.comparative_process is not None:
-            response = self.comparative_process(question)
+            response = self.comparative_process.invoke(question)
         
         return response
 

@@ -22,7 +22,7 @@ logging.info("URL: http://localhost:8501")
 def handle_userinput(user_question):
     if user_question:
         with st.spinner("Processing..."):
-            response = st.session_state.conversation({"question": user_question})
+            response = st.session_state.conversation.invoke({"question": user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 

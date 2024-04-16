@@ -5,7 +5,7 @@ import json
 import requests  # type: ignore
 import sseclient  # type: ignore
 
-from pydantic import Extra, root_validator  # type: ignore
+from pydantic.v1 import Extra, root_validator  # type: ignore
 from langchain.schema.output import GenerationChunk  # type: ignore
 from langchain.callbacks.manager import CallbackManagerForLLMRun  # type: ignore
 from langchain.llms.base import LLM  # type: ignore
