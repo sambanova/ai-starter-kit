@@ -29,7 +29,12 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 
 2. Install the required dependencies::
   ```bash
-  pip install -r requirements.txt
+  - With pip: `pip install -r requirements.txt` 
+  - With poetry: `poetry install --no-root`
+  ```
+2b. - Create venv 
+  ```bash
+  python<version> -m venv <virtual-environment-name>
   ```
 
 
