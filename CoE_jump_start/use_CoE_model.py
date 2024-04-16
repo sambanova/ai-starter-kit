@@ -9,29 +9,25 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+import logging
+from typing import Dict, Any, Optional
 from dotenv import load_dotenv
-
-
 from langchain.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
-import os
-from utils.sambanova_endpoint import (
-    SambaNovaEndpoint,
-    SambaverseEndpoint,
-    SambaNovaEmbeddingModel,
-)
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaNovaEmbeddingModel, SambaverseEndpoint
 import yaml
-from snsdk import SnSdk
 import json
-
+import requests
 
 # Use embeddings As Part of Langchain
 from langchain.vectorstores import Chroma
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 CONFIG_PATH = os.path.join(current_dir, "config.yaml")
 
@@ -39,97 +35,67 @@ with open(CONFIG_PATH, "r") as yaml_file:
     config = yaml.safe_load(yaml_file)
 api_info = config["api"]
 llm_info = config["llm"]
+retrieval_info = config["retrieval"]
 
-
-# load dot_env
+# Load environment variables from .env file
 load_dotenv(os.path.join(current_dir, ".env"))
 
-try:
-    from snsdk import SnSdk
-except ImportError:
-    snsdk_installed = False
+def get_expert_val(res: Dict[str, Any]) -> str:
+    """
+    Extract the expert value from the API response.
 
+    Args:
+        res (Dict[str, Any]): The API response dictionary.
 
-def get_expert_val(res):
+    Returns:
+        str: The expert value or "Generalist" if not found.
+    """
     if not res or not res.get("data") or not res["data"]:
         return "Generalist"
 
-    supported_experts_map = {
-        "finance": "Finance expert",
-        "economics": "Finance expert",
-        "maths": "Math expert",
-        "mathematics": "Math expert",
-        "code generation": "Code expert",
-        "computer science": "Code expert",
-        "legal": "Legal expert",
-        "medical": "Medical expert",
-    }
-
-    # String check - medicals or health
+    supported_experts_map = config["supported_experts_map"]
 
     data = (res["data"][0].get("completion", "") or "").strip().lower()
     supported_experts = list(supported_experts_map.keys())
     expert = next((x for x in supported_experts if x in data), "Generalist")
     return supported_experts_map.get(expert, "Generalist")
 
-
 def get_expert(
-    input_text,
-    do_sample=False,
-    max_tokens_to_generate=500,
-    repetition_penalty=1.0,
-    temperature=0.7,
-    top_k=50,
-    top_p=1.0,
-    select_expert="llama-2-7b-chat-hf",
-):
+    input_text: str,
+    do_sample: bool = False,
+    max_tokens_to_generate: int = 500,
+    repetition_penalty: float = 1.0,
+    temperature: float = 0.7,
+    top_k: int = 50,
+    top_p: float = 1.0,
+    select_expert: str = "llama-2-7b-chat-hf",
+    use_requests: bool = False,
+) -> Dict[str, Any]:
     """
-    Classifies the given input text into one of the following categories:
-    'finance', 'economics', 'maths', 'code generation', 'legal', 'medical' or 'None of the above'.
+    Classifies the given input text into one of the predefined categories.
 
     Args:
         input_text (str): The input text to classify.
         do_sample (bool): Whether to sample from the model's output distribution. Default is False.
-        max_tokens_to_generate (int): The maximum number of tokens to generate. Default is 30.
+        max_tokens_to_generate (int): The maximum number of tokens to generate. Default is 500.
         repetition_penalty (float): The penalty for repeating tokens. Default is 1.0.
         temperature (float): The temperature for sampling. Default is 0.7.
         top_k (int): The number of top most likely tokens to consider. Default is 50.
         top_p (float): The cumulative probability threshold for top-p sampling. Default is 1.0.
-        select_expert (str): The name of the expert model to use. Default is "Mistral-7B-Instruct-v0.2".
+        select_expert (str): The name of the expert model to use. Default is "llama-2-7b-chat-hf".
+        use_requests (bool): Whether to use the requests library instead of SNSDK. Default is False.
 
     Returns:
-        str: The response from the model.
+        Dict[str, Any]: The response from the model.
     """
-    sdk = SnSdk("https://sjc3-svqa.sambanova.net", "endpoint_secret")
+    prompt = config["expert_prompt"].format(input=input_text)
 
-    prompt = """<s>[INST] 
-
-A message can be classified as only one of the following categories: 'finance',  'economics',  'maths',  'code generation', 'legal', 'medical', 'history' or 'None of the above'.  
-
-Examples for few of these categories are given below:
-- 'code generation': Write a python program
-- 'code generation': Debug the following code
-- 'None of the above': Who are you?
-- 'None of the above': What are you?
-- 'None of the above': Where are you?
-
-Based on the above categories, classify this message: 
-
-{input}
-
-Always remember the following instructions while classifying the given statement:
-- Think carefully and if you are not highly certain then classify the  given statement as 'None of the above'
-- Always begin your response by putting the classified category of the given statement after  '<<detected category>>:'
-- Explain you answer
-
-[/INST]"""
-
-    inputs = (
-        r'{"conversation_id":"sambaverse-conversation-id","messages":[{"message_id":0,"role":"user","content":"'
-        + input_text
-        + '"}], "prompt": "'
-        + prompt
-        + '"}'
+    inputs = json.dumps(
+        {
+            "conversation_id": "sambaverse-conversation-id",
+            "messages": [{"message_id": 0, "role": "user", "content": input_text}],
+            "prompt": prompt,
+        }
     )
 
     tuning_params = {
@@ -143,129 +109,126 @@ Always remember the following instructions while classifying the given statement
         "process_prompt": {"type": "bool", "value": "false"},
     }
 
-    tuning_params_str = json.dumps(tuning_params)
+    if use_requests:
 
-    response = sdk.nlp_predict(
-        os.getenv("PROJECT_ID"),
-        os.getenv("ENDPOINT_ID"),
-        os.getenv("API_KEY"),
-        inputs,
-        tuning_params_str,
-    )
+        url = "{}/api/predict/nlp/{}/{}"
+        headers = {"Content-Type": "application/json", "key": os.getenv("API_KEY")}
+        data = {
+            "inputs": [inputs],
+            "params": tuning_params,
+        }
+        response = requests.post(
+            url.format(os.getenv("BASE_URL"),os.getenv("PROJECT_ID"), os.getenv("ENDPOINT_ID")),
+            headers=headers,
+            json=data,
+        )
+        response.raise_for_status()
+        return response.json()
+    else:
+        from snsdk import SnSdk
 
-    return response
+        sdk = SnSdk(os.getenv("BASE_URL"), "endpoint_secret")
+        return sdk.nlp_predict(
+            os.getenv("PROJECT_ID"),
+            os.getenv("ENDPOINT_ID"),
+            os.getenv("API_KEY"),
+            inputs,
+            json.dumps(tuning_params),
+        )
 
-
-def main():
-    # snsdk_model retuns a langchain Embedding Object which can be used within langchain
+def main() -> None:
+    """Main function to run the script."""
+    # Create a SambaNovaEmbeddingModel object
     snsdk_model = SambaNovaEmbeddingModel()
-
-    # A Small Example to see how SNS embeddings can be integrated within Langchain Workflow
-    # Let's set embeddings to equal or snsdk_model to keep with the langchain convention
     embeddings = snsdk_model
+
+    # Load documents from the specified URL
     loader = WebBaseLoader("https://docs.smith.langchain.com")
     docs = loader.load()
 
-    text_splitter = RecursiveCharacterTextSplitter()
+    # Split the documents into chunks
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=retrieval_info["chunk_size"],
+        chunk_overlap=retrieval_info["chunk_overlap"],
+    )
     documents = text_splitter.split_documents(docs)
+
+    # Create a vector database using Chroma
     vector = Chroma.from_documents(documents, embeddings)
 
+    # Define the prompt template
     prompt = ChatPromptTemplate.from_template(
         """Answer the following question based only on the provided context:
 
-    <context>
-    {context}
-    </context>
+        <context>
+        {context}
+        </context>
 
-    Question: {input}"""
+        Question: {input}"""
     )
 
-    # Example 1 - Using SambaVerse to call CoE Model. They provide the expert name, and their Sambaverse api_key
+    # Set up the language model based on the API configuration
+    llm: Optional[SambaNovaEndpoint] = None
+
     if api_info == "sambaverse":
         llm = SambaverseEndpoint(
             sambaverse_model_name=llm_info["sambaverse_model_name"],
-            # sambaverse_url=os.getenv("SAMBAVERSE_URL"),
             sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
             model_kwargs={
                 "do_sample": False,
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
                 "temperature": llm_info["temperature"],
                 "process_prompt": True,
-                "select_expert": llm_info["samabaverse_select_expert"]
-                # "stop_sequences": { "type":"str", "value":""},
-                # "repetition_penalty": {"type": "float", "value": "1"},
-                # "top_k": {"type": "int", "value": "50"},
-                # "top_p": {"type": "float", "value": "1"}
+                "select_expert": llm_info["samabaverse_select_expert"],
             },
         )
-
-    # Example 2a - Using SambaStudio to call CoE with Named Expert
     elif api_info == "sambastudio":
         llm = SambaNovaEndpoint(
             model_kwargs={
                 "do_sample": True,
                 "temperature": llm_info["temperature"],
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                # If using a CoE endpoint, you must select the expert using the select_expert parameter below and set process prompt = False.
                 "select_expert": llm_info["samabaverse_select_expert"],
                 "process_prompt": False,
-                # "stop_sequences": { "type":"str", "value":""},
-                # "repetition_penalty": {"type": "float", "value": "1"},
-                # "top_k": {"type": "int", "value": "50"},
-                # "top_p": {"type": "float", "value": "1"}
             }
         )
 
     user_query = "Give me the code for creating a vector db in langchain"
 
     if llm_info["coe_routing"]:
-        # Example 2B - Use SambaStudio to Call CoE with Routing v1
+        # Get the expert by calling SambaStudio with a custom prompt workflow
+        expert_response = get_expert(user_query,use_requests=True)
+        logger.info(f"Expert response: {expert_response}")
 
-        # We Get the Expert By Calling SambaStudio with a Custom Prompt Workflow
-        expert_response = get_expert(user_query)
-        print(expert_response)
-
-        # After this we extract the expert name from the response
+        # Extract the expert name from the response
         expert = get_expert_val(expert_response)
-        print(expert)
+        logger.info(f"Expert: {expert}")
 
-        # Once we have this we simply instantiate the LLM by calling the CoE using a named model, by mapping the expert name to the relevant model.
-        # Lookup Model Name
-        coe_name_map = {
-            "Finance expert": "finance-chat",
-            "Math expert": "deepseek-llm-67b-chat",
-            "Code expert": "deepseek-llm-67b-chat",
-            "Medical expert": "medicine-chat",
-            "Legal expert": "law-chat",
-            "Generalist": "Mistral-7B-Instruct-v0.2",
-        }
-        named_expert = coe_name_map[expert]
-        print(named_expert)
+        # Look up the model name based on the expert
+        named_expert = config["coe_name_map"][expert]
+        logger.info(f"Named expert: {named_expert}")
 
         llm = SambaNovaEndpoint(
             model_kwargs={
                 "do_sample": True,
                 "temperature": llm_info["temperature"],
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                # If using a CoE endpoint, you must select the expert using the select_expert parameter below and set process prompt = False.
                 "select_expert": named_expert,
                 "process_prompt": False,
-                # "stop_sequences": { "type":"str", "value":""},
-                # "repetition_penalty": {"type": "float", "value": "1"},
-                # "top_k": {"type": "int", "value": "50"},
-                # "top_p": {"type": "float", "value": "1"}
             }
         )
 
-    document_chain = create_stuff_documents_chain(llm, prompt)
+    if llm is None:
+        raise ValueError("Invalid API configuration")
 
+    # Create the document chain and retrieval chain
+    document_chain = create_stuff_documents_chain(llm, prompt)
     retriever = vector.as_retriever()
     retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
+    # Invoke the retrieval chain with the user query
     response = retrieval_chain.invoke({"input": user_query})
-
-    print(response["answer"])
-
+    logger.info(f"Response: {response['answer']}")
 
 if __name__ == "__main__":
     main()

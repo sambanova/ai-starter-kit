@@ -1,15 +1,54 @@
-
-    
 api: sambastudio
 
-llm: 
-    "temperature": 0.1
-    "max_tokens_to_generate": 1024
-    "sambaverse_model_name": "Mistral/Mistral-7B-Instruct-v0.2"
-    "samabaverse_select_expert": "Mistral-7B-Instruct-v0.2"
-    "coe_routing": true
+llm:
+  temperature: 0.1
+  max_tokens_to_generate: 1024
+  sambaverse_model_name: "Mistral/Mistral-7B-Instruct-v0.2"
+  samabaverse_select_expert: "Mistral-7B-Instruct-v0.2"
+  coe_routing: true
 
 retrieval:
-    "chunk_size": 1000
-    "chunk_overlap": 200
-    "db_type": "faiss"
+  chunk_size: 1000
+  chunk_overlap: 200
+  db_type: "faiss"
+
+supported_experts_map:
+  finance: "Finance expert"
+  economics: "Finance expert"
+  maths: "Math expert"
+  mathematics: "Math expert"
+  code generation: "Code expert"
+  computer science: "Code expert"
+  legal: "Legal expert"
+  medical: "Medical expert"
+
+expert_prompt: |
+  <s>[INST] 
+
+  A message can be classified as only one of the following categories: 'finance',  'economics',  'maths',  'code generation', 'legal', 'medical', 'history' or 'None of the above'.  
+
+  Examples for few of these categories are given below:
+  - 'code generation': Write a python program
+  - 'code generation': Debug the following code
+  - 'None of the above': Who are you?
+  - 'None of the above': What are you?
+  - 'None of the above': Where are you?
+
+  Based on the above categories, classify this message: 
+
+  {input}
+
+  Always remember the following instructions while classifying the given statement:
+  - Think carefully and if you are not highly certain then classify the  given statement as 'None of the above'
+  - Always begin your response by putting the classified category of the given statement after  '<<detected category>>:'
+  - Explain you answer
+
+  [/INST]
+
+coe_name_map:
+  Finance expert: "finance-chat"
+  Math expert: "deepseek-llm-67b-chat"
+  Code expert: "deepseek-llm-67b-chat"
+  Medical expert: "medicine-chat"
+  Legal expert: "law-chat"
+  Generalist: "Mistral-7B-Instruct-v0.2"
