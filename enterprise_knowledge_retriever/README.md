@@ -149,6 +149,9 @@ To run this with docker, run the command:
 
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
+Here's a short video demonstrating docker deployment:
+https://github.com/sambanova/ai-starter-kit/assets/150964187/8c9e88da-3913-4bc5-af4d-a1aa4815d351
+
 ## Use the starter kit 
 
 1. In the **Pick a data source** pane, drag and drop or browse for files. The data source can be a [Chroma](https://docs.trychroma.com/getting-started) vectorstore or a series of PDF files.
