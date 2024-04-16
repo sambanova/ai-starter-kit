@@ -17,18 +17,48 @@ If you have any issues with the examples or to provide feedback, [create an issu
 
 # Available AI Starter Kits
 
-| Starter Kit                                                                | About                                                                                                                                                                                                                                                          |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Data Extraction](data_extraction/README.md)                               | A series of notebooks that demonstrates various methods for extracting text from documents in different input formats.                                                                                                                                         |
-| [EDGAR Q&A](edgar_qna/README.md)                                           | An example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.                                             |
-| [Enterprise Knowledge Retrieval](enterprise_knowledge_retriever/README.md) | A sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.                                                                                               |
-| [Fine tuning embeddings](fine_tuning_embeddings/README.md)                 | This kit guides users through fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.                                                                         |
-| [Fine Tuning: SQL model](fine_tuning_sql/README.md)                        | A sample training recipe to build a fine-tuned SQL model over a Llama 7B base.                                                                                                                                                                                 |
-| [Post Call Analysis](post_call_analysis/README.md)                         | This kit exemplifies a systematic approach to post-call analysis starting with Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows that are built using the SambaNova platform. |
-| [Prompt Engineering](prompt_engineering/README.md)                         | An starting point demo for prompt engineering using Sambanova's API to experiment with different use case templates. It also provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.                  |
-| [Web Crawled Data Retrieval](web_crawled_data_retriever/README.md)         | A sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.                                                         |
-| [YoDA: Your Data Your model](yoda/README.md)                               | A sample training recipe to train a Language Model (LLM) using customer's private data.                                                                                                                                                                        |
-| [Search Assitant](search_assistant/README.md)                              | A sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo                              |
+<table style="width: 100%;">
+<tbody>
+<tr>
+<td width="25%"><a href="data_extraction/README.md">Data Extraction</a>
+</td>
+<td width="75%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
+</tr>
+<td width="25%"><a href="edgar_qna/README.md">EDGAR Q&A</a> 
+</td>
+<td width="75%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
+</tr>
+<tr>
+<td width="25%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</td>
+</td>
+<td width="75%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
+</tr>
+<td width="25%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a>
+</td>
+<td width="75%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
+</tr>
+<tr>
+<td width="25%"><a href="prompt_engineering/README.md">Prompt Engineering</td>
+</td>
+<td width="75%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
+</tr>
+<td width="25%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a>
+</td>
+<td width="75%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
+</tr>
+<tr>
+<td width="25%"><a href="yoda/README.md">YoDA: Your Data Your model</td>
+</td>
+<td width="75%">Sample training recipe to train a Language Model (LLM) using a customer's private data. </td>
+</tr>
+<td width="25%"><a href="search_assistant/README.md">Search Assistant</a>
+</td>
+<td width="75%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
+</tr>
+
+</tbody>
+</table>
+
 # Get started with SambaNova AI starter kit
 
 ## Setting your model
