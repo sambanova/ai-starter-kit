@@ -113,7 +113,7 @@ def instantiate_llm():
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
                 "temperature": llm_info["temperature"],
                 "process_prompt": True,
-                "select_expert": llm_info["smabaverse_select_expert"]
+                "select_expert": llm_info["samabaverse_select_expert"]
                 #"stop_sequences": { "type":"str", "value":""},
                 # "repetition_penalty": {"type": "float", "value": "1"},
                 # "top_k": {"type": "int", "value": "50"},

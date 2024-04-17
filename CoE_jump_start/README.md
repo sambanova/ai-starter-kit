@@ -81,26 +81,15 @@ The script supports both SambaVerse and SambaStudio APIs. Depending on which API
 
 #### Calling CoE Models with the Python Script
 
-1\. Update the `config\.yaml` file with your desired configuration\.
+1\. Update the `config.yaml` file with your desired configuration\.
 
-2\. Run the `use\_coe\_model\.py` script\:
+2\. Run the `use_coe_model.py` script\:
 
   ```bash
-  python use\_coe\_model\.py
+  python use_coe_model.py
   ``` 
 
 
-### Usage
-
-#### Calling CoE Models with the Python Script
-
-1\. Update the `config\.yaml` file with your desired configuration\.
-
-2\. Run the `use\_coe\_model\.py` script\:
-
-  ```bash
-  python use\_coe\_model\.py
-  ```
 
 The script will load documents, create a vector database, set up the language model based on the configuration, and invoke the retrieval chain with a user query.
 
