@@ -17,6 +17,11 @@ def handle_user_input(user_question):
             if st.session_state.method=="rag_query":
                 response = st.session_state.search_assistant.retrieval_call(user_question)
                 sources = set(f'{doc.metadata["source"]}'for doc in response["source_documents"])
+                st.session_state.related_queries_history.append(
+                    st.session_state.search_assistant.get_relevant_queries(
+                        st.session_state.query+" - "+user_question
+                        )
+                    )
             elif st.session_state.method=="basic_query":
                 response = st.session_state.search_assistant.basic_call(
                     query = user_question,
@@ -24,6 +29,7 @@ def handle_user_input(user_question):
                     max_results = st.session_state.max_results,
                     search_engine = st.session_state.search_engine)
                 sources = set(response["sources"])
+                st.session_state.related_queries_history.append(st.session_state.search_assistant.get_relevant_queries(user_question))
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
  
@@ -37,30 +43,49 @@ def handle_user_input(user_question):
             
         st.session_state.sources_history.append(sources_text)   
 
-    for ques, ans, source in zip(
+    for ques, ans, source, related_queries in zip(
         st.session_state.chat_history[::2],
         st.session_state.chat_history[1::2],
-        st.session_state.sources_history
+        st.session_state.sources_history,
+        st.session_state.related_queries_history,
     ):
+        # use question
         with st.chat_message("user"):
             st.write(f"{ques}")
 
+        #kit response
         with st.chat_message(
             "ai",
             avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
+            # answer
             st.write(f"{ans}")
+            # sources
             if st.session_state.show_sources:
-                with st.expander("Sources"):
-                    st.markdown(
-                        f'<font size="2" color="grey">{source}</font>',
-                        unsafe_allow_html=True,
-                    )
+                with st.popover("Sources", use_container_width=False):
+                    sources_lines = source.split("\n")[:-1]
+                    for i in range(len(sources_lines)//3+1):
+                        columns = st.columns(3)
+                        for j in range(len(columns)):
+                            if i*3+j >= len(sources_lines): 
+                                break
+                            columns[j].container(border=True).markdown(
+                                f'<font size="2" color="grey">{sources_lines[i*3+j]}</font>',
+                                unsafe_allow_html=True,
+                            )
+            # related questions
+            with st.expander("**Related questions**", expanded=False):
+                if len(related_queries)>0:
+                    for question in related_queries:
+                        st.markdown(
+                            f"[{question}](https://www.google.com/search?q={question.replace(' ', '+')})",
+                        )
              
 def main():
     st.set_page_config(
         page_title="AI Starter Kit",
         page_icon="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+        #layout="wide"
     )
     
     if "conversation" not in st.session_state:
@@ -69,6 +94,10 @@ def main():
         st.session_state.chat_history = []
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
+    if "related_queries_history" not in st.session_state:
+        st.session_state.related_queries_history = []
+    if "related_questions" not in st.session_state:
+        st.session_state.related_questions = []
     if "show_sources" not in st.session_state:
         st.session_state.show_sources = True
     if "search_assistant" not in st.session_state:
@@ -146,9 +175,9 @@ def main():
             )
             if st.button("Reset conversation"):
                 st.session_state.chat_history = []
-                st.toast(
-                    "Conversation reset. The next response will clear the history on the screen"
-                )
+                st.session_state.sources_history = []
+                st.session_state.related_queries_history = []
+                st.rerun()
             
     user_question = st.chat_input("Ask questions about data in provided sites", disabled=st.session_state.input_disabled)
     handle_user_input(user_question)
