@@ -8,7 +8,7 @@ instructorembedding==1.0.1
 beautifulsoup4==4.12.2
 qdrant-client==1.5.2
 uvicorn==0.23.2
-fastapi==0.99.1
+fastapi==0.110.1
 aiohttp==3.9.1
 Faker==19.1.0
 ratelimit==2.2.1
@@ -16,6 +16,6 @@ unstructured==0.8.1
 python-xbrl==1.1.1
 sec-edgar-downloader==5.0.2
 python-dotenv==1.0.0
-chromadb==0.4.8
+chromadb==0.4.24
 streamlit==1.25.0
 sseclient-py==1.8.0
