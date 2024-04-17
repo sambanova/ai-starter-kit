@@ -10,26 +10,27 @@ sys.path.append(repo_dir)
 
 import streamlit as st
 from search_assistant.src.search_assistant import SearchAssistant
+import concurrent.futures
 
 def handle_user_input(user_question):
     if user_question:
         with st.spinner("Processing..."):
             if st.session_state.method=="rag_query":
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    related_querys_future = executor.submit(st.session_state.search_assistant.get_relevant_queries, query=user_question)
                 response = st.session_state.search_assistant.retrieval_call(user_question)
                 sources = set(f'{doc.metadata["source"]}'for doc in response["source_documents"])
-                st.session_state.related_queries_history.append(
-                    st.session_state.search_assistant.get_relevant_queries(
-                        st.session_state.query+" - "+user_question
-                        )
-                    )
+                st.session_state.related_queries_history.append(related_querys_future.result())
             elif st.session_state.method=="basic_query":
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    related_querys_future = executor.submit(st.session_state.search_assistant.get_relevant_queries, query=user_question)
                 response = st.session_state.search_assistant.basic_call(
                     query = user_question,
                     search_method = st.session_state.tool[0],
                     max_results = st.session_state.max_results,
                     search_engine = st.session_state.search_engine)
                 sources = set(response["sources"])
-                st.session_state.related_queries_history.append(st.session_state.search_assistant.get_relevant_queries(user_question))
+                st.session_state.related_queries_history.append(related_querys_future.result())
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
  
@@ -59,7 +60,7 @@ def handle_user_input(user_question):
             avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
             # answer
-            st.write(f"{ans}")
+            st.markdown(f"{ans}", unsafe_allow_html=True,)
             # sources
             if st.session_state.show_sources:
                 with st.popover("Sources", use_container_width=False):
@@ -74,8 +75,8 @@ def handle_user_input(user_question):
                                 unsafe_allow_html=True,
                             )
             # related questions
-            with st.expander("**Related questions**", expanded=False):
-                if len(related_queries)>0:
+            if related_queries:
+                with st.expander("**Related questions**", expanded=False):
                     for question in related_queries:
                         st.markdown(
                             f"[{question}](https://www.google.com/search?q={question.replace(' ', '+')})",

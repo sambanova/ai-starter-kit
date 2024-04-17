@@ -100,6 +100,17 @@ class SearchAssistant():
             ) 
         return llm
     
+    def remove_links(self, text):
+        url_pattern = r'https?://\S+|www\.\S+'
+        return re.sub(url_pattern, '', text)
+    
+    def parse_serp_analysis_output(self, answer, links):
+        for i, link in enumerate(links):
+            answer = answer.replace(f"[reference:{i+1}]", f"[<sup>{i+1}</sup>]({link})")
+            answer = answer.replace(f"[Reference:{i+1}]", f"[<sup>{i+1}</sup>]({link})")
+            answer = answer.replace(f"[Reference: {i+1}]", f"[<sup>{i+1}</sup>]({link})")
+        return answer
+    
     def querySerper(self, query: str, limit: int = 5, do_analysis: bool = True ,include_site_links: bool = False):
         """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
         url = "https://google.serper.dev/search"
@@ -115,17 +126,23 @@ class SearchAssistant():
         response = requests.post(url, headers=headers, data=payload).json()
         results=response["organic"]
         links = [r["link"] for r in results]
+        
+        context = []
+        for i, result in enumerate(results):
+            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')      
+        context="\n\n".join(context)
+        
         if include_site_links:
             sitelinks = []
             for r in [r.get("sitelinks",[]) for r in results]:
                 sitelinks.extend([site.get("link", None) for site in r])
             links.extend(sitelinks)
         links=list(filter(lambda x: x is not None, links))
-        
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-SerperSearchAnalysis.yaml"))
+            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-serp_analysis.yaml"))
             formatted_prompt = prompt.format(question=query, context=json.dumps(results))
-            return self.llm.invoke(formatted_prompt), links
+            answer = self.llm.invoke(formatted_prompt)
+            return self.parse_serp_analysis_output(answer,links), links
         else:
             return response, links
         
@@ -141,18 +158,20 @@ class SearchAssistant():
         }
 
         results = requests.get(url, params=params).json()
-        
         links = [r["url"] for r in results]
+        
+        context = []
+        for i, result in enumerate(results):
+            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}')      
+        context="\n\n".join(context)
+        
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-OpenSearchAnalysis.yaml"))
-            formatted_prompt = prompt.format(question=query, context=json.dumps(results))
-            return self.llm.invoke(formatted_prompt), links
+            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-serp_analysis.yaml"))
+            formatted_prompt = prompt.format(question=query, context=context)
+            answer = self.llm.invoke(formatted_prompt)
+            return self.parse_serp_analysis_output(answer,links), links
         else:
             return results, links
-
-    def remove_links(self, text):
-        url_pattern = r'https?://\S+|www\.\S+'
-        return re.sub(url_pattern, '', text)
 
     def querySerpapi(self, query: str, limit: int = 1, do_analysis: bool = True, engine="google") -> str:
         """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
@@ -174,18 +193,18 @@ class SearchAssistant():
         links = []
         links = [r["link"] for r in results]
         
+        context = []
+        for i, result in enumerate(results):
+            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')      
+        context="\n\n".join(context)
         
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-SerpapiSearchAnalysis.yaml"))
-            if knowledge_graph:
-                knowledge_graph_str = json.dumps(knowledge_graph)
-                knowledge_graph = self.remove_links(knowledge_graph_str)
-                formatted_prompt = prompt.format(question=query, context=json.dumps(knowledge_graph))
-            else:
-                results_str = json.dumps(results)
-                results_str = self.remove_links(results_str)
-                formatted_prompt = prompt.format(question=query, context=json.dumps(results))
-            return self.llm.invoke(formatted_prompt), links
+            prompt = load_prompt(os.path.join(kit_dir, "prompts/llama70b-serp_analysis.yaml"))
+            results_str = json.dumps(results)
+            results_str = self.remove_links(results_str)
+            formatted_prompt = prompt.format(question=query, context=context)
+            answer = self.llm.invoke(formatted_prompt)
+            return self.parse_serp_analysis_output(answer,links), links
         else:
             return response, links
 
