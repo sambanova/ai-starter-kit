@@ -14,7 +14,7 @@ YoDa
 - [Overview](#overview)
 - [Workflow overview](#workflow-overview)
 - [Getting Started](#getting-started)
-    - [Deploy your models in SambaStudio](#deploy-your-models-in-sambastudio)
+    - [Deploy a SambaStudio inference endpoint](#deploy-a-sambastudio-inference-endpoint)
     - [Get your SambaStudio API key](#get-your-sambastudio-api-key)
     - [Set the starter kit environment](#set-the-starter-kit-environment)
 - [Starterkit: Usage](#starterkit-usage)
@@ -53,11 +53,9 @@ Evaluation facilitates further analysis of your model's effectiveness in solving
 
 These instructions will guide you on how to generate training data, preprocess it, train the model, launch the online inference service, and evaluate it.
 
-## Deploy your models in SambaStudio
+## Deploy a SambaStudio inference endpoint
 
-Begin by deploying a powerful LLM (e.g. Llama 2 70B chat) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-
-Then deploy your baseline model (e.g. Llama 2 7B) to an endpoint for inference in SambaStudio either through the GUI or CLI
+SambaStudio includes a rich set of open source models that have been customized to run efficiently on RDU. Deploy the LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html). 
 
 ## Get your SambaStudio API key
 >Optional 
