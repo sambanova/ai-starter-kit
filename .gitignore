@@ -117,6 +117,7 @@ ENV/
 env.bak/
 venv.bak/
 server/ask-venv/*
+secret.txt
 
 # Spyder project settings
 .spyderproject
@@ -178,6 +179,9 @@ next-env.d.ts
 # Fine tuning Data
 fine_tuning_sql/data/
 
+#snapi and snsdk
+SambaStudio_API_Client-*
+snsdk-*
 # FineTune Local Data
 fine_tuning_embeddings/sample_data
 fine_tuning_embeddings/data

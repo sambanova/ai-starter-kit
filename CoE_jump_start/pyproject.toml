@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fine-tuning-embeddings"
+name = "COE_Jumpstart"
 version = "0.1.0"
-description = "AI Starter Kit - Fine Tuning Embeddings"
+description = "Starter Kit To Work With CoE"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 

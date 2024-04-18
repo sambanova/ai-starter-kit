@@ -1,0 +1,10 @@
+version: '1'
+services:
+  search_assistant_service:
+    build: 
+      context: ../
+      dockerfile: search_assistant/docker/Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/search_assistant/data

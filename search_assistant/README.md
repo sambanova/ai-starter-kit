@@ -1,4 +1,3 @@
-
 <a href="https://sambanova.ai/">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
@@ -6,24 +5,23 @@
 </picture>
 </a>
 
-Web Crawled Data Retrieval
+Search Assitant
 ======================
+
 <!-- TOC -->
 
-- [Web Crawled Data Retrieval](#web-crawled-data-retrieval)
 - [Overview](#overview)
     - [About this template](#about-this-template)
 - [Getting started](#getting-started)
-    - [Deploy your model in SambaStudio](#deploy-your-model-in-sambastudio)
+    - [Deploy your model](#deploy-your-model)
     - [Integrate your model](#integrate-your-model)
     - [Deploy the starter kit](#deploy-the-starter-kit)
     - [Starterkit usage](#starterkit-usage)
-    - [Docker usage](#docker-usage)
 - [Workflow](#workflow)
-    - [Ingestion](#ingestion)
-    - [Retrieval](#retrieval)
-    - [Response](#response)
+    - [Answer and search](#answer-and-search)
+    - [Answer and scrape sites](#answer-and-scrape-sites)
 - [Customizing the template](#customizing-the-template)
+    - [Use your custom serp tool](#use-your-custom-serp-tool)
     - [Crawl websites](#crawl-websites)
     - [Split Data](#split-data)
     - [Embed data](#embed-data)
@@ -34,21 +32,20 @@ Web Crawled Data Retrieval
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
+
 # Overview
 
 ## About this template
-This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using website-crawled information as the source. 
+This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using google search information as the source. this kit includes
 
  -   A configurable SambaStudio connector to run inference off a deployed model.
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
+ -   An configurable integrations with multiple SERP APIs
+ -   An stretegy for instant question - search - answer
+ -   An strategy for query - search - web-crawl - answer
 
 This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. It also includes straightforward explanations and useful resources to help you understand each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
-
-You can also view a demo video of deploying and using the starter kit:
-
-https://github.com/sambanova/ai-starter-kit/assets/150964187/818a7ff8-f478-4899-8ebf-5b0c935d46d2
-
 
 # Getting started
 
@@ -89,10 +86,20 @@ Set in the [config file](./config.yaml), the variable *api* as: "sambastudio"
 3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
 ```
 cd ai-starter-kit/web_crawled_data_retriever
-python3 -m venv web_crawling_env
-source web_crawling_env/bin/activate
+python3 -m venv search_assistant_env
+source search_assistant_env/bin/activate
 pip install -r requirements.txt
 ```
+
+4. Set the serp tool to use.
+
+This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp)
+
+- For [openSERP](https://github.com/karust/openserp) follow the docker usage [intructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
+
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY , you should set this Keys in your repo these are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. `SERPER_API_KEY` or `SERPAPI_API_KEY`
+
+  > Setting more than of these tools it's optional you can set only one and run the kit with this, there are some pros and cons of each one of these tools
 
 ## Deploy the starter kit
 To run the demo, run the following commands:
@@ -102,23 +109,10 @@ streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 After deploying the starter kit you should see the following application user interface
 
-![capture of web_crawled_retriever_demo](./docs/web_crawled_app.png)
+![capture of search_assistant_kit](./docs/search_assitant.png)
 
-## Starterkit usage 
 
-1- Pick the data source, that could be previous stored [FAISS](https://github.com/facebookresearch/faiss) vectorstore or a list of website URLs
-
-2- Include URLs: Enter each site you want to crawl in the text area and press 'Include URL'. You can also clear the list if needed.
-
-3- Choose the crawling depth determining how many layers of internal links to explore. (limited to 2)
-
-> Be cautious as the crawling depth increases, leading to exponential growth in the number of processed sites. Consider resource implications for efficient workflow performance.
-
-4- Process Crawled websites, there will be created a vectorstore in memory that you can also store on disk if you want.
-
-5- Ask questions about website data!
-
-## docker-usage
+## Docker-usage
 
 To run this with docker, run the command:
 
@@ -126,79 +120,80 @@ To run this with docker, run the command:
 
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
+## Starterkit usage 
+
+1. select the Serp tool to use for searching information on the internet
+2. select the one of the Available search engines you want to use for retrieval
+3. Set the maximum amount of search results to retrieve
+4. Select the method for retrieval
+    - **Search and answer** This method will do a search for each query you pas to the assistant, and will use the search result snippets to provide you and answer.
+    - **Search and Scrape Sites** This method will ask you for an initial query and then it will search and scrape the sites the search engine find, whit this a vector database will be created and you will be able to ask multiple thing related to your query, this method will use the information of the scraped sites to give an answer.
+5. Click the SET button to start doing questions to your kit!
+
 # Workflow
 This AI Starter Kit implements two distinct workflows that pipelines a series of operations.
 
+## Answer and search 
 
-## Ingestion
-This workflow is an example of crawling, parsing and indexing data for subsequent Q&A. The steps are:
+  1. **Search** Use the Serp tool to retrieve the search engine results, and use the snippets of the organic search results (Serper, OpenSerp) or the raw knowledge graph (Serpapi) as context.
 
-1. **Website crawling**: 
-    Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document which is built on top of [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) python packages, is used to scrape the html from the websites.
+  2. **Answer** Call the LLM using the retrieved information as context to answer your question.
 
-    An iterative approach is employed to delve deeper into the website's references. The process starts by loading the initial HTML content and extracting links present within it using the [beautifulSoup](https://www.crummy.com/software/BeautifulSoup/) package. For each extracted link, the workflow repeats the crawling process, loading the linked page's HTML content, and again identifying additional links within that content. This iterative cycle continues for 'n' iterations, where 'n' represents the specified depth. With each iteration, the workflow explores deeper levels of the website hierarchy, progressively expanding the scope of data retrieval.
+## Answer and scrape sites
 
-2. **Document parsing:**
+  1. **Search** Use the Serp tool to retrieve the search engine results, and get links of organic search result.
 
-    Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply various transformations to extract specific information or modify the document's content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. These transformers are designed to process a large number of documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
+  2. **Website crawling**  Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document which is built on top of [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) python packages, is used to scrape the html from the websites.
 
-    Langchain Document Transformer [html2text](https://python.langchain.com/docs/integrations/document_transformers/html2text) is used to extract plain and clear text from the HTML documents. There are other document transformers like[BeautfulSoup transformer](https://python.langchain.com/docs/integrations/document_transformers/beautiful_soup) available for plain text extraction from HTML included in the LangChain package. Depending on the required information you need to extract form websites, this step might require some customization.
+  3. **Document parsing:** Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply various transformations to extract specific information or modify the document's content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. These transformers are designed to process a large number of documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
+    
+      Langchain Document Transformer [html2text](https://python.langchain.com/docs/integrations/document_transformers/html2text) is used to extract plain and clear text from the HTML documents. There are other document transformers like[BeautfulSoup transformer](https://python.langchain.com/docs/integrations/document_transformers/beautiful_soup) available for plain text extraction from HTML included in the LangChain package. Depending on the required information you need to extract form websites, this step might require some customization.
+      
+      For cases in which the url retrive remote files this template includes extra file type loading functionality, you can activate or deactivate these loaders listing the filetypes in the [config file](./config.yaml) in the parameter extra_loaders.
+      > Right now it is only avalidable remote **PDF** loading
 
-    For cases in which the url retrive remote files this template includes extra file type loading functionality, you can activate or deactivate these loaders listing the filetypes in the [config file](./config.yaml) in the parameter extra_loaders.
-
-    > Right now it is only avalidable remote **PDF** loading
-
-3.  **Data splitting:** 
+  4. **Data splitting:** 
     Due to token limits in actual Large language models, once the website's data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. This size of the chunk of text depends on the context (sequence) length offered by the model, and generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is splited using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
+    
+  5. **Embed data:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
+      *For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
 
-3. **Embed data:** 
-    For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+  6. **Store embeddings:**  Embeddings for each chunk, along with content and relevant metadata (such as source website) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```website source```  is also attached to the embeddings which are stored during  web scraping process.
 
-    *For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
+  7. **Retrieval** This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
 
-
-4. **Store embeddings:** 
-    Embeddings for each chunk, along with content and relevant metadata (such as source website) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```website source```  is also attached to the embeddings which are stored during  webcrawling process.
-
-
-## Retrieval
-This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
-
- 1.  **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model  in the ingestion workflow.
+  - **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model  in the ingestion workflow.
  
- 2.  **Retrieve relevant content:**
+  - **Retrieve relevant content:**
     Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
     
      *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
  
- *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
-
-## Response  
-**SambaNova Large language model (LLM):** Once the relevant information is retrieved, the content is sent to a SambaNova LLM to generate the final response to the user query. 
-
-   - **Prompt engineering:** The user's query is combined with the retrieved content along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part in ensuring quality output. In this AI template, customized prompts are provided to the LLM to improve the quality of response for this use case.
-
-     *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
-
+    *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
 # Customizing the template
 
-
 The provided example template can be further customized based on the use case.
 
+## Use your custom serp tool
+
+You can modify or change the behavior of searching step including your custom method in [SearchAssistant](./src/search_assistant.py) class, this method must receive a query, and a do_analysis flag, and should return a result, and a list of retrieved URLS.
+
+This modification can be done in the following location:
+> file: [src/search_assistant.py](src/search_assistant.py)
 
 ## Crawl websites
 
-**website scraping** Different packages are available to crawl and extract out of websites. In the demo app it is implemented the [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html), langchain also includes a cople of [HTML loaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/html) that can be used.
+**website scraping** Different packages are available to crawl and extract out of websites. In the demo app it is implemented the [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html), langchain also includes a couple of [HTML loaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/html) that can be used.
 This modification can be done in the following location:
 
-> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+> file: [src/search_assistant.py](src/search_assistant.py)
 >```
 >function: load_htmls
 >```
 
-**Iterative web crawling:** for each provided site after the scraping, all the referenced links are saved and filtered using [beautifulSoup](https://www.crummy.com/software/BeautifulSoup/) package, then the web crawling method iterates 'n' times scraping this sites and finding referenced links, this depth is limited to 2 maximum depth, and an maximum absolute number of crawled sites to 20 crawled sited, but you can modify these limits, and the behavior of the web crawling in the following location:
+The scraping method has a maximum absolute number of sites to 20 scraped sited, but you can modify these limits, and the behavior of the web crawling in the following location:
 > file: [config.yaml](config.yaml)
 >```yaml
 >web_crawling:
@@ -206,15 +201,13 @@ This modification can be done in the following location:
 >    "max_scraped_websites": 20
 >```
 
-> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+> file: [src/search_assistant.py](src/search_assistant.py)
 >```
 >function: web_crawl
 >```
 
-> Be cautious as the crawling depth increases, leading to exponential growth in the number of processed sites. Consider resource implications for efficient workflow performance.
-
 **Document transformations** Depending on the loader used for scraping the sites, you may want or not to use some transformation method to clean up the downloaded documents. , this could be done in the following location:
-> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+> file: [src/search_assistant.py](src/search_assistant.py)
 >```
 >function: clean_docs
 >```
@@ -225,7 +218,7 @@ This modification can be done in the following location:
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
-The **RecursiveCharacterTextSplitter** in the [kit src file](src/web_crawling_retriever.py), which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
+The **RecursiveCharacterTextSplitter** in the [kit src file](src/search_assistant.py), which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
 This modification can be done in the following location:
 > file: [config.yaml](config.yaml)
@@ -237,7 +230,6 @@ This modification can be done in the following location:
 >    "k_retrieved_documents": 4
 >    "score_treshold": 0.5
 >```
-
 
 ## Embed data
 
@@ -261,7 +253,6 @@ This modification can be done in the following location:
 > function: create_vector_store
 >```
 
-
 ## Retrieval
 
 Similar to the vector stores, a wide collection of retriever options is also available depending on the use case. In this template, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/docs/integrations/retrievers).
@@ -275,7 +266,7 @@ file: [config.yaml](config.yaml)
 This modification can be done in the following location:
 
 and
-> file: [src/web_crawling_retriever.py](src/web_crawling_retriever.py)
+> file: [src/search_assistant.py](src/search_assistant.py)
 >```
 >function: retrieval_qa_chain
 >```
@@ -311,8 +302,23 @@ template: |
           Helpful Answer: [/INST]
 )
 ```
-This modification can be done in the following location:
-> file: [prompts/llama7b-web_crwling_data_retriever.yaml](prompts/llama7b-web_crwling_data_retriever.yaml)
+Those modifications can be done in the following locations:
+
+  > Prompt: retrival Q&A chain  
+  >
+  > file: [prompts/llama7b-web_scraped_data_retriever.yaml](prompts/llama7b-web_scraped_data_retriever.yaml)
+
+  > Prompt: Serpapi search and answer chain  
+  >
+  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
+
+  > Prompt: Serper search and answer chain  
+  >
+  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
+
+  > Prompt: OpenSerp search and answer chain  
+  >
+  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
 
 > *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
 
@@ -320,11 +326,16 @@ This modification can be done in the following location:
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- streamlit (version 1.25.0)
-- langchain (version 1.1.2)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- faiss-cpu (version 1.7.4)
-- python-dotenv (version 1.0.0)
-- beautifulsoup4 (version 4.12.3)
-- html2text (version 2020.1.16)
+- streamlit (Version 1.32.2)
+- streamlit-extras (Version 0.3.6)
+- langchain (Version 0.1.2)
+- sentence_transformers (Version 2.2.2)
+- instructorembedding (Version 1.0.1)
+- faiss-cpu (Version 1.7.4)
+- python-dotenv (Version 1.0.0)
+- pydantic (Version 1.10.14)
+- pydantic_core (Version 2.10.1)
+- sseclient-py (Version 1.8.0)
+- google-search-results (Version 2.4.2)
+- html2text (Version 2024.2.26)
+- unstructured[pdf] (Version 0.12.4)

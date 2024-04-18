@@ -1,18 +1,6 @@
-import numpy as np
-import os
-from sklearn.metrics.pairwise import cosine_similarity
-from dotenv import load_dotenv
-from langchain_core.embeddings import Embeddings
+
 import sys
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_community.document_loaders import WebBaseLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
-
-
-# Use embeddings As Part of Langchain
-from langchain.vectorstores import Chroma
+import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -21,11 +9,35 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from src.models.sambanova_endpoint import SambaNovaEndpoint
+
+
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from dotenv import load_dotenv
+
+
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_community.document_loaders import WebBaseLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+import os
+from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint, SambaNovaEmbeddingModel
+import yaml
+
+# Use embeddings As Part of Langchain
+from langchain.vectorstores import Chroma
+
+CONFIG_PATH = os.path.join(current_dir,'config.yaml')
+
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+api_info = config["api"]
+llm_info = config["llm"]
+
 
 # load dot_env
-
-load_dotenv(os.path.join(repo_dir,".env"))
+load_dotenv(os.path.join(current_dir,".env"))
 
 try:
     from snsdk import SnSdk
@@ -33,62 +45,9 @@ except ImportError:
     snsdk_installed = False
 
 
-class SNSDKModel(Embeddings):
-    def __init__(self, url_domain, project_id, endpoint_id, key):
-        api_key_path = os.path.join(os.environ["HOME"], ".snapi/secret.txt")
-        with open(api_key_path) as file:
-            api_key = file.read().strip()
-        self.sdk = SnSdk(host_url=url_domain, access_key=api_key)
-        self.sdk.http_session.verify = False
-        self.project_id = project_id
-        self.endpoint_id = endpoint_id
-        self.key = key
-
-    def embed_documents(self, texts, batch_size=32, **kwargs):
-        """Returns a list of embeddings for the given sentences.
-        Args:
-            sentences (`List[str]`): List of sentences to encode
-            batch_size (`int`): Batch size for the encoding
-
-        Returns:
-            `List[np.ndarray]` or `List[tensor]`: List of embeddings for the given sentences
-        """
-        embeddings = []
-        for sentence in texts:
-            sentence = "document: " + sentence
-            responses = self.sdk.nlp_predict(
-                self.project_id, self.endpoint_id, self.key, sentence
-            )
-            embedding = responses["data"][0]
-            embeddings.append(embedding)
-        return embeddings
-
-    def embed_query(self, text, batch_size=32, **kwargs):
-        """Returns a list of embeddings for the given sentences.
-        Args:
-            sentences (`List[str]`): List of sentences to encode
-            batch_size (`int`): Batch size for the encoding
-
-        Returns:
-            `List[np.ndarray]` or `List[tensor]`: List of embeddings for the given sentences
-        """
-
-        sentence = "query: " + text
-        responses = self.sdk.nlp_predict(
-            self.project_id, self.endpoint_id, self.key, sentence
-        )
-        embedding = responses["data"][0]
-        return embedding
-
-
 def main():
     # snsdk_model retuns a langchain Embedding Object which can be used within langchain
-    snsdk_model = SNSDKModel(
-        url_domain=os.environ.get("EMBED_BASE_URL"),
-        project_id=os.environ.get("EMBED_PROJECT_ID"),
-        endpoint_id=os.environ.get("EMBED_ENDPOINT_ID"),
-        key=os.environ.get("EMBED_API_KEY"),
-    )
+    snsdk_model = SambaNovaEmbeddingModel()
 
     # An Example Using Raw Text and Cosine Similarity
     documents = [
@@ -118,13 +77,37 @@ def main():
     # Let's set embeddings to equal or snsdk_model to keep with the langchain convention
     embeddings = snsdk_model
 
-    llm = SambaNovaEndpoint(
-        model_kwargs={
-            "do_sample": True,
-            "temperature": 0.01,
-            "max_tokens_to_generate": 512,
-        },
-    )
+
+    if api_info == "sambaverse":
+        llm = SambaverseEndpoint(
+            sambaverse_model_name=llm_info["sambaverse_model_name"],
+            #sambaverse_url=os.getenv("SAMBAVERSE_URL"),
+            sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+            model_kwargs={
+                "do_sample": False, 
+                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                "temperature": llm_info["temperature"],
+                "process_prompt": True,
+                "select_expert": llm_info["smabaverse_select_expert"]
+                #"stop_sequences": { "type":"str", "value":""},
+                # "repetition_penalty": {"type": "float", "value": "1"},
+                # "top_k": {"type": "int", "value": "50"},
+                # "top_p": {"type": "float", "value": "1"}
+            }
+        )
+    
+    elif api_info == "sambastudio":
+        llm = SambaNovaEndpoint(
+            model_kwargs={
+                "do_sample": True, 
+                "temperature": llm_info["temperature"],
+                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
+                            #"stop_sequences": { "type":"str", "value":""},
+            # "repetition_penalty": {"type": "float", "value": "1"},
+            # "top_k": {"type": "int", "value": "50"},
+            # "top_p": {"type": "float", "value": "1"}
+            }
+        ) 
 
     loader = WebBaseLoader("https://docs.smith.langchain.com")
 
