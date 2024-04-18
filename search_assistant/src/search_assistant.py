@@ -23,6 +23,7 @@ from urllib.parse import urljoin, urlparse, urldefrag
 from vectordb.vector_db import VectorDb
 from langchain.chains import RetrievalQA
 from langchain.output_parsers import CommaSeparatedListOutputParser, StructuredOutputParser, ResponseSchema
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 
 from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
@@ -295,11 +296,36 @@ class SearchAssistant():
         urls = list(urls)[:self.web_crawling_params["max_scraped_websites"]]   
             
         scraped_docs = self.load_htmls(urls, self.extra_loaders)
-        scrapped_urls.append(urls)
+        scrapped_urls.extend(urls)
             
         docs=self.clean_docs(scraped_docs)
         self.documents=docs
         self.urls=scrapped_urls
+        
+        
+    def get_text_chunks_with_references(self, docs: list, chunk_size: int, chunk_overlap: int) -> list:
+        """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
+
+        Args:
+            docs (list): list of documents or texts. If no metadata is passed, this parameter is a list of documents.
+            If metadata is passed, this parameter is a list of texts.
+            chunk_size (int): chunk size in number of characters
+            chunk_overlap (int): chunk overlap in number of characters
+
+        Returns:
+            list: list of documents
+        """
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+        )
+        sources = {site:i+1 for i,site in enumerate(self.urls)}
+        chunks = text_splitter.split_documents(docs)
+        for chunk in chunks:
+            reference = chunk.metadata["source"]# get the number in the dict
+            chunk.page_content = f"[reference:{sources[reference]}] {chunk.page_content}\n\n"
+
+        return chunks
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
         """
@@ -317,12 +343,12 @@ class SearchAssistant():
             self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
         
         elif os.path.exists(persist_directory) and update:
-            chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            chunks = self.get_text_chunks_with_references(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
             self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])
             self.vector_store = self.vectordb.update_vdb(chunks, embeddings, self.retrieval_info["db_type"], persist_directory)
             
         else:
-            chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            chunks = self.get_text_chunks_with_references(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
             self.vector_store = self.vectordb.create_vector_store(chunks, embeddings, self.retrieval_info["db_type"], None)
                 
         
@@ -335,7 +361,7 @@ class SearchAssistant():
             update (bool, optional): Whether to update the vector store. Defaults to False.
         """
         
-        chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+        chunks = self.get_text_chunks_with_references(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
         embeddings = self.vectordb.load_embedding_model()
         if update:
             self.config["update"]=True
@@ -437,6 +463,16 @@ class SearchAssistant():
         input_variables = {"question":query, "format_instructions":list_format_instructions}
         return relevant_queries_chain.invoke(input_variables).get("related_queries",[])
         
+    def parse_retrieval_output(self, result):
+        parsed_answer = self.parse_serp_analysis_output(result["answer"], self.urls)
+        #mapping original sources order with question used sources order 
+        question_sources = set(f'{doc.metadata["source"]}'for doc in result["source_documents"])
+        question_sources_map={source: i+1 for i, source in enumerate(question_sources)}
+        for i, link in enumerate(self.urls):
+            if link in parsed_answer:
+                parsed_answer=parsed_answer.replace(f"[<sup>{i+1}</sup>]({link})",f"[<sup>{question_sources_map[link]}</sup>]({link})")
+        return parsed_answer
+        
     def retrieval_call(self, query):
         """ 
         Do a call to the retriever chain
@@ -444,4 +480,5 @@ class SearchAssistant():
             query (str): The query to search.
         """
         result = self.qa_chain.invoke(query)
+        result["answer"] = self.parse_retrieval_output(result)
         return result
