@@ -63,13 +63,14 @@ Lastly, we must augment our base LLM to accommodate the new vocab size.
     python src/checkpoint_extension.py  
 
 ### Launching the training on SambaStudio 
-The next step is to upload the model and the datasets to SambaStudio.
+The next step is to upload the model and the datasets to SambaStudio. Note that because we are training and hosting a 
+custom model, this starter-kit does not support Sambaverse.
 
 ![Uploading the model checkpoint to SambaStudio](./docs/Upload_model_checkpoint.png)
 
 Before uploading your dataset, you will need to process it via the gen_data_prep resource which you should consult for the latest updates.
 
-Download the [Samabnova data preparation repository](https://github.com/sambanova/generative_data_prep)
+Download the [Sambanova data preparation repository](https://github.com/sambanova/generative_data_prep)
    ```bash
     deactivate
     cd ../..
@@ -94,13 +95,6 @@ Update API information for the SambaNova LLM and your environment [sambastudio k
     PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
     ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
     API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-
-    YODA_BASE_URL="https://api-stage.sambanova.net"
-    YODA_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    BASELINE_ENDPOINT_ID="987654ef-fedc-9876-1234-01fedbac9876"
-    BASELINE_API_KEY="12fedcba-9876-1234-abcd76543"
-
-    SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
    ```
 
 Then run `inference.py` with your sentence to translate.

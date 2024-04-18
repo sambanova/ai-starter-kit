@@ -9,16 +9,10 @@ import yaml
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', default='config.yaml', type=str, help='Path to configuration file',
                         required=True)
-    #parser.add_argument('--model_path', required=True, type=str)
-    #parser.add_argument('--output_model_path', required=True, type=str)
-    #parser.add_argument('--tokenizer_path', required=True, type=str)
-    #parser.add_argument('--target_config', required=True, type=str)
-    #parser.add_argument('--init_method', choices=['std_xavier', 'std_hf', 'avg_all', 'avg_tokens', 'zero', 'zero_all', 'hf_default', 'avg_all_w_head', 'avg_tokens_w_head'], type=str, default='std_xavier')
     args = parser.parse_args()
     with open(args.config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -99,3 +93,6 @@ if __name__ == '__main__':
     with open(Path(config['output_model_path']) / 'embedding_extension_args.json', 'w') as f:
         json.dump(vars(args), f)
     print('Done!')
+
+if __name__ == '__main__':
+    main()

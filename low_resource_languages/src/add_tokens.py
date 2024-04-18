@@ -8,16 +8,10 @@ from sentencepiece import sentencepiece_model_pb2 as sp_pb2_model
 import sentencepiece as spm
 import argparse
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', default='config.yaml', type=str, help='Path to configuration file',
                         required=True)
-    #parser.add_argument('--base_tokenizer', default='llama_2/Llama-2-7b-hf', type=str,
-    #                    help='Path to base Hugging Face tokenizer to add tokens to')
-    #parser.add_argument('--sp_model_file', default=None, type=str,
-    #                    help='Path to sentence piece tokenizer model file to add to the base_tokenizer')
-    #parser.add_argument('--output_dir', default=None, type=str, help='Path to save the finalized output tokenizer to ')
     args = parser.parse_args()
     with open(args.config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -61,3 +55,7 @@ if __name__ == "__main__":
 
     tokenizer.save_pretrained(output_hf_dir)
     print(f"Merged tokenizer has been saved to {output_hf_dir}")
+
+
+if __name__ == "__main__":
+    main()
