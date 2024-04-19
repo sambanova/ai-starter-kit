@@ -32,7 +32,7 @@ asr:
   output:
     output_path: results/output.csv
     
-api: sambastudio
+  api: sambastudio
 
 llm: 
     "temperature": 0.1

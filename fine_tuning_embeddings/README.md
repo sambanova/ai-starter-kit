@@ -10,6 +10,30 @@ This comprehensive starter kit guides users through fine-tuning embeddings from 
 
 ## Getting Started
 
+Some things to note:
+
+ 1. This kit is fine-tuning models from hugging face using the name as of the model ad the model_id referred to later.
+ 2. We hope to have embedding model fine-tuning capability in SambaStudio very soon which will allow you to fine-tune embeddings models on SambaNova RDUs.
+ 3. In this kit the SambaNova LLM is used in the dataset creation process, namely in creating questions and answers from the chunks in order to finetune the model.
+ 4. This kit allows the use of either SambaStudio or SambaVerse please see below: 
+
+ Create a .env file in the project root directory and provide the necessary API keys based on your chosen entry point:
+
+   ```env
+# NEEDED FOR SAMBAVERSE LLM MODEL
+SAMBAVERSE_API_KEY="133-adb-you-key-here"
+SAMBAVERSE_URL="https://yoururl"
+
+# NEEDED FOR SAMBASTUDIO LLM MODEL
+BASE_URL="https://yoursambstudio.url"
+PROJECT_ID="your-samba-studio_coe_model-projectid"
+ENDPOINT_ID="your-samba-studio-coe_model-endpointid"
+API_KEY="your-samba-studio-coe_model-apikey"
+VECTOR_DB_URL=http://localhost:6333
+  ```
+
+The script supports both SambaVerse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you choose to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
+
 ### Prerequisites
 
 - Python 3.11+
@@ -34,6 +58,8 @@ This comprehensive starter kit guides users through fine-tuning embeddings from 
    ```
 
 #### Using Pre-generated Data for Fine-Tuning
+
+
 
 If you've previously generated synthetic data and wish to proceed directly to fine-tuning:
 
