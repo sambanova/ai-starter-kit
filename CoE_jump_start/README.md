@@ -13,7 +13,7 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 
 ## Prerequisites
 
-- Python 3.6+
+- Python 3.11.3+
 - Langchain
 - Sentence Transformers
 - YAML
@@ -21,10 +21,11 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 
 ## Installation
 
-1. Clone the repository:
+1. Clone the main repository and cd into CoE Starter Kit:
 
   ```bash
-  git clone https://github.com/your-repo/calling-coe-models.git
+  git clone https://github.com/sambanova/ai-starter-kit.git
+  cd CoE_jump_start
   ```
 
 2. Install the required dependencies::
