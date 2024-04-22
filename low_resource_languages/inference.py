@@ -2,8 +2,13 @@ import os
 from dotenv import load_dotenv
 load_dotenv('.env')
 
+import argparse
+import yaml
+
 from prompts.prompts import CUSTOM_PROMPT_TEMPLATE
 from utils.sambanova_endpoint import SambaNovaEndpoint
+
+with open('prompts/prompts.yaml') as f:
 
 llm = SambaNovaEndpoint(
     base_url=os.getenv('BASE_URL'),
@@ -17,9 +22,16 @@ llm = SambaNovaEndpoint(
     },
 )
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--config_file', default='config.yaml', type=str, help='Path to configuration file',
+                    required=True)
+args = parser.parse_args()
+with open(args.config_file) as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+    CUSTOM_PROMPT_TEMPLATE = config['CUSTOM_PROMPT_TEMPLATE']
+
 def translate(sentence):
     return llm(CUSTOM_PROMPT_TEMPLATE + sentence + '=')
-
 
 if __name__ == '__main__':
     print(translate('The cat sat on the mat'))

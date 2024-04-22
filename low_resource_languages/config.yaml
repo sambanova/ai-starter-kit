@@ -12,3 +12,5 @@ output_model_path: # path to save the augmented model
 tokenizer_path: #path to merged tokenizer - this should be the same as `output_dir`.
 target_config: #path to configuration file for base model.
 init_method: #choice of initialization method for model parameters
+
+path_to_prompt: # path to prompt yaml with prompt used for inference.
