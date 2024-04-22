@@ -5,10 +5,7 @@ load_dotenv('.env')
 import argparse
 import yaml
 
-from prompts.prompts import CUSTOM_PROMPT_TEMPLATE
 from utils.sambanova_endpoint import SambaNovaEndpoint
-
-with open('prompts/prompts.yaml') as f:
 
 llm = SambaNovaEndpoint(
     base_url=os.getenv('BASE_URL'),
