@@ -55,7 +55,6 @@ class BatchClipProcessor():
         self.dataset_source_file = self.config['clip']['datasets']['dataset_source_file']
         
         self.clip_app_id = self.config['clip']['apps']['clip_app_id']
-        self.application_field = self.config['clip']['apps']['application_field']
         
         self.base_url = self.config['clip']['urls']['base_url']
         self.datasets_url = self.config['clip']['urls']['datasets_url'] 
@@ -169,7 +168,7 @@ class BatchClipProcessor():
                     image_paths.append(image_path)
 
         df = pd.DataFrame({'image_path': image_paths, 'description': '', 'subset': '', 'metadata': ''})
-        df.to_csv(os.path.join(dataset_dir,'predictions.csv'), index=False)
+        df.to_csv(os.path.join(dataset_dir,'labels.csv'), index=False)
 
     def _get_df_output(self, response_content: str) -> DataFrame:
         """Parse the response from the CLIP job.
@@ -255,7 +254,6 @@ class BatchClipProcessor():
             --apps {self.clip_app_id} \
             --source_type {self.dataset_source_type} \
             --source_file {self.dataset_source_file} \
-            --application_field {self.application_field} \
             --description "{self.dataset_description}"'
         
         os.system(command)
