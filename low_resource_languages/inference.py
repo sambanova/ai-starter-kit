@@ -25,7 +25,7 @@ parser.add_argument('--config_file', default='config.yaml', type=str, help='Path
 args = parser.parse_args()
 with open(args.config_file) as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
-    CUSTOM_PROMPT_TEMPLATE = config['CUSTOM_PROMPT_TEMPLATE']
+    CUSTOM_PROMPT_TEMPLATE = config['path_to_prompt']
 
 def translate(sentence):
     return llm(CUSTOM_PROMPT_TEMPLATE + sentence + '=')
