@@ -143,6 +143,8 @@ After deploying the starter kit you see the following user interface:
 
 ## Docker-usage
 
+> If you are deploying the docker container in Windows be sure to open the docker desktop application before
+
 To run this with docker, run the command:
 
     docker-compose up --build
