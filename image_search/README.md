@@ -48,7 +48,7 @@ Start by running this command to clone the ai-starter-kit repository:
 
 ## Deploy an OpenCLIP SambaStudio endpoint
 
-SambaStudio includes a rich set of open source models that have been customized to run efficiently on RDU. Deploy OpenCLIP to an endpoint for inference in SambaStudio either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html). 
+SambaStudio includes a rich set of open source models that have been customized to run efficiently on RDU. Deploy a CLIP-ViT-B-32-laion2B-s34B-b79k model to an endpoint for inference in SambaStudio either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html). 
 
 
 ## Integrate your SambaStudio endpoint with this starter kit
@@ -64,7 +64,6 @@ BASE_URL="https://api-stage.sambanova.net"
 PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-VECTOR_DB_URL="http://host.docker.internal:6333"
 SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
 ```
 3. In the [config file](./config.yaml) file, set the variable `api` to `"sambastudio"`    
@@ -77,18 +76,21 @@ SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     pip install -r requirements.txt
 ```
 
-5. Download and install the SambaStudio CLI. Follow [these instructions](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) to install SambaNova SNSDK and SNAPI, (You can omit the *Create a virtual environment* step because you created a venv in the previous step.)
+**If you want to speed up the ingestion of images to search use the following steps**
 
-6. Find the OpenCLIP app ID. 
+1. Download and install the SambaStudio CLI. Follow [these instructions](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) to install SambaNova SNSDK and SNAPI, (You can omit the *Create a virtual environment* step because you created a venv in the previous step.)
+
+2. Find the OpenCLIP app ID. 
 * First run the following command in your terminal:  
 ```bash
 snapi app list 
 ```
-* Then find the ID in the ```OpenCLIP CLIP-ViT-B-32 Backbone``` section.
+* Then find the ID in the ```CLIP``` section.
 
-5. Update the  [config file](./config.yaml):
+3. Update the  [config file](./config.yaml):
 * Set the `open_clip_app_id` key in the `apps` section to the ID you just found in Step 6. 
 * Set the `base_url` key in the `urls` section to the url of your SambaStudio environment.
+* Set the `ingestion_mode` key to batch_inference
 
 
 # Run the demo

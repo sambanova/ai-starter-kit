@@ -10,6 +10,8 @@ sys.path.append(repo_dir)
 import chromadb
 import numpy as np
 import io
+import yaml
+import requests
 from PIL import Image
 from chromadb.api.types import is_image, is_document, Images,  Documents, EmbeddingFunction, Embeddings
 from typing import cast, Union, TypeVar
@@ -24,20 +26,45 @@ D = TypeVar("D", bound=Embeddable, contravariant=True)
 class ClipEmbbeding(EmbeddingFunction[D]):
     def __init__(self) -> None:
         pass
+    
+    def embed_image(self, img_path= None, img=None):
+        base_url = os.environ.get("BASE_URL")
+        api_key = os.environ.get("API_KEY")
+        project_id = os.environ.get("PROJECT_ID")
+        endpoint_id = os.environ.get("ENDPOINT_ID") 
+        url = f"{base_url}/api/predict/file/{project_id}/{endpoint_id}"
+        if img_path:
+            files = {'predict_file': open(img_path, 'rb')}
+        elif img: 
+            files = {'predict_file': img}
+        else:
+            raise Exception("please provide a image path or a bytes image file")
+        headers = {'key': api_key}
+        response = requests.post(url, files=files, headers=headers)
+        return response.json()["data"][0]
+    
+    def embed_text(self, text):
+        base_url = os.environ.get("BASE_URL")
+        api_key = os.environ.get("API_KEY")
+        project_id = os.environ.get("PROJECT_ID")
+        endpoint_id = os.environ.get("ENDPOINT_ID") 
+        url = f"{base_url}/api/predict/nlp/{project_id}/{endpoint_id}"
+        input_data = {"inputs": [text]}
+        headers = {'key': api_key, 'Content-Type': 'application/json'}
+        response = requests.post(url, json=input_data, headers=headers)
+        return response.json()["data"][0]
+
     def __call__(self, input: D) -> Embeddings:
         embeddings: Embeddings = []
         for item in input:     
             if is_document(item):
-                #TODO implement SN endpoint inference
-                output = None
+                output = self.embed_text(item)
             elif is_image(item):
                 image = Image.fromarray(item)
                 buffer = io.BytesIO()
                 image.save(buffer, format='PNG')
-                buffer
-                #TODO implement SN endpoint inference
-                output = None
-            embeddings.append(output["embedding"])
+                output = self.embed_image(img=buffer.getvalue())
+            embeddings.append(output)
         return cast(Embeddings, embeddings)
 
 class ImageSearch():
@@ -76,17 +103,29 @@ class ImageSearch():
         print(f"got {len (images)} images")
         return paths,images
 
-    def add_images(self, path):
-        clip = BatchClipProcessor(config_path=os.path.join(kit_dir,"config.yaml"))
-        df = clip.process_images(path)
-        embeddings = list(df["predictions"]) 
-        paths = list(df["input"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
-        self.collection.add(
-            embeddings=embeddings,
-            metadatas=[{"source": path} for path in paths],
-            ids=paths,
-            uris=paths
-        )
+    def add_images(self, path, batch=False):
+        config_path = os.path.join(kit_dir,"config.yaml")
+        with open(config_path, 'r') as file:
+            ingestion_mode = yaml.safe_load(file)["clip"]["ingestion_mode"]
+        if ingestion_mode=="batch_inference":
+            clip = BatchClipProcessor(config_path=config_path)
+            df = clip.process_images(path)
+            embeddings = list(df["predictions"]) 
+            paths = list(df["input"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
+            self.collection.add(
+                embeddings=embeddings,
+                metadatas=[{"source": path} for path in paths],
+                ids=paths,
+                uris=paths
+            )
+        elif ingestion_mode=="online_inference":
+            paths, images=self.get_images(os.path.join(kit_dir,"data/images"))
+            self.collection.add(
+                images=images,
+                metadatas=[{"source": path} for path in paths],
+                ids=paths,
+                uris=paths
+            )
     
     def search_image_by_text(self, query, n=5):
         result=self.collection.query(query_texts=[query],include=["uris", "distances"],n_results=n)

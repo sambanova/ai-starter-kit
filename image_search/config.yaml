@@ -1,4 +1,7 @@
 clip:
+
+  ingestion_mode: online_inference # Alternative bath_inference mode
+
   datasets:
     datasets_path: ./data/datasets
     dataset_name: images_dataset
@@ -8,10 +11,9 @@ clip:
    
   apps:
     clip_app_id: 6c14325a-1be7-4e48-b38f-19b33745fc3b
-    application_field: vision
    
   urls:
-    base_url: https://your.sambastrudio.environment.com
+    base_url: https://sjc3-demo2.sambanova.net
     datasets_url: /api/datasets
     projects_url: /api/projects
     jobs_url: /{project_id}/jobs
@@ -19,14 +21,14 @@ clip:
     
   projects:
     project_name: image_search_project
-    project_description: This project will process iamages batch jobs regarding image search AISK.
+    project_description: This project will process images batch jobs regarding image search AISK.
   
   jobs:
     job_name: image search job pipeline
     job_description: image search ingestion embedding
     job_task: CLIP
     job_type: batch_predict
-    model_checkpoint: OpenCLIP CLIP-ViT-B-32 Backbone
+    model_checkpoint: CLIP-ViT-B-32-laion2B-s34B-b79k
 
   output:
     output_path: results/predictions.jsonl
