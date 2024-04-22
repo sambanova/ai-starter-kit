@@ -11,7 +11,7 @@ from langchain.callbacks.manager import CallbackManagerForLLMRun  # type: ignore
 from langchain.llms.base import LLM  # type: ignore
 from langchain.utils import get_from_dict_or_env  # type: ignore
 from langchain.callbacks.base import BaseCallbackHandler  # type: ignore
-from langchain_core.embeddings import Embeddings
+from langchain.embeddings.base import Embeddings
 
 
 class SSEndpointHandler:
@@ -758,7 +758,7 @@ class SambaNovaEmbeddingModel(Embeddings):
                  headers={"key": self.embed_api_key},
                  json=data,
                  )
-            print(response.json)
+            #print(response.json)
             embedding = response.json()["data"]
             embeddings.extend(embedding)
 

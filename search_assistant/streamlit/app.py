@@ -17,7 +17,7 @@ def handle_user_input(user_question):
         with st.spinner("Processing..."):
             if st.session_state.method=="rag_query":
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    related_querys_future = executor.submit(st.session_state.search_assistant.get_relevant_queries, query=user_question)
+                    related_querys_future = executor.submit(st.session_state.search_assistant.get_relevant_queries, query=f"{st.session_state.query} - {user_question}")
                 response = st.session_state.search_assistant.retrieval_call(user_question)
                 sources = set(f'{doc.metadata["source"]}'for doc in response["source_documents"])
                 st.session_state.related_queries_history.append(related_querys_future.result())
