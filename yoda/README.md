@@ -163,7 +163,8 @@ To pretrain and finetune on SambaStudio, the data must be hdf5 files that you ca
 To preprocess the data:
 1. open `scripts/preprocess.sh`
 2. Replace the variables `ROOT_GEN_DATA_PREP_DIR` with the path to your [generative data preparation](https://github.com/sambanova/generative_data_prep)
-directory
+directory. Also note that `PATH_TO_TOKENIZER` is the path to either a downloaded tokenizer or the huggingface name of
+the model. For example, `meta-llama/Llama-2-7b-chat-hf`. 
 3. In `scripts/preprocess.sh`, set the `INPUT_FILE` parameter to the absolute path of the output JSONL from [pretraining/finetuning](#data-generation-1) and 
 set `OUTPUT_DIR` to the location where you want your hdf5 files to be dumped before you upload them to 
 SambaStudio Datasets.
