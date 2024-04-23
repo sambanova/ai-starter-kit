@@ -191,6 +191,7 @@ In SambaStudio, you need to create and host your model checkpoints. Connect to t
 
 5 Add the endpoint details to the ```.env``` file. Now your .env file should look like this:
     ```yaml
+
     BASE_URL="https://api-stage.sambanova.net"
     PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
     ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
@@ -207,8 +208,6 @@ In SambaStudio, you need to create and host your model checkpoints. Connect to t
 
     SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
-
-You can also run the training and create an enpoint with **snapapi** and **snsdk**. Have a look at the WIP [notebook](./notebooks/SambaStudio_job_spinup.ipynb) using the yoda env to learn how to do it with **SNSDK**.
 
 ## Evaluation
 
