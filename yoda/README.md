@@ -92,8 +92,8 @@ In this Starter kit you can use the SambaNova SDK `SKSDK` to run training infere
     pip install -r requirements.txt
     ```
 4. Download your dataset and update
-the `src_folder` in `src_subfolders` variables in your [sn expert config file](./sn_expert_conf.yaml) with the path of the folder and sub folders to the dataset. The dataset structure consists of the `src_folder` which contains one or more subfolders that represent a different file. Each subfolder should contain at least one
-txt file containing the content of that file. The txt files will be used as context retrievals for RAG.
+the path to the data source folder in `src_folder` and the list of subfolders in the `src_subfolders` variable in your [sn expert config file](./sn_expert_conf.yaml) . The dataset structure consists of the `src_folder` (str) which contains one or more subfolders that represent a different file. Each subfolder should contain at least one
+txt file containing the content of that file. The txt files will be used as context retrievals for RAG. We have added an illustration of the data structure in the `data` folder which acts as our `src_folder` and `['sambanova_resources_blogs','sambastudio']` which are our `src_subfolders`.
 
 5. (Optional) Download and install SambaNova SNSDK.
     Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing Sambanova SNSDK and SNAPI, (you can skip the *Create a virtual environment* step since you are using the ```yoda_env``` environment you just created).
