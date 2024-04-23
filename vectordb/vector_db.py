@@ -43,7 +43,26 @@ logger = logging.getLogger(__name__)
 
 
 class VectorDb():
+    """
+    A class for creating, updating and loading FAISS or Chroma vector databases, 
+    to use them with retrieval augmented generation tasks with langchain
 
+    Args:
+        None
+
+    Attributes:
+        None
+
+    Methods:
+        load_files: Load files from an input directory as langchain documents
+        get_text_chunks: Get text chunks from a list of documents
+        get_token_chunks: Get token chunks from a list of documents
+        load_embedding_model: Load a sambastudio or a huggingface embedding model
+        create_vector_store: Create a vector store from chunks and an embedding model
+        load_vdb: load a previous stored vector database 
+        update_vdb: Update an existing vector store with new chunks
+        create_vdb: Create a vector database from the raw files in a specific input directory 
+    """
     def __init__(self) -> None:
         pass
 
