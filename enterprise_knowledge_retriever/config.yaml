@@ -2,7 +2,9 @@ api: "sambaverse"
 
 embedding_model: "sambastudio"
 
-loader: "unstructured"
+loaders: 
+    pdf: "unstructured"
+    txt: "text_loader"
 
 llm: 
     "temperature": 0.0
