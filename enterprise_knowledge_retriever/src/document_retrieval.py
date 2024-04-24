@@ -32,7 +32,7 @@ class DocumentRetrieval():
         self.llm_info =config_info[1] 
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
-        self.loader = config_info[4] 
+        self.loaders = config_info[4] 
 
     def get_config_info(self):
         """
@@ -45,9 +45,9 @@ class DocumentRetrieval():
         llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
-        loader = config["loader"]
+        loaders = config["loaders"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, loader
+        return api_info, llm_info, embedding_model_info, retrieval_info, loaders
     
     def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
         """Extract text and metadata from pdf document with pypdf2 loader
@@ -160,14 +160,19 @@ class DocumentRetrieval():
         files_metadatas = []
         for i in range(len(docs)):
             if docs[i].name.endswith(".pdf"):
-                if self.loader == "unstructured":
+                if self.loaders["pdf"] == "unstructured":
                     text, meta = self.get_pdf_text_and_metadata_unstructured(docs[i])
-                elif self.loader == "pypdf2":
+                elif self.loaders["pdf"] == "pypdf2":
                     text, meta = self.get_pdf_text_and_metadata_pypdf2(docs[i])
-                elif self.loader == "fitz":
+                elif self.loaders["pdf"] == "fitz":
                     text, meta = self.get_pdf_text_and_metadata_fitz(docs[i])
+                else:
+                    raise ValueError(f"{self.loaders['pdf']} is not a valid pdf loader")
             elif docs[i].name.endswith(".txt"):
-                text, meta = self.get_txt_text_and_metadata(docs[i])
+                if self.loaders["txt"] == "text_loader":
+                    text, meta = self.get_txt_text_and_metadata(docs[i])
+                else:
+                    raise ValueError(f"{self.loaders['txt']} is not a valid txt loader")
             files_data.extend(text)
             files_metadatas.extend(meta)
         return files_data, files_metadatas      
