@@ -10,7 +10,7 @@ from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import UnstructuredPDFLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -24,7 +24,7 @@ PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
 
 load_dotenv(os.path.join(repo_dir,'.env'))
 
-class PDFRetrieval():
+class DocumentRetrieval():
     def __init__(self):
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
@@ -32,7 +32,7 @@ class PDFRetrieval():
         self.llm_info =config_info[1] 
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
-        self.loader = config_info[4] 
+        self.loaders = config_info[4] 
 
     def get_config_info(self):
         """
@@ -45,9 +45,9 @@ class PDFRetrieval():
         llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
-        loader = config["loader"]
+        loaders = config["loaders"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, loader
+        return api_info, llm_info, embedding_model_info, retrieval_info, loaders
     
     def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
         """Extract text and metadata from pdf document with pypdf2 loader
@@ -119,8 +119,35 @@ class PDFRetrieval():
             text.append(doc.page_content)
             metadata.append({"filename": pdf_doc.name})
         return text, metadata
+    
+    def get_txt_text_and_metadata(self, txt_doc):
+        """Extract text and metadata from txt document with txt loader
 
-    def get_data_for_splitting(self, pdf_docs):
+        Args:
+            txt_doc: path to txt document
+
+        Returns:
+            list, list: list of extracted text and metadata per page
+            
+        """
+        text = []
+        metadata = []
+        temp_folder = os.path.join(kit_dir,"data/tmp")
+        temp_file = os.path.join(temp_folder,"file.txt")
+        if not os.path.exists(temp_folder):
+            os.makedirs(temp_folder)
+        with open(temp_file, "wb") as f:
+            f.write(txt_doc.getvalue())
+            
+        loader = TextLoader(temp_file)
+        docs_text_loader = loader.load()
+        
+        for doc in docs_text_loader:
+            text.append(doc.page_content)
+            metadata.append({"filename": txt_doc.name})
+        return text, metadata
+
+    def get_data_for_splitting(self, docs):
         """Extract text and metadata from all the pdf files
 
         Args:
@@ -131,13 +158,21 @@ class PDFRetrieval():
         """
         files_data = []
         files_metadatas = []
-        for i in range(len(pdf_docs)):
-            if self.loader == "unstructured":
-                text, meta = self.get_pdf_text_and_metadata_unstructured(pdf_docs[i])
-            elif self.loader == "pypdf2":
-                text, meta = self.get_pdf_text_and_metadata_pypdf2(pdf_docs[i])
-            elif self.loader == "fitz":
-                text, meta = self.get_pdf_text_and_metadata_fitz(pdf_docs[i])
+        for i in range(len(docs)):
+            if docs[i].name.endswith(".pdf"):
+                if self.loaders["pdf"] == "unstructured":
+                    text, meta = self.get_pdf_text_and_metadata_unstructured(docs[i])
+                elif self.loaders["pdf"] == "pypdf2":
+                    text, meta = self.get_pdf_text_and_metadata_pypdf2(docs[i])
+                elif self.loaders["pdf"] == "fitz":
+                    text, meta = self.get_pdf_text_and_metadata_fitz(docs[i])
+                else:
+                    raise ValueError(f"{self.loaders['pdf']} is not a valid pdf loader")
+            elif docs[i].name.endswith(".txt"):
+                if self.loaders["txt"] == "text_loader":
+                    text, meta = self.get_txt_text_and_metadata(docs[i])
+                else:
+                    raise ValueError(f"{self.loaders['txt']} is not a valid txt loader")
             files_data.extend(text)
             files_metadatas.extend(meta)
         return files_data, files_metadatas      

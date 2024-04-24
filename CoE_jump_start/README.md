@@ -25,6 +25,7 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 
 <!-- /TOC -->
 
+https://github.com/sambanova/ai-starter-kit/assets/150964187/9841b787-5222-4c41-8ad5-34bd9b4fe2c5
 
 ## Features
 
