@@ -1,0 +1,12 @@
+streamlit==1.32.0
+pydantic==2.7.0
+pydantic_core==2.18.1
+langchain==0.1.16
+sentence_transformers==2.2.2
+instructorembedding==1.0.1
+python-dotenv==1.0.0
+streamlit-extras
+sseclient-py==1.8.0
+unstructured[pdf]==0.12.4
+unstructured_inference==0.7.23
+chromadb==0.4.24

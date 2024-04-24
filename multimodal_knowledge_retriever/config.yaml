@@ -1,0 +1,10 @@
+loaders: 
+  pdf: "unstructured"
+
+retrieval:
+    "chunk_size": 1200
+    "chunk_overlap": 240
+    "db_type": "chroma"
+    "k_retrieved_documents": 3
+    "score_treshold": 0.6
+
