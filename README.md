@@ -227,7 +227,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEmbeddingModel
 
 load_dotenv('.env')
 
