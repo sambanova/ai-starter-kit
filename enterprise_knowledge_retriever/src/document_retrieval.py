@@ -6,11 +6,11 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from vectordb.vector_db import VectorDb
 from data_extraction.src.multi_column import column_boxes
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate, load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -218,7 +218,7 @@ class DocumentRetrieval():
         """
         Generate a qa_retrieval chain using a language model.
 
-        This function uses a language model, specifically a SambaNovaEndpoint, to generate a qa_retrieval chain
+        This function uses a language model, specifically a SambaNova llm, to generate a qa_retrieval chain
         based on the input vector store of text chunks.
 
         Parameters:
@@ -230,7 +230,7 @@ class DocumentRetrieval():
         """
         
         if self.api_info == "sambaverse":
-            llm = SambaverseEndpoint(
+            llm = Sambaverse(
                     sambaverse_model_name=self.llm_info["sambaverse_model_name"],
                     sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                     model_kwargs={
@@ -247,7 +247,7 @@ class DocumentRetrieval():
                 )
             
         elif self.api_info == "sambastudio":
-            llm = SambaNovaEndpoint(
+            llm = SambaStudio(
                 model_kwargs={
                     "do_sample": False,
                     "temperature": self.llm_info["temperature"],
@@ -282,7 +282,7 @@ class DocumentRetrieval():
         """
         Generate a conversational retrieval qa chain using a language model.
 
-        This function uses a language model, specifically a SambaNovaEndpoint, to generate a conversational_qa_retrieval chain
+        This function uses a language model, specifically a SambaNova LLM, to generate a conversational_qa_retrieval chain
         based on the chat history and the relevant retrieved content from the input vector store of text chunks.
 
         Parameters:
