@@ -42,7 +42,7 @@ class DocumentRetrieval():
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
-        llm_info =  config["llm"]
+        _info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         loaders = config["loaders"]
@@ -218,7 +218,7 @@ class DocumentRetrieval():
         """
         Generate a qa_retrieval chain using a language model.
 
-        This function uses a language model, specifically a SambaNova llm, to generate a qa_retrieval chain
+        This function uses a language model, specifically a SambaNova LLM, to generate a qa_retrieval chain
         based on the input vector store of text chunks.
 
         Parameters:
