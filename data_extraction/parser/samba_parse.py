@@ -4,6 +4,7 @@ import logging
 import requests
 import yaml
 import time
+import argparse
 from pathlib import Path
 from tqdm import tqdm
 from typing import List, Dict, Tuple, Optional, Union
@@ -13,7 +14,6 @@ import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 class UnstructuredAPIConfig(BaseModel):
     api_url: str = "https://api.unstructured.io/general/v0/general"
@@ -42,12 +42,10 @@ class UnstructuredAPIConfig(BaseModel):
             config_dict = yaml.safe_load(f)
         return cls(**config_dict)
 
-
 class UnstructuredAPIClient:
     """
     A Python wrapper class for the Unstructured API.
     """
-
     def __init__(self, config: UnstructuredAPIConfig):
         self.config = config
 
@@ -108,7 +106,7 @@ class UnstructuredAPIClient:
         replace_table_text: bool = False,
     ) -> Tuple[
         List[Dict],
-        Tuple[List[str], Dict[str, Union[str, List[str]]]],
+        Tuple[List[str], List[Dict]],
         Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]],
     ]:
         """
@@ -122,11 +120,11 @@ class UnstructuredAPIClient:
             replace_table_text (bool): Whether to replace the 'text' element of a table with the 'table_as_html' value. Defaults to False.
 
         Returns:
-            Tuple[List[Dict], Tuple[List[str], Dict[str, Union[str, List[str]]]], Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]]]: A tuple containing:
+            Tuple[List[Dict], Tuple[List[str], List[Dict]], Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]]]: A tuple containing:
                 - The raw JSON response from the API.
                 - A tuple containing:
                     - A list of text elements extracted from the document.
-                    - A dictionary of metadata keys.
+                    - A list of metadata dictionaries for each element.
                 - A dictionary mapping table names to tuples of (texts, metadata).
         """
         logger.info(f"Parsing {file_path}...")
@@ -139,7 +137,7 @@ class UnstructuredAPIClient:
                     element["text"] = element["metadata"]["text_as_html"]
 
         texts = []
-        metadata = {}
+        metadata_list = []
         table_data = {}
 
         try:
@@ -161,9 +159,7 @@ class UnstructuredAPIClient:
                     else:
                         texts.append(text)
 
-                for key, val in element.items():
-                    if key != "text":
-                        metadata[key] = val
+                metadata_list.append(element["metadata"])
 
             if extract_combined_tables:
                 combined_tables = []
@@ -177,8 +173,7 @@ class UnstructuredAPIClient:
             logger.error(f"Error processing elements: {e}")
             raise
 
-        return elements, (texts, metadata), table_data
-
+        return elements, (texts, metadata_list), table_data
 
 def process_file(
     client: UnstructuredAPIClient,
@@ -191,7 +186,7 @@ def process_file(
 ) -> Tuple[
     float,
     List[Dict],
-    Tuple[List[str], Dict[str, Union[str, List[str]]]],
+    Tuple[List[str], List[Dict]],
     Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]],
 ]:
     """
@@ -207,16 +202,16 @@ def process_file(
         replace_table_text (bool): Whether to replace the 'text' element of a table with the 'table_as_html' value.
 
     Returns:
-        Tuple[float, List[Dict], Tuple[List[str], Dict[str, Union[str, List[str]]]], Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]]]: A tuple containing:
+        Tuple[float, List[Dict], Tuple[List[str], List[Dict]], Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]]]: A tuple containing:
             - The time taken to process the file.
             - The raw JSON response from the API.
             - A tuple containing:
                 - A list of text elements extracted from the document.
-                - A dictionary of metadata keys.
+                - A list of metadata dictionaries for each element.
             - A dictionary mapping table names to tuples of (texts, metadata).
     """
     start_time = time.time()
-    elements, (texts, metadata), table_data = client.parse(
+    elements, (texts, metadata_list), table_data = client.parse(
         file_path,
         extract_tables,
         extract_html_tables,
@@ -234,12 +229,11 @@ def process_file(
         with open(os.path.join(output_dir, f"{file_name}_texts.json"), "w") as f:
             json.dump(texts, f, indent=2)
         with open(os.path.join(output_dir, f"{file_name}_metadata.json"), "w") as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata_list, f, indent=2)
         with open(os.path.join(output_dir, f"{file_name}_tables.json"), "w") as f:
             json.dump(table_data, f, indent=2)
 
-    return processing_time, elements, (texts, metadata), table_data
-
+    return processing_time, elements, (texts, metadata_list), table_data
 
 def process_directory(
     client: UnstructuredAPIClient,
@@ -284,16 +278,15 @@ def process_directory(
         results.append({"file_path": file_path, "processing_time": processing_time})
     return pd.DataFrame(results)
 
-
 def compare_strategies(
     client: UnstructuredAPIClient,
     file_path: str,
     strategies: List[str],
-    output_dir: str,
     extract_tables: bool,
     extract_html_tables: bool,
     extract_combined_tables: bool,
     replace_table_text: bool,
+    output_dir: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Compares the processing times for different strategies on a single file.
@@ -302,11 +295,11 @@ def compare_strategies(
         client (UnstructuredAPIClient): The API client instance.
         file_path (str): The path to the file to process.
         strategies (List[str]): The list of strategies to compare.
-        output_dir (str): The directory to save the output files.
         extract_tables (bool): Whether to extract tables from the document.
         extract_html_tables (bool): Whether to extract tables as HTML.
         extract_combined_tables (bool): Whether to extract all tables combined into a single element.
         replace_table_text (bool): Whether to replace the 'text' element of a table with the 'table_as_html' value.
+        output_dir (Optional[str]): The directory to save the output files. Defaults to None.
 
     Returns:
         pd.DataFrame: A DataFrame containing the processing times for each strategy.
@@ -326,59 +319,74 @@ def compare_strategies(
         results.append({"strategy": strategy, "processing_time": processing_time})
     return pd.DataFrame(results)
 
-
 def main():
-    config = UnstructuredAPIConfig.from_yaml("config.yaml")
-    client = UnstructuredAPIClient(config)
+    parser = argparse.ArgumentParser(description="Process files using the Unstructured API")
+    parser.add_argument("--config", type=str, default="config.yaml", help="Path to the config YAML file")
+    parser.add_argument("--input_dir", type=str, help="Path to the input directory")
+    parser.add_argument("--output_dir", type=str, default="./results", help="Path to the output directory")
+    parser.add_argument("--file_path", type=str, help="Path to a single file to process")
+    parser.add_argument("--compare_strategies", action="store_true", help="Compare processing times for different strategies")
+    parser.add_argument("--strategies", type=str, nargs="+", default=["fast", "hi_res", "ocr_only"], help="List of strategies to compare")
 
-    input_dir = "./test_docs"
-    output_dir = "./results"
-    strategies = ["fast", "hi_res", "ocr_only"]
+    args = parser.parse_args()
+
+    config = UnstructuredAPIConfig.from_yaml(args.config)
+    client = UnstructuredAPIClient(config)
 
     extract_tables = True
     extract_html_tables = True
     extract_combined_tables = True
     replace_table_text = True
 
-    # Process a single file
-    file_path = "test_docs/tsla-20230930-short.pdf"
-    processing_time, elements, (texts, metadata), table_data = process_file(
-        client,
-        file_path,
-        output_dir,
-        extract_tables,
-        extract_html_tables,
-        extract_combined_tables,
-        replace_table_text,
-    )
-    print(f"Processing time for {file_path}: {processing_time:.2f} seconds")
+    if args.file_path:
+        processing_time, elements, (texts, metadata_list), table_data = process_file(
+            client,
+            args.file_path,
+            args.output_dir,
+            extract_tables,
+            extract_html_tables,
+            extract_combined_tables,
+            replace_table_text,
+        )
+        print(f"Processing time for {args.file_path}: {processing_time:.2f} seconds")
 
-    # # Process a directory
-    # df_dir = process_directory(client, input_dir, output_dir, extract_tables, extract_html_tables, extract_combined_tables, replace_table_text)
-    # print("Processing times for directory:")
-    # print(df_dir)
+    if args.input_dir:
+        df_dir = process_directory(
+            client,
+            args.input_dir,
+            args.output_dir,
+            extract_tables,
+            extract_html_tables,
+            extract_combined_tables,
+            replace_table_text,
+        )
+        print("Processing times for directory:")
+        print(df_dir)
 
-    # Compare strategies for a single file
-    df_strategies = compare_strategies(
-        client,
-        file_path,
-        strategies,
-        output_dir,
-        extract_tables,
-        extract_html_tables,
-        extract_combined_tables,
-        replace_table_text,
-    )
-    print("Processing times for different strategies:")
-    print(df_strategies)
+    if args.compare_strategies:
+        if not args.file_path:
+            print("Please provide a file path to compare strategies.")
+            return
 
-    # Plot the processing times for different strategies
-    plt.figure(figsize=(8, 6))
-    plt.bar(df_strategies["strategy"], df_strategies["processing_time"])
-    plt.xlabel("Strategy")
-    plt.ylabel("Processing Time (seconds)")
-    plt.title("Processing Times for Different Strategies")
-    plt.savefig(os.path.join(output_dir, "strategy_comparison.png"))
+        df_strategies = compare_strategies(
+            client,
+            args.file_path,
+            args.strategies,
+            extract_tables,
+            extract_html_tables,
+            extract_combined_tables,
+            replace_table_text,
+        )
+        print("Processing times for different strategies:")
+        print(df_strategies)
+
+        plt.figure(figsize=(8, 6))
+        plt.bar(df_strategies["strategy"], df_strategies["processing_time"])
+        plt.xlabel("Strategy")
+        plt.ylabel
+        plt.ylabel("Processing Time (seconds)")
+        plt.title("Processing Times for Different Strategies")
+        plt.savefig(os.path.join(args.output_dir, "strategy_comparison.png"))
 
 
 if __name__ == "__main__":
