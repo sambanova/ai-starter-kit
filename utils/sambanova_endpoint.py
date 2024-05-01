@@ -10,7 +10,7 @@ from langchain_core.outputs import GenerationChunk
 from langchain_core.pydantic_v1 import Extra, root_validator
 from langchain_core.utils import get_from_dict_or_env
 from langchain.callbacks.base import BaseCallbackHandler  # type: ignore
-from langchain.embeddings.base import Embeddings
+from langchain_core.embeddings import Embeddings
 
 
 class SVEndpointHandler:
