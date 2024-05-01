@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class UnstructuredAPIConfig(BaseModel):
     api_url: str = "https://api.unstructured.io/general/v0/general"
     api_key: str = Field(..., env="UNSTRUCTURED_API_KEY")
@@ -42,10 +43,12 @@ class UnstructuredAPIConfig(BaseModel):
             config_dict = yaml.safe_load(f)
         return cls(**config_dict)
 
+
 class UnstructuredAPIClient:
     """
     A Python wrapper class for the Unstructured API.
     """
+
     def __init__(self, config: UnstructuredAPIConfig):
         self.config = config
 
@@ -143,23 +146,25 @@ class UnstructuredAPIClient:
         try:
             for i, element in enumerate(tqdm(elements, desc="Processing elements")):
                 text = element.get("text")
+                metadata = {k: v for k, v in element.items() if k != "text"}
+
                 if text:
                     if element["type"] == "Table" and extract_tables:
                         if extract_html_tables:
                             html_table = element["metadata"]["text_as_html"]
                             table_data[f"table_{i}"] = (
                                 [html_table],
-                                {k: v for k, v in element.items() if k != "text"},
+                                metadata,
                             )
                         else:
                             table_data[f"table_{i}"] = (
                                 [text],
-                                {k: v for k, v in element.items() if k != "text"},
+                                metadata,
                             )
                     else:
                         texts.append(text)
 
-                metadata_list.append(element["metadata"])
+                metadata_list.append(metadata)
 
             if extract_combined_tables:
                 combined_tables = []
@@ -174,6 +179,7 @@ class UnstructuredAPIClient:
             raise
 
         return elements, (texts, metadata_list), table_data
+
 
 def process_file(
     client: UnstructuredAPIClient,
@@ -235,6 +241,7 @@ def process_file(
 
     return processing_time, elements, (texts, metadata_list), table_data
 
+
 def process_directory(
     client: UnstructuredAPIClient,
     input_dir: str,
@@ -278,6 +285,7 @@ def process_directory(
         results.append({"file_path": file_path, "processing_time": processing_time})
     return pd.DataFrame(results)
 
+
 def compare_strategies(
     client: UnstructuredAPIClient,
     file_path: str,
@@ -319,14 +327,36 @@ def compare_strategies(
         results.append({"strategy": strategy, "processing_time": processing_time})
     return pd.DataFrame(results)
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Process files using the Unstructured API")
-    parser.add_argument("--config", type=str, default="config.yaml", help="Path to the config YAML file")
+    parser = argparse.ArgumentParser(
+        description="Process files using the Unstructured API"
+    )
+    parser.add_argument(
+        "--config", type=str, default="config.yaml", help="Path to the config YAML file"
+    )
     parser.add_argument("--input_dir", type=str, help="Path to the input directory")
-    parser.add_argument("--output_dir", type=str, default="./results", help="Path to the output directory")
-    parser.add_argument("--file_path", type=str, help="Path to a single file to process")
-    parser.add_argument("--compare_strategies", action="store_true", help="Compare processing times for different strategies")
-    parser.add_argument("--strategies", type=str, nargs="+", default=["fast", "hi_res", "ocr_only"], help="List of strategies to compare")
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="./results",
+        help="Path to the output directory",
+    )
+    parser.add_argument(
+        "--file_path", type=str, help="Path to a single file to process"
+    )
+    parser.add_argument(
+        "--compare_strategies",
+        action="store_true",
+        help="Compare processing times for different strategies",
+    )
+    parser.add_argument(
+        "--strategies",
+        type=str,
+        nargs="+",
+        default=["fast", "hi_res", "ocr_only"],
+        help="List of strategies to compare",
+    )
 
     args = parser.parse_args()
 
