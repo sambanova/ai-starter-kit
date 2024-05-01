@@ -146,7 +146,11 @@ class UnstructuredAPIClient:
         try:
             for i, element in enumerate(tqdm(elements, desc="Processing elements")):
                 text = element.get("text")
-                metadata = {k: v for k, v in element.items() if k != "text"}
+                metadata = element.get("metadata", {}).copy()
+
+                for key in element:
+                    if key not in ["text", "metadata"]:
+                        metadata[key] = element[key]
 
                 if text:
                     if element["type"] == "Table" and extract_tables:
