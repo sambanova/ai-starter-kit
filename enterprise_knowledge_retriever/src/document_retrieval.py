@@ -42,7 +42,7 @@ class DocumentRetrieval():
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
-        _info =  config["llm"]
+        llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         loaders = config["loaders"]
