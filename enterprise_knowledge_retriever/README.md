@@ -14,12 +14,15 @@ Enterprise Knowledge Retrieval
 - [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
 - [Overview](#overview)
 - [Getting started](#getting-started)
-    - [Deploy your model](#get-access-to-your-model)
+    - [Get access to your model](#get-access-to-your-model)
     - [Integrate your model](#integrate-your-model)
     - [Deploy the starter kit](#deploy-the-starter-kit)
+    - [Docker-usage](#docker-usage)
+    - [Use the starter kit](#use-the-starter-kit)
 - [Workflow: Ingestion, retrieval, response](#workflow-ingestion-retrieval-response)
     - [Ingestion](#ingestion)
-    - [Retrieval](#retrieval)
+    - [Retrieval workflow](#retrieval-workflow)
+    - [Q&A](#qa)
 - [Workflow: Customizing the template](#workflow-customizing-the-template)
     - [Import Data](#import-data)
     - [Split Data](#split-data)
@@ -30,11 +33,11 @@ Enterprise Knowledge Retrieval
         - [Prompt engineering](#prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
-<!-- /TOC --> 
+<!-- /TOC -->
 
 # Overview
 
-This AI Starter Kit is an example of a semantic search workflow. You send your PDF to the SambaNova platform, and get answers to questions about the PDF content. The Kit includes:
+This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
  -   A configurable SambaStudio connector. The connector generates answers from a deployed model.
  -   A configurable integration with a third-party vector database.
  -   An implementation of a semantic search workflow 
@@ -143,6 +146,8 @@ After deploying the starter kit you see the following user interface:
 
 ## Docker-usage
 
+> If you are deploying the docker container in Windows be sure to open the docker desktop application before
+
 To run this with docker, run the command:
 
     docker-compose up --build
@@ -168,7 +173,7 @@ This workflow uses the AI starter kit as is.
 
 This workflow is an example of parsing and indexing data for subsequent Q&A. The steps are:
 
-1. **Document parsing:** Python packages [pypdf2](https://pypi.org/project/PyPDF2/), [fitz](https://pymupdf.readthedocs.io/en/latest/) and [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from PDF documents. There are multiple [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) available for text extraction from PDF on LangChain website. Depending on the quality and the format of the PDF files, this step might require customization for different use cases.
+1. **Document parsing:** Python packages [pypdf2](https://pypi.org/project/PyPDF2/), [fitz](https://pymupdf.readthedocs.io/en/latest/) and [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from PDF documents. There are multiple [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) available for text extraction from PDF on LangChain website. Depending on the quality and the format of the PDF files, this step might require customization for different use cases. For TXT loading it is used the default [txt loading](https://python.langchain.com/docs/modules/data_connection/document_loaders/) implementation of langchain
 
 2.  **Split data:** After the data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
 
@@ -211,7 +216,7 @@ Most of these packages have easy [integrations](https://python.langchain.com/doc
 
 You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md)
 
-This starter kit includes three PDF loaders, unstructured, pypdf2, and fitz. You can change the default in the [config.yaml](./config.yaml) file in the parameter `loader`
+This starter kit includes three PDF loaders, unstructured, pypdf2, and fitz and one TXT loader. You can change the default loader to use in the [config.yaml](./config.yaml) file in the parameter `loaders`
 
 You can include a new loader in the following location:
 ```
@@ -316,11 +321,12 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 
 - streamlit (version 1.25.0)
-- langchain (version 0.0.252)
+- langchain (version 0.1.16)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
-- chromadb (version 0.4.8)
+- chromadb (version 0.4.24)
 - PyPDF2 (version 3.0.1)
-- unstructured_inference (version 0.7.23)
+- unstructured_inference (version 0.7.27)
+- unstructured[pdf] (version 0.13.3)
 - PyMuPDF (version 1.23.4)
 - python-dotenv (version 1.0.0)

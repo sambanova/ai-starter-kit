@@ -41,7 +41,7 @@ When you work with YoDa, you'll go through several phases until you arrive at a 
    * Pretraining Generation: Generate a JSONL file containing sections of the provided data. Enables the model to do completion over queries.
    * Finetuning Generation: Process each document to create a series of synthetic questions and answers based on the content. This method uses a powerful LLM (Llama 2 70B) and a pipeline composed of prompting and postprocessing techniques. The generated data is stored in JSONL files. This method teaches the model to follow instructions and answer questions.
 2. **Data preparation**. Preprocessing and formatting the generated data to make it suitable for training. This step transforms the data into the required format and structure necessary for training the large language model.
-3. **Training / Finetuning**. In this stage, you fine tune the model in SambaStudio using your data. Finetuning includes updating the model's parameters to adapt it to the specific characteristics and patterns present in the prepared dataset.
+3. **Training / Finetuning**. In this stage, you fine tune the model in SambaStudio using your data. Finetuning includes updating the model's parameters to adapt it to the specific characteristics and patterns present in the prepared dataset. Note that this starter kit does not support Sambaverse as the model needs to be finetuned.
 4. **Evaluation**. The evaluation phase creates a set of responses to assess the performance of the finetuned language model. It involves using the set of evaluation queries for:
    * Obtaining responses from a baseline model.
    * Obtaining responses from your custom model.
@@ -92,7 +92,8 @@ In this Starter kit you can use the SambaNova SDK `SKSDK` to run training infere
     pip install -r requirements.txt
     ```
 4. Download your dataset and update
-the `src_folder` variable in your [sn expert config file](./sn_expert_conf.yaml) with the path of the folder and sub folders in `src_subfolders`, for including your own data follow the same step.
+the path to the data source folder in `src_folder` and the list of subfolders in the `src_subfolders` variable in your [sn expert config file](./sn_expert_conf.yaml) . The dataset structure consists of the `src_folder` (str) which contains one or more subfolders that represent a different file. Each subfolder should contain at least one
+txt file containing the content of that file. The txt files will be used as context retrievals for RAG. We have added an illustration of the data structure in the `data` folder which acts as our `src_folder` and `['sambanova_resources_blogs','sambastudio']` which are our `src_subfolders`.
 
 5. (Optional) Download and install SambaNova SNSDK.
     Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing Sambanova SNSDK and SNAPI, (you can skip the *Create a virtual environment* step since you are using the ```yoda_env``` environment you just created).
@@ -163,7 +164,8 @@ To pretrain and finetune on SambaStudio, the data must be hdf5 files that you ca
 To preprocess the data:
 1. open `scripts/preprocess.sh`
 2. Replace the variables `ROOT_GEN_DATA_PREP_DIR` with the path to your [generative data preparation](https://github.com/sambanova/generative_data_prep)
-directory
+directory. Also note that `PATH_TO_TOKENIZER` is the path to either a downloaded tokenizer or the huggingface name of
+the model. For example, `meta-llama/Llama-2-7b-chat-hf`. 
 3. In `scripts/preprocess.sh`, set the `INPUT_FILE` parameter to the absolute path of the output JSONL from [pretraining/finetuning](#data-generation-1) and 
 set `OUTPUT_DIR` to the location where you want your hdf5 files to be dumped before you upload them to 
 SambaStudio Datasets.
@@ -191,6 +193,7 @@ In SambaStudio, you need to create and host your model checkpoints. Connect to t
 
 5 Add the endpoint details to the ```.env``` file. Now your .env file should look like this:
     ```yaml
+
     BASE_URL="https://api-stage.sambanova.net"
     PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
     ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
@@ -207,8 +210,6 @@ In SambaStudio, you need to create and host your model checkpoints. Connect to t
 
     SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
-
-You can also run the training and create an enpoint with **snapapi** and **snsdk**. Have a look at the WIP [notebook](./notebooks/SambaStudio_job_spinup.ipynb) using the yoda env to learn how to do it with **SNSDK**.
 
 ## Evaluation
 

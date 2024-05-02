@@ -10,7 +10,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from enterprise_knowledge_retriever.src.pdf_retrieval import PDFRetrieval
+from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
 from data_extraction.src.multi_column import column_boxes
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
@@ -62,8 +62,8 @@ def handle_userinput(user_question):
                     )
 
 def main(): 
-    pdfRetrieval =  PDFRetrieval()
-    *_, embedding_model_info ,retrieval_info, _ = pdfRetrieval.get_config_info()
+    documentRetrieval =  DocumentRetrieval()
+    *_, embedding_model_info ,retrieval_info, _ = documentRetrieval.get_config_info()
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -89,11 +89,11 @@ def main():
         st.title("Setup")
         st.markdown("**1. Pick a datasource**")
         datasource = st.selectbox(
-            "", ("Upload PDFs (create new vector db)", "Use existing vector db")
+            "", ("Upload files (create new vector db)", "Use existing vector db")
         )
         if "Upload" in datasource:
-            pdf_docs = st.file_uploader(
-                "Add PDF files", accept_multiple_files=True, type="pdf"
+            docs = st.file_uploader(
+                "Add PDF or TXT files", accept_multiple_files=True, type=["pdf","txt"]
             )
             st.markdown("**2. Process your documents and create vector store**")
             st.markdown(
@@ -103,15 +103,15 @@ def main():
             if st.button("Process"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = pdfRetrieval.get_data_for_splitting(pdf_docs)
+                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
                     # get the text chunks
-                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
-                    embeddings = pdfRetrieval.load_embedding_model()
-                    vectorstore = pdfRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
+                    embeddings = documentRetrieval.load_embedding_model()
+                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
-                    st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     )
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
@@ -120,15 +120,15 @@ def main():
             if st.button("Process and Save database"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = pdfRetrieval.get_data_for_splitting(pdf_docs)
+                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
                     # get the text chunks
-                    text_chunks = pdfRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
-                    embeddings = pdfRetrieval.load_embedding_model()
-                    vectorstore = pdfRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
+                    embeddings = documentRetrieval.load_embedding_model()
+                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
-                    st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
                         st.session_state.vectorstore
                     ) 
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
@@ -149,15 +149,15 @@ def main():
                     else:
                         if os.path.exists(db_path):
                             # load the vectorstore
-                            embeddings = pdfRetrieval.load_embedding_model()
-                            vectorstore = pdfRetrieval.load_vdb(db_path, embeddings)
+                            embeddings = documentRetrieval.load_embedding_model()
+                            vectorstore = documentRetrieval.load_vdb(db_path, embeddings)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session
                             st.session_state.vectorstore = vectorstore
 
                             # create conversation chain
-                            st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
+                            st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
                                 st.session_state.vectorstore
                             )
                         else:
@@ -178,7 +178,7 @@ def main():
             )
             if st.button("Reset conversation"):
                 # reset create conversation chain
-                st.session_state.conversation = pdfRetrieval.get_qa_retrieval_chain(
+                st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
                     st.session_state.vectorstore
                 )
                 st.session_state.chat_history = []

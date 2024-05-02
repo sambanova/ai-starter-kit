@@ -9,259 +9,245 @@ Post Call Analysis
 ======================
 <!-- TOC -->
 
-- [Post Call Analysis](#post-call-analysis)
 - [Overview](#overview)
-    - [About this template](#about-this-template)
-- [Getting started](#getting-started)
-    - [Deploy your models in SambaStudio](#deploy-your-models-in-sambastudio)
-        - [Deploy your LLM](#deploy-your-llm)
-        - [Use the automatic Speech Recognition Pipleine](#use-the-automatic-speech-recognition-pipleine)
-    - [Set the starter kit and integrate your models](#set-the-starter-kit-and-integrate-your-models)
-    - [Deploy the starter kit](#deploy-the-starter-kit)
-- [Starterkit usage](#starterkit-usage)
-- [Workflow](#workflow)
-    - [Audio processing](#audio-processing)
-        - [Trascription](#trascription)
-        - [Diarization](#diarization)
-    - [Analysis](#analysis)
-        - [Transcript Reduction](#transcript-reduction)
-        - [Summarization](#summarization)
-        - [Classification](#classification)
-        - [Named entity recognition](#named-entity-recognition)
-        - [Sentiment Analysis](#sentiment-analysis)
-        - [Factual Accuracy Analysis](#factual-accuracy-analysis)
-        - [Procedure Analysis](#procedure-analysis)
-        - [Call Quality Assessment](#call-quality-assessment)
-- [Customizing the template](#customizing-the-template)
-    - [Large language model LLM](#large-language-model-llm)
-        - [Fine tune your model](#fine-tune-your-model)
-        - [Prompt engineering](#prompt-engineering)
-        - [Factual Accuracy Analysis](#factual-accuracy-analysis)
-        - [Call Quality Assessment](#call-quality-assessment)
-        - [Batch Inference](#batch-inference)
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the account and config file](#set-up-the-account-and-config-file)
+        - [Setup for SambaStudio](#setup-for-sambastudio)
+        - [Setup for Sambaverse](#setup-for-sambaverse)
+- [Run the starter kit](#run-the-starter-kit)
+    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
+    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
+- [Use post-call analysis with your own data](#use-post-call-analysis-with-your-own-data)	
+- [How the starter kit works](#how-the-starter-kit-works)
+- [Customizing the starter kit](#customizing-the-starter-kit)
+    - [Customize the model](#customize-the-model)
+        - [Sambaverse](#sambaverse)
+        - [SambaStudio](#sambastudio)
+    - [Improve results with prompt engineering](#improve-results-with-prompt-engineering)
+    - [Customize the factual accuracy analysis](#customize-the-factual-accuracy-analysis)
+    - [Customize call quality assessment](#customize-call-quality-assessment)
+    - [Customize batch inference](#customize-batch-inference)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
 # Overview
-## About this template
 
-This AI Starter Kit exemplifies a systematic approach to post-call analysis starting with Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows that are built using the SambaNova platform, this template provides:
 
--   A customizable SambaStudio connector facilitating LLM inference from deployed models.
--   A configurable SambaStudio connector enabling ASR pipeline inference from deployed models.
--   Implementation of the RAG workflow alongside prompt construction strategies tailored for call analysis, including:
-    - Call Summarization
+This AI starter kit illustrates a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. 
+
+NOTE: You must use SambaStudio for the Automatic Speech Recognition (ASR) workflow. You can use Sambaverse or SambaStudio to perform text analysis. 
+
+This starter kit provides:
+
+* A customizable SambaStudio connector that facilitates LLM inference from deployed models.
+* A configurable SambaStudio connector that enables ASR inference workflow from deployed models.
+* Implementation of a RAG workflow that includes prompt construction strategies which are tailored for call analysis, including:
+    - Call summarization
     - Classification
-    - Named Entity recognition
-    - Sentiment Analysis
-    - Factual Accuracy Analysis
-    - Call Quality Assessment
+    - Named entity recognition
+    - Sentiment analysis
+    - Factual accuracy analysis
+    - Call quality assessment
 
-This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. it also includes a simple explanation with useful resources for understanding what is happening in each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
+This example is ready to use. We provide: 
+* Instructions for setup. 
+* Instructions for running the model as is. 
+* Instructions for customization. 
 
-# Getting started
+# Before you begin
 
-## Deploy your models in SambaStudio
+This starter kit automatically uses the SambaNova `snapi` CLI to create an ASR project and run batch inference jobs for doing speech recognition steps. You only have to set up your environment first. 
 
-### Deploy your LLM
+## Clone this repository
 
-Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
+Clone the start kit repo.
 
-Alternatively by deploying your LLM of choice (e.g. Llama 2 70B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+```
+git clone https://github.com/sambanova/ai-starter-kit.git
+```
 
-### Use the automatic Speech Recognition Pipleine
+## Set up the account and config file 
 
-This Starter kit automatically will use the Sambanova CLI Snapi to create an ASR pipleine project and run batch inference jobs for doing speech recognition steps, you will only need to set your environment API Authorization Key (The Authorization Key will be used to access to the API Resources on SambaStudio), the steps for getting this key is decribed [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key)
+You must perform SambaStudio setup and can optionally perform Sambaverse setup. 
 
-## Set the starter kit and integrate your models
+* The ASR pipeline requires that you perform the SambaStudio setup steps. 
+* For the text analysis, you can use either SambaStudio or Sambaverse. 
 
-Set your local environment and Integrate your LLM deployed on SambaStudio with this AI starter kit following this steps:
+### Setup for SambaStudio
 
-1. Clone repo.
-    ```
-    git clone https://github.com/sambanova/ai-starter-kit.git
-    ```
+To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
 
-2. **Sambaverse Endpoint:**  Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
-"456789ab-cdef-0123-4567-89abcdef0123"
-and and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
-would be entered in the env file (with no spaces) as:
-    ```yaml
+NOTE: You must have at least 3 RDUs available in your SambaStudio environment for the ASR pipeline batch inference jobs. 
+
+1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
+2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+
+```yaml
+BASE_URL="https://api-stage.sambanova.net"
+PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
+```
+4. Update the [config file](./config.yaml): 
+* Set the variable `api` to `"sambastudio"`.
+* Run `snapi app list`, search for the `ASR With Diarization` section in the output, and set `asr_with_diarization_app_id` in the `apps` section of the config file to the app ID.
+
+5. Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing SambaStudio SNSDK and SNAPI, (you can omit the *Create a virtual environment* step if you plan to create a `post_call_analysis_env` environment in the next step.)
+
+### Setup for Sambaverse
+
+1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
+2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
+3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+
+```yaml
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-    SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
-    ```
+```
 
-Set in the [config file](./config.yaml), the variable *api* as: "sambaverse"
-
-2. **SambaStudio Endpoint:**  Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo dir Update API information for the SambaNova LLM and your environment [sambastudio key](#use-the-automatic-speech-recognition-pipleine). 
-    
-    These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
-    "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    and a samba studio key ```"1234567890abcdef987654321fedcba0123456789abcdef"```
-    would be entered in the environment file (with no spaces) as:
-    ```yaml
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
-    ```
-
-    Set in the [config file](./config.yaml), the variable *api* as: "sambastudio"
+4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
 
 
-3. Install requirements.
+# Run the starter kit
 
-    It is recommended to use virtualenv or conda environment for installation, and to update pip.
-    ```bash
+We recommend that you run  the the starter kit in a virtual environment or use a container. 
+
+## Option 1: Use a virtual environment
+
+If you want to use virtualenv or conda environment 
+
+1. Install and update pip.
+
+```bash
     cd ai-starter-kit/post_call_analysis
     python3 -m venv post_call_analysis_env
     source post_call_analysis_env/bin/activate
     pip install -r requirements.txt
-    ```
-
-4. Download and install Sambanova CLI.
-
-    Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing Sambanova SNSDK and SNAPI, (you can omit the *Create a virtual environment* step since you are using the just created ```post_call_analysis_env``` environment)
-
-5. Set up config file.
-
-    - Uptate de value of the base_url key in the ```urls``` section of [```config.yaml```](config.yaml) file. Set it with the url of your sambastudio environment
-    -  Uptate de value of the asr_with_diarization_app_id key in the apps section of [```config.yaml```](config.yaml) file. to find this app id you should execute the following comand in your terminal:
-        ```
-        snapi app list 
-        ```
-    - Search for the ```ASR With Diarization``` section in the oputput and copy in the [```config.yaml``](./config.yaml) the ID value.
-    - Set in the [```config.yaml``](./config.yaml), the variable *api* as: "sambaverse" or "sambanova" depending of which endpoint you are using to the LLM calls.
-
-## Deploy the starter kit
-
-To run the demo, run the following command
+```
+2. Run the following command:
 
 ```
 streamlit run streamlit/app.py --browser.gatherUsageStats false  
 ```
-
-After deploying the starter kit you should see the following streamlit user interface
+You will see the following Streamlit user interface
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_base.png)
 
-## Deploy the starter kit in a Docker container 
+## Option 2: Deploy the starter kit in a Docker container 
 
-To run this with docker
+If you want to use Docker:
 
-- 1. update the `SAMBASTUDIO_KEY`, `SNAPI`, `SNSDK` args in [docker-compose.yaml file](docker-compose.yaml)
+1. Update the `SAMBASTUDIO_KEY`, `SNAPI`, `SNSDK` args in [docker-compose.yaml file](docker-compose.yaml)
 
-- 2. run the command:
+2. Run the command:
 
     ```bash
-        docker-compose up --build
+    docker-compose up --build
     ```
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
-# Starterkit usage 
 
-1- Pick your source (Audio or Transcription). You can upload your call audio recording or a CSV file containing the call transcription with diarization. Alternatively, you can select a preset/preloaded audio recording or a preset/processed call transcription.
 
-> The audio recording should be in .wav format
+#  Use post-call analysis with your own data
 
-2- Save the file and process it. If the input is an audio file, the processing step could take a couple of minutes to initialize the bash inference job in SambaStudio. Then you will see the following output structure.
+NOTE: For this task, you must have at least 3 RDUs available in your SambaStudio environment.
+
+1. Pick your source audio (.wav file) or transcript (CSV file containing the call transcription with diarization). 
+
+2. In the GUI, select either **Audio input** or **Text transcript input** and upload the file. If the input is an audio file, the processing step could take a couple of minutes to initialize the bash inference job in SambaStudio. Then the GUI is updated to show information like the following: 
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_audio.png)
 
-> Be sure to have at least 3 RDUs available in your SambaStudio environment
 
-3- Set the analysis parameters. Here, you can define a list of classes for classification, specify entities for extraction.
+3. In the GUI, select **Analysis Settings** and set the analysis parameters. You can define a list of classes for classification or specify entities for extraction.
 
-Also you should provide the input path containing your facts and procedures knowledge bases, or you can include a list of urls you want to scrape to include it as facts and procedures knowledge bases
+    Provide the input path containing your facts and procedures knowledge bases, or you include a list of urls that you want to scrape to include it as facts and procedures knowledge bases.
 
-> With this default template only txt and pdf files or urls will be used for factual and procedures check.  
+    By default, this starter kit performs factual and procedures check only on .txt and PDF files or urls.  
 
-4- Click the Analyse transcription button an this will execute the analysis steps over the transcription, this step could take a copule of minutes, Then you will see the following output structure.
+4. Click the **Analyse transcription** button to run the analysis steps over the transcription. After a short time (a few minutes) you will see the following output structure.
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_analysis.png)
 
-# Workflow
+# How the starter kit works
 
-## Audio processing
+This section discusses how the start kit works and which tasks it performs with each step. 
 
-This step is made by the SambaStudio batch inference pipeline for ASR and Diarization and is composed of these models.
+* **Audio processing:** Audio processing is performed by the batch inference pipeline for ASR and Diarization and is composed of these steps:
 
-### Transcription
+    - **Transcription:** The Transcription step involves converting the audio data into text format. This step utilizes Automatic Speech Recognition (ASR) technology to transcribe spoken words into written text.
 
-In the Transcription step involves converting the audio data from the call into text format. This step utilizes Automatic Speech Recognition (ASR) technology to accurately transcribe spoken words into written text.
+    - **Diarization:** The Diarization process distinguishes between different speakers in the conversation. It segments the audio data based on speaker characteristics, identifies each speaker's audio segments, and enables further analysis on a per-speaker basis.
 
-### Diarization
+    This pipeline returns a CSV file that contains the timestamped audio segments with speaker labels and transcription assigned to each segment.
 
-The Diarization process distinguishing between different speakers in the conversation. It segments the audio data based on speaker characteristics, identifing each speacker audio segments, enabling further analysis on a per-speaker basis.
+* **Text Analysis:** For the analysis process, you set a list of categories for classifying the text, and the LLM assigns the text to one category using zero shot classification. Analysis consists of several steps. 
 
-This pipeline retrives a csv containing times of the audio segments with speaker labels and correpsonding transcription assigned to each segment.
+    - **Transcript Reduction:** Transcript reduction involves condensing the transcribed text to eliminate redundancy and shorten it enough to fit within the context length of the LLM. This results in a more concise representation of the conversation. This process uses the [reduce](https://api.python.langchain.com/en/latest/chains/langchain.chains.combine_documents.reduce.ReduceDocumentsChain.html) langchain chain and the [`reduce prompt template`](./prompts/reduce.yaml), which iteratively takes chunks of the conversation and compresses them while preserving key ideas and entities.
 
-## Analysis
+    - **Summarization:** Summarization generates a summary of the conversation, capturing its key points and main themes. This process uses the [`summarization prompt template`](./prompts/sumarization.yaml).
 
-### Transcript Reduction
+    - **Classification:** Classification categorizes the call based on its content or purpose by assigning it to a list of predefined classes or categories. This zero-shot classification uses the [`classification prompt template`](./prompts/topic_clasification.yaml). The reduced call transcription and a list of possible classes is passed to the langchain [list output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/csv) to get a list structure as result.
 
-Transcript reduction involves condensing the transcribed text to eliminate redundancy and shorten it enough to fit within the context length of the LLM. This results in a more concise representation of the conversation. This process is achieved using the [reduce](https://api.python.langchain.com/en/latest/chains/langchain.chains.combine_documents.reduce.ReduceDocumentsChain.html) langchain chain and the [```reduce prompt template```](./prompts/reduce.yaml), which iteratively takes chunks of the conversation and compresses them while preserving key ideas and entities."
+    - **Named entity recognition:** Named Entity Recognition (NER) identifies and classifies named entities mentioned in the conversation, such as names of people, organizations, locations, and other entities of interest. We pass (1) a list of entities and (2) the reduced conversation to the [`NER prompt template`](./prompts/ner.yaml). The output is parsed with the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which returns a JSON structure containing a list of extracted values for each entity.
 
-### Summarization
+    - **Sentiment Analysis:** Sentiment Analysis determines the overall sentiment expressed in the conversation. This can help gauge the emotional tone of the interaction. This process uses the [`sentiment analysis prompt template`](./prompts/sentiment_analysis.yaml).
 
-Summarization generates a brief abstractive overview of the conversation, capturing its key points and main themes. This aids in quickly understanding the content of the call, This process is achieved using the [```summarization prompt template```](./prompts/sumarization.yaml)
+    - **Factual Accuracy Analysis:** Factual Accuracy Analysis evaluates the factual correctness of statements made during the conversation. This process uses a RAG (Retrieval Augmented Generation) methodology:
+        - A series of documents are loaded, chunked, embedded, and stored in a vectorstore database.
+        - Relevant documents for factual checks and procedures are retrieved and contrasted with the call transcrip using the [`Factual Accuracy Analysis prompt template`](./prompts/factual_accuracy_analysis.yaml) and a [retrieval](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval.create_retrieval_chain.html) langchain chain. 
+        - The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a `correctness` field, an `error` field containing a description of the errors in the transcription, and a `score` field.
 
-### Classification
+    - **Procedure Analysis:** Procedure Analysis evaluates whether the agent follows predefined procedures during the conversation and ensures that the agent's procedures correspond with procedural guidelines. This process uses the [`procedures analysis prompt template`](./prompts/procedures_analysis.yaml).
 
-Classification categorizes the call based on its content or purpose by assigning it to a list of predefined classes or categories. This zero-shot classification is achieved using the [```classification prompt template```](./prompts/topic_clasification.yaml), which utilizes the reduced call transcription and a list of possible classes, this is pased over the langchain [list output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/csv) to get a list structure as result.
+        The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a `correctness` field, an `error` field containing a description of the errors evidenced in the transcription, and a `score` field.
 
-### Named entity recognition
+    - **Call Quality Assessment:** Call Quality Assessment evaluates agent accuracy in the call. It helps identify areas for improvement in call handling processes. In this starter kit, a basic analysis is performed alongside the [Factual Accuracy Analysis](#factual-accuracy-analysis) and [Procedure Analysis](#procedure-analysis) steps. The analysis assigns a score based on the errors made by the agent in the call, and predicts the NPS score that the user might give. This is achieved using the `get_call_quallity_assessment()` method in the [Analysis script](./src/analysis.py).
 
-Named Entity Recognition (NER) identifies and classifies named entities mentioned in the conversation, such as names of people, organizations, locations, and other entities of interest. This process utilizes a provided list of entities to extract and the reduced conversation, using the [```NER prompt template```](./prompts/ner.yaml). The output then is parsed with the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a list of extracted values for each entity.
+# Customizing the starter kit
 
-### Sentiment Analysis
+You can customize this starter kit in many ways. 
 
-Sentiment Analysis determines the overall sentiment expressed in the conversation by the user. This helps in gauging the emotional tone of the interaction, this is achived using the [```sentiment analysis prompt template```](./prompts/sentiment_analysis.yaml)
+## Customize the model 
 
-### Factual Accuracy Analysis
+The precise process for customizing the model depends on whether you're using Sambaverse or SambaStudio. 
+
+### Sambaverse
+
+With Sambaverse, you can test and compare the performance of several models. 
+
+To change the model that this starter kit is using: 
+
+1. Log in to Sambaverse. 
+2. Find the model you want to use in the playground, select the three dots, click **Show code**, and find the values of `modelName` and `select_expert`.
+3. To modify the parameters for calling the model, open `config.yaml` and set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify `temperature` and `maximum generation token` to experiment with that. 
+
+### SambaStudio
+
+For the ASR steps, only one pipeline is available. You can see the components in the Jupyter notebook. 
+
+For text analysis, we recommend that you use one of the most capable models like Llama2 7B. You can fine tune that model to improve response quality. 
+
+The SambaStudio documentation helps you learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html).
 
 
-Factual Accuracy Analysis evaluates the factual correctness of statements made during the conversation by the agent,  This is achieved using a RAG methodology, in which:
+NOTE: You set things like list of categories to classify the conversation in or the entities to extract from the conversation in the **Settings** section in the SambaStudio GUI. In the `config.yaml` file, you customize model-specific settings like the temperature. 
 
-- A series of documents are loaded, chunked, embedded, and stored in a vectorstore database.
-- Using the [```Factual Accuracy Analysis prompt template```](./prompts/factual_accuracy_analysis.yaml) and a [retrieval](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval.create_retrieval_chain.html) langchain chain, relevant documents for factual checks and procedures are retrieved and contrasted with the call transcription.
-- The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a 'correctness' field, an 'error' field containing a description of the errors evidenced in the transcription, and a 'score' field.
+### Improve results with prompt engineering
 
-### Procedure Analysis
+Prompting has a significant effect on the quality of LLM responses. A series of prompts used for each text analysis ste are in the `prompts` folder of this starter kit. 
 
-Procedures Analysis evaluates if the agent follows some given proceduresduring the conversation, also ensuring that the agent's procedures correspond with procedural guidelines. is achived using the [```procedures analysis prompt template```](./prompts/procedures_analysis.yaml)
-
-- The output is then parsed using the langchain [Structured Output parser](https://python.langchain.com/docs/modules/model_io/output_parsers/types/structured), which converts it into a JSON structure containing a 'correctness' field, an 'error' field containing a description of the errors evidenced in the transcription, and a 'score' field.
-
-### Call Quality Assessment
-
-Call Quality Assessment evaluates agent accuracy aspects in the call. It helps in identifying areas for improvement in call handling processes. In this template, a basic analysis is performed alongside the [Factual Accuracy Analysis](#factual-accuracy-analysis) and [Procedure Analysis](#procedure-analysis) steps, in which a score is given according to the errors made by the agent in the call, and a prdiction of a score (NPS) the user could give to the attention receibed. This is achieved using the get_call_quallity_assesment method in the [Analysis script](./src/analysis.py).
-
-# Customizing the template
-
-## Large language model (LLM)
-
-**If using Sambaverse endpoint**
-
-You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
-
-- Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
-
-**If using Sambastudio:**
-
-The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
-Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
-
-### Prompt engineering
-Finally, prompting has a significant effect on the quality of LLM responses. All Prompts used in [Analysis section](#analysis) can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
+All prompts used in [Analysis section](#analysis) can be further customized to improve the overall quality of the responses from the LLMs. For example, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` are the documents retrieved.
 ```yaml
 template: |
           <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
-          If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
-          Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n
+          If the answer is not in context for answering, say that you don't know, 
+          don't try to make up an answer or provide an answer not extracted from provided context.
+          Cross check if the answer is contained in provided context. 
+          If not then say \"I do not have information regarding this.\"\n
           context
           {context}
           end of context
@@ -270,25 +256,27 @@ template: |
           Helpful Answer: [/INST]
 )
 ```
-> *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+> Learn more about prompt engineering [here](https://www.promptingguide.ai/).
 
 
-### Factual Accuracy Analysis
+### Customize the factual accuracy analysis
 
-You can also customize or add specific document loaders in the `load_files` method, which can be found in the [vectordb class](../vectordb/vector_db.py). We also provide several examples of document loaders for different formats with specific capabilities in the [data extraction starter kit](../data_extraction/README.md).
+During factual accuracy  analysis, we check if the agent in the conversation made any mistake by comparing it with files that have the informaition. This kit loads a TXT file. You can add or customize document loaders in the `load_files` method (in the [vectordb class](../vectordb/vector_db.py)). Several examples of document loaders for different formats with specific capabilities are in the [data extraction starter kit](../data_extraction/README.md).
 
-### Call Quality Assessment
 
-The example provided in this template is basic but can be further customized to include your specific metrics in the evaluation steps. You can also modify the output parsers to obtain extra data or structures in the [analysis script](./src/analysis.py) methods.
 
-### Batch Inference
+### Customize call quality assessment
 
-In the [analysis](./notebooks/analysis.ipynb), [asr](./notebooks/asr.ipynb) notebooks, and [analysis](./src/analysis.py), [asr](./src/asr.py) scripts, you will find methods that can be used for batch analysis of multiple calls.
+You can customize the basic example in this starter kit by including your own metrics in the evaluation steps. You can also modify the output parsers to obtain extra data or structures in the [analysis script](./src/analysis.py) methods.
+
+### Customize batch inference
+
+You can customize batch inference by modifying methods in the [analysis](./notebooks/analysis.ipynb), [asr](./notebooks/asr.ipynb) notebooks, and [analysis](./src/analysis.py), [asr](./src/asr.py) scripts.
 
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
 
 - langchain (version 0.1.2)
 - python-dotenv (version 1.0.1)

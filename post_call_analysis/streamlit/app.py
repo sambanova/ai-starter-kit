@@ -46,7 +46,7 @@ def handle_userinput():
     else:
         dark_mode = False
     #display block
-    st.title("Post Call Anaysis AI Starter Kit")
+    st.title("Post Call Analysis AI Starter Kit")
     if st.session_state.transcription is None:
         st.info("Start selecting and processing the input in the side bar ")
     if st.session_state.audio_path:

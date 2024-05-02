@@ -5,85 +5,110 @@
 </picture>
 </a>
 
-Search Assitant
+Search Assistant
 ======================
 
 <!-- TOC -->
 
 - [Overview](#overview)
-    - [About this template](#about-this-template)
-- [Getting started](#getting-started)
-    - [Deploy your model](#deploy-your-model)
-    - [Integrate your model](#integrate-your-model)
-    - [Deploy the starter kit](#deploy-the-starter-kit)
-    - [Starterkit usage](#starterkit-usage)
-- [Workflow](#workflow)
-    - [Answer and search](#answer-and-search)
-    - [Answer and scrape sites](#answer-and-scrape-sites)
-- [Customizing the template](#customizing-the-template)
-    - [Use your custom serp tool](#use-your-custom-serp-tool)
-    - [Crawl websites](#crawl-websites)
-    - [Split Data](#split-data)
-    - [Embed data](#embed-data)
-    - [Store embeddings](#store-embeddings)
-    - [Retrieval](#retrieval)
-    - [Large language model LLM](#large-language-model-llm)
-        - [Prompt engineering](#prompt-engineering)
+- [Before you begin](#before-you-begin)
+  - [Clone this repository](#clone-this-repository)
+  - [Set up the account and config file](#set-up-the-account-and-config-file)
+    - [Setup for SambaStudio](#setup-for-sambastudio)
+    - [Setup for Sambaverse](#setup-for-sambaverse)
+- [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
+    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
+    - [Run the demo](#run-the-demo)
+- [Workflow overview](#workflow-overview)
+  - [Answer and search workflow](#answer-and-search-workflow)
+  - [Answer and scrape sites workflow](#answer-and-scrape-sites-workflow)
+  - [Retrieval workflow](#retrieval-workflow)
+- [Customizing the starter kit](#customizing-the-starter-kit)
+  - [Use a custom serp tool](#use-a-custom-serp-tool)
+  - [Customize website scraping](#customize-website-scraping)
+  - [Customize document transformation](#customize-document-transformation)
+  - [Customize data splitting](#customize-data-splitting)
+  - [Customize data embedding](#customize-data-embedding)
+  - [Customize embedding storage](#customize-embedding-storage)
+  - [Customize retrieval](#customize-retrieval)
+  - [Customize LLM usage](#customize-llm-usage)
+  - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
 # Overview
 
-## About this template
-This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using google search information as the source. this kit includes
+This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using Google search information as the source. This kit includes:
 
- -   A configurable SambaStudio connector to run inference off a deployed model.
+ -   A configurable SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
- -   An configurable integrations with multiple SERP APIs
- -   An stretegy for instant question - search - answer
- -   An strategy for query - search - web-crawl - answer
+ -   Configurable integrations with multiple SERP APIs
+ -   An strategy for an instant question - search - answer workflow
+ -   An strategy for a query - search - web-crawl - answer workflow
 
-This sample is ready to use. We provide instructions to help you run this demo by following a few simple steps described in the [Getting Started](#getting-started) section. It also includes straightforward explanations and useful resources to help you understand each step of the [workflow](#workflow), Then it also serves as a starting point for customization to your organization's needs, which you can learn more about in the [Customizing the Template](#customizing-the-template) section.
+This example is ready to use. 
 
-# Getting started
+* Run the model following the steps in [Before you begin](#before-you-begin) and [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+* Learn how the model works and look at resources in [Workflow overview](#workflow-overview).
+* Customize the model to meet your organization's needs by looking at the [Customizing the starter kit](#customizing-the-starter-kit) section.
 
-## Deploy your model
+# Before you begin
 
-Begin creating an account and using the available models included in [Sambaverse](sambaverse.sambanova.net), and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the user button
+You can use this model with Sambaverse or SambaStudio, but you have to do some setup first. 
 
-Alternatively begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+## Clone this repository
 
-## Integrate your model
-Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
-1. Clone repo.
+Clone the start kit repo.
+
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-2. **Sambaverse Endpoint:**  Update API information for your Sambaverse account.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an api key
-"456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the env file (with no spaces) as:
-```
-SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+## Set up the account and config file 
 
-Set in the [config file](./config.yaml), the variable *api* as: "sambaverse"
+You can use the model with SambaStudio or Sambaverse. 
 
-2.  **SambaStudio Endpoint:**  Update API information for the SambaNova LLM.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the env file (with no spaces) as:
-```
+### Setup for SambaStudio
+
+To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudio account. 
+
+1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
+2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+
+```yaml
 BASE_URL="https://api-stage.sambanova.net"
 PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
+4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
 
-Set in the [config file](./config.yaml), the variable *api* as: "sambastudio"
+### Setup for Sambaverse
 
-3. Install requirements: It is recommended to use virtualenv or conda environment for installation, and to update pip.
+1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
+2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
+3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+
+```yaml
+    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+```
+
+4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+
+# Bring up the starter kit GUI
+
+We recommend that you run the starter kit in a virtual environment or use a container. 
+
+## Option 1: Use a virtual environment
+
+If you want to use virtualenv or conda environment 
+
+1. Install and update pip.
+
 ```
 cd ai-starter-kit/web_crawled_data_retriever
 python3 -m venv search_assistant_env
@@ -91,109 +116,117 @@ source search_assistant_env/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Set the serp tool to use.
+2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp).
 
-This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp)
+- For [openSERP](https://github.com/karust/openserp) follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
-- For [openSERP](https://github.com/karust/openserp) follow the docker usage [intructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
-
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY , you should set this Keys in your repo these are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. `SERPER_API_KEY` or `SERPAPI_API_KEY`
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY for SambaStudio or Sambaverse. The add the key to in the environment variables file in the root repo directory `sn-ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`)
 
   > Setting more than of these tools it's optional you can set only one and run the kit with this, there are some pros and cons of each one of these tools
 
-## Deploy the starter kit
-To run the demo, run the following commands:
+
+3. Run the following command:
 ```
 streamlit run streamlit/app.py --browser.gatherUsageStats false   
 ```
 
-After deploying the starter kit you should see the following application user interface
+You should see the following application user interface:
 
 ![capture of search_assistant_kit](./docs/search_assitant.png)
 
+## Option 2: Deploy the starter kit in a Docker container 
 
-## Docker-usage
+If you want to use Docker:
 
-To run this with docker, run the command:
+1. Update the `SAMBASTUDIO_KEY`, `SNAPI`, `SNSDK` args in [docker-compose.yaml file](docker-compose.yaml)
 
+2. Run the command:
+
+    ```bash
     docker-compose up --build
+    ```
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page shown in the screenshot above.
 
-You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+## Run the demo 
 
-## Starterkit usage 
+After the GUI is up and running, you can start making selections in the left pane of the GUI. 
 
-1. select the Serp tool to use for searching information on the internet
-2. select the one of the Available search engines you want to use for retrieval
-3. Set the maximum amount of search results to retrieve
+1. Select the Search Tool to use. That's the tool that will search the internet. 
+2. Select the search engine you want to use for retrieval.
+3. Set the maximum number of search results to retrieve.
 4. Select the method for retrieval
-    - **Search and answer** This method will do a search for each query you pas to the assistant, and will use the search result snippets to provide you and answer.
-    - **Search and Scrape Sites** This method will ask you for an initial query and then it will search and scrape the sites the search engine find, whit this a vector database will be created and you will be able to ask multiple thing related to your query, this method will use the information of the scraped sites to give an answer.
-5. Click the SET button to start doing questions to your kit!
+    - **Search and answer** Does a search for each query you pass to the search assistant, and uses the search result snippets to provide an answer.
+    - **Search and Scrape Sites** Asks you for an initial query and searches and scrapes the sites. Creates a vector database from the result. You can then as other questions related to your initial query and the method uses the stored information to give an answer.
+5. Click the **Set** button to start asking questions!
 
-# Workflow
-This AI Starter Kit implements two distinct workflows that pipelines a series of operations.
+# Workflow overview
 
-## Answer and search 
+This AI starter kit implements two distinct workflows each with a series of operations.
 
-  1. **Search** Use the Serp tool to retrieve the search engine results, and use the snippets of the organic search results (Serper, OpenSerp) or the raw knowledge graph (Serpapi) as context.
+## Answer and search workflow
 
-  2. **Answer** Call the LLM using the retrieved information as context to answer your question.
+1. **Search** Use the Serp tool to retrieve the search results, and use the snippets of the organic search results (Serper, OpenSerp) or the raw knowledge graph (Serpapi) as context.
 
-## Answer and scrape sites
+2. **Answer** Call the LLM using the retrieved information as context to answer your question.
 
-  1. **Search** Use the Serp tool to retrieve the search engine results, and get links of organic search result.
+## Answer and scrape sites workflow
 
-  2. **Website crawling**  Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document which is built on top of [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) python packages, is used to scrape the html from the websites.
+1. **Search** Use the Serp tool to retrieve the search results and get links of organic search result.
 
-  3. **Document parsing:** Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply various transformations to extract specific information or modify the document's content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. These transformers are designed to process a large number of documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
-    
-      Langchain Document Transformer [html2text](https://python.langchain.com/docs/integrations/document_transformers/html2text) is used to extract plain and clear text from the HTML documents. There are other document transformers like[BeautfulSoup transformer](https://python.langchain.com/docs/integrations/document_transformers/beautiful_soup) available for plain text extraction from HTML included in the LangChain package. Depending on the required information you need to extract form websites, this step might require some customization.
+2. **Website crawling**  Scrape the HTML from the website using Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document, which is built on top of the [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) Python packages.
+
+3. **Document parsing:** Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply transformations to extract specific information or modify the documents' content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. Transformers process many documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
+
+   Depending on the required information you need to extract from websites, this step might require some customization.
+   * Langchain Document Transformer [html2text](https://python.langchain.com/docs/integrations/document_transformers/html2text) is used to extract plain and clear text from the HTML documents. 
+   * Other document transformers like the [BeautfulSoup transformer](https://python.langchain.com/docs/integrations/document_transformers/beautiful_soup) are available for plain text extraction from HTML and are included in the LangChain package. 
       
-      For cases in which the url retrive remote files this template includes extra file type loading functionality, you can activate or deactivate these loaders listing the filetypes in the [config file](./config.yaml) in the parameter extra_loaders.
-      > Right now it is only avalidable remote **PDF** loading
+    If you want to retrieve remote files, this starter kit includes extra file type loading functionality. You can activate or deactivate these loaders listing the filetypes in the [config file](./config.yaml) in the parameter `extra_loaders`. Right now remote **PDF** loading is available
 
-  4. **Data splitting:** 
-    Due to token limits in actual Large language models, once the website's data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. This size of the chunk of text depends on the context (sequence) length offered by the model, and generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is splited using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
+4. **Data splitting:** Due to token limits in LLMs, you need to split the data into chunks of text to be embedded and stored in a vector database after the data has been parsed and its content extracted. The size of the chunk of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
     
-  5. **Embed data:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+5. **Data embedding:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
-      *For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
+   For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)
 
-  6. **Store embeddings:**  Embeddings for each chunk, along with content and relevant metadata (such as source website) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, ```website source```  is also attached to the embeddings which are stored during  web scraping process.
+6. **Embedding storage:**  Embeddings for each chunk, along with content and relevant metadata (such as source website), are stored in a vector database. The embedding acts as the index in the database. In this starter kit, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with its own pros and cons. This starter kit uses [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it's a free, open-source option with straightforward setup, but can easily be updated to use another database if desired. In terms of metadata, `website source`  is also attached to the embeddings which are stored during web scraping.
 
-  7. **Retrieval** This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
+## Retrieval workflow
 
-  - **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model  in the ingestion workflow.
+This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
+
+1. **Embed query:** The first step is to convert a user-submitted query into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, we recommend that you use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
  
-  - **Retrieve relevant content:**
-    Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
+2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which returns *relevant* entries (content). The vector database acts as a retriever for fetching relevant information from the database.
     
-     *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
+     Find more information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)
  
-    *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
+     Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)
 
-# Customizing the template
+# Customizing the starter kit
 
-The provided example template can be further customized based on the use case.
+You can customize this starter kit based on your use case. 
 
-## Use your custom serp tool
+## Use a custom serp tool
 
-You can modify or change the behavior of searching step including your custom method in [SearchAssistant](./src/search_assistant.py) class, this method must receive a query, and a do_analysis flag, and should return a result, and a list of retrieved URLS.
+You can modify or change the behavior of the search step by including your custom method in [SearchAssistant](./src/search_assistant.py) class. Your method must be able to receive a query, have a `do_analysis` flag, and return a result and a list of retrieved URLS.
 
 This modification can be done in the following location:
 > file: [src/search_assistant.py](src/search_assistant.py)
 
-## Crawl websites
+## Customize website scraping
 
-**website scraping** Different packages are available to crawl and extract out of websites. In the demo app it is implemented the [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html), langchain also includes a couple of [HTML loaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/html) that can be used.
+Different packages are available to crawl and extract from websites. This starter kit uses the [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html). Langchain also includes a couple of [HTML loaders](https://python.langchain.com/docs/modules/data_connection/document_loaders/html) that can be used.
+
 This modification can be done in the following location:
 
 > file: [src/search_assistant.py](src/search_assistant.py)
->```
->function: load_htmls
->```
+>
+>function: `load_htmls`
+>
 
-The scraping method has a maximum absolute number of sites to 20 scraped sited, but you can modify these limits, and the behavior of the web crawling in the following location:
+The maximum number of sites in the scraping method is set to 20 scraped sited, but you can modify that limit and the web crawling behavior in the following location:
+
 > file: [config.yaml](config.yaml)
 >```yaml
 >web_crawling:
@@ -206,19 +239,25 @@ The scraping method has a maximum absolute number of sites to 20 scraped sited, 
 >function: web_crawl
 >```
 
-**Document transformations** Depending on the loader used for scraping the sites, you may want or not to use some transformation method to clean up the downloaded documents. , this could be done in the following location:
-> file: [src/search_assistant.py](src/search_assistant.py)
->```
->function: clean_docs
->```
-*[LangChain](https://python.langchain.com/docs/integrations/document_transformers) provides several document transformers that can be used with you data*
+## Customize document transformation
 
-## Split Data
+Depending on the loader used for scraping the sites, you may want to use a transformation method to clean up the downloaded documents. You can do that in the following location:
+
+> file: [src/search_assistant.py](src/search_assistant.py)
+>
+>function: `clean_docs`
+>
+
+[LangChain](https://python.langchain.com/docs/integrations/document_transformers) provides several document transformers that you can use.
+
+## Customize data splitting
 
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
-The **RecursiveCharacterTextSplitter** in the [kit src file](src/search_assistant.py), which is used for this template, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, a larger value of `chunk_size` could be used to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
+You can customize the **RecursiveCharacterTextSplitter** in the [kit src file](src/search_assistant.py), which is used by this starter kit by changing the `chunk_size` and `chunk_overlap` parameters. 
+* For LLMs with a long sequence length, try using a larger value of `chunk_size` to provide the LLM with broader context and improve performance. 
+* The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
 This modification can be done in the following location:
 > file: [config.yaml](config.yaml)
@@ -231,31 +270,33 @@ This modification can be done in the following location:
 >    "score_treshold": 0.5
 >```
 
-## Embed data
+## Customize data embedding
 
-There are several open-source embedding models available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be used or further fine-tuned on specific datasets to improve performance.
-
-This modification can be done in the following location:
-> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
->```
-> function: load_embedding_model
->```
-
-> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
-
-## Store embeddings
-
-The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/docs/integrations/vectorstores) provides a broad collection of vector stores that can be easily integrated.
+Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). Several of these models are available on SambaStudio and can be used or further fine-tuned on specific datasets to improve performance.
 
 This modification can be done in the following location:
 > file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
->```
-> function: create_vector_store
->```
+>
+> function: `load_embedding_model`
+>
 
-## Retrieval
+> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md).
 
-Similar to the vector stores, a wide collection of retriever options is also available depending on the use case. In this template, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/docs/integrations/retrievers).
+## Customize embedding storage
+
+Customize search assistant to use a different vector database to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/docs/integrations/vectorstores) provides a broad collection of vector stores that are easy to integrate.
+
+This modification can be done in the following location:
+> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
+>
+> function: `create_vector_store`
+>
+
+## Customize retrieval
+
+Similar to the vector stores, a wide collection of retriever options is also available. This starter kit uses the vector store as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/docs/integrations/retrievers).
+
+This modification can be done in the following location:
 
 file: [config.yaml](config.yaml)
 ```yaml
@@ -263,32 +304,41 @@ file: [config.yaml](config.yaml)
     "k_retrieved_documents": 3
     "score_treshold": 0.6
 ```
-This modification can be done in the following location:
 
 and
 > file: [src/search_assistant.py](src/search_assistant.py)
->```
->function: retrieval_qa_chain
->```
+>
+>function: `retrieval_qa_chain`
+>
 
+## Customize LLM usage 
 
-## Large language model (LLM)
+You can further customize the model itself. If you're using Sambaverse, you can also compare model performance for your use case. 
 
-**If using Sambaverse endpoint**
+### Sambaverse endpoint
 
-You can test the performace of multiple models avalable in sambaverse, for changing the model in this template:
+You can test the performance of multiple models available in Sambaverse. For changing the model used by this starter kit:
 
-- Search in the available models in playground and select the three dots the click in show code, you should search the values of these two tags `modelName` and `select_expert` 
-- Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file setting the values of `sambaverse_model_name` and `sambaverse_expert`, temperature and maximun generation token can aso be modified
+If you're using a Sambaverse endpoint, follow these steps:
 
-**If using Sambastudio:**
+1. In the playground, find the model you're interested in. 
+2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
+3. Modify the parameters for calling the model. In the `config.yaml` file, set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify temperature and maximum generation token.
 
-The template uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
-Modify the parameters for calling the model, those are in *llm* in ```config,yaml``` file, temperature and maximun generation token can be modified
+### SambaStudio endpoint
 
-### Prompt engineering
+The starter kit uses the SN LLM model, which can be further fine-tuned to improve response quality. 
 
-Finally, prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in the given template, the following prompt was used to generate a response from the LLM, where ```question``` is the user query and ```context``` are the documents retrieved by the retriever.
+To train a model in SambaStudio, learn how to: 
+* [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html)
+* [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html)
+* [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
+
+You can modify the parameters for calling the model and the temperature and maximum generation token in the `config,yaml` file.
+
+## Experiment with prompt engineering
+
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` are the documents retrieved by the search engine.
 ```yaml
 template: |
           <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
@@ -320,7 +370,7 @@ Those modifications can be done in the following locations:
   >
   > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
 
-> *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+Learn more about prompt engineering [here](https://www.promptingguide.ai/)
 
 # Third-party tools and data sources
 
