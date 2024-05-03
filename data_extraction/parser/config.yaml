@@ -17,3 +17,5 @@ parallel_mode_url: null
 parallel_mode_threads: 3
 parallel_mode_split_size: 1
 parallel_retry_attempts: 2
+return_langchain_docs: true
+chunk_size: 1500

@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from unstructured.staging.base import elements_to_json
 from unstructured.staging.base import dict_to_elements
 from unstructured.chunking.basic import chunk_elements
+from langchain_core.documents.base import Document
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,6 +40,8 @@ class UnstructuredAPIConfig(BaseModel):
     parallel_mode_threads: int = 3
     parallel_mode_split_size: int = 1
     parallel_retry_attempts: int = 2
+    return_langchain_docs: bool = False
+    chunk_size: int = 1500
 
     @classmethod
     def from_yaml(cls, yaml_file: str):
@@ -137,11 +140,15 @@ class UnstructuredAPIClient:
 
         elements = self._make_request(file_path)
         elements_processed = dict_to_elements(elements)
-        chunks = chunk_elements(elements_processed, max_characters=1500)
+        chunks = chunk_elements(
+            elements_processed, max_characters=self.config.chunk_size
+        )
         elements = elements_to_json(chunks)
+        elements = json.loads(elements)
 
         if replace_table_text:
             for element in elements:
+                print(element)
                 if element["type"] == "Table":
                     element["text"] = element["metadata"]["text_as_html"]
 
@@ -188,7 +195,31 @@ class UnstructuredAPIClient:
             logger.error(f"Error processing elements: {e}")
             raise
 
-        return elements, (texts, metadata_list), table_data
+        if self.config.return_langchain_docs:
+            langchain_docs = self.get_langchain_docs(texts, metadata_list)
+            return elements, (texts, metadata_list), table_data, langchain_docs
+        else:
+            return elements, (texts, metadata_list), table_data
+
+    def get_langchain_docs(
+        self,
+        texts: List[str],
+        metadata_list: List[Dict],
+    ) -> List[Document]:
+        """
+        Creates a list of langchain Document objects from the parsed text and metadata.
+
+        Args:
+            texts (List[str]): The list of text elements extracted from the document.
+            metadata_list (List[Dict]): The list of metadata dictionaries for each element.
+
+        Returns:
+            List[Document]: A list of langchain Document objects.
+        """
+        return [
+            Document(page_content=content, metadata=metadata)
+            for content, metadata in zip(texts, metadata_list)
+        ]
 
 
 def process_file(
@@ -199,11 +230,20 @@ def process_file(
     extract_html_tables: bool,
     extract_combined_tables: bool,
     replace_table_text: bool,
-) -> Tuple[
-    float,
-    List[Dict],
-    Tuple[List[str], List[Dict]],
-    Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]],
+) -> Union[
+    Tuple[
+        float,
+        List[Dict],
+        Tuple[List[str], List[Dict]],
+        Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]],
+    ],
+    Tuple[
+        float,
+        List[Dict],
+        Tuple[List[str], List[Dict]],
+        Dict[str, Tuple[List[str], Dict[str, Union[str, List[str]]]]],
+        List[Document],
+    ],
 ]:
     """
     Processes a single file and saves the output to the specified directory.
