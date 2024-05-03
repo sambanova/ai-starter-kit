@@ -10,7 +10,7 @@ encoding: "utf-8"
 xml_keep_tags: false
 include_page_breaks: false
 unique_element_ids: false
-chunking_strategy: null
+chunking_strategy: "by_title"
 chunking_params: {}
 parallel_mode_enabled: false
 parallel_mode_url: null

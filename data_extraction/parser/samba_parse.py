@@ -11,6 +11,9 @@ from typing import List, Dict, Tuple, Optional, Union
 from pydantic import BaseModel, Field
 import pandas as pd
 import matplotlib.pyplot as plt
+from unstructured.staging.base import elements_to_json
+from unstructured.staging.base import dict_to_elements
+from unstructured.chunking.basic import chunk_elements
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,7 +80,7 @@ class UnstructuredAPIClient:
                     "include_page_breaks": self.config.include_page_breaks,
                     "unique_element_ids": self.config.unique_element_ids,
                     "chunking_strategy": self.config.chunking_strategy,
-                    **self.config.chunking_params,
+                    # **self.config.chunking_params,
                 }
                 headers = {
                     "accept": "application/json",
@@ -133,6 +136,9 @@ class UnstructuredAPIClient:
         logger.info(f"Parsing {file_path}...")
 
         elements = self._make_request(file_path)
+        elements_processed = dict_to_elements(elements)
+        chunks = chunk_elements(elements_processed, max_characters=1500)
+        elements = elements_to_json(chunks)
 
         if replace_table_text:
             for element in elements:

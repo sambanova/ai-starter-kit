@@ -199,3 +199,5 @@ data_extraction/parser/results
 #image search data
 image_search/data
 
+
+data_extraction/parser/adv_rag.ipynb
