@@ -17,5 +17,5 @@ retrieval:
     "chunk_overlap": 240
     "db_type": "chroma"
     "k_retrieved_documents": 3
-    "score_treshold": 0.6
+    "score_threshold": 0.6
 
