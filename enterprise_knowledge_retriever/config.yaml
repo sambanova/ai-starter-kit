@@ -2,7 +2,9 @@ api: "sambaverse"
 
 embedding_model: "sambastudio"
 
-loader: "unstructured"
+loaders: 
+    pdf: "unstructured"
+    txt: "text_loader"
 
 llm: 
     "temperature": 0.0
@@ -15,5 +17,5 @@ retrieval:
     "chunk_overlap": 240
     "db_type": "chroma"
     "k_retrieved_documents": 3
-    "score_treshold": 0.6
+    "score_threshold": 0.6
 

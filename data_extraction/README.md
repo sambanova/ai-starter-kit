@@ -47,8 +47,8 @@ source data_extract_env/bin/activate
 cd data_extraction
 pip install -r requirements.txt
 ```
-3. Install files required for the paddle utility: ,It is recommended to use virtualenv or conda environment for installation.
->Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you should use the requirementsPaddle file instead
+3. Install files required for the paddle utility: We recommend that you use virtualenv or conda environment for installation.
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you should use the requirementsPaddle file instead.
 ```
 cd ai-starter-kit
 python3 -m venv data_extract_env
@@ -61,9 +61,9 @@ pip install -r requirementsPaddle.txt
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
 
-#### Option 2: Run via Docker
+### Option 2: Run via Docker
 
-With this option, all functionality and Jupyter notebooks are ready to use 
+With this option, all functionality and Jupyter notebooks are ready to use. 
 
 1. Ensure that you have the Docker engine installed [Docker installation](https://docs.docker.com/engine/install/).
 
@@ -123,7 +123,7 @@ The [notebooks](notebooks) folder has several data extraction recipes and pipeli
 
 - [web_extraction.ipynb](notebooks/web_extraction.ipynb): Examples of text extraction from files in different input format using the `Unstructured` library. Section 6 includes two loading examples, one using the `Unstructured` API and the other using the local unstructured loader.
 
-#### PDF Documents
+### PDF Documents
 
 - [pdf_extraction.ipynb](notebooks/pdf_extraction.ipynb): Examples of text extraction from PDF documents using different packages including different OCR and non-OCR packages. Depending on your specific use case, some packages may perform better than others.
 

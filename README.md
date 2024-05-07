@@ -22,7 +22,7 @@ If you have any issues with the examples or to provide feedback, [create an issu
 <tr>
 <td width="25%"><a href="CoE_jump_start/README.md">CoE jump start</a>
 </td>
-<td width="75%">This kit demonstrate how to call <a href=https://coe-1.cloud.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using Sambaverse, using SambaStudio with a named expert, and using SambaStudio with routing.</td>
+<td width="75%">This kit demonstrates how to call <a href=https://coe-1.cloud.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using Sambaverse, using SambaStudio with a named expert, and using SambaStudio with routing.</td>
 </tr>
 <tr>
 <td width="25%"><a href="data_extraction/README.md">Data Extraction</a>
@@ -47,7 +47,7 @@ If you have any issues with the examples or to provide feedback, [create an issu
 <td width="75%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
 </tr><td width="25%"><a href="image_search/README.md">Image Search</a> 
 </td>
-<td width="75%"> Thi example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
+<td width="75%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
 </tr>
 <td width="25%"><a href="post_call_analysis/README.md">Post Call Analysis</a> 
 </td>
@@ -227,7 +227,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from utils.sambanova_endpoint import SambaNovaEmbeddingModel
 
 load_dotenv('.env')
 

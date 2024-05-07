@@ -5,30 +5,36 @@
 </picture>
 </a>
 
-SambaNova AI Starter Kits
+Fine-Tuning Embedding Starter Kit
 ====================
-# Embedding Fine-Tuning Starter Kit
+
 
 <!-- TOC -->
 
 - [Key features](#key-features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Standard workflow](#standard-workflow)
+- [Before you begin](#before-you-begin)
+   - [Clone the repo and install dependencies](#clone-the-repo-and-install-dependencies)
+   - [Ensure your environment meets prerequisites](#ensure-your-environment-meets-prerequisites)
+   - [Set up the account and config file](#set-up-the-account-and-config-file)
+      - [Setup for SambaStudio](#setup-for-sambastudio)
+      - [Setup for Sambaverse](#setup-for-sambaverse)
+- [Using the model](#using-the-model)
+   - [Prepare data and run the script](#prepare-data-and-run-the-script)
+      - [Additional arguments](#additional-arguments)
+   - [Perform fine tuning using pregenerated data](#perform-finetuning-using-pre-generated-data)
+   - [Evaluating a finetuned model](#evaluating-a-finetuned-model)
+   - [Using SambaNova systems (SNS) embeddings](#using-sambanova-systems-sns-embeddings)
 - [Using pre-generated data for finetuning](#using-pre-generated-data-for-finetuning)
-- [Evaluating a finetuned model](#evaluating-a-finetuned-model)
-- [Using SambaNova systems (SNS) embeddings](#using-sambanova-systems-sns-embeddings)
-- [Additional arguments](#additional-arguments)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgements](#acknowledgments)
 
 <!-- /TOC -->
 
 This comprehensive starter kit guides users through fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance. It supports a flexible workflow catering to different stages of the fine-tuning process, from data preparation to evaluation.
 
-<!--- 
-Where does the model come from? 
-Needs a TOC!--->
 
-## Key features
+# Key features
 
 - **Automated Query Generation**: Automatically generate synthetic query-answer pairs from unstructured text.
 - **Embedding Model Fine-Tuning**: Fine-tune open-source embedding models with a synthetic dataset via the Sentence Transformers library.
@@ -38,35 +44,16 @@ Needs a TOC!--->
  
 Some things to note:
 
- 1. This kit is fine-tuning models from hugging face using the name as of the model ad the model_id referred to later.
- 2. We hope to have embedding model fine-tuning capability in SambaStudio very soon which will allow you to fine-tune embeddings models on SambaNova RDUs.
- 3. In this kit the SambaNova LLM is used in the dataset creation process, namely in creating questions and answers from the chunks in order to finetune the model.
- 4. This kit allows the use of either SambaStudio or SambaVerse please see below: 
+ * This kit is fine-tuning models from Hugging Face using the name of the model and the model_id referred to later.
+ * We hope to have embedding model fine-tuning capability in SambaStudio very soon which will allow you to fine-tune embeddings models on SambaNova RDUs.
+ * In this kit the SambaNova LLM is used in the dataset creation process, namely in creating questions and answers from the chunks in order to finetune the model.
+ * This kit allows the use of either SambaStudio or SambaVerse: 
 
- Create a .env file in the project root directory and provide the necessary API keys based on your chosen entry point:
+# Before you begin
 
-   ```env
-# NEEDED FOR SAMBAVERSE LLM MODEL
-SAMBAVERSE_API_KEY="133-adb-you-key-here"
-SAMBAVERSE_URL="https://yoururl"
+You can use this model with Sambaverse or SambaStudio, but you have to do some setup first. 
 
-# NEEDED FOR SAMBASTUDIO LLM MODEL
-BASE_URL="https://yoursambstudio.url"
-PROJECT_ID="your-samba-studio_coe_model-projectid"
-ENDPOINT_ID="your-samba-studio-coe_model-endpointid"
-API_KEY="your-samba-studio-coe_model-apikey"
-VECTOR_DB_URL=http://localhost:6333
-  ```
-
-The script supports both SambaVerse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you choose to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
-
-### Prerequisites
-=======
-
-- Python 3.11+
-- Required libraries: Sentence Transformers, Hugging Face Transformers
-
-## Installation
+## Clone the repo and install dependencies
 
 1. Clone the ai-starter-kit repo.
 ```
@@ -75,9 +62,61 @@ The script supports both SambaVerse and SambaStudio APIs. Depending on which API
 2. Install the dependencies:
    - With poetry: `poetry install --no-root`
    - With pip: `pip install -r requirements.txt`
+Clone the start kit repo.
+
+## Ensure your environment meets prerequisites
+
+- Python 3.11+
+- Required libraries: Sentence Transformers, Hugging Face Transformers
+
+## Set up the account and config file 
+
+You can use the model with SambaStudio or Sambaverse. 
+
+### Setup for SambaStudio
+
+To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudio account. 
+
+1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
+2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+
+```yaml
+BASE_URL="https://api-stage.sambanova.net"
+PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+VECTOR_DB_URL=http://localhost:6333
+```
+4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
+
+### Setup for Sambaverse
+
+1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
+2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
+3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+
+```yaml
+    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBAVERSE_URL="https://yoururl"
+```
+
+4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
 
 
-## Standard Workflow
+The script supports both SambaVerse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you choose to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
+
+
+
+
+
+
+
+# Using the model
+
+After you've completed installation, you can use and evaluate it. 
+
+## Prepare data and run the script
 
 The standard workflow consists of data preparation and script execution. Follow these steps:
 
@@ -88,16 +127,22 @@ The standard workflow consists of data preparation and script execution. Follow 
    python scriptfine_tune_embed_model_name.py --input_data_directory ./your_data_directory --output_data_directory ./processed_data
    ```
 
-## Using pre-generated data for finetuning
+### Additional arguments
 
-If you've already generated synthetic data, you can proceed directly to fine-tuning:
+The script supports the following arguments to customize the process:
 
+- `--file_extension` for specifying file types.
+- `--split_ratio` to adjust the train-validation dataset split.
+- `--force_retrain` to force retraining even if a finetuned model exists.
 
+Run `python fine_tune_embed_model.py --help` for a full list of arguments and their descriptions.
+
+## Perform finetuning using pre-generated data
 
 If you've previously generated synthetic data and wish to proceed directly to fine-tuning:
-=======
+
 1. Run the script with the following arguments: 
-* `--train_dataset_path` and `--val_dataset_path`are the paths to your pre-generated datasets.
+* `--train_dataset_path` and `--val_dataset_path are the paths to your pre-generated datasets.
 * Specify the model and output directory. 
 
 
@@ -136,25 +181,17 @@ To run the SNS embeddings integration:
 
 The script executes the embedding process for documents and queries, computes similarities, and demonstrates a LangChain retrieval workflow using the predefined embeddings.
 
-## Additional arguments
 
-The script supports the following arguments to customize the process:
 
-- `--file_extension` for specifying file types.
-- `--split_ratio` to adjust the train-validation dataset split.
-- `--force_retrain` to force retraining even if a finetuned model exists.
-
-Run `python fine_tune_embed_model.py --help` for a full list of arguments and their descriptions.
-
-## Contributing
+# Contributing
 
 We welcome contributions! Feel free to improve the process or add features by submitting issues or pull requests.
 
-## License
+# License
 
 This project is licensed under the MIT License.
 
-## Acknowledgments
+# Acknowledgments
 
 - Sentence Transformers and Hugging Face for their resources and pre-trained models.
 - Inspired by practices from [original embedding fine-tuning repository](https://github.com/run-llama/finetune-embedding/tree/main).
