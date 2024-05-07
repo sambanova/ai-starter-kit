@@ -1,0 +1,14 @@
+vector_db:
+  vector_db_location: "../../data/adi_vdb_v3_md_200.chromadb"
+  embed_model_name: "intfloat/e5-large-v2"
+  k: 10
+
+rag_llm:
+  base_url: "https://sjc3-demo2.sambanova.net" 
+  project_id: "2eeb2d6c-525a-481d-8019-9032f66e5339"
+  endpoint_id: "e0c392fc-cc71-4161-ab4d-1b7fee26af84"
+  api_key: "a775c809-c3c8-46eb-9b08-2d4f25349b86"
+  model_kwargs:
+    do_sample: false
+    temperature: 0.01
+    max_tokens_to_generate: 512

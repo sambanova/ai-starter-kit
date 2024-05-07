@@ -1,0 +1,21 @@
+question,ground_truth,tag
+What is the maximum efficiency of the ADP2107?,97%,llm_generated
+What is the quiescent current of the ADP2107?,20 μA,llm_generated
+What is the switching frequency of the ADP2107?,1.2 MHz,llm_generated
+What is the shutdown supply current of the ADP2107?,0.1 μA,llm_generated
+What is the maximum load current of the ADP2107?,2 A,llm_generated
+What is the input voltage range of the ADP2107?,2.7 V to 5.5 V,llm_generated
+What is the output voltage range of the ADP2107?,0.8 V to VIN,llm_generated
+What is the maximum duty cycle of the ADP2107?,100%,llm_generated
+Does the ADP2107 smoothly transition into low dropout (LDO) mode?,Yes,llm_generated
+Does the ADP2107 have an internal synchronous rectifier?,Yes,llm_generated
+What package is the ADP2107 available in?,"16-lead 4 mm × 4 mm LFCSP",llm_generated
+Is the ADP2107 optimized for small ceramic output capacitors?,Yes,llm_generated
+Does the ADP2107 have an enable/shutdown logic input?,Yes,llm_generated
+Does the ADP2107 have undervoltage lockout?,Yes,llm_generated
+Does the ADP2107 have soft start?,Yes,llm_generated
+Is the ADP2107 supported by ADIsimPower design tool?,Yes,llm_generated
+What control scheme does the ADP2107 use at medium to high load currents?,"Current mode, constant frequency pulse-width modulation (PWM)",llm_generated
+What control scheme does the ADP2107 use under light load conditions to save power?,Pulse frequency modulation (PFM),llm_generated
+What are some typical power sources compatible with the ADP2107 input voltage range?,"Single Li+/Li− polymer cell, multiple alkaline/NiMH cells, PCMCIA, and other standard power sources",llm_generated
+How much current does the ADP2107 draw from the input source during logic controlled shutdown?,Less than 0.1 µA,llm_generated
