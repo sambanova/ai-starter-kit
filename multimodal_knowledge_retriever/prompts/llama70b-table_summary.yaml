@@ -6,8 +6,8 @@ input_variables:
 name: null
 output_parser: null
 partial_variables: {}
-template: "[INST]<<SYS>> You are a helpful assistant tasked with summarizing tables and text.\
-  \ Give a concise summary of the table or text. Table or text chunk:<</SYS>>\n\n
+template: "[INST]<<SYS>> You are a helpful assistant tasked with summarizing tables .\
+  \ Give a concise summary of the table chunk:<</SYS>>\n\n
   \ {element} \n    Summary: [/INST]"
 template_format: f-string
 validate_template: false
