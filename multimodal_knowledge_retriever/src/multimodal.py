@@ -12,10 +12,12 @@ import glob
 import yaml
 import json
 import uuid
+import time
 import base64
 import requests
 from dotenv import load_dotenv
 from unstructured.partition.pdf import partition_pdf
+from chromadb.config import Settings
 from langchain.schema import Document
 from langchain.chains import RetrievalQA
 from langchain.storage import InMemoryByteStore
@@ -180,7 +182,7 @@ class MultimodalRetrieval():
             table_summaries = table_summarize_chain.batch(tables, {"max_concurrency":1})
         return table_summaries
     
-    def process_raw_elements(self, raw_elements, images_path):
+    def process_raw_elements(self, raw_elements, images_paths):
         #Categorize by type
         categorized_elements = []
         for element in raw_elements:
@@ -197,8 +199,12 @@ class MultimodalRetrieval():
         text_docs = [e for e in categorized_elements if e.metadata["type"] == "text"]
                 
         image_paths = []
-        image_paths.extend(glob.glob(os.path.join(images_path, '*.jpg')))
-        image_paths.extend(glob.glob(os.path.join(images_path, '*.png')))
+        if isinstance(images_paths, str): 
+            images_paths = [images_paths]
+        for images_path in images_paths:
+            image_paths.extend(glob.glob(os.path.join(images_path, '*.jpg')))
+            image_paths.extend(glob.glob(os.path.join(images_path, '*.jpeg')))
+            image_paths.extend(glob.glob(os.path.join(images_path, '*.png')))
         
         return text_docs, table_docs, image_paths
     
@@ -218,7 +224,9 @@ class MultimodalRetrieval():
             raise ValueError(f"{self.embedding_model_info} is not a valid embedding model type")
         
         vectorstore = Chroma(
-            collection_name="summaries", embedding_function=self.embeddings
+            collection_name="summaries", 
+            embedding_function=self.embeddings,
+            client_settings=Settings(anonymized_telemetry=False)
         )
         store = InMemoryByteStore()  
         id_key = "doc_id"
@@ -244,7 +252,12 @@ class MultimodalRetrieval():
                 ]
                 retriever.vectorstore.add_documents(summary_texts)
             else:
-               retriever.vectorstore.add_documents(text_docs) 
+                texts = [i.page_content for i in text_docs] 
+                texts = [
+                    Document(page_content=s, metadata={id_key: doc_ids[i]})
+                    for i, s in enumerate(texts)
+                ]
+                retriever.vectorstore.add_documents(texts) 
             retriever.docstore.mset(list(zip(doc_ids, text_docs)))
 
         if table_docs:
@@ -257,14 +270,28 @@ class MultimodalRetrieval():
                 ]
                 retriever.vectorstore.add_documents(summary_tables)
             else: 
-                retriever.vectorstore.add_documents(table_docs)
+                tables = [i.page_content for i in table_docs] 
+                tables = [
+                    Document(page_content=s, metadata={id_key: doc_ids[i]})
+                    for i, s in enumerate(tables)
+                ]
+                retriever.vectorstore.add_documents(tables)
             retriever.docstore.mset(list(zip(table_ids, table_docs)))
             
         if image_paths:
             img_ids = [str(uuid.uuid4()) for _ in image_paths]
             image_summaries = self.summarize_images(image_paths)
-            image_docs=[Document(page_content=summary, metadata={"type": "image", 'file_directory': image_path }) 
-                        for summary, image_path in zip(image_summaries, image_paths)]
+            image_docs=[
+                Document(
+                    page_content=summary,
+                    metadata={
+                        "type": "image", 
+                        'file_directory': os.path.dirname(image_path),
+                        'filename': os.path.basename(image_path)
+                        }
+                    ) 
+                for summary, image_path in zip(image_summaries, image_paths)
+            ]
             summary_img = [
                 Document(page_content=s, metadata={id_key: img_ids[i], "path" : image_paths[i]})
                 for i, s in enumerate(image_summaries)
@@ -286,3 +313,34 @@ class MultimodalRetrieval():
         chain.combine_documents_chain.llm_chain.prompt=prompt
         
         return chain
+    
+    def st_ingest(self, files, summarize_tables=False, summarize_texts=False):
+        pdf_files = [file for file in files if file.name.endswith((".pdf"))] 
+        image_files =  [file for file in files if file.name.endswith((".jpg",".jpeg","png"))]
+        raw_elements = []
+        image_paths = []
+        upload_folder = os.path.join(kit_dir, "data", "upload")
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        for pdf in pdf_files:
+            file_path = os.path.join(upload_folder, pdf.name)
+            with open(file_path, 'wb') as file:
+                file.write(pdf.read())
+            raw_pdf_elements, output_path = self.extract_pdf(file_path)
+            raw_elements.extend(raw_pdf_elements)
+            image_paths.append(output_path)
+        if image_files:
+            single_images_folder = os.path.join(upload_folder, f"images_{time.time()}")
+            os.makedirs(single_images_folder)
+            for image in image_files:
+                file_path = os.path.join(single_images_folder, image.name)
+                with open(file_path, 'wb') as file:
+                    file.write(image.read())
+            image_paths.append(single_images_folder)
+        text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
+        retriever=self.create_vectorstore()
+        retriever=self.vectorstore_ingest(
+            retriever, text_docs, table_docs, image_paths, summarize_texts=summarize_texts, summarize_tables=summarize_tables
+            )
+        qa_chain =self.set_retrieval_chain(retriever)
+        return qa_chain
