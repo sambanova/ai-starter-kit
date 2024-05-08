@@ -234,7 +234,7 @@ class VectorDb():
     def load_vdb(self, persist_directory, embedding_model, db_type="chroma"):
 
         if db_type == "faiss":
-            vector_store = FAISS.load_local(persist_directory, embedding_model)
+            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)
         elif db_type == "chroma":
             vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
         elif db_type == "qdrant":
@@ -247,7 +247,7 @@ class VectorDb():
                    output_db: str = None):
 
         if db_type == "faiss":
-            vector_store = FAISS.load_local(input_db, embeddings)
+            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)
             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
             vector_store.merge_from(new_vector_store)
             if output_db:
