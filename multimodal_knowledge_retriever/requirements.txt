@@ -7,6 +7,6 @@ sentence_transformers==2.2.2
 instructorembedding==1.0.1
 streamlit-extras
 sseclient-py==1.8.0
-unstructured[pdf]==0.12.4
-unstructured_inference==0.7.23
+unstructured_inference==0.7.29
+unstructured[pdf]==0.13.6
 chromadb==0.4.24
