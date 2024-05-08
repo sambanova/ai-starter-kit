@@ -39,7 +39,7 @@ class MultimodalRetrieval():
         config_info = self.get_config_info()
         self.api_info =config_info[0]
         self.llm_info =config_info[1]
-        self.lvm_info =config_info[2]
+        self.lvlm_info =config_info[2]
         self.embedding_model_info =config_info[3] 
         self.retrieval_info =config_info[4]
         self.loader = config_info[5]
@@ -54,12 +54,12 @@ class MultimodalRetrieval():
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
         llm_info =  config["llm"]
-        lvm_info = config["lvm"]
+        lvlm_info = config["lvlm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         loader = config["loaders"]
         
-        return api_info, llm_info, lvm_info, embedding_model_info, retrieval_info, loader
+        return api_info, llm_info, lvlm_info, embedding_model_info, retrieval_info, loader
     
     @staticmethod
     def image_to_base64(image_path):
@@ -70,13 +70,13 @@ class MultimodalRetrieval():
     
     def llava_call(self, prompt, image_path, base_url=None, project_id=None, endpoint_id=None, api_key=None):
         if base_url is None:
-            base_url = os.environ.get('BASE_URL')
+            base_url = os.environ.get('LVLM_BASE_URL')
         if project_id is None:
-            project_id = os.environ.get('PROJECT_ID')
+            project_id = os.environ.get('LVLM_PROJECT_ID')
         if endpoint_id is None:
-            endpoint_id = os.environ.get('ENDPOINT_ID')
+            endpoint_id = os.environ.get('LVLM_ENDPOINT_ID')
         if api_key is None:
-            api_key = os.environ.get('API_KEY')
+            api_key = os.environ.get('LVLM_API_KEY')
         endpoint_url = f"{base_url}/api/predict/generic/{project_id}/{endpoint_id}"
         endpoint_key = api_key
         # Define the data payload
@@ -87,12 +87,12 @@ class MultimodalRetrieval():
                 "image_content": f"{image_b64}"
             }],
             "params": {
-                "do_sample": {"type": "bool", "value": str(self.lvm_info["do_sample"])},
-                "max_tokens_to_generate": {"type": "int", "value": str(self.lvm_info["max_tokens_to_generate"])},
-                "temperature": {"type": "float", "value": str(self.lvm_info["temperature"])},
-                "top_k": {"type": "int", "value":  str(self.lvm_info["top_k"])},
+                "do_sample": {"type": "bool", "value": str(self.lvlm_info["do_sample"])},
+                "max_tokens_to_generate": {"type": "int", "value": str(self.lvlm_info["max_tokens_to_generate"])},
+                "temperature": {"type": "float", "value": str(self.lvlm_info["temperature"])},
+                "top_k": {"type": "int", "value":  str(self.lvlm_info["top_k"])},
                 "top_logprobs": {"type": "int", "value": "0"},
-                "top_p": {"type": "float", "value":  str(self.lvm_info["top_p"])}
+                "top_p": {"type": "float", "value":  str(self.lvlm_info["top_p"])}
             }
         }
         # Define headers

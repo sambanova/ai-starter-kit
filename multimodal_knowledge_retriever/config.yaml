@@ -1,4 +1,4 @@
-api: "sambaverse"
+api: "sambastudio"
 
 embedding_model: "sambastudio"
 
@@ -12,7 +12,7 @@ llm:
     "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
     "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
-lvm:
+lvlm:
     "do_sample": false
     "max_tokens_to_generate": 512 
     "temperature": 1
