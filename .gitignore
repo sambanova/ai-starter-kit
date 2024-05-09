@@ -194,3 +194,9 @@ CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
 
 #image search data
 image_search/data
+
+#enterprise knowledge retriever data
+enterprise_knowledge_retriever/data
+
+#multimodal upload
+multimodal_knowledge_retriever/data/upload
