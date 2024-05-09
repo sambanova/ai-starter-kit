@@ -1,6 +1,6 @@
 api_url: "http://localhost:8000/general/v0/general" 
 api_key: "${UNSTRUCTURED_API_KEY}"
-strategy: "hi_res"
+strategy: "auto"
 hi_res_model_name: "yolox"
 ocr_languages: []
 languages: []
