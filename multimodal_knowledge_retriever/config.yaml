@@ -23,5 +23,5 @@ retrieval:
     "max_characters": 1000
     "new_after_n_chars": 800
     "combine_text_under_n_chars": 500
-    "k_retrieved_documents": 1
+    "k_retrieved_documents": 2
 
