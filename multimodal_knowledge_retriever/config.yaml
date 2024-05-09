@@ -1,4 +1,4 @@
-api: "sambaverse"
+api: "sambastudio"
 
 embedding_model: "sambastudio"
 
@@ -12,10 +12,16 @@ llm:
     "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
     "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
+lvlm:
+    "do_sample": false
+    "max_tokens_to_generate": 512 
+    "temperature": 1
+    "top_k": 50
+    "top_p": 1
+
 retrieval:
-    "chunk_size": 1200
-    "chunk_overlap": 240
-    "db_type": "chroma"
-    "k_retrieved_documents": 3
-    "score_threshold": 0.6
+    "max_characters": 1000
+    "new_after_n_chars": 800
+    "combine_text_under_n_chars": 500
+    "k_retrieved_documents": 2
 

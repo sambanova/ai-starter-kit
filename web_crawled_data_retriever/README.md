@@ -80,7 +80,7 @@ The next step sets you up to use one of the models available from SambaNova. It 
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`, and the `embedding_model` variable to `"cpu"`.
 
 
 ### Setup for SambaStudio users
@@ -98,7 +98,33 @@ ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
+4. Update the Embedding API information in your target SambaNova application.
+
+- Option 1 **In CPU embedding model**
+
+    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"`
+
+- Option 2 **Set a sambastudio embedding model**
+
+    You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+    > *Be sure to set batch size model parameter to 32*
+
+    (Step 1) Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+    "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    would be entered in the env file (with no spaces) as:
+    ```
+    EMBED_BASE_URL="https://api-stage.sambanova.net"
+    EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    ```
+    (Step 2) In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+
+  > Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
+  > 
+  > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  *(load_embedding_model method)*
+
+5. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
 
 
 # Deploy the starter kit GUI
@@ -112,9 +138,9 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
     ```
-    cd ai-starter-kit/prompt-engineering
-    python3 -m venv prompt_engineering_env
-    source prompt_engineering_env/bin/activate
+    cd ai-starter-kit/web_crawled_data_retriever
+    python3 -m venv web_crawled_data_retriever_env
+    source web_crawled_data_retriever_env/bin/activate
     pip install -r requirements.txt
     ```
 2. Run the following command:
@@ -253,7 +279,7 @@ Depending on the loader used for scraping the sites, you may want to use a trans
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 
-You can customize the **RecursiveCharacterTextSplitter** in the [kit src file](src/search_assistant.py), which is used by this starter kit by changing the `chunk_size` and `chunk_overlap` parameters. 
+You can customize the **RecursiveCharacterTextSplitter** in get_text_chunks method of [vectordb class](../vectordb/vector_db.py), which is used by this starter kit by changing the `chunk_size` and `chunk_overlap` parameters. 
 * For LLMs with a long sequence length, try using a larger value of `chunk_size` to provide the LLM with broader context and improve performance. 
 * The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 

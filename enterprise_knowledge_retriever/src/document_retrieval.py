@@ -42,7 +42,7 @@ class DocumentRetrieval():
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
-        _info =  config["llm"]
+        llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         loaders = config["loaders"]
@@ -261,7 +261,7 @@ class DocumentRetrieval():
             
         retriever = vectorstore.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": self.retrieval_info["score_treshold"], "k": self.retrieval_info["k_retrieved_documents"]},
+            search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["k_retrieved_documents"]},
         )
         qa_chain = RetrievalQA.from_llm(
             llm=llm,

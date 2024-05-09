@@ -79,11 +79,15 @@ If you have any issues with the examples or to provide feedback, [create an issu
 
 ## Setting your model
 
-### (Option 1) Use Sambaverse models
+### Use Sambaverse models (Option 1)
+
+**Sambaverse**Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
+
+Please note that Sambaverse's free offering is performance-limited. Companies that are ready to evaluate the production tokens-per-second performance, volume throughput, and 10x lower total cost of ownership (TCO) of SambaNova should [contact us](https://sambaverse.sambanova.ai/contact-us) for a non-limited evaluation instance.
 
 Begin by creating a [Sambaverse](https://sambaverse.sambanova.net) account, then [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the username button. Use the available models.
 
-### (Option 2) Deploy your model in SambaStudio
+### Deploy your model in SambaStudio (Option 2)
 
 Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
