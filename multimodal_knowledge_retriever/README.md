@@ -134,12 +134,17 @@ To integrate your models with this AI starter kit, follow these steps:
       ```
       brew install tesseract
       ```
-  - Windows instalation:
+    - Windows instalation:
       > [Windows tessearc instalation](https://github.com/UB-Mannheim/tesseract/wiki)
 
    - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html) 
 
+  
+
 6. (Recommended) Use a `venv` or `conda` environment for installation, and do a `pip install`. 
+
+    > python 3.10 or higher is required to run this kit.
+
     ```bash
       cd ai_starter_kit/multimodal_knowledge_retriever
       python3 -m venv multimodal_knowledge_env
