@@ -193,12 +193,11 @@ fine_tuning_embeddings/finetuned_model
 CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
 
 #Local Test Files
-data_extraction/parser/test_docs
-data_extraction/parser/results
+
 =======
 #image search data
 image_search/data
 
 
-data_extraction/parser/adv_rag.ipynb
-data_extraction/parser/confluence-ingest-output
+utils/parsing/output
+utils/parsing/test_docs

@@ -1,6 +1,0 @@
-requests
-pyyaml
-tqdm
-pydantic
-pandas
-matplotlib

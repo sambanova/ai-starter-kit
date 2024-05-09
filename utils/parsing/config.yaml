@@ -17,6 +17,7 @@ partitioning:
   pdf_infer_table_structure: False
   skip_infer_table_types: []
   strategy: 'hi_res'
+  hi_res_model_name: "yolox"
   ocr_languages: ['eng']
   encoding: 'utf-8'
   fields_include: ['element_id', 'text', 'type', 'metadata', 'embeddings']
@@ -46,6 +47,7 @@ chunking:
   strategy: 'basic'
   chunk_max_characters: 1500
   chunk_overlap: 300
+  overlap_all: True
 
 embedding:
   enabled: True
@@ -67,4 +69,9 @@ destination_connectors:
     location: 'http://localhost:6333'
     collection_name: 'test'
 
-    
+additional_processing:
+  enabled: True
+  extend_metadata: True
+  replace_table_text: True
+  table_text_key: 'text_as_html'
+  return_langchain_docs: True

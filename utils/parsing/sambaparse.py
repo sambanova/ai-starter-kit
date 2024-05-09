@@ -1,14 +1,14 @@
 import os
 import yaml
 import subprocess
-from typing import Dict, Optional
+import json
+from typing import Dict, Optional, List, Tuple
 from dotenv import load_dotenv
-import pandas as pd
+from langchain.docstore.document import Document
 
 load_dotenv()
 
-
-class UnstructuredWrapper:
+class SambaParse:
     def __init__(self, config_path: str):
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
@@ -44,7 +44,7 @@ class UnstructuredWrapper:
             if input_path is None:
                 raise ValueError("Input path is required for local source type.")
             command.extend(['--input-path', input_path])
-            
+
             if self.config['sources']['local']['recursive']:
                 command.append('--recursive')
         elif source_type == 'confluence':
@@ -80,9 +80,6 @@ class UnstructuredWrapper:
             else:
                 raise ValueError("UNSTRUCTURED_API_KEY environment variable is not set.")
 
-        if additional_metadata:
-            for key, value in additional_metadata.items():
-                command.extend(['--metadata', f"{key}={value}"])
 
         if self.config['chunking']['enabled']:
             command.extend([
@@ -123,31 +120,62 @@ class UnstructuredWrapper:
         print(f"Running command: {command_str}")
         subprocess.run(command_str, shell=True, check=True)
 
-        # Post Processing - 
-        # Add additional metadata
-        # Table Extraction to text 
-        # Add description to text ie add some text field append to text and then return it. 
+        # Call the additional processing function if enabled
+        if self.config['additional_processing']['enabled']:
+            texts, metadata_list, langchain_docs = additional_processing(
+                directory=self.config['processor']['output_dir'],
+                extend_metadata=self.config['additional_processing']['extend_metadata'],
+                additional_metadata=additional_metadata,
+                replace_table_text=self.config['additional_processing']['replace_table_text'],
+                table_text_key=self.config['additional_processing']['table_text_key'],
+                return_langchain_docs=self.config['additional_processing']['return_langchain_docs']
+            )
+            return texts, metadata_list, langchain_docs
 
-def main():
-    config_path = 'config_e2e.yaml'
-    wrapper = UnstructuredWrapper(config_path)
+def additional_processing(directory: str, extend_metadata: bool, additional_metadata: Optional[Dict],
+                          replace_table_text: bool, table_text_key: str, return_langchain_docs: bool):
+    if os.path.isfile(directory):
+        file_paths = [directory]
+    else:
+        file_paths = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.json')]
 
-    # Example usage for local source type with a single file
-    source_type = 'local'
-    input_path = './test_docs'
+    texts = []
+    metadata_list = []
+    langchain_docs = []
 
+    for file_path in file_paths:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
 
+        for element in data:
+            if extend_metadata and additional_metadata:
+                element['metadata'].update(additional_metadata)
 
-    additional_metadata = {'key': 'value'}
-    wrapper.run_ingest(source_type, input_path=input_path)
-                        #additional_metadata=additional_metadata)
+            if replace_table_text and element['type'] == 'Table':
+                element['text'] = element['metadata'][table_text_key]
 
-    # Example usage for local source type with a folder
-    # source_type = 'local'
-    # input_path = 'path/to/your/folder'
-    # additional_metadata = {'key': 'value'}
-    # wrapper.run_ingest(source_type, input_path=input_path, additional_metadata=additional_metadata)
+            metadata = element['metadata'].copy()
+            for key in element:
+                if key not in ['text', 'metadata','embeddings']:
+                    metadata[key] = element[key]
+            if 'page_number' in metadata:
+                metadata['page'] = metadata['page_number']
+            else:
+                metadata['page'] = 1
 
+            metadata_list.append(metadata)
+            texts.append(element['text'])
 
-if __name__ == '__main__':
-    main()
+        if return_langchain_docs:
+            langchain_docs.extend(get_langchain_docs(texts, metadata_list))
+
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=2)
+
+    return texts, metadata_list, langchain_docs
+
+def get_langchain_docs(texts: List[str], metadata_list: List[Dict]) -> List[Document]:
+    return [
+        Document(page_content=content, metadata=metadata)
+        for content, metadata in zip(texts, metadata_list)
+    ]
