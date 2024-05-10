@@ -14,6 +14,13 @@ class SambaParse:
             self.config = yaml.safe_load(file)
 
     def run_ingest(self, source_type: str, input_path: Optional[str] = None, additional_metadata: Optional[Dict] = None):
+
+        # Delete Old Output Before running
+        del_command = f"rm -rf {self.config['processor']['output_dir']}"
+        print(f"Running command to delete previous output: {del_command}")
+
+        subprocess.run(del_command, shell=True, check=True)
+
         command = [
             'unstructured-ingest',
             source_type,
@@ -43,7 +50,7 @@ class SambaParse:
         if source_type == 'local':
             if input_path is None:
                 raise ValueError("Input path is required for local source type.")
-            command.extend(['--input-path', input_path])
+            command.extend(['--input-path', '"'+input_path+'"'])
 
             if self.config['sources']['local']['recursive']:
                 command.append('--recursive')
@@ -118,6 +125,7 @@ class SambaParse:
 
         command_str = ' '.join(command)
         print(f"Running command: {command_str}")
+
         subprocess.run(command_str, shell=True, check=True)
 
         # Call the additional processing function if enabled
