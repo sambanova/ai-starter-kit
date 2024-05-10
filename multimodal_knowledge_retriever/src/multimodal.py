@@ -301,20 +301,51 @@ class MultimodalRetrieval():
         
         return retriever
     
-    def set_retrieval_chain(self, retriever):
-        prompt = load_prompt(os.path.join(kit_dir,"prompts","llama70b-knowledge_retriever_custom_qa_prompt.yaml"))
-        chain = RetrievalQA.from_llm(
-            llm = self.llm,
-            retriever=retriever,
-            return_source_documents=True,
-            input_key="question",
-            output_key="answer"
-        )
-        chain.combine_documents_chain.llm_chain.prompt=prompt
-        
-        return chain
+    def get_retrieved_images_and_docs(self, retriever, query):
+        results=retriever.invoke(query)
+        image_results = [result for result in results if result.metadata["type"]=="image"]
+        doc_results = [result for result in results if result.metadata["type"]!="image"]
+        return image_results, doc_results
     
-    def st_ingest(self, files, summarize_tables=False, summarize_texts=False):
+    def get_image_answers(self, retrieved_image_docs, query):
+        image_answer_prompt_template = load_prompt(os.path.join(kit_dir,"prompts","llava-qa.yaml"))
+        image_answer_prompt = image_answer_prompt_template.format(question = query)
+        answers = []
+        for doc in retrieved_image_docs:
+            image_path = os.path.join(doc.metadata["file_directory"],doc.metadata["filename"])
+            answers.append(self.llava_call(image_answer_prompt, image_path))
+        return answers
+    
+    def set_retrieval_chain(self, retriever, image_retrieval_type="raw"):
+        prompt = load_prompt(os.path.join(kit_dir,"prompts","llama70b-knowledge_retriever_custom_qa_prompt.yaml"))
+        if image_retrieval_type == "summary":
+            retrieval_qa_summary_chain = RetrievalQA.from_llm(
+                llm = self.llm,
+                retriever=retriever,
+                return_source_documents=True,
+                input_key="question",
+                output_key="answer"
+            )
+            retrieval_qa_summary_chain.combine_documents_chain.llm_chain.prompt=prompt
+            return retrieval_qa_summary_chain.invoke
+        
+        if image_retrieval_type == "raw":
+            def retrieval_qa_raw_chain(query):
+                image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
+                image_answers = self.get_image_answers(image_docs, query)
+                text_contexts = [doc.page_content for doc in context_docs]
+                full_context = '\n\n'.join(image_answers)+'\n\n'+'\n\n'.join(text_contexts)
+                formated_prompt = prompt.format(context=full_context, question=query)
+                answer = self.llm.invoke(formated_prompt)
+                result={'question': query, 'answer': answer, 'source_documents': image_docs+context_docs}
+                return result
+            return retrieval_qa_raw_chain
+        
+        else:
+            raise ValueError("Invalid value for image_retrieval_type: {}".format(image_retrieval_type))
+    
+    
+    def st_ingest(self, files, summarize_tables=False, summarize_texts=False, raw_image_retrieval=True):
         pdf_files = [file for file in files if file.name.endswith((".pdf"))] 
         image_files =  [file for file in files if file.name.endswith((".jpg",".jpeg","png"))]
         raw_elements = []
@@ -342,5 +373,8 @@ class MultimodalRetrieval():
         retriever=self.vectorstore_ingest(
             retriever, text_docs, table_docs, image_paths, summarize_texts=summarize_texts, summarize_tables=summarize_tables
             )
-        qa_chain =self.set_retrieval_chain(retriever)
+        if raw_image_retrieval:
+            qa_chain =self.set_retrieval_chain(retriever, image_retrieval_type="raw")
+        else:
+            qa_chain = self.set_retrieval_chain(retriever, image_retrieval_type="summary")
         return qa_chain
