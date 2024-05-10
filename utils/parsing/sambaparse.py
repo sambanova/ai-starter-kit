@@ -2,29 +2,47 @@ import os
 import yaml
 import subprocess
 import json
+import logging
 from typing import Dict, Optional, List, Tuple
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 class SambaParse:
     def __init__(self, config_path: str):
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
+        self.logger = logging.getLogger(__name__)
 
     def run_ingest(self, source_type: str, input_path: Optional[str] = None, additional_metadata: Optional[Dict] = None):
+        """
+        Runs the ingest process for the specified source type and input path.
 
-        # Delete Old Output Before running
-        del_command = f"rm -rf {self.config['processor']['output_dir']}"
-        print(f"Running command to delete previous output: {del_command}")
+        Args:
+            source_type (str): The type of source to ingest (e.g., 'local', 'confluence', 'github', 'google-drive').
+            input_path (Optional[str]): The input path for the source (only required for 'local' source type).
+            additional_metadata (Optional[Dict]): Additional metadata to include in the processed documents.
 
+        Returns:
+            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+        """
+        output_dir = self.config['processor']['output_dir']
+        
+        # Create the output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Delete contents of the output directory using shell command
+        del_command = f"rm -rf {output_dir}/*"
+        self.logger.info(f"Running command to delete contents of output directory: {del_command}")
         subprocess.run(del_command, shell=True, check=True)
 
         command = [
             'unstructured-ingest',
             source_type,
-            '--output-dir', self.config['processor']['output_dir'],
+            '--output-dir', output_dir,
             '--num-processes', str(self.config['processor']['num_processes']),
         ]
 
@@ -50,7 +68,7 @@ class SambaParse:
         if source_type == 'local':
             if input_path is None:
                 raise ValueError("Input path is required for local source type.")
-            command.extend(['--input-path', '"'+input_path+'"'])
+            command.extend(['--input-path', f'"{input_path}"'])
 
             if self.config['sources']['local']['recursive']:
                 command.append('--recursive')
@@ -80,13 +98,12 @@ class SambaParse:
 
         if self.config['partitioning']['partition_by_api']:
             api_key = os.getenv("UNSTRUCTURED_API_KEY")
-            partition_endpoint_url = self.config['partitioning']['partition_endpoint']
+            partition_endpoint_url = f"{self.config['partitioning']['partition_endpoint']}:{self.config['partitioning']['unstructured_port']}"
             if api_key:
                 command.extend(['--partition-by-api', '--api-key', api_key])
                 command.extend(['--partition-endpoint', partition_endpoint_url])
             else:
                 raise ValueError("UNSTRUCTURED_API_KEY environment variable is not set.")
-
 
         if self.config['chunking']['enabled']:
             command.extend([
@@ -124,14 +141,14 @@ class SambaParse:
                 raise ValueError(f"Unsupported destination connector type: {destination_type}")
 
         command_str = ' '.join(command)
-        print(f"Running command: {command_str}")
+        self.logger.info(f"Running command: {command_str}")
 
         subprocess.run(command_str, shell=True, check=True)
 
         # Call the additional processing function if enabled
         if self.config['additional_processing']['enabled']:
             texts, metadata_list, langchain_docs = additional_processing(
-                directory=self.config['processor']['output_dir'],
+                directory=output_dir,
                 extend_metadata=self.config['additional_processing']['extend_metadata'],
                 additional_metadata=additional_metadata,
                 replace_table_text=self.config['additional_processing']['replace_table_text'],
@@ -142,6 +159,20 @@ class SambaParse:
 
 def additional_processing(directory: str, extend_metadata: bool, additional_metadata: Optional[Dict],
                           replace_table_text: bool, table_text_key: str, return_langchain_docs: bool):
+    """
+    Performs additional processing on the extracted documents.
+
+    Args:
+        directory (str): The directory containing the extracted JSON files.
+        extend_metadata (bool): Whether to extend the metadata with additional metadata.
+        additional_metadata (Optional[Dict]): Additional metadata to include in the processed documents.
+        replace_table_text (bool): Whether to replace table text with the specified table text key.
+        table_text_key (str): The key to use for replacing table text.
+        return_langchain_docs (bool): Whether to return LangChain documents.
+
+    Returns:
+        Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+    """
     if os.path.isfile(directory):
         file_paths = [directory]
     else:
@@ -164,7 +195,7 @@ def additional_processing(directory: str, extend_metadata: bool, additional_meta
 
             metadata = element['metadata'].copy()
             for key in element:
-                if key not in ['text', 'metadata','embeddings']:
+                if key not in ['text', 'metadata', 'embeddings']:
                     metadata[key] = element[key]
             if 'page_number' in metadata:
                 metadata['page'] = metadata['page_number']
@@ -183,6 +214,16 @@ def additional_processing(directory: str, extend_metadata: bool, additional_meta
     return texts, metadata_list, langchain_docs
 
 def get_langchain_docs(texts: List[str], metadata_list: List[Dict]) -> List[Document]:
+    """
+    Creates LangChain documents from the extracted texts and metadata.
+
+    Args:
+        texts (List[str]): The extracted texts.
+        metadata_list (List[Dict]): The metadata associated with each text.
+
+    Returns:
+        List[Document]: A list of LangChain documents.
+    """
     return [
         Document(page_content=content, metadata=metadata)
         for content, metadata in zip(texts, metadata_list)

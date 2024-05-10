@@ -1,31 +1,7 @@
 processor:
-  reprocess: False
   verbose: True
-  work_dir: 'work'
-  output_dir: 'output'
+  output_dir: './app/output'
   num_processes: 2
-  raise_on_error: False
-
-read:
-  download_dir: 'downloads'
-  re_download: False
-  preserve_downloads: False
-  download_only: False
-  max_docs: 100
-
-partitioning:
-  pdf_infer_table_structure: False
-  skip_infer_table_types: []
-  strategy: 'hi_res'
-  hi_res_model_name: "yolox"
-  ocr_languages: ['eng']
-  encoding: 'utf-8'
-  fields_include: ['element_id', 'text', 'type', 'metadata', 'embeddings']
-  flatten_metadata: False
-  metadata_exclude: []
-  metadata_include: []
-  partition_endpoint: 'http://localhost:8000/general/v0/general'
-  partition_by_api: True
 
 sources:
   local:
@@ -42,27 +18,39 @@ sources:
     recursive: True
     drive_id: 'your_drive_id'
 
+partitioning:
+  pdf_infer_table_structure: False
+  skip_infer_table_types: []
+  strategy: 'auto'
+  ocr_languages: ['eng']
+  encoding: 'utf-8'
+  fields_include: ['element_id', 'text', 'type', 'metadata', 'embeddings']
+  flatten_metadata: False
+  metadata_exclude: []
+  metadata_include: []
+  partition_endpoint: 'http://localhost'
+  unstructured_port: 8005
+  partition_by_api: True
+
 chunking:
   enabled: True
   strategy: 'basic'
   chunk_max_characters: 1500
   chunk_overlap: 300
-  overlap_all: True
 
 embedding:
-  enabled: True
+  enabled: False
   provider: 'langchain-huggingface'
-  api_key_env_var: 'OPENAI_API_KEY'
-  model_name: 'intfloat/e5-large-v2'
+  model_name: 'your_model_name'
 
 destination_connectors:
-  enabled: True
+  enabled: False
   type: 'chroma'
   batch_size: 80
   chroma:
     host: 'localhost'
-    port: 8002
-    collection_name: 'samba_parse_test'
+    port: 8000
+    collection_name: 'your_collection_name'
     tenant: 'default_tenant'
     database: 'default_database'
   qdrant:
