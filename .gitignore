@@ -178,6 +178,7 @@ next-env.d.ts
 
 # Fine tuning Data
 fine_tuning_sql/data/
+yoda/data/
 
 #snapi and snsdk
 SambaStudio_API_Client-*
