@@ -316,7 +316,7 @@ class MultimodalRetrieval():
             answers.append(self.llava_call(image_answer_prompt, image_path))
         return answers
     
-    def set_retrieval_chain(self, retriever, image_retrieval_type="raw"):
+    def get_retrieval_chain(self, retriever, image_retrieval_type="raw"):
         prompt = load_prompt(os.path.join(kit_dir,"prompts","llama70b-knowledge_retriever_custom_qa_prompt.yaml"))
         if image_retrieval_type == "summary":
             retrieval_qa_summary_chain = RetrievalQA.from_llm(
@@ -374,7 +374,7 @@ class MultimodalRetrieval():
             retriever, text_docs, table_docs, image_paths, summarize_texts=summarize_texts, summarize_tables=summarize_tables
             )
         if raw_image_retrieval:
-            qa_chain =self.set_retrieval_chain(retriever, image_retrieval_type="raw")
+            qa_chain =self.get_retrieval_chain(retriever, image_retrieval_type="raw")
         else:
-            qa_chain = self.set_retrieval_chain(retriever, image_retrieval_type="summary")
+            qa_chain = self.get_retrieval_chain(retriever, image_retrieval_type="summary")
         return qa_chain
