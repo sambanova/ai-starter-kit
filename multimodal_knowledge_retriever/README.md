@@ -16,6 +16,7 @@ Multimodal Knowledge Retrieval
     - [Get access to your LLM](#get-access-to-your-llm)
     - [Integrate your models](#integrate-your-models)
     - [Deploy the starter kit](#deploy-the-starter-kit)
+    - [Docker-usage](#docker-usage)
     - [Use the starter kit](#use-the-starter-kit)
 - [Workflow:](#workflow)
     - [Retrieval workflow](#retrieval-workflow)
@@ -162,11 +163,23 @@ After deploying the starter kit you see the following user interface:
 
 ![capture of multimodal_knowledge_retriever_demo](./docs/multimodal_knowledge_app.png)
 
+## Docker-usage
+
+> If you are deploying the docker container in Windows be sure to open the docker desktop application before
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
 ## Use the starter kit 
 
-1. In the **Upload your files** pane, drag and drop or browse for images or PDF files. 
+1. In the **Upload your files** pane, drag and drop or browse for images or PDF files.
 
-2. In the **Set ingetion steps** select processing steps ypu want to apply to the loaded files
+2. In the **Set ingestion steps** select processing steps you want to apply to the loaded files.
+
+3. In the **Set retrieval steps** Select the retrieva lmethod you want to use for answering, see more in [Q&A workflow](#qa).
 
 2. Click **Process** to process all loaded PDFs. A vectorstore is created in memory for making the retrieval process.
 
@@ -198,7 +211,8 @@ This workflow is an example of leveraging data stored in a vector database and d
 
  1.  **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
  
- 2.  **Retrieve relevant sumamries:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (summaries) in it. The vector database and soc storage therefore also act as a retriever for finding the relevant information and fetching the original chunks from the doc storage.
+  2.  **Retrieve relevant documents** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (documents or summaries) in it. The vector database and doc storage therefore also act as a retriever for finding the relevant information and fetching the original chunks from the doc storage.
+
 
 *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
  
@@ -208,9 +222,11 @@ This workflow is an example of leveraging data stored in a vector database and d
 
 ## Q&A
 
-After the relevant information is retrieved, the content is sent to a SambaNova LLM to generate a final response to the user query.
+After the relevant information is retrieved, if answer over raw images is disabled, the content (table and text documents/summaries, and images summaries) are directly sent to a SambaNova LLM to generate a final response to the user query.
 
-The user's query is combined with the retrieved content along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
+If answer over raw images is enabled, the retrieved raw images ans query are send alongside to the LVLM, getting intermediate answers to the query with each images, these intermediate answers are included with relevant text and table documents/summaries to be used as context
+
+The user's query is combined with the retrieved context along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
 
 *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
 
@@ -284,7 +300,7 @@ file: [config.yaml](config.yaml)
 and
 file: [app.py](strematil/app.py)
 ```
-function: get_qa_retrieval_chain 
+function: get_retrieval_chain 
 ```
 
 ## Large language model (LLM)
