@@ -1,6 +1,7 @@
 # qa_processing.py
 import os
 import sys
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -8,7 +9,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
 sys.path.append(os.path.join(repo_dir,"utils"))
 
-import logging
 from .data_reader import read_txt_data, format_text
 from sambanova_endpoint import SambaNovaEndpoint
 
