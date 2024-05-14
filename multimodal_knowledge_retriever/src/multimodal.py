@@ -293,7 +293,7 @@ class MultimodalRetrieval():
             self.embeddings = SambaNovaEmbeddingModel()
         elif self.embedding_model_info == "cpu":
             encode_kwargs = {"normalize_embeddings": True}
-            embedding_model = "hkunlp/instructor-large"
+            embedding_model = "intfloat/e5-large-v2"
             self.embeddings = HuggingFaceInstructEmbeddings(
                 model_name=embedding_model,
                 embed_instruction="",  # no instruction is needed for candidate passages
