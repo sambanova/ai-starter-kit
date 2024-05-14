@@ -24,7 +24,7 @@ from utils.sambanova_endpoint import SambaNovaEmbeddingModel
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
 
-EMBEDDING_MODEL = "hkunlp/instructor-large"
+EMBEDDING_MODEL = "intfloat/e5-large-v2"
 NORMALIZE_EMBEDDINGS = True
 VECTORDB_LOG_FILE_NAME = "vector_db.log"
 
