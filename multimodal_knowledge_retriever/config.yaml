@@ -2,10 +2,6 @@ api: "sambastudio"
 
 embedding_model: "sambastudio"
 
-loaders: 
-    pdf: "unstructured"
-    txt: "text_loader"
-
 llm: 
     "temperature": 0.0
     "max_tokens_to_generate": 1200

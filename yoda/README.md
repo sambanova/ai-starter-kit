@@ -135,26 +135,20 @@ source/yoda_env/bin/activate
 To generate pretraining data, run this script: 
 
 ```bash
-python -m src/gen_data.py
-    --config ./sn_expert_conf.yaml
-    --purpose pretrain 
+python src/gen_data.py  --config ./sn_expert_conf.yaml --purpose pretrain 
 ```
 
 ### Generate finetuning data
 
 To generate finetuning data, run this script:
 ```bash
-python src/gen_data.py
-    --config ./sn_expert_conf.yaml
-    --purpose finetune 
+python src/gen_data.py --config ./sn_expert_conf.yaml --purpose finetune 
 ```
 
 ### Generate both pretraining and finetuning data
 Run this script: 
 ```bash
-python -m src.gen_data
-    --config ./sn_expert_conf.yaml
-    --purpose both 
+python src.gen_data --config ./sn_expert_conf.yaml --purpose both 
 ```
 
 ## Preprocess the data
@@ -166,6 +160,10 @@ To preprocess the data:
 2. Replace the variables `ROOT_GEN_DATA_PREP_DIR` with the path to your [generative data preparation](https://github.com/sambanova/generative_data_prep)
 directory. Also note that `PATH_TO_TOKENIZER` is the path to either a downloaded tokenizer or the huggingface name of
 the model. For example, `meta-llama/Llama-2-7b-chat-hf`. 
+> Note: if you want only to pre-train the JSON to use as input is article_data.jsonl,
+> if you used finetune as --purpose ,the JSON to use as input is synthetic_qa_train.jsonl 
+> if you want to do both in the same training job ,the JSON to use as input is qa_article_mix.jsonl
+
 3. In `scripts/preprocess.sh`, set the `INPUT_FILE` parameter to the absolute path of the output JSONL from [pretraining/finetuning](#data-generation-1) and 
 set `OUTPUT_DIR` to the location where you want your hdf5 files to be dumped before you upload them to 
 SambaStudio Datasets.
