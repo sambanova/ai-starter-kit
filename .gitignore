@@ -2,6 +2,7 @@
 *.bin
 *.parquet
 *.sqlite3
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
