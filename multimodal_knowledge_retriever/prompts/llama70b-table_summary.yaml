@@ -1,0 +1,13 @@
+_type: prompt
+input_types: {}
+input_variables:
+- context
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template: "[INST]<<SYS>> You are a helpful assistant tasked with summarizing tables .\
+  \ Give a concise summary of the table chunk:<</SYS>>\n\n
+  \ {element} \n    Summary: [/INST]"
+template_format: f-string
+validate_template: false

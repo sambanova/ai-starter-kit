@@ -1,0 +1,354 @@
+
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+</picture>
+</a>
+
+Multimodal Knowledge Retrieval
+======================
+<!-- TOC -->
+
+- [Multimodal Knowledge Retrieval](#multimodal-knowledge-retrieval)
+- [Overview](#overview)
+- [Getting started](#getting-started)
+    - [Get access to your LLM](#get-access-to-your-llm)
+    - [Integrate your models](#integrate-your-models)
+    - [Deploy the starter kit](#deploy-the-starter-kit)
+    - [Docker-usage](#docker-usage)
+    - [Use the starter kit](#use-the-starter-kit)
+- [Workflow:](#workflow)
+    - [Retrieval workflow](#retrieval-workflow)
+    - [Q&A](#qa)
+- [Customizing the template](#customizing-the-template)
+    - [Import Data](#import-data)
+    - [Split Data](#split-data)
+    - [Embed data](#embed-data)
+    - [Store embeddings](#store-embeddings)
+    - [Retrieval](#retrieval)
+    - [Large language model LLM](#large-language-model-llm)
+        - [Prompt engineering](#prompt-engineering)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
+
+# Overview
+
+This AI Starter Kit is an example of a multimodal retrieval workflow. You load your images or PDF files, and get answers to questions about the documents content. The Kit includes:
+ -   A configurable SambaStudio connector. The connector generates answers from a deployed multimodal model, and a deployed LLM.
+ -   An integration with a third-party vector database.
+ -   An implementation of a semantic search workflow.
+ -   An implementation of a multi-vector database for searching over document summaries
+ -   Prompt construction strategies.
+
+This sample is ready-to-use. We provide two options:
+* [Getting Started](#getting-started) help you run a demo by following a few simple steps.
+* [Customizing the Template](#customizing-the-template) serves as a starting point for customizing the demo to your organization's needs.
+   
+
+# Getting started
+
+## Get access to your LLM 
+
+First, you need access to a multimodal model, you should deploy a your LVLM of choice (e.g. Llava 1.5) to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/llava-7b.html#_deploy_a_llava_v1_5_7b_endpoint). 
+
+Then, you need access to a model. You have these choices: 
+
+* **Use Sambaverse**. Create an account and [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key). You can now use any of the models included in [Sambaverse](sambaverse.sambanova.net).
+* **Use SambaStudio**. Deploy the LLM of choice (e.g. Llama 2 70B chat, etc) to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+
+## Integrate your models
+
+To integrate your models with this AI starter kit, follow these steps:
+1. Clone the ai-starter-kit repo.
+  ```
+  git clone https://github.com/sambanova/ai-starter-kit.git
+  ```
+
+2. Update the multimodal model API information in the Starter Kit.
+
+    update the environment variables file in the root repo directory `sn-ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+   ```
+    LVLM_BASE_URL="https://api-stage.sambanova.net"
+    LVLM_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    LVLM_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+   ```
+
+3. Update the LLM API information in the Starter Kit. 
+
+    - Option 1 **SambaStudio Endpoint:**
+        (Step 1) Update the environment variables file in the root repo directory `sn-ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+      ```
+        SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+        SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+      ```
+
+      (Step 2) In the [config file](./config.yaml) file, set the variable `api` to `"sambastudio"`
+
+    - Option 2 **Sambaverse Endpoint:**
+        (Step 1): Update the `sn-ai-starter-kit/.env` file in the root repo directory to include your API key. For example, enter an API key "456789ab-cdef-0123-4567-89abcdef0123" in the env file (with no spaces) as:
+
+      ```
+        SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+      ```
+
+        (Step 2) In the [config file](./config.yaml) file, set the variable `api` to `"sambaverse"`
+
+
+4. Update the Embedding API information in your target SambaNova application.
+
+    - Option 1 **In CPU embedding model**
+
+        In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"`
+
+    - Option 2 **Set a sambastudio embedding model**
+
+        You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+        > *Be sure to set batch size model parameter to 32*
+
+        (Step 1) Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+        would be entered in the env file (with no spaces) as:
+        ```
+        EMBED_BASE_URL="https://api-stage.sambanova.net"
+        EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123" 
+        EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+        (Step 2) In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+
+      > Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
+      > 
+      > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  *(load_embedding_model method)*
+
+5.  Install system dependencies
+
+   - Ubuntu instalation:
+      ```
+      sudo apt install tesseract-ocr
+      ```
+   - Mac Homebrew instalation:
+      ```
+      brew install tesseract
+      ```
+    - Windows instalation:
+      > [Windows tessearc instalation](https://github.com/UB-Mannheim/tesseract/wiki)
+
+   - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html) 
+
+  
+
+6. (Recommended) Use a `venv` or `conda` environment for installation, and do a `pip install`. 
+
+    > python 3.10 or higher is required to run this kit.
+
+    ```bash
+      cd ai_starter_kit/multimodal_knowledge_retriever
+      python3 -m venv multimodal_knowledge_env
+      source multimodal_knowledge_env/bin/activate
+      pip  install  -r  requirements.txt
+    ```
+
+## Deploy the starter kit
+To run the demo, run the following commands:
+```
+streamlit run streamlit/app.py --browser.gatherUsageStats false 
+```
+
+After deploying the starter kit you see the following user interface:
+
+![capture of multimodal_knowledge_retriever_demo](./docs/multimodal_knowledge_app.png)
+
+## Docker-usage
+
+> If you are deploying the docker container in Windows be sure to open the docker desktop application before
+
+To run this with docker, run the command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
+## Use the starter kit 
+
+1. In the **Upload your files** pane, drag and drop or browse for images or PDF files.
+
+2. In the **Set ingestion steps** select processing steps you want to apply to the loaded files.
+
+3. In the **Set retrieval steps** Select the retrieva lmethod you want to use for answering, see more in [Q&A workflow](#qa).
+
+2. Click **Process** to process all loaded PDFs. A vectorstore is created in memory for making the retrieval process.
+
+3. Ask questions about your data in the main panel.
+
+# Workflow:
+
+This workflow is an example of parsing and indexing data for subsequent Q&A. The steps are:
+
+1. **Document parsing:** Python package [unstructured](https://github.com/Unstructured-IO/unstructured-inference) is used to extract text from PDF documents. There are multiple [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) available for text extraction from PDF on LangChain website. Depending on the quality and the format of the PDF files, this step might require customization for different use cases.
+
+
+2.  **Split data:** After the data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger and related context chunks result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using the [unstructured partition pdf](https://unstructured-io.github.io/unstructured/core/partition.html) method with chunking_strategy="by_title".
+
+3 **Sumarize data**
+
+Text chunks and identified tables are summarized using the selected Large Language Model, and For image parsing the Large Vision-Large Model is used as image summarizer
+
+
+3. **Embed data:** 
+For each chunk from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query.
+
+*For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
+
+4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This AI template is setup to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired.
+
+## Retrieval workflow
+This workflow is an example of leveraging data stored in a vector database and doc storage along with a large language model to enable retrieval-based Q&A off your data. The steps are:
+
+ 1.  **Embed query:** Given a user submitted query, the first step is to convert it into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, it is recommended to use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
+ 
+  2.  **Retrieve relevant documents** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (documents or summaries) in it. The vector database and doc storage therefore also act as a retriever for finding the relevant information and fetching the original chunks from the doc storage.
+
+
+*More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
+ 
+*Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
+
+*More information about multivector rerievers [here](https://python.langchain.com/docs/modules/data_connection/retrievers/multi_vector/)*
+
+## Q&A
+
+After the relevant information is retrieved, if answer over raw images is disabled, the content (table and text documents/summaries, and images summaries) are directly sent to a SambaNova LLM to generate a final response to the user query.
+
+If answer over raw images is enabled, the retrieved raw images ans query are send alongside to the LVLM, getting intermediate answers to the query with each images, these intermediate answers are included with relevant text and table documents/summaries to be used as context
+
+The user's query is combined with the retrieved context along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
+
+*Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+
+# Customizing the template
+
+The example template can be further customized based on the use case.
+
+## Import Data
+
+**PDF Format:** Different packages are available to extract text from PDF files. They can be broadly categorized as
+- OCR-based: [pytesseract](https://pypi.org/project/pytesseract/), [paddleOCR](https://pypi.org/project/paddleocr/), [unstructured](https://unstructured.io/)
+- Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
+Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
+
+You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md)
+
+Unstructured kit includes a easy to use image extraction method using YOLOX model which is used by default in the kit, when using other extraction tool you should implement a proper image extraction strategy
+
+
+You can include a new loader in the following location:
+```
+file: src/multimodal.py
+function: extract_pdf
+```
+
+## Split Data
+
+This kit uses the data normalization and partition strategy from unstructured package but you can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
+
+you can modify the maximum length of each chunk in the following location:
+file: [config.yaml](config.yaml)
+```yaml
+retrieval:
+    "max_characters": 1000
+    "new_after_n_chars": 800
+    "combine_text_under_n_chars": 500
+    ...
+```
+
+## Embed data
+
+Several open-source embedding models are available on Hugging Face. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
+
+You can do this modification in the following location:
+```
+file: src/multimodal.py
+function: create_vectorstore
+```
+
+For details about the SambaStudio hosted embedding models see the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
+
+## Store embeddings
+
+The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://js.langchain.com/docs/modules/data_connection/vectorstores/integrations/) provides a broad collection of vector stores that can be easily integrated.
+
+You can do this modification in the following location:
+```
+file: src/multimodal.py
+function: create_vectorstore
+```
+
+## Retrieval
+
+A wide collection of retriever options is available. In this starter kit, the vector store and doc store are used as retriever, but they can be enhanced and customized, as shown in [here](https://python.langchain.com/docs/modules/data_connection/retrievers/multi_vector/).
+
+You can do this modification in the following location:
+file: [config.yaml](config.yaml)
+```yaml
+    "k_retrieved_documents": 3
+```
+and
+file: [app.py](strematil/app.py)
+```
+function: get_retrieval_chain 
+```
+
+## Large language model (LLM)
+
+**If using Sambaverse endpoint**
+
+You can test the performance of multiple models avalable in Sambaverse by the model:
+
+- Search the available models in playground and select the three dots. Click **Show code**, and search for the values of the `modelName` and `select_expert` tags.
+- To modify the parameters for calling the model, change the values of `sambaverse_model_name` and `sambaverse_expert` in *llm* in the `config.yaml` file. You can also set the values of temperature and maximum generation token in that file. 
+
+**If using SambaStudio:**
+
+- The starter kit uses the SN LLM model, which can be further fine-tuned to improve response quality. To train a model in SambaStudio, [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
+- To modify the parameters for calling the model, make changes to the `config.yaml` file. You can also set the values of temperature and maximum generation token in that file. 
+
+### Prompt engineering
+
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
+```python
+custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
+
+{context}    
+
+Question: {question}
+
+Helpful answer: [/INST]"""
+
+CUSTOMPROMPT = PromptTemplate(
+template=custom_prompt_template, input_variables=["context", "question"]
+)
+```
+
+You can make modifications in the [prompts](./prompts) folder
+
+# Third-party tools and data sources
+
+All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+
+- streamlit (version 1.32.0)
+- pydantic (version 2.7.0)
+- pydantic_core (version 2.18.1)
+- python-dotenv (version 1.0.1)
+- langchain (version 0.1.17)
+- sentence_transformers (version 2.2.2)
+- instructorembedding (version 1.0.1)
+- streamlit-extras
+- sseclient-py (version 1.8.0)
+- unstructured_inference (version 0.7.29)
+- unstructured[pdf] (version 0.13.6)
+- chromadb (version 0.4.24)

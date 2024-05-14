@@ -1,0 +1,10 @@
+version: '1'
+services:
+  multimodal_knowledge_retriever_service:
+    build: 
+      context: ../
+      dockerfile: multimodal_knowledge_retriever/docker/Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/multimodal_knowledge_retriever/data

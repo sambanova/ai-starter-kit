@@ -52,13 +52,14 @@ class WebCrawlingRetrieval:
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
+        embedding_model_info =config["embedding_model"]
         llm_info =  config["llm"]
         retreival_info = config["retrieval"]
         web_crawling_params = config["web_crawling"]
         extra_loaders = config["extra_loaders"]
         
         
-        return api_info, llm_info, retreival_info, web_crawling_params, extra_loaders
+        return api_info, embedding_model_info ,llm_info, retreival_info, web_crawling_params, extra_loaders
             
     @staticmethod
     def load_remote_pdf(url):
@@ -206,7 +207,7 @@ class WebCrawlingRetrieval:
     def init_llm_model(self) -> None:
         """Initializes the LLM endpoint
         """
-        api_info, llm_info, *_ = WebCrawlingRetrieval._get_config_info()
+        api_info, _,llm_info, *_ = WebCrawlingRetrieval._get_config_info()
         if api_info=="sambaverse":
             self.llm = SambaverseEndpoint(
                 sambaverse_model_name=llm_info["sambaverse_model_name"],
@@ -238,12 +239,11 @@ class WebCrawlingRetrieval:
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
         
-        *_, retrieval_info, _, _ = WebCrawlingRetrieval._get_config_info()
-        
+        _, embedding_model_type, _, retrieval_info,  *_ = WebCrawlingRetrieval._get_config_info()
         
         persist_directory = self.config.get("persist_directory", "NoneDirectory")
         
-        self.embeddings = self.vectordb.load_embedding_model()
+        self.embeddings = self.vectordb.load_embedding_model(type=embedding_model_type)
         
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(persist_directory, self.embeddings, db_type = retrieval_info["db_type"])
@@ -259,10 +259,10 @@ class WebCrawlingRetrieval:
     
     def create_and_save_local(self, input_directory, persist_directory, update=False):
         
-        *_, retrieval_info, _, _ = WebCrawlingRetrieval._get_config_info()
+        _, embedding_model_type, _, retrieval_info,  *_ = WebCrawlingRetrieval._get_config_info()
         
         self.chunks = self.vectordb.get_text_chunks(self.documents , retrieval_info["chunk_size"], retrieval_info["chunk_overlap"])
-        self.embeddings = self.vectordb.load_embedding_model()
+        self.embeddings = self.vectordb.load_embedding_model(type=embedding_model_type)
         if update:
             self.config["update"]=True
             self.vector_store = self.vectordb.update_vdb(self.chunks, self.embeddings, retrieval_info["db_type"], input_directory, persist_directory)
