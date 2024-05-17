@@ -1,10 +1,15 @@
 import os
 import sys
 sys.path.append('../')
+sys.path.append('../src')
+sys.path.append('../src/llmperf')
+sys.path.append('../src/ray_clients')
 
 import streamlit as st
-
 from st_pages import Page, show_pages, add_page_title
+from dotenv import load_dotenv
+
+load_dotenv('../.env', override=True)
 
 
 st.set_page_config(
