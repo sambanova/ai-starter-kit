@@ -94,7 +94,6 @@ async def worker(index: int, num_requests: int, in_tokens: int = 2048, max_out_t
     # Sleep some time to offset the threads.
     await asyncio.sleep(0.01*index)
 
-    # for _ in tqdm(range(num_requests)):
     for _ in range(num_requests):
         request_start_time = time.time()
         generated_ouput = llm.invoke(prompt[0])
@@ -115,7 +114,6 @@ async def single_benchmark(num_requests_per_worker: int, num_workers: int, in_to
     tasks = []
     for i in range(num_workers):
         # run worker in background
-        # task = asyncio.create_task(worker(i, num_requests_per_worker, in_tokens, out_tokens))
         task = asyncio.create_task(worker(i, num_requests_per_worker, in_tokens, out_tokens))
         tasks.append(task)
         
@@ -161,6 +159,8 @@ async def benchmark(parallel_workers: int = 1, in_tokens: int = 2048, out_tokens
     # We use the time to generate just 1 token to get the time to first token, this is stored in median_latency[0]
     output_token_time = (median_latency[2] - median_latency[1])*1000/(avg_num_output_tokens[2]-avg_num_output_tokens[1])
     print(f'Time to first token (s): {round(median_latency[0],2)}, Time per output token (ms) {round(output_token_time,2)}')
+    print()
+    print()
 
     output = {
         'parallel_workers': parallel_workers,
