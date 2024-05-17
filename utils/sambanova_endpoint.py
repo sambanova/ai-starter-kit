@@ -56,10 +56,12 @@ class SVEndpointHandler:
             if response.status_code == 200 and json.loads(text_result).get("error"):
                 completion = ""
                 for line in lines_result[:-1]:
-                    completion += json.loads(line)["result"]["responses"][0]["stream_token"]
+                    completion += json.loads(line)["result"]["responses"][0][
+                        "stream_token"
+                    ]
                 text_result = lines_result[-2]
                 result = json.loads(text_result)
-                result["result"]["responses"][0]["completion"]=completion
+                result["result"]["responses"][0]["completion"] = completion
             else:
                 result = json.loads(text_result)
         except Exception as e:
@@ -78,9 +80,12 @@ class SVEndpointHandler:
                 chunk = json.loads(line)
                 if "status_code" not in chunk:
                     chunk["status_code"] = response.status_code
+                if chunk["status_code"] == 200 and chunk.get("error"):
+                    chunk["result"] = {"responses": [{"stream_token": ""}]}
+                    return chunk
                 yield chunk
         except Exception as e:
-            print(e)
+            raise RuntimeError(f"Error processing streaming response: {e}")
 
     def _get_full_url(self) -> str:
         """
@@ -94,7 +99,7 @@ class SVEndpointHandler:
         self,
         key: str,
         sambaverse_model_name: Optional[str],
-        input: str,
+        input: Union[List[str], str],
         params: Optional[str] = "",
         stream: bool = False,
     ) -> Dict:
@@ -119,7 +124,7 @@ class SVEndpointHandler:
                 }
             ],
         }
-        parsed_input = (json.dumps(parsed_element))
+        parsed_input = json.dumps(parsed_element)
         if params:
             data = {"instance": parsed_input, "params": json.loads(params)}
         else:
@@ -141,7 +146,7 @@ class SVEndpointHandler:
         sambaverse_model_name: Optional[str],
         input: Union[List[str], str],
         params: Optional[str] = "",
-    ) -> Iterator[GenerationChunk]:
+    ) -> Iterator[Dict]:
         """
         NLP predict using inline input string.
 
@@ -163,7 +168,7 @@ class SVEndpointHandler:
                 }
             ],
         }
-        parsed_input = (json.dumps(parsed_element))
+        parsed_input = json.dumps(parsed_element)
         if params:
             data = {"instance": parsed_input, "params": json.loads(params)}
         else:
@@ -181,6 +186,7 @@ class SVEndpointHandler:
         )
         for chunk in SVEndpointHandler._process_streaming_response(response):
             yield chunk
+
 
 class SsStreamingHandler(BaseCallbackHandler):
     """Wrapper around Base Callback Handler."""
@@ -212,15 +218,16 @@ class SambaverseEndpoint(LLM):
         from langchain_community.llms.sambanova  import Sambaverse
         Sambaverse(
             sambaverse_url="https://sambaverse.sambanova.ai",
-            sambaverse_api_key: "your sambaverse api key",
-            sambaverse_model_name: "Meta/llama-2-7b-chat-hf",
+            sambaverse_api_key="your-sambaverse-api-key",
+            sambaverse_model_name="Meta/llama-2-7b-chat-hf",
             streaming: = False
             model_kwargs={
+                "select_expert": "llama-2-7b-chat-hf",
                 "do_sample": False,
                 "max_tokens_to_generate": 100,
                 "temperature": 0.7,
                 "top_p": 1.0,
-                "repetition_penalty": 1,
+                "repetition_penalty": 1.0,
                 "top_k": 50,
             },
         )
@@ -289,7 +296,9 @@ class SambaverseEndpoint(LLM):
         _kwarg_stop_sequences = _model_kwargs.get("stop_sequences", [])
         _stop_sequences = stop or _kwarg_stop_sequences
         if not _kwarg_stop_sequences:
-            _model_kwargs["stop_sequences"] = ",".join(f'"{x}"' for x in _stop_sequences)
+            _model_kwargs["stop_sequences"] = ",".join(
+                f'"{x}"' for x in _stop_sequences
+            )
         tuning_params_dict = {
             k: {"type": type(v).__name__, "value": str(v)}
             for k, v in (_model_kwargs.items())
@@ -327,7 +336,10 @@ class SambaverseEndpoint(LLM):
             optional_message = response["error"].get("message")
             raise ValueError(
                 f"Sambanova /complete call failed with status code "
-                f"{response['status_code']}. \n Message: {optional_message} \n Details: {optional_details} \n Code: {optional_code}"
+                f"{response['status_code']}."
+                f"Message: {optional_message}"
+                f"Details: {optional_details}"
+                f"Code: {optional_code}"
             )
         return response["result"]["responses"][0]["completion"]
 
@@ -374,11 +386,14 @@ class SambaverseEndpoint(LLM):
                 optional_message = chunk["error"].get("message")
                 raise ValueError(
                     f"Sambanova /complete call failed with status code "
-                    f"{chunk['status_code']}. \n Message: {optional_message} \n Details: {optional_details} \n Code: {optional_code}"
+                    f"{chunk['status_code']}."
+                    f"Message: {optional_message}"
+                    f"Details: {optional_details}"
+                    f"Code: {optional_code}"
                 )
             text = chunk["result"]["responses"][0]["stream_token"]
-            chunk = GenerationChunk(text=text)
-            yield chunk
+            generated_chunk = GenerationChunk(text=text)
+            yield generated_chunk
 
     def _stream(
         self,
