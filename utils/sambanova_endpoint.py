@@ -584,7 +584,6 @@ class SSEndpointHandler:
                         chunk["status_code"] = response.status_code
                     if chunk["status_code"] == 200 and chunk.get("error"):
                         chunk["result"] = {"responses": [{"stream_token": ""}]}
-                        return chunk
                     yield chunk
             except Exception as e:
                 raise RuntimeError(f"Error processing streaming response: {e}")
