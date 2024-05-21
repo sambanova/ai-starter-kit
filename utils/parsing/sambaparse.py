@@ -10,12 +10,12 @@ from langchain.docstore.document import Document
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class SambaParse:
     def __init__(self, config_path: str):
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
-        self.logger = logging.getLogger(__name__)
 
     def run_ingest(self, source_type: str, input_path: Optional[str] = None, additional_metadata: Optional[Dict] = None):
         """
@@ -36,7 +36,7 @@ class SambaParse:
 
         # Delete contents of the output directory using shell command
         del_command = f"rm -rf {output_dir}/*"
-        self.logger.info(f"Running command to delete contents of output directory: {del_command}")
+        logger.info(f"Deleting contents of output directory: {output_dir}")
         subprocess.run(del_command, shell=True, check=True)
 
         command = [
@@ -56,7 +56,7 @@ class SambaParse:
             '--metadata-include', ','.join(self.config['partitioning']['metadata_include']),
         ])
 
-        if not self.config['partitioning']['pdf_infer_table_structure']:
+        if self.config['partitioning']['pdf_infer_table_structure']:
             command.append('--pdf-infer-table-structure')
 
         if self.config['partitioning']['skip_infer_table_types']:
@@ -102,8 +102,14 @@ class SambaParse:
             if api_key:
                 command.extend(['--partition-by-api', '--api-key', api_key])
                 command.extend(['--partition-endpoint', partition_endpoint_url])
+                command.extend(['--pdf-infer-table-structure'])
             else:
                 raise ValueError("UNSTRUCTURED_API_KEY environment variable is not set.")
+
+        if self.config['partitioning']['strategy'] == 'hi_res':
+            if 'hi_res_model_name' in self.config['partitioning'] and self.config['partitioning']['hi_res_model_name']:
+                command.extend(['--hi-res-model-name', self.config['partitioning']['hi_res_model_name']])
+            logger.warning("You've chosen the high-resolution partitioning strategy. Grab a cup of coffee or tea while you wait, as this may take some time due to OCR and table detection.")
 
         if self.config['chunking']['enabled']:
             command.extend([
@@ -141,12 +147,16 @@ class SambaParse:
                 raise ValueError(f"Unsupported destination connector type: {destination_type}")
 
         command_str = ' '.join(command)
-        self.logger.info(f"Running command: {command_str}")
+        logger.info(f"Running command: {command_str}")
+        logger.info("This may take some time depending on the size of your data. Please be patient...")
 
         subprocess.run(command_str, shell=True, check=True)
 
+        logger.info("Ingest process completed successfully!")
+
         # Call the additional processing function if enabled
         if self.config['additional_processing']['enabled']:
+            logger.info("Performing additional processing...")
             texts, metadata_list, langchain_docs = additional_processing(
                 directory=output_dir,
                 extend_metadata=self.config['additional_processing']['extend_metadata'],
@@ -155,6 +165,7 @@ class SambaParse:
                 table_text_key=self.config['additional_processing']['table_text_key'],
                 return_langchain_docs=self.config['additional_processing']['return_langchain_docs']
             )
+            logger.info("Additional processing completed.")
             return texts, metadata_list, langchain_docs
 
 def additional_processing(directory: str, extend_metadata: bool, additional_metadata: Optional[Dict],

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set default values
-ENV_FILE="./.env"
-CONFIG_FILE="config.yaml"
+ENV_FILE="../.env.local"
+CONFIG_FILE="./config.yaml"
 
 # Parse command line arguments
 while getopts ":e:c:" opt; do
