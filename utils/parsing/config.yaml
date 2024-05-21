@@ -64,3 +64,4 @@ additional_processing:
   replace_table_text: True
   table_text_key: 'text_as_html'
   return_langchain_docs: True
+  convert_metadata_keys_to_string: True

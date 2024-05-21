@@ -11,6 +11,9 @@ from langchain.prompts import PromptTemplate, load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain.docstore.document import Document
+import shutil
+from typing import List, Dict, Optional
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -23,6 +26,9 @@ CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
 
 load_dotenv(os.path.join(repo_dir,'.env'))
+
+from utils.parsing.sambaparse import SambaParse, parse_doc_universal
+
 
 class DocumentRetrieval():
     def __init__(self):
@@ -49,158 +55,48 @@ class DocumentRetrieval():
         
         return api_info, llm_info, embedding_model_info, retrieval_info, loaders
     
-    def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
-        """Extract text and metadata from pdf document with pypdf2 loader
+
+    def parse_doc(self, docs: List, additional_metadata: Optional[Dict] = None) -> List[Document]:
+        """
+        Parse the uploaded documents and return a list of LangChain documents.
 
         Args:
-            pdf_doc: path to pdf document
+            docs (List[UploadFile]): A list of uploaded files.
+            additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
+                Defaults to an empty dictionary.
 
         Returns:
-            list, list: list of extracted text and metadata per page
+            List[Document]: A list of LangChain documents.
         """
-        text = []
-        metadata = []
-        pdf_reader = PdfReader(pdf_doc)
-        doc_name = pdf_doc.name
-        for page in pdf_reader.pages:
-            #page_number =pdf_reader.get_page_number(page)+1
-            text.append(page.extract_text())
-            metadata.append({"filename": doc_name})#, "page": page_number})
-        return text, metadata
+        if additional_metadata is None:
+            additional_metadata = {}
 
-
-    def get_pdf_text_and_metadata_fitz(self, pdf_doc):    
-        """Extract text and metadata from pdf document with fitz loader
-
-        Args:
-            pdf_doc: path to pdf document
-
-        Returns:
-            list, list: list of extracted text and metadata per page
-        """
-        text = []
-        metadata = []
-        temp_folder = os.path.join(kit_dir,"data/tmp")
-        temp_file = os.path.join(temp_folder,"file.pdf")
+        # Create the data/tmp folder if it doesn't exist
+        temp_folder = os.path.join(kit_dir, "data/tmp")
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder)
-        with open(temp_file, "wb") as f:
-            f.write(pdf_doc.getvalue())
-        docs = fitz.open(temp_file)  
-        for page, page in enumerate(docs):
-            full_text = ''
-            bboxes = column_boxes(page, footer_margin=100, no_image_text=True)
-            for rect in bboxes:
-                full_text += page.get_text(clip=rect, sort=True)
-            text.append(full_text)
-            metadata.append({"filename": pdf_doc.name})
-        return text, metadata
+        else:
+            # If there are already files there, delete them
+            for filename in os.listdir(temp_folder):
+                file_path = os.path.join(temp_folder, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print(f'Failed to delete {file_path}. Reason: {e}')
 
-    def get_pdf_text_and_metadata_unstructured(self, pdf_doc):
-        """Extract text and metadata from pdf document with unstructured loader
+        # Save all selected files to the tmp dir with their file names
+        for doc in docs:
+            temp_file = os.path.join(temp_folder, doc.name)
+            with open(temp_file, "wb") as f:
+                f.write(doc.getvalue())
 
-        Args:
-            pdf_doc: path to pdf document
+        # Pass in the temp folder for processing into the parse_doc_universal function
+        _, _, langchain_docs = parse_doc_universal(doc=temp_folder, additional_metadata=additional_metadata)
+        return langchain_docs
 
-        Returns:
-            list, list: list of extracted text and metadata per page
-        """
-        text = []
-        metadata = []
-        temp_folder = os.path.join(kit_dir,"data/tmp")
-        temp_file = os.path.join(temp_folder,"file.pdf")
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-        with open(temp_file, "wb") as f:
-            f.write(pdf_doc.getvalue())
-        loader = UnstructuredPDFLoader(temp_file)
-        docs_unstructured = loader.load()
-        for doc in docs_unstructured:
-            text.append(doc.page_content)
-            metadata.append({"filename": pdf_doc.name})
-        return text, metadata
-    
-    def get_txt_text_and_metadata(self, txt_doc):
-        """Extract text and metadata from txt document with txt loader
-
-        Args:
-            txt_doc: path to txt document
-
-        Returns:
-            list, list: list of extracted text and metadata per page
-            
-        """
-        text = []
-        metadata = []
-        temp_folder = os.path.join(kit_dir,"data/tmp")
-        temp_file = os.path.join(temp_folder,"file.txt")
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-        with open(temp_file, "wb") as f:
-            f.write(txt_doc.getvalue())
-            
-        loader = TextLoader(temp_file)
-        docs_text_loader = loader.load()
-        
-        for doc in docs_text_loader:
-            text.append(doc.page_content)
-            metadata.append({"filename": txt_doc.name})
-        return text, metadata
-
-    def get_data_for_splitting(self, docs):
-        """Extract text and metadata from all the pdf files
-
-        Args:
-            pdf_docs (list): list of pdf files
-
-        Returns:
-            list, list: list of extracted text and metadata per file
-        """
-        files_data = []
-        files_metadatas = []
-        for i in range(len(docs)):
-            if docs[i].name.endswith(".pdf"):
-                if self.loaders["pdf"] == "unstructured":
-                    text, meta = self.get_pdf_text_and_metadata_unstructured(docs[i])
-                elif self.loaders["pdf"] == "pypdf2":
-                    text, meta = self.get_pdf_text_and_metadata_pypdf2(docs[i])
-                elif self.loaders["pdf"] == "fitz":
-                    text, meta = self.get_pdf_text_and_metadata_fitz(docs[i])
-                else:
-                    raise ValueError(f"{self.loaders['pdf']} is not a valid pdf loader")
-            elif docs[i].name.endswith(".txt"):
-                if self.loaders["txt"] == "text_loader":
-                    text, meta = self.get_txt_text_and_metadata(docs[i])
-                else:
-                    raise ValueError(f"{self.loaders['txt']} is not a valid txt loader")
-            files_data.extend(text)
-            files_metadatas.extend(meta)
-        return files_data, files_metadatas      
-            
-    def get_text_chunks_with_metadata(self, docs, meta_data):
-        """Gets text chunks. .
-
-        Args:
-        doc (list): list of strings with text to split 
-        chunk_size (int): chunk size in number of tokens
-        chunk_overlap (int): chunk overlap in number of tokens
-        metadata (list, optional): list of metadata in dictionary format.
-
-        Returns:
-            list: list of documents 
-        """
-        chunk_size = self.retrieval_info["chunk_size"]
-        chunk_overlap = self.retrieval_info["chunk_overlap"]
-        chunks_list = []
-        text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
-            )
-        for doc, meta in zip(docs, meta_data):
-            chunks = text_splitter.create_documents([doc], [meta])
-            for chunk in chunks:
-                chunk.page_content = f"Source: {meta['filename'].split('.')[0]}, Text: \n{chunk.page_content}\n"
-                chunks_list.append(chunk)
-        return chunks_list
 
     def load_embedding_model(self):
         embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info) 
@@ -292,5 +188,7 @@ class DocumentRetrieval():
         Returns:
         RetrievalQA: A chain ready for QA with memory
         """
+
+
 
 

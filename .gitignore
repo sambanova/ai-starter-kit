@@ -207,6 +207,7 @@ utils/parsing/test_docs
 =======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
+enterprise_knowledge_retriever/app/output
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload
