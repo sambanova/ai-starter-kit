@@ -2,6 +2,7 @@
 *.bin
 *.parquet
 *.sqlite3
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -178,6 +179,7 @@ next-env.d.ts
 
 # Fine tuning Data
 fine_tuning_sql/data/
+yoda/data/
 
 #snapi and snsdk
 SambaStudio_API_Client-*
@@ -208,4 +210,8 @@ enterprise_knowledge_retriever/data
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload
+
+=======
+#web crawled retriever data
+web_crawled_data_retriever/data/
 

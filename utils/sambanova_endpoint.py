@@ -51,8 +51,17 @@ class SVEndpointHandler:
         """
         result: Dict[str, Any] = {}
         try:
-            text_result = response.text.strip().split("\n")[-1]
-            result = {"data": json.loads("".join(text_result.split("data: ")[1:]))}
+            lines_result = response.text.strip().split("\n")
+            text_result = lines_result[-1]
+            if response.status_code == 200 and json.loads(text_result).get("error"):
+                completion = ""
+                for line in lines_result[:-1]:
+                    completion += json.loads(line)["result"]["responses"][0]["stream_token"]
+                text_result = lines_result[-2]
+                result = json.loads(text_result)
+                result["result"]["responses"][0]["completion"]=completion
+            else:
+                result = json.loads(text_result)
         except Exception as e:
             result["detail"] = str(e)
         if "status_code" not in result:
@@ -62,25 +71,16 @@ class SVEndpointHandler:
     @staticmethod
     def _process_streaming_response(
         response: requests.Response,
-    ) -> Generator[GenerationChunk, None, None]:
+    ) -> Generator[Dict, None, None]:
         """Process the streaming response"""
         try:
-            import sseclient
-        except ImportError:
-            raise ImportError(
-                "could not import sseclient library"
-                "Please install it with `pip install sseclient-py`."
-            )
-        client = sseclient.SSEClient(response)
-        close_conn = False
-        for event in client.events():
-            if event.event == "error_event":
-                close_conn = True
-            text = json.dumps({"event": event.event, "data": event.data})
-            chunk = GenerationChunk(text=text)
-            yield chunk
-        if close_conn:
-            client.close()
+            for line in response.iter_lines():
+                chunk = json.loads(line)
+                if "status_code" not in chunk:
+                    chunk["status_code"] = response.status_code
+                yield chunk
+        except Exception as e:
+            print(e)
 
     def _get_full_url(self) -> str:
         """
@@ -94,7 +94,7 @@ class SVEndpointHandler:
         self,
         key: str,
         sambaverse_model_name: Optional[str],
-        input: Union[List[str], str],
+        input: str,
         params: Optional[str] = "",
         stream: bool = False,
     ) -> Dict:
@@ -109,25 +109,21 @@ class SVEndpointHandler:
         :returns: Prediction results
         :rtype: dict
         """
-        if isinstance(input, str):
-            input = [input]
-        parsed_input = []
-        for element in input:
-            parsed_element = {
-                "conversation_id": "sambaverse-conversation-id",
-                "messages": [
-                    {
-                        "message_id": 0,
-                        "role": "user",
-                        "content": element,
-                    }
-                ],
-            }
-            parsed_input.append(json.dumps(parsed_element))
+        parsed_element = {
+            "conversation_id": "sambaverse-conversation-id",
+            "messages": [
+                {
+                    "message_id": 0,
+                    "role": "user",
+                    "content": input,
+                }
+            ],
+        }
+        parsed_input = (json.dumps(parsed_element))
         if params:
-            data = {"inputs": parsed_input, "params": json.loads(params)}
+            data = {"instance": parsed_input, "params": json.loads(params)}
         else:
-            data = {"inputs": parsed_input}
+            data = {"instance": parsed_input}
         response = self.http_session.post(
             self._get_full_url(),
             headers={
@@ -157,25 +153,21 @@ class SVEndpointHandler:
         :returns: Prediction results
         :rtype: dict
         """
-        if isinstance(input, str):
-            input = [input]
-        parsed_input = []
-        for element in input:
-            parsed_element = {
-                "conversation_id": "sambaverse-conversation-id",
-                "messages": [
-                    {
-                        "message_id": 0,
-                        "role": "user",
-                        "content": element,
-                    }
-                ],
-            }
-            parsed_input.append(json.dumps(parsed_element))
+        parsed_element = {
+            "conversation_id": "sambaverse-conversation-id",
+            "messages": [
+                {
+                    "message_id": 0,
+                    "role": "user",
+                    "content": input,
+                }
+            ],
+        }
+        parsed_input = (json.dumps(parsed_element))
         if params:
-            data = {"inputs": parsed_input, "params": json.loads(params)}
+            data = {"instance": parsed_input, "params": json.loads(params)}
         else:
-            data = {"inputs": parsed_input}
+            data = {"instance": parsed_input}
         # Streaming output
         response = self.http_session.post(
             self._get_full_url(),
@@ -294,13 +286,15 @@ class SambaverseEndpoint(LLM):
             The tuning parameters as a JSON string.
         """
         _model_kwargs = self.model_kwargs or {}
-        _stop_sequences = _model_kwargs.get("stop_sequences", [])
-        _stop_sequences = stop or _stop_sequences
-        _model_kwargs["stop_sequences"] = ",".join(f'"{x}"' for x in _stop_sequences)
+        _kwarg_stop_sequences = _model_kwargs.get("stop_sequences", [])
+        _stop_sequences = stop or _kwarg_stop_sequences
+        if not _kwarg_stop_sequences:
+            _model_kwargs["stop_sequences"] = ",".join(f'"{x}"' for x in _stop_sequences)
         tuning_params_dict = {
             k: {"type": type(v).__name__, "value": str(v)}
             for k, v in (_model_kwargs.items())
         }
+        _model_kwargs["stop_sequences"] = _kwarg_stop_sequences
         tuning_params = json.dumps(tuning_params_dict)
         return tuning_params
 
@@ -328,14 +322,14 @@ class SambaverseEndpoint(LLM):
             self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params
         )
         if response["status_code"] != 200:
-            optional_details = response["details"]
-            optional_message = response["message"]
+            optional_code = response["error"].get("code")
+            optional_details = response["error"].get("details")
+            optional_message = response["error"].get("message")
             raise ValueError(
                 f"Sambanova /complete call failed with status code "
-                f"{response['status_code']}. Details: {optional_details}"
-                f"{response['status_code']}. Message: {optional_message}"
+                f"{response['status_code']}. \n Message: {optional_message} \n Details: {optional_details} \n Code: {optional_code}"
             )
-        return response["data"]["completion"]
+        return response["result"]["responses"][0]["completion"]
 
     def _handle_completion_requests(
         self, prompt: Union[List[str], str], stop: Optional[List[str]]
@@ -374,6 +368,16 @@ class SambaverseEndpoint(LLM):
         for chunk in sdk.nlp_predict_stream(
             self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params
         ):
+            if chunk["status_code"] != 200:
+                optional_code = chunk["error"].get("code")
+                optional_details = chunk["error"].get("details")
+                optional_message = chunk["error"].get("message")
+                raise ValueError(
+                    f"Sambanova /complete call failed with status code "
+                    f"{chunk['status_code']}. \n Message: {optional_message} \n Details: {optional_details} \n Code: {optional_code}"
+                )
+            text = chunk["result"]["responses"][0]["stream_token"]
+            chunk = GenerationChunk(text=text)
             yield chunk
 
     def _stream(
