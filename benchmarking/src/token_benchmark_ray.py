@@ -22,9 +22,11 @@ from llmperf.utils import (
     sample_random_positive_int,
 )
 from tqdm import tqdm
+from dotenv import load_dotenv
+
+load_dotenv('../.env', override=True)
 
 from transformers import LlamaTokenizerFast
-
 
 def get_token_throughput_latencies(
     model: str,
