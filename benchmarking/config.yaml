@@ -1,4 +1,0 @@
-performance_eval:
-  input_tokens: 50
-  output_tokens: 50
-  num_requests_per_worker: 5
