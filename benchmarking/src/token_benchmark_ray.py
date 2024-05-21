@@ -22,9 +22,6 @@ from llmperf.utils import (
     sample_random_positive_int,
 )
 from tqdm import tqdm
-from dotenv import load_dotenv
-
-load_dotenv('.env', override=True)
 
 from transformers import LlamaTokenizerFast
 
@@ -40,6 +37,7 @@ def get_token_throughput_latencies(
     max_num_completed_requests: int = 500,
     test_timeout_s=90,
     llm_api="sambanova",
+    mode="stream",
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """Get the token throughput and latencies for the given model.
 
@@ -100,6 +98,8 @@ def get_token_throughput_latencies(
             prompt=prompt,
             sampling_params=default_sampling_params,
             llm_api=llm_api,
+            mode=mode,
+            num_concurrent_requests=num_concurrent_requests,
         )
         req_launcher.launch_requests(request_config)
         # Retrieving results less frequently allows for more concurrent requests
@@ -109,21 +109,7 @@ def get_token_throughput_latencies(
             outs = req_launcher.get_next_ready()
             all_metrics = []
             for out in outs:
-                request_metrics, gen_text, _ = out
-                num_output_tokens = get_token_length(gen_text)
-                if num_output_tokens:
-                    request_metrics[common_metrics.INTER_TOKEN_LAT] /= num_output_tokens
-                else:
-                    request_metrics[common_metrics.INTER_TOKEN_LAT] = 0
-                request_metrics[common_metrics.NUM_OUTPUT_TOKENS] = num_output_tokens
-                request_metrics[common_metrics.NUM_TOTAL_TOKENS] = (
-                    request_metrics[common_metrics.NUM_INPUT_TOKENS] + num_output_tokens
-                )
-                request_metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
-                    (num_output_tokens / request_metrics[common_metrics.E2E_LAT])
-                    if request_metrics[common_metrics.E2E_LAT] > 0
-                    else 0
-                )
+                request_metrics, _, _ = out
                 all_metrics.append(request_metrics)
             completed_requests.extend(all_metrics)
         pbar.update(len(completed_requests) - num_completed_requests)
@@ -138,20 +124,7 @@ def get_token_throughput_latencies(
     outs = req_launcher.get_next_ready()
     all_metrics = []
     for out in outs:
-        request_metrics, gen_text, _ = out
-        num_output_tokens = get_token_length(gen_text)
-        if num_output_tokens:
-            request_metrics[common_metrics.INTER_TOKEN_LAT] /= num_output_tokens
-        else:
-            request_metrics[common_metrics.INTER_TOKEN_LAT] = 0
-        request_metrics[common_metrics.NUM_OUTPUT_TOKENS] = num_output_tokens
-        request_metrics[common_metrics.NUM_TOTAL_TOKENS] = (
-            request_metrics[common_metrics.NUM_INPUT_TOKENS] + num_output_tokens
-        )
-        request_metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
-            num_output_tokens / request_metrics[common_metrics.E2E_LAT]
-        )
-
+        request_metrics, _, _ = out
         all_metrics.append(request_metrics)
     completed_requests.extend(all_metrics)
 
@@ -210,7 +183,6 @@ def metrics_summary(
     df_without_errored_req = df[df[common_metrics.ERROR_CODE].isna()]
 
     for key in [
-        common_metrics.INTER_TOKEN_LAT,
         common_metrics.TTFT,
         common_metrics.E2E_LAT,
         common_metrics.REQ_OUTPUT_THROUGHPUT,
@@ -283,6 +255,7 @@ def run_token_benchmark(
     stddev_output_tokens: int,
     additional_sampling_params: str,
     results_dir: str,
+    mode: str,
     user_metadata: Dict[str, Any],
 ):
     """
@@ -319,10 +292,11 @@ def run_token_benchmark(
         stddev_output_tokens=stddev_output_tokens,
         num_concurrent_requests=num_concurrent_requests,
         additional_sampling_params=json.loads(additional_sampling_params),
+        mode=mode,
     )
 
     if results_dir:
-        filename = f"{model}_{mean_input_tokens}_{mean_output_tokens}_{num_concurrent_requests}"
+        filename = f"{model}_{mean_input_tokens}_{mean_output_tokens}_{num_concurrent_requests}_{mode}"
         filename = re.sub(r"[^\w\d-]+", "-", filename)
         filename = re.sub(r"-{2,}", "-", filename)
         summary_filename = f"{filename}_summary"
@@ -446,6 +420,12 @@ args.add_argument(
     ),
 )
 args.add_argument(
+    "--mode",
+    type=str,
+    default="stream",
+    help=("Choose between batch or stream" " (default: %(default)s)"),
+)
+args.add_argument(
     "--metadata",
     type=str,
     default="",
@@ -479,5 +459,6 @@ if __name__ == "__main__":
         num_concurrent_requests=args.num_concurrent_requests,
         additional_sampling_params=args.additional_sampling_params,
         results_dir=args.results_dir,
+        mode=args.mode,
         user_metadata=user_metadata,
     )
