@@ -10,6 +10,7 @@ python src/token_benchmark_ray.py \
 --num-concurrent-requests 1 \
 --results-dir "./data/results/llmperf" \
 --llm-api sambanova \
+--mode stream \
 --additional-sampling-params '{}'
 
 # # Non-COE model: Remember to source .env for new endpoint
