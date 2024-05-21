@@ -1,92 +1,112 @@
-# LLMPerf
 
-A Tool for evaluating the performance of LLM APIs.
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+</picture>
+</a>
 
-# Installation
-```bash
-git clone https://github.com/ray-project/llmperf.git
-cd llmperf
-pip install -e .
+Benchmarking
+======================
+
+<!-- TOC -->
+
+- [Overview](#overview)
+- [Getting started](#getting-started)
+    - [Get access to your model](#get-access-to-your-model)
+    - [Integrate your model](#integrate-your-model)
+    - [Deploy the starter kit](#run-the-starter-kit)
+    - [Use the starter kit](#use-the-starter-kit)
+- [Workflow: Performance evaluation](#workflow-performance-evaluation-wip)
+    - [Set parameters](#)
+    - [Analyze results](#)
+- [Workflow: Performance on chat](#workflow-performance-on-chat-wip)
+    - [Set parameters](#)
+    - [Interact with LLM](#)
+
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
+
+# Overview
+
+This AISK performs a performance evaluation on different LLM models hosted in SambaStudio Center of Experts deployment. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs, but measurement metrics simultanously. The Kit includes:
+- A configurable SambaStudio COE connector. The connector generates answers from a deployed model.
+- An app with two functionalities:
+    - A performance evaluation process with configurable options that users will utilize to obtain and compare different results. 
+    - A chat interface with configurable options that users will set to interact and get performance metrics.
+
+This sample is ready-to-use. We provide two options:
+* [Getting Started](#getting-started) help you run the kit by following a few simple steps.
+* [Performance evaluation](#workflow-performance-evaluation) serves as a starting point for customizing the available parameters and obtain interesting performance results based on cocurrent processes.
+* [Performance on chat](#workflow-performance-on-chat) provides a set of options and a chat interface to interact with and analyze multiple performance metrics.
+   
+# Getting started
+
+## Get access to your model
+
+First, you need access to a SambaStudio Center of Experts (COE) model. Therefore, it's mandatory to have all necessary experts downloaded on the SambaStudio platform, specially those that will be used with this Kit. [Follow these steps](https://docs.sambanova.ai/sambastudio/latest/model-hub.html#_download_models_using_the_gui) to download the experts or check if  they're already downloaded.
+
+Deploy the **Samba-1.0** model to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for more information. It might take some minutes, so please be patient.
+
+## Integrate your model
+
+To integrate your LLM with this AI starter kit, follow these steps:
+1. Clone the ai-starter-kit repo.
+```
+git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-# Basic Usage
+2. Update the SambaStudio COE LLM API information in your target SambaNova application. 
 
-We implement performance tests for evaluating LLMs.
+    Update the environment variables file in the root repo directory `ai-starter-kit-snova/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+   ```
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+   ```
 
-## Load test
-
-The load test spawns a number of concurrent requests to the LLM API and measures the inter-token latency and generation throughput per request and across concurrent requests. The prompt that is sent with each request is of the format:
-
+3. (Recommended) Use a `venv` or `conda` environment for installation, and do a `pip install`. 
 ```
-Randomly stream lines from the following text. Don't generate eos tokens:
-LINE 1,
-LINE 2,
-LINE 3,
-...
+cd ai-starter-kit-snova/benchmarking
+python3 -m venv benchmarking_env
+source benchmarking_env/bin/activate
+pip  install  -r  requirements.txt
 ```
-
-Where the lines are randomly sampled from a collection of lines from Shakespeare sonnets. Tokens are counted using the `LlamaTokenizer` regardless of which LLM API is being tested. This is to ensure that the prompts are consistent across different LLM APIs.
-
-To run the most basic load test you can the token_benchmark_ray script.
-
-
-### Caveats and Disclaimers
-
-- The endpoints provider backend might vary widely, so this is not a reflection on how the software runs on a particular hardware.
-- The results may vary with time of day.
-- The results may vary with the load.
-- The results may not correlate with users’ workloads.
-
-### SambaNova Compatible APIs
-Update API information for the SambaNova LLM
-These are represented as configurable variables in the environment variables file in .env.
-
-For example, enter an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123" in the env file (with no spaces) as:
-
+## Run the starter kit
+To run the demo, execute the following command:
 ```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-```
-python token_benchmark_ray.py \
---model "sambanova/Llama-2-7b-chat-hf" \
---mean-input-tokens 550 \
---stddev-input-tokens 150 \
---mean-output-tokens 150 \
---stddev-output-tokens 10 \
---max-num-completed-requests 2 \
---timeout 600 \
---num-concurrent-requests 1 \
---results-dir "result_outputs" \
---llm-api sambanova \
---additional-sampling-params '{}'
-```
-### LiteLLM
-
-LLMPerf can use LiteLLM to send prompts to LLM APIs. To see the environment variables to set for the provider and arguments that one should set for model and additional-sampling-params.
-
-see the [LiteLLM Provider Documentation](https://docs.litellm.ai/docs/providers).
-
-```bash
-python token_benchmark_ray.py \
---model "meta-llama/Llama-2-7b-chat-hf" \
---mean-input-tokens 550 \
---stddev-input-tokens 150 \
---mean-output-tokens 150 \
---stddev-output-tokens 10 \
---max-num-completed-requests 2 \
---timeout 600 \
---num-concurrent-requests 1 \
---results-dir "result_outputs" \
---llm-api "litellm" \
---additional-sampling-params '{}'
+cd streamlit
+streamlit run app.py --browser.gatherUsageStats false 
 ```
 
-see `python token_benchmark_ray.py --help` for more details on the arguments.
+After deploying the starter kit, you'll see the following user interface:
 
+![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
 
-## Saving Results
+## Use the starter kit 
 
-The results of the load test are saved in the results directory specified by the `--results-dir` argument. The results are saved in 2 files, one with the summary metrics of the test, and one with metrics from each individual request that is returned.
+More details will come in the following sections [Workflow: Performance evaluation](#workflow-performance-evaluation) and [Workflow: Performance on chat](#workflow-performance-on-chat). However, the general usage of both is the comming bullets:
+
+1. In the left side bar, pick one of the two app functionalities: `Performance evaluation` or `Performance on chat`.
+
+2. Select the LLM model/expert and configure each of the parameters related to each functionality.
+
+3. Press the `Run` button, wait and see the results in the middle of the screen. In the case of `Performance on chat` functionality, users are able to interact with the LLM in a chat interface.  
+
+# Workflow: Performance evaluation (WIP)
+
+# Workflow: Performance on chat (WIP)
+
+# Third-party tools and data sources 
+
+All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+
+- streamlit (version 1.34.0)
+- st-pages (version 0.4.5)
+- ray (version 2.22.0)
+- transformers (version 4.40.1)
+- python-dotenv (version 1.0.0)
+- Requests (version 2.31.0)
+- seaborn (version 0.12.2)
