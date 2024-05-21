@@ -194,14 +194,24 @@ fine_tuning_embeddings/finetuned_model
 #CoE JumpStart
 CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
 
+#Local Test Files
+
+=======
 #image search data
 image_search/data
 
+
+
+utils/parsing/output
+utils/parsing/test_docs
+=======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload
 
+=======
 #web crawled retriever data
 web_crawled_data_retriever/data/
+

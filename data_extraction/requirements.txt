@@ -120,3 +120,6 @@ html2text==2020.1.16
 unstructured_pytesseract==0.3.12
 chromadb==0.4.22
 sseclient-py==1.8.0
+
+#Addn Code Formatting
+black
