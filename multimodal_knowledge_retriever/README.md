@@ -56,7 +56,7 @@ This sample is ready-to-use. We provide two options:
 # Before you begin
 
 This starter kit, you need both a LVLM and a LLM. 
-* We use the Llava 1.5 LVM, which is currently available only in SambaStudio. 
+* We use the Llava 1.5 LVLM, which is currently available only in SambaStudio. 
 * You can use a LLM of your choice, either from Sambaverse or from SambaStudio. 
 
 It might make sense to use two SambaStudio models.
@@ -185,10 +185,6 @@ NOTE: python 3.10 or higher is required to run this kit.
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
-```
-streamlit run streamlit/app.py --browser.gatherUsageStats false 
-```
-
 After deploying the starter kit you see the following user interface:
 
 ![capture of multimodal_knowledge_retriever_demo](./docs/multimodal_knowledge_app.png)
@@ -231,12 +227,12 @@ This workflow is an example of parsing and indexing data for subsequent Q&A. The
 
 2. **Split data:** After the data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger and related context chunks result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using the [unstructured partition pdf](https://unstructured-io.github.io/unstructured/core/partition.html) method with `chunking_strategy="by_title"`.
 
-3 **Sumarize data** Text chunks and identified tables are summarized using the selected Large Language Model. For image parsing the Large Vision-Large Model is used as image summarizer.
+3 **Summarize data** Text chunks and identified tables are summarized using the selected Large Language Model. For image parsing the Large Vision-Language Model is used as image summarizer.
 
 
 3. **Embed data:** For each chunk from the previous step, we use an embeddings model to create a vector representation. These embeddings are used in the storage and retrieval of the most relevant content given a user's query.
 
-    For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)
+    For more information about what an embedding is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)
 
 4. **Store embeddings:** Embeddings for each chunk are stored in a vector database, along with content and relevant metadata (such as source documents). The embedding acts as the index in the database. In this starter kit, we store information with each entry, which can be modified to suit your needs. Several vector databases are available, each with their own pros and cons. This AI starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but you could use a different vector database if you like. 
 
