@@ -16,8 +16,8 @@ class RequestsLauncher:
 
         Args:
             request_config: The configuration for the request.
-
         """
+        
         if self._llm_client_pool.has_free():
             self._llm_client_pool.submit(
                 lambda client, _request_config: client.llm_request.remote(
@@ -30,12 +30,13 @@ class RequestsLauncher:
         """Return results that are ready from completed requests.
 
         Args:
-            block: Whether to block until a result is ready.
+            block (bool): Whether to block until a result is ready.
 
         Returns:
-            A list of results that are ready.
+            List[Any]: A list of results that are ready.
 
         """
+        
         results = []
         if not block:
             while self._llm_client_pool.has_next():

@@ -8,11 +8,10 @@ from typing import Any, Dict, Tuple
 
 from transformers import LlamaTokenizerFast
 
-
 RESULTS_VERSION = "2023-08-31"
 
-
 class LLMPerfResults:
+    """Class with LLM Performance results"""
     def __init__(
         self,
         name: str,
@@ -44,7 +43,6 @@ def upload_to_s3(results_path: str, s3_path: str) -> None:
     Args:
         results_path: The path to the results file.
         s3_path: The s3 path to upload the results to.
-
     """
 
     command = ["aws", "s3", "sync", results_path, f"{s3_path}/"]
@@ -130,6 +128,7 @@ def sample_random_positive_int(mean: int, stddev: int) -> int:
     Returns:
         A random positive integer sampled from the gaussian distribution.
     """
+    
     ret = -1
     while ret <= 0:
         ret = int(random.gauss(mean, stddev))
