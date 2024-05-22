@@ -11,6 +11,8 @@ class RequestConfig(BaseModel):
         sampling_params: Additional sampling parameters to send with the request.
             For more information see the Router app's documentation for the completions
         llm_api: The name of the LLM API to send the request to.
+        mode: API mode (stream or batch)
+        num_concurrent_requests: number of concurrent requests
         metadata: Additional metadata to attach to the request for logging or validation purposes.
     """
 
