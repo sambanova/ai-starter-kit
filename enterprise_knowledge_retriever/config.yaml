@@ -13,9 +13,9 @@ llm:
     "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
 retrieval:
-    "chunk_size": 1200
-    "chunk_overlap": 240
+    "chunk_size": 1500
+    "chunk_overlap": 300
     "db_type": "chroma"
-    "k_retrieved_documents": 3
+    "k_retrieved_documents": 4
     "score_threshold": 0.6
 

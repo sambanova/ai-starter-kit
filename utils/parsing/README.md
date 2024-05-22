@@ -34,14 +34,14 @@ Before using SambaParse, make sure you have the following:
    pip install git+https://github.com/sambanova/ai-starter-kit
    ```
 
-2. Set up the Unstructured API server:
+2. Start the local Unstructured API server:
 
    
 
-   - Run the provided shell script to start the Unstructured API container (make it executable beforehand):
+   - Run Docker Compose Up (Ensure you have docker compose installed) (run from the parsing dir):
 
      ```bash
-     ./server_setup.sh
+    docker-compose up
      ```
 
      This script will start the Unstructured API container using the specified API key and expose it on the custom port defined in the YAML configuration file (default: 8005).
