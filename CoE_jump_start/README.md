@@ -55,15 +55,22 @@ This AI starter kit supports the following features:
   cd CoE_jump_start
   ```
 
-2. Install the required dependencies:
+2a. Create a venv:  
+
+  ```bash
+  python<version> -m venv <virtual-environment-name>
+  ```
+
+2b. - Install the requirements via pip: 
+
   ```bash
   - With pip: `pip install -r requirements.txt` 
   - With poetry: `poetry install --no-root`
   ```
-2b. - Create a venv: 
-  ```bash
-  python<version> -m venv <virtual-environment-name>
-  ```
+
+
+
+
 
 3. Set up the config.yaml file with your API credentials and preferences. For example:
   ```yaml
