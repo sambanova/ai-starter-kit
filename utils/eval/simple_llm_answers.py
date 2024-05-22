@@ -11,7 +11,7 @@ class SimpleLLMAnswers:
         self.prompt = PromptTemplate(
             template="Question: {question}\nAnswer:", input_variables=["question"]
         )
-    
+
     def generate(self, query: str) -> Dict:
         """Generate an answer for the given query"""
         response = self.llm(self.prompt.format(question=query))

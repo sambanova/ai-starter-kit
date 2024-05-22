@@ -204,6 +204,7 @@ image_search/data
 
 utils/parsing/output
 utils/parsing/test_docs
+utils/parsing/confluence-ingest-output
 =======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
@@ -215,4 +216,5 @@ multimodal_knowledge_retriever/data/upload
 =======
 #web crawled retriever data
 web_crawled_data_retriever/data/
+
 
