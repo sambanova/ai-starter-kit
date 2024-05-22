@@ -16,6 +16,8 @@ retrieval:
     "chunk_size": 1200
     "chunk_overlap": 240
     "db_type": "chroma"
-    "k_retrieved_documents": 3
+    "k_retrieved_documents": 15
     "score_threshold": 0.6
+    "rerank": True
+    "final_k_retrieved_documents": 3
 

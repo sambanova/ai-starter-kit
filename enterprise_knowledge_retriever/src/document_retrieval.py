@@ -11,6 +11,9 @@ from langchain.prompts import PromptTemplate, load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain_core.output_parsers import StrOutputParser
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -32,7 +35,8 @@ class DocumentRetrieval():
         self.llm_info =config_info[1] 
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
-        self.loaders = config_info[4] 
+        self.loaders = config_info[4]
+        self.retriever = None
 
     def get_config_info(self):
         """
@@ -214,7 +218,54 @@ class DocumentRetrieval():
         vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type=self.retrieval_info["db_type"])
         return vectorstore
     
-    def get_qa_retrieval_chain(self, vectorstore):
+    def init_retriever(self, vectorstore):
+
+        self.retriever = vectorstore.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["k_retrieved_documents"]},
+        )
+
+    def _format_docs(self, docs):
+    
+        return "\n\n".join(doc.page_content for doc in docs)
+    
+    def rerank_docs(self, query, docs, final_k):
+        
+        # Lazy hardcoding for now
+        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
+        reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
+        pairs = []
+        for d in docs:
+            pairs.append([query, d.page_content])
+
+        with torch.no_grad():
+            inputs = tokenizer(
+                pairs,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=512,
+            )
+            scores = (
+                reranker(**inputs, return_dict=True)
+                .logits.view(
+                    -1,
+                )
+                .float()
+            )
+
+        scores_list = scores.tolist()
+        scores_sorted_idx = sorted(
+            range(len(scores_list)), key=lambda k: scores_list[k], reverse=True
+        )
+
+        docs_sorted = [docs[k] for k in scores_sorted_idx]
+        # docs_sorted = [docs[k] for k in scores_sorted_idx if scores_list[k]>0]
+        docs_sorted = docs_sorted[:final_k]
+
+        return docs_sorted
+    
+    def qa_retrieval(self, question):
         """
         Generate a qa_retrieval chain using a language model.
 
@@ -258,24 +309,22 @@ class DocumentRetrieval():
                     # "top_p": {"type": "float", "value": "1"}
                 }
             )
-            
-        retriever = vectorstore.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["k_retrieved_documents"]},
-        )
-        qa_chain = RetrievalQA.from_llm(
-            llm=llm,
-            retriever=retriever,
-            return_source_documents=True,
-            input_key="question",
-            output_key="answer",
-        )
         
+        # Not sure we should load the prompt here.  Works for quick implementation, but now prompt specification is shoved into source code.
         customprompt = load_prompt(os.path.join(kit_dir, "prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml"))
+        print(customprompt)
+        
+        response = {}
+        documents = self.retriever.invoke(question)
+        if self.retrieval_info["rerank"]:
+            documents = self.rerank_docs(question, documents, self.retrieval_info["final_k_retrieved_documents"])
+        docs = self._format_docs(documents)
+        qa_chain = customprompt | llm | StrOutputParser()
+        response["answer"] = qa_chain.invoke({"question": question, "context": docs})
+        response["source_documents"] = documents
 
-        ## Inject custom prompt
-        qa_chain.combine_documents_chain.llm_chain.prompt = customprompt
-        return qa_chain
+        # TODO: Would be nicer to return an object like RetrievalQA
+        return response
 
 
     def get_conversational_qa_retrieval_chain(self, vectorstore):

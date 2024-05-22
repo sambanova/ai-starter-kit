@@ -22,7 +22,7 @@ logging.info("URL: http://localhost:8501")
 def handle_userinput(user_question):
     if user_question:
         with st.spinner("Processing..."):
-            response = st.session_state.conversation.invoke({"question": user_question})
+            response = st.session_state.conversation.qa_retrieval(user_question)
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 
@@ -111,9 +111,8 @@ def main():
                     vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
-                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
-                        st.session_state.vectorstore
-                    )
+                    documentRetrieval.init_retriever(vectorstore)
+                    st.session_state.conversation = documentRetrieval
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
             st.markdown("[Optional] Save database for reuse")
             save_location = st.text_input("Save location", "./data/my-vector-db").strip()
@@ -128,9 +127,8 @@ def main():
                     vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
-                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
-                        st.session_state.vectorstore
-                    ) 
+                    documentRetrieval.init_retriever(vectorstore)
+                    st.session_state.conversation = documentRetrieval 
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
 
         else:
@@ -157,9 +155,8 @@ def main():
                             st.session_state.vectorstore = vectorstore
 
                             # create conversation chain
-                            st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
-                                st.session_state.vectorstore
-                            )
+                            documentRetrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = documentRetrieval
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
 
@@ -178,9 +175,9 @@ def main():
             )
             if st.button("Reset conversation"):
                 # reset create conversation chain
-                st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
-                    st.session_state.vectorstore
-                )
+                # st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
+                #     st.session_state.vectorstore
+                # )
                 st.session_state.chat_history = []
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"
