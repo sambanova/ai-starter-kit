@@ -16,8 +16,8 @@ lvlm:
     "top_p": 1
 
 retrieval:
-    "max_characters": 1000
-    "new_after_n_chars": 800
-    "combine_text_under_n_chars": 500
-    "k_retrieved_documents": 2
+    "max_characters": 800
+    "new_after_n_chars": 500
+    "combine_text_under_n_chars": 300
+    "k_retrieved_documents": 4
 
