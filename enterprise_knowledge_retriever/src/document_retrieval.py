@@ -2,30 +2,110 @@ import os
 import sys
 import yaml
 import fitz
+import torch
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
-from vectordb.vector_db import VectorDb
-from data_extraction.src.multi_column import column_boxes
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate, load_prompt
+from typing import Any, Dict, List, Optional
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from langchain.chains.base import Chain
+from langchain.prompts import BasePromptTemplate,  load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.callbacks import CallbackManagerForChainRun
+from langchain_core.language_models import BaseLanguageModel
 from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
-from langchain_core.output_parsers import StrOutputParser
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
-
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
+
+from vectordb.vector_db import VectorDb
+from data_extraction.src.multi_column import column_boxes
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
 
 load_dotenv(os.path.join(repo_dir,'.env'))
+
+class RetrievalQAChain(Chain):
+    """class for question-answering."""
+    retriever : BaseRetriever 
+    rerank : bool = True
+    llm : BaseLanguageModel
+    qa_prompt : BasePromptTemplate
+    final_k_retrieved_documents : int = 3
+    
+    @property
+    def input_keys(self) -> List[str]:
+        """Input keys.
+        :meta private:
+        """
+        return ["question"]
+
+    @property
+    def output_keys(self) -> List[str]:
+        """Output keys.
+        :meta private:
+        """
+        return ["answer", "source_documents"]  
+    
+    def _format_docs(self, docs):
+        
+        return "\n\n".join(doc.page_content for doc in docs)
+    
+    def rerank_docs(self, query, docs, final_k):
+        
+        # Lazy hardcoding for now
+        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
+        reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
+        pairs = []
+        for d in docs:
+            pairs.append([query, d.page_content])
+
+        with torch.no_grad():
+            inputs = tokenizer(
+                pairs,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=512,
+            )
+            scores = (
+                reranker(**inputs, return_dict=True)
+                .logits.view(
+                    -1,
+                )
+                .float()
+            )
+
+        scores_list = scores.tolist()
+        scores_sorted_idx = sorted(
+            range(len(scores_list)), key=lambda k: scores_list[k], reverse=True
+        )
+
+        docs_sorted = [docs[k] for k in scores_sorted_idx]
+        # docs_sorted = [docs[k] for k in scores_sorted_idx if scores_list[k]>0]
+        docs_sorted = docs_sorted[:final_k]
+
+        return docs_sorted
+    
+    def _call(self,
+        inputs: Dict[str, Any],
+        run_manager: Optional[CallbackManagerForChainRun] = None,
+    ) -> Dict[str, Any]:
+        qa_chain = self.qa_prompt | self.llm | StrOutputParser()
+        response = {}
+        documents = self.retriever.invoke(inputs["question"])
+        if self.rerank:
+            documents = self.rerank_docs(inputs["question"], documents, self.final_k_retrieved_documents)
+        docs = self._format_docs(documents)
+        response["answer"] = qa_chain.invoke({"question": inputs["question"], "context": docs})
+        response["source_documents"] = documents
+        return response
 
 class DocumentRetrieval():
     def __init__(self):
@@ -38,7 +118,7 @@ class DocumentRetrieval():
         self.loaders = config_info[4]
         self.prompts = config_info[5]
         self.retriever = None
-        
+        self.llm=self.set_llm()
 
     def get_config_info(self):
         """
@@ -56,6 +136,39 @@ class DocumentRetrieval():
         
         return api_info, llm_info, embedding_model_info, retrieval_info, loaders, prompts
     
+    def set_llm(self):
+        if self.api_info == "sambaverse":
+            llm = Sambaverse(
+                    sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+                    sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+                    model_kwargs={
+                        "do_sample": False, 
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "temperature": self.llm_info["temperature"],
+                        "process_prompt": True,
+                        "select_expert": self.llm_info["sambaverse_select_expert"]
+                        #"stop_sequences": { "type":"str", "value":""},
+                        # "repetition_penalty": {"type": "float", "value": "1"},
+                        # "top_k": {"type": "int", "value": "50"},
+                        # "top_p": {"type": "float", "value": "1"}
+                    }
+                )
+            
+        elif self.api_info == "sambastudio":
+            llm = SambaStudio(
+                model_kwargs={
+                    "do_sample": False,
+                    "temperature": self.llm_info["temperature"],
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                    #"stop_sequences": { "type":"str", "value":""},
+                    # "repetition_penalty": {"type": "float", "value": "1"},
+                    # "top_k": {"type": "int", "value": "50"},
+                    # "top_p": {"type": "float", "value": "1"}
+                }
+            )
+        
+        return llm
+            
     def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
         """Extract text and metadata from pdf document with pypdf2 loader
 
@@ -232,48 +345,8 @@ class DocumentRetrieval():
                 search_type="similarity_score_threshold",
                 search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["final_k_retrieved_documents"]},
             )
-
-    def _format_docs(self, docs):
     
-        return "\n\n".join(doc.page_content for doc in docs)
-    
-    def rerank_docs(self, query, docs, final_k):
-        
-        # Lazy hardcoding for now
-        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
-        reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
-        pairs = []
-        for d in docs:
-            pairs.append([query, d.page_content])
-
-        with torch.no_grad():
-            inputs = tokenizer(
-                pairs,
-                padding=True,
-                truncation=True,
-                return_tensors="pt",
-                max_length=512,
-            )
-            scores = (
-                reranker(**inputs, return_dict=True)
-                .logits.view(
-                    -1,
-                )
-                .float()
-            )
-
-        scores_list = scores.tolist()
-        scores_sorted_idx = sorted(
-            range(len(scores_list)), key=lambda k: scores_list[k], reverse=True
-        )
-
-        docs_sorted = [docs[k] for k in scores_sorted_idx]
-        # docs_sorted = [docs[k] for k in scores_sorted_idx if scores_list[k]>0]
-        docs_sorted = docs_sorted[:final_k]
-
-        return docs_sorted
-    
-    def qa_retrieval(self, question):
+    def get_qa_retrieval_chain(self):
         """
         Generate a qa_retrieval chain using a language model.
 
@@ -287,54 +360,28 @@ class DocumentRetrieval():
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
+        # customprompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"]))   
+        # qa_chain = customprompt | self.llm | StrOutputParser()   
         
-        if self.api_info == "sambaverse":
-            llm = Sambaverse(
-                    sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                    sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-                    model_kwargs={
-                        "do_sample": False, 
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "temperature": self.llm_info["temperature"],
-                        "process_prompt": True,
-                        "select_expert": self.llm_info["sambaverse_select_expert"]
-                        #"stop_sequences": { "type":"str", "value":""},
-                        # "repetition_penalty": {"type": "float", "value": "1"},
-                        # "top_k": {"type": "int", "value": "50"},
-                        # "top_p": {"type": "float", "value": "1"}
-                    }
-                )
-            
-        elif self.api_info == "sambastudio":
-            llm = SambaStudio(
-                model_kwargs={
-                    "do_sample": False,
-                    "temperature": self.llm_info["temperature"],
-                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
-                }
-            )
+        # response = {}
+        # documents = self.retriever.invoke(question)
+        # if self.retrieval_info["rerank"]:
+        #     documents = self.rerank_docs(question, documents, self.retrieval_info["final_k_retrieved_documents"])
+        # docs = self._format_docs(documents)
         
-        customprompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"]))
-        print(customprompt)
-        
-        response = {}
-        documents = self.retriever.invoke(question)
-        if self.retrieval_info["rerank"]:
-            documents = self.rerank_docs(question, documents, self.retrieval_info["final_k_retrieved_documents"])
-        docs = self._format_docs(documents)
-        qa_chain = customprompt | llm | StrOutputParser()
-        response["answer"] = qa_chain.invoke({"question": question, "context": docs})
-        response["source_documents"] = documents
+        # response["answer"] = qa_chain.invoke({"question": question, "context": docs})
+        # response["source_documents"] = documents
 
-        # TODO: Would be nicer to return an object like RetrievalQA
-        return response
+        retrievalQAChain = RetrievalQAChain(
+            retriever=self.retriever,
+            llm=self.llm,
+            qa_prompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"])),
+            rerank = self.retrieval_info["rerank"],
+            final_k_retrieved_documents = self.retrieval_info["final_k_retrieved_documents"]
+        )
+        return retrievalQAChain        
 
-
-    def get_conversational_qa_retrieval_chain(self, vectorstore):
+    def get_conversational_qa_retrieval_chain(self):
         """
         Generate a conversational retrieval qa chain using a language model.
 

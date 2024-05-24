@@ -11,7 +11,6 @@ sys.path.append(repo_dir)
 
 import streamlit as st
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
-from data_extraction.src.multi_column import column_boxes
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
@@ -22,7 +21,7 @@ logging.info("URL: http://localhost:8501")
 def handle_userinput(user_question):
     if user_question:
         with st.spinner("Processing..."):
-            response = st.session_state.conversation.qa_retrieval(user_question)
+            response = st.session_state.conversation.invoke({"question":user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 
@@ -74,7 +73,7 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "show_sources" not in st.session_state:
-         st.session_state.show_sources = False
+         st.session_state.show_sources = True
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
     if "vectorstore" not in st.session_state:
@@ -111,7 +110,7 @@ def main():
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     documentRetrieval.init_retriever(vectorstore)
-                    st.session_state.conversation = documentRetrieval
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
             st.markdown("[Optional] Save database for reuse")
             save_location = st.text_input("Save location", "./data/my-vector-db").strip()
@@ -127,7 +126,7 @@ def main():
                     st.session_state.vectorstore = vectorstore
                     # create conversation chain
                     documentRetrieval.init_retriever(vectorstore)
-                    st.session_state.conversation = documentRetrieval 
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
 
         else:
@@ -155,7 +154,7 @@ def main():
 
                             # create conversation chain
                             documentRetrieval.init_retriever(vectorstore)
-                            st.session_state.conversation = documentRetrieval
+                            st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
 

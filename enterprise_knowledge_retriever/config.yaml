@@ -1,6 +1,6 @@
 api: "sambaverse"
 
-embedding_model: "sambastudio"
+embedding_model: "sambaverse"
 
 loaders: 
     pdf: "unstructured"
