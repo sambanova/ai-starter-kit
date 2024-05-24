@@ -148,11 +148,6 @@ pip  install  -r  requirements.txt
 streamlit run complex_rag/streamlit/app.py --browser.gatherUsageStats false 
 ```
 
-After deploying the starter kit you see the following user interface:
-
-![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
-
-
 # Use the starter kit 
 
 After you've deployed the GUI, you can use the start kit. Follow these steps:
