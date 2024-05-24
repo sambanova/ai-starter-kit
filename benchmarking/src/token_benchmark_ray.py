@@ -23,6 +23,7 @@ from llmperf.utils import (
 from transformers import LlamaTokenizerFast
 from dotenv import load_dotenv
 
+ray.init(log_to_driver=False)
 load_dotenv('../.env', override=True)
 
 def get_token_throughput_latencies(
