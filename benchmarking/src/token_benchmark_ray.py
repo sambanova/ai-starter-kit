@@ -20,12 +20,10 @@ from llmperf.utils import (
     LLMPerfResults,
     sample_random_positive_int,
 )
-
+from transformers import LlamaTokenizerFast
 from dotenv import load_dotenv
 
 load_dotenv('../.env', override=True)
-
-from transformers import LlamaTokenizerFast
 
 def get_token_throughput_latencies(
     model: str,
@@ -48,8 +46,8 @@ def get_token_throughput_latencies(
         stddev_input_tokens (int): The standard deviation of the number of tokens to send in the prompt for the request.
         mean_output_tokens (int): The mean number of tokens to generate per request.
         stddev_output_tokens (int): The standard deviation of the number of tokens to generate per request.
-        additional_sampling_params (Optional[Dict[str, Any]]): Additional sampling parameters to send with the request. Defaults to None.
-            For more information see the LLM APIs documentation for the completions
+        additional_sampling_params (Optional[Dict[str, Any]]): Additional sampling parameters to send with the request. 
+            For more information see the LLM APIs documentation for the completions. Defaults to None.
         num_concurrent_requests (int): The number of concurrent requests to make. Increase
             this to increase the amount of load and vice versa. Defaults to 1.
         test_timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90.
