@@ -10,31 +10,36 @@ Multimodal Knowledge Retrieval
 ======================
 <!-- TOC -->
 
+- [Multimodal Knowledge Retrieval](#multimodal-knowledge-retrieval)
 - [Overview](#overview)
+    - [Capabilities and Limitations of Image Analysis](#capabilities-and-limitations-of-image-analysis)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the LVLM](#set-up-the-lvlm)
-    - [Set up the account and config file](#set-up-the-account-and-config-file-for-the-llm)
-        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+    - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
-        - [Update the Embedding API Information](#update-the-embedding-api-information)
+        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+        - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-  - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
-  - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
+    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
+    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
 - [Use the starter kit GUI](#use-the-starter-kit-gui)
 - [Workflows](#workflows)
     - [Parsing and indexing workflow](#parsing-and-indexing-workflow)
     - [Retrieval workflow](#retrieval-workflow)
+        - [More info](#more-info)
     - [Q&A workflow](#qa-workflow)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Customize data import](#customize-data-import)
     - [Customize data splitting](#customize-data-splitting)
     - [Customize data embedding](#customize-data-embedding)
     - [Customize embedding storage](#customize-embedding-storage)
-    - [Customize retrieval](#customize-retrieval)
+    - [Customize Retrieval](#customize-retrieval)
     - [Customize the LLM](#customize-the-llm)
-    - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
+        - [SambaStudio endpoint](#sambastudio-endpoint)
+        - [Sambaverse endpoint](#sambaverse-endpoint)
+        - [Experiment with Prompt Engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -52,6 +57,33 @@ This sample is ready-to-use. We provide two options:
 * [Use the starter kit GUI](#use-the-starter-kit-gui) helps you run a demo by following a few simple steps. You must perform the setup in [Before you begin](#before-you-begin) and [Deploy the starter kit GUI](#deploy-the-starter-kit-gui) first. 
 * [Customizing the starter kit](#customizing-the-starter-kit) serves as a starting point for customizing the demo to your organization's needs.
    
+
+## Capabilities and Limitations of Image Analysis
+The AI Starter Kit includes capabilities for retrieving and analyzing images contained in your source documents and integrating them with table textual information to generate comprehensive answers. However, it's important to understand the current limitations of the large vision-language model *for this kit LlaVa1.5*:
+
+Image Source Retrieval: The system retrieves and shows the image sources used to generate an answer, allowing you to perform further analysis on the original images.
+
+General Image Understanding: 
+    
+The model is capable of understanding the general content and some specific details of images such as photos, logos, and other visual elements.
+
+- Charts and Graphs:
+
+    General Understanding: The model can understand the generalities of charts, including simple and uncluttered charts where it can identify trends.
+    Axes Recognition: It usually recognizes what the axes in plots represent.
+    Detailed Data Points: The model has limited ability to retrieve detailed data points from charts.
+    Comparative Analysis: It is not proficient at making comparisons between data points or performing detailed analyses of graphs.
+
+- Diagrams and Schematics:
+
+    General Understanding: The model can grasp general concepts in diagrams such as schematics and database schemas.
+    Detailed Information: It is unreliable in generating detailed information, such as text contained within diagrams or specific details of connections, and can sometimes produce hallucinated information.
+
+PDF Documents: The model performs well in analyzing PDF documents that include both text and images. It uses tables and images to generate comprehensive answers and provides related images to support its responses.
+
+This overview should help users understand the strengths and limitations of the image analysis capabilities in your AI Starter Kit, enabling them to make better use of the system.
+ 
+> In future model checkpoints, which will be available in SmabaStudio, you will have access to better-performing models with fewer limitations in image understanding, providing more accurate and detailed analysis capabilities.
 
 # Before you begin
 
