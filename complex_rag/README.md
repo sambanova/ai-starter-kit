@@ -96,26 +96,26 @@ You have these options to specify the embedding API info:
 
 * **Option 2: Set a SambaStudio embedding model**
 
-To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.  For the workshop, we will provide the E5 endpoint with batch size 32 for inference.
+    To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.  For the workshop, we will provide the E5 endpoint with batch size 32 for inference.
 
-NOTE: Be sure to set batch size model parameter to 32.
+    NOTE: Be sure to set batch size model parameter to 32.
 
-1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example: 
+    1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example: 
 
-* Assume you have an endpoint with the URL
-    "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-* You can enter the following in the env file (with no spaces):
-    ```
-    EMBED_BASE_URL="https://api-stage.sambanova.net"
-    EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
-2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+    * Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    * You can enter the following in the env file (with no spaces):
+        ```
+        EMBED_BASE_URL="https://api-stage.sambanova.net"
+        EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+    2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
 
-  > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
-  > 
-  > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+    > 
+    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 
 # Deploy the starter kit GUI
