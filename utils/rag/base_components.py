@@ -1,15 +1,16 @@
 import os
 import yaml
+import torch
 import base64
+import nest_asyncio
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.chat_models import ChatOllama
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from IPython.display import display, HTML
 from langchain_community.embeddings.sambanova import SambaStudioEmbeddings
 from langchain_core.prompts import load_prompt
-import nest_asyncio
 from langchain_core.runnables.graph import CurveStyle, NodeColors, MermaidDrawMethod
-import torch
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 
 class BaseComponents:
 
@@ -33,9 +34,28 @@ class BaseComponents:
         return embeddings  
 
     def init_llm(self):
-
-        local_llm = 'llama3'
-        self.llm = ChatOllama(model=local_llm, temperature=0)
+        
+        if self.configs["api"] == "sambaverse":
+            self.llm = Sambaverse(
+                    sambaverse_model_name=self.configs["llm"]["sambaverse_model_name"],
+                    sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+                    model_kwargs={
+                        "do_sample": False, 
+                        "max_tokens_to_generate": self.configs["llm"]["max_tokens_to_generate"],
+                        "temperature": self.configs["llm"]["temperature"],
+                        "process_prompt": True,
+                        "select_expert": self.configs["llm"]["sambaverse_select_expert"]
+                    }
+                )
+            
+        elif self.configs["api"] == "sambastudio":
+            self.llm = SambaStudio(
+                model_kwargs={
+                    "do_sample": False,
+                    "temperature": self.configs["llm"]["temperature"],
+                    "max_tokens_to_generate": self.configs["llm"]["max_tokens_to_generate"],
+                }
+            )
 
     def _format_docs(self, docs):
     
