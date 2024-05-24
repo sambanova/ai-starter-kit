@@ -219,11 +219,16 @@ class DocumentRetrieval():
         return vectorstore
     
     def init_retriever(self, vectorstore):
-
-        self.retriever = vectorstore.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["k_retrieved_documents"]},
-        )
+        if self.retrieval_info["rerank"]:
+            self.retriever = vectorstore.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["k_retrieved_documents"]},
+            )
+        else:
+            self.retriever = vectorstore.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={"score_threshold": self.retrieval_info["score_threshold"], "k": self.retrieval_info["final_k_retrieved_documents"]},
+            )
 
     def _format_docs(self, docs):
     
