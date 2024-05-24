@@ -52,8 +52,8 @@ class BaseComponents:
     # def init_llm(self): 
 
     #     self.llm = SambaStudio(
+    #         streaming=True,
     #         model_kwargs={
-    #                 "do_sample": False,        
     #                 "max_tokens_to_generate": 2048,
     #                 "select_expert": "Meta-Llama-3-8B-Instruct",
     #                 "process_prompt": False

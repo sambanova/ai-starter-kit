@@ -154,7 +154,7 @@ class RAGComponents(BaseComponents):
                 return "not useful"
         else:
             print("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS---")
-            return "not supported"   
+            return "not supported"  
         
     def failure_msg(self, state):
 
@@ -171,11 +171,11 @@ class RAGComponents(BaseComponents):
             answers = "\n\n".join(a for a in answers)
         original_question = state["original_question"]
 
-        print("---ANSWERING---")
-        print(original_question)
+        # print("---ANSWERING---")
+        # print(original_question)
 
-        print("---INTERMEDIATE ANSWERS---")
-        print(answers)
+        # print("---INTERMEDIATE ANSWERS---")
+        # print(answers)
 
         print("---FINAL ANSWER---")
         final_answer = self.final_chain.invoke({"question": original_question, "answers": answers}) 
