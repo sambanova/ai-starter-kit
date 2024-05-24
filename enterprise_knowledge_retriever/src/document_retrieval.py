@@ -36,7 +36,9 @@ class DocumentRetrieval():
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
         self.loaders = config_info[4]
+        self.prompts = config_info[5]
         self.retriever = None
+        
 
     def get_config_info(self):
         """
@@ -50,8 +52,9 @@ class DocumentRetrieval():
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         loaders = config["loaders"]
+        prompts = config["prompts"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, loaders
+        return api_info, llm_info, embedding_model_info, retrieval_info, loaders, prompts
     
     def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
         """Extract text and metadata from pdf document with pypdf2 loader
@@ -315,8 +318,7 @@ class DocumentRetrieval():
                 }
             )
         
-        # Not sure we should load the prompt here.  Works for quick implementation, but now prompt specification is shoved into source code.
-        customprompt = load_prompt(os.path.join(kit_dir, "prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml"))
+        customprompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"]))
         print(customprompt)
         
         response = {}

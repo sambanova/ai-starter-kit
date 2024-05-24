@@ -18,6 +18,8 @@ retrieval:
     "db_type": "chroma"
     "k_retrieved_documents": 15
     "score_threshold": 0.6
-    "rerank": True
+    "rerank": False
     "final_k_retrieved_documents": 3
 
+prompts: 
+    "qa_prompt": "prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml"
