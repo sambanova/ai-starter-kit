@@ -18,6 +18,7 @@ retrieval:
     "k_retrieved_documents": 15
     "score_threshold": 0.2
     "rerank": True
+    "reranker": 'BAAI/bge-reranker-large'
     "final_k_retrieved_documents": 3
 
 prompts: 
