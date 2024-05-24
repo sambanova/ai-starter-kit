@@ -241,7 +241,6 @@ unstructured.pytesseract==0.3.12
 urllib3==1.26.18
 uuid6==2024.1.12
 uvicorn==0.29.0
-uvloop==0.19.0
 validators==0.28.2
 watchfiles==0.21.0
 wcwidth==0.2.13

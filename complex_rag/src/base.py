@@ -4,7 +4,7 @@ import base64
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.chat_models import ChatOllama
 from IPython.display import display, HTML
-from langchain_community.llms.sambanova import SambaStudio
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.embeddings.sambanova import SambaStudioEmbeddings
 from langchain_core.prompts import load_prompt
 import nest_asyncio
@@ -44,21 +44,36 @@ class BaseComponents:
         embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info) 
         return embeddings  
 
-    def init_llm(self): #TODO: switch to CoE when Llama 3 is available
+    # def init_llm(self): #TODO: switch to CoE when Llama 3 is available
 
-        local_llm = 'llama3'
-        self.llm = ChatOllama(model=local_llm, temperature=0)
+    #     local_llm = 'llama3'
+    #     self.llm = ChatOllama(model=local_llm, temperature=0)
     
-    # def init_llm(self): 
 
-    #     self.llm = SambaStudio(
-    #         streaming=True,
-    #         model_kwargs={
-    #                 "max_tokens_to_generate": 2048,
-    #                 "select_expert": "Meta-Llama-3-8B-Instruct",
-    #                 "process_prompt": False
-    #             }
-    #     )
+    def init_llm(self): 
+
+        if self.configs["api"] == "sambastudio":
+                self.llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                            "max_tokens_to_generate": 2048,
+                            "select_expert": "Meta-Llama-3-8B-Instruct",
+                            "process_prompt": False
+                        }
+                )
+
+        elif self.configs["api"] == "sambaverse":
+            self.llm = Sambaverse(
+                streaming=False,
+                model_kwargs={
+                    "do_sample": False,
+                    "process_prompt": True,
+                    "select_expert": "llama-2-70b-chat-hf",
+                },
+            )
+        
+        else:
+            raise ValueError("Please enter sambastudio or sambaverse for api in config.yaml")
 
     def _format_docs(self, docs):
     
