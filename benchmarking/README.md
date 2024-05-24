@@ -152,6 +152,9 @@ Users are able to ask anything and get a generated answer of their questions, as
 - Time to first token (s)
 - Time per output token (ms)
 
+![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat_results.png)
+
+
 # Third-party tools and data sources 
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
