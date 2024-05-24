@@ -63,7 +63,6 @@ def handle_userinput(user_question):
 
 def main(): 
     documentRetrieval =  DocumentRetrieval()
-    *_, embedding_model_info ,retrieval_info, _ = documentRetrieval.get_config_info()
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -74,8 +73,8 @@ def main():
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    # if "show_sources" not in st.session_state:
-    #     st.session_state.show_sources = False
+    if "show_sources" not in st.session_state:
+         st.session_state.show_sources = False
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
     if "vectorstore" not in st.session_state:
@@ -179,6 +178,7 @@ def main():
                 #     st.session_state.vectorstore
                 # )
                 st.session_state.chat_history = []
+                st.session_state.sources_history = []
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"
                 )
