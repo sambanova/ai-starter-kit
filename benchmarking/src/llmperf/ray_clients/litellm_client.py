@@ -6,12 +6,19 @@ from llmperf.ray_llm_client import LLMClient
 from llmperf.models import RequestConfig
 from llmperf import common_metrics
 
-
 @ray.remote
 class LiteLLMClient(LLMClient):
     """Client for LiteLLM Completions API."""
 
-    def llm_request(self, request_config: RequestConfig) -> Dict[str, Any]:
+    def llm_request(self, request_config: RequestConfig) -> tuple:
+        """Sends LLM request considering request_config information (prompt and LLM parameters)
+
+        Args:
+            request_config (RequestConfig): configuration file that contains the user's prompt and LLM parameters
+
+        Returns:
+            tuple: metrics measured, LLM generated text, and config parameters used
+        """
         # litellm package isn't serializable, so we import it within the function
         # to maintain compatibility with ray.
         from litellm import completion, validate_environment

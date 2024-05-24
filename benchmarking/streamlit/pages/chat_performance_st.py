@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../')
+sys.path.append('../')
 import streamlit as st
 
 from benchmarking.src.chat_performance_evaluation import SambaStudioCOEHandler
@@ -93,10 +93,10 @@ def main ():
         page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
     )
 
+    _initialize_sesion_variables()
+
     st.title(":orange[SambaNova]Performance evaluation")    
     st.markdown("With this option, users have a way to know performance metrics per response. Set your LLM first on the left side bar and then have a nice conversation, also know more about our performance metrics per each response.")
-
-    _initialize_sesion_variables()
 
     with st.sidebar:
         st.title("Set up the LLM")

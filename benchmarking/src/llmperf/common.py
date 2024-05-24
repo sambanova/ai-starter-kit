@@ -4,9 +4,7 @@ from llmperf.ray_clients.litellm_client import LiteLLMClient
 from llmperf.ray_clients.sambanova_client import SambaNovaLLMClient
 from llmperf.ray_llm_client import LLMClient
 
-
 SUPPORTED_APIS = ["sambanova", "litellm"]
-
 
 def construct_clients(llm_api: str, num_clients: int) -> List[LLMClient]:
     """Construct LLMClients that will be used to make requests to the LLM API.

@@ -33,13 +33,13 @@ def llm_correctness(
     """Get the token throughput and latencies for the given model.
 
     Args:
-        model: The name of the model to query.
-        additional_sampling_params: Additional sampling parameters to send with the request.
+        model (str): The name of the model to query.
+        additional_sampling_params (Optional[Dict[str, Any]] = None): Additional sampling parameters to send with the request. Defaults to None
             For more information see the LLM APIs documentation for the completions
-        num_concurrent_requests: The number of concurrent requests to make. Increase
-            this to increase the amount of load and vice versa.
-        test_timeout_s: The amount of time to run the test for before reporting results.
-        llm_api: The type of request to make. Either "chat" or "litellm".
+        num_concurrent_requests (int): The number of concurrent requests to make. Increase
+            this to increase the amount of load and vice versa. Defaults to 1
+        test_timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90
+        llm_api (str): The type of request to make. Either "chat" or "litellm". Defaults to "chat"
 
     Returns:
         A tuple containing summary metrics and raw results from the test.
@@ -161,20 +161,16 @@ def run(
 ):
     """
     Args:
-        llm_api: The type of request to make. Either "chat" or "litellm".
-        model: The name of the model to query.
-        max_num_completed_requests: The number of requests to complete before finishing the test.
-        test_timeout_s: The amount of time to run the test for before reporting results.
-        num_concurrent_requests: The number of concurrent requests to make. Increase
+        llm_api (str): The type of request to make. Either "chat" or "litellm".
+        model (str): The name of the model to query.
+        max_num_completed_requests (int): The number of requests to complete before finishing the test.
+        test_timeout_s (int): The amount of time to run the test for before reporting results.
+        num_concurrent_requests (int): The number of concurrent requests to make. Increase
             this to increase the amount of load and vice versa.
-        mean_input_tokens: The mean number of tokens to send in the prompt for the request.
-        stddev_input_tokens: The standard deviation of the number of tokens to send in the prompt for the request.
-        mean_output_tokens: The mean number of tokens to generate per request.
-        stddev_output_tokens: The standard deviation of the number of tokens to generate per request.
-        additional_sampling_params: Additional sampling parameters to send with the request.
+        additional_sampling_params (str): Additional sampling parameters to send with the request.
             For more information see the LLM APIs documentation for the completions.
-        results_dir: The directory to save the results to.
-
+        results_dir (str): The directory to save the results to.
+        user_metadata (Dict[str, str]): Additional metadata to include in the results.
     """
 
     summary_metrics, raw_results = llm_correctness(
