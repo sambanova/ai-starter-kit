@@ -1,7 +1,16 @@
 import os
+
+# paths added to PYTHONPATH for Ray
+streamlit_dir = os.path.dirname(os.path.abspath(__file__))
+benchmarking_dir = os.path.dirname(streamlit_dir)
+src_dir = os.path.abspath(f'{benchmarking_dir}/src')
+llmperf_dir = os.path.abspath(f'{src_dir}/llmperf')
+os.environ["PYTHONPATH"] = streamlit_dir + ":" + src_dir + ":" + llmperf_dir + ":" + benchmarking_dir + ":" + os.environ.get("PYTHONPATH", "")   
+
 import sys
-sys.path.append('../')
-sys.path.append('../src')
+
+sys.path.append('./src')
+sys.path.append('./streamlit')
 
 import re
 import time
@@ -12,14 +21,9 @@ import streamlit as st
 from st_pages import Page, show_pages
 from dotenv import load_dotenv
 from token_benchmark_ray import run_token_benchmark
+import warnings
 
-# paths added to PYTHONPATH for Ray
-streamlit_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.dirname(os.path.abspath(streamlit_dir))
-src_dir = os.path.abspath(f'{benchmarking_dir}/src')
-llmperf_dir = os.path.abspath(f'{src_dir}/llmperf')
-os.environ["PYTHONPATH"] = streamlit_dir + ":" + src_dir + ":" + llmperf_dir + ":" + benchmarking_dir + ":" + os.environ.get("PYTHONPATH", "")   
-    
+warnings.filterwarnings("ignore")
 load_dotenv('../../.env', override=True)
 
 def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
@@ -41,45 +45,27 @@ def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
     final_df["concurrent_user"] = valid_df["concurrent_user"]
     return final_df
 
-def _run_performance_evaluation(model: str, 
-                               input_tokens: int, 
-                               input_tokens_std: int, 
-                               output_tokens: int, 
-                               output_tokens_std: int, 
-                               number_requests: int, 
-                               number_concurrent_requests: int, 
-                               timeout: int
-    ) -> pd.DataFrame:
+def _run_performance_evaluation() -> pd.DataFrame:
     """Runs the performance evaluation process for different number of workers that will run in parallel.
     Each worker will run num_requests_per_worker requests.
-
-    Args:
-        model (str): LLM model selected
-        input_tokens (int): mean number of input tokens
-        input_tokens_std (int): standard deviation number for input tokens
-        output_tokens (int): mean number of output tokens
-        output_tokens_std (int): standard deviation number for output tokens
-        number_requests (int): number of total requests
-        number_concurrent_requests (int): number of concurrent requests
-        timeout (int): maximum time out of the benchmark process 
 
     Returns:
         pd.DataFrame: Dataframe with metrics for each number of workers.
     """
     
-    results_path = "./../data/results/llmperf"
+    results_path = "./data/results/llmperf"
     mode = 'stream' # static for now
     
     run_token_benchmark(
         llm_api='sambanova',
-        model=model,
-        test_timeout_s=timeout,
-        max_num_completed_requests=number_requests,
-        mean_input_tokens=input_tokens,
-        stddev_input_tokens=input_tokens_std,
-        mean_output_tokens=output_tokens,
-        stddev_output_tokens=output_tokens_std,
-        num_concurrent_requests=number_concurrent_requests,
+        model=st.session_state.llm,
+        test_timeout_s=st.session_state.timeout,
+        max_num_completed_requests=st.session_state.number_requests,
+        mean_input_tokens=st.session_state.input_tokens,
+        stddev_input_tokens=st.session_state.input_tokens_std,
+        mean_output_tokens=st.session_state.output_tokens,
+        stddev_output_tokens=st.session_state.output_tokens_std,
+        num_concurrent_requests=st.session_state.number_concurrent_requests,
         additional_sampling_params='{}',
         results_dir=results_path,
         user_metadata="",
@@ -88,9 +74,9 @@ def _run_performance_evaluation(model: str,
     
     # read generated json and output formatted results
     df = pd.DataFrame()
-    model = re.sub('\/|\.','-',model)
-    df_user = pd.read_json(f"{results_path}/{model}_{input_tokens}_{output_tokens}_{number_concurrent_requests}_{mode}_individual_responses.json")
-    df_user['concurrent_user'] = number_concurrent_requests
+    model = re.sub('\/|\.','-',st.session_state.llm)
+    df_user = pd.read_json(f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_requests}_{mode}_individual_responses.json")
+    df_user['concurrent_user'] = st.session_state.number_concurrent_requests
     df = pd.concat([df,df_user])
     valid_df = df[(df["error_code"] != "")]
     final_df = _rename_metrics_df(valid_df)
@@ -118,6 +104,27 @@ def _get_model_options() -> list:
     llm_options.sort(key=lambda x: x.split('/')[-1].upper())
     return llm_options
 
+def _initialize_sesion_variables():
+
+    if "llm" not in st.session_state:
+        st.session_state.llm = None
+        
+    # Initialize llm params    
+    if "input_tokens" not in st.session_state:
+        st.session_state.input_tokens = None
+    if "input_tokens_std" not in st.session_state:
+        st.session_state.input_tokens_std = None
+    if "output_tokens" not in st.session_state:
+        st.session_state.output_tokens = None
+    if "output_tokens_std" not in st.session_state:
+        st.session_state.output_tokens_std = None
+    if "number_requests" not in st.session_state:
+        st.session_state.number_requests = None
+    if "number_concurrent_requests" not in st.session_state:
+        st.session_state.number_concurrent_requests = None
+    if "timeout" not in st.session_state:
+        st.session_state.timeout = None
+
 def main():
     
     st.set_page_config(
@@ -127,10 +134,12 @@ def main():
 
     show_pages(
         [
-            Page("app.py", "Performance evaluation"),
-            Page("pages/chat_performance_st.py", "Performance on chat")
+            Page("streamlit/app.py", "Performance evaluation"),
+            Page("streamlit/pages/chat_performance_st.py", "Performance on chat")
         ]
     )
+
+    _initialize_sesion_variables()
 
     st.title(":orange[SambaNova]Performance evaluation")    
     st.markdown("This performance evaluation assesses the following LLM's performance metrics using concurrent processes.")
@@ -144,18 +153,18 @@ def main():
         st.markdown("**Modify the following parameters before running the process**")
         
         llm_options = _get_model_options()
-        model_selected = st.selectbox('Choose a LLM model', llm_options, index=0, format_func=lambda x: x.split('/')[-1])
+        st.session_state.llm = st.selectbox('Choose a LLM model', llm_options, index=0, format_func=lambda x: x.split('/')[-1])
         
-        input_tokens = st.number_input('Number of input tokens', min_value=50, max_value=1000, value=150)
-        input_tokens_std = st.number_input('Input tokens standard deviation', min_value=10, max_value=500, value=50)
+        st.session_state.input_tokens = st.slider('Number of input tokens', min_value=50, max_value=2000, value=250)
+        st.session_state.input_tokens_std = st.slider('Input tokens standard deviation', min_value=10, max_value=500, value=50)
         
-        output_tokens = st.number_input('Number of output tokens', min_value=50, max_value=1000, value=150)
-        output_tokens_std = st.number_input('Output tokens standard deviation', min_value=10, max_value=500, value=50)
+        st.session_state.output_tokens = st.slider('Number of output tokens', min_value=50, max_value=2000, value=250)
+        st.session_state.output_tokens_std = st.slider('Output tokens standard deviation', min_value=10, max_value=500, value=50)
         
-        number_requests = st.number_input('Number of total requests', min_value=10, max_value=100, value=32)
-        number_concurrent_requests = st.number_input('Number of concurrent requests', min_value=1, max_value=100, value=8)
+        st.session_state.number_requests = st.slider('Number of total requests', min_value=10, max_value=100, value=50)
+        st.session_state.number_concurrent_requests = st.slider('Number of concurrent requests', min_value=1, max_value=100, value=1)
         
-        timeout = st.number_input('Timeout', min_value=60, max_value=1800, value=600)
+        st.session_state.timeout = st.slider('Timeout', min_value=60, max_value=1800, value=600)
         
         sidebar_option = st.sidebar.button("Run!")
 
@@ -165,7 +174,7 @@ def main():
         with st.spinner("Processing"):
             
             performance_eval_start = time.time()
-            df = _run_performance_evaluation(model_selected, input_tokens, input_tokens_std, output_tokens, output_tokens_std, number_requests, number_concurrent_requests, timeout)
+            df = _run_performance_evaluation()
             performance_eval_end = time.time()
             process_duration = performance_eval_end-performance_eval_start
             print(f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}')
