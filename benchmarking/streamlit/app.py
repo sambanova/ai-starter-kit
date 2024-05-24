@@ -155,14 +155,14 @@ def main():
         llm_options = _get_model_options()
         st.session_state.llm = st.selectbox('Choose a LLM model', llm_options, index=0, format_func=lambda x: x.split('/')[-1])
         
-        st.session_state.input_tokens = st.slider('Number of input tokens', min_value=50, max_value=2000, value=250)
-        st.session_state.input_tokens_std = st.slider('Input tokens standard deviation', min_value=10, max_value=500, value=50)
+        st.session_state.input_tokens = st.slider('Number of input tokens', min_value=50, max_value=1024, value=250)
+        st.session_state.input_tokens_std = st.slider('Input tokens standard deviation', min_value=10, max_value=256, value=50)
         
-        st.session_state.output_tokens = st.slider('Number of output tokens', min_value=50, max_value=2000, value=250)
-        st.session_state.output_tokens_std = st.slider('Output tokens standard deviation', min_value=10, max_value=500, value=50)
+        st.session_state.output_tokens = st.slider('Number of output tokens', min_value=50, max_value=1024, value=250)
+        st.session_state.output_tokens_std = st.slider('Output tokens standard deviation', min_value=10, max_value=256, value=50)
         
         st.session_state.number_requests = st.slider('Number of total requests', min_value=10, max_value=100, value=50)
-        st.session_state.number_concurrent_requests = st.slider('Number of concurrent requests', min_value=1, max_value=100, value=1)
+        st.session_state.number_concurrent_requests = st.slider('Number of concurrent requests', min_value=1, max_value=50, value=1)
         
         st.session_state.timeout = st.slider('Timeout', min_value=60, max_value=1800, value=600)
         

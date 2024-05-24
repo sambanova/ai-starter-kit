@@ -11,7 +11,8 @@ Requests==2.31.0
 seaborn==0.12.2
 st-pages==0.4.5
 tqdm==4.66.1
-transformers==4.40.1
+transformers==4.41.1
 poetry==1.8.3
 tensorflow==2.16.1
 torch==2.3.0
+ipykernel==6.29.4

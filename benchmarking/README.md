@@ -15,13 +15,13 @@ Benchmarking
 - [Getting started](#getting-started)
     - [Get access to your model](#get-access-to-your-model)
     - [Integrate your model](#integrate-your-model)
-    - [Deploy the starter kit](#run-the-starter-kit)
+    - [Run the starter kit](#run-the-starter-kit)
     - [Use the starter kit](#use-the-starter-kit)
-- [Workflow: Performance evaluation](#workflow-performance-evaluation-wip)
-    - [Set parameters](#)
+- [Workflow: Performance evaluation](#workflow-performance-evaluation)
+    - [Select the LLM model](#1-select-the-llm-model)
     - [Analyze results](#)
-- [Workflow: Performance on chat](#workflow-performance-on-chat-wip)
-    - [Set parameters](#)
+- [Workflow: Performance on chat](#workflow-performance-on-chat)
+    - [Select the LLM model](#1-select-the-llm-model-1)
     - [Interact with LLM](#)
 
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -77,7 +77,7 @@ pip  install  -r  requirements.txt
 ## Run the starter kit
 To run the demo, execute the following command:
 ```
-streamlit run app.py --browser.gatherUsageStats false 
+streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
 After deploying the starter kit, you'll see the following user interface:
