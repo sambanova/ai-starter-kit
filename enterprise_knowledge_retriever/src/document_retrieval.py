@@ -327,11 +327,11 @@ class DocumentRetrieval():
         return embeddings  
 
     def create_vector_store(self, text_chunks, embeddings, output_db=None):
-        vectorstore = self.vectordb.create_vector_store(text_chunks, embeddings, output_db=output_db, db_type=self.retrieval_info["db_type"])
+        vectorstore = self.vectordb.create_vector_store(text_chunks, embeddings, output_db=output_db, db_type="chroma")
         return vectorstore
     
     def load_vdb(self, db_path, embeddings):
-        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type=self.retrieval_info["db_type"])
+        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type="chroma")
         return vectorstore
     
     def init_retriever(self, vectorstore):
