@@ -8,7 +8,6 @@ from llmperf import common_metrics
 import time
 import requests
 from transformers import LlamaTokenizerFast
-from dotenv import load_dotenv
 
 @ray.remote
 class SambaNovaLLMClient(LLMClient):
@@ -31,10 +30,10 @@ class SambaNovaLLMClient(LLMClient):
             The request_config used to make the request. This is mainly for logging purposes.
         """
         
-        base_url = os.environ.get("SAMBASTUDIO_BASE_URL")
-        project_id = os.environ.get("SAMBASTUDIO_PROJECT_ID")
-        endpoint_id = os.environ.get("SAMBASTUDIO_ENDPOINT_ID")
-        api_key = os.environ.get("SAMBASTUDIO_API_KEY")
+        base_url = os.environ.get("BASE_URL")
+        project_id = os.environ.get("PROJECT_ID")
+        endpoint_id = os.environ.get("ENDPOINT_ID")
+        api_key = os.environ.get("API_KEY")
 
         ttft = 0
         generated_text = ""

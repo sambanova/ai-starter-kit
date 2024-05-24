@@ -61,10 +61,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
     Update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
    ```
-    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    BASE_URL="https://api-stage.sambanova.net"
+    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
    ```
 
 3. (Recommended) Use a `venv` or `conda` environment for installation, and do a `pip install`. 
@@ -151,6 +151,9 @@ Users are able to ask anything and get a generated answer of their questions, as
 - Throughput (tokens/s)
 - Time to first token (s)
 - Time per output token (ms)
+
+![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat_results.png)
+
 
 # Third-party tools and data sources 
 
