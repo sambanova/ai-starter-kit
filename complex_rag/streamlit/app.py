@@ -77,7 +77,7 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "show_sources" not in st.session_state:
-        st.session_state.show_sources = False
+        st.session_state.show_sources = True
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
     if "embeddings" not in st.session_state:
