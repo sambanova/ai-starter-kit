@@ -1,6 +1,6 @@
 api: "sambastudio"
 
-embedding_model: "cpu"
+embedding_model: "sambastudio"
 
 loaders: 
     pdf: "unstructured"
