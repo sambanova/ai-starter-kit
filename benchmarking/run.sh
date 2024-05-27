@@ -1,9 +1,9 @@
 # COE model
 python src/token_benchmark_ray.py \
 --model "COE/llama-2-7b-chat-hf" \
---mean-input-tokens 150 \
+--mean-input-tokens 1000 \
 --stddev-input-tokens 10 \
---mean-output-tokens 150 \
+--mean-output-tokens 1000 \
 --stddev-output-tokens 10 \
 --max-num-completed-requests 32 \
 --timeout 600 \
