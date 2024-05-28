@@ -1,6 +1,6 @@
 # COE model
 python src/token_benchmark_ray.py \
---model "COE/llama-2-7b-chat-hf" \
+--model "COE/Meta-Llama-3-8B-Instruct" \
 --mean-input-tokens 1000 \
 --stddev-input-tokens 10 \
 --mean-output-tokens 1000 \
