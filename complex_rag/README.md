@@ -25,6 +25,7 @@ Enterprise Knowledge Retrieval
     - [Retrieval workflow](#retrieval-workflow)
     - [Q&A workflow](#qa-workflow)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
+- [Acknowledgements and reference](#acknowledgements-and-references)
 
 <!-- /TOC -->
 
@@ -207,3 +208,9 @@ After the relevant information is retrieved, the content is sent to the LangGrap
 - unstructured[pdf] (version 0.13.3)
 - PyMuPDF (version 1.23.4)
 - python-dotenv (version 1.0.0)
+
+# Acknowledgements and References
+
+The following work aims to show the power of SambaNova Systems RDU acceleration, using Samba-1 Turbo.  The work herein has been leveraged and adapted from the great folks at LangGraph.  Some of the adaptations of the original works also demonstrate how to modularize different components of the LangGraph setup and implement in Streamlit for rapid, early development.  The original tutorial can be found here:
+
+https://github.com/langchain-ai/langgraph/blob/main/examples/rag/langgraph_rag_agent_llama3_local.ipynb
