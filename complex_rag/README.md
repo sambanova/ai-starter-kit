@@ -25,6 +25,7 @@ Enterprise Knowledge Retrieval
     - [Retrieval workflow](#retrieval-workflow)
     - [Q&A workflow](#qa-workflow)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
+- [Acknowledgements and reference](#acknowledgements-and-references)
 
 <!-- /TOC -->
 
@@ -207,3 +208,6 @@ After the relevant information is retrieved, the content is sent to the LangGrap
 - unstructured[pdf] (version 0.13.3)
 - PyMuPDF (version 1.23.4)
 - python-dotenv (version 1.0.0)
+
+# Acknowledgements and References
+
