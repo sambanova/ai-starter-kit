@@ -1,4 +1,3 @@
-# TODO (Avnishn): compute metrics in class
 # INTER_TOKEN_LAT = "inter_token_latency_s"
 TTFT = "ttft_s"
 E2E_LAT = "end_to_end_latency_s"
@@ -25,4 +24,4 @@ REQ_OUTPUT_THROUGHPUT_AFTER_FIRST_SERVER = (
 NUM_OUTPUT_TOKENS_SERVER = "number_output_tokens_server"
 NUM_INPUT_TOKENS_SERVER = "number_input_tokens_server"
 NUM_TOTAL_TOKENS_SERVER = "number_total_tokens_server"
-TOTAL_TOKEN_THROUGHPUT_SERVER = "total_tokens_per_sec"
+TOTAL_TOKEN_THROUGHPUT_SERVER = "total_tokens_per_sec_server"
