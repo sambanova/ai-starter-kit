@@ -106,7 +106,7 @@ def main ():
         llm_options = _get_model_options()
         st.session_state.llm_selected = st.selectbox('Choose a LLM model', llm_options, index=2, format_func=lambda x: x.split('/')[-1])
         st.session_state.do_sample = st.toggle("Do Sample")
-        st.session_state.max_tokens_to_generate = st.slider('Max tokens to generate', min_value=50, max_value=4096, value=250)
+        st.session_state.max_tokens_to_generate = st.slider('Max tokens to generate', min_value=50, max_value=2048, value=250)
         st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0, step=0.01, value=1.0, format="%.2f")
         st.session_state.temperature = st.slider('Temperature', min_value=0.01, max_value=1.00, value=0.1, step=0.01, format="%.2f")
         st.session_state.top_k = st.slider('Top K', min_value=1, max_value=1000, value=50)
@@ -114,6 +114,20 @@ def main ():
         
         # Sets LLM
         sidebar_run_option = st.sidebar.button("Run!")
+        
+        # Additional settings
+        with st.expander("Additional settings", expanded=True):
+            st.markdown("**Reset chat**")
+            st.markdown(
+                "**Note:** Resetting the chat will clear all conversation history"
+            )
+            if st.button("Reset conversation"):
+                st.session_state.chat_history = []
+                st.session_state.perf_metrics_history = []
+                
+                st.toast(
+                    "Conversation reset. The next response will clear the history on the screen"
+                )
 
     # Sets LLM based on side bar parameters and COE model selected
     if sidebar_run_option:
@@ -131,10 +145,10 @@ def main ():
             
             # Display llm response
             llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
-            
+
             # Add user message to chat history
             st.session_state.chat_history.append({"role": "user", "question": user_prompt})
-            st.session_state.chat_history.append({"role": "system", "answer": llm_response['completion']})
+            st.session_state.chat_history.append({"role": "system", "answer": llm_response['completion'].strip()})
             st.session_state.perf_metrics_history.append({"time_to_first_token": llm_response['time_to_first_token'],
                                                         "latency": llm_response['latency'],
                                                         "throughput": llm_response['throughput'],
