@@ -67,8 +67,8 @@ class RAGEvalConfig:
         return self.config["embeddings"]["model_name"]
 
     @property
-    def llm_configs(self) -> List[Dict]:
-        return [self.get_llm_config(llm) for llm in self.config["llms"]]
+    def llm_configs(self) -> List[Tuple[str, Dict]]:
+        return [(llm["name"], llm) for llm in self.config["llms"]]
 
     @property
     def eval_llm_configs(self) -> List[Tuple[str, Dict]]:

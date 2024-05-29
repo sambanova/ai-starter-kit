@@ -58,6 +58,6 @@ evaluation:
   methodology: rag_pipeline
 
 pipeline:
-  class: rag_pipeline.RAGPipeline
+  class: example_rag_pipeline.RAGPipeline
   kwargs:
     vector_db_location: adi_vdb.chromadb
