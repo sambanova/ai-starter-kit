@@ -2,14 +2,18 @@ eval_dataset:
   path: eval_set.csv
   # hf_dataset_name: squad_v2
   question_col: question
-  answer_col: ground_truth
-  context_col: context
+  ground_truth_col: ground_truth
+  answer_col: answer
+  #context_col: contexts
 
 llms:
   - name: llm1
     model_kwargs:
-      temperature: 0.5
-      max_tokens: 1000
+      select_expert: Meta-Llama-3-70B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+
+
 
   # - name: llm2
   #   model_kwargs:
@@ -22,15 +26,18 @@ llms:
   #     max_tokens: 150
 
 eval_llms:
-  - name: eval_llm1
+  - name: EVAL_LLAMA38B
     model_kwargs:
-      temperature: 0.4
-      max_tokens: 1000
+      select_expert: Meta-Llama-3-8B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
 
-  # - name: eval_llm2
-  #   model_kwargs:
-  #     temperature: 0.6
-  #     max_tokens: 200
+
+  - name: EVAL_LLAMA370B
+    model_kwargs:
+      select_expert: Meta-Llama-3-70B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
 
   # - name: eval_llm3
   #   model_kwargs:
@@ -44,7 +51,7 @@ embeddings:
   model_name: hkunlp/instructor-large
 
 evaluation:
-  num_samples: 100
+  num_samples: 1
   log_wandb: true
   project_name: rag-pipeline-eval
   eval_name: test-run-1

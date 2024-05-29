@@ -1,7 +1,7 @@
 import os
 import yaml
 import pandas as pd
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from datasets import Dataset, load_dataset
 from langchain.llms.base import BaseLLM
 from langchain.embeddings.base import Embeddings
@@ -31,16 +31,16 @@ class RAGEvalConfig:
         with open(config_yaml_path, "r") as f:
             self.config = yaml.safe_load(f)
 
-    def get_llm_config(self, llm_config: Dict) -> Dict:
-        print(llm_config)
-        llm_name = llm_config["name"]
-        return {
+    def get_llm_config(self, llm_config: Tuple[str, Dict]) -> Tuple[str, Dict]:
+        llm_name, config_dict = llm_config
+        full_config_dict = {
             "sambastudio_base_url": os.getenv(f"{llm_name.upper()}_BASE_URL"),
             "sambastudio_project_id": os.getenv(f"{llm_name.upper()}_PROJECT_ID"),
             "sambastudio_endpoint_id": os.getenv(f"{llm_name.upper()}_ENDPOINT_ID"),
             "sambastudio_api_key": os.getenv(f"{llm_name.upper()}_API_KEY"),
-            **llm_config.get("model_kwargs", {}),
+            "model_kwargs": config_dict.get("model_kwargs", {}),
         }
+        return llm_name, full_config_dict
 
     @property
     def eval_dataset_path(self) -> str:
@@ -55,6 +55,10 @@ class RAGEvalConfig:
         return self.config["eval_dataset"]["answer_col"]
 
     @property
+    def eval_dataset_ground_truth_col(self) -> str:
+        return self.config["eval_dataset"]["ground_truth_col"]
+
+    @property
     def eval_dataset_context_col(self) -> str:
         return self.config["eval_dataset"].get("context_col")
 
@@ -67,8 +71,8 @@ class RAGEvalConfig:
         return [self.get_llm_config(llm) for llm in self.config["llms"]]
 
     @property
-    def eval_llm_configs(self) -> List[Dict]:
-        return [self.get_llm_config(llm) for llm in self.config["eval_llms"]]
+    def eval_llm_configs(self) -> List[Tuple[str, Dict]]:
+        return [(llm["name"], llm) for llm in self.config["eval_llms"]]
 
     def print_config_keys(self):
         print("Configuration Keys:")
@@ -132,7 +136,7 @@ class RAGEvaluator:
 
     def __init__(
         self,
-        eval_llms: List[BaseLLM],
+        eval_llms: List[Tuple[str, BaseLLM]],
         eval_embeddings: Embeddings,
         config_yaml_path: str,
     ):
@@ -156,12 +160,12 @@ class RAGEvaluator:
             ragas_data.append(
                 {
                     "question": row[self.config.eval_dataset_question_col],
-                    "answer": row["answer"],
-                    "ground_truth": row[self.config.eval_dataset_answer_col],
+                    "answer": row[self.config.eval_dataset_answer_col],
+                    "ground_truth": row[self.config.eval_dataset_ground_truth_col],
                     "contexts": (
                         [row[self.config.eval_dataset_context_col]]
                         if self.config.eval_dataset_context_col
-                        else []
+                        else [""]
                     ),
                 }
             )
@@ -203,7 +207,7 @@ class RAGEvaluator:
             )
 
         results = {}
-        for eval_llm in self.eval_llms:
+        for llm_name, eval_llm in self.eval_llms:
             ragas_dataset = self.create_ragas_dataset(eval_df)
 
             result = evaluate(
@@ -212,7 +216,7 @@ class RAGEvaluator:
                 llm=eval_llm,
                 embeddings=self.eval_embeddings,
             )
-            results[eval_llm.model_name] = result
+            results[llm_name] = result
 
         if self.config.log_wandb:
             self._log_wandb(results)
@@ -263,7 +267,6 @@ def load_eval_dataframe(config: RAGEvalConfig):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Path to YAML config file")
     args = parser.parse_args()

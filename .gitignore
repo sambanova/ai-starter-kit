@@ -218,3 +218,7 @@ multimodal_knowledge_retriever/data/upload
 web_crawled_data_retriever/data/
 
 
+
+#evals
+eval_jumpstart/data
+eval_jumpstart/notebooks/wandb
