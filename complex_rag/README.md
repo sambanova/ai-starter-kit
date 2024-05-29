@@ -6,7 +6,7 @@
 </picture>
 </a>
 
-Complex Knowledge Retrieval Augmented Generation Use Case
+Complex Retrieval Augmented Generation Use Case
 ======================
 
 <!-- TOC -->
