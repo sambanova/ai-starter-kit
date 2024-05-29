@@ -251,7 +251,7 @@ class SambaNovaLLMClient(LLMClient):
 
 if __name__ == "__main__":
 
-    ray.init(local_mode=True)
+    # ray.init(local_mode=True)
     prompt = "Test this."
     client = SambaNovaLLMClient.remote()
     request_config = RequestConfig(
