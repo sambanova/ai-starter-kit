@@ -123,7 +123,7 @@ You have these options to specify the embedding API info:
 
 We recommend that you run the starter kit in a virtual environment or use a container. 
 
-## Workshop deployment: Use a virtual environment
+## Workshop deployment: Use a virtual environment (3.11 preferred)
 
 If you want to use virtualenv or conda environment:
 
@@ -134,14 +134,16 @@ If you want to use virtualenv or conda environment:
 cd ai_starter_kit/
 python3 -m venv complex_rag_env
 source complex_rag_env/bin/activate
-pip  install  -r  requirements.txt
+pip install --upgrade pip
+pip  install  -r  complex_rag/requirements.txt
 ```
 * Windows
 ```
 cd ai_starter_kit/
 python3 -m venv complex_rag_env
 complex_rag>complex_rag_env\Scripts\activate
-pip  install  -r  requirements.txt
+pip install --upgrade pip
+pip  install  -r  complex_rag\requirements.txt
 ```
 
 2. Run the following command:
