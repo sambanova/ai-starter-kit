@@ -14,6 +14,7 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 <!-- TOC -->
 - [Features](#features)
 - [Prerequisites](#prerequisites)
+- [Key dependencies](#key-dependencies)
 - [Installation](#installation)
 - [Starter kit usage](#starter-kit-usage)
   - [Calling CoE models with the Python script](#calling-coe-models-with-the-python-script)
@@ -40,13 +41,18 @@ This AI starter kit supports the following features:
 
 ## Prerequisites
 
-- Python 3.11.3+
+- Python (>3.11.3 and <3.12)
+
+## Key dependencies
+
+_(Installed below)_
 - Langchain
 - Sentence Transformers
 - YAML
 - Requests
 
 ## Installation
+_These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
 1. Clone the main repository and cd into CoE starter kit:
 
@@ -55,17 +61,19 @@ This AI starter kit supports the following features:
   cd CoE_jump_start
   ```
 
-2. Install the required dependencies:
-  ```bash
-  - With pip: `pip install -r requirements.txt` 
-  - With poetry: `poetry install --no-root`
-  ```
-2b. - Create a venv: 
+2. (Recommended) Create a virtual environment and activate it: 
   ```bash
   python<version> -m venv <virtual-environment-name>
+  source <virtual-environment-name>/bin/activate
   ```
 
-3. Set up the config.yaml file with your API credentials and preferences. For example:
+3. Install the required dependencies:
+  ```bash
+  pip install -r requirements.txt # With pip
+  poetry install --no-root # With poetry
+  ```
+
+4. Set up the `config.yaml` file with your API credentials and preferences. For example:
   ```yaml
   api: sambastudio
 
@@ -82,7 +90,7 @@ This AI starter kit supports the following features:
    db_type: "faiss"
   ```
 
-4. In the project root directory, create a .env file and add the necessary API keys based on your chosen entry point:
+4. In the CoE starter kit root directory, create a `.env` file and add the necessary API keys based on your chosen entry point:
 
 ```env
 # NEEDED FOR SAMBAVERSE
@@ -103,7 +111,7 @@ EMBED_ENDPOINT_ID="your-samba-studio-embedding_model-endpointid"
 EMBED_API_KEY="your-samba-studio-embedding_model-apikey"
 ```
 
-The script supports both Sambaverse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you want to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
+The script supports both Sambaverse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the `.env` file. If you want to use the `SNSDK` instead of `requests`, make sure you have it installed and configured with your credentials.
 
 ## Starter kit usage
 
