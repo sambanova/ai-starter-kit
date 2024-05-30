@@ -1,7 +1,7 @@
 import os
 import yaml
 import pandas as pd
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from datasets import Dataset, load_dataset
 from langchain.llms.base import BaseLLM
 from langchain.embeddings.base import Embeddings
@@ -147,6 +147,7 @@ class RAGEvaluator:
     def create_ragas_dataset(
         self,
         eval_df: pd.DataFrame,
+        llm_name: Optional[str] = None,
         answers_df: Optional[pd.DataFrame] = None,
     ) -> Dataset:
         """Create RAGAS eval dataset from question, answer, context dataframe"""
@@ -157,19 +158,29 @@ class RAGEvaluator:
 
         ragas_data = []
         for _, row in eval_df.iterrows():
+            answer_col = (
+                f"answer_{llm_name}"
+                if llm_name and f"answer_{llm_name}" in eval_df.columns
+                else self.config.eval_dataset_answer_col
+            )
+            context_col = (
+                f"context_{llm_name}"
+                if llm_name and f"context_{llm_name}" in eval_df.columns
+                else self.config.eval_dataset_context_col
+            )
             ragas_data.append(
                 {
                     "question": row[self.config.eval_dataset_question_col],
-                    "answer": row[self.config.eval_dataset_answer_col],
+                    "answer": row[answer_col],
                     "ground_truth": row[self.config.eval_dataset_ground_truth_col],
                     "contexts": (
-                        [row[self.config.eval_dataset_context_col]]
-                        if self.config.eval_dataset_context_col
+                        [row[context_col]]
+                        if context_col and not pd.isna(row[context_col])
                         else [""]
                     ),
                 }
             )
-
+        print(ragas_data)
         ragas_dataset = Dataset.from_list(ragas_data)
         return ragas_dataset
 
@@ -180,15 +191,37 @@ class RAGEvaluator:
     ) -> Dict:
         """Run RAG evaluation"""
 
+        gen_llm_names = []
         if answer_generation_pipelines:
-            for pipeline in answer_generation_pipelines:
+            for llm_name, pipeline in answer_generation_pipelines:
                 answers = []
+                contexts = []
                 for _, row in eval_df.iterrows():
                     query = row[self.config.eval_dataset_question_col]
-                    answer = pipeline.generate(query)
-                    answers.append(answer["answer"])
+                    result = pipeline.generate(query)
 
-                eval_df[f"answer_{pipeline.llm.model_name}"] = answers
+                    if isinstance(result["answer"], dict):
+                        answer = result["answer"]["result"]
+                        source_documents = result["answer"].get("source_documents", [])
+                        if source_documents:
+                            context = "\n\n=====\n\n".join(
+                                [
+                                    f"Context {i+1}:\n{doc.page_content}"
+                                    for i, doc in enumerate(source_documents)
+                                ]
+                            )
+                        else:
+                            context = ""
+                    else:
+                        answer = result["answer"]
+                        context = ""
+
+                    answers.append(answer)
+                    contexts.append(context)
+
+                eval_df[f"answer_{llm_name}"] = answers
+                eval_df[f"context_{llm_name}"] = contexts
+                gen_llm_names.append(llm_name)
 
         metrics = [
             answer_relevancy,
@@ -196,7 +229,13 @@ class RAGEvaluator:
             answer_similarity,
         ]
 
-        if self.config.eval_dataset_context_col:
+        # Check if context columns exist for any of the generation LLMs
+        context_cols_exist = any(
+            f"context_{llm_name}" in eval_df.columns for llm_name in gen_llm_names
+        )
+
+        # Extend the metrics if context columns exist or if eval_dataset_context_col is provided
+        if context_cols_exist or self.config.eval_dataset_context_col:
             metrics.extend(
                 [
                     context_precision,
@@ -207,16 +246,31 @@ class RAGEvaluator:
             )
 
         results = {}
-        for llm_name, eval_llm in self.eval_llms:
-            ragas_dataset = self.create_ragas_dataset(eval_df)
+        print(eval_df)
 
-            result = evaluate(
-                ragas_dataset.select(range(self.config.num_eval_samples)),
-                metrics=metrics,
-                llm=eval_llm,
-                embeddings=self.eval_embeddings,
-            )
-            results[llm_name] = result
+        if gen_llm_names:
+            for gen_llm_name in gen_llm_names:
+                for eval_llm_name, eval_llm in self.eval_llms:
+                    ragas_dataset = self.create_ragas_dataset(eval_df, gen_llm_name)
+
+                    result = evaluate(
+                        ragas_dataset.select(range(self.config.num_eval_samples)),
+                        metrics=metrics,
+                        llm=eval_llm,
+                        embeddings=self.eval_embeddings,
+                    )
+                    results[f"{gen_llm_name}_{eval_llm_name}"] = result
+        else:
+            for eval_llm_name, eval_llm in self.eval_llms:
+                ragas_dataset = self.create_ragas_dataset(eval_df, None)
+
+                result = evaluate(
+                    ragas_dataset.select(range(self.config.num_eval_samples)),
+                    metrics=metrics,
+                    llm=eval_llm,
+                    embeddings=self.eval_embeddings,
+                )
+                results[eval_llm_name] = result
 
         if self.config.log_wandb:
             self._log_wandb(results)
@@ -234,11 +288,11 @@ class RAGEvaluator:
         run.finish()
 
 
-def load_pipeline(llm: BaseLLM, config: RAGEvalConfig):
+def load_pipeline(llm: Tuple[str, BaseLLM], config: RAGEvalConfig) -> Tuple[str, Any]:
     """Dynamically load answer generation pipeline from config"""
-    if not config.config.get("pipeline"):
-        return None
+    llm_name, llm_instance = llm
 
+    print(f"This is llm instance {llm_instance}")
     pipeline_class = config.config["pipeline"]["class"]
     pipeline_kwargs = config.config["pipeline"].get("kwargs", {})
 
@@ -246,14 +300,15 @@ def load_pipeline(llm: BaseLLM, config: RAGEvalConfig):
     module = __import__(module_name, fromlist=[class_name])
     PipelineClass = getattr(module, class_name)
 
-    pipeline_kwargs["llm"] = llm
-    if config.vector_db_location:
+    pipeline_kwargs["llm"] = llm_instance
+    if "vector_db_location" in pipeline_kwargs:
         pipeline_kwargs["embeddings"] = HuggingFaceInstructEmbeddings(
             model_name=config.embedding_model_name
         )
         pipeline_kwargs["vector_db_location"] = config.vector_db_location
 
-    return PipelineClass(**pipeline_kwargs)
+    print(PipelineClass(**pipeline_kwargs))
+    return llm_name, PipelineClass(**pipeline_kwargs)
 
 
 def load_eval_dataframe(config: RAGEvalConfig):

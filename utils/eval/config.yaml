@@ -7,11 +7,17 @@ eval_dataset:
   #context_col: contexts
 
 llms:
-  - name: llm1
+  - name: LLAMA70B_GEN
     model_kwargs:
       select_expert: Meta-Llama-3-70B-Instruct
       process_prompt: False
       max_tokens_to_generate: 512
+  - name: LLAMA8B_GEN
+    model_kwargs:
+      select_expert: Meta-Llama-3-8B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+
 
 
 
@@ -45,10 +51,10 @@ eval_llms:
   #     max_tokens: 150
 
 vector_db:
-  location: adi_vdb.chromadb
+  location: ../data/adi_vdb_v3_md_200.chromadb
 
 embeddings:
-  model_name: hkunlp/instructor-large
+  model_name: intfloat/e5-large
 
 evaluation:
   num_samples: 1
@@ -60,4 +66,4 @@ evaluation:
 pipeline:
   class: example_rag_pipeline.RAGPipeline
   kwargs:
-    vector_db_location: adi_vdb.chromadb
+    vector_db_location: ../data/adi_vdb_v3_md_200.chromadb
