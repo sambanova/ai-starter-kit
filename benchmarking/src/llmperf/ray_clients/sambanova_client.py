@@ -1,3 +1,6 @@
+import sys
+sys.path.append('./src')
+
 from llmperf.ray_llm_client import LLMClient
 from llmperf.models import RequestConfig
 import ray
@@ -8,7 +11,7 @@ from llmperf import common_metrics
 import time
 import requests
 from transformers import LlamaTokenizerFast
-
+from dotenv import load_dotenv
 
 @ray.remote
 class SambaNovaLLMClient(LLMClient):
@@ -196,6 +199,7 @@ class SambaNovaLLMClient(LLMClient):
         start_time = time.monotonic()
         total_request_time = 0
         generated_text = ""
+        
         with requests.post(url, headers=headers, json=data, stream=stream) as response:
             if response.status_code != 200:
                 response.raise_for_status()
@@ -225,24 +229,12 @@ class SambaNovaLLMClient(LLMClient):
         Returns:
             dict: updated metrics dictionary
         """
-        metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = output_data["result"][
-            "responses"
-        ][0].get("prompt_tokens_count")
-        metrics[common_metrics.NUM_OUTPUT_TOKENS_SERVER] = output_data["result"][
-            "responses"
-        ][0].get("completion_tokens_count")
-        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = output_data["result"][
-            "responses"
-        ][0].get("total_tokens_count")
-        metrics[common_metrics.TTFT_SERVER] = output_data["result"]["responses"][0].get(
-            "time_to_first_token", 0
-        )
-        metrics[common_metrics.E2E_LAT_SERVER] = output_data["result"]["responses"][
-            0
-        ].get("total_latency")
-        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = output_data["result"][
-            "responses"
-        ][0].get("completion_tokens_after_first_per_sec")
+        metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = output_data["result"]["responses"][0].get("prompt_tokens_count")
+        metrics[common_metrics.NUM_OUTPUT_TOKENS_SERVER] = output_data["result"]["responses"][0].get("completion_tokens_count")
+        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = output_data["result"]["responses"][0].get("total_tokens_count")
+        metrics[common_metrics.TTFT_SERVER] = output_data["result"]["responses"][0].get("time_to_first_token", 0)
+        metrics[common_metrics.E2E_LAT_SERVER] = output_data["result"]["responses"][0].get("total_latency")
+        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = output_data["result"]["responses"][0].get("completion_tokens_after_first_per_sec")
         # metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_AFTER_FIRST_SERVER] = output_data[
         #     "result"
         # ]["responses"][0].get("completion_tokens_after_first_per_sec")
@@ -251,7 +243,14 @@ class SambaNovaLLMClient(LLMClient):
 
 if __name__ == "__main__":
 
-    ray.init(local_mode=True)
+    # load env variables
+    load_dotenv('../.env', override=True)
+    env_vars = dict(os.environ)
+    
+    # init ray
+    ray.init(local_mode=True, runtime_env={"env_vars": env_vars},log_to_driver=True)
+
+    # ray.init(local_mode=True)
     prompt = "Test this."
     client = SambaNovaLLMClient.remote()
     request_config = RequestConfig(
@@ -260,13 +259,34 @@ if __name__ == "__main__":
         model="COE/llama-2-7b-chat-hf",
         # model="Llama-7B-DynamicBatching",
         sampling_params={
-            "do_sample": False,
-            "max_tokens_to_generate": 256,
-            "top_k": 40,
-            "top_p": 0.95,
+            # "do_sample": False,
+            "max_tokens_to_generate": 1000,
+            # "top_k": 40,
+            # "top_p": 0.95,
             # "process_prompt": "False",
         },
         mode="stream",
         num_concurrent_requests=1,
     )
-    ray.get(client.llm_request.remote(request_config))
+    
+    metrics, generated_text, request_config = ray.get(client.llm_request.remote(request_config))
+    print(f'Metrics collected: {metrics}')
+    # print(f'Completion text: {generated_text}')
+    print(f'Request config: {request_config}')
+    
+    # # batch output tokens testing 
+    
+    # results = []
+    # tokenizer = LlamaTokenizerFast.from_pretrained("hf-internal-testing/llama-tokenizer")
+    
+    # import tqdm 
+    # for i in tqdm.tqdm(range(0,50)):
+    #     metrics, generated_text, request_config = ray.get(client.llm_request.remote(request_config))
+    #     number_tokens = len(tokenizer.encode(generated_text))
+    #     results.append(number_tokens)
+    
+    # import pandas as pd
+    # print(pd.DataFrame(results, columns=['number_tokens']).describe())
+    
+    
+
