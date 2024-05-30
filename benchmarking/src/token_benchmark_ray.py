@@ -23,9 +23,6 @@ from llmperf.utils import (
 from transformers import LlamaTokenizerFast
 from dotenv import load_dotenv
 
-ray.init(log_to_driver=False)
-load_dotenv('../.env', override=True)
-
 def get_token_throughput_latencies(
     model: str,
     mean_input_tokens: int,
@@ -438,8 +435,12 @@ args.add_argument(
 )
 
 if __name__ == "__main__":
+    
+    load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
-    ray.init(runtime_env={"env_vars": env_vars})
+    # set log_to_driver = True if you'd like to have ray's logs in terminal
+    ray.init(runtime_env={"env_vars": env_vars},log_to_driver=False)
+    
     args = args.parse_args()
 
     # Parse user metadata.
