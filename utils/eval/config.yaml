@@ -19,8 +19,6 @@ llms:
       max_tokens_to_generate: 512
 
 
-
-
   # - name: llm2
   #   model_kwargs:
   #     temperature: 0.3
@@ -59,9 +57,10 @@ embeddings:
 evaluation:
   num_samples: 1
   log_wandb: true
-  project_name: rag-pipeline-eval
-  eval_name: test-run-1
+  project_name: rag-pipeline-eval-charts
+  #eval_name: test-run-1
   methodology: rag_pipeline
+  save_eval_table_csv: true
 
 pipeline:
   class: example_rag_pipeline.RAGPipeline

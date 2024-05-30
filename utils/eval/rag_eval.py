@@ -73,6 +73,10 @@ class RAGEvalConfig:
     @property
     def eval_llm_configs(self) -> List[Tuple[str, Dict]]:
         return [(llm["name"], llm) for llm in self.config["eval_llms"]]
+    
+    @property
+    def save_eval_table_csv(self) -> bool:
+        return self.config["evaluation"].get("save_eval_table_csv", True)
 
     def print_config_keys(self):
         print("Configuration Keys:")
@@ -104,8 +108,8 @@ class RAGEvalConfig:
         return self.config["evaluation"]["project_name"]
 
     @property
-    def wandb_eval_name(self) -> str:
-        return self.config["evaluation"]["eval_name"]
+    def wandb_eval_name(self) -> Optional[str]:
+        return self.config["evaluation"].get("eval_name")
 
     @property
     def eval_methodology(self) -> str:
@@ -139,10 +143,12 @@ class RAGEvaluator:
         eval_llms: List[Tuple[str, BaseLLM]],
         eval_embeddings: Embeddings,
         config_yaml_path: str,
+        csv_filename: str = "eval_table.csv",
     ):
         self.eval_llms = eval_llms
         self.eval_embeddings = eval_embeddings
         self.config = RAGEvalConfig(config_yaml_path)
+        self.csv_filename = csv_filename
 
     def create_ragas_dataset(
         self,
@@ -273,20 +279,93 @@ class RAGEvaluator:
                 results[eval_llm_name] = result
 
         if self.config.log_wandb:
-            self._log_wandb(results)
+            self._log_wandb(eval_df, results)
+
+        if self.config.save_eval_table_csv:
+            pass
+            #self.l.to_csv(self.csv_filename, index=False)
 
         return results
+    
+    def create_wandb_table(self, eval_df: pd.DataFrame, results: Dict) -> pd.DataFrame:
+        table_data = []
+        flattened_config = self.config.get_flattened_config()
 
-    def _log_wandb(self, results: Dict):
+        for _, row in eval_df.iterrows():
+            base_row_data = {
+                "question": row[self.config.eval_dataset_question_col],
+                "ground_truth": row[self.config.eval_dataset_ground_truth_col],
+                "user_answer": row[self.config.eval_dataset_answer_col] if self.config.eval_dataset_answer_col else None,
+                "user_context": row[self.config.eval_dataset_context_col] if self.config.eval_dataset_context_col else None,
+                **flattened_config,
+            }
+
+            for eval_llm_name, eval_results in results.items():
+                row_data = {
+                    **base_row_data,
+                    "gen_llm_name": None,
+                    "generated_answer": None,
+                    "context": None,
+                }
+
+                for metric_name, metric_value in eval_results.items():
+                    row_data["eval_llm_name"] = eval_llm_name
+                    row_data["metric_name"] = metric_name
+                    row_data["metric_value"] = metric_value
+                    table_data.append(row_data.copy())
+
+        columns = [
+            "question", "ground_truth", "user_answer", "user_context", *flattened_config.keys(),
+            "gen_llm_name", "generated_answer", "context",
+            "eval_llm_name", "metric_name", "metric_value"
+        ]
+
+        df = pd.DataFrame(table_data, columns=columns)
+
+        print("Evaluation Table:")
+        print(df)
+
+        return df
+    
+    def _log_wandb(self, eval_df: pd.DataFrame, results: Dict):
         """Log eval results and config to Weights & Biases"""
         run = wandb.init(
             project=self.config.wandb_project,
-            name=self.config.wandb_eval_name,
+            name=self.config.wandb_eval_name if self.config.wandb_eval_name else None,
             config=self.config.get_flattened_config(),
         )
-        wandb.log(results)
-        run.finish()
+        
+        table_df = self.create_wandb_table(eval_df, results)
+        self.logging_table = table_df
+        run.log({"eval_table": wandb.Table(dataframe=table_df)})
 
+        # Extract data from the DataFrame
+        eval_llm_names = self.logging_table['eval_llm_name'].unique()
+        metrics = ['answer_relevancy', 'answer_correctness', 'answer_similarity']
+
+        data = []
+        for metric in metrics:
+            # Gather metric values for each evaluation LLM name
+            metric_values = [
+                self.logging_table[
+                    (self.logging_table['eval_llm_name'] == llm_name) & 
+                    (self.logging_table['metric_name'] == metric)
+                ]['metric_value'].values[0] 
+                for llm_name in eval_llm_names
+            ]
+            
+            # Prepare data for the current metric
+            data = [[llm_name, value] for llm_name, value in zip(eval_llm_names, metric_values)]
+            table = wandb.Table(data=data, columns=["Evaluation Model", "Value"])
+            
+            # Log the bar chart for the current metric
+            run.log(
+                {f"Metric_Value_by_Evaluation Model_{metric}": wandb.plot.bar(
+                    table, "Evaluation Model", "Value", title=f"Metric_Value_by_Evaluation)Model_{metric}"
+                )}
+            )
+
+        run.finish()
 
 def load_pipeline(llm: Tuple[str, BaseLLM], config: RAGEvalConfig) -> Tuple[str, Any]:
     """Dynamically load answer generation pipeline from config"""
