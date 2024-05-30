@@ -6,7 +6,7 @@
 </picture>
 </a>
 
-Enterprise Knowledge Retrieval
+Complex Retrieval Augmented Generation Use Case
 ======================
 
 <!-- TOC -->
@@ -25,6 +25,7 @@ Enterprise Knowledge Retrieval
     - [Retrieval workflow](#retrieval-workflow)
     - [Q&A workflow](#qa-workflow)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
+- [Acknowledgements and reference](#acknowledgements-and-references)
 
 <!-- /TOC -->
 
@@ -122,7 +123,7 @@ You have these options to specify the embedding API info:
 
 We recommend that you run the starter kit in a virtual environment or use a container. 
 
-## Workshop deployment: Use a virtual environment
+## Workshop deployment: Use a virtual environment (3.11 preferred)
 
 If you want to use virtualenv or conda environment:
 
@@ -133,14 +134,16 @@ If you want to use virtualenv or conda environment:
 cd ai_starter_kit/
 python3 -m venv complex_rag_env
 source complex_rag_env/bin/activate
-pip  install  -r  requirements.txt
+pip install --upgrade pip
+pip  install  -r  complex_rag/requirements.txt
 ```
 * Windows
 ```
 cd ai_starter_kit/
 python3 -m venv complex_rag_env
 complex_rag>complex_rag_env\Scripts\activate
-pip  install  -r  requirements.txt
+pip install --upgrade pip
+pip  install  -r  complex_rag\requirements.txt
 ```
 
 2. Run the following command:
@@ -207,3 +210,9 @@ After the relevant information is retrieved, the content is sent to the LangGrap
 - unstructured[pdf] (version 0.13.3)
 - PyMuPDF (version 1.23.4)
 - python-dotenv (version 1.0.0)
+
+# Acknowledgements and References
+
+The following work aims to show the power of SambaNova Systems RDU acceleration, using Samba-1 Turbo.  The work herein has been leveraged and adapted from the great folks at LangGraph.  Some of the adaptations of the original works also demonstrate how to modularize different components of the LangGraph setup and implement in Streamlit for rapid, early development.  The original tutorial can be found here:
+
+https://github.com/langchain-ai/langgraph/blob/main/examples/rag/langgraph_rag_agent_llama3_local.ipynb
