@@ -11,12 +11,12 @@ def _get_params() -> dict:
         dict: returns dictionary with LLM params
     """
     params = {
-        "do_sample": st.session_state.do_sample,
+        # "do_sample": st.session_state.do_sample,
         "max_tokens_to_generate": st.session_state.max_tokens_to_generate,
-        "repetition_penalty": st.session_state.repetition_penalty,
-        "temperature": st.session_state.temperature,
-        "top_k": st.session_state.top_k,
-        "top_p": st.session_state.top_p,
+        # "repetition_penalty": st.session_state.repetition_penalty,
+        # "temperature": st.session_state.temperature,
+        # "top_k": st.session_state.top_k,
+        # "top_p": st.session_state.top_p,
     }
     return params
 
@@ -39,27 +39,6 @@ def _parse_llm_response(llm: SambaStudioCOEHandler, prompt: str) -> dict:
     }
     return response
 
-def _get_model_options() -> list:
-    """Gets a list of COE LLM model names
-
-    Returns:
-        list: list with COE LLM model names
-    """
-    llm_options = [
-        'COE/Mistral-7B-Instruct-v0.2',
-        'COE/zephyr-7b-beta',
-        'COE/Mistral-T5-7B-v1',
-        'COE/v1olet_merged_dpo_7B',
-        'COE/Lil-c3po',
-        'COE/DonutLM-v1',
-        'COE/Rabbit-7B-DPO-Chat',
-        'COE/Snorkel-Mistral-PairRM-DPO',
-        'COE/llama-2-7b-chat-hf',
-        'COE/LlamaGuard-7b',
-    ]
-    llm_options.sort(key=lambda x: x.split('/')[-1].upper())
-    return llm_options
-
 def _initialize_sesion_variables():
     # Initialize chat history
     if "chat_history" not in st.session_state:
@@ -72,18 +51,18 @@ def _initialize_sesion_variables():
         st.session_state.chat_disabled = True
         
      # Initialize llm params    
-    if "do_sample" not in st.session_state:
-        st.session_state.do_sample = None
+    # if "do_sample" not in st.session_state:
+    #     st.session_state.do_sample = None
     if "max_tokens_to_generate" not in st.session_state:
         st.session_state.max_tokens_to_generate = None
-    if "repetition_penalty" not in st.session_state:
-        st.session_state.repetition_penalty = None
-    if "temperature" not in st.session_state:
-        st.session_state.temperature = None
-    if "top_k" not in st.session_state:
-        st.session_state.top_k = None
-    if "top_p" not in st.session_state:
-        st.session_state.top_p = None
+    # if "repetition_penalty" not in st.session_state:
+    #     st.session_state.repetition_penalty = None
+    # if "temperature" not in st.session_state:
+    #     st.session_state.temperature = None
+    # if "top_k" not in st.session_state:
+    #     st.session_state.top_k = None
+    # if "top_p" not in st.session_state:
+    #     st.session_state.top_p = None
     
 
 def main ():
@@ -103,14 +82,14 @@ def main ():
         st.markdown("**Configure your LLM before starting to chat**")
         
         # Show LLM parameters
-        llm_options = _get_model_options()
-        st.session_state.llm_selected = st.selectbox('Choose a LLM model', llm_options, index=2, format_func=lambda x: x.split('/')[-1])
-        st.session_state.do_sample = st.toggle("Do Sample")
+        llm_model = st.text_input('Introduce a valid LLM model name', value="Meta-Llama-3-8B-Instruct", help="Look at your model card in SambaStudio and c/p the name of the expert here.")
+        llm_selected = f"COE/{llm_model}"
+        # st.session_state.do_sample = st.toggle("Do Sample")
         st.session_state.max_tokens_to_generate = st.slider('Max tokens to generate', min_value=50, max_value=2048, value=250)
-        st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0, step=0.01, value=1.0, format="%.2f")
-        st.session_state.temperature = st.slider('Temperature', min_value=0.01, max_value=1.00, value=0.1, step=0.01, format="%.2f")
-        st.session_state.top_k = st.slider('Top K', min_value=1, max_value=1000, value=50)
-        st.session_state.top_p = st.slider('Top P', min_value=0.01, max_value=1.00, value=0.95, step=0.01, format="%.2f")
+        # st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0, step=0.01, value=1.0, format="%.2f")
+        # st.session_state.temperature = st.slider('Temperature', min_value=0.01, max_value=1.00, value=0.1, step=0.01, format="%.2f")
+        # st.session_state.top_k = st.slider('Top K', min_value=1, max_value=1000, value=50)
+        # st.session_state.top_p = st.slider('Top P', min_value=0.01, max_value=1.00, value=0.95, step=0.01, format="%.2f")
         
         # Sets LLM
         sidebar_run_option = st.sidebar.button("Run!")
@@ -132,7 +111,7 @@ def main ():
     # Sets LLM based on side bar parameters and COE model selected
     if sidebar_run_option:
         params = _get_params()
-        st.session_state.llm = SambaStudioCOEHandler(model_name=st.session_state.llm_selected,params=params)
+        st.session_state.llm = SambaStudioCOEHandler(model_name=llm_selected,params=params)
         st.toast('LLM ready! 🙌 Start asking!')
         st.session_state.chat_disabled = False
         
