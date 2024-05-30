@@ -30,11 +30,21 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
 from dotenv import load_dotenv
+import ray
 from token_benchmark_ray import run_token_benchmark
 import warnings
 
 warnings.filterwarnings("ignore")
+
 load_dotenv("../../.env", override=True)
+env_vars = dict(os.environ)
+
+
+@st.cache_data
+def _init_ray():
+    # set log_to_driver=True to see more ray logging details
+    ray.shutdown()
+    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=True)
 
 
 def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
@@ -50,19 +60,73 @@ def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
     final_df = pd.DataFrame()
     final_df["number_input_tokens"] = valid_df["number_input_tokens"]
     final_df["number_output_tokens"] = valid_df["number_output_tokens"]
+    final_df["number_total_tokens"] = valid_df["number_total_tokens"]
+    final_df["concurrent_user"] = valid_df["concurrent_user"]
+
+    # server metrics
+    final_df["ttft_server_s"] = valid_df["ttft_server_s"]
+    final_df["end_to_end_latency_server_s"] = valid_df["end_to_end_latency_server_s"]
+    final_df["generation_throughput_server"] = valid_df[
+        "request_output_throughput_server_token_per_s"
+    ]
+
+    # client metrics
     final_df["ttft_s"] = valid_df["ttft_s"]
     final_df["end_to_end_latency_s"] = valid_df["end_to_end_latency_s"]
     final_df["generation_throughput"] = valid_df[
         "request_output_throughput_token_per_s"
     ]
-    # Server numbers
-    final_df["ttft_server_s"] = valid_df["ttft_s"]
-    final_df["end_to_end_latency_server_s"] = valid_df["end_to_end_latency_s"]
-    final_df["generation_throughput_server"] = valid_df[
-        "request_output_throughput_server_token_per_s"
-    ]
-    final_df["concurrent_user"] = valid_df["concurrent_user"]
+
     return final_df
+
+
+def _transform_df_for_plotting(df: pd.DataFrame) -> pd.DataFrame:
+    """Transforms input dataframe into another with server and client types
+
+    Args:
+        df (pd.DataFrame): input dataframe
+
+    Returns:
+        pd.DataFrame: transformed dataframe with server and client type
+    """
+
+    df_server = df[
+        [
+            "ttft_server_s",
+            "number_input_tokens",
+            "number_total_tokens",
+            "generation_throughput_server",
+            "number_output_tokens",
+            "end_to_end_latency_server_s",
+        ]
+    ].copy()
+    df_server = df_server.rename(
+        columns={
+            "ttft_server_s": "ttft",
+            "generation_throughput_server": "generation_throughput",
+            "end_to_end_latency_server_s": "e2e_latency",
+        }
+    )
+    df_server["type"] = "Server side"
+
+    df_client = df[
+        [
+            "ttft_s",
+            "number_input_tokens",
+            "number_total_tokens",
+            "generation_throughput",
+            "number_output_tokens",
+            "end_to_end_latency_s",
+        ]
+    ].copy()
+    df_client = df_client.rename(
+        columns={"ttft_s": "ttft", "end_to_end_latency_s": "e2e_latency"}
+    )
+    df_client["type"] = "Client side"
+
+    df_ttft_throughput_latency = pd.concat([df_server, df_client], ignore_index=True)
+
+    return df_ttft_throughput_latency
 
 
 def _run_performance_evaluation() -> pd.DataFrame:
@@ -101,32 +165,10 @@ def _run_performance_evaluation() -> pd.DataFrame:
     df_user["concurrent_user"] = st.session_state.number_concurrent_requests
     df = pd.concat([df, df_user])
     valid_df = df[(df["error_code"] != "")]
-    final_df = _rename_metrics_df(valid_df)
+    renamed_df = _rename_metrics_df(valid_df)
+    df_ttft_throughput_latency = _transform_df_for_plotting(renamed_df)
 
-    return final_df
-
-
-def _get_model_options() -> list:
-    """Gets a list of COE LLM model names
-
-    Returns:
-        list: list with COE LLM model names
-    """
-    llm_options = [
-        "COE/Meta-Llama-3-8B-Instruct",
-        "COE/Mistral-7B-Instruct-v0.2",
-        "COE/llama-2-7b-chat-hf",
-        "COE/zephyr-7b-beta",
-        "COE/Mistral-T5-7B-v1",
-        "COE/v1olet_merged_dpo_7B",
-        "COE/Lil-c3po",
-        "COE/DonutLM-v1",
-        "COE/Rabbit-7B-DPO-Chat",
-        "COE/Snorkel-Mistral-PairRM-DPO",
-        "COE/LlamaGuard-7b",
-    ]
-    llm_options.sort(key=lambda x: x.split("/")[-1].upper())
-    return llm_options
+    return df_ttft_throughput_latency
 
 
 def _initialize_sesion_variables():
@@ -165,6 +207,7 @@ def main():
         ]
     )
 
+    _init_ray()
     _initialize_sesion_variables()
 
     st.title(":orange[SambaNova]Performance evaluation")
@@ -188,20 +231,42 @@ def main():
         st.title("Configuration")
         st.markdown("**Modify the following parameters before running the process**")
 
-        llm_options = _get_model_options()
-        st.session_state.llm = st.selectbox('Choose a LLM model', llm_options, index=0, format_func=lambda x: x.split('/')[-1])
-        
-        st.session_state.input_tokens = st.slider('Number of input tokens', min_value=50, max_value=1024, value=250)
-        st.session_state.input_tokens_std = st.slider('Input tokens standard deviation', min_value=10, max_value=256, value=50)
-        
-        st.session_state.output_tokens = st.slider('Number of output tokens', min_value=50, max_value=1024, value=250)
-        st.session_state.output_tokens_std = st.slider('Output tokens standard deviation', min_value=10, max_value=256, value=50)
-        
-        st.session_state.number_requests = st.slider('Number of total requests', min_value=10, max_value=100, value=50)
-        st.session_state.number_concurrent_requests = st.slider('Number of concurrent requests', min_value=1, max_value=50, value=1)
-        
-        st.session_state.timeout = st.slider('Timeout', min_value=60, max_value=1800, value=600)
-        
+        llm_model = st.text_input(
+            "Introduce a valid LLM model name",
+            value="Meta-Llama-3-8B-Instruct",
+            help="Look at your model card in SambaStudio and c/p the name of the expert here.",
+        )
+        st.session_state.llm = f"COE/{llm_model}"
+
+        st.session_state.input_tokens = st.slider(
+            "Number of input tokens", min_value=50, max_value=1024, value=250
+        )
+        st.session_state.input_tokens_std = st.slider(
+            "Input tokens standard deviation", min_value=10, max_value=256, value=50
+        )
+
+        st.session_state.output_tokens = st.slider(
+            "Number of output tokens", min_value=50, max_value=1024, value=250
+        )
+        st.session_state.output_tokens_std = st.slider(
+            "Output tokens standard deviation", min_value=10, max_value=256, value=50
+        )
+
+        st.session_state.number_requests = st.slider(
+            "Number of total requests", min_value=10, max_value=100, value=50
+        )
+        st.session_state.number_concurrent_requests = st.slider(
+            "Number of concurrent requests",
+            min_value=1,
+            max_value=50,
+            value=1,
+            help="TTFT will not be available for concurrent workers greater than 1",
+        )
+
+        st.session_state.timeout = st.slider(
+            "Timeout", min_value=60, max_value=1800, value=600
+        )
+
         sidebar_option = st.sidebar.button("Run!")
 
     if sidebar_option:
@@ -217,55 +282,68 @@ def main():
                 f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
             )
 
-            st.subheader("TTFT and E2E Latency scatter plots")
+            st.subheader("TTFT, Throughput and E2E Latency scatter plots")
 
-            # Plot ttft vs input tokens
-            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
-            # Number of Input Tokens vs. TTFT
-            df_melted = df.melt(
-                id_vars="number_input_tokens",
-                value_vars=["ttft_s", "ttft_server_s"],
-                var_name="Variable",
-                value_name="Value",
-            )
+            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
             sns.scatterplot(
-                data=df_melted,
+                data=df,
                 x="number_input_tokens",
-                y="Value",
-                hue="Variable",
+                y="ttft",
+                hue="type",
                 ax=ax[0],
-            ).set_title("Number of Input Tokens vs. TTFT")
-            ax[0].set(
-                xlabel="Number of Input Tokens", ylabel="Time to First Token (secs)"
+                alpha=0.5,
+            ).set(
+                xlabel="Number of Input Tokens",
+                ylabel="Time to First Token (secs)",
+                title="Number of Input Tokens vs. TTFT",
             )
-
-            # Number of output Tokens vs. Throughput
-            df_melted = df.melt(
-                id_vars="number_output_tokens",
-                value_vars=["end_to_end_latency_s", "end_to_end_latency_server_s"],
-                var_name="Variable",
-                value_name="Value",
-            )
+            ax[0].legend(title="Type")
             sns.scatterplot(
-                data=df_melted,
+                data=df,
                 x="number_output_tokens",
-                y="Value",
-                hue="Variable",
+                y="generation_throughput",
+                hue="type",
                 ax=ax[1],
-            ).set_title("Number of output Tokens vs. End-to-end latency")
-            ax[1].set(xlabel="Number of Output Tokens", ylabel="E2E latency (secs)")
-            st.pyplot(fig)
-            st.subheader("TTFT and E2E Latency plots")
-
-            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(8, 12))
-            # Time to First Token boxplot
-            sns.boxplot(data=df, x="ttft_s", hue="concurrent_user", ax=ax[0])
-            ax[0].set(xlabel="Time to First Token (secs)")
-            # Generation Throughput boxplot
-            sns.boxplot(
-                data=df, x="end_to_end_latency_s", hue="concurrent_user", ax=ax[1]
+                alpha=0.5,
+            ).set(
+                xlabel="Number of Output Tokens",
+                ylabel="Throughput (tokens/sec)",
+                title="Number of Output Tokens vs. Throughput",
             )
-            ax[1].set(xlabel="E2E latency (secs)")
+            ax[1].legend(title="Type")
+            sns.scatterplot(
+                data=df,
+                x="number_output_tokens",
+                y="e2e_latency",
+                hue="type",
+                ax=ax[2],
+                alpha=0.5,
+            ).set(
+                xlabel="Number of Output Tokens",
+                ylabel="E2E Latency (secs)",
+                title="Number of Output Tokens vs Latency",
+            )
+            ax[2].legend(title="Type")
+            st.pyplot(fig)
+
+            st.subheader("TTFT, Throughput and E2E Latency box plots")
+
+            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
+            sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
+                xlabel="Time to First Token (secs)",
+                ylabel="Type",
+                title="Time to First Token Distribution",
+            )
+            sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
+                xlabel="E2E Latency (secs)",
+                ylabel="Type",
+                title="End-to-end Latency Distribution",
+            )
+            sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
+                xlabel="Throughput (tokens/sec)",
+                ylabel="Type",
+                title="Throughput Distribution",
+            )
             st.pyplot(fig)
 
 
