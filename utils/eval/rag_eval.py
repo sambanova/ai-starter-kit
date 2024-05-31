@@ -96,8 +96,8 @@ class RAGEvalConfig:
         return self.config["vector_db"]["location"]
 
     @property
-    def num_eval_samples(self) -> int:
-        return self.config["evaluation"]["num_samples"]
+    def num_eval_samples(self) -> Optional[int]:
+        return self.config["evaluation"].get("num_samples")
 
     @property
     def log_wandb(self) -> bool:
@@ -199,10 +199,14 @@ class RAGEvaluator:
 
         gen_llm_names = []
         if answer_generation_pipelines:
+            num_samples = self.config.num_eval_samples
+            if num_samples is None or num_samples > len(eval_df):
+                num_samples = len(eval_df)
+
             for llm_name, pipeline in answer_generation_pipelines:
                 answers = []
                 contexts = []
-                for _, row in eval_df.iterrows():
+                for _, row in eval_df.iloc[:num_samples].iterrows():
                     query = row[self.config.eval_dataset_question_col]
                     result = pipeline.generate(query)
 
@@ -225,8 +229,8 @@ class RAGEvaluator:
                     answers.append(answer)
                     contexts.append(context)
 
-                eval_df[f"answer_{llm_name}"] = answers
-                eval_df[f"context_{llm_name}"] = contexts
+                eval_df.loc[:num_samples-1, f"answer_{llm_name}"] = answers
+                eval_df.loc[:num_samples-1, f"context_{llm_name}"] = contexts
                 gen_llm_names.append(llm_name)
 
         metrics = [
@@ -254,32 +258,37 @@ class RAGEvaluator:
         results = {}
         print(eval_df)
 
+        num_samples = self.config.num_eval_samples
+        if num_samples is None or num_samples > len(eval_df):
+            num_samples = len(eval_df)
+
         if gen_llm_names:
             for gen_llm_name in gen_llm_names:
                 for eval_llm_name, eval_llm in self.eval_llms:
-                    ragas_dataset = self.create_ragas_dataset(eval_df, gen_llm_name)
+                    ragas_dataset = self.create_ragas_dataset(eval_df.iloc[:num_samples], gen_llm_name)
 
                     result = evaluate(
-                        ragas_dataset.select(range(self.config.num_eval_samples)),
+                        ragas_dataset,
                         metrics=metrics,
                         llm=eval_llm,
                         embeddings=self.eval_embeddings,
                     )
-                    results[f"{gen_llm_name}_{eval_llm_name}"] = result
+                    results[f"{gen_llm_name}_{eval_llm_name}"] = result.to_pandas()  # Use result.to_pandas()
         else:
             for eval_llm_name, eval_llm in self.eval_llms:
-                ragas_dataset = self.create_ragas_dataset(eval_df, None)
+                ragas_dataset = self.create_ragas_dataset(eval_df.iloc[:num_samples], None)
 
                 result = evaluate(
-                    ragas_dataset.select(range(self.config.num_eval_samples)),
+                    ragas_dataset,
                     metrics=metrics,
                     llm=eval_llm,
                     embeddings=self.eval_embeddings,
                 )
-                results[eval_llm_name] = result
+                print(f'This is the results df {result.to_pandas()}')
+                results[eval_llm_name] = result.to_pandas()  # Use result.to_pandas()
 
         if self.config.log_wandb:
-            self._log_wandb(eval_df, results)
+            self._log_wandb(eval_df.iloc[:num_samples], results)
 
         if self.config.save_eval_table_csv:
             pass
@@ -300,7 +309,7 @@ class RAGEvaluator:
                 **flattened_config,
             }
 
-            for eval_llm_name, eval_results in results.items():
+            for eval_llm_name, eval_results_df in results.items():
                 row_data = {
                     **base_row_data,
                     "gen_llm_name": None,
@@ -308,10 +317,14 @@ class RAGEvaluator:
                     "context": None,
                 }
 
-                for metric_name, metric_value in eval_results.items():
+                eval_results_row = eval_results_df[eval_results_df["question"] == row[self.config.eval_dataset_question_col]]
+
+                for metric_name in eval_results_row.columns:
+                    if metric_name in ["question", "answer", "ground_truth", "contexts"]:
+                        continue
                     row_data["eval_llm_name"] = eval_llm_name
                     row_data["metric_name"] = metric_name
-                    row_data["metric_value"] = metric_value
+                    row_data["metric_value"] = eval_results_row[metric_name].values[0]
                     table_data.append(row_data.copy())
 
         columns = [
@@ -334,7 +347,7 @@ class RAGEvaluator:
             name=self.config.wandb_eval_name if self.config.wandb_eval_name else None,
             config=self.config.get_flattened_config(),
         )
-        
+
         table_df = self.create_wandb_table(eval_df, results)
         self.logging_table = table_df
         run.log({"eval_table": wandb.Table(dataframe=table_df)})
@@ -348,16 +361,16 @@ class RAGEvaluator:
             # Gather metric values for each evaluation LLM name
             metric_values = [
                 self.logging_table[
-                    (self.logging_table['eval_llm_name'] == llm_name) & 
+                    (self.logging_table['eval_llm_name'] == llm_name) &
                     (self.logging_table['metric_name'] == metric)
-                ]['metric_value'].values[0] 
+                ]['metric_value'].mean()  # Use mean() to handle NaN values
                 for llm_name in eval_llm_names
             ]
-            
+
             # Prepare data for the current metric
             data = [[llm_name, value] for llm_name, value in zip(eval_llm_names, metric_values)]
             table = wandb.Table(data=data, columns=["Evaluation Model", "Value"])
-            
+
             # Log the bar chart for the current metric
             run.log(
                 {f"Metric_Value_by_Evaluation Model_{metric}": wandb.plot.bar(

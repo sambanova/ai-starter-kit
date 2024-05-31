@@ -43,10 +43,11 @@ eval_llms:
       process_prompt: False
       max_tokens_to_generate: 512
 
-  # - name: eval_llm3
+  # - name: EVAL_SWALLOW70B
   #   model_kwargs:
-  #     temperature: 0.8
-  #     max_tokens: 150
+  #     select_expert: Swallow-70b-NVE-instruct-hf
+  #     process_prompt: False
+  #     max_tokens_to_generate: 512
 
 vector_db:
   location: ../data/adi_vdb_v3_md_200.chromadb
@@ -55,10 +56,10 @@ embeddings:
   model_name: intfloat/e5-large
 
 evaluation:
-  num_samples: 1
+  num_samples: 5
   log_wandb: true
   project_name: rag-pipeline-eval-charts
-  #eval_name: test-run-1
+  eval_name: 
   methodology: rag_pipeline
   save_eval_table_csv: true
 
