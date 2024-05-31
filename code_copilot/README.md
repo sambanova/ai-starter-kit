@@ -36,7 +36,7 @@ Code Copilot
 
 # Overview
 
-This AI Starter Kit is a demonstration of how to use Sambanova's models as coding assistant leveraging the [Continue](https://www.continue.dev/) extension for VSCode and JetBrains.  The Kit includes:
+This AI Starter Kit is a demonstration of how to use Sambanova's models as coding assistants leveraging the [Continue](https://www.continue.dev/) extension for VSCode and JetBrains.  The Kit includes:
 
 - A configurable SambaStudio - Continue connector. The connector generates answers from a deployed LLM.
 
@@ -46,12 +46,18 @@ This AI Starter Kit is a demonstration of how to use Sambanova's models as codin
 
 # Before you begin
 
-In this starter kit, you need access to an Sambaverse account or a SambaStudio Environment.
+For this starter kit, you will need access to an Sambaverse account or a SambaStudio Environment.
 > You can use a LLM of your choice, either from Sambaverse or from SambaStudio, but is highly recommended to use Meta-Llama-3-8B-Instruct
 
-## Set up the account and config file for the LLM 
+## Set up the account for using the LLM 
 
 The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse.
+
+### Setup for Sambaverse users 
+
+1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.ai) and select your model.
+
+2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
 
 ### Setup for SambaStudio users
 
@@ -61,30 +67,25 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 2. Select the LLM to use (e,g. CoE1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-### Setup for Sambaverse users 
-
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model.
-
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-
 ## Get Continue Extension/plugin
 
-you will need to install the [Continue](https://www.continue.dev/) [VSCode](https://marketplace.visualstudio.com/items?itemName=Continue.continue) or [JetBrains](https://plugins.jetbrains.com/plugin/22707-continue) Extension. *this can be done directly from the extensions/plugins section of you IDE searching **continue***
+you will need to install the [Continue](https://www.continue.dev/) [VSCode](https://marketplace.visualstudio.com/items?itemName=Continue.continue) or [JetBrains](https://plugins.jetbrains.com/plugin/22707-continue) Extension. *this can be done directly from the extensions/plugins section of you IDE searching ***Continue****
 
 # Setting up
 
 ## Setup Continue
+
 After installing Continue you will need to do the basic setup
 
-- First you will be prompted to select a model to use you can skip this step and close the ***Continue** extension
+- First you will be prompted to select a model to use you can skip this step and close the ***Continue** window
 
-## Set custom Sambanova integration
+## Set the custom Sambanova integration
 
 After the basic installation it is needed to set the custom SambaStudio and Sambaverse ***Continue*** connectors
 
-First you should modify the ***Continue*** config.ts file
+First you should modify the ***Continue*** `config.ts` file
 
-- Open the config.ts file in  `~/.continue/` folder and replace the contents with the contents of the [config.ts](config.ts) kit provided file.
+- Open the `config.ts` file in  `~/.continue/` folder and replace the contents with the contents of the [config.ts](config.ts) kit provided file.
 
 - If you are using Sambaverse: replace the sambaverse_api_key variable  with your previously generated Sambaverse api key
 
@@ -95,7 +96,7 @@ First you should modify the ***Continue*** config.ts file
     const sambaverse_api_key = "123456ab-cdef-0123-4567-890abcdef"
     ```
 
-- If you are using SambaStudio: replace the sambastudio_base_url, sambastudio_project_id, sambastudio_endpoint_id and sambaStudio_api_key variables with your SambaStudio endpoint keys:
+- If you are using SambaStudio: replace the sambastudio_base_url, sambastudio_project_id, sambastudio_endpoint_id and sambastudio_api_key variables with your SambaStudio endpoint keys:
 
     For example, for an endpoint with the URL `https://api-stage.sambanova.net/api/predict/generic/stream/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012` with api key `123456ab-cdef-0123-4567-890abcdef` update the first section in the config.ts file as:
 
@@ -107,29 +108,29 @@ First you should modify the ***Continue*** config.ts file
     const sambastudio_api_key = "123456ab-cdef-0123-4567-890abcdef"
     ```
 
-Ten you should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ bottom right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file.
+Then you should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ bottom right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file.
 
 # Usage
 
 ## Ask question to the LLM in your IDE
 
-You can interact with the LLM directly using ⌘+l  this will open a ***Continue*** session in a new extension window then ask anything to the to the model!
+You can interact with the LLM directly using ⌘+l command this will open a ***Continue*** session in a new extension window then ask anything to the to the model!
 
 ## Ask about selected code
 
-You can ask information of selected code to the LLM directly selecting your text and then pressing ⌘+l  this will open a ***Continue*** session in a new extension window with the code snippet as context, then ask anything related with your code snippet!
+You can ask information of a selected snippet of code to the LLM directly selecting your text and then pressing ⌘+l, this will open a ***Continue*** session in a new extension window with the code snippet as context, then ask anything related with your code!
 
 ## Edit code
 
-You can ask your LLM to modify your code, ad functionalities, documentation etc, over a selected code snippet, for this first select the code snipped you want the model to modify, then press ⌘+i, this will open an input bar in the top of your IDE, then write your desired changes and press enter, this will generate the modified code for you and you can edit it, accept or reject the proposed changes.
+You can ask your LLM to modify your code, add functionalities, documentation etc, over a selected code snippet, for this first select the code snippet you want the model to modify, then press ⌘+i, this will open an input bar in the top of your IDE, then write your desired changes and press enter, this will generate the modified code for you and you can edit it, accept or reject the proposed changes.
 
 ## Understand terminal errors
 
-you can ask the model to inspect your terminal error outputs to explain you the error and give you some suggestions, for this after getting an error in your terminal only press  ⌘+shit+r, this will open a ***Continue*** session in a new extension window with the error explanation!
+You can ask the model to inspect your terminal error outputs to explain you the error and give you some suggestions, for this after getting an error in your terminal only press ⌘+shit+r, this will open a ***Continue*** session in a new extension window with the error explanation!
 
 ## Custom commands 
 
-you can execute your custom commands/prompts selecting a code snippet an then pressing ⌘+l to open a new ***Continue*** session then write `/<yourCommand>` to generate, see how to create your custom commands [here](#add-custom-commands)
+You can execute your custom commands/prompts selecting a code snippet and then pressing ⌘+l to open a new ***Continue*** session then write `/<yourCommand>` to generate, see how to create your custom commands [here](#add-custom-commands)
 
 > See more about ***Continue*** extension usage [here](https://docs.continue.dev/how-to-use-continue)
 
@@ -139,7 +140,21 @@ The example template can be further customized based on the use case.
 
 ## Modify the parameters and the model to use
 
-you can change the default Sambaverse model or the default model used with SambaStudio CoE models, and some model parameters modifying the `options` and the `body` params of the Sambaverse model and Sambastudio model in the `SambastudioModel` an `SambaverseModel` definitions of [config.ts file](config.ts) 
+You can change the default Sambaverse model or the default model used with SambaStudio CoE models modifying the model and expert selection in [config.ts](config.ts) file:
+
+- If using Sambaverse:
+    ```ts
+        const sambaverse_model_name = "Meta/Meta-Llama-3-8B-Instruct";
+        const sambaverse_expert_name = "Meta-Llama-3-8B-Instruct";
+    ```
+
+- If using SambaStudio CoE:
+    ```ts
+        const sambastudio_use_coe = true;
+        const sambastudio_coe_expert_name = "Meta-Llama-3-8B-Instruct";
+    ```
+
+Also you can modify model parameters modifying the `body` params of the Sambaverse model and Sambastudio model in the `SambastudioModel` an `SambaverseModel` definitions of [config.ts file](config.ts).
 
 ## Add custom commands
 
@@ -151,11 +166,10 @@ A custom command should have the following structure
 {
   "name": "yourCommand",
   "prompt": "{{{ input }}} \n\n custom prompt",
-  "description": "Write unit tests for highlighted code "
+  "description": "Description of your custom command"
 }
 ```
 
 # Acknowledgments
 
-This kit work aims to show the integration of SambaNova Systems RDU acceleration models, The work here has been leveraged and adapted from the [Continue](https://docs.continue.dev/) documentation.  The original docs can be found here:
-[https://docs.continue.dev/](https://docs.continue.dev/)
+This kit work aims to show the integration of SambaNova Systems RDU acceleration models, The work here has been leveraged and adapted from the [Continue](https://docs.continue.dev/) documentation. The original docs can be found in [https://docs.continue.dev/](https://docs.continue.dev/)
