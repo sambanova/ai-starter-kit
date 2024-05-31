@@ -110,8 +110,8 @@ class ImageSearch():
         if ingestion_mode=="batch_inference":
             clip = BatchClipProcessor(config_path=config_path)
             df = clip.process_images(path)
-            embeddings = list(df["predictions"]) 
-            paths = list(df["input"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
+            embeddings = [element["image_vec"] for element in list(df["predictions"])] 
+            paths = list(df["image_path"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
             self.collection.add(
                 embeddings=embeddings,
                 metadatas=[{"source": path} for path in paths],
@@ -119,7 +119,7 @@ class ImageSearch():
                 uris=paths
             )
         elif ingestion_mode=="online_inference":
-            paths, images=self.get_images(os.path.join(kit_dir,"data/images"))
+            paths, images=self.get_images(path)
             self.collection.add(
                 images=images,
                 metadatas=[{"source": path} for path in paths],

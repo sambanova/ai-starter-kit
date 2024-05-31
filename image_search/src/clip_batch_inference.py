@@ -168,7 +168,7 @@ class BatchClipProcessor():
                     image_paths.append(image_path)
 
         df = pd.DataFrame({'image_path': image_paths, 'description': '', 'subset': '', 'metadata': ''})
-        df.to_csv(os.path.join(dataset_dir,'labels.csv'), index=False)
+        df.to_csv(os.path.join(dataset_dir,'predictions.csv'), index=False)
 
     def _get_df_output(self, response_content: str) -> DataFrame:
         """Parse the response from the CLIP job.
