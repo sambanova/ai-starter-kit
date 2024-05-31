@@ -1,6 +1,6 @@
 clip:
 
-  ingestion_mode: bath_inference # Alternative online_inference mode 
+  ingestion_mode: online_inference #Alternative batch_inference_job 
 
   datasets:
     datasets_path: ./data/datasets
@@ -13,7 +13,7 @@ clip:
     clip_app_id: 6c14325a-1be7-4e48-b38f-19b33745fc3b
    
   urls:
-    base_url: https:/my-samabastudio-environ.net
+    base_url: https://your-SambaStudio-env.net
     datasets_url: /api/datasets
     projects_url: /api/projects
     jobs_url: /{project_id}/jobs

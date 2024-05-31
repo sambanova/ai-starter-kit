@@ -234,7 +234,7 @@ class BatchClipProcessor():
             os.mkdir(self.datasets_path) 
             
         if not os.path.isdir(clip_directory):
-            logging.info(f'Datasets path: {clip_directory} wan \'t found')
+            logging.info(f'Datasets path: {clip_directory} not found')
             
             source_file_data = {
                 "source_path": clip_directory
