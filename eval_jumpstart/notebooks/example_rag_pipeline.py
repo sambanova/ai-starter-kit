@@ -21,7 +21,7 @@ class RAGPipeline:
             persist_directory=vector_db_location, embedding_function=embeddings
         )
 
-        print(f'This is the vector db {vector_db_location}')
+        print(f"This is the vector db {vector_db_location}")
 
         prompt_template = """
         <|begin_of_text|>
@@ -53,13 +53,13 @@ class RAGPipeline:
             chain_type="stuff",
             retriever=self.vector_store.as_retriever(),
             chain_type_kwargs={"prompt": PROMPT},
-            return_source_documents=True
+            return_source_documents=True,
         )
 
     def generate(self, query: str) -> Dict:
         docs = self.vector_store.similarity_search(query)
         print(docs)
-        #print(docs[0].page_content)
+        # print(docs[0].page_content)
         """Generate an answer for the given query"""
         response = self.qa_chain.invoke(query)
         return {"answer": response}

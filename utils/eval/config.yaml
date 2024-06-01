@@ -4,7 +4,7 @@ eval_dataset:
   question_col: question
   ground_truth_col: ground_truth
   answer_col: answer
-  #context_col: contexts
+  context_col: contexts
 
 llms:
   - name: LLAMA70B_GEN
@@ -56,7 +56,7 @@ embeddings:
   model_name: intfloat/e5-large
 
 evaluation:
-  num_samples: 5
+  num_samples: 3
   log_wandb: true
   project_name: rag-pipeline-eval-charts
   eval_name: 
