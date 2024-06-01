@@ -33,18 +33,22 @@ from dotenv import load_dotenv
 import ray
 from token_benchmark_ray import run_token_benchmark
 import warnings
+import logging
 
 warnings.filterwarnings("ignore")
-
-load_dotenv("../../.env", override=True)
-env_vars = dict(os.environ)
 
 
 @st.cache_data
 def _init_ray():
+    load_dotenv("../.env", override=True)
+    env_vars = dict(os.environ)
     # set log_to_driver=True to see more ray logging details
     ray.shutdown()
-    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=True)
+    ray.init(
+        runtime_env={"env_vars": env_vars},
+        log_to_driver=True,
+        logging_level=logging.ERROR,
+    )
 
 
 def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
@@ -141,7 +145,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     mode = "stream"  # static for now
 
     run_token_benchmark(
-        llm_api="sambanova",
+        llm_api="sambastudio",
         model=st.session_state.llm,
         test_timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
@@ -215,7 +219,7 @@ def main():
         "This performance evaluation assesses the following LLM's performance metrics using concurrent processes. _client represent the metrics computed from the client-side and _server represents the metrics computed from the server-side."
     )
     st.markdown(
-        "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token."
+        "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token. Client metric is calculated using another request with output tokens = 1."
     )
     st.markdown(
         "**Time per output token (TPOT):** Time to generate an output token for each user that is querying the system."
@@ -224,7 +228,7 @@ def main():
         "**E2E Latency:** TTFT + (TPOT) * (the number of tokens to be generated)"
     )
     st.markdown(
-        "**Throughput:** Number of output tokens per second across all concurrency requests"
+        "**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"
     )
 
     with st.sidebar:
@@ -233,10 +237,10 @@ def main():
 
         llm_model = st.text_input(
             "Introduce a valid LLM model name",
-            value="Meta-Llama-3-8B-Instruct",
-            help="Look at your model card in SambaStudio and c/p the name of the expert here.",
+            value="COE/Meta-Llama-3-8B-Instruct",
+            help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
-        st.session_state.llm = f"COE/{llm_model}"
+        st.session_state.llm = f"{llm_model}"
 
         st.session_state.input_tokens = st.slider(
             "Number of input tokens", min_value=50, max_value=1024, value=250
@@ -260,7 +264,7 @@ def main():
             min_value=1,
             max_value=50,
             value=1,
-            help="TTFT will not be available for concurrent workers greater than 1",
+            help="Client TTFT and Throughout will not be available for concurrent workers greater than 1",
         )
 
         st.session_state.timeout = st.slider(
