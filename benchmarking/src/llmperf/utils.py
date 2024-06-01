@@ -10,8 +10,10 @@ from transformers import LlamaTokenizerFast
 
 RESULTS_VERSION = "2023-08-31"
 
+
 class LLMPerfResults:
     """Class with LLM Performance results"""
+
     def __init__(
         self,
         name: str,
@@ -23,7 +25,12 @@ class LLMPerfResults:
         self.metadata["timestamp"] = self.timestamp
         self.version = RESULTS_VERSION
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Updates and flattens dictionary
+
+        Returns:
+            dict: transformed dictionary
+        """
         data = {
             "version": self.version,
             "name": self.name,
@@ -32,7 +39,12 @@ class LLMPerfResults:
         data = flatten_dict(data)
         return data
 
-    def json(self):
+    def json(self) -> str:
+        """Transforms dictionary to json string
+
+        Returns:
+            str: json string
+        """
         data = self.to_dict()
         return json.dumps(data)
 
@@ -62,8 +74,8 @@ def randomly_sample_sonnet_lines_prompt(
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
     Args:
-        prompt_length_mean: The mean length of the prompt to generate.
-        prompt_len_stddev: The standard deviation of the length of the prompt to generate.
+        prompt_tokens_mean: The mean tokens of the prompt to generate.
+        prompt_tokens_stddev: The standard deviation of the tokens of the prompt to generate.
         expect_output_tokens: The number of tokens to expect in the output. This is used to
         determine the length of the prompt. The prompt will be generated such that the output
         will be approximately this many tokens.
@@ -128,14 +140,24 @@ def sample_random_positive_int(mean: int, stddev: int) -> int:
     Returns:
         A random positive integer sampled from the gaussian distribution.
     """
-    
+
     ret = -1
     while ret <= 0:
         ret = int(random.gauss(mean, stddev))
     return ret
 
 
-def flatten_dict(d, parent_key="", sep="_"):
+def flatten_dict(d: dict, parent_key: str = "", sep: str = "_") -> dict:
+    """Flattens dictionary
+
+    Args:
+        d (dict): input dictionary
+        parent_key (str, optional): parent key. Defaults to "".
+        sep (str, optional): separator. Defaults to "_".
+
+    Returns:
+        dict: output flat dictionary
+    """
     items = []
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k
