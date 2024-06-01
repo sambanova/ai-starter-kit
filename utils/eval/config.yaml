@@ -4,7 +4,7 @@ eval_dataset:
   question_col: question
   ground_truth_col: ground_truth
   answer_col: answer
-  context_col: contexts
+  #context_col: contexts
 
 llms:
   - name: LLAMA70B_GEN
@@ -12,12 +12,12 @@ llms:
       select_expert: Meta-Llama-3-70B-Instruct
       process_prompt: False
       max_tokens_to_generate: 512
+
   - name: LLAMA8B_GEN
     model_kwargs:
       select_expert: Meta-Llama-3-8B-Instruct
       process_prompt: False
       max_tokens_to_generate: 512
-
 
   # - name: llm2
   #   model_kwargs:
@@ -35,19 +35,19 @@ eval_llms:
       select_expert: Meta-Llama-3-8B-Instruct
       process_prompt: False
       max_tokens_to_generate: 512
-
-
+  
   - name: EVAL_LLAMA370B
     model_kwargs:
       select_expert: Meta-Llama-3-70B-Instruct
       process_prompt: False
       max_tokens_to_generate: 512
 
-  # - name: EVAL_SWALLOW70B
-  #   model_kwargs:
-  #     select_expert: Swallow-70b-NVE-instruct-hf
-  #     process_prompt: False
-  #     max_tokens_to_generate: 512
+
+# - name: EVAL_SWALLOW70B
+#   model_kwargs:
+#     select_expert: Swallow-70b-NVE-instruct-hf
+#     process_prompt: False
+#     max_tokens_to_generate: 512
 
 vector_db:
   location: ../data/adi_vdb_v3_md_200.chromadb
@@ -56,7 +56,7 @@ embeddings:
   model_name: intfloat/e5-large
 
 evaluation:
-  num_samples: 3
+  num_samples: 5
   log_wandb: true
   project_name: rag-pipeline-eval-charts
   eval_name: 
@@ -64,6 +64,6 @@ evaluation:
   save_eval_table_csv: true
 
 pipeline:
-  class: example_rag_pipeline.RAGPipeline
+  class: rag_pipeline.RAGPipeline
   kwargs:
-    vector_db_location: ../data/adi_vdb_v3_md_200.chromadb
+    vector_db_location: /Users/kwasia/Documents/Projects/ai-starter-kit/eval_jumpstart/data/adi_vdb_v3_md_200.chromadb

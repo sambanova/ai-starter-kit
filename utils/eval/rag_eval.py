@@ -20,8 +20,14 @@ import argparse
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()  # Load environment variables from .env file
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 
 class RAGEvalConfig:
@@ -79,21 +85,21 @@ class RAGEvalConfig:
         return self.config["evaluation"].get("save_eval_table_csv", True)
 
     def print_config_keys(self):
-        print("Configuration Keys:")
+        logging.info("Configuration Keys:")
         for key, value in self.config.items():
-            print(f"{key}:")
+            logging.info(f"{key}:")
             if isinstance(value, list):
                 for item in value:
-                    print(f"  - {item}")
+                    logging.info(f"  - {item}")
             elif isinstance(value, dict):
                 for sub_key, sub_value in value.items():
-                    print(f"  {sub_key}: {sub_value}")
+                    logging.info(f"  {sub_key}: {sub_value}")
             else:
-                print(f"  {value}")
+                logging.info(f"  {value}")
 
     @property
     def vector_db_location(self) -> str:
-        return self.config["vector_db"].get("location")
+        return self.config["pipeline"]["kwargs"].get("vector_db_location")
 
     @property
     def num_eval_samples(self) -> Optional[int]:
@@ -189,7 +195,7 @@ class RAGEvaluator:
                     ),
                 }
             )
-        print(ragas_data)
+
         ragas_dataset = Dataset.from_list(ragas_data)
         return ragas_dataset
 
@@ -211,6 +217,7 @@ class RAGEvaluator:
                 contexts = []
                 for _, row in eval_df.iloc[:num_samples].iterrows():
                     query = row[self.config.eval_dataset_question_col]
+                    logging.info(f"Generating answer for query: {query}")
                     result = pipeline.generate(query)
 
                     if isinstance(result["answer"], dict):
@@ -266,7 +273,7 @@ class RAGEvaluator:
             )
 
         results = {}
-        print(eval_df)
+        # logging.info(f"Evaluation dataframe:\n{eval_df}")
 
         num_samples = self.config.num_eval_samples
         if num_samples is None or num_samples > len(eval_df):
@@ -279,31 +286,36 @@ class RAGEvaluator:
                         eval_df.iloc[:num_samples], gen_llm_name
                     )
 
+                    logging.info(
+                        f"Evaluating metrics for {gen_llm_name} and {eval_llm_name}"
+                    )
                     result = evaluate(
                         ragas_dataset,
                         metrics=metrics,
                         llm=eval_llm,
                         embeddings=self.eval_embeddings,
                     )
-                    results[
-                        f"{gen_llm_name}_{eval_llm_name}"
-                    ] = result.to_pandas()  # Use result.to_pandas()
+                    results[f"{gen_llm_name}_{eval_llm_name}"] = (
+                        result.to_pandas()
+                    )  # Use result.to_pandas()
         else:
             for eval_llm_name, eval_llm in self.eval_llms:
                 ragas_dataset = self.create_ragas_dataset(
                     eval_df.iloc[:num_samples], None
                 )
 
+                logging.info(f"Evaluating metrics for {eval_llm_name}")
                 result = evaluate(
                     ragas_dataset,
                     metrics=metrics,
                     llm=eval_llm,
                     embeddings=self.eval_embeddings,
                 )
-                print(f"This is the results df {result.to_pandas()}")
+                # logging.info(f"Results dataframe for {eval_llm_name}:\n{result.to_pandas()}")
                 results[eval_llm_name] = result.to_pandas()  # Use result.to_pandas()
 
         if self.config.log_wandb:
+            logging.info("Logging results to Weights & Biases")
             self._log_wandb(eval_df.iloc[:num_samples], results)
 
         if self.config.save_eval_table_csv:
@@ -320,13 +332,17 @@ class RAGEvaluator:
             base_row_data = {
                 "question": row[self.config.eval_dataset_question_col],
                 "ground_truth": row[self.config.eval_dataset_ground_truth_col],
-                "user_answer": row[self.config.eval_dataset_answer_col]
-                if self.config.eval_dataset_answer_col
-                else None,
-                "user_context": row[self.config.eval_dataset_context_col]
-                if self.config.eval_dataset_context_col
-                and self.config.eval_dataset_context_col in eval_df.columns
-                else None,
+                "user_answer": (
+                    row[self.config.eval_dataset_answer_col]
+                    if self.config.eval_dataset_answer_col
+                    else None
+                ),
+                "user_context": (
+                    row[self.config.eval_dataset_context_col]
+                    if self.config.eval_dataset_context_col
+                    and self.config.eval_dataset_context_col in eval_df.columns
+                    else None
+                ),
                 **flattened_config,
             }
 
@@ -371,9 +387,6 @@ class RAGEvaluator:
         ]
 
         df = pd.DataFrame(table_data, columns=columns)
-
-        print("Evaluation Table:")
-        print(df)
 
         return df
 
@@ -420,7 +433,7 @@ class RAGEvaluator:
                         table,
                         "Evaluation Model",
                         "Value",
-                        title=f"Metric_Value_by_Evaluation)Model_{metric}",
+                        title=f"Metric_Value_by_Evaluation Model_{metric}",
                     )
                 }
             )
@@ -447,7 +460,7 @@ def load_pipeline(llm: Tuple[str, BaseLLM], config: RAGEvalConfig) -> Tuple[str,
         )
         pipeline_kwargs["vector_db_location"] = config.vector_db_location
 
-    print(PipelineClass(**pipeline_kwargs))
+    logging.info(f"Pipeline: {PipelineClass(**pipeline_kwargs)}")
 
     return llm_name, PipelineClass(**pipeline_kwargs)
 
@@ -460,40 +473,3 @@ def load_eval_dataframe(config: RAGEvalConfig):
         eval_df = pd.read_csv(config.eval_dataset_path)
 
     return eval_df
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True, help="Path to YAML config file")
-    args = parser.parse_args()
-
-    config = RAGEvalConfig(args.config)
-
-    eval_llms = [
-        SambaStudio(**config.get_llm_config(conf)) for conf in config.eval_llm_configs
-    ]
-
-    eval_embeddings = HuggingFaceInstructEmbeddings(
-        model_name=config.embedding_model_name
-    )
-
-    evaluator = RAGEvaluator(
-        eval_llms=eval_llms,
-        eval_embeddings=eval_embeddings,
-        config_yaml_path=args.config,
-    )
-
-    eval_df = load_eval_dataframe(config)
-
-    answer_generation_pipelines = []
-    for llm_config in config.llm_configs:
-        llm = SambaStudio(**config.get_llm_config(llm_config))
-        pipeline = load_pipeline(llm, config)
-        answer_generation_pipelines.append(pipeline)
-
-    results = evaluator.evaluate(eval_df, answer_generation_pipelines)
-    print(results)
-
-
-if __name__ == "__main__":
-    main()

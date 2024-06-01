@@ -222,3 +222,8 @@ web_crawled_data_retriever/data/
 #evals
 eval_jumpstart/data
 eval_jumpstart/notebooks/wandb
+utils/eval/res.csv
+utils/eval/tepsys_eng_tran.csv
+
+#wandb
+wandb/
