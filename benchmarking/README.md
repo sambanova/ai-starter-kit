@@ -12,93 +12,157 @@ Benchmarking
 <!-- TOC -->
 
 - [Overview](#overview)
-- [Getting started](#getting-started)
-    - [Get access to your model](#get-access-to-your-model)
-    - [Integrate your model](#integrate-your-model)
-    - [Run the starter kit](#run-the-starter-kit)
-    - [Use the starter kit](#use-the-starter-kit)
-- [Workflow: Performance evaluation](#workflow-performance-evaluation)
-    - [Select the LLM model](#1-select-the-llm-model)
-    - [Analyze results](#)
-- [Workflow: Performance on chat](#workflow-performance-on-chat)
-    - [Select the LLM model](#1-select-the-llm-model-1)
-    - [Interact with LLM](#)
-
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the account and config file](#set-up-the-account-and-config-file)
+        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
+  - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
+- [Use the starter kit](#use-the-starter-kit)
+    - [Performance evaluation workflow](#performance-evaluation-workflow)
+        - [Using streamlit app](#using-streamlit-app)
+        - [Using terminal](#using-terminal)
+    - [Performance on chat workflow](#performance-on-chat-workflow)
+- [Customizing the template](#customizing-the-starter-kit)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
 # Overview
 
-This AISK performs a performance evaluation on different LLM models hosted in SambaStudio Composition of Experts deployment. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs, but measurement metrics simultanously. The Kit includes:
-- A configurable SambaStudio COE connector. The connector generates answers from a deployed model.
+This AISK performs a performance evaluation on different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs, but measurement metrics simultanously. The Kit includes:
+- A configurable SambaStudio connector. The connector generates answers from a deployed model.
 - An app with two functionalities:
     - A performance evaluation process with configurable options that users will utilize to obtain and compare different results. 
     - A chat interface with configurable options that users will set to interact and get performance metrics.
+- A bash process that is the core of the performance evaluation and provides more flexibility to users.
 
-This sample is ready-to-use. We provide two options:
-* [Getting Started](#getting-started) help you run the kit by following a few simple steps.
-* [Performance evaluation](#workflow-performance-evaluation) serves as a starting point for customizing the available parameters and obtain interesting performance results based on cocurrent processes.
-* [Performance on chat](#workflow-performance-on-chat) provides a set of options and a chat interface to interact with and analyze multiple performance metrics.
+This sample is ready-to-use. We provide:
+- Instructions for setup with SambaStudio.
+- Instructions for running the model as is.
+- Instructions for customizing the model.
    
-# Getting started
+# Before you begin
 
-## Get access to your model
+You have to set up your environment before you can run or customize the starter kit.
 
-First, you need access to a SambaStudio Composition of Experts (COE) model. Therefore, it's mandatory to have all necessary experts downloaded on the SambaStudio platform, specially those that will be used with this Kit. [Follow these steps](https://docs.sambanova.ai/sambastudio/latest/model-hub.html#_download_models_using_the_gui) to download the experts or check if  they're already downloaded.
+## Clone this repository
 
-Deploy the **Samba-1.1** model to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_create_a_coe_endpoint_using_the_gui) for more information. It might take some minutes, so please be patient.
-
-## Integrate your model
-
-To integrate your LLM with this AI starter kit, follow these steps:
-1. Clone the ai-starter-kit repo.
+Clone the starter kit repo.
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-2. Update the SambaStudio COE LLM API information in your target SambaNova application. 
+## Set up the account and config file
 
-    Update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
-   ```
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+### Setup for SambaStudio users
+
+The next step sets you up to use one of the models available from SambaNova. 
+
+To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
+
+1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
+2. Select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+
+ ```
+   BASE_URL="https://api-stage.sambanova.net"
+   PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+   ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+   API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
    ```
 
-3. (Recommended) Use a `venv` or `conda` environment for installation, and do a `pip install`. 
+4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file. If you are planning to use the `run.sh` bash process, please change the `--llm-api` parameter to `"sambastudio"`. More details about the bash process will be covered later.
+
+# Deploy the starter kit GUI
+
+We recommend that you run the starter kit in a virtual environment.
+
+## Option 1: Use a virtual environment
+
+If you want to use virtualenv or conda environment:
+
+1. Install and update pip.
+
 ```
-cd ai-starter-kit/benchmarking
+cd ai_starter_kit/benchmarking
 python3 -m venv benchmarking_env
 source benchmarking_env/bin/activate
 pip  install  -r  requirements.txt
 ```
-## Run the starter kit
-To run the demo, execute the following command:
+
+2. Run the following command:
 ```
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
-After deploying the starter kit, you'll see the following user interface:
+After deploying the starter kit you see the following user interface:
 
 ![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
 
 ## Use the starter kit 
 
-More details will come in the following sections [Workflow: Performance evaluation](#workflow-performance-evaluation) and [Workflow: Performance on chat](#workflow-performance-on-chat). However, the general usage of both is the comming bullets:
+After you've deployed the GUI, you can use the start kit. More details will come in the following sections, however the general usage is described in the comming bullets: 
 
-1. In the left side bar, pick one of the two app functionalities: `Performance evaluation` or `Performance on chat`.
+1. In the left side bar, select one of the two app functionalities: `Performance evaluation` or `Performance on chat`.
 
-2. Select the LLM model/expert and configure each of the parameters related to each functionality.
+2. If the LLM deployed is a Composition of Experts, introduce the LLM expert and configure each of the parameters related to each functionality. Otherwise, just do the latter.
 
-3. Press the `Run` button, wait and see results in the middle of the screen. In the case of `Performance on chat` functionality, users are able to interact with the LLM in a chat interface.  
+3. Press the `Run` button, wait and analyze results in the middle of the screen. In the case of `Performance on chat` functionality, users are able to interact with the LLM in a chat interface.  
 
-# Workflow: Performance evaluation 
+### Performance evaluation workflow
 
-There are two options that users can choose. First one is running the performance evaluation from terminal and the other is using streamlit app.
+There are two options that users can choose from. The first one is running the performance evaluation process using the terminal, while the other is using the Streamlit app.
 
-## Using terminal
+#### Using streamlit app
+
+Choose the option `Performance evaluation` on the left side bar, the following interface shows up: 
+
+![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+
+In order to use this functionality, please follow the steps below:
+
+1. Introduce the LLM model
+
+Under the section `Configuration`, users need to introduce the LLM model that will be used for the performance evaluation process. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct". If you're not sure about the name of the model/expert you want to choose, please go to the model card in SambaStudio and search for the model/expert name.
+
+2. Choose parameter values
+
+Different LLM parameters are available for experimentation, directly related to the previously introduced LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
+
+- Number of input tokens: average number of input tokens. Default value: 250.
+- Standard deviation of input tokens: standard deviation of input tokens. Default value: 50.
+- Number of output tokens: average number of output tokens. Default value: 250.
+- Standard deviation of output tokens: standard deviation of output tokens. Default value: 50.
+- Number of total requests: maximum number of completed requests. Default value: 50 
+- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available. If this parameter is greater than 1, then TTFT and Throughput won't be available.
+- Timeout: time when the process will stop. Default value: 600 seconds
+
+3. Run the performance evaluation process
+
+Click on `Run!` button. It will automatically start the process. Depending on the previous parameter configuration, it should take between 1 min and 20 min  
+
+4. See and analyze results
+
+**Scatter plots**
+
+One part of the results is composed by three scatter plots. 
+
+   - Number of Input Tokens vs TTFT: users should expect to see relatively stable TTFT values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+   - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+   - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+
+**Box plots**
+
+The second part of the results is composed by three box plots. 
+
+   - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
+   - End-to-End Latency Distribution: users should expect to see a distribution around 518 tokens/second from Client side numbers.
+   - Throughput Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
+
+#### Using terminal
+
+Users have this option if they want to experiment using values that are beyond the limits specified in the Streamlit app parameters.
 
 1. Open the file `run.sh` and configure the following parameters in there:
 
@@ -111,55 +175,27 @@ There are two options that users can choose. First one is running the performanc
    - timeout: time when the process will stop. Default value: 600 seconds
    - num-concurrent-requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available.
    - results-dir: path to the results directory. Default value: "./data/results/llmperf"
-   - llm-api: currently only supporting Sambanova's. Default value: "sambanova"
+   - llm-api: currently only supporting Sambanova Studio's models. Default value: "sambastudio"
    - mode: whether the generation is in stream or batch mode. Default value: "stream" 
    - additional-sampling-params: additional params for LLM. Default value: '{}'
 
-2. Run the following command in terminal. Performance evaluation process will start running and a progress bar will be shown until it is done.
+2. Run the following command in terminal. The performance evaluation process will start running and a progress bar will be shown until it is done.
 
 ```
 sh run.sh
 ```
 
-3. Review results and further customization. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode. Besides, for each run, two files are generated with the following suffixes: `individual_responses` and `summary`.
+3. Review and analyze results. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode. Besides, for each run, two files are generated with the following suffixes: `individual_responses` and `summary`.
 
-- Individual responses file (WIP)
-- Summary (WIP)
+- Individual responses file 
 
-## Using streamlit app
+This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-token-benchmark-results.ipynb` with some charts that they can use to start.
 
-Choose the option `Performance evaluation` on the left side bar, the following interface shows up: 
+- Summary file
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute.
 
-In order to use this functionality, please follow the steps below:
-
-### 1. Introduce the LLM model
-
-Under section `Configuration`, users need to introduce the LLM model that will be used for the performance evaluation process. Please, go to the model card in SambaStudio and search for the list of experts that the model supports. Choose one of them and introduce the same name in here.
-
-### 2. Choose parameter values
-
-Different LLM parameters are available for experimentation, directly related to the previously chosen LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
-
-- Number of input tokens: average number of input tokens. Default value: 250.
-- Standard deviation of input tokens: standard deviation of input tokens. Default value: 50.
-- Number of output tokens: average number of output tokens. Default value: 250.
-- Standard deviation of output tokens: standard deviation of output tokens. Default value: 50.
-- Number of total requests: maximum number of completed requests. Default value: 50 
-- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available.
-- Timeout: time when the process will stop. Default value: 600 seconds
-
-### 3. Run the performance evaluation process
-
-Click on `Run!` button. It will automatically start the process. Depending on the previous parameter configuration, it should take between 1 min and 20 min  
-
-### 4. See and analyze results
-
-- Scatter plots (WIP)
-- Box plots (WIP)
-
-# Workflow: Performance on chat 
+### Performance on chat workflow
 
 Choose the option `Performance on chat` on the left side bar, the following interface shows up: 
 
@@ -167,13 +203,13 @@ Choose the option `Performance on chat` on the left side bar, the following inte
 
 In order to use this functionality, please follow the steps below:
 
-### 1. Introduce the LLM model
+1. Introduce the LLM model
 
-Under section `Set up the LLM`, users need to introduce the LLM model that will be used for chatting. Please, go to the model card in SambaStudio and search for the list of experts that the model supports. Choose one of them and introduce the same name in here.
+Under section `Set up the LLM`, users need to introduce the LLM model that will be used for chatting. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct". If you're not sure about the name of the model/expert you want to choose, please go to the model card in SambaStudio and search for the model/expert name.
 
-## 2. Choose LLM parameter values
+2. Choose LLM parameter values
 
-Different LLM parameters are available for experimentation depending on the LLM model deployed. These are directly related to the previously chosen LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
+Different LLM parameters are available for experimentation depending on the LLM model deployed. These are directly related to the previously introduced LLM. The app provides various options to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
 
 <!-- - Do sample (True, False) -->
 - Max tokens to generate (from 50 to 2048)
@@ -182,11 +218,11 @@ Different LLM parameters are available for experimentation depending on the LLM 
 - Top k (from 1 to 1000)
 - Top p (from 0.01 to 1.00) -->
 
-## 3. Set up the LLM model
+3. Set up the LLM model
 
-After selecting the desired LLM and configuring the parameters, users have to press the `Run` button on the bottom. It will automatically set up the chosen LLM and activate the chat interface for upcoming interactions.
+After introducing the LLM and configuring the parameters, users have to press the `Run` button on the bottom. It will automatically set up the introduced LLM and activate the chat interface for upcoming interactions.
 
-## 4. Ask anything and see results
+4. Ask anything and see results
 
 Users are able to ask anything and get a generated answer of their questions, as showed in the image bellow. In addition to the back and forth conversations between the user and the LLM, there is a expander option that users can click to see the following metrics per each LLM response:
 - Latency (s)
@@ -195,7 +231,6 @@ Users are able to ask anything and get a generated answer of their questions, as
 - Time per output token (ms)
 
 ![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat_results.png)
-
 
 # Third-party tools and data sources 
 

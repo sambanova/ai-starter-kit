@@ -22,6 +22,10 @@ from llmperf.utils import (
 )
 from transformers import LlamaTokenizerFast
 from dotenv import load_dotenv
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 def get_token_throughput_latencies(
     model: str,
@@ -33,7 +37,7 @@ def get_token_throughput_latencies(
     num_concurrent_requests: int = 1,
     max_num_completed_requests: int = 500,
     test_timeout_s=90,
-    llm_api="sambanova",
+    llm_api="sambastudio",
     mode="stream",
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """Get the token throughput and latencies for the given model.
@@ -44,12 +48,13 @@ def get_token_throughput_latencies(
         stddev_input_tokens (int): The standard deviation of the number of tokens to send in the prompt for the request.
         mean_output_tokens (int): The mean number of tokens to generate per request.
         stddev_output_tokens (int): The standard deviation of the number of tokens to generate per request.
-        additional_sampling_params (Optional[Dict[str, Any]]): Additional sampling parameters to send with the request. 
+        additional_sampling_params (Optional[Dict[str, Any]]): Additional sampling parameters to send with the request.
             For more information see the LLM APIs documentation for the completions. Defaults to None.
         num_concurrent_requests (int): The number of concurrent requests to make. Increase
             this to increase the amount of load and vice versa. Defaults to 1.
+        max_num_completed_requests (int): The maximum number of completed requests. Defaults to 500.
         test_timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90.
-        llm_api (str): The name of the llm api to use. Either "sambanova" or "litellm". Defaults to "sambanova"
+        llm_api (str): The name of the llm api to use. Either "sambastudio" or "sambaverse". Defaults to "sambastudio"
         mode (str): mode of the API. Either "stream" or "batch". Defaults to "stream"
 
     Returns:
@@ -89,8 +94,11 @@ def get_token_throughput_latencies(
             expect_output_tokens=num_output_tokens,
         )
 
-        default_sampling_params = {"max_tokens_to_generate": num_output_tokens}
+        default_sampling_params = {
+            "max_tokens_to_generate": num_output_tokens,
+        }
         default_sampling_params.update(additional_sampling_params)
+        # print(f"default_params: {default_sampling_params}", flush=True)
         request_config = RequestConfig(
             model=model,
             prompt=prompt,
@@ -260,8 +268,8 @@ def run_token_benchmark(
     Args:
         llm_api (str): The name of the llm api to use.
         model (str): The name of the model to query.
-        max_num_completed_requests (int): The number of requests to complete before finishing the test.
         test_timeout_s (int): The amount of time to run the test for before reporting results.
+        max_num_completed_requests (int): The number of requests to complete before finishing the test.
         num_concurrent_requests (int): The number of concurrent requests to make. Increase
             this to increase the amount of load and vice versa.
         mean_input_tokens (int): The mean number of tokens to send in the prompt for the request.
@@ -435,12 +443,12 @@ args.add_argument(
 )
 
 if __name__ == "__main__":
-    
-    load_dotenv('../.env', override=True)
+
+    load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
     # set log_to_driver = True if you'd like to have ray's logs in terminal
-    ray.init(runtime_env={"env_vars": env_vars},log_to_driver=False)
-    
+    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=False)
+
     args = args.parse_args()
 
     # Parse user metadata.

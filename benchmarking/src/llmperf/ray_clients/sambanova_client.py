@@ -12,7 +12,11 @@ from llmperf import common_metrics
 import time
 import requests
 from transformers import LlamaTokenizerFast
+import logging
 from dotenv import load_dotenv
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 @ray.remote
@@ -40,6 +44,8 @@ class SambaNovaLLMClient(LLMClient):
         project_id = os.environ.get("PROJECT_ID")
         endpoint_id = os.environ.get("ENDPOINT_ID")
         api_key = os.environ.get("API_KEY")
+        # api_key = os.environ.get("SAMBAVERSE_API_KEY")
+        # print(f"client api_key: {api_key}", flush=True)
 
         ttft = 0
         generated_text = ""
@@ -55,6 +61,7 @@ class SambaNovaLLMClient(LLMClient):
         try:
             # Define the URL for the request
             url = self._get_url(request_config, base_url, project_id, endpoint_id)
+            # url = "https://sambaverse.sambanova.ai/api/predict"
             # Define the headers
             headers = {"key": api_key}
             # data
@@ -203,6 +210,7 @@ class SambaNovaLLMClient(LLMClient):
         generated_text = ""
 
         with requests.post(url, headers=headers, json=data, stream=stream) as response:
+            # print(response.content, flush=True)
             if response.status_code != 200:
                 response.raise_for_status()
             for chunk_orig in response.iter_lines(chunk_size=None):
@@ -241,7 +249,7 @@ class SambaNovaLLMClient(LLMClient):
             "responses"
         ][0].get("total_tokens_count")
         metrics[common_metrics.TTFT_SERVER] = output_data["result"]["responses"][0].get(
-            "time_to_first_token", 0
+            "time_to_first_token"
         )
         metrics[common_metrics.E2E_LAT_SERVER] = output_data["result"]["responses"][
             0
@@ -262,7 +270,12 @@ if __name__ == "__main__":
     env_vars = dict(os.environ)
 
     # init ray
-    ray.init(local_mode=True, runtime_env={"env_vars": env_vars}, log_to_driver=True)
+    ray.init(
+        local_mode=True,
+        runtime_env={"env_vars": env_vars},
+        log_to_driver=True,
+        logging_level=logging.ERROR,
+    )
 
     prompt = "Test this."
     client = SambaNovaLLMClient.remote()
@@ -270,15 +283,17 @@ if __name__ == "__main__":
         prompt=(prompt, 10),
         # model="COE/Meta-Llama-3-8B-Instruct",
         model="COE/llama-2-7b-chat-hf",
+        # model="llama-2-7b-chat-hf",
         # model="Llama-7B-DynamicBatching",
         sampling_params={
             # "do_sample": False,
-            "max_tokens_to_generate": 1000,
+            "max_tokens_to_generate": 250,
             # "top_k": 40,
             # "top_p": 0.95,
             # "process_prompt": "False",
         },
         mode="stream",
+        llm_api="sambastudio",
         num_concurrent_requests=1,
     )
 
@@ -288,17 +303,3 @@ if __name__ == "__main__":
     print(f"Metrics collected: {metrics}")
     # print(f'Completion text: {generated_text}')
     print(f"Request config: {request_config}")
-
-    # # batch output tokens testing
-
-    # results = []
-    # tokenizer = LlamaTokenizerFast.from_pretrained("hf-internal-testing/llama-tokenizer")
-
-    # import tqdm
-    # for i in tqdm.tqdm(range(0,50)):
-    #     metrics, generated_text, request_config = ray.get(client.llm_request.remote(request_config))
-    #     number_tokens = len(tokenizer.encode(generated_text))
-    #     results.append(number_tokens)
-
-    # import pandas as pd
-    # print(pd.DataFrame(results, columns=['number_tokens']).describe())

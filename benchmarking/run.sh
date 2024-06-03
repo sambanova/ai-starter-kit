@@ -9,20 +9,20 @@ python src/token_benchmark_ray.py \
 --timeout 600 \
 --num-concurrent-requests 1 \
 --results-dir "./data/results/llmperf" \
---llm-api sambanova \
+--llm-api sambastudio \
 --mode stream \
 --additional-sampling-params '{}'
 
 # # Non-COE model: Remember to source .env for new endpoint
 # python src/token_benchmark_ray.py \
-# --model "llama-2-7b-chat-hf" \
+# --model "llama-2-7b-chat" \
 # --mean-input-tokens 150 \
 # --stddev-input-tokens 10 \
 # --mean-output-tokens 150 \
 # --stddev-output-tokens 10 \
-# --max-num-completed-requests 32 \
+# --max-num-completed-requests 10 \
 # --timeout 600 \
 # --num-concurrent-requests 1 \
 # --results-dir "./data/results/llmperf" \
-# --llm-api sambanova \
+# --llm-api sambastudio \
 # --additional-sampling-params '{}'
