@@ -42,6 +42,10 @@ This AI starter kit supports the following features:
 ## Prerequisites
 
 - Python (>3.11.3 and <3.12)
+- A [Sambaverse](https://sambaverse.sambanova.ai/) account
+- A [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html) account with at least two running endpoints:
+  - A Composition of Experts (CoE) model
+  - A text embedding model with a batch size larger than 1 (set/view this via the model parameters)
 
 ## Key dependencies
 
@@ -90,12 +94,16 @@ _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you wi
    db_type: "faiss"
   ```
 
-4. In the CoE starter kit root directory, create a `.env` file and add the necessary API keys based on your chosen entry point:
+4. In the CoE starter kit root directory (that is, in the parent folder to where this `README` is saved), create a `.env` file and add the necessary API keys based on your chosen entry point:
 
 ```env
 # NEEDED FOR SAMBAVERSE
-SAMBAVERSE_API_KEY="133-adb-you-key-here"
-SAMBAVERSE_URL="https://yoururl"
+SAMBAVERSE_API_KEY="133-adb-you-key-here" # Found in your profile (upper right corner of Sambaverse)
+SAMBAVERSE_URL="https://sambaverse.sambanova.ai/" # Adjust as needed
+
+# For below, SambaStudio endpoint URLs follow the format:
+# <BASE_URL>/api/predict/generic/<PROJECT_ID>/<ENDPOINT_ID>
+# Both the endpoint URL and the endpoint API key can be found by clicking into an endpoint's details page
 
 # NEEDED FOR SAMBASTUDIO COE MODEL
 BASE_URL="https://yoursambstudio.url"
@@ -150,7 +158,6 @@ The script and notebook support various models for calling CoE, including:
 * deepseek-llm-67b-chat
 * medicine-chat
 * law-chat
-
 
 For a full list of supported CoE models, see the [Supported Models](https://docs.sambanova.ai/sambastudio/latest/samba-1.html#_samba_1_expert_models) documentation.
 
