@@ -67,6 +67,7 @@ def upload_to_s3(results_path: str, s3_path: str) -> None:
 
 
 def randomly_sample_sonnet_lines_prompt(
+    model_name: str,
     prompt_tokens_mean: int = 550,
     prompt_tokens_stddev: int = 250,
     expect_output_tokens: int = 150,
@@ -74,6 +75,7 @@ def randomly_sample_sonnet_lines_prompt(
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
     Args:
+        model: name of the model
         prompt_tokens_mean: The mean tokens of the prompt to generate.
         prompt_tokens_stddev: The standard deviation of the tokens of the prompt to generate.
         expect_output_tokens: The number of tokens to expect in the output. This is used to
@@ -96,11 +98,20 @@ def randomly_sample_sonnet_lines_prompt(
 
     get_token_length = lambda text: len(tokenizer.encode(text))
 
-    prompt = (
-        "Randomly stream lines from the following text "
-        f"with {expect_output_tokens} output tokens. "
-        "Don't generate eos tokens:\n\n"
-    )
+    llama3_type_name = "llama-3"
+    if llama3_type_name in model_name.lower():
+        prompt = (
+            "<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant that generates prompts for LLMs. <|eot_id|>"
+            f"<|start_header_id|>user<|end_header_id|> Randomly stream lines from the following text with {expect_output_tokens} output tokens. Don't generate eot tokens:\n\nAnswer: <|eot_id|>"
+            "<|start_header_id|>assistant<|end_header_id|>"
+        )
+    else:
+        prompt = (
+            "<INST> <SYSTEM> You are an assistant that generates prompts for LLMs. </SYSTEM>\nRandomly stream lines from the following text "
+            f"with {expect_output_tokens} output tokens. "
+            "Don't generate eos tokens:\n\n </INST>"
+        )
+
     # get a prompt length that is at least as long as the base
     num_prompt_tokens = sample_random_positive_int(
         prompt_tokens_mean, prompt_tokens_stddev

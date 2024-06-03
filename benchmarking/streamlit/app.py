@@ -243,21 +243,21 @@ def main():
         st.session_state.llm = f"{llm_model}"
 
         st.session_state.input_tokens = st.slider(
-            "Number of input tokens", min_value=50, max_value=1024, value=250
+            "Number of input tokens", min_value=50, max_value=2048, value=1000
         )
         st.session_state.input_tokens_std = st.slider(
-            "Input tokens standard deviation", min_value=10, max_value=256, value=50
+            "Input tokens standard deviation", min_value=10, max_value=256, value=10
         )
 
         st.session_state.output_tokens = st.slider(
-            "Number of output tokens", min_value=50, max_value=1024, value=250
+            "Number of output tokens", min_value=50, max_value=2048, value=1000
         )
         st.session_state.output_tokens_std = st.slider(
-            "Output tokens standard deviation", min_value=10, max_value=256, value=50
+            "Output tokens standard deviation", min_value=10, max_value=256, value=10
         )
 
         st.session_state.number_requests = st.slider(
-            "Number of total requests", min_value=10, max_value=100, value=50
+            "Number of total requests", min_value=10, max_value=100, value=32
         )
         st.session_state.number_concurrent_requests = st.slider(
             "Number of concurrent requests",
