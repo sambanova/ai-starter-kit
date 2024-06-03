@@ -41,6 +41,7 @@ docx2txt==0.8
 emoji==2.10.1
 evaluate==0.4.1
 executing==2.0.1
+fake_useragent==1.5.1
 fastapi==0.109.2
 filelock==3.13.1
 filetype==1.2.0
