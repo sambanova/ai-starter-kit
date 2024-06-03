@@ -1,4 +1,8 @@
-# COE model
+# COE Turbo model
+# --model "COE/llama-2-7b-chat-hf" \
+# --model "COE/Llama-2-13B-chat-hf" \
+# --model "COE/Mistral-7B-Instruct-V0.2" \
+# --model "COE/Meta-Llama-3-8B-Instruct" \
 python src/token_benchmark_ray.py \
 --model "COE/Meta-Llama-3-8B-Instruct" \
 --mean-input-tokens 1000 \
