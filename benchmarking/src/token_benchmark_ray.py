@@ -89,6 +89,7 @@ def get_token_throughput_latencies(
         )
 
         prompt = randomly_sample_sonnet_lines_prompt(
+            model_name=model,
             prompt_tokens_mean=mean_input_tokens,
             prompt_tokens_stddev=stddev_input_tokens,
             expect_output_tokens=num_output_tokens,
