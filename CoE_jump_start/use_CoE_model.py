@@ -23,7 +23,7 @@ import json
 import requests
 
 # Use embeddings As Part of Langchain
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
