@@ -89,7 +89,7 @@ class ImageSearch():
         
     def get_images(self, folder_path = None ):
         if folder_path is None:
-            folder_path=os.path.join(kit_dir,"data/images")
+            folder_path=os.path.join(kit_dir,"data","images")
         images=[]
         paths=[]
         for root, _dirs, files in os.walk(folder_path):
@@ -104,7 +104,7 @@ class ImageSearch():
 
     def add_images(self, path = None):
         if path is None:
-            path=os.path.join(kit_dir,"data/images")
+            path=os.path.join(kit_dir,"data","images")
         config_path = os.path.join(kit_dir,"config.yaml")
         with open(config_path, 'r') as file:
             ingestion_mode = yaml.safe_load(file)["clip"]["ingestion_mode"]

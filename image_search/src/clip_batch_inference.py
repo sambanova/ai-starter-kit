@@ -290,7 +290,7 @@ class BatchClipProcessor():
 
         if not_found_error_message in response.text:
             
-            logging.info(f'Project {self.project_name} wasn\'t found in SambaStudio')
+            logging.info(f'Project {self.project_name} not found in SambaStudio')
             
             url = self.base_url + self.projects_url
 
