@@ -1,0 +1,17 @@
+_type: prompt
+input_types: {}
+input_variables:
+- question
+- answers
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
+    Use the following intermediate answers, provide a final answer to the original question.  If you cannot answer based on the intermediate answers provided to you, say "Whoops!  I don't know!". <|eot_id|><|start_header_id|>user<|end_header_id|>
+    Original Question: {question} 
+    Intermediate Answers: {answers} 
+    \n ------- \n
+    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+template_format: f-string
+validate_template: false

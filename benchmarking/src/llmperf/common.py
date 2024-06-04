@@ -1,10 +1,9 @@
-
 from typing import List
-from llmperf.ray_clients.litellm_client import LiteLLMClient
 from llmperf.ray_clients.sambanova_client import SambaNovaLLMClient
 from llmperf.ray_llm_client import LLMClient
 
-SUPPORTED_APIS = ["sambanova", "litellm"]
+SUPPORTED_APIS = ["sambastudio", "sambaverse"]
+
 
 def construct_clients(llm_api: str, num_clients: int) -> List[LLMClient]:
     """Construct LLMClients that will be used to make requests to the LLM API.
@@ -23,10 +22,8 @@ def construct_clients(llm_api: str, num_clients: int) -> List[LLMClient]:
     #     clients = [SageMakerClient.remote() for _ in range(num_clients)]
     # elif llm_api == "vertexai":
     #     clients = [VertexAIClient.remote() for _ in range(num_clients)]
-    if llm_api == "sambanova":
+    if llm_api in SUPPORTED_APIS:
         clients = [SambaNovaLLMClient.remote() for _ in range(num_clients)]
-    elif llm_api in SUPPORTED_APIS:
-        clients = [LiteLLMClient.remote() for _ in range(num_clients)]
     else:
         raise ValueError(
             f"llm_api must be one of the supported LLM APIs: {SUPPORTED_APIS}"

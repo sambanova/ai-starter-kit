@@ -19,6 +19,14 @@ If you have any issues with the examples or to provide feedback, [create an issu
 
 <table style="width: 100%;">
 <tbody>
+</tr><td width="25%"><a href="code_copilot/README.md">Code Copilot</a> 
+</td>
+<td width="75%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
+</tr>
+</tr><td width="25%"><a href="complex_rag/README.md">Complex RAG</a> 
+</td>
+<td width="75%"> Sample implementation of a complex RAG workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo. </td>
+</tr>
 <tr>
 <td width="25%"><a href="CoE_jump_start/README.md">CoE jump start</a>
 </td>
@@ -48,6 +56,10 @@ If you have any issues with the examples or to provide feedback, [create an issu
 </tr><td width="25%"><a href="image_search/README.md">Image Search</a> 
 </td>
 <td width="75%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
+</tr>
+</tr><td width="25%"><a href="multimodal_knowlwdge_retriever/README.md">Multimodal Knowledge Retriever</a> 
+</td>
+<td width="75%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
 </tr>
 <td width="25%"><a href="post_call_analysis/README.md">Post Call Analysis</a> 
 </td>
@@ -81,7 +93,7 @@ If you have any issues with the examples or to provide feedback, [create an issu
 
 ### Use Sambaverse models (Option 1)
 
-**Sambaverse**Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
+Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
 
 Please note that Sambaverse's free offering is performance-limited. Companies that are ready to evaluate the production tokens-per-second performance, volume throughput, and 10x lower total cost of ownership (TCO) of SambaNova should [contact us](https://sambaverse.sambanova.ai/contact-us) for a non-limited evaluation instance.
 
