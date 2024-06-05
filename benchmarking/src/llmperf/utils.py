@@ -5,11 +5,12 @@ import random
 import subprocess
 import time
 from typing import Any, Dict, Tuple
+import warnings
 
 from transformers import LlamaTokenizerFast
 
 RESULTS_VERSION = "2023-08-31"
-
+NUM_RNG_ATTEMPTS = 10 # Unlikely to be used in practice: prevents eternal WHILE-loops
 
 class LLMPerfResults:
     """Class with LLM Performance results"""
@@ -112,32 +113,51 @@ def randomly_sample_sonnet_lines_prompt(
             "Don't generate eos tokens:\n\n </INST>"
         )
 
-    # get a prompt length that is at least as long as the base
-    num_prompt_tokens = sample_random_positive_int(
-        prompt_tokens_mean, prompt_tokens_stddev
-    )
+    # Get a prompt length that is at least as long as the base prompt
+    # n.b.: this means that we are not actually sampling from the Normal distribution but rather from a _censored_
+    #   Normal distribution. This will not necessarily have the requested mean and STD, but the difference is negligible 
+    #   when the mean (minus an STD or 3) is much larger than the base prompt length (i.e.: about 122 tokens for Llama-3 
+    #   model and about 57 tokens otherwise)
+    num_prompt_tokens = -1
+    num_attempts = 0
     while num_prompt_tokens < get_token_length(prompt):
         num_prompt_tokens = sample_random_positive_int(
             prompt_tokens_mean, prompt_tokens_stddev
         )
-    remaining_prompt_tokens = num_prompt_tokens - get_token_length(prompt)
+        num_attempts += 1
+        if num_attempts > NUM_RNG_ATTEMPTS:
+            warnings.warn(
+                f"Could not generate a long enough prompt after {NUM_RNG_ATTEMPTS} attempts. \n"
+                f"Consider increasing prompt_tokens_mean (currently: {prompt_tokens_mean}). "
+                f"Returning the default prompt instead."
+                )
+            num_prompt_tokens = get_token_length(prompt)
+            break
+
     sonnet_path = pathlib.Path(__file__).parent.resolve() / "sonnet.txt"
     with open(sonnet_path, "r") as f:
         sonnet_lines = f.readlines()
     random.shuffle(sonnet_lines)
-    sampling_lines = True
-    while sampling_lines:
+
+    # Because there isn't a 1:1 correspondence between text characters and tokens,
+    # it could be impossible to get exactly the number of input tokens requested.
+    # The following is guaranteed to return, will usually get things exactly correct,
+    # and very occasionally might generate a few tokens more than requested.
+    while num_prompt_tokens > get_token_length(prompt):
         for line in sonnet_lines:
-            line_to_add = line
-            if remaining_prompt_tokens - get_token_length(line_to_add) < 0:
-                # This will cut off a line in the middle of a word, but that's ok since an
-                # llm should be able to handle that.
-                line_to_add = line_to_add[: int(math.ceil(remaining_prompt_tokens))]
-                sampling_lines = False
-                prompt += line_to_add
-                break
-            prompt += line_to_add
-            remaining_prompt_tokens -= get_token_length(line_to_add)
+            new_prompt = prompt + line
+            new_tokens = get_token_length(new_prompt)
+            if num_prompt_tokens > new_tokens:
+                prompt = new_prompt
+            elif num_prompt_tokens == new_tokens:
+                prompt = new_prompt
+                return (prompt, num_prompt_tokens)
+            else:
+                for character in line:
+                    prompt += character
+                    if num_prompt_tokens <= get_token_length(prompt):
+                        return (prompt, num_prompt_tokens)
+
     return (prompt, num_prompt_tokens)
 
 
@@ -153,10 +173,18 @@ def sample_random_positive_int(mean: int, stddev: int) -> int:
     """
 
     ret = -1
+    num_attempts = 0
     while ret <= 0:
         ret = int(random.gauss(mean, stddev))
+        num_attempts += 1
+        if num_attempts > NUM_RNG_ATTEMPTS:
+            warnings.warn(
+                f"Could not generate a random, positive integer after {NUM_RNG_ATTEMPTS} attempts. \n"
+                f"Check your choices for mean (currently: {mean}) and stddev (currently: {stddev}). "
+                f"Returning 1 instead."
+                )
+            return 1
     return ret
-
 
 def flatten_dict(d: dict, parent_key: str = "", sep: str = "_") -> dict:
     """Flattens dictionary

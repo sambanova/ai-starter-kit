@@ -30,79 +30,77 @@ Benchmarking
 
 # Overview
 
-This AISK performs a performance evaluation on different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs, but measurement metrics simultanously. The Kit includes:
+This AI Starter Kit evaluates the performance of different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs but also measurement metrics simultaneously. The Kit includes:
 - A configurable SambaStudio connector. The connector generates answers from a deployed model.
 - An app with two functionalities:
-    - A performance evaluation process with configurable options that users will utilize to obtain and compare different results. 
-    - A chat interface with configurable options that users will set to interact and get performance metrics.
-- A bash process that is the core of the performance evaluation and provides more flexibility to users.
+    - A performance evaluation process with configurable options that users will utilize to obtain and compare different results 
+    - A chat interface with configurable options that users will set to interact and get performance metrics
+- A bash process that is the core of the performance evaluation and provides more flexibility to users
 
 This sample is ready-to-use. We provide:
-- Instructions for setup with SambaStudio.
-- Instructions for running the model as is.
-- Instructions for customizing the model.
+- Instructions for setup with SambaStudio
+- Instructions for running the model as-is
+- Instructions for customizing the model
    
 # Before you begin
 
-You have to set up your environment before you can run or customize the starter kit.
+To perform this setup, you must be a SambaNova customer with a SambaStudio account. You also have to set up your environment before you can run or customize the starter kit. 
+
+_These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
+```bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
 ## Set up the account and config file
 
-### Setup for SambaStudio users
+1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
+    ```env
+    # SambaStudio endpoint URLs follow the format:
+    # <BASE_URL>/api/predict/generic/<PROJECT_ID>/<ENDPOINT_ID>
+    # Both the endpoint URL and the endpoint API key can be found by clicking into an endpoint's details page
 
-The next step sets you up to use one of the models available from SambaNova. 
+    BASE_URL="https://yoursambastudio.url"
+    PROJECT_ID="your-samba-studio_model-projectid"
+    ENDPOINT_ID="your-samba-studio-model-endpointid"
+    API_KEY="your-samba-studio-model-apikey"
+    ```
 
-To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
+3. Open the [config file](./config.yaml) and ensure that the key `api` is set to the value `sambastudio`
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+4. (Optional) If you are planning to use the `run.sh` bash process, ensure that its `--llm-api` parameter is set to `sambastudio`. More details about the bash process will be covered later.
 
- ```
-   BASE_URL="https://api-stage.sambanova.net"
-   PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-   ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-   API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-   ```
+## Create the (virtual) environment
+1. (Recommended) Create a virtual environment and activate it: 
+    ```bash
+    python<version> -m venv <virtual-environment-name>
+    source <virtual-environment-name>/bin/activate
+    ```
 
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file. If you are planning to use the `run.sh` bash process, please change the `--llm-api` parameter to `"sambastudio"`. More details about the bash process will be covered later.
+2. Install the required dependencies:
+    ```bash
+    cd benchmarking # If not already in the benchmarking folder
+    pip install -r requirements.txt
+    ```
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment.
-
-## Option 1: Use a virtual environment
-
-If you want to use virtualenv or conda environment:
-
-1. Install and update pip.
-
-```
-cd ai_starter_kit/benchmarking
-python3 -m venv benchmarking_env
-source benchmarking_env/bin/activate
-pip  install  -r  requirements.txt
-```
-
-2. Run the following command:
+Ensure you are in the `benchmarking` folder and run the following command:
 ```
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
-After deploying the starter kit you see the following user interface:
+After deploying the starter kit, you will see the following user interface:
 
 ![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
 
 ## Use the starter kit 
 
-After you've deployed the GUI, you can use the start kit. More details will come in the following sections, however the general usage is described in the comming bullets: 
+After you've deployed the GUI, you can use the starter kit. More details will come in the following sections, however the general usage is described in the comming bullets: 
 
 1. In the left side bar, select one of the two app functionalities: `Performance evaluation` or `Performance on chat`.
 
@@ -124,41 +122,43 @@ In order to use this functionality, please follow the steps below:
 
 1. Introduce the LLM model
 
-Under the section `Configuration`, users need to introduce the LLM model that will be used for the performance evaluation process. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct". If you're not sure about the name of the model/expert you want to choose, please go to the model card in SambaStudio and search for the model/expert name.
+Under the section `Configuration`, users need to introduce the LLM model that will be used for the performance evaluation process. If it's a CoE model, add a `COE/` prefix to the name (for example, `COE/Meta-Llama-3-8B-Instruct`). If you're not sure about the name of the model/expert you want to choose, please go to the model card in SambaStudio and search for the model/expert name.
 
 2. Choose parameter values
 
 Different LLM parameters are available for experimentation, directly related to the previously introduced LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
 
 - Number of input tokens: average number of input tokens. Default value: 250.
-- Standard deviation of input tokens: standard deviation of input tokens. Default value: 50.
+- Input tokens standard deviation: standard deviation of input tokens. Default value: 50.
 - Number of output tokens: average number of output tokens. Default value: 250.
-- Standard deviation of output tokens: standard deviation of output tokens. Default value: 50.
+- Output tokens standard deviation: standard deviation of output tokens. Default value: 50.
 - Number of total requests: maximum number of completed requests. Default value: 50 
-- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available. If this parameter is greater than 1, then TTFT and Throughput won't be available.
+- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available. If this parameter is greater than 1, then Time to First Token (TTFT) and Throughput won't be available.
 - Timeout: time when the process will stop. Default value: 600 seconds
 
 3. Run the performance evaluation process
 
-Click on `Run!` button. It will automatically start the process. Depending on the previous parameter configuration, it should take between 1 min and 20 min  
+Click on the `Run!` button. It will automatically start the process. Depending on the previous parameter configuration, it should take between 1 min and 20 min. Some diagnostic/progress information will be displayed in the terminal shell.
 
 4. See and analyze results
 
-**Scatter plots**
+    _Note: Not all model endpoints currently support the calculation of server-side statistics. Depending on your choice of endpoint, then, you may see either client and server information, or you may see just the client-side information._
 
-One part of the results is composed by three scatter plots. 
+    **Scatter plots**
 
-   - Number of Input Tokens vs TTFT: users should expect to see relatively stable TTFT values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-   - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-   - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+    One part of the results is composed of three scatter plots. 
 
-**Box plots**
+    - Number of Input Tokens vs TTFT: users should expect to see relatively stable TTFT values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+    - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+    - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
 
-The second part of the results is composed by three box plots. 
+    **Box plots**
 
-   - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
-   - End-to-End Latency Distribution: users should expect to see a distribution around 518 tokens/second from Client side numbers.
-   - Throughput Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
+    The second part of the results is composed by three box plots. 
+
+    - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
+    - End-to-End Latency Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
+    - Throughput Distribution: users should expect to see a distribution around 518 tokens/second from Client side numbers.
 
 #### Using terminal
 

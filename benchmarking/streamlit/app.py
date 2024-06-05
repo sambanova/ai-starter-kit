@@ -264,7 +264,7 @@ def main():
             min_value=1,
             max_value=50,
             value=1,
-            help="Client TTFT and Throughout will not be available for concurrent workers greater than 1",
+            help="Client TTFT and Throughput will not be available for concurrent workers greater than 1",
         )
 
         st.session_state.timeout = st.slider(
@@ -299,7 +299,7 @@ def main():
             ).set(
                 xlabel="Number of Input Tokens",
                 ylabel="Time to First Token (secs)",
-                title="Number of Input Tokens vs. TTFT",
+                title="TTFT vs. Number of Input Tokens",
             )
             ax[0].legend(title="Type")
             sns.scatterplot(
@@ -312,7 +312,7 @@ def main():
             ).set(
                 xlabel="Number of Output Tokens",
                 ylabel="Throughput (tokens/sec)",
-                title="Number of Output Tokens vs. Throughput",
+                title="Throughput vs. Number of Output Tokens",
             )
             ax[1].legend(title="Type")
             sns.scatterplot(
@@ -325,7 +325,7 @@ def main():
             ).set(
                 xlabel="Number of Output Tokens",
                 ylabel="E2E Latency (secs)",
-                title="Number of Output Tokens vs Latency",
+                title="Latency vs. Number of Output Tokens",
             )
             ax[2].legend(title="Type")
             st.pyplot(fig)
