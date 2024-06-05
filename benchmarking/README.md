@@ -30,7 +30,7 @@ Benchmarking
 
 # Overview
 
-This AI Starter Kkit evaluates the performance of different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs but also measureme metrics simultaneously. The Kit includes:
+This AI Starter Kit evaluates the performance of different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs but also measurement metrics simultaneously. The Kit includes:
 - A configurable SambaStudio connector. The connector generates answers from a deployed model.
 - An app with two functionalities:
     - A performance evaluation process with configurable options that users will utilize to obtain and compare different results 
