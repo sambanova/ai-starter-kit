@@ -1,65 +1,65 @@
 import os
-import json 
-import requests 
-
+import ray
+from llmperf.ray_clients.sambanova_client import SambaNovaLLMClient
+from llmperf.models import RequestConfig
 from dotenv import load_dotenv
-load_dotenv('../.env', override=True)
 
-URL = "https://sambaverse.sambanova.ai/api/predict"
-DEFAULT_SYSTEM_PROMPT = "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\\\\n\\\\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don'\''t know the answer to a question, please don'\''t share false information."
+DEFAULT_SYSTEM_PROMPT = "You are a helpful, respectful and honest assistant. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\n If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don'''t know the answer to a question, please don'''t share false information. Don'''t show any HTML tag in your answer."
 
-class SambaVerseHandlerTmp:
-    
+
+class SambaStudioCOEHandler:
+    """Samba Studio COE handler that wraps SamabaNova LLM client to parse output"""
+
     def __init__(self, model_name, params):
-        self.url = URL
-        self.key = os.getenv('SAMBAVERSE_API_KEY')
-        self.headers = {
-            'Content-Type': 'application/json',
-            'key': self.key,
-            'modelName': model_name
-        }
+        self.model = model_name
         self.params = params
 
-    def _get_data_structure(self, prompt, system_prompt=DEFAULT_SYSTEM_PROMPT):
-        data = {
-            "instance": prompt,
-            "params": self.params
-        }
-        
-        return data
-        
-    def generate(self, prompt, system_prompt=DEFAULT_SYSTEM_PROMPT):
-        data = self._get_data_structure(prompt, system_prompt)
-        response = requests.post(self.url, headers=self.headers, data=json.dumps(data))
-        if response.status_code == 200:
-            successful_response = ''
-            for resp in response.text.split('\n'):
-                response_dict = json.loads(resp)
-                complete = response_dict['result']['status']['complete']
-                if complete == True:
-                    successful_response = response_dict
-                    break
-            return successful_response
-        else:
-            print(response.text)
-            raise Exception("Error in generate")
-        
-if __name__ == '__main__':
-    
-    model_name = 'Mistral/Mistral-7B-Instruct-v0.2'
+    def generate(self, prompt: str) -> tuple:
+        """Generates LLM output in a tuple. It wraps SambaNova LLM client.
+
+        Args:
+            prompt (str): user's prompt
+
+        Returns:
+            tuple: contains the api response, generated text and input parameters
+        """
+
+        prompt_template = (
+            f"<INST> <SYSTEM> {DEFAULT_SYSTEM_PROMPT} </SYSTEM> {prompt} </INST>"
+        )
+
+        client = SambaNovaLLMClient.remote()
+        request_config = RequestConfig(
+            prompt=(prompt_template, 10),
+            model=self.model,
+            sampling_params=self.params,
+            mode="stream",
+            num_concurrent_requests=1,
+        )
+        output = ray.get(client.llm_request.remote(request_config))
+        return output
+
+
+if __name__ == "__main__":
+
+    # load env variables
+    load_dotenv("../../.env", override=True)
+    env_vars = dict(os.environ)
+
+    # init ray
+    ray.init(local_mode=True, runtime_env={"env_vars": env_vars}, log_to_driver=True)
+
+    model_name = "COE/Meta-Llama-3-8B-Instruct"
 
     params = {
-        "do_sample": {"type": "bool", "value": "false"},
-        "max_tokens_to_generate": {"type": "int", "value":"1024"},
-        "temperature": {"type": "float", "value": "1"},
-        "repetition_penalty":{"type":"float","value":"1.0"},
-        "top_k":{"type":"int","value":"50"},
-        "top_p":{"type":"float","value":"0.95"},
-        
-        "process_prompt":{"type":"bool", "value":"false"},
-        "select_expert":{"type":"str", "value":f"{model_name.split('/')[-1]}"},
+        # "do_sample": False,
+        "max_tokens_to_generate": 1024,
+        # "temperature": 1,
+        # "repetition_penalty":1.0,
+        # "top_k":50,
+        # "top_p":0.95,
     }
-    
-    sambaverse = SambaVerseHandlerTmp(model_name, params)
-    response = sambaverse.generate(prompt='Tell me about SambaNova in one sentence')
+
+    handler = SambaStudioCOEHandler(model_name, params)
+    response = handler.generate(prompt="Tell me about SambaNova in one sentence")
     print(response)

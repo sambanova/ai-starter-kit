@@ -189,7 +189,7 @@ We welcome contributions! Feel free to improve the process or add features by su
 
 # License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache 2.0 license. See the `LICENSE.md` file in the parent folder (`AI-STARTER-KIT`) for more details.
 
 # Acknowledgments
 

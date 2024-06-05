@@ -14,6 +14,7 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 <!-- TOC -->
 - [Features](#features)
 - [Prerequisites](#prerequisites)
+- [Key dependencies](#key-dependencies)
 - [Installation](#installation)
 - [Starter kit usage](#starter-kit-usage)
   - [Calling CoE models with the Python script](#calling-coe-models-with-the-python-script)
@@ -40,13 +41,22 @@ This AI starter kit supports the following features:
 
 ## Prerequisites
 
-- Python 3.11.3+
+- Python (>3.11.3 and <3.12)
+- A [Sambaverse](https://sambaverse.sambanova.ai/) account
+- A [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html) account with at least two running endpoints:
+  - A Composition of Experts (CoE) model
+  - A text embedding model with a batch size larger than 1 (set/view this via the model parameters)
+
+## Key dependencies
+
+_(Installed below)_
 - Langchain
 - Sentence Transformers
 - YAML
 - Requests
 
 ## Installation
+_These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
 1. Clone the main repository and cd into CoE starter kit:
 
@@ -73,6 +83,21 @@ This AI starter kit supports the following features:
 
 
 3. Set up the config.yaml file with your API credentials and preferences. For example:
+=======
+2. (Recommended) Create a virtual environment and activate it: 
+  ```bash
+  python<version> -m venv <virtual-environment-name>
+  source <virtual-environment-name>/bin/activate
+  ```
+
+3. Install the required dependencies:
+  ```bash
+  pip install -r requirements.txt # With pip
+  poetry install --no-root # With poetry
+  ```
+
+4. Set up the `config.yaml` file with your API credentials and preferences. For example:
+
   ```yaml
   api: sambastudio
 
@@ -89,12 +114,16 @@ This AI starter kit supports the following features:
    db_type: "faiss"
   ```
 
-4. In the project root directory, create a .env file and add the necessary API keys based on your chosen entry point:
+4. In the CoE starter kit root directory (that is, in the parent folder to where this `README` is saved), create a `.env` file and add the necessary API keys based on your chosen entry point:
 
 ```env
 # NEEDED FOR SAMBAVERSE
-SAMBAVERSE_API_KEY="133-adb-you-key-here"
-SAMBAVERSE_URL="https://yoururl"
+SAMBAVERSE_API_KEY="133-adb-you-key-here" # Found in your profile (upper right corner of Sambaverse)
+SAMBAVERSE_URL="https://sambaverse.sambanova.ai/" # Adjust as needed
+
+# For below, SambaStudio endpoint URLs follow the format:
+# <BASE_URL>/api/predict/generic/<PROJECT_ID>/<ENDPOINT_ID>
+# Both the endpoint URL and the endpoint API key can be found by clicking into an endpoint's details page
 
 # NEEDED FOR SAMBASTUDIO COE MODEL
 BASE_URL="https://yoursambstudio.url"
@@ -110,7 +139,7 @@ EMBED_ENDPOINT_ID="your-samba-studio-embedding_model-endpointid"
 EMBED_API_KEY="your-samba-studio-embedding_model-apikey"
 ```
 
-The script supports both Sambaverse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you want to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
+The script supports both Sambaverse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the `.env` file. If you want to use the `SNSDK` instead of `requests`, make sure you have it installed and configured with your credentials.
 
 ## Starter kit usage
 
@@ -150,7 +179,6 @@ The script and notebook support various models for calling CoE, including:
 * medicine-chat
 * law-chat
 
-
 For a full list of supported CoE models, see the [Supported Models](https://docs.sambanova.ai/sambastudio/latest/samba-1.html#_samba_1_expert_models) documentation.
 
 ## Contributing
@@ -159,7 +187,7 @@ Contributions are welcome! If you have any suggestions, bug reports, or feature 
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache 2.0 license. See the `LICENSE.md` file in the parent folder (`AI-STARTER-KIT`) for more details.
 
 ## Acknowledgements
 

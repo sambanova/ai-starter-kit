@@ -1,6 +1,6 @@
 api: "sambaverse"
 
-embedding_model: "sambastudio"
+embedding_model: "cpu"
 
 loaders: 
     pdf: "unstructured"
@@ -13,9 +13,15 @@ llm:
     "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
 retrieval:
-    "chunk_size": 1500
-    "chunk_overlap": 300
-    "db_type": "chroma"
-    "k_retrieved_documents": 4
-    "score_threshold": 0.6
 
+    "chunk_size": 1200
+    "chunk_overlap": 240
+    "k_retrieved_documents": 15
+    "score_threshold": 0.2
+    "rerank": True
+    "reranker": 'BAAI/bge-reranker-large'
+    "final_k_retrieved_documents": 3
+
+prompts: 
+    "qa_prompt": "prompts/qa_prompt.yaml"
+    "final_chain_prompt": "prompts/final_chain_prompt.yaml"
