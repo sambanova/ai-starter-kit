@@ -279,76 +279,65 @@ def main():
         with st.spinner("Processing"):
 
             performance_eval_start = time.time()
-            df = _run_performance_evaluation()
-            performance_eval_end = time.time()
-            process_duration = performance_eval_end - performance_eval_start
-            print(
-                f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
-            )
 
-            st.subheader("TTFT, Throughput and E2E Latency scatter plots")
+            try:
 
-            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-            sns.scatterplot(
-                data=df,
-                x="number_input_tokens",
-                y="ttft",
-                hue="type",
-                ax=ax[0],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Input Tokens",
-                ylabel="Time to First Token (secs)",
-                title="TTFT vs. Number of Input Tokens",
-            )
-            ax[0].legend(title="Type")
-            sns.scatterplot(
-                data=df,
-                x="number_output_tokens",
-                y="generation_throughput",
-                hue="type",
-                ax=ax[1],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Output Tokens",
-                ylabel="Throughput (tokens/sec)",
-                title="Throughput vs. Number of Output Tokens",
-            )
-            ax[1].legend(title="Type")
-            sns.scatterplot(
-                data=df,
-                x="number_output_tokens",
-                y="e2e_latency",
-                hue="type",
-                ax=ax[2],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Output Tokens",
-                ylabel="E2E Latency (secs)",
-                title="Latency vs. Number of Output Tokens",
-            )
-            ax[2].legend(title="Type")
-            st.pyplot(fig)
+                df = _run_performance_evaluation()
 
-            st.subheader("TTFT, Throughput and E2E Latency box plots")
+                performance_eval_end = time.time()
+                process_duration = performance_eval_end - performance_eval_start
+                print(
+                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
+                )
 
-            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-            sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
-                xlabel="Time to First Token (secs)",
-                ylabel="Type",
-                title="Time to First Token Distribution",
-            )
-            sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
-                xlabel="E2E Latency (secs)",
-                ylabel="Type",
-                title="End-to-end Latency Distribution",
-            )
-            sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
-                xlabel="Throughput (tokens/sec)",
-                ylabel="Type",
-                title="Throughput Distribution",
-            )
-            st.pyplot(fig)
+                st.subheader("TTFT, Throughput and E2E Latency scatter plots")
+
+                fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
+                sns.scatterplot(
+                    data=df,
+                    x="number_input_tokens",
+                    y="ttft",
+                    hue="type",
+                    ax=ax[0],
+                    alpha=0.5,
+                ).set(
+                    xlabel="Number of Input Tokens",
+                    ylabel="Time to First Token (secs)",
+                    title="TTFT vs. Number of Input Tokens",
+                )
+                ax[0].legend(title="Type")
+                sns.scatterplot(
+                    data=df,
+                    x="number_output_tokens",
+                    y="generation_throughput",
+                    hue="type",
+                    ax=ax[1],
+                    alpha=0.5,
+                ).set(
+                    xlabel="Number of Output Tokens",
+                    ylabel="Throughput (tokens/sec)",
+                    title="Throughput vs. Number of Output Tokens",
+                )
+                ax[1].legend(title="Type")
+                sns.scatterplot(
+                    data=df,
+                    x="number_output_tokens",
+                    y="e2e_latency",
+                    hue="type",
+                    ax=ax[2],
+                    alpha=0.5,
+                ).set(
+                    xlabel="Number of Output Tokens",
+                    ylabel="E2E Latency (secs)",
+                    title="Latency vs. Number of Output Tokens",
+                )
+                ax[2].legend(title="Type")
+                st.pyplot(fig)
+
+            except Exception as e:
+                st.error(
+                    f"Unexpected error: {e}. For more error details, please look at the terminal."
+                )
 
 
 if __name__ == "__main__":

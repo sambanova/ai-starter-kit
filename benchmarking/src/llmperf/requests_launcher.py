@@ -17,7 +17,7 @@ class RequestsLauncher:
         Args:
             request_config: The configuration for the request.
         """
-        
+
         if self._llm_client_pool.has_free():
             self._llm_client_pool.submit(
                 lambda client, _request_config: client.llm_request.remote(
@@ -36,14 +36,20 @@ class RequestsLauncher:
             List[Any]: A list of results that are ready.
 
         """
-        
+
         results = []
-        if not block:
-            while self._llm_client_pool.has_next():
-                results.append(self._llm_client_pool.get_next_unordered())
-        else:
-            while not self._llm_client_pool.has_next():
-                pass
-            while self._llm_client_pool.has_next():
-                results.append(self._llm_client_pool.get_next_unordered())
-        return results
+        try:
+            if not block:
+                while self._llm_client_pool.has_next():
+                    result = self._llm_client_pool.get_next_unordered()
+                    results.append(result)
+            else:
+                while not self._llm_client_pool.has_next():
+                    pass
+                while self._llm_client_pool.has_next():
+                    result = self._llm_client_pool.get_next_unordered()
+                    results.append(result)
+            return results
+        except Exception as _:
+            error_msg = f"Error ocurred in getting next ray client executed. Please review your endpoint credentials or model/expert name"
+            raise Exception(error_msg)
