@@ -90,7 +90,7 @@ snapi app list
 3. Update the  [config file](./config.yaml):
 * Set the `open_clip_app_id` key in the `apps` section to the ID you just found in Step 6. 
 * Set the `base_url` key in the `urls` section to the url of your SambaStudio environment.
-* Set the `ingestion_mode` key to batch_inference
+* Set the `ingestion_mode` key to batch_inference_job
 
 
 # Run the demo

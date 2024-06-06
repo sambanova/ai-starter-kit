@@ -1,6 +1,6 @@
 clip:
 
-  ingestion_mode: online_inference # Alternative bath_inference mode
+  ingestion_mode: online_inference #Alternative batch_inference_job 
 
   datasets:
     datasets_path: ./data/datasets
@@ -13,7 +13,7 @@ clip:
     clip_app_id: 6c14325a-1be7-4e48-b38f-19b33745fc3b
    
   urls:
-    base_url: https://sjc3-demo2.sambanova.net
+    base_url: https://your-SambaStudio-env.net
     datasets_url: /api/datasets
     projects_url: /api/projects
     jobs_url: /{project_id}/jobs
@@ -28,7 +28,7 @@ clip:
     job_description: image search ingestion embedding
     job_task: CLIP
     job_type: batch_predict
-    model_checkpoint: CLIP-ViT-B-32-laion2B-s34B-b79k
+    model_checkpoint: CLIP-ViT-B-32-laion2B-s34B-b79k-v2
 
   output:
     output_path: results/predictions.jsonl
