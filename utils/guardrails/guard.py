@@ -12,7 +12,9 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, ".." ))
 load_dotenv(os.path.join(repo_dir, ".env") )
 
 class Guard():
-            
+    """
+    Guard class for running guardrails check with Sambanova's models.
+    """
     def __init__(
         self,
         api: str = "sambaverse",
@@ -25,7 +27,23 @@ class Guard():
         sambastudio_endpoint_id: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
         ):
-        
+        """
+        Initialize Guard class with specified LLM and guardrails.
+
+        Parameters:
+        - api (str): The LLM API to use, either 'sambaverse' or 'sambastudio'. Default is 'sambaverse'.
+        - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
+        - guardrails_path (str, optional): Path to the guardrails YAML file. Default is 'utils/guardrails/guardrails.yaml'.
+        - sambaverse_base_url (str, optional): Base URL for Sambaverse API.
+        - sambaverse_api_key (str, optional): API key for Sambaverse API.
+        - sambastudio_base_url (str, optional): Base URL for SambaStudio API.
+        - sambastudio_project_id (str, optional): Project ID for SambaStudio API.
+        - sambastudio_endpoint_id (str, optional): Endpoint ID for SambaStudio API.
+        - sambastudio_api_key (str, optional): API key for SambaStudio API.
+
+        Returns:
+        - None
+        """
         if prompt_path is None:
             prompt_path = os.path.join(guardrails_dir, "prompt.yaml")
         self.prompt = load_prompt(prompt_path)
@@ -52,6 +70,16 @@ class Guard():
             self.llm = self.set_llm("sambaverse", params)
     
     def load_guardrails(self, path: str):
+        """
+        Load enabled guardrails from a YAML file and return them as a dictionary and a formatted string.
+
+        Parameters:
+        - path (str): The path to the YAML file containing the guardrails.
+
+        Returns:
+        - guardrails (dict): A dictionary of guardrails, where the keys are the guardrail IDs and the values are dictionaries containing the guardrail name and details.
+        - guardrails_str (str): A formatted string containing the names and descriptions of the enabled guardrails.
+        """
         with open(path, 'r') as yaml_file:
             guardrails = yaml.safe_load(yaml_file)
         enabled_guardrails = {k: v for k, v in guardrails.items() if v.get('enabled')}
@@ -60,6 +88,19 @@ class Guard():
         return guardrails, guardrails_str
     
     def set_llm(self, api: str, params: Optional[Dict]):
+        """
+        Set the LLM based on the provided API and parameters.
+
+        Parameters:
+        - api (str): The LLM API to use, either 'sambaverse' or 'sambastudio'.
+        - params (Dict, optional): Additional parameters for the LLM.
+
+        Returns:
+        - LLM: An instance of the specified LLM.
+
+        Raises:
+        - ValueError: If an invalid API is provided.
+        """
         if api == "sambastudio":
             llm = SambaStudio(
                 **params,
@@ -83,6 +124,8 @@ class Guard():
                     "temperature": 0.1,
                 },
             )
+        else:
+            raise ValueError(f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported.")
         return llm
 
     def evaluate(
@@ -92,8 +135,31 @@ class Guard():
         error_message: str = None,
         return_guardrail_type: bool = True,
         raise_exception: bool =False
-        ):
-        
+        ) -> Union[str, List[str]]: 
+        """
+        Evaluate a message or a conversation against the guardrails.
+
+        Parameters:
+        - input (Union[List[Dict], str]): The message or conversation to evaluate. It can be a string with the message or a list of dictionaries representing a conversation.
+            Example conversation input
+            [
+             {"message_id":0,"role":"user", "content":"this is an user message"},
+             {"message_id":1,"role":"assistant","content":"this is an assistant response"},
+            ]
+        - role (str): The role of the message to analyse. It can be either 'user' or 'assistant'.
+        - error_message (str, optional): The error message to be displayed when the message violates the guardrails. If not provided, a default message "The message violate guardrails" will be used.
+        - return_guardrail_type (bool, optional): If True, the function will return the violated guardrail types. If False, it will only return the error message. Default is True.
+        - raise_exception (bool, optional): If True, the function will raise a ValueError with the error message when the message violates the guardrails. If False, it will return the error message. Default is False.
+
+        Returns:
+        - Union[str, List[str]]: The result of the evaluation. If the message violates the guardrails, it will return the error message with the violated guardrail types based on the return_guardrail_type parameter.
+        If the message passes the guardrails, it will return the input message or conversation.
+
+        Raises:
+        - ValueError: If the role is not 'user' or 'assistant'.
+        - ValueError: If the message violates the guardrails when raises_exception is True.
+        """
+
         if isinstance(input, str):
             if role.lower() == "user":
                 conversation = f"User: {input}"
@@ -102,11 +168,6 @@ class Guard():
             else:
                 raise ValueError(f"Invalid role: {role}, only User and Assistant")
         elif isinstance(input, List):
-            # example conversation input
-            # [
-            # {"message_id":0,"role":"user", "content":"this is an user message"},
-            # {"message_id":1,"role":"assistant","content":"this is an assistant response"},
-            #]
             conversation = ""
             for message in input:
                 if message["role"].lower() == "user":
@@ -114,7 +175,7 @@ class Guard():
                 elif message["role"].lower() == "assistant":
                     conversation += f"Assistant: {message['content']}\n"
         values = {"conversation": input, "guardrails": self.parsed_guardrails, "role": conversation}
-        formatted_input =  self.prompt.format(**values)
+        formatted_input = self.prompt.format(**values)
         result = self.llm.invoke(formatted_input)
         if "unsafe" in result:
             violated_categories = result.split("\n")[-1].split(",")
@@ -131,4 +192,3 @@ class Guard():
                     return error_message 
         else:
             return input 
-            
