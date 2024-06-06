@@ -1,5 +1,6 @@
 import os
 import yaml
+import argparse
 from dotenv import load_dotenv
 from langchain_community.llms import SambaStudio, Sambaverse
 from langchain_core.prompts import load_prompt
@@ -192,3 +193,12 @@ class Guard():
                     return error_message 
         else:
             return input 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--message", type=str, help="message to check")
+    parser.add_argument("--role", type=str, help="role of the message")
+    parser.add_argument("--api", default="sambaverse" ,type=str, help="sambaverse or sambastudio")
+    args = parser.parse_args()
+    guardrails = Guard(api=args.api)
+    print(guardrails.evaluate(args.message, args.role))
