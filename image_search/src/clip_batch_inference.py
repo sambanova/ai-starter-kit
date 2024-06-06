@@ -168,7 +168,7 @@ class BatchClipProcessor():
                     image_paths.append(image_path)
 
         df = pd.DataFrame({'image_path': image_paths, 'description': '', 'subset': '', 'metadata': ''})
-        df.to_csv(os.path.join(dataset_dir,'labels.csv'), index=False)
+        df.to_csv(os.path.join(dataset_dir,'predictions.csv'), index=False)
 
     def _get_df_output(self, response_content: str) -> DataFrame:
         """Parse the response from the CLIP job.
@@ -234,7 +234,7 @@ class BatchClipProcessor():
             os.mkdir(self.datasets_path) 
             
         if not os.path.isdir(clip_directory):
-            logging.info(f'Datasets path: {clip_directory} wan \'t found')
+            logging.info(f'Datasets path: {clip_directory} not found')
             
             source_file_data = {
                 "source_path": clip_directory
@@ -290,7 +290,7 @@ class BatchClipProcessor():
 
         if not_found_error_message in response.text:
             
-            logging.info(f'Project {self.project_name} wasn\'t found in SambaStudio')
+            logging.info(f'Project {self.project_name} not found in SambaStudio')
             
             url = self.base_url + self.projects_url
 

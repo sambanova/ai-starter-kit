@@ -68,21 +68,20 @@ class ClipEmbbeding(EmbeddingFunction[D]):
         return cast(Embeddings, embeddings)
 
 class ImageSearch():
-    def __init__(self, path = None, embbeding = ClipEmbbeding):
+    def __init__(self, path = None, embbeding = ClipEmbbeding()):
         if path is None:
-            self.client = chromadb.PersistentClient(path=os.path.join(kit_dir,"data/vector_db"))
+            self.client = chromadb.PersistentClient(path=os.path.join(kit_dir, "data", "vector_db"))
         else:
             self.client = chromadb.PersistentClient(path=path)
-        clip_embedding=ClipEmbbeding()
-        self.embedding_function=clip_embedding
+        self.embedding_function= embbeding
         
-    def init_collection(self, name="image_collection", distance="cosine"):
-        # try:
-        #     client.delete_collection(name="image_collection")
-        # except:
-        #     pass
+    def init_collection(self, name="image_collection", distance="l2"):
+        #try:
+             #self.client.delete_collection(name=name)
+        #except:
+             #pass
         self.collection=self.client.get_or_create_collection(
-            name="image_collection", 
+            name=name, 
             embedding_function=self.embedding_function, 
             metadata={"hnsw:space": distance}
             )
@@ -90,7 +89,7 @@ class ImageSearch():
         
     def get_images(self, folder_path = None ):
         if folder_path is None:
-            folder_path=os.path.join(kit_dir,"data/images")
+            folder_path=os.path.join(kit_dir,"data","images")
         images=[]
         paths=[]
         for root, _dirs, files in os.walk(folder_path):
@@ -103,15 +102,17 @@ class ImageSearch():
         print(f"got {len (images)} images")
         return paths,images
 
-    def add_images(self, path, batch=False):
+    def add_images(self, path = None):
+        if path is None:
+            path=os.path.join(kit_dir,"data","images")
         config_path = os.path.join(kit_dir,"config.yaml")
         with open(config_path, 'r') as file:
             ingestion_mode = yaml.safe_load(file)["clip"]["ingestion_mode"]
-        if ingestion_mode=="batch_inference":
+        if ingestion_mode=="batch_inference_job":
             clip = BatchClipProcessor(config_path=config_path)
             df = clip.process_images(path)
-            embeddings = list(df["predictions"]) 
-            paths = list(df["input"].apply(lambda x: os.path.join(kit_dir,'data/images',x)))
+            embeddings = [element["image_vec"] for element in list(df["predictions"])] 
+            paths = list(df["image_path"].apply(lambda x: os.path.join(path, x)))
             self.collection.add(
                 embeddings=embeddings,
                 metadatas=[{"source": path} for path in paths],
@@ -119,13 +120,15 @@ class ImageSearch():
                 uris=paths
             )
         elif ingestion_mode=="online_inference":
-            paths, images=self.get_images(os.path.join(kit_dir,"data/images"))
+            paths, images=self.get_images(path)
             self.collection.add(
                 images=images,
                 metadatas=[{"source": path} for path in paths],
                 ids=paths,
                 uris=paths
             )
+        else:
+            raise Exception(f"ingestion mode {ingestion_mode} not supported")
     
     def search_image_by_text(self, query, n=5):
         result=self.collection.query(query_texts=[query],include=["uris", "distances"],n_results=n)
