@@ -148,7 +148,7 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     One part of the results is composed of three scatter plots. 
 
-    - Number of Input Tokens vs TTFT: users should expect to see relatively stable TTFT values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
+    - Number of Input Tokens vs TTFT: users should expect to see a linear relationship between TTFT values across different number of input tokens for Server (if available) and Client side numbers, however it should be more visible for larger number of input tokens ranges. Also, Server and Client values should be fairly close.
     - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
     - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
 
@@ -238,7 +238,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (version 1.34.0)
 - st-pages (version 0.4.5)
-- ray (version 2.22.0)
+- ray (version 2.22.0). Specifically for the use of [llmperf framework](](https://github.com/ray-project/llmperf)).
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
