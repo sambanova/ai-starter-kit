@@ -99,7 +99,6 @@ def get_token_throughput_latencies(
             "max_tokens_to_generate": num_output_tokens,
         }
         default_sampling_params.update(additional_sampling_params)
-        # print(f"default_params: {default_sampling_params}", flush=True)
         request_config = RequestConfig(
             model=model,
             prompt=prompt,
@@ -380,12 +379,6 @@ args.add_argument(
     ),
 )
 args.add_argument(
-    "--num-concurrent-requests",
-    type=int,
-    default=10,
-    help=("The number of concurrent requests to send (default: %(default)s)"),
-)
-args.add_argument(
     "--timeout",
     type=int,
     default=90,
@@ -419,21 +412,6 @@ args.add_argument(
     ),
 )
 args.add_argument(
-    "--llm-api",
-    type=str,
-    default="sambanova",
-    help=(
-        f"The name of the llm api to use. Can select from {SUPPORTED_APIS}"
-        " (default: %(default)s)"
-    ),
-)
-args.add_argument(
-    "--mode",
-    type=str,
-    default="stream",
-    help=("Choose between batch or stream" " (default: %(default)s)"),
-)
-args.add_argument(
     "--metadata",
     type=str,
     default="",
@@ -448,7 +426,7 @@ if __name__ == "__main__":
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
     # set log_to_driver = True if you'd like to have ray's logs in terminal
-    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=False)
+    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=True)
 
     args = args.parse_args()
 
@@ -459,8 +437,9 @@ if __name__ == "__main__":
             key, value = item.split("=")
             user_metadata[key] = value
 
+    # Call benchmarking process. Static param values are intentional and still WIP.
     run_token_benchmark(
-        llm_api=args.llm_api,
+        llm_api="sambastudio",
         model=args.model,
         test_timeout_s=args.timeout,
         max_num_completed_requests=args.max_num_completed_requests,
@@ -468,9 +447,9 @@ if __name__ == "__main__":
         stddev_input_tokens=args.stddev_input_tokens,
         mean_output_tokens=args.mean_output_tokens,
         stddev_output_tokens=args.stddev_output_tokens,
-        num_concurrent_requests=args.num_concurrent_requests,
+        num_concurrent_requests=1,
         additional_sampling_params=args.additional_sampling_params,
         results_dir=args.results_dir,
-        mode=args.mode,
+        mode="stream",
         user_metadata=user_metadata,
     )
