@@ -1,6 +1,6 @@
-api: "sambaverse"
+api: "sambastudio"
 
-embedding_model: "cpu"
+embedding_model: "sambastudio"
 
 loaders: 
     pdf: "unstructured"
@@ -15,12 +15,28 @@ llm:
 retrieval:
     "chunk_size": 1200
     "chunk_overlap": 240
-    "k_retrieved_documents": 15
+    "example_selector_k": 1
+    "entity_key": "filename"
+    "k_retrieved_documents": 12
     "score_threshold": 0.2
     "rerank": True
     "reranker": 'BAAI/bge-reranker-large'
     "final_k_retrieved_documents": 3
 
 prompts: 
+    "router_prompt": "prompts/router_prompt.yaml"
+    "example_judge_prompt": "prompts/example_judge_prompt.yaml"
+    "reformulation_prompt": "prompts/reformulation_prompt.yaml"
+    "entity_prompt": "prompts/entity_prompt.yaml"
+    "subquery_prompt": "prompts/subquery_prompt.yaml"
+    "retrieval_grader_prompt": "prompts/retrieval_grader_prompt.yaml"
     "qa_prompt": "prompts/qa_prompt.yaml"
+    "hallucination_prompt": "prompts/hallucination_prompt.yaml"
+    "grading_prompt": "prompts/grading_prompt.yaml"
+    "code_router_prompt": "prompts/code_router_prompt.yaml"
+    "codegen_prompt": "prompts/codegen_prompt.yaml"
+    "codegen_qc_prompt": "prompts/codegen_qc_prompt.yaml"
+    "refactor_prompt": "prompts/refactor_prompt.yaml"
+    "failure_prompt": "prompts/failure_prompt.yaml"
+    "aggregation_prompt": "prompts/aggregation_prompt.yaml"
     "final_chain_prompt": "prompts/final_chain_prompt.yaml"

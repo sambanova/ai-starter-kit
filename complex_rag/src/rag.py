@@ -32,6 +32,7 @@ class RAGComponents(BaseComponents):
     def init_qa_chain(self) -> None:
 
         qa_prompt = load_prompt(os.path.join(self.prompts_path, "qa_prompt.yaml"))
+        print(qa_prompt)
         self.qa_chain = qa_prompt | self.llm | StrOutputParser()
 
     def init_hallucination_chain(self) -> None:
