@@ -1,13 +1,5 @@
 import os
 import sys
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
 import yaml
 from typing import List 
 from pydantic import BaseModel, Field
@@ -22,7 +14,16 @@ from langchain.prompts import PromptTemplate, load_prompt
 from langchain.docstore.document import Document
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from vectordb.vector_db import VectorDb
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+#from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
 from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,'.env'))
@@ -51,10 +52,11 @@ class SecFiling:
         
         params = self._get_config_info()
         self.api_info = params[0]
-        self.llm_info = params[1]
-        self.retrieval_info = params[2]
-        self.query_decomposition_info = params[3]
-        self.sec_info = params[4]
+        self.embedding_model_info = params[1]
+        self.llm_info = params[2]
+        self.retrieval_info = params[3]
+        self.query_decomposition_info = params[4]
+        self.sec_info = params[5]
 
     def _get_config_info(self) -> str:
         """
@@ -65,18 +67,19 @@ class SecFiling:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
         llm_info = config["llm"]
+        embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         query_decomposition_info = config["query_decomposition"]
         sec_info = config["sec"]
         
-        return api_info, llm_info, retrieval_info, query_decomposition_info, sec_info
+        return api_info, embedding_model_info, llm_info, retrieval_info, query_decomposition_info, sec_info
+    
     def init_llm_model(self) -> None:
         """Initializes the LLM endpoint
         """
         if self.api_info=="sambaverse":
-            self.llm = SambaverseEndpoint(
+            self.llm = Sambaverse(
                 sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                 model_kwargs={
                     "do_sample": True, 
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
@@ -90,7 +93,7 @@ class SecFiling:
                 }
             )
         elif self.api_info=="sambastudio":
-            self.llm = SambaNovaEndpoint(
+            self.llm = SambaStudio(
                 model_kwargs={
                     "do_sample": True, 
                     "temperature": self.llm_info["temperature"],
@@ -173,7 +176,7 @@ class SecFiling:
         force_reload = self.config.get("force_reload", None)
         
         vectordb = VectorDb()
-        embeddings = vectordb.load_embedding_model()
+        embeddings = vectordb.load_embedding_model(type=self.embedding_model_info)
         
         if persist_directory and os.path.exists(persist_directory) and not force_reload:
             self.vector_store = vectordb.load_vdb(persist_directory, embeddings)
