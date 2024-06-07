@@ -23,8 +23,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-#from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
-
 from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir,'.env'))
 
