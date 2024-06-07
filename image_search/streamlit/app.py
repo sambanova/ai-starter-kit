@@ -45,7 +45,6 @@ with st.sidebar:
                 if os.path.exists(st.session_state.images_path):
                     st.session_state.image_search = ImageSearch()
                     st.session_state.image_search.init_collection()
-                    #paths, images = st.session_state.image_search.get_images(st.session_state.images_path)
                     st.session_state.image_search.add_images(st.session_state.images_path)
                     st.toast(f'vector_db stored in {os.path.join(kit_dir,"/data/vector_db")}')
                     st.session_state.search_disabled = False  
