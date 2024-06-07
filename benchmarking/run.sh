@@ -1,3 +1,6 @@
+#!/bin/bash
+# run.sh
+
 # COE Turbo model
 # --model "COE/llama-2-7b-chat-hf" \
 # --model "COE/Llama-2-13B-chat-hf" \
@@ -11,10 +14,7 @@ python src/token_benchmark_ray.py \
 --stddev-output-tokens 10 \
 --max-num-completed-requests 32 \
 --timeout 600 \
---num-concurrent-requests 1 \
 --results-dir "./data/results/llmperf" \
---llm-api sambastudio \
---mode stream \
 --additional-sampling-params '{}'
 
 # # Non-COE model: Remember to source .env for new endpoint
@@ -26,7 +26,5 @@ python src/token_benchmark_ray.py \
 # --stddev-output-tokens 10 \
 # --max-num-completed-requests 10 \
 # --timeout 600 \
-# --num-concurrent-requests 1 \
 # --results-dir "./data/results/llmperf" \
-# --llm-api sambastudio \
 # --additional-sampling-params '{}'
