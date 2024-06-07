@@ -58,6 +58,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 ## Set up the account and config file
 
 1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+
+**_Note: Do not use for batching-enabled models (WIP)._**
+
 2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
     ```env
     # SambaStudio endpoint URLs follow the format:
@@ -70,9 +73,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     API_KEY="your-samba-studio-model-apikey"
     ```
 
-3. Open the [config file](./config.yaml) and ensure that the key `api` is set to the value `sambastudio`
-
-4. (Optional) If you are planning to use the `run.sh` bash process, ensure that its `--llm-api` parameter is set to `sambastudio`. More details about the bash process will be covered later.
+3. (Optional) If you are planning to use the `run.sh` bash process. More details about the bash process will be covered later.
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it: 
@@ -128,12 +129,11 @@ Under the section `Configuration`, users need to introduce the LLM model that wi
 
 Different LLM parameters are available for experimentation, directly related to the previously introduced LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
 
-- Number of input tokens: average number of input tokens. Default value: 250.
-- Input tokens standard deviation: standard deviation of input tokens. Default value: 50.
-- Number of output tokens: average number of output tokens. Default value: 250.
-- Output tokens standard deviation: standard deviation of output tokens. Default value: 50.
-- Number of total requests: maximum number of completed requests. Default value: 50 
-- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available. If this parameter is greater than 1, then Time to First Token (TTFT) and Throughput won't be available.
+- Number of input tokens: average number of input tokens. Default value: 1000.
+- Input tokens standard deviation: standard deviation of input tokens. Default value: 10.
+- Number of output tokens: average number of output tokens. Default value: 1000.
+- Output tokens standard deviation: standard deviation of output tokens. Default value: 10.
+- Number of total requests: maximum number of completed requests. Default value: 32. 
 - Timeout: time when the process will stop. Default value: 600 seconds
 
 3. Run the performance evaluation process
@@ -154,7 +154,7 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     **Box plots**
 
-    The second part of the results is composed by three box plots. 
+    The second part of the results is composed by three box plots. (Performance metric values are based on a SambaTurbo endpoint.)
 
     - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
     - End-to-End Latency Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
@@ -173,10 +173,7 @@ Users have this option if they want to experiment using values that are beyond t
    - stddev-output-tokens: standard deviation of output tokens. It's recommended to choose no more than 50% the amount of output tokens. Default value: 10.
    - max-num-completed-requests: maximum number of completed requests. Default value: 32 
    - timeout: time when the process will stop. Default value: 600 seconds
-   - num-concurrent-requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available.
    - results-dir: path to the results directory. Default value: "./data/results/llmperf"
-   - llm-api: currently only supporting Sambanova Studio's models. Default value: "sambastudio"
-   - mode: whether the generation is in stream or batch mode. Default value: "stream" 
    - additional-sampling-params: additional params for LLM. Default value: '{}'
 
 2. Run the following command in terminal. The performance evaluation process will start running and a progress bar will be shown until it is done.
