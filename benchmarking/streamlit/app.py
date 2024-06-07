@@ -142,10 +142,14 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-    mode = "stream"  # static for now
+
+    # Call benchmarking process. Static param values are intentional and still WIP.
+    num_concurrent_requests = 1
+    mode = "stream"
+    llm_api = "sambastudio"
 
     run_token_benchmark(
-        llm_api="sambastudio",
+        llm_api=llm_api,
         model=st.session_state.llm,
         test_timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
@@ -153,7 +157,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
         stddev_input_tokens=st.session_state.input_tokens_std,
         mean_output_tokens=st.session_state.output_tokens,
         stddev_output_tokens=st.session_state.output_tokens_std,
-        num_concurrent_requests=st.session_state.number_concurrent_requests,
+        num_concurrent_requests=num_concurrent_requests,
         additional_sampling_params="{}",
         results_dir=results_path,
         user_metadata="",
@@ -164,9 +168,9 @@ def _run_performance_evaluation() -> pd.DataFrame:
     df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_requests}_{mode}_individual_responses.json"
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_requests}_{mode}_individual_responses.json"
     )
-    df_user["concurrent_user"] = st.session_state.number_concurrent_requests
+    df_user["concurrent_user"] = num_concurrent_requests
     df = pd.concat([df, df_user])
     valid_df = df[(df["error_code"] != "")]
     renamed_df = _rename_metrics_df(valid_df)
@@ -191,8 +195,6 @@ def _initialize_sesion_variables():
         st.session_state.output_tokens_std = None
     if "number_requests" not in st.session_state:
         st.session_state.number_requests = None
-    if "number_concurrent_requests" not in st.session_state:
-        st.session_state.number_concurrent_requests = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
 
@@ -258,13 +260,6 @@ def main():
 
         st.session_state.number_requests = st.slider(
             "Number of total requests", min_value=10, max_value=100, value=32
-        )
-        st.session_state.number_concurrent_requests = st.slider(
-            "Number of concurrent requests",
-            min_value=1,
-            max_value=50,
-            value=1,
-            help="Client TTFT and Throughput will not be available for concurrent workers greater than 1",
         )
 
         st.session_state.timeout = st.slider(
@@ -332,6 +327,26 @@ def main():
                     title="Latency vs. Number of Output Tokens",
                 )
                 ax[2].legend(title="Type")
+                st.pyplot(fig)
+
+                st.subheader("TTFT, Throughput and E2E Latency box plots")
+
+                fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
+                sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
+                    xlabel="Time to First Token (secs)",
+                    ylabel="Type",
+                    title="Time to First Token Distribution",
+                )
+                sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
+                    xlabel="E2E Latency (secs)",
+                    ylabel="Type",
+                    title="End-to-end Latency Distribution",
+                )
+                sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
+                    xlabel="Throughput (tokens/sec)",
+                    ylabel="Type",
+                    title="Throughput Distribution",
+                )
                 st.pyplot(fig)
 
             except Exception as e:
