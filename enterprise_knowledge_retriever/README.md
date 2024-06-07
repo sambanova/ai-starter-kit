@@ -40,6 +40,7 @@ Enterprise Knowledge Retrieval
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
+<!-- /TOC -->
 
 # Overview
 
@@ -105,37 +106,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 ### Update the Embedding API information
 
 You have these options to specify the embedding API info: 
-<!-- TOC -->
 
-- [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
-- [Overview](#overview)
-- [Before you begin](#before-you-begin)
-    - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
-        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
-        - [Install system dependencies](#install-system-dependencies)
-- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
-    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
-- [Use the starter kit](#use-the-starter-kit)
-    - [Ingestion workflow](#ingestion-workflow)
-    - [Retrieval workflow](#retrieval-workflow)
-    - [Q&A workflow](#qa-workflow)
-- [Customizing the starter kit](#customizing-the-starter-kit)
-    - [Import Data](#import-data)
-    - [Split Data](#split-data)
-    - [Embed data](#embed-data)
-    - [Store embeddings](#store-embeddings)
-    - [Retrieval an Reranking](#retrieval-an-reranking)
-    - [Customize the LLM](#customize-the-llm)
-        - [Sambaverse endpoint](#sambaverse-endpoint)
-        - [SambaStudio endpoint](#sambastudio-endpoint)
-    - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
-- [Third-party tools and data sources](#third-party-tools-and-data-sources)
-
-<!-- /TOC -->
 * **Option 1: Use a CPU embedding model**
 
     In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
