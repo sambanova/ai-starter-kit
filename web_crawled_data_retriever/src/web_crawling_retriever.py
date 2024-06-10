@@ -1,5 +1,16 @@
 import os
 import sys
+import yaml
+import nest_asyncio 
+from dotenv import load_dotenv
+from langchain.chains import RetrievalQA
+from langchain.prompts import load_prompt
+from langchain_community.document_loaders import UnstructuredURLLoader
+from langchain.document_loaders import AsyncHtmlLoader
+from langchain.document_transformers import Html2TextTransformer
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse, urldefrag
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -8,27 +19,9 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from dotenv import load_dotenv
-load_dotenv(os.path.join(repo_dir,'.env'))
-
 from vectordb.vector_db import VectorDb
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
 
-import yaml
-import nest_asyncio
-from typing import Tuple      
-from langchain.chains import RetrievalQA
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.prompts import PromptTemplate, load_prompt
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain.vectorstores import FAISS 
-from langchain.document_loaders import AsyncHtmlLoader
-from langchain.document_transformers import Html2TextTransformer
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse, urldefrag
-from utils.sambanova_endpoint import SambaNovaEndpoint
-
+load_dotenv(os.path.join(repo_dir,'.env'))
 nest_asyncio.apply()
 
 DATA_DIRECTORY = os.path.join(kit_dir,"data")
@@ -40,26 +33,32 @@ class WebCrawlingRetrieval:
         if config is None:
             config = {}
         self.documents = documents
-        self.config = config
+        self.config = config 
+        config_info=self._get_config_info(CONFIG_PATH)
+        self.api_info = config_info[0]
+        self.embedding_model_info = config_info[1]
+        self.llm_info = config_info[2]
+        self.retrieval_info = config_info[3]
+        self.web_crawling_params = config_info[4]
+        self.extra_loaders = config_info[5]
         self.vectordb = VectorDb()
-     
-    @staticmethod   
-    def _get_config_info():
+       
+    def _get_config_info(self, path=CONFIG_PATH):
         """
         Loads json config file
         """
         # Read config file
-        with open(CONFIG_PATH, 'r') as yaml_file:
+        with open(path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
         embedding_model_info =config["embedding_model"]
         llm_info =  config["llm"]
-        retreival_info = config["retrieval"]
+        retrieval_info = config["retrieval"]
         web_crawling_params = config["web_crawling"]
         extra_loaders = config["extra_loaders"]
         
         
-        return api_info, embedding_model_info ,llm_info, retreival_info, web_crawling_params, extra_loaders
+        return api_info, embedding_model_info ,llm_info, retrieval_info, web_crawling_params, extra_loaders
             
     @staticmethod
     def load_remote_pdf(url):
@@ -165,8 +164,7 @@ class WebCrawlingRetrieval:
         docs=html2text_transformer.transform_documents(documents=docs)
         return docs
     
-    @staticmethod
-    def web_crawl(urls, excluded_links=None, depth = 1):
+    def web_crawl(self, urls, excluded_links=None, depth = 1):
         """
         Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth of exploration.
         Args:
@@ -176,28 +174,27 @@ class WebCrawlingRetrieval:
         Returns:
             tuple: A tuple containing the langchain documents (list) and the scrapped URLs (list).
         """
-        *_, web_crawling_params, extra_loaders = WebCrawlingRetrieval._get_config_info()
         if excluded_links is None:
             excluded_links = []
         excluded_links.extend(["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "telagram.me", "reddit.com", "whatsapp.com", "wa.me"])
-        if depth > web_crawling_params["max_depth"]: #Max depth change with precausion number of sites grow exponentially
-            depth = web_crawling_params["max_depth"]
+        if depth > self.web_crawling_params["max_depth"]: #Max depth change with precausion number of sites grow exponentially
+            depth = self.web_crawling_params["max_depth"]
         scrapped_urls=[]
         raw_docs=[]
         for _ in range(depth):
             
-            if len(scrapped_urls)+len(urls) >= web_crawling_params["max_scraped_websites"]:
-                urls = list(urls)[:web_crawling_params["max_scraped_websites"]-len(scrapped_urls)]
+            if len(scrapped_urls)+len(urls) >= self.web_crawling_params["max_scraped_websites"]:
+                urls = list(urls)[:self.web_crawling_params["max_scraped_websites"]-len(scrapped_urls)]
                 urls = set(urls)
                 
-            scraped_docs = WebCrawlingRetrieval.load_htmls(urls, extra_loaders)
+            scraped_docs = WebCrawlingRetrieval.load_htmls(urls, self.extra_loaders)
             scrapped_urls.extend(urls)
             urls=WebCrawlingRetrieval.find_links(scraped_docs, excluded_links)
             
             excluded_links.extend(scrapped_urls)
             raw_docs.extend(scraped_docs)
             
-            if len(scrapped_urls) == web_crawling_params["max_scraped_websites"]:
+            if len(scrapped_urls) == self.web_crawling_params["max_scraped_websites"]:
                 break
             
         docs=WebCrawlingRetrieval.clean_docs(raw_docs)
@@ -205,78 +202,64 @@ class WebCrawlingRetrieval:
 
 
     def init_llm_model(self) -> None:
-        """Initializes the LLM endpoint
         """
-        api_info, _,llm_info, *_ = WebCrawlingRetrieval._get_config_info()
-        if api_info=="sambaverse":
-            self.llm = SambaverseEndpoint(
-                sambaverse_model_name=llm_info["sambaverse_model_name"],
-                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
+        Initializes the LLM endpoint
+        """
+        if self.api_info=="sambaverse":
+            self.llm = Sambaverse(
+                sambaverse_model_name=self.llm_info["sambaverse_model_name"],
                 model_kwargs={
                     "do_sample": True, 
-                    "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                    "temperature": llm_info["temperature"],
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                    "temperature": self.llm_info["temperature"],
                     "process_prompt": True,
-                    "select_expert": llm_info["sambaverse_select_expert"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
+                    "select_expert": self.llm_info["sambaverse_select_expert"],
                 }
             )
-        elif api_info=="sambastudio":
-            self.llm = SambaNovaEndpoint(
+        elif self.api_info=="sambastudio":
+            self.llm = SambaStudio(
                 model_kwargs={
                     "do_sample": True, 
-                    "temperature": llm_info["temperature"],
-                    "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
+                    "temperature": self.llm_info["temperature"],
+                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                 }
             ) 
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
         
-        _, embedding_model_type, _, retrieval_info,  *_ = WebCrawlingRetrieval._get_config_info()
-        
         persist_directory = self.config.get("persist_directory", "NoneDirectory")
         
-        self.embeddings = self.vectordb.load_embedding_model(type=embedding_model_type)
+        self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
         
         if os.path.exists(persist_directory) and not force_reload and not update:
-            self.vector_store = self.vectordb.load_vdb(persist_directory, self.embeddings, db_type = retrieval_info["db_type"])
+            self.vector_store = self.vectordb.load_vdb(persist_directory, self.embeddings, db_type = self.retrieval_info["db_type"])
         
         elif os.path.exists(persist_directory) and update:
-            self.chunks = self.vectordb.get_text_chunks(self.documents , retrieval_info["chunk_size"], retrieval_info["chunk_overlap"])
-            self.vector_store = self.vectordb.load_vdb(persist_directory, self.embeddings, db_type = retrieval_info["db_type"])
-            self.vector_store = self.vectordb.update_vdb(self.chunks, self.embeddings, retrieval_info["db_type"], persist_directory)
+            self.chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            self.vector_store = self.vectordb.load_vdb(persist_directory, self.embeddings, db_type = self.retrieval_info["db_type"])
+            self.vector_store = self.vectordb.update_vdb(self.chunks, self.embeddings, self.retrieval_info["db_type"], persist_directory)
             
         else:
-            self.chunks = self.vectordb.get_text_chunks(self.documents , retrieval_info["chunk_size"], retrieval_info["chunk_overlap"])
-            self.vector_store = self.vectordb.create_vector_store(self.chunks, self.embeddings, retrieval_info["db_type"], None)
+            self.chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+            self.vector_store = self.vectordb.create_vector_store(self.chunks, self.embeddings, self.retrieval_info["db_type"], None)
     
     def create_and_save_local(self, input_directory, persist_directory, update=False):
         
-        _, embedding_model_type, _, retrieval_info,  *_ = WebCrawlingRetrieval._get_config_info()
-        
-        self.chunks = self.vectordb.get_text_chunks(self.documents , retrieval_info["chunk_size"], retrieval_info["chunk_overlap"])
-        self.embeddings = self.vectordb.load_embedding_model(type=embedding_model_type)
+        self.chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
+        self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
         if update:
             self.config["update"]=True
-            self.vector_store = self.vectordb.update_vdb(self.chunks, self.embeddings, retrieval_info["db_type"], input_directory, persist_directory)
+            self.vector_store = self.vectordb.update_vdb(self.chunks, self.embeddings, self.retrieval_info["db_type"], input_directory, persist_directory)
 
         else:
-            self.vector_store = self.vectordb.create_vector_store(self.chunks, self.embeddings, retrieval_info["db_type"], persist_directory)
+            self.vector_store = self.vectordb.create_vector_store(self.chunks, self.embeddings, self.retrieval_info["db_type"], persist_directory)
 
        
     def retrieval_qa_chain(self):
-        *_, retrieval_info, _, _ = WebCrawlingRetrieval._get_config_info()
         prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_crwling_data_retriever.yaml"))
         retriever = self.vector_store.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": retrieval_info["score_treshold"], "k": retrieval_info["k_retrieved_documents"]},
+            search_kwargs={"score_threshold": self.retrieval_info["score_treshold"], "k": self.retrieval_info["k_retrieved_documents"]},
         )
         self.qa_chain = RetrievalQA.from_llm(
             llm=self.llm,
