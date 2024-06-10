@@ -28,8 +28,18 @@ DATA_DIRECTORY = os.path.join(kit_dir,"data")
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 
 class WebCrawlingRetrieval:
+    """
+    Class for web crawling retrieval.
+    """
     
     def __init__(self, documents=None, config=None):
+        """
+        Initialize the WebCrawlingRetrieval class.
+
+        Args:
+        documents (list, optional): A list of langchain documents. Defaults to None.
+        config (dict, optional): A dictionary of extra configuration parameters. Defaults to None.
+        """
         if config is None:
             config = {}
         self.documents = documents
@@ -43,12 +53,21 @@ class WebCrawlingRetrieval:
         self.extra_loaders = config_info[5]
         self.vectordb = VectorDb()
        
-    def _get_config_info(self, path=CONFIG_PATH):
+    def _get_config_info(self, config_path=CONFIG_PATH):
         """
         Loads json config file
+        Args:
+            path (str, optional): The path to the config file. Defaults to CONFIG_PATH.
+        Returns:
+            api_info (string): string containing API to use SambaStudio or Sambaverse.
+            embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
+            llm_info (dict): Dictionary containing LLM parameters.
+            retrieval_info (dict): Dictionary containing retrieval parameters
+            web_crawling_params (dict): Dictionary containing web crawling parameters
+            extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available in base kit)
         """
         # Read config file
-        with open(path, 'r') as yaml_file:
+        with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
         embedding_model_info =config["embedding_model"]
@@ -226,7 +245,12 @@ class WebCrawlingRetrieval:
             ) 
     
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
-        
+        """
+        Create a vector store based on the given documents.
+        Args:
+            force_reload (bool, optional): Whether to force reloading the vector store. Defaults to False.
+            update (bool, optional): Whether to update the vector store. Defaults to False.
+        """
         persist_directory = self.config.get("persist_directory", "NoneDirectory")
         
         self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
@@ -244,7 +268,13 @@ class WebCrawlingRetrieval:
             self.vector_store = self.vectordb.create_vector_store(self.chunks, self.embeddings, self.retrieval_info["db_type"], None)
     
     def create_and_save_local(self, input_directory, persist_directory, update=False):
-        
+        """
+        Create a vector store based on the given documents.
+        Args:
+            input_directory: The directory containing the previously created vectorstore.
+            persist_directory: The directory to save the vectorstore.
+            update (bool, optional): Whether to update the vector store. Defaults to False.
+        """
         self.chunks = self.vectordb.get_text_chunks(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
         self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
         if update:
@@ -256,6 +286,12 @@ class WebCrawlingRetrieval:
 
        
     def retrieval_qa_chain(self):
+        """
+        Creates a RetrievalQA chain from LangChain chains.
+
+        Returns:
+        RetrievalQA: A LangChain RetrievalQA chain object.
+        """
         prompt = load_prompt(os.path.join(kit_dir,"prompts/llama7b-web_crwling_data_retriever.yaml"))
         retriever = self.vector_store.as_retriever(
             search_type="similarity_score_threshold",

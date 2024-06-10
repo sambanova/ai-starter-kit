@@ -84,10 +84,10 @@ To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudi
 3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
 
     ```bash
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
 4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
