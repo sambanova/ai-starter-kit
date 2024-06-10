@@ -2,7 +2,20 @@ import os
 import re
 import sys
 import yaml
-from pprint import pprint
+import requests
+import json
+from dotenv import load_dotenv
+from serpapi import GoogleSearch
+from langchain.prompts import load_prompt
+from langchain_community.document_loaders import UnstructuredURLLoader,  AsyncHtmlLoader
+from langchain_community.document_transformers import Html2TextTransformer
+from urllib.parse import urljoin, urlparse, urldefrag
+from vectordb.vector_db import VectorDb
+from langchain.chains import RetrievalQA
+from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain.globals import set_debug
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -11,27 +24,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-import requests
-import json
-from dotenv import load_dotenv
-from serpapi import GoogleSearch
-
-from langchain.prompts import PromptTemplate, load_prompt
-from langchain_community.document_loaders import UnstructuredURLLoader,  AsyncHtmlLoader
-from langchain_community.document_transformers import Html2TextTransformer
-from urllib.parse import urljoin, urlparse, urldefrag
-from vectordb.vector_db import VectorDb
-from langchain.chains import RetrievalQA
-from langchain.output_parsers import CommaSeparatedListOutputParser, StructuredOutputParser, ResponseSchema
-from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
-
-load_dotenv(os.path.join(repo_dir,".env"))
-
-from langchain.globals import set_debug
-
 set_debug(False)
+load_dotenv(os.path.join(repo_dir,".env"))
 
 CONFIG_PATH = os.path.join(kit_dir,"config.yaml")
 
@@ -43,10 +37,11 @@ class SearchAssistant():
             self.config = config
         config_info=self._get_config_info(CONFIG_PATH)
         self.api_info = config_info[0]
-        self.llm_info = config_info[1]
-        self.retrieval_info = config_info[2]
-        self.web_crawling_params = config_info[3]
-        self.extra_loaders = config_info[4]
+        self.embedding_model_info = config_info[1]
+        self.llm_info = config_info[2]
+        self.retrieval_info = config_info[3]
+        self.web_crawling_params = config_info[4]
+        self.extra_loaders = config_info[5]
         self.documents = None
         self.urls = None
         self.llm = self.init_llm_model()
@@ -61,42 +56,35 @@ class SearchAssistant():
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
+        embedding_model_info = config["embedding_model"]
         llm_info =  config["llm"]
         retrieval_info = config["retrieval"]
         web_crawling_params = config["web_crawling"]
         extra_loaders = config["extra_loaders"]
         
-        return api_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
+        return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
         
     def init_llm_model(self) -> None:
-        """Initializes the LLM endpoint
+        """
+        Initializes the LLM endpoint
         """
         if self.api_info=="sambaverse":
-            llm = SambaverseEndpoint(
+            llm = Sambaverse(
                 sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                 model_kwargs={
                     "do_sample": True, 
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     "temperature": self.llm_info["temperature"],
                     "process_prompt": True,
                     "select_expert": self.llm_info["sambaverse_select_expert"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
                 }
             )
         elif self.pi_info=="sambastudio":
-            llm = SambaNovaEndpoint(
+            llm = SambaStudio(
                 model_kwargs={
                     "do_sample": True, 
                     "temperature": self.llm_info["temperature"],
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
                 }
             ) 
         return llm
@@ -337,7 +325,7 @@ class SearchAssistant():
             
         persist_directory = self.config.get("persist_directory", "NoneDirectory")
         
-        embeddings = self.vectordb.load_embedding_model()
+        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
         
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(persist_directory, embeddings, db_type = self.retrieval_info["db_type"])

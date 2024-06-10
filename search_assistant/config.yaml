@@ -1,5 +1,7 @@
 api: "sambaverse"
 
+embedding_model: "cpu"
+
 llm: 
     "temperature": 0.01
     "max_tokens_to_generate": 1000
