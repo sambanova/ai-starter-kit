@@ -425,7 +425,7 @@ class SearchAssistant():
         """
         
         chunks = self.get_text_chunks_with_references(self.documents , self.retrieval_info["chunk_size"], self.retrieval_info["chunk_overlap"])
-        embeddings = self.vectordb.load_embedding_model()
+        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
         if update:
             self.config["update"]=True
             self.vector_store = self.vectordb.update_vdb(chunks, embeddings, self.retrieval_info["db_type"], input_directory, persist_directory)
