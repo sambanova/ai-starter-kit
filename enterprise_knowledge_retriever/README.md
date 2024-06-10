@@ -32,14 +32,13 @@ Enterprise Knowledge Retrieval
     - [Split Data](#split-data)
     - [Embed data](#embed-data)
     - [Store embeddings](#store-embeddings)
-    - [Retrieval an Reranking](#retrieval-an-reranking)
+    - [Retrieval and Reranking](#retrieval-and-reranking)
     - [Customize the LLM](#customize-the-llm)
         - [Sambaverse endpoint](#sambaverse-endpoint)
         - [SambaStudio endpoint](#sambastudio-endpoint)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
-<!-- /TOC -->
 <!-- /TOC -->
 
 # Overview
@@ -151,7 +150,7 @@ NOTE: Be sure to set batch size model parameter to 32.
     ```
 
 - Windows installation:
-    > [Windows tessearc instalation](https://github.com/UB-Mannheim/tesseract/wiki)
+    > [Windows tessearct installation](https://github.com/UB-Mannheim/tesseract/wiki)
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
@@ -314,7 +313,7 @@ function: create_vector_store
 
 For details about the SambaStudio hosted embedding models see the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
 
-## Retrieval an Reranking
+## Retrieval and Reranking
 
 A wide collection of retriever options is available. In this starter kit, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
 
@@ -329,7 +328,7 @@ file: [config.yaml](config.yaml)
     "final_k_retrieved_documents": 3
 ```
 
-tThere you will be able to select the final number of retrieved documents, and if you want to use or not the reranker.
+There you will be able to select the final number of retrieved documents, and if you want to use or not the reranker.
 
 and the implementation can be customized in file: [document_retrieval.py](src/document_retrieval.py) for LCEL implementation.
 
@@ -408,6 +407,5 @@ streamlit-extras
 - unstructured[pdf] (version 0.13.3)
 - unstructured_inference (version 0.7.27)
 - PyMuPDF (version 1.23.4)
-- PyMuPDFb (version 1.23.3)
 - chromadb (version 0.4.24)
 - langgraph (version 0.0.55)
