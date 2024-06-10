@@ -426,7 +426,7 @@ if __name__ == "__main__":
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
     # set log_to_driver = True if you'd like to have ray's logs in terminal
-    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=True)
+    ray.init(runtime_env={"env_vars": env_vars}, log_to_driver=False)
 
     args = args.parse_args()
 

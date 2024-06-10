@@ -51,5 +51,5 @@ class RequestsLauncher:
                     results.append(result)
             return results
         except Exception as _:
-            error_msg = f"Error ocurred in getting next ray client executed. Please review your endpoint credentials or model/expert name"
+            error_msg = f"Error ocurred in getting next ray client executed. Please review your endpoint credentials/set-up or model/expert name"
             raise Exception(error_msg)

@@ -46,7 +46,7 @@ def _init_ray():
     ray.shutdown()
     ray.init(
         runtime_env={"env_vars": env_vars},
-        log_to_driver=True,
+        log_to_driver=False,
         logging_level=logging.ERROR,
     )
 
