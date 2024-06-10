@@ -10,30 +10,34 @@ Search Assistant
 
 <!-- TOC -->
 
+- [Search Assistant](#search-assistant)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
-  - [Clone this repository](#clone-this-repository)
-  - [Set up the account and config file](#set-up-the-account-and-config-file)
-    - [Setup for SambaStudio](#setup-for-sambastudio)
-    - [Setup for Sambaverse](#setup-for-sambaverse)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the account and config file](#set-up-the-account-and-config-file)
+        - [Setup for SambaStudio](#setup-for-sambastudio)
+        - [Setup for Sambaverse](#setup-for-sambaverse)
+        - [Update the Embedding API information](#update-the-embedding-api-information)
 - [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
     - [Run the demo](#run-the-demo)
 - [Workflow overview](#workflow-overview)
-  - [Answer and search workflow](#answer-and-search-workflow)
-  - [Answer and scrape sites workflow](#answer-and-scrape-sites-workflow)
-  - [Retrieval workflow](#retrieval-workflow)
+    - [Answer and search workflow](#answer-and-search-workflow)
+    - [Answer and scrape sites workflow](#answer-and-scrape-sites-workflow)
+    - [Retrieval workflow](#retrieval-workflow)
 - [Customizing the starter kit](#customizing-the-starter-kit)
-  - [Use a custom serp tool](#use-a-custom-serp-tool)
-  - [Customize website scraping](#customize-website-scraping)
-  - [Customize document transformation](#customize-document-transformation)
-  - [Customize data splitting](#customize-data-splitting)
-  - [Customize data embedding](#customize-data-embedding)
-  - [Customize embedding storage](#customize-embedding-storage)
-  - [Customize retrieval](#customize-retrieval)
-  - [Customize LLM usage](#customize-llm-usage)
-  - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
+    - [Use a custom serp tool](#use-a-custom-serp-tool)
+    - [Customize website scraping](#customize-website-scraping)
+    - [Customize document transformation](#customize-document-transformation)
+    - [Customize data splitting](#customize-data-splitting)
+    - [Customize data embedding](#customize-data-embedding)
+    - [Customize embedding storage](#customize-embedding-storage)
+    - [Customize retrieval](#customize-retrieval)
+    - [Customize LLM usage](#customize-llm-usage)
+        - [Sambaverse endpoint](#sambaverse-endpoint)
+        - [SambaStudio endpoint](#sambastudio-endpoint)
+    - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -79,12 +83,13 @@ To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudi
 2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
 
-```yaml
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
+    ```bash
+    BASE_URL="https://api-stage.sambanova.net"
+    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    ```
+
 4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
 
 ### Setup for Sambaverse
@@ -93,11 +98,45 @@ API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
 3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
 
-```yaml
+    ```bash
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+    ```
 
 4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+
+### Update the Embedding API information
+
+You have these options to specify the embedding API info: 
+
+* **Option 1: Use a CPU embedding model**
+
+    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"`
+
+* **Option 2: Set a SambaStudio embedding model**
+
+To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+
+NOTE: Be sure to set batch size model parameter to 32.
+
+1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
+
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    - You can enter the following in the env file (with no spaces):
+
+        ```bash
+            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+
+2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
+    > 
+    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+
 
 # Bring up the starter kit GUI
 
@@ -109,12 +148,12 @@ If you want to use virtualenv or conda environment
 
 1. Install and update pip.
 
-```
-cd ai-starter-kit/web_crawled_data_retriever
-python3 -m venv search_assistant_env
-source search_assistant_env/bin/activate
-pip install -r requirements.txt
-```
+    ``` bash
+    cd ai-starter-kit/web_crawled_data_retriever
+    python3 -m venv search_assistant_env
+    source search_assistant_env/bin/activate
+    pip install -r requirements.txt
+    ```
 
 2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp).
 
@@ -126,11 +165,12 @@ pip install -r requirements.txt
 
 
 3. Run the following command:
-```
-streamlit run streamlit/app.py --browser.gatherUsageStats false   
-```
 
-You should see the following application user interface:
+    ```bash
+    streamlit run streamlit/app.py --browser.gatherUsageStats false   
+    ```
+
+    You should see the following application user interface:
 
 ![capture of search_assistant_kit](./docs/search_assitant.png)
 
@@ -145,6 +185,7 @@ If you want to use Docker:
     ```bash
     docker-compose up --build
     ```
+
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page shown in the screenshot above.
 
 ## Run the demo 
@@ -354,7 +395,7 @@ template: |
 ```
 Those modifications can be done in the following locations:
 
-  > Prompt: retrival Q&A chain  
+  > Prompt: retrieval Q&A chain  
   >
   > file: [prompts/llama7b-web_scraped_data_retriever.yaml](prompts/llama7b-web_scraped_data_retriever.yaml)
 
@@ -378,7 +419,8 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (Version 1.32.2)
 - streamlit-extras (Version 0.3.6)
-- langchain (Version 0.1.2)
+- langchain (Version 0.2.1)
+- langchain_community (Version 0.2.1)
 - sentence_transformers (Version 2.2.2)
 - instructorembedding (Version 1.0.1)
 - faiss-cpu (Version 1.7.4)

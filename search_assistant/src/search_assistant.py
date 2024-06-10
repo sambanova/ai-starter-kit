@@ -30,7 +30,17 @@ load_dotenv(os.path.join(repo_dir,".env"))
 CONFIG_PATH = os.path.join(kit_dir,"config.yaml")
 
 class SearchAssistant():
+    """
+    class used to do generation over search query results and scraped sites
+    """
     def __init__(self, config=None) -> None:
+        """
+        Initializes the search assistant with the given configuration parameters.
+
+        Args: 
+        config (dict, optional):  Extra configuration parameters for the search Assistant. 
+        If not provided, default values will be used.
+        """
         if config is None:
             self.config = {}
         else:
@@ -51,8 +61,18 @@ class SearchAssistant():
     def _get_config_info(self, config_path):
         """
         Loads json config file
+        
+        Args:
+        config_path (str): Path to the YAML configuration file.
+        
+        Returns:
+        api_info (string): string containing API to use SambaStudio or Sambaverse.
+        embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
+        llm_info (dict): Dictionary containing LLM parameters.
+        retrieval_info (dict): Dictionary containing retrieval parameters
+        web_crawling_params (dict): Dictionary containing web crawling parameters
+        extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available in base kit)
         """
-        # Read config file
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config["api"]
@@ -67,6 +87,9 @@ class SearchAssistant():
     def init_llm_model(self) -> None:
         """
         Initializes the LLM endpoint
+        
+        Returns:
+        llm (SambaStudio or Sambaverse): Langchain LLM to use
         """
         if self.api_info=="sambaverse":
             llm = Sambaverse(
@@ -90,10 +113,29 @@ class SearchAssistant():
         return llm
     
     def remove_links(self, text):
+        """
+        Removes all URLs from the given text.
+
+        Args:
+        text (str): The text from which to remove URLs.
+
+        Returns:
+        (str) The text with all URLs removed.
+        """
         url_pattern = r'https?://\S+|www\.\S+'
         return re.sub(url_pattern, '', text)
     
     def parse_serp_analysis_output(self, answer, links):
+        """
+        Parse the output of the SERP analysis prompt to replace the reference numbers with HTML links.
+
+        Parameters:
+        answer (str): The LLM answer of the query using the SERP tool output.
+        links (list): A list of links corresponding to the reference numbers in the prompt.
+
+        Returns:
+        str: The parsed output with HTML links instead of reference numbers.
+        """
         for i, link in enumerate(links):
             answer = answer.replace(f"[reference:{i+1}]", f"[<sup>{i+1}</sup>]({link})")
             answer = answer.replace(f"[Reference:{i+1}]", f"[<sup>{i+1}</sup>]({link})")
@@ -101,7 +143,18 @@ class SearchAssistant():
         return answer
     
     def querySerper(self, query: str, limit: int = 5, do_analysis: bool = True ,include_site_links: bool = False):
-        """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
+        """
+        A search engine using Serper API. Useful for when you need to answer questions about current events. Input should be a search query.
+
+        Parameters:
+        query (str): The query to search.
+        limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
+
+        Returns:
+        tuple: A tuple containing the search results or parsed llm generation and the corresponding links.
+        """
         url = "https://google.serper.dev/search"
         payload = json.dumps({
             "q": query,
@@ -136,7 +189,18 @@ class SearchAssistant():
             return response, links
         
     def queryOpenSerp(self, query: str, limit: int = 5, do_analysis: bool = True, engine="google") -> str:
-        """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
+        """
+        A search engine using OpenSerp local API. Useful for when you need to answer questions about current events. Input should be a search query.
+
+        Parameters:
+        query (str): The query to search.
+        limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
+
+        Returns:
+        tuple: A tuple containing the search results or parsed llm generation and the corresponding links.
+        """
         if engine not in ["google","yandex","baidu"]:
             raise ValueError("engine must be either google, yandex or baidu")
         url = f"http://127.0.0.1:7000/{engine}/search"
@@ -163,7 +227,18 @@ class SearchAssistant():
             return results, links
 
     def querySerpapi(self, query: str, limit: int = 1, do_analysis: bool = True, engine="google") -> str:
-        """A search engine. Useful for when you need to answer questions about current events. Input should be a search query."""
+        """
+        A search engine using Serpapi API. Useful for when you need to answer questions about current events. Input should be a search query.
+
+        Parameters:
+        query (str): The query to search.
+        limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
+
+        Returns:
+        tuple: A tuple containing the search results or parsed llm generation and the corresponding links.
+        """
         if engine not in ["google", "bing"]:
             raise ValueError("engine must be either google or bing")
         params = {
@@ -443,6 +518,15 @@ class SearchAssistant():
         self.set_retrieval_qa_chain()
         
     def get_relevant_queries(self, query):
+        """
+        Generates a list of related queries based on the input query.
+
+        Args:
+        query (str): The input query for which related queries are to be generated.
+
+        Returns:
+        list: A list of related queries based on the input query.
+        """
         prompt = load_prompt(os.path.join(kit_dir,"prompts/llama70b-related_questions.yaml"))
         response_schemas=[ResponseSchema(name="related_queries", description=f"related search queries", type="list")]
         list_output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
@@ -452,6 +536,15 @@ class SearchAssistant():
         return relevant_queries_chain.invoke(input_variables).get("related_queries",[])
         
     def parse_retrieval_output(self, result):
+        """
+        Parses the output of the retrieval chain to map the original source numbers with the numbers in generation.
+
+        Args:
+        result (dict): The result from the retrieval chain, containing the answer and source documents.
+
+        Returns:
+        str: The parsed answer with the mapped source numbers.
+        """
         parsed_answer = self.parse_serp_analysis_output(result["answer"], self.urls)
         #mapping original sources order with question used sources order 
         question_sources = set(f'{doc.metadata["source"]}'for doc in result["source_documents"])
@@ -464,8 +557,14 @@ class SearchAssistant():
     def retrieval_call(self, query):
         """ 
         Do a call to the retriever chain
+        
         Args:
-            query (str): The query to search.
+        query (str): The query to search.
+        
+        Returns:
+        
+        result (str): The final Result to que user query
+        
         """
         result = self.qa_chain.invoke(query)
         result["answer"] = self.parse_retrieval_output(result)
