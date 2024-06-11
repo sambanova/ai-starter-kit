@@ -57,7 +57,7 @@ If you have any issues with the examples or to provide feedback, [create an issu
 </td>
 <td width="75%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
 </tr>
-</tr><td width="25%"><a href="multimodal_knowlwdge_retriever/README.md">Multimodal Knowledge Retriever</a> 
+</tr><td width="25%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a> 
 </td>
 <td width="75%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
 </tr>
