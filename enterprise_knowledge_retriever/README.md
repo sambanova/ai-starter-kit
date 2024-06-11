@@ -11,28 +11,31 @@ Enterprise Knowledge Retrieval
 
 <!-- TOC -->
 
+- [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file](#set-up-the-account-and-config-file)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
-        - [Update the Embedding API Information](#update-the-embedding-api-information)
+        - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-  - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
-  - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
+    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
+    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
 - [Use the starter kit](#use-the-starter-kit)
     - [Ingestion workflow](#ingestion-workflow)
     - [Retrieval workflow](#retrieval-workflow)
     - [Q&A workflow](#qa-workflow)
-- [Customizing the template](#customizing-the-starter-kit)
+- [Customizing the starter kit](#customizing-the-starter-kit)
     - [Import Data](#import-data)
     - [Split Data](#split-data)
     - [Embed data](#embed-data)
     - [Store embeddings](#store-embeddings)
-    - [Retrieval](#retrieval)
+    - [Retrieval and Reranking](#retrieval-and-reranking)
     - [Customize the LLM](#customize-the-llm)
+        - [Sambaverse endpoint](#sambaverse-endpoint)
+        - [SambaStudio endpoint](#sambastudio-endpoint)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
@@ -41,16 +44,18 @@ Enterprise Knowledge Retrieval
 # Overview
 
 This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
- -   A configurable SambaStudio connector. The connector generates answers from a deployed model.
- -   A configurable integration with a third-party vector database.
- -   An implementation of a semantic search workflow 
- -   Prompt construction strategies.
 
-This sample is ready-to-use. We provide: 
+- A configurable SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable integration with a third-party vector database.
+- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/)
+- An implementation of a semantic search workflow using [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph)
+- Prompt construction strategies.
 
-* Instructions for setup with SambaStudio or Sambaverse. 
-* Instructions for running the model as is. 
-* Instructions for customizing the model. 
+This sample is ready-to-use. We provide:
+
+- Instructions for setup with SambaStudio or Sambaverse.
+- Instructions for running the model as is.
+- Instructions for customizing the model.
 
 # Before you begin
 
@@ -59,7 +64,8 @@ You have to set up your environment before you can run or customize the starter 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
+
+```bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
@@ -73,9 +79,9 @@ The next step sets you up to use one of the models available from SambaNova. It 
 2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
 3. In the repo root directory find the config file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example: 
 
-```yaml
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+    ```bash
+        SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
+    ```
 
 4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
 
@@ -87,12 +93,12 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
 
- ```
-   BASE_URL="https://api-stage.sambanova.net"
-   PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-   ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-   API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-   ```
+    ``` bash
+        SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+        SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    ```
 
 4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
 
@@ -106,41 +112,47 @@ You have these options to specify the embedding API info:
 
 * **Option 2: Set a SambaStudio embedding model**
 
-To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model 
+To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
 NOTE: Be sure to set batch size model parameter to 32.
 
-1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example: 
+1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
 
-* Assume you have an endpoint with the URL
-    "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-* You can enter the following in the env file (with no spaces):
-    ```
-    EMBED_BASE_URL="https://api-stage.sambanova.net"
-    EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    - You can enter the following in the env file (with no spaces):
+
+        ```bash
+            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+
 2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
 
-  > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
-  > 
-  > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+    > 
+    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 ### Install system dependencies
 
-   - Ubuntu instalation:
-      ```
-      sudo apt install tesseract-ocr
-      ```
-   - Mac Homebrew instalation:
-      ```
-      brew install tesseract
-      ```
-  - Windows instalation:
-      > [Windows tessearc instalation](https://github.com/UB-Mannheim/tesseract/wiki)
+- Ubuntu installation:
 
-   - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html) 
+    ```bash
+    sudo apt install tesseract-ocr
+    ```
+
+- Mac Homebrew installation:
+
+    ```bash
+    brew install tesseract
+    ```
+
+- Windows installation:
+    > [Windows tessearct installation](https://github.com/UB-Mannheim/tesseract/wiki)
+
+- For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
 # Deploy the starter kit GUI
 
@@ -152,17 +164,28 @@ If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
-```
-cd ai_starter_kit/enterprise_knowledge_retriever
-python3 -m venv enterprise_knowledge_env
-source enterprise_knowledge_env/bin/activate
-pip  install  -r  requirements.txt
-```
+    ```bash
+    cd ai_starter_kit/enterprise_knowledge_retriever
+    python3 -m venv enterprise_knowledge_env
+    source enterprise_knowledge_env/bin/activate
+    pip  install  -r  requirements.txt
+    ```
 
 2. Run the following command:
-```
-streamlit run streamlit/app.py --browser.gatherUsageStats false 
-```
+
+    > This kit can be deployed using either a simple [LCEL]() implementation or a [LangGraph]() implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
+
+    - LCEL version
+
+        ```bash
+            streamlit run streamlit/app.py --browser.gatherUsageStats false 
+        ```
+
+    - LangGraph version
+
+        ```bash
+            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
+        ```
 
 After deploying the starter kit you see the following user interface:
 
@@ -211,17 +234,19 @@ This workflow, included with this starter kit, is an example of parsing and inde
 
 This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A off your data. The steps are:
 
- 1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embeddng model in the ingestion workflow.
+1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embedding model in the ingestion workflow.
  
- 2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
+2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
 
-*More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
- 
+    *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
+
+3. **Rerank retrieved content** After retrieving a specified number of relevant chunks of information, a reranker model can be set to rerank the retrieved passages in order of relevance to the user query. Then are selected the top N documents with higher relevance scores and passes those chunks to the QA chain as context.
+
 *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
 ## Q&A workflow
 
-After the relevant information is retrieved, the content is sent to a SambaNova LLM to generate a final response to the user query. 
+After the relevant information is retrieved, the content is sent to a SambaNova LLM to generate a final response to the user query.
 
 Before being sent to the LLM, the user's query is combined with the retrieved content along with instructions to form the prompt. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
 
@@ -278,7 +303,7 @@ function: load_embedding_model
 
 ## Store embeddings
 
-The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://js.langchain.com/docs/modules/data_connection/vectorstores/integrations/) provides a broad collection of vector stores that can be easily integrated.
+The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/v0.1/docs/modules/data_connection/vectorstores/) provides a broad collection of vector stores that can be easily integrated.
 
 You can do this modification in the following location:
 ```
@@ -288,26 +313,38 @@ function: create_vector_store
 
 For details about the SambaStudio hosted embedding models see the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
 
-## Retrieval
+## Retrieval and Reranking
 
-A wide collection of retriever options is available. In this starter kit, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://js.langchain.com/docs/modules/data_connection/retrievers/).
+A wide collection of retriever options is available. In this starter kit, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
 
 You can do this modification in the following location:
 file: [config.yaml](config.yaml)
+
 ```yaml
-    "db_type": "chroma"
-    "k_retrieved_documents": 3
-    "score_treshold": 0.6
+    "k_retrieved_documents": 15
+    "score_threshold": 0.2
+    "rerank": True
+    "reranker": 'BAAI/bge-reranker-large'
+    "final_k_retrieved_documents": 3
 ```
-and
-file: [app.py](strematil/app.py)
+
+There you will be able to select the final number of retrieved documents, and if you want to use or not the reranker.
+
+and the implementation can be customized in file: [document_retrieval.py](src/document_retrieval.py) for LCEL implementation.
+
+``` python
+function: get_qa_retrieval_chain
 ```
-function: get_qa_retrieval_chain 
+
+or in [utils/rag/rag_components.py](../utils/rag/rag_components.py) for LangGraph implementation
+
+``` python
+function: retrieve
 ```
 
 ## Customize the LLM
 
-Certain customizations to the LLM itself can affect the starter kit performance. 
+Certain customizations to the LLM itself can affect the starter kit performance.
 
 ### Sambaverse endpoint
 
@@ -328,6 +365,7 @@ The starter kit uses a LLM model in SambaStudio. You can fine tune the SambaStud
 ## Experiment with prompt engineering
 
 Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
+
 ```python
 custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
 
@@ -343,6 +381,7 @@ template=custom_prompt_template, input_variables=["context", "question"]
 ```
 
 You can make modifications in the following location:
+
 ```
 file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
 ```
@@ -351,14 +390,22 @@ file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-
 - streamlit (version 1.25.0)
-- langchain (version 0.1.16)
+- pydantic (version 2.7.0)
+- pydantic_core (version 2.18.1)
+- langchain-community (version 0.2.1)
+- langchain-core (version 0.2.1)
+- langchain (version 0.2.1)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
-- chromadb (version 0.4.24)
+- faiss-cpu (version 1.7.4)
 - PyPDF2 (version 3.0.1)
-- unstructured_inference (version 0.7.27)
-- unstructured[pdf] (version 0.13.3)
-- PyMuPDF (version 1.23.4)
 - python-dotenv (version 1.0.0)
+streamlit-extras
+- pillow (version 9.1.0)
+- sseclient-py (version 1.8.0)
+- unstructured[pdf] (version 0.13.3)
+- unstructured_inference (version 0.7.27)
+- PyMuPDF (version 1.23.4)
+- chromadb (version 0.4.24)
+- langgraph (version 0.0.55)

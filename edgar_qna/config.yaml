@@ -1,4 +1,6 @@
-api: sambaverse #or sambastudio
+api: "sambaverse" #or "sambastudio"
+
+embedding_model: "sambastudio"
 
 llm: 
     "temperature": 0.1
