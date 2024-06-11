@@ -441,11 +441,14 @@ class RAGComponents(BaseComponents):
         q_entities: List[str] = []
         question_list: List[str] = question.replace("?", "").replace("*", "").lower().split()
 
-        # Double check logic here
-        for e in entities:
-            if e.split(".")[0] in question_list:  # A dumb hack to avoid messing with the vectorstore creation
-                q_entities.append(e)
-        entity: str = q_entities.pop(0).lower()
+        try:
+            # Double check logic here
+            for e in entities:
+                if e.split(".")[0] in question_list:  # A dumb hack to avoid messing with the vectorstore creation
+                    q_entities.append(e)
+            entity: str = q_entities.pop(0).lower()
+        except:
+            entity = ""
 
         search_kwargs: Dict = {"k": self.configs["retrieval"]["k_retrieved_documents"], "filter": {self.configs["retrieval"]["entity_key"]: {"$eq": entity}}}
 
@@ -455,7 +458,10 @@ class RAGComponents(BaseComponents):
 
         if self.configs["retrieval"]["rerank"]:
             print("---RERANKING DOCUMENTS---")
-            documents = self.rerank_docs(question, documents, self.configs["retrieval"]["final_k_retrieved_documents"])
+            try:
+                documents = self.rerank_docs(question, documents, self.configs["retrieval"]["final_k_retrieved_documents"])
+            except:
+                pass
 
         print("---NUM DOCUMENTS RETRIEVED---")
         print(len(documents))
@@ -591,26 +597,29 @@ class RAGComponents(BaseComponents):
 
         print("---DETERMINING ENTITIES---")
         question: str = state["question"]
-        print("question: ", question)
+        # print("question: ", question)
         subquestions: List[str] = state["subquestions"]
 
-        if len(subquestions) == 0:
-            response: Dict = self.entity_chain.invoke({"question": question})
+        try:
+            if len(subquestions) == 0:
+                response: Dict = self.entity_chain.invoke({"question": question})
 
-        else:
-            response: Dict = self.entity_chain.invoke({"question": subquestions[0]})
-        
-        print("entities: ", response["entity_name"])
-        if not isinstance(response["entity_name"], List):
-            entities: List[str] =[response["entity_name"]]
-        else:
-            entities: List[str] = response["entity_name"]
-        # entities: List[str] = response["entity_name"].split()
-        # entities: List[str] = response["entity_name"]
-        entities: List[str] = [e.lower() for e in entities]
-        entities: List[str] = [e.replace(",", "") for e in entities]
-        entities: List[str] = [e + ".pdf" for e in entities]  # Dumb hack to avoid dealing with the vectorstore logic, for now.
-        print(entities)
+            else:
+                response: Dict = self.entity_chain.invoke({"question": subquestions[0]})
+            
+            print("entities: ", response["entity_name"])
+            if not isinstance(response["entity_name"], List):
+                entities: List[str] =[response["entity_name"]]
+            else:
+                entities: List[str] = response["entity_name"]
+            # entities: List[str] = response["entity_name"].split()
+            # entities: List[str] = response["entity_name"]
+            entities: List[str] = [e.lower() for e in entities]
+            entities: List[str] = [e.replace(",", "") for e in entities]
+            entities: List[str] = [e + ".pdf" for e in entities]  # Dumb hack to avoid dealing with the vectorstore logic, for now.
+            print(entities)
+        except:
+            entities = []
 
         return {"entities": entities}
     

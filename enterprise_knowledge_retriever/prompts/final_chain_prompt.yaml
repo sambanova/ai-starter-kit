@@ -8,7 +8,7 @@ output_parser: null
 partial_variables: {}
 template: |
     <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. \n
-    Use the following generation to provide a final answer to the original question.  If you cannot answer based on the generation provided to you, say "I apologize, but I cannot provide the final answer due to a lack of grounding in documents or an ability to generate and run code that is required to solve the task". <|eot_id|><|start_header_id|>user<|end_header_id|> \n
+    Use the following generation to provide a final answer to the original question.  If you cannot answer based on the generation provided to you, say "I apologize, but I cannot provide the final answer due to a lack of grounding in documents or an ability to generate and run code that is required to solve the task".  Please do not comment on how to obtain further information about partially answered questions. <|eot_id|><|start_header_id|>user<|end_header_id|> \n
     Original Question: {question} 
     Generation: {generation} 
     \n ------- \n

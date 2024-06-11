@@ -88,8 +88,10 @@ class BaseComponents:
             #     streaming=True,
             #     model_kwargs={
             #             "max_tokens_to_generate": 2048,
-            #             "select_expert": "Meta-Llama-3-8B-Instruct",
-            #             "process_prompt": True,
+            #             "do_sample": False,
+            #             "temperature": 0.01,
+            #             "select_expert": "Meta-Llama-3-70B-Instruct",
+            #             "process_prompt": False,
             #         }
             # )
             local_llm = 'llama3'

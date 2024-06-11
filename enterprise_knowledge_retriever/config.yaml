@@ -17,7 +17,7 @@ retrieval:
     "chunk_overlap": 240
     "example_selector_k": 1
     "entity_key": "filename"
-    "k_retrieved_documents": 12
+    "k_retrieved_documents": 15
     "score_threshold": 0.2
     "rerank": True
     "reranker": 'BAAI/bge-reranker-large'
