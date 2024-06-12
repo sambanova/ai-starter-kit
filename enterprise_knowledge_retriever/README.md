@@ -9,6 +9,11 @@
 Enterprise Knowledge Retrieval
 ======================
 
+Questions? Just [message us on Discord](https://discord.gg/XF5Sf2sa) <a href="https://discord.gg/XF5Sf2sa"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or [create an issue](https://github.com/sambanova/ai-starter-kit/issues/new/choose) in GitHub. We're happy to help live!
+
+
+Table of Contents:
+
 <!-- TOC -->
 
 - [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
@@ -56,6 +61,10 @@ This sample is ready-to-use. We provide:
 - Instructions for setup with SambaStudio or Sambaverse.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
+- A video overview of the setup process:
+
+https://github.com/sambanova/ai-starter-kit/assets/150964187/7113077e-661a-4327-beef-d71d374ac36f
+
 
 # Before you begin
 
