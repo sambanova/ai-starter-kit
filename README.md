@@ -13,7 +13,7 @@ SambaNova AI Starter Kits are a collection of open-source examples and guides to
 
 To run these examples, you need access to a SambaStudio environment with your models deployed to endpoints. Most code examples are written in Python, though the concepts can be applied in any language.
 
-If you have any issues with the examples or to provide feedback, [create an issue](https://github.com/sambanova/ai-starter-kit/issues/new/choose) in GitHub.
+If you have any issues with the examples or to provide feedback, please [message us on Discord](https://discord.gg/XF5Sf2sa) or [create an issue](https://github.com/sambanova/ai-starter-kit/issues/new/choose) in GitHub.
 
 # Available AI Starter Kits
 
