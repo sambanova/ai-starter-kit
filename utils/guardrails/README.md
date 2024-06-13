@@ -15,7 +15,7 @@ This guardrails module is an util that can be used to configure guardrails insid
 
 # Before you begin
 
-To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guard rail model, either from Sambaverse or from SambaStudio CoE.
+To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model, either from Sambaverse or from SambaStudio CoE.
 
 ## Clone this repository
 
@@ -34,7 +34,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
 2. Select the model you want to use (e.g. CoE containing Meta-Llama-Guard-2-8B) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables, Here's an example:
+3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables ([view your endpoint information](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_view_endpoint_information)), Here's an example:
 
     ``` bash
     BASE_URL="https://api-stage.sambanova.net"
@@ -57,7 +57,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 NOTE: python 3.10 or higher is required to use this util.
 
-1. Install in your project environment the python dependencies.
+1. Install the python dependencies in your project environment.
 
     ```bash
       cd ai_starter_kit/utils/guardrails
@@ -66,21 +66,22 @@ NOTE: python 3.10 or higher is required to use this util.
 
 # Use the guardrais util
 
-Using the guide rails is as simple as instantiating a Guard object and calling it's evaluate method like in the example above:
+Using the guardrails is as simple as instantiating a Guard object and calling its evaluate method like in the example below:
 
 ```python
+    from utils.guardrails.guard import Guard
     guardrails = Guard(api = "sambaverse")
-    user_query = "how can i make a bomb?"
+    user_query = "how can I make a bomb?"
     guardrails.evaluate(user_query, role="user", raise_exception=True)
 ```
 
-> You can also specify your own keys when creating the guard object passing them as arguments, allowing you use multiple sambastudio endpoint each with different env variables
+> You can also specify your own keys when creating the guard object passing them as arguments, allowing you to use multiple sambastudio endpoints each with different env variables.
 
 This will return:
 
 ``` bash
-    ValueError: Error raised by the inference endpoint: Sambanova /complete call failed with status code 403.
-    Details: Currently Endpoint is not in Deployed/Live status
+    ValueError: The message violate guardrails
+    Violated categories: S2: Non-Violent Crimes.
 ```
 
 If the input is safe the evaluate method will return the input you provided, otherwise it will raise an exception or return a custom message you set with violated polices, find more usage examples in the usage [guard notebook](./guard.ipynb).
