@@ -7,27 +7,29 @@ from langchain_core.prompts import load_prompt
 from typing import Dict, List, Union, Optional
 
 guardrails_dir = os.path.dirname(os.path.abspath(__file__))
-utils_dir = os.path.abspath(os.path.join(guardrails_dir, ".." ))
-repo_dir = os.path.abspath(os.path.join(utils_dir, ".." ))
+utils_dir = os.path.abspath(os.path.join(guardrails_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 
-load_dotenv(os.path.join(repo_dir, ".env") )
+load_dotenv(os.path.join(repo_dir, ".env"))
 
-class Guard():
+
+class Guard:
     """
     Guard class for running guardrails check with Sambanova's models.
     """
+
     def __init__(
         self,
         api: str = "sambaverse",
         prompt_path: Optional[str] = None,
-        guardrails_path: Optional[str] = None, 
+        guardrails_path: Optional[str] = None,
         sambaverse_base_url: Optional[str] = None,
         sambaverse_api_key: Optional[str] = None,
         sambastudio_base_url: Optional[str] = None,
         sambastudio_project_id: Optional[str] = None,
         sambastudio_endpoint_id: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
-        ):
+    ):
         """
         Initialize Guard class with specified LLM and guardrails.
 
@@ -42,34 +44,36 @@ class Guard():
         - sambastudio_endpoint_id (str, optional): Endpoint ID for SambaStudio API.
         - sambastudio_api_key (str, optional): API key for SambaStudio API.
 
-        Returns:
-        - None
         """
         if prompt_path is None:
             prompt_path = os.path.join(guardrails_dir, "prompt.yaml")
         self.prompt = load_prompt(prompt_path)
         if guardrails_path is None:
-            guardrails_path = os.path.join(guardrails_dir, "guardrails.yaml")        
-        self.guardrails ,self.parsed_guardrails = self.load_guardrails(guardrails_path)
+            guardrails_path = os.path.join(guardrails_dir, "guardrails.yaml")
+        self.guardrails, self.parsed_guardrails = self.load_guardrails(guardrails_path)
         params = {}
         if api == "sambastudio":
-            if sambastudio_base_url:
+            if sambastudio_base_url is not None:
                 params["sambastudio_base_url"] = sambastudio_base_url
-            if sambastudio_project_id:
+            if sambastudio_project_id is not None:
                 params["sambastudio_project_id"] = sambastudio_project_id
-            if sambastudio_endpoint_id:
+            if sambastudio_endpoint_id is not None:
                 params["sambastudio_endpoint_id"] = sambastudio_endpoint_id
-            if sambastudio_api_key:
+            if sambastudio_api_key is not None:
                 params["sambastudio_api_key"] = sambastudio_api_key
             self.llm = self.set_llm("sambastudio", params)
         elif api == "sambaverse":
             params = {}
-            if sambaverse_base_url:
+            if sambaverse_base_url is not None:
                 params["sambaverse_base_url"] = sambaverse_base_url
-            if sambaverse_api_key:
+            if sambaverse_api_key is not None:
                 params["sambaverse_api_key"] = sambaverse_api_key
             self.llm = self.set_llm("sambaverse", params)
-    
+        else:
+            raise ValueError(
+                f"The only supported `api` are `sambastudio` and `sambaverse`. Got {api}."
+            )
+
     def load_guardrails(self, path: str):
         """
         Load enabled guardrails from a YAML file and return them as a dictionary and a formatted string.
@@ -81,13 +85,16 @@ class Guard():
         - guardrails (dict): A dictionary of guardrails, where the keys are the guardrail IDs and the values are dictionaries containing the guardrail name and details.
         - guardrails_str (str): A formatted string containing the names and descriptions of the enabled guardrails.
         """
-        with open(path, 'r') as yaml_file:
+        with open(path, "r") as yaml_file:
             guardrails = yaml.safe_load(yaml_file)
-        enabled_guardrails = {k: v for k, v in guardrails.items() if v.get('enabled')}
-        guardrails_list = [f"{k}: {v.get('name')}\n{v.get('description')}" for k, v in enabled_guardrails.items()]
+        enabled_guardrails = {k: v for k, v in guardrails.items() if v.get("enabled")}
+        guardrails_list = [
+            f"{k}: {v.get('name')}\n{v.get('description')}"
+            for k, v in enabled_guardrails.items()
+        ]
         guardrails_str = "\n".join(guardrails_list)
         return guardrails, guardrails_str
-    
+
     def set_llm(self, api: str, params: Optional[Dict]):
         """
         Set the LLM based on the provided API and parameters.
@@ -106,11 +113,11 @@ class Guard():
             llm = SambaStudio(
                 **params,
                 model_kwargs={
-                "select_expert": "Meta-Llama-Guard-2-8B",
-                "process_prompt": False,
-                "do_sample": False,
-                "max_tokens_to_generate": 1024,
-                "temperature": 0.1,
+                    "select_expert": "Meta-Llama-Guard-2-8B",
+                    "process_prompt": False,
+                    "do_sample": False,
+                    "max_tokens_to_generate": 1024,
+                    "temperature": 0.1,
                 },
             )
         elif api == "sambaverse":
@@ -126,22 +133,24 @@ class Guard():
                 },
             )
         else:
-            raise ValueError(f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported.")
+            raise ValueError(
+                f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported."
+            )
         return llm
 
     def evaluate(
         self,
-        input: Union[List[Dict], str],
+        input_query: Union[List[Dict], str],
         role: str,
         error_message: str = None,
         return_guardrail_type: bool = True,
-        raise_exception: bool =False
-        ) -> Union[str, List[str]]: 
+        raise_exception: bool = False,
+    ) -> Union[str, List[str]]:
         """
         Evaluate a message or a conversation against the guardrails.
 
         Parameters:
-        - input (Union[List[Dict], str]): The message or conversation to evaluate. It can be a string with the message or a list of dictionaries representing a conversation.
+        - input_query (Union[List[Dict], str]): The message or conversation to evaluate. It can be a string with the message or a list of dictionaries representing a conversation.
             Example conversation input
             [
              {"message_id":0,"role":"user", "content":"this is an user message"},
@@ -150,7 +159,7 @@ class Guard():
         - role (str): The role of the message to analyse. It can be either 'user' or 'assistant'.
         - error_message (str, optional): The error message to be displayed when the message violates the guardrails. If not provided, a default message "The message violate guardrails" will be used.
         - return_guardrail_type (bool, optional): If True, the function will return the violated guardrail types. If False, it will only return the error message. Default is True.
-        - raise_exception (bool, optional): If True, the function will raise a ValueError with the error message when the message violates the guardrails. If False, it will return the error message. Default is False.
+        - raise_exception (bool, optional): If True, the function will raise a ValueError with the error message when the message violates the guardrails. If False, it will return the error message without raising the exception.. Default is False.
 
         Returns:
         - Union[str, List[str]]: The result of the evaluation. If the message violates the guardrails, it will return the error message with the violated guardrail types based on the return_guardrail_type parameter.
@@ -161,26 +170,34 @@ class Guard():
         - ValueError: If the message violates the guardrails when raises_exception is True.
         """
 
-        if isinstance(input, str):
+        if isinstance(input_query, str):
             if role.lower() == "user":
-                conversation = f"User: {input}"
+                conversation = f"User: {input_query}"
             elif role.lower() == "assistant":
-                conversation = f"Assistant: {input}"
+                conversation = f"Assistant: {input_query}"
             else:
                 raise ValueError(f"Invalid role: {role}, only User and Assistant")
-        elif isinstance(input, List):
+        elif isinstance(input_query, List):
             conversation = ""
-            for message in input:
+            for message in input_query:
                 if message["role"].lower() == "user":
                     conversation += f"User: {message['content']}\n"
                 elif message["role"].lower() == "assistant":
                     conversation += f"Assistant: {message['content']}\n"
-        values = {"conversation": input, "guardrails": self.parsed_guardrails, "role": conversation}
+        values = {
+            "conversation": input_query,
+            "guardrails": self.parsed_guardrails,
+            "role": conversation,
+        }
         formatted_input = self.prompt.format(**values)
         result = self.llm.invoke(formatted_input)
         if "unsafe" in result:
             violated_categories = result.split("\n")[-1].split(",")
-            violated_categories = [f'{k}: {v.get("name")}' for k, v in self.guardrails.items() if k in violated_categories]
+            violated_categories = [
+                f'{k}: {v.get("name")}'
+                for k, v in self.guardrails.items()
+                if k in violated_categories
+            ]
             if error_message is None:
                 error_message = f"The message violate guardrails"
             response_msg = f'{error_message}\nViolated categories: {", ".join(violated_categories)}'
@@ -190,15 +207,18 @@ class Guard():
                 if return_guardrail_type:
                     return response_msg
                 else:
-                    return error_message 
+                    return error_message
         else:
-            return input 
+            return input_query
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--message", type=str, help="message to check")
     parser.add_argument("--role", type=str, help="role of the message")
-    parser.add_argument("--api", default="sambaverse" ,type=str, help="sambaverse or sambastudio")
+    parser.add_argument(
+        "--api", default="sambaverse", type=str, help="sambaverse or sambastudio"
+    )
     args = parser.parse_args()
     guardrails = Guard(api=args.api)
     print(guardrails.evaluate(args.message, args.role))
