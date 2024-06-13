@@ -1,3 +1,4 @@
+# Default guardrails taken from https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-guard-2/
 S1: 
   name: Violent Crimes.
   description: | 
