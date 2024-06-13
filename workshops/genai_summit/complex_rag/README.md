@@ -1,7 +1,7 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+ <source media="(prefers-color-scheme: dark)" srcset="../../../images/SambaNova-light-logo-1.png" height="60">
   <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
 </a>
@@ -148,7 +148,7 @@ pip  install  -r  complex_rag\requirements.txt
 
 2. Run the following command:
 ```
-streamlit run complex_rag/streamlit/app.py --browser.gatherUsageStats false 
+streamlit run workshops/genai_summit/complex_rag/streamlit/app.py --browser.gatherUsageStats false 
 ```
 
 # Use the starter kit 

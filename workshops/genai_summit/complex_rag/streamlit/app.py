@@ -4,14 +4,14 @@ import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, "../../.."))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from complex_rag.src.document_retrieval import DocumentRetrieval
-from complex_rag.src.rag import COMPLEXRAG
+from workshops.genai_summit.complex_rag.src.document_retrieval import DocumentRetrieval
+from workshops.genai_summit.complex_rag.src.rag import COMPLEXRAG
 
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
