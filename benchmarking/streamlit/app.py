@@ -31,7 +31,7 @@ import streamlit as st
 from st_pages import Page, show_pages
 from dotenv import load_dotenv
 import ray
-from token_benchmark_ray import run_token_benchmark
+from benchmarking.src.token_benchmark_ray import run_token_benchmark
 import warnings
 import logging
 
@@ -142,25 +142,25 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
+    num_concurrent_requests = st.session_state.number_concurrent_requests
 
     # Call benchmarking process. Static param values are intentional and still WIP.
-    num_concurrent_requests = 1
     mode = "stream"
     llm_api = "sambastudio"
 
     run_token_benchmark(
-        llm_api=llm_api,
         model=st.session_state.llm,
-        test_timeout_s=st.session_state.timeout,
-        max_num_completed_requests=st.session_state.number_requests,
         mean_input_tokens=st.session_state.input_tokens,
         stddev_input_tokens=st.session_state.input_tokens_std,
         mean_output_tokens=st.session_state.output_tokens,
         stddev_output_tokens=st.session_state.output_tokens_std,
+        test_timeout_s=st.session_state.timeout,
+        max_num_completed_requests=st.session_state.number_requests,
         num_concurrent_requests=num_concurrent_requests,
         additional_sampling_params="{}",
         results_dir=results_path,
         user_metadata="",
+        llm_api=llm_api,
         mode=mode,
     )
 
@@ -195,6 +195,8 @@ def _initialize_sesion_variables():
         st.session_state.output_tokens_std = None
     if "number_requests" not in st.session_state:
         st.session_state.number_requests = None
+    if "number_concurrent_requests" not in st.session_state:
+        st.session_state.number_concurrent_requests = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
 
@@ -260,6 +262,10 @@ def main():
 
         st.session_state.number_requests = st.slider(
             "Number of total requests", min_value=10, max_value=100, value=32
+        )
+
+        st.session_state.number_concurrent_requests = st.slider(
+            "Number of concurrent requests", min_value=1, max_value=10, value=1
         )
 
         st.session_state.timeout = st.slider(
@@ -351,7 +357,7 @@ def main():
 
             except Exception as e:
                 st.error(
-                    f"Unexpected error: {e}. For more error details, please look at the terminal."
+                    f"Error: {e} For more error details, please look at the terminal."
                 )
 
 
