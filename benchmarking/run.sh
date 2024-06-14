@@ -7,12 +7,12 @@
 # --model "COE/Mistral-7B-Instruct-v0.2" \
 # --model "COE/Meta-Llama-3-8B-Instruct" \
 python src/token_benchmark_ray.py \
---model "COE/Mistral-7B-Instruct-v0.2" \
---mean-input-tokens 50 \
+--model "COE/Meta-Llama-3-8B-Instruct" \
+--mean-input-tokens 1000 \
 --stddev-input-tokens 10 \
---mean-output-tokens 50 \
+--mean-output-tokens 1000 \
 --stddev-output-tokens 10 \
---max-num-completed-requests 10 \
+--max-num-completed-requests 32 \
 --num-concurrent-requests 1 \
 --timeout 600 \
 --results-dir "./data/results/llmperf" \
