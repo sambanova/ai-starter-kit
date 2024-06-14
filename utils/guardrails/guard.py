@@ -51,6 +51,8 @@ class Guard:
         if guardrails_path is None:
             guardrails_path = os.path.join(guardrails_dir, "guardrails.yaml")
         self.guardrails, self.parsed_guardrails = self.load_guardrails(guardrails_path)
+
+        # pass the parameters from Guar to the model integration to use
         params = {}
         if api == "sambastudio":
             if sambastudio_base_url is not None:
@@ -87,6 +89,8 @@ class Guard:
         """
         with open(path, "r") as yaml_file:
             guardrails = yaml.safe_load(yaml_file)
+
+        # filter out disabled guardrails
         enabled_guardrails = {k: v for k, v in guardrails.items() if v.get("enabled")}
         guardrails_list = [
             f"{k}: {v.get('name')}\n{v.get('description')}"
@@ -170,6 +174,7 @@ class Guard:
         - ValueError: If the message violates the guardrails when raises_exception is True.
         """
 
+        # parse single query to a conversation structure
         if isinstance(input_query, str):
             if role.lower() == "user":
                 conversation = f"User: {input_query}"
@@ -177,6 +182,8 @@ class Guard:
                 conversation = f"Assistant: {input_query}"
             else:
                 raise ValueError(f"Invalid role: {role}, only User and Assistant")
+
+        # parse list of messages to a conversation structure
         elif isinstance(input_query, List):
             conversation = ""
             for message in input_query:
@@ -184,13 +191,19 @@ class Guard:
                     conversation += f"User: {message['content']}\n"
                 elif message["role"].lower() == "assistant":
                     conversation += f"Assistant: {message['content']}\n"
+
+        # format prompt
         values = {
             "conversation": input_query,
             "guardrails": self.parsed_guardrails,
             "role": conversation,
         }
         formatted_input = self.prompt.format(**values)
+
+        # guardrail model call
         result = self.llm.invoke(formatted_input)
+
+        # check if the message violates the guardrails
         if "unsafe" in result:
             violated_categories = result.split("\n")[-1].split(",")
             violated_categories = [
