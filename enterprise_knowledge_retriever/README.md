@@ -63,8 +63,7 @@ This sample is ready-to-use. We provide:
 - Instructions for customizing the model.
 - A video overview of the setup process:
 
-https://github.com/sambanova/ai-starter-kit/assets/150964187/7113077e-661a-4327-beef-d71d374ac36f
-
+https://github.com/sambanova/ai-starter-kit/assets/150964187/958528ae-00c8-4934-b64f-80a03dd746f0
 
 # Before you begin
 
@@ -211,7 +210,9 @@ To run the starter kit  with docker, run the following command:
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 Here's a short video demonstrating docker deployment:
-https://github.com/sambanova/ai-starter-kit/assets/150964187/8c9e88da-3913-4bc5-af4d-a1aa4815d351
+
+https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-961d-a4b369be5ec4
+
 
 # Use the starter kit 
 
