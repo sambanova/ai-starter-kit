@@ -123,73 +123,78 @@ def main():
                     "Conversation reset. The next response will clear the history on the screen"
                 )
 
-    # Sets LLM based on side bar parameters and COE model selected
-    if sidebar_run_option:
-        params = _get_params()
-        st.session_state.llm = SambaStudioCOEHandler(
-            model_name=llm_selected, params=params
+    try:
+
+        # Sets LLM based on side bar parameters and COE model selected
+
+        if sidebar_run_option:
+            params = _get_params()
+            st.session_state.llm = SambaStudioCOEHandler(
+                model_name=llm_selected, params=params
+            )
+            st.toast("LLM setup ready! 🙌 Start asking!")
+            st.session_state.chat_disabled = False
+
+        # Chat with user
+        user_prompt = st.chat_input(
+            "Ask me anything", disabled=st.session_state.chat_disabled
         )
-        st.toast("LLM ready! 🙌 Start asking!")
-        st.session_state.chat_disabled = False
 
-    # Chat with user
-    user_prompt = st.chat_input(
-        "Ask me anything", disabled=st.session_state.chat_disabled
-    )
+        # If user's asking something
+        if user_prompt:
+            with st.spinner("Processing"):
 
-    # If user's asking something
-    if user_prompt:
-        with st.spinner("Processing"):
+                # Display llm response
+                llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
 
-            # Display llm response
-            llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
+                # Add user message to chat history
+                st.session_state.chat_history.append(
+                    {"role": "user", "question": user_prompt}
+                )
+                st.session_state.chat_history.append(
+                    {"role": "system", "answer": llm_response["completion"].strip()}
+                )
+                st.session_state.perf_metrics_history.append(
+                    {
+                        "time_to_first_token": llm_response["time_to_first_token"],
+                        "latency": llm_response["latency"],
+                        "throughput": llm_response["throughput"],
+                        # "time_per_output_token": 1 / llm_response["throughput"] * 1000,
+                    }
+                )
 
-            # Add user message to chat history
-            st.session_state.chat_history.append(
-                {"role": "user", "question": user_prompt}
-            )
-            st.session_state.chat_history.append(
-                {"role": "system", "answer": llm_response["completion"].strip()}
-            )
-            st.session_state.perf_metrics_history.append(
-                {
-                    "time_to_first_token": llm_response["time_to_first_token"],
-                    "latency": llm_response["latency"],
-                    "throughput": llm_response["throughput"],
-                    "time_per_output_token": 1 / llm_response["throughput"] * 1000,
-                }
-            )
-
-            # Display chat messages and performance metrics from history on app
-            for user, system, perf_metric in zip(
-                st.session_state.chat_history[::2],
-                st.session_state.chat_history[1::2],
-                st.session_state.perf_metrics_history,
-            ):
-                with st.chat_message(user["role"]):
-                    st.write(f"{user['question']}")
-                with st.chat_message(
-                    "ai",
-                    avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
+                # Display chat messages and performance metrics from history on app
+                for user, system, perf_metric in zip(
+                    st.session_state.chat_history[::2],
+                    st.session_state.chat_history[1::2],
+                    st.session_state.perf_metrics_history,
                 ):
-                    st.write(f"{system['answer']}")
-                    with st.expander("Performance metrics"):
-                        st.markdown(
-                            f'<font size="2" color="grey">Time to first token: {round(perf_metric["time_to_first_token"],4)} seconds</font>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<font size="2" color="grey">Time per output token: {round(perf_metric["time_per_output_token"],4)} miliseconds</font>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<font size="2" color="grey">Throughput: {round(perf_metric["throughput"],4)} tokens/second</font>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<font size="2" color="grey">Latency: {round(perf_metric["latency"],4 )} seconds</font>',
-                            unsafe_allow_html=True,
-                        )
+                    with st.chat_message(user["role"]):
+                        st.write(f"{user['question']}")
+                    with st.chat_message(
+                        "ai",
+                        avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
+                    ):
+                        st.write(f"{system['answer']}")
+                        with st.expander("Performance metrics"):
+                            st.markdown(
+                                f'<font size="2" color="grey">Time to first token: {round(perf_metric["time_to_first_token"],4)} seconds</font>',
+                                unsafe_allow_html=True,
+                            )
+                            # st.markdown(
+                            #     f'<font size="2" color="grey">Time per output token: {round(perf_metric["time_per_output_token"],4)} miliseconds</font>',
+                            #     unsafe_allow_html=True,
+                            # )
+                            st.markdown(
+                                f'<font size="2" color="grey">Throughput: {round(perf_metric["throughput"] if perf_metric["throughput"] else 0,4)} tokens/second</font>',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f'<font size="2" color="grey">Latency: {round(perf_metric["latency"],4 )} seconds</font>',
+                                unsafe_allow_html=True,
+                            )
+    except Exception as e:
+        st.error(f"Error: {e} For more error details, please look at the terminal.")
 
 
 if __name__ == "__main__":
