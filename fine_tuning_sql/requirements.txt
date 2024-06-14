@@ -1,0 +1,4 @@
+langchain
+langchain-community
+transformers
+datasets==2.20.0
