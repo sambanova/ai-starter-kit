@@ -56,7 +56,8 @@ This AI Starter Kit is an example of a multimodal retrieval workflow. You load y
 This sample is ready-to-use. We provide two options:
 * [Use the starter kit GUI](#use-the-starter-kit-gui) helps you run a demo by following a few simple steps. You must perform the setup in [Before you begin](#before-you-begin) and [Deploy the starter kit GUI](#deploy-the-starter-kit-gui) first. 
 * [Customizing the starter kit](#customizing-the-starter-kit) serves as a starting point for customizing the demo to your organization's needs.
-   
+
+https://github.com/sambanova/ai-starter-kit/assets/150964187/21f83d80-c479-4677-9e80-3dcb096f120e
 
 ## Capabilities and Limitations of Image Analysis
 The AI Starter Kit includes capabilities for retrieving and analyzing images contained in your source documents and integrating them with table textual information to generate comprehensive answers. However, it's important to understand the current limitations of the large vision-language model *for this kit LlaVa1.5*:

@@ -201,6 +201,9 @@ CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
 image_search/data
 
 
+=======
+#edgar data
+edgar_qna/data
 
 utils/parsing/output
 utils/parsing/test_docs
