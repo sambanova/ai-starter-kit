@@ -8,8 +8,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, "../../.."))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-print(kit_dir)
-print(repo_dir)
 
 import streamlit as st
 from workshops.genai_summit.complex_rag.src.document_retrieval import DocumentRetrieval
