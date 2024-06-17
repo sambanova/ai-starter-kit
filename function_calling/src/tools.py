@@ -5,13 +5,21 @@ import operator
 from datetime import datetime
 from dotenv import load_dotenv
 from typing import  Optional, Union
-from langchain_core.tools import StructuredTool
-from langchain_core.tools import ToolException
-from langchain_core.tools import tool
+from langchain_core.tools import StructuredTool, ToolException, Tool,tool
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.tools import Tool
 from langchain_experimental.utilities import PythonREPL
+from langchain_community.llms.sambanova import SambaStudio
+from langchain_community.utilities import SQLDatabase
+from langchain.chains import create_sql_query_chain
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+load_dotenv(os.path.join(repo_dir, ".env")) 
 
 ##Get time tool
 
@@ -122,3 +130,34 @@ python_repl = Tool(
     func=python_repl.run,
     args_schema=ReplSchema
 )
+
+## SQL tool
+# tool schema
+class QueryDBSchema(BaseModel):
+    "A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."
+    query: str = Field(..., description="python code to execute to evaluate")
+    
+@tool(args_schema=QueryDBSchema)
+def query_db(query):
+    
+    """A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."""
+
+    fine_tunned_sql_llm = "sql_expert"
+    llm= SambaStudio(
+        model_kwargs={       
+                "max_tokens_to_generate": 2048,
+                "select_expert": fine_tunned_sql_llm,
+                "process_prompt": False
+            }
+    )
+    
+    db_path = os.path.join(kit_dir,"data/chinook.db")
+    db_uri = f"sqlite:///{db_path}"
+    db = SQLDatabase.from_uri(db_uri)
+    
+    write_query = create_sql_query_chain(llm, db)
+    print(write_query.invoke({"question":query}))
+    execute_query = QuerySQLDataBaseTool(db=db)
+    sql_chain = write_query | execute_query
+    
+    return sql_chain.invoke({"question":query})

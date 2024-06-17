@@ -4,11 +4,10 @@ import sys
 import json
 from pprint import pprint
 from dotenv import load_dotenv
-from typing import  Optional, Union
+from typing import Optional, Union
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
 from langchain_core.runnables import RunnableLambda
