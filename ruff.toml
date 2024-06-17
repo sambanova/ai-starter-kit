@@ -1,6 +1,9 @@
 # Set the maximum line length to 120
 line-length = 120
 
+# Add the flake8-annotations rules
+select = ["ANN"]
+
 # Additional file extensions
 extend-include = ["*.ipynb"]
 
