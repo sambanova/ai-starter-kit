@@ -1,0 +1,17 @@
+{
+    "[python]": {
+        "ruff.path": "ruff.toml",
+        "ruff.nativeServer": true,
+        "ruff.configuration": "ruff.toml",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "notebook.formatOnSave.enabled": true,
+    "notebook.codeActionsOnSave": {
+        "notebook.source.fixAll.ruff": "explicit",
+        "notebook.source.organizeImports.ruff": "explicit"
+    }
+}
