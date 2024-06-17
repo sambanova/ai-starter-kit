@@ -207,6 +207,7 @@ def main():
     show_pages(
         [
             Page("streamlit/app.py", "Performance evaluation"),
+            Page("streamlit/pages/custom_performance_eval_st.py", "Custom Performance Evaluation"),
             Page("streamlit/pages/chat_performance_st.py", "Performance on chat"),
         ]
     )
