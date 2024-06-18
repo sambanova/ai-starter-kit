@@ -14,6 +14,8 @@ pip  install  -r  requirements.txt
 ## Data download
 Follow the notebook [1_download_data.ipynb](notebooks/1_download_data.ipynb) to download and store pre-training and fine-tuning datasets.
 
+> You will need to request access to each of the example datasets in the notebook in their HuggingFace datasets page, and install and login with the [HuggingFace CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli) in your terminal
+
 ## Data preparation
 
 Clone the [generative_data_prep](https://github.com/sambanova/generative_data_prep) github repo and follow the instructions. The repo required jsonl files produced in [Data download](#data-download) section above.
