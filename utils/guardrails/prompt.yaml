@@ -1,0 +1,28 @@
+_type: prompt
+input_types: {}
+input_variables:
+- guardrails
+- conversation
+- role
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+  <|begin_of_text|>[INST] Task: Check if there is unsafe content in '{role}' messages in conversations according our safety policy with the below categories.
+
+  <BEGIN UNSAFE CONTENT CATEGORIES>
+  {guardrails}
+  <END UNSAFE CONTENT CATEGORIES>
+
+  <BEGIN CONVERSATION>
+
+  {conversation}
+
+  <END CONVERSATION>
+
+  Provide your safety assessment for ONLY THE LAST {role} in the above conversation:
+  - First line must read 'safe' or 'unsafe'.
+  - If unsafe, a second line must include a comma-separated list of violated categories. [/INST]
+
+template_format: f-string
+validate_template: false
