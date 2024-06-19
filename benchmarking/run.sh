@@ -6,7 +6,7 @@
 # --model "COE/llama-2-13b-chat-hf" \
 # --model "COE/Mistral-7B-Instruct-v0.2" \
 # --model "COE/Meta-Llama-3-8B-Instruct" \
-python src/token_benchmark_ray.py \
+python src/token_benchmark.py \
 --model "COE/Meta-Llama-3-8B-Instruct" \
 --mean-input-tokens 1000 \
 --stddev-input-tokens 10 \
@@ -19,7 +19,7 @@ python src/token_benchmark_ray.py \
 --additional-sampling-params '{}'
 
 # # Non-COE model: Remember to source .env for new endpoint
-# python src/token_benchmark_ray.py \
+# python src/token_benchmark.py \
 # --model "llama-2-7b-chat" \
 # --mean-input-tokens 1000 \
 # --stddev-input-tokens 10 \
