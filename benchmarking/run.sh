@@ -13,7 +13,7 @@ python src/token_benchmark_ray.py \
 --mean-output-tokens 1000 \
 --stddev-output-tokens 10 \
 --max-num-completed-requests 32 \
---num-concurrent-requests 1 \
+--num-concurrent-workers 1 \
 --timeout 600 \
 --results-dir "./data/results/llmperf" \
 --additional-sampling-params '{}'
@@ -21,12 +21,12 @@ python src/token_benchmark_ray.py \
 # # Non-COE model: Remember to source .env for new endpoint
 # python src/token_benchmark_ray.py \
 # --model "llama-2-7b-chat" \
-# --mean-input-tokens 150 \
+# --mean-input-tokens 1000 \
 # --stddev-input-tokens 10 \
-# --mean-output-tokens 150 \
+# --mean-output-tokens 1000 \
 # --stddev-output-tokens 10 \
-# --max-num-completed-requests 10 \
-# --num-concurrent-requests 1 \
+# --max-num-completed-requests 32 \
+# --num-concurrent-workers 1 \
 # --timeout 600 \
 # --results-dir "./data/results/llmperf" \
 # --additional-sampling-params '{}'
