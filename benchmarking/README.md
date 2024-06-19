@@ -59,8 +59,6 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-**_Note: Do not use for batching-enabled models (WIP)._**
-
 2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
     ```env
     # SambaStudio endpoint URLs follow the format:
@@ -134,6 +132,7 @@ Different LLM parameters are available for experimentation, directly related to 
 - Number of output tokens: average number of output tokens. Default value: 1000.
 - Output tokens standard deviation: standard deviation of output tokens. Default value: 10.
 - Number of total requests: maximum number of completed requests. Default value: 32. 
+- Number of concurrent workers: number of concurrent workers. Default value: 1. 
 - Timeout: time when the process will stop. Default value: 600 seconds
 
 3. Run the performance evaluation process
@@ -172,6 +171,7 @@ Users have this option if they want to experiment using values that are beyond t
    - mean-output-tokens: average number of output tokens. It's recommended to choose no more than 1024 tokens to avoid long waitings. Default value: 1000.
    - stddev-output-tokens: standard deviation of output tokens. It's recommended to choose no more than 50% the amount of output tokens. Default value: 10.
    - max-num-completed-requests: maximum number of completed requests. Default value: 32 
+   - num-concurrent-workers: number of concurrent workers. Default value: 1. 
    - timeout: time when the process will stop. Default value: 600 seconds
    - results-dir: path to the results directory. Default value: "./data/results/llmperf"
    - additional-sampling-params: additional params for LLM. Default value: '{}'
