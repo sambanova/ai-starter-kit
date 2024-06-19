@@ -22,7 +22,8 @@ from utils import get_tokenizer
 warnings.filterwarnings("ignore")
 
 
-def llm_request(request_config: RequestConfig, tokenizer: LlamaTokenizerFast) -> tuple:
+# def llm_request(request_config: RequestConfig, tokenizer: LlamaTokenizerFast) -> tuple:
+def llm_request(request_config: RequestConfig) -> tuple:
     """Makes a single completion request to a LLM API
 
     Args:
@@ -54,8 +55,11 @@ def llm_request(request_config: RequestConfig, tokenizer: LlamaTokenizerFast) ->
 
         # Make the POST request
         if request_config.mode == "stream":
+            # metrics, generated_text = _compute_client_metrics(
+            #     url, headers, request_config, metrics, stream=True, tokenizer=tokenizer
+            # )
             metrics, generated_text = _compute_client_metrics(
-                url, headers, request_config, metrics, stream=True, tokenizer=tokenizer
+                url, headers, request_config, metrics, stream=True
             )
             return metrics, generated_text, request_config
 
@@ -136,7 +140,7 @@ def _compute_client_metrics(
     request_config: RequestConfig,
     metrics: dict,
     stream: bool,
-    tokenizer: LlamaTokenizerFast,
+    # tokenizer: LlamaTokenizerFast,
 ) -> tuple:
     """Gets total time of a request
 
@@ -153,7 +157,8 @@ def _compute_client_metrics(
 
     # Get data
     input_data = _get_data(request_config)
-    prompt_len = _get_token_length(request_config.prompt[0], tokenizer)
+    # prompt_len = _get_token_length(request_config.prompt[0], tokenizer)
+    prompt_len = _get_token_length(request_config.prompt[0])
 
     metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
     start_time = chunk_start_time = time.monotonic()
@@ -186,6 +191,9 @@ def _compute_client_metrics(
                 chunks_received.append(data["result"]["responses"][0]["stream_token"])
                 continue
             else:
+                print(
+                    f'batch_size_used: {data["result"]["responses"][0]["batch_size_used"]}'
+                )
                 generated_text = data["result"]["responses"][0]["completion"]
                 break
     total_request_time = time.monotonic() - start_time
@@ -196,11 +204,15 @@ def _compute_client_metrics(
     if number_chunks_recieved <= 1:
         ttft = total_request_time
     else:
+        # total_tokens_received_after_first_chunk = sum(
+        #     _get_token_length(c, tokenizer) for c in chunks_received[1:]
+        # )
         total_tokens_received_after_first_chunk = sum(
-            _get_token_length(c, tokenizer) for c in chunks_received[1:]
+            _get_token_length(c) for c in chunks_received[1:]
         )
         total_time_to_receive_tokens_after_first_chunk = sum(chunks_timings[1:])
-        total_tokens_in_first_chunk = _get_token_length(chunks_received[0], tokenizer)
+        # total_tokens_in_first_chunk = _get_token_length(chunks_received[0], tokenizer)
+        total_tokens_in_first_chunk = _get_token_length(chunks_received[0])
         tpot = (
             total_time_to_receive_tokens_after_first_chunk
             / total_tokens_received_after_first_chunk
@@ -208,7 +220,8 @@ def _compute_client_metrics(
         ttft = chunks_timings[0] - (total_tokens_in_first_chunk - 1) * tpot
 
     # Populate server and client metrics
-    num_output_tokens = _get_token_length(generated_text, tokenizer)
+    # num_output_tokens = _get_token_length(generated_text, tokenizer)
+    num_output_tokens = _get_token_length(generated_text)
     metrics = _populate_server_metrics(data, metrics)
     metrics = _populate_client_metrics(
         metrics,
@@ -275,7 +288,8 @@ def _populate_client_metrics(
     return metrics
 
 
-def _get_token_length(input_text: str, tokenizer: LlamaTokenizerFast) -> int:
+# def _get_token_length(input_text: str, tokenizer: LlamaTokenizerFast) -> int:
+def _get_token_length(input_text: str) -> int:
     """Gets the token length of a piece of text
 
     Args:
@@ -285,7 +299,8 @@ def _get_token_length(input_text: str, tokenizer: LlamaTokenizerFast) -> int:
     Returns:
         int: number of tokens
     """
-    return len(tokenizer.encode(input_text))
+    # return len(tokenizer.encode(input_text))
+    return 100
 
 
 def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
