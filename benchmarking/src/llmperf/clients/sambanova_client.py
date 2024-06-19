@@ -22,7 +22,6 @@ from utils import get_tokenizer
 warnings.filterwarnings("ignore")
 
 
-@ray.remote
 def llm_request(request_config: RequestConfig, tokenizer: LlamaTokenizerFast) -> tuple:
     """Makes a single completion request to a LLM API
 
@@ -168,6 +167,7 @@ def _compute_client_metrics(
     with requests.post(
         url, headers=headers, json=input_data, stream=stream
     ) as response:
+
         if response.status_code != 200:
             response.raise_for_status()
         for chunk_orig in response.iter_lines(chunk_size=None):
@@ -223,13 +223,26 @@ def _compute_client_metrics(
 
 
 def _populate_client_metrics(
-    metrics,
-    prompt_len,
-    total_request_time,
-    ttft,
-    num_output_tokens,
-    number_chunks_recieved,
-):
+    metrics: dict,
+    prompt_len: int,
+    total_request_time: int,
+    ttft: int,
+    num_output_tokens: int,
+    number_chunks_recieved: int,
+) -> dict:
+    """Populates `metrics` dictionary with performance metrics calculated from client side
+
+    Args:
+        metrics (dict):  metrics dictionary
+        prompt_len (int): prompt's length
+        total_request_time (int): end-to-end latency
+        ttft (int): time to first token
+        num_output_tokens (int): number of output tokens
+        number_chunks_recieved (int): number of chunks recieved
+
+    Returns:
+        dict: updated metrics dictionary
+    """
 
     metrics[common_metrics.NUM_INPUT_TOKENS] = (
         prompt_len
@@ -262,7 +275,16 @@ def _populate_client_metrics(
     return metrics
 
 
-def _get_token_length(input_text: str, tokenizer) -> int:
+def _get_token_length(input_text: str, tokenizer: LlamaTokenizerFast) -> int:
+    """Gets the token length of a piece of text
+
+    Args:
+        input_text (str): input text
+        tokenizer (LlamaTokenizerFast): HuggingFace tokenizer
+
+    Returns:
+        int: number of tokens
+    """
     return len(tokenizer.encode(input_text))
 
 
@@ -276,57 +298,53 @@ def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
     Returns:
         dict: updated metrics dictionary
     """
-    metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = output_data["result"][
-        "responses"
-    ][0].get("prompt_tokens_count")
-    metrics[common_metrics.NUM_OUTPUT_TOKENS_SERVER] = output_data["result"][
-        "responses"
-    ][0].get("completion_tokens_count")
-    metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = output_data["result"][
-        "responses"
-    ][0].get("total_tokens_count")
-    metrics[common_metrics.TTFT_SERVER] = output_data["result"]["responses"][0].get(
-        "time_to_first_token"
+
+    response_dict = output_data["result"]["responses"][0]
+
+    metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get(
+        "prompt_tokens_count"
     )
-    metrics[common_metrics.E2E_LAT_SERVER] = output_data["result"]["responses"][0].get(
-        "total_latency"
+    metrics[common_metrics.NUM_OUTPUT_TOKENS_SERVER] = response_dict.get(
+        "completion_tokens_count"
     )
-    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = output_data["result"][
-        "responses"
-    ][0].get("completion_tokens_after_first_per_sec")
-    metrics[common_metrics.BATCH_SIZE_USED] = output_data["result"]["responses"][0].get(
-        "batch_size_used"
+    metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = response_dict.get(
+        "total_tokens_count"
     )
-    # metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_AFTER_FIRST_SERVER] = output_data[
-    #     "result"
-    # ]["responses"][0].get("completion_tokens_after_first_per_sec")
+    ttft_server = response_dict.get("time_to_first_token") or response_dict.get(
+        "time_to_first_response"
+    )
+    metrics[common_metrics.TTFT_SERVER] = ttft_server
+    metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get("total_latency")
+    throughput_server = response_dict.get(
+        "completion_tokens_after_first_per_sec"
+    ) or response_dict.get("completion_tokens_per_sec_after_first_response")
+    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = throughput_server
+    metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get("batch_size_used")
+    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get(
+        "total_tokens_per_sec"
+    )
+
     return metrics
 
 
 if __name__ == "__main__":
+    # The call of this python file is more for debugging purposes
 
     # load env variables
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
-    # set log_to_driver = True if you'd like to have ray's logs in terminal
-    ray.init(
-        local_mode=True,
-        runtime_env={"env_vars": env_vars},
-        log_to_driver=False,
-        logging_level=logging.ERROR,
-    )
-
-    model = "COE/llama-2-7b-chat-hf"
+    # model = "COE/llama-2-7b-chat-hf"
+    # model = "COE/llama-2-13b-chat-hf"
+    # model = "COE/Mistral-7B-Instruct-v0.2"
+    # model = "COE/Meta-Llama-3-8B-Instruct"
+    model = "COE/Meta-Llama-3-8B-Instruct"
     tokenizer = get_tokenizer(model)
 
     prompt = "This is a test example, so tell me about anything"
     request_config = RequestConfig(
         prompt=(prompt, 10),
-        # model="COE/Meta-Llama-3-8B-Instruct",
         model=model,
-        # model="llama-2-7b-chat-hf",
-        # model="Llama-7B-DynamicBatching",
         sampling_params={
             # "do_sample": False,
             "max_tokens_to_generate": 250,
@@ -336,12 +354,10 @@ if __name__ == "__main__":
         },
         mode="stream",
         llm_api="sambastudio",
-        num_concurrent_requests=1,
+        num_concurrent_workers=1,
     )
 
-    metrics, generated_text, request_config = ray.get(
-        llm_request.remote(request_config, tokenizer)
-    )
+    metrics, generated_text, request_config = llm_request(request_config, tokenizer)
 
     print(f"Metrics collected: {metrics}")
     # print(f'Completion text: {generated_text}')
