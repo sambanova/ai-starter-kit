@@ -1,6 +1,5 @@
 import os
-import ray
-from llmperf.ray_clients.sambanova_client import llm_request
+from llmperf.clients.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 import llmperf.utils as utils
 from dotenv import load_dotenv
@@ -41,7 +40,7 @@ class SambaStudioCOEHandler:
             mode="stream",
             num_concurrent_requests=1,
         )
-        output = ray.get(llm_request.remote(request_config, tokenizer))
+        output = llm_request(request_config, tokenizer)
 
         if output[0]["error_code"]:
             raise Exception(
@@ -55,9 +54,6 @@ if __name__ == "__main__":
     # load env variables
     load_dotenv("../../.env", override=True)
     env_vars = dict(os.environ)
-
-    # set log_to_driver = True if you'd like to have ray's logs in terminal
-    ray.init(local_mode=True, runtime_env={"env_vars": env_vars}, log_to_driver=False)
 
     model_name = "COE/Meta-Llama-3-8B-Instruct"
 

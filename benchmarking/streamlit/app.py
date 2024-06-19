@@ -31,7 +31,7 @@ import streamlit as st
 from st_pages import Page, show_pages
 from dotenv import load_dotenv
 import ray
-from benchmarking.src.token_benchmark_ray import run_token_benchmark
+from token_benchmark_ray import run_token_benchmark
 import warnings
 import logging
 
@@ -39,16 +39,8 @@ warnings.filterwarnings("ignore")
 
 
 @st.cache_data
-def _init_ray():
+def _init():
     load_dotenv("../.env", override=True)
-    env_vars = dict(os.environ)
-    # set log_to_driver=True to see more ray logging details
-    ray.shutdown()
-    ray.init(
-        runtime_env={"env_vars": env_vars},
-        log_to_driver=False,
-        logging_level=logging.ERROR,
-    )
 
 
 def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
@@ -142,7 +134,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-    num_concurrent_requests = st.session_state.number_concurrent_requests
+    num_concurrent_workers = st.session_state.number_concurrent_workers
 
     # Call benchmarking process. Static param values are intentional and still WIP.
     mode = "stream"
@@ -154,9 +146,9 @@ def _run_performance_evaluation() -> pd.DataFrame:
         stddev_input_tokens=st.session_state.input_tokens_std,
         mean_output_tokens=st.session_state.output_tokens,
         stddev_output_tokens=st.session_state.output_tokens_std,
-        test_timeout_s=st.session_state.timeout,
+        timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
-        num_concurrent_requests=num_concurrent_requests,
+        num_concurrent_workers=num_concurrent_workers,
         additional_sampling_params="{}",
         results_dir=results_path,
         user_metadata="",
@@ -168,9 +160,9 @@ def _run_performance_evaluation() -> pd.DataFrame:
     df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_requests}_{mode}_individual_responses.json"
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
     )
-    df_user["concurrent_user"] = num_concurrent_requests
+    df_user["concurrent_user"] = num_concurrent_workers
     df = pd.concat([df, df_user])
     valid_df = df[(df["error_code"] != "")]
     renamed_df = _rename_metrics_df(valid_df)
@@ -195,8 +187,8 @@ def _initialize_sesion_variables():
         st.session_state.output_tokens_std = None
     if "number_requests" not in st.session_state:
         st.session_state.number_requests = None
-    if "number_concurrent_requests" not in st.session_state:
-        st.session_state.number_concurrent_requests = None
+    if "number_concurrent_workers" not in st.session_state:
+        st.session_state.number_concurrent_workers = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
 
@@ -215,7 +207,7 @@ def main():
         ]
     )
 
-    _init_ray()
+    _init()
     _initialize_sesion_variables()
 
     st.title(":orange[SambaNova]Performance evaluation")
@@ -261,8 +253,8 @@ def main():
             "Number of total requests", min_value=10, max_value=100, value=32
         )
 
-        st.session_state.number_concurrent_requests = st.slider(
-            "Number of concurrent requests", min_value=1, max_value=10, value=1
+        st.session_state.number_concurrent_workers = st.slider(
+            "Number of concurrent workers", min_value=1, max_value=10, value=1
         )
 
         st.session_state.timeout = st.slider(
