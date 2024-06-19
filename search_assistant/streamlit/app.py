@@ -28,15 +28,18 @@ def handle_user_input(user_question):
                 sources = set(f'{doc.metadata["source"]}' for doc in response['source_documents'])
                 st.session_state.related_queries_history.append(related_querys_future.result())
             elif st.session_state.method == 'basic_query':
+                reformulated_query = st.session_state.search_assistant.reformulate_query_with_history(user_question)
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     related_querys_future = executor.submit(
-                        st.session_state.search_assistant.get_relevant_queries, query=user_question
+                        st.session_state.search_assistant.get_relevant_queries, query=reformulated_query
                     )
                 response = st.session_state.search_assistant.basic_call(
                     query=user_question,
+                    reformulated_query=reformulated_query,
                     search_method=st.session_state.tool[0],
                     max_results=st.session_state.max_results,
                     search_engine=st.session_state.search_engine,
+                    conversational=True,
                 )
                 sources = set(response['sources'])
                 st.session_state.related_queries_history.append(related_querys_future.result())
@@ -188,6 +191,8 @@ def main():
                 st.session_state.chat_history = []
                 st.session_state.sources_history = []
                 st.session_state.related_queries_history = []
+                if st.session_state.search_assistant:
+                    st.session_state.search_assistant.init_memory()
                 st.rerun()
 
     user_question = st.chat_input(

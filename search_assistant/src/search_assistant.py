@@ -62,6 +62,7 @@ class SearchAssistant:
         self.llm = self.init_llm_model()
         self.vectordb = VectorDb()
         self.qa_chain = None
+        self.memory = None
 
     def _get_config_info(self, config_path):
         """
@@ -89,6 +90,22 @@ class SearchAssistant:
 
         return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
 
+    def init_memory(self):
+        """
+        Initialize conversation summary memory for the conversation
+        """
+        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-summary.yaml'))
+
+        self.memory = ConversationSummaryMemory(
+            llm=self.llm,
+            max_token_limit=100,
+            buffer='The human and AI greet each other to start a conversation.',
+            memory_key='chat_history',
+            return_messages=True,
+            output_key='answer',
+            prompt=summary_prompt,
+        )
+
     def init_llm_model(self) -> None:
         """
         Initializes the LLM endpoint
@@ -100,21 +117,47 @@ class SearchAssistant:
             llm = Sambaverse(
                 sambaverse_model_name=self.llm_info['sambaverse_model_name'],
                 model_kwargs={
-                    'do_sample': True,
+                    'do_sample': self.llm_info['do_sample'],
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
                     'temperature': self.llm_info['temperature'],
-                    'select_expert': self.llm_info['sambaverse_select_expert'],
+                    'top_p': self.llm_info['top_p'],
+                    'process_prompt': True,
+                    'select_expert': self.llm_info['select_expert'],
                 },
             )
-        elif self.pi_info == 'sambastudio':
-            llm = SambaStudio(
-                model_kwargs={
+        elif self.api_info == 'sambastudio':
+            if self.llm_info['coe'] == True:
+                model_kwargs = {
                     'do_sample': True,
+                    'do_sample': self.llm_info['do_sample'],
+                    'top_p': self.llm_info['top_p'],
                     'temperature': self.llm_info['temperature'],
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
+                    'select_expert': self.llm_info['select_expert'],
                 }
-            )
+            else:
+                llm = SambaStudio(
+                    model_kwargs={
+                        'do_sample': True,
+                        'do_sample': self.llm_info['do_sample'],
+                        'top_p': self.llm_info['top_p'],
+                        'temperature': self.llm_info['temperature'],
+                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
+                    }
+                )
         return llm
+
+    def reformulate_query_with_history(self, query):
+        if self.memory is None:
+            self.init_memory()
+        custom_condensed_question_prompt = load_prompt(
+            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_question.yaml')
+        )
+        history = self.memory.load_memory_variables({})
+        reformulated_query = self.llm.invoke(
+            custom_condensed_question_prompt.format(chat_history=history, question=query)
+        )
+        return reformulated_query
 
     def remove_links(self, text):
         """
@@ -142,11 +185,19 @@ class SearchAssistant:
         """
         for i, link in enumerate(links):
             answer = answer.replace(f'[reference:{i+1}]', f'[<sup>{i+1}</sup>]({link})')
+            answer = answer.replace(f'[reference: {i+1}]', f'[<sup>{i+1}</sup>]({link})')
             answer = answer.replace(f'[Reference:{i+1}]', f'[<sup>{i+1}</sup>]({link})')
             answer = answer.replace(f'[Reference: {i+1}]', f'[<sup>{i+1}</sup>]({link})')
         return answer
 
-    def querySerper(self, query: str, limit: int = 5, do_analysis: bool = True, include_site_links: bool = False):
+    def querySerper(
+        self,
+        query: str,
+        limit: int = 5,
+        do_analysis: bool = True,
+        include_site_links: bool = False,
+        conversational: bool = False,
+    ):
         """
         A search engine using Serper API. Useful for when you need to answer questions about current events. Input should be a search query.
 
@@ -179,14 +230,21 @@ class SearchAssistant:
             links.extend(sitelinks)
         links = list(filter(lambda x: x is not None, links))
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama70b-serp_analysis.yaml'))
+            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=json.dumps(results))
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
             return response, links
 
-    def queryOpenSerp(self, query: str, limit: int = 5, do_analysis: bool = True, engine='google') -> str:
+    def queryOpenSerp(
+        self,
+        query: str,
+        limit: int = 5,
+        do_analysis: bool = True,
+        engine='google',
+        conversational: bool = False,
+    ) -> str:
         """
         A search engine using OpenSerp local API. Useful for when you need to answer questions about current events. Input should be a search query.
 
@@ -195,6 +253,7 @@ class SearchAssistant:
         limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
         do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
         include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
+        engine (str, optional): The search engine to use
 
         Returns:
         tuple: A tuple containing the search results or parsed llm generation and the corresponding links.
@@ -213,14 +272,20 @@ class SearchAssistant:
         context = '\n\n'.join(context)
 
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama70b-serp_analysis.yaml'))
+            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
             return results, links
 
-    def querySerpapi(self, query: str, limit: int = 1, do_analysis: bool = True, engine='google') -> str:
+    def querySerpapi(
+        self,
+        query: str,
+        limit: int = 1,
+        do_analysis: bool = True,
+        engine='google',
+    ) -> str:
         """
         A search engine using Serpapi API. Useful for when you need to answer questions about current events. Input should be a search query.
 
@@ -228,7 +293,7 @@ class SearchAssistant:
         query (str): The query to search.
         limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
         do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
-        include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
+        engine (str, optional): The search engine to use
 
         Returns:
         tuple: A tuple containing the search results or parsed llm generation and the corresponding links.
@@ -252,9 +317,9 @@ class SearchAssistant:
         context = '\n\n'.join(context)
 
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama70b-serp_analysis.yaml'))
-            results_str = json.dumps(results)
-            results_str = self.remove_links(results_str)
+            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
+            # results_str = json.dumps(results) #TODO remove if works with serpapi
+            # results_str = self.remove_links(results_str)
             formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
@@ -455,29 +520,49 @@ class SearchAssistant:
                     chunks, embeddings, self.retrieval_info['db_type'], None
                 )
 
-    def basic_call(self, query, search_method='serpapi', max_results=5, search_engine='google'):
+    def basic_call(
+        self,
+        query,
+        reformulated_query=None,
+        search_method='serpapi',
+        max_results=5,
+        search_engine='google',
+        conversational=False,
+    ):
         """
         Do a basic call to the llm using the query result snippets as context
         Args:
             query (str): The query to search.
+            reformulated_query (str, optional): The reformulated query to search. Defaults to None.
             search_method (str, optional): The search method to use. Defaults to "serpapi".
             max_results (int, optional): The maximum number of search results to retrieve. Defaults to 5.
             search_engine (str, optional): The search engine to use. Defaults to "google".
+            conversational (bool, optional): Whether to save conversation to memory. Defaults to False.
         """
+        if reformulated_query is None:
+            reformulated_query = query
 
         if search_method == 'serpapi':
-            answer, links = self.querySerpapi(query=query, limit=max_results, engine=search_engine, do_analysis=True)
+            answer, links = self.querySerpapi(
+                query=reformulated_query, limit=max_results, engine=search_engine, do_analysis=True
+            )
         elif search_method == 'serper':
-            answer, links = self.querySerper(query=query, limit=max_results, do_analysis=True)
+            answer, links = self.querySerper(query=reformulated_query, limit=max_results, do_analysis=True)
         elif search_method == 'openserp':
-            answer, links = self.queryOpenSerp(query=query, limit=max_results, engine=search_engine, do_analysis=True)
+            answer, links = self.queryOpenSerp(
+                query=reformulated_query, limit=max_results, engine=search_engine, do_analysis=True
+            )
+
+        if conversational:
+            self.memory.save_context(inputs={'input': query}, outputs={'answer': answer})
+
         return {'answer': answer, 'sources': links}
 
-    def set_retrieval_qa_chain(self):
+    def set_retrieval_qa_chain(self, conversational=False):
         """
         Set a retrieval chain for queries that use as retriever a previously created vectorstore
         """
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama70b-web_scraped_data_retriever.yaml'))
+        retrieval_qa_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-web_scraped_data_retriever.yaml'))
         retriever = self.vector_store.as_retriever(
             search_type='similarity_score_threshold',
             search_kwargs={
@@ -485,15 +570,34 @@ class SearchAssistant:
                 'k': self.retrieval_info['k_retrieved_documents'],
             },
         )
-        self.qa_chain = RetrievalQA.from_llm(
-            llm=self.llm,
-            retriever=retriever,
-            return_source_documents=True,
-            verbose=True,
-            input_key='question',
-            output_key='answer',
-            prompt=prompt,
-        )
+        if conversational:
+            self.init_memory()
+
+            custom_condensed_question_prompt = load_prompt(
+                os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_question.yaml')
+            )
+
+            self.qa_chain = ConversationalRetrievalChain.from_llm(
+                llm=self.llm,
+                retriever=retriever,
+                memory=self.memory,
+                chain_type='stuff',
+                return_source_documents=True,
+                verbose=False,
+                condense_question_prompt=custom_condensed_question_prompt,
+                combine_docs_chain_kwargs={'prompt': retrieval_qa_prompt},
+            )
+
+        else:
+            self.qa_chain = RetrievalQA.from_llm(
+                llm=self.llm,
+                retriever=retriever,
+                return_source_documents=True,
+                verbose=False,
+                input_key='question',
+                output_key='answer',
+                prompt=retrieval_qa_prompt,
+            )
 
     def search_and_scrape(self, query, search_method='serpapi', max_results=5, search_engine='google'):
         """
@@ -513,7 +617,7 @@ class SearchAssistant:
         self.web_crawl(urls=links)
         # self.create_load_vector_store()
         self.create_and_save_local()
-        self.set_retrieval_qa_chain()
+        self.set_retrieval_qa_chain(conversational=True)
 
     def get_relevant_queries(self, query):
         """
@@ -525,7 +629,7 @@ class SearchAssistant:
         Returns:
         list: A list of related queries based on the input query.
         """
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama70b-related_questions.yaml'))
+        prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-related_questions.yaml'))
         response_schemas = [ResponseSchema(name='related_queries', description=f'related search queries', type='list')]
         list_output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
         list_format_instructions = list_output_parser.get_format_instructions()
