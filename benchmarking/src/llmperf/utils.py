@@ -123,6 +123,7 @@ def build_prompt(
     model_name: str,
     prompt_tokens_mean: int,
     prompt_tokens_stddev: int,
+    num_output_tokens: int,
 ) -> Tuple[str, int]:
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
@@ -130,7 +131,6 @@ def build_prompt(
         model_name (str): name of the model
         prompt_tokens_mean (int): The mean tokens of the prompt to generate.
         prompt_tokens_stddev (int): The standard deviation of the tokens of the prompt to generate.
-        tokenizer (LlamaTokenizerFast): tokenizer instantiated for specific model
 
     Returns:
         Tuple[str, int]: A tuple of the prompt and the length of the prompt.
@@ -163,8 +163,7 @@ def build_prompt(
     # Prompt for Llama3 models
     elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
 
-        prompt_system = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful assistant that generates movie scripts<|eot_id|>"
-        prompt_user = "<|start_header_id|>user<|end_header_id|>Create a movie script of the whole Star Wars movie with details. Describe how every character felt, include environment details and onomatopoeias.<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+        prompt_system = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<|eot_id|>"
         tokens_to_complement = num_prompt_tokens - get_token_length(prompt_system)
         prompt_user = build_prompt_user(
             prompt_user_template, prompt_user_template_tokens, tokens_to_complement
@@ -179,7 +178,7 @@ def build_prompt(
     # Prompt for Llama2 and other models
     else:
 
-        prompt_system = "[INST]<<SYS>>You are a helpful assistant that generates movie scripts<</SYS>>"
+        prompt_system = f"[INST]<<SYS>>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<</SYS>>"
         tokens_to_complement = num_prompt_tokens - get_token_length(prompt_system)
         prompt_user = build_prompt_user(
             prompt_user_template, prompt_user_template_tokens, tokens_to_complement
