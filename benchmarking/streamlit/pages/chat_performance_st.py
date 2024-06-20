@@ -1,9 +1,10 @@
 import sys
-
-sys.path.append("../")
 import streamlit as st
 
+sys.path.append("../")
+
 from benchmarking.src.chat_performance_evaluation import SambaStudioCOEHandler
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -159,7 +160,6 @@ def main():
                         "time_to_first_token": llm_response["time_to_first_token"],
                         "latency": llm_response["latency"],
                         "throughput": llm_response["throughput"],
-                        # "time_per_output_token": 1 / llm_response["throughput"] * 1000,
                     }
                 )
 
@@ -181,10 +181,6 @@ def main():
                                 f'<font size="2" color="grey">Time to first token: {round(perf_metric["time_to_first_token"],4)} seconds</font>',
                                 unsafe_allow_html=True,
                             )
-                            # st.markdown(
-                            #     f'<font size="2" color="grey">Time per output token: {round(perf_metric["time_per_output_token"],4)} miliseconds</font>',
-                            #     unsafe_allow_html=True,
-                            # )
                             st.markdown(
                                 f'<font size="2" color="grey">Throughput: {round(perf_metric["throughput"] if perf_metric["throughput"] else 0,4)} tokens/second</font>',
                                 unsafe_allow_html=True,

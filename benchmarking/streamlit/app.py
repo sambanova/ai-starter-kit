@@ -1,22 +1,3 @@
-import os
-
-# paths added to PYTHONPATH for Ray
-streamlit_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.dirname(streamlit_dir)
-src_dir = os.path.abspath(f"{benchmarking_dir}/src")
-llmperf_dir = os.path.abspath(f"{src_dir}/llmperf")
-os.environ["PYTHONPATH"] = (
-    streamlit_dir
-    + ":"
-    + src_dir
-    + ":"
-    + llmperf_dir
-    + ":"
-    + benchmarking_dir
-    + ":"
-    + os.environ.get("PYTHONPATH", "")
-)
-
 import sys
 
 sys.path.append("./src")
@@ -24,16 +5,17 @@ sys.path.append("./streamlit")
 
 import re
 import time
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
+
+from token_benchmark import run_token_benchmark
+
 from dotenv import load_dotenv
-import ray
-from token_benchmark_ray import run_token_benchmark
 import warnings
-import logging
 
 warnings.filterwarnings("ignore")
 
@@ -143,9 +125,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     run_token_benchmark(
         model=st.session_state.llm,
         mean_input_tokens=st.session_state.input_tokens,
-        stddev_input_tokens=st.session_state.input_tokens_std,
         mean_output_tokens=st.session_state.output_tokens,
-        stddev_output_tokens=st.session_state.output_tokens_std,
         timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
         num_concurrent_workers=num_concurrent_workers,
@@ -179,12 +159,8 @@ def _initialize_sesion_variables():
     # Initialize llm params
     if "input_tokens" not in st.session_state:
         st.session_state.input_tokens = None
-    if "input_tokens_std" not in st.session_state:
-        st.session_state.input_tokens_std = None
     if "output_tokens" not in st.session_state:
         st.session_state.output_tokens = None
-    if "output_tokens_std" not in st.session_state:
-        st.session_state.output_tokens_std = None
     if "number_requests" not in st.session_state:
         st.session_state.number_requests = None
     if "number_concurrent_workers" not in st.session_state:
@@ -238,15 +214,9 @@ def main():
         st.session_state.input_tokens = st.slider(
             "Number of input tokens", min_value=50, max_value=2048, value=1000
         )
-        st.session_state.input_tokens_std = st.slider(
-            "Input tokens standard deviation", min_value=10, max_value=256, value=10
-        )
 
         st.session_state.output_tokens = st.slider(
             "Number of output tokens", min_value=50, max_value=2048, value=1000
-        )
-        st.session_state.output_tokens_std = st.slider(
-            "Output tokens standard deviation", min_value=10, max_value=256, value=10
         )
 
         st.session_state.number_requests = st.slider(
@@ -279,50 +249,6 @@ def main():
                 print(
                     f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
                 )
-
-                st.subheader("TTFT, Throughput and E2E Latency scatter plots")
-
-                fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-                sns.scatterplot(
-                    data=df,
-                    x="number_input_tokens",
-                    y="ttft",
-                    hue="type",
-                    ax=ax[0],
-                    alpha=0.5,
-                ).set(
-                    xlabel="Number of Input Tokens",
-                    ylabel="Time to First Token (secs)",
-                    title="TTFT vs. Number of Input Tokens",
-                )
-                ax[0].legend(title="Type")
-                sns.scatterplot(
-                    data=df,
-                    x="number_output_tokens",
-                    y="generation_throughput",
-                    hue="type",
-                    ax=ax[1],
-                    alpha=0.5,
-                ).set(
-                    xlabel="Number of Output Tokens",
-                    ylabel="Throughput (tokens/sec)",
-                    title="Throughput vs. Number of Output Tokens",
-                )
-                ax[1].legend(title="Type")
-                sns.scatterplot(
-                    data=df,
-                    x="number_output_tokens",
-                    y="e2e_latency",
-                    hue="type",
-                    ax=ax[2],
-                    alpha=0.5,
-                ).set(
-                    xlabel="Number of Output Tokens",
-                    ylabel="E2E Latency (secs)",
-                    title="Latency vs. Number of Output Tokens",
-                )
-                ax[2].legend(title="Type")
-                st.pyplot(fig)
 
                 st.subheader("TTFT, Throughput and E2E Latency box plots")
 
