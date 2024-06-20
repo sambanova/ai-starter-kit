@@ -9,9 +9,7 @@
 python src/token_benchmark.py \
 --model "COE/Meta-Llama-3-8B-Instruct" \
 --mean-input-tokens 1000 \
---stddev-input-tokens 10 \
 --mean-output-tokens 1000 \
---stddev-output-tokens 10 \
 --max-num-completed-requests 32 \
 --num-concurrent-workers 1 \
 --timeout 600 \
@@ -22,9 +20,7 @@ python src/token_benchmark.py \
 # python src/token_benchmark.py \
 # --model "llama-2-7b-chat" \
 # --mean-input-tokens 1000 \
-# --stddev-input-tokens 10 \
 # --mean-output-tokens 1000 \
-# --stddev-output-tokens 10 \
 # --max-num-completed-requests 32 \
 # --num-concurrent-workers 1 \
 # --timeout 600 \
