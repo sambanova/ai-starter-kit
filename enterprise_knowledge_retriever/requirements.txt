@@ -18,3 +18,4 @@ PyMuPDF==1.23.4
 PyMuPDFb==1.23.3
 chromadb==0.4.24
 langgraph==0.0.55
+openpyxl==3.1.4
