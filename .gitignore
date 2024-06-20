@@ -218,3 +218,7 @@ multimodal_knowledge_retriever/data/upload
 #web crawled retriever data
 web_crawled_data_retriever/data/
 
+=======
+# benchmarking data
+benchmarking/data
+benchmarking/debug
