@@ -427,7 +427,7 @@ args.add_argument(
     "--model", type=str, required=True, help="The model to use for this load test."
 )
 args.add_argument(
-    "--number-input-tokens",
+    "--num-input-tokens",
     type=int,
     default=550,
     help=(
@@ -436,7 +436,7 @@ args.add_argument(
     ),
 )
 args.add_argument(
-    "--number-output-tokens",
+    "--num-output-tokens",
     type=int,
     default=150,
     help=(
