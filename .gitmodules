@@ -1,3 +1,0 @@
-[submodule "utils/parsing/unstructured-api"]
-	path = utils/parsing/unstructured-api
-	url = https://github.com/Unstructured-IO/unstructured-api.git
