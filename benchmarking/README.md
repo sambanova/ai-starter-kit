@@ -23,7 +23,7 @@ Benchmarking
         - [Using streamlit app](#using-streamlit-app)
         - [Using terminal](#using-terminal)
     - [Performance on chat workflow](#performance-on-chat-workflow)
-- [Customizing the template](#customizing-the-starter-kit)
+- [Batching vs non-batching benchmarking](#batching-vs-non-batching-benchmarking)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -95,7 +95,7 @@ streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 After deploying the starter kit, you will see the following user interface:
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+![perf_eval_image](./imgs/performance_eval.png)
 
 ## Use the starter kit 
 
@@ -115,7 +115,7 @@ There are two options that users can choose from. The first one is running the p
 
 Choose the option `Performance evaluation` on the left side bar, the following interface shows up: 
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+![perf_eval_image](./imgs/performance_eval.png)
 
 In order to use this functionality, please follow the steps below:
 
@@ -142,14 +142,6 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 4. See and analyze results
 
     _Note: Not all model endpoints currently support the calculation of server-side statistics. Depending on your choice of endpoint, then, you may see either client and server information, or you may see just the client-side information._
-
-    **Scatter plots**
-
-    One part of the results is composed of three scatter plots. 
-
-    - Number of Input Tokens vs TTFT: users should expect to see an increasing trend on TTFT values across different number of input tokens for Server (if available) and Client side numbers, however it should be more visible for larger number of input tokens ranges. Also, Server and Client values should be fairly close.
-    - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-    - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
 
     **Box plots**
 
@@ -182,21 +174,31 @@ Users have this option if they want to experiment using values that are beyond t
 sh run.sh
 ```
 
-3. Review and analyze results. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode. Besides, for each run, two files are generated with the following suffixes: `individual_responses` and `summary`.
+3. Review and analyze results. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode, like the following:
+
+```
+<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_WORKERS}_{MODE}
+```
+
+For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
 
 - Individual responses file 
 
 This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-token-benchmark-results.ipynb` with some charts that they can use to start.
 
+![individual_responses_image](./imgs/perf_eval_individual_responses_output.png)
+
 - Summary file
 
-This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute.
+This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute. 
+
+![summary_output_image](./imgs/perf_eval_summary_output.png)
 
 ### Performance on chat workflow
 
 Choose the option `Performance on chat` on the left side bar, the following interface shows up: 
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat.png)
+![perf_on_chat_image](./imgs/performance_on_chat.png)
 
 In order to use this functionality, please follow the steps below:
 
@@ -225,9 +227,12 @@ Users are able to ask anything and get a generated answer of their questions, as
 - Latency (s)
 - Throughput (tokens/s)
 - Time to first token (s)
-- Time per output token (ms)
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat_results.png)
+![perf_on_chat_image](./imgs/performance_on_chat_results.png)
+
+# Batching vs non-batching benchmarking
+
+WIP
 
 # Third-party tools and data sources 
 
