@@ -232,7 +232,29 @@ Users are able to ask anything and get a generated answer of their questions, as
 
 # Batching vs non-batching benchmarking
 
-WIP
+This kit also supports SambaNova Studio models with Dynamic Batch Size, which improves the model performance significantly. 
+
+In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that. 
+
+About results, users will notice an increase in latency per request, but a higher number of completed requests per minute, compared against non-batching models. Moreover, overall throughput will be higher, and end-to-end latency of the whole process lower.
+
+Here's an example using a Meta-Llama-3-8B-Instruct endpoting with dynamic batching size.
+
+Non-batching setup
+- Parameters:
+  - Number of requests: 32
+  - Number of concurrent workers: 1
+- Results:
+  - Overall Output Throughput: 321.23 tokens/s
+  - Completed Requests Per Minute: 19.27 
+
+Batching setup
+- Parameters:
+  - Number of requests: 32
+  - Number of concurrent workers: 32
+- Results:
+  - Overall Output Throughput: 810.48 tokens/s
+  - Completed Requests Per Minute: 48.63
 
 # Third-party tools and data sources 
 
@@ -240,7 +262,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (version 1.34.0)
 - st-pages (version 0.4.5)
-- ray (version 2.22.0). Specifically for the use of [llmperf framework](](https://github.com/ray-project/llmperf)).
+- [llmperf framework](](https://github.com/ray-project/llmperf))
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
