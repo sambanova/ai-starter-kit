@@ -1,0 +1,3 @@
+langchain
+langchain-community==0.2.0
+wandb

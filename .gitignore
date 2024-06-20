@@ -181,6 +181,10 @@ next-env.d.ts
 fine_tuning_sql/data/
 yoda/data/
 
+# search assistant Data
+search_assistant/data/
+yoda/data/
+
 #snapi and snsdk
 SambaStudio_API_Client-*
 snsdk-*
@@ -206,10 +210,11 @@ image_search/data
 edgar_qna/data
 
 utils/parsing/output
-utils/parsing/test_docs
+utils/parsing/confluence-ingest-output
 =======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
+enterprise_knowledge_retriever/app/output
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload
@@ -222,3 +227,14 @@ web_crawled_data_retriever/data/
 # benchmarking data
 benchmarking/data
 benchmarking/debug
+
+=======
+#evals
+eval_jumpstart/data
+eval_jumpstart/notebooks/wandb
+utils/eval/res.csv
+utils/eval/tepsys_eng_tran.csv
+
+=======
+#wandb
+wandb/

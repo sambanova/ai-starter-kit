@@ -65,6 +65,25 @@ _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you wi
   cd CoE_jump_start
   ```
 
+2a. Create a venv:  
+
+  ```bash
+  python<version> -m venv <virtual-environment-name>
+  ```
+
+2b. - Install the requirements via pip: 
+
+  ```bash
+  - With pip: `pip install -r requirements.txt` 
+  - With poetry: `poetry install --no-root`
+  ```
+
+
+
+
+
+3. Set up the config.yaml file with your API credentials and preferences. For example:
+=======
 2. (Recommended) Create a virtual environment and activate it: 
   ```bash
   python<version> -m venv <virtual-environment-name>
@@ -78,6 +97,7 @@ _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you wi
   ```
 
 4. Set up the `config.yaml` file with your API credentials and preferences. For example:
+
   ```yaml
   api: sambastudio
 

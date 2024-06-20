@@ -1,10 +1,15 @@
 api: "sambaverse"
 
+embedding_model: "cpu" # "sambastudio"
+
 llm: 
     "temperature": 0.01
-    "max_tokens_to_generate": 1000
-    "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
-    "sambaverse_select_expert": "llama-2-70b-chat-hf"
+    "max_tokens_to_generate": 500
+    "top_p": 1
+    "do_sample": false
+    "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+    "coe": false
+    "select_expert": "Meta-Llama-3-8B-Instruct"
 
 retrieval:
     "chunk_size": 1200
@@ -15,6 +20,15 @@ retrieval:
 
 web_crawling:
     "max_scraped_websites": 20
+    "excluded_links":
+        - 'facebook.com'
+        - 'twitter.com'
+        - 'instagram.com'
+        - 'linkedin.com'
+        - 'telegram.me'
+        - 'reddit.com'
+        - 'whatsapp.com'
+        - 'wa.me' 
 
 extra_loaders:
     - "pdf"
