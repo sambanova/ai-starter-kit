@@ -60,8 +60,8 @@ def get_request_configs(
     model: str,
     max_num_completed_requests: int,
     num_concurrent_workers: int,
-    mean_output_tokens: int,
-    mean_input_tokens: int,
+    num_output_tokens: int,
+    num_input_tokens: int,
     additional_sampling_params: dict,
     llm_api: str,
     mode: str,
@@ -72,8 +72,8 @@ def get_request_configs(
         model (str): model name
         max_num_completed_requests (int): maximum number of completed requests
         num_concurrent_workers (int): number of concurrent workers
-        mean_output_tokens (int): number of output tokens
-        mean_input_tokens (int): number of input tokens
+        num_output_tokens (int): number of output tokens
+        num_input_tokens (int): number of input tokens
         additional_sampling_params (dict): additional sampling parameters
         llm_api (str): The name of the llm api to use. Static for now. Defaults to "sambastudio".
         mode (str): mode of the API. Either "stream" or "batch". Defaults to "stream".
@@ -86,11 +86,11 @@ def get_request_configs(
 
     for _ in range(max_num_completed_requests):
         # Set request config
-        num_output_tokens = mean_output_tokens
+        num_output_tokens = num_output_tokens
 
         prompt = build_prompt(
             model_name=model,
-            prompt_tokens_mean=mean_input_tokens,
+            prompt_tokens=num_input_tokens,
             num_output_tokens=num_output_tokens,
         )
 
@@ -116,8 +116,8 @@ def get_request_configs(
 
 def get_token_throughput_latencies(
     model: str,
-    mean_input_tokens: int,
-    mean_output_tokens: int,
+    num_input_tokens: int,
+    num_output_tokens: int,
     timeout_s=90,
     num_concurrent_workers: int = 1,
     max_num_completed_requests: int = 32,
@@ -129,8 +129,8 @@ def get_token_throughput_latencies(
 
     Args:
         model (str): The name of the model to query.
-        mean_input_tokens (int): The mean number of tokens to send in the prompt for the request.
-        mean_output_tokens (int): The mean number of tokens to generate per request.
+        num_input_tokens (int): The number of tokens to send in the prompt for the request.
+        num_output_tokens (int): The number of tokens to generate per request.
         timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90.
         num_concurrent_workers (int): The number of concurrent workers to make. Increase
             this to increase the amount of load and vice versa. Defaults to 1.
@@ -160,8 +160,8 @@ def get_token_throughput_latencies(
         model,
         max_num_completed_requests,
         num_concurrent_workers,
-        mean_output_tokens,
-        mean_input_tokens,
+        num_output_tokens,
+        num_input_tokens,
         additional_sampling_params,
         llm_api,
         mode,
@@ -222,8 +222,8 @@ def get_token_throughput_latencies(
 
     metadata = {
         "model": model,
-        "mean_input_tokens": mean_input_tokens,
-        "mean_output_tokens": mean_output_tokens,
+        "num_input_tokens": num_input_tokens,
+        "num_output_tokens": num_output_tokens,
         "num_concurrent_workers": num_concurrent_workers,
         "additional_sampling_params": additional_sampling_params,
     }
@@ -338,8 +338,8 @@ def metrics_summary(
 
 def run_token_benchmark(
     model: str,
-    mean_input_tokens: int,
-    mean_output_tokens: int,
+    num_input_tokens: int,
+    num_output_tokens: int,
     timeout_s: int,
     max_num_completed_requests: int,
     num_concurrent_workers: int,
@@ -353,8 +353,8 @@ def run_token_benchmark(
     Args:
 
         model (str): The name of the model to query.
-        mean_input_tokens (int): The mean number of tokens to send in the prompt for the request.
-        mean_output_tokens (int): The mean number of tokens to generate per request.
+        num_input_tokens (int): The number of tokens to send in the prompt for the request.
+        num_output_tokens (int): The number of tokens to generate per request.
         timeout_s (int): The amount of time to run the test for before reporting results.
         max_num_completed_requests (int): The number of requests to complete before finishing the test.
         num_concurrent_workers (int): The number of concurrent workers to make. Increase
@@ -366,7 +366,7 @@ def run_token_benchmark(
         llm_api (str): The name of the llm api to use. Static for now. Defaults to "sambastudio".
         mode (str): mode of the API. Either "stream" or "batch". Defaults to "stream".
     """
-    if mean_input_tokens < 40:
+    if num_input_tokens < 40:
         raise ValueError(
             "The minimum number of input tokens that will be sent is 40"
             " because of the prompting logic right now"
@@ -375,8 +375,8 @@ def run_token_benchmark(
     # Calculate performance metrics individually and summary
     summary, individual_responses = get_token_throughput_latencies(
         model=model,
-        mean_input_tokens=mean_input_tokens,
-        mean_output_tokens=mean_output_tokens,
+        num_input_tokens=num_input_tokens,
+        num_output_tokens=num_output_tokens,
         timeout_s=timeout_s,
         max_num_completed_requests=max_num_completed_requests,
         num_concurrent_workers=num_concurrent_workers,
@@ -387,7 +387,7 @@ def run_token_benchmark(
 
     # Build and output performance reports
     if results_dir:
-        filename = f"{model}_{mean_input_tokens}_{mean_output_tokens}_{num_concurrent_workers}_{mode}"
+        filename = f"{model}_{num_input_tokens}_{num_output_tokens}_{num_concurrent_workers}_{mode}"
         filename = re.sub(r"[^\w\d-]+", "-", filename)
         filename = re.sub(r"-{2,}", "-", filename)
         summary_filename = f"{filename}_summary"
@@ -427,20 +427,20 @@ args.add_argument(
     "--model", type=str, required=True, help="The model to use for this load test."
 )
 args.add_argument(
-    "--mean-input-tokens",
+    "--number-input-tokens",
     type=int,
     default=550,
     help=(
-        "The mean number of tokens to send in the prompt for the request. "
+        "The number of tokens to send in the prompt for the request. "
         " (default: %(default)s)"
     ),
 )
 args.add_argument(
-    "--mean-output-tokens",
+    "--number-output-tokens",
     type=int,
     default=150,
     help=(
-        "The mean number of tokens to generate from each llm request. This is the max_tokens param "
+        "The number of tokens to generate from each llm request. This is the max_tokens param "
         "for the completions API. Note that this is not always the number of tokens returned. "
         "(default: %(default)s)"
     ),
@@ -511,8 +511,8 @@ if __name__ == "__main__":
     # Call benchmarking process. Static param values are intentional and still WIP.
     run_token_benchmark(
         model=args.model,
-        mean_input_tokens=args.mean_input_tokens,
-        mean_output_tokens=args.mean_output_tokens,
+        num_input_tokens=args.num_input_tokens,
+        num_output_tokens=args.num_output_tokens,
         timeout_s=args.timeout,
         max_num_completed_requests=args.max_num_completed_requests,
         num_concurrent_workers=args.num_concurrent_workers,

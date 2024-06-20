@@ -97,14 +97,14 @@ def build_prompt_user(
 
 def build_prompt(
     model_name: str,
-    prompt_tokens_mean: int,
+    prompt_tokens: int,
     num_output_tokens: int,
 ) -> Tuple[str, int]:
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
     Args:
         model_name (str): name of the model
-        prompt_tokens_mean (int): The mean tokens of the prompt to generate.
+        prompt_tokens (int): The number of tokens of the prompt to generate.
 
     Returns:
         Tuple[str, int]: A tuple of the prompt and the length of the prompt.
@@ -118,7 +118,7 @@ def build_prompt(
     prompt_user_template = "Create a movie script of the whole Star Wars movie with details. Describe how every character felt, include environment details and onomatopoeias."
     prompt_user_template_tokens = get_token_length(prompt_user_template)
 
-    num_prompt_tokens = prompt_tokens_mean
+    num_prompt_tokens = prompt_tokens
 
     # Prompt for Mistral models
     if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower():

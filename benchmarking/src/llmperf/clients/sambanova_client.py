@@ -184,10 +184,6 @@ def _compute_client_metrics(
                 chunks_received.append(data["result"]["responses"][0]["stream_token"])
                 continue
             else:
-                # TODO remove before pushing
-                # print(
-                #     f'batch_size_used: {data["result"]["responses"][0]["batch_size_used"]}'
-                # )
                 generated_text = data["result"]["responses"][0]["completion"]
                 break
     total_request_time = time.monotonic() - start_time
