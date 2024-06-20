@@ -2,17 +2,19 @@
 
 A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.
 
-# Installation
-```bash
-git clone https://github.com/sambanova/ai-starter-kit
-cd eval_jumpstart
-pip install -r requirements.txt
-```
+## Installation
+  
+  ```bash
+  git clone https://github.com/sambanova/ai-starter-kit
+  cd eval_jumpstart
+  pip install -r requirements.txt
+  ```
 
-# Basic Usage
+## Basic Usage
 We implement performance tests for evaluating LLMs using various metrics.
 
-Config File
+### Config File
+
 Create a YAML configuration file to specify the evaluation settings.
 
 Example config.yaml
@@ -49,8 +51,7 @@ evaluation:
   eval_name: "rag_eval_test"
 ```
 
-
-# Evaluation Use Cases
+## Evaluation Use Cases
 
 ```python
 ## Use Case 1: Evaluation without Generation
@@ -74,8 +75,8 @@ results_no_gen = evaluator.evaluate(eval_df)
 print(results_no_gen)
 ```
 
-
 ## Use Case 3: Evaluation with Generation
+
 ```python
 from rag_eval import RAGEvaluator, RAGEvalConfig, load_pipeline
 from langchain_community.llms.sambanova import SambaStudio
@@ -100,7 +101,7 @@ results_with_gen = evaluator.evaluate(eval_df, pipelines)
 print(results_with_gen)
 ```
 
-More usecases are in the notebook
+More use cases are available in the [notebooks](./notebooks)
 
 ## Running the Evaluation Using CLI
 
@@ -120,14 +121,14 @@ python evaluate.py --config path/to/config.yaml --eval_csv path/to/eval.csv --ge
 ## Metrics
 
 The evaluation kit uses various metrics to evaluate the performance of LLMs:
-
-Answer Relevancy
-Answer Correctness
-Answer Similarity
-Context Precision
-Context Recall
-Faithfulness
-Context Relevancy
+-
+- Answer Relevancy
+- Answer Correctness
+- Answer Similarity
+- Context Precision
+- Context Recall
+- Faithfulness
+- Context Relevancy
 
 These are from RAGAS please see the RAGAS website for details on the underlying methodlogy 
 https://docs.ragas.io/en/stable/concepts/metrics/index.html
@@ -135,6 +136,3 @@ https://docs.ragas.io/en/stable/concepts/metrics/index.html
 ## Logging
 
 Results can be logged to Weights & Biases (wandb) by setting the log_wandb parameter in the configuration file.
-
-License
-This project is licensed under the MIT License.
