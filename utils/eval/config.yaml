@@ -1,0 +1,69 @@
+eval_dataset:
+  path: eval_set.csv
+  # hf_dataset_name: squad_v2
+  question_col: question
+  ground_truth_col: ground_truth
+  answer_col: answer
+  #context_col: contexts
+
+llms:
+  - name: LLAMA70B_GEN
+    model_kwargs:
+      select_expert: Meta-Llama-3-70B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+
+  - name: LLAMA8B_GEN
+    model_kwargs:
+      select_expert: Meta-Llama-3-8B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+
+  # - name: llm2
+  #   model_kwargs:
+  #     temperature: 0.3
+  #     max_tokens: 200
+
+  # - name: llm3
+  #   model_kwargs:
+  #     temperature: 0.7
+  #     max_tokens: 150
+
+eval_llms:
+  - name: EVAL_LLAMA38B
+    model_kwargs:
+      select_expert: Meta-Llama-3-8B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+  
+  - name: EVAL_LLAMA370B
+    model_kwargs:
+      select_expert: Meta-Llama-3-70B-Instruct
+      process_prompt: False
+      max_tokens_to_generate: 512
+
+
+# - name: EVAL_SWALLOW70B
+#   model_kwargs:
+#     select_expert: Swallow-70b-NVE-instruct-hf
+#     process_prompt: False
+#     max_tokens_to_generate: 512
+
+vector_db:
+  location: ../data/adi_vdb_v3_md_200.chromadb
+
+embeddings:
+  model_name: intfloat/e5-large
+
+evaluation:
+  num_samples: 5
+  log_wandb: true
+  project_name: rag-pipeline-eval-charts
+  eval_name: 
+  methodology: rag_pipeline
+  save_eval_table_csv: true
+
+pipeline:
+  class: rag_pipeline.RAGPipeline
+  kwargs:
+    vector_db_location: /Users/kwasia/Documents/Projects/ai-starter-kit/eval_jumpstart/data/adi_vdb_v3_md_200.chromadb

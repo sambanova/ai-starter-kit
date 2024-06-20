@@ -1,0 +1,44 @@
+name: Dependabot - Bump libs and cut release
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+    paths:
+      - 'requirements/**'
+
+env:
+  PYTHON_VERSION: "3.8"
+
+jobs:
+    bump-changelog:
+        runs-on: ubuntu-latest
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        permissions:
+          contents: write 
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python ${{ env.PYTHON_VERSION }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ env.PYTHON_VERSION }}
+        - name: Dependabot metadata
+          id: metadata
+          uses: dependabot/fetch-metadata@v2
+          with:
+            github-token: "${{ secrets.GITHUB_TOKEN }}"
+        - name: Create release version
+          run: |
+            pip install pip-tools
+            make pip-compile
+            package=${{ steps.metadata.outputs.dependency-names }}
+            # Strip any [extras] from name
+            package=${package%\[*}
+            changelog_message="Bump $package to ${{ steps.metadata.outputs.new-version }}"
+            ./scripts/version-increment.sh "$changelog_message"
+            make version-sync
+        - uses: stefanzweifel/git-auto-commit-action@v5
+          with:
+            commit_message: "Bump libraries and release"
+
