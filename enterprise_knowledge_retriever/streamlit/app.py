@@ -117,9 +117,9 @@ def main():
             if st.button("Process and Save database"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
+                    #raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
                     # get the text chunks
-                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = documentRetrieval.parse_doc(docs)
                     # create vector store
                     embeddings = documentRetrieval.load_embedding_model()
                     vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)

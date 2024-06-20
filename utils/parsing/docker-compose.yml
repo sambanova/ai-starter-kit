@@ -11,7 +11,7 @@ services:
     ports:
       - "${UNSTRUCTURED_PORT:-8005}:8000"
     env_file:
-      - ./.env
+      - ../../.env
 
     networks:
       - net

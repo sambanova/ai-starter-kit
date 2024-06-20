@@ -203,7 +203,6 @@ image_search/data
 
 
 utils/parsing/output
-utils/parsing/test_docs
 utils/parsing/confluence-ingest-output
 =======
 #enterprise knowledge retriever data

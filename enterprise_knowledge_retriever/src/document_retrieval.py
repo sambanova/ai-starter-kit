@@ -177,9 +177,6 @@ class DocumentRetrieval():
         
         return llm
             
-    def get_pdf_text_and_metadata_pypdf2(self, pdf_doc, extra_tags=None):
-        """Extract text and metadata from pdf document with pypdf2 loader
-
 
     def parse_doc(self, docs: List, additional_metadata: Optional[Dict] = None) -> List[Document]:
         """

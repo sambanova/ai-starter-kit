@@ -1,6 +1,6 @@
 processor:
   verbose: True
-  output_dir: './app/output'
+  output_dir: './output'
   num_processes: 2
 
 sources:
@@ -40,12 +40,12 @@ chunking:
   chunk_overlap: 300
 
 embedding:
-  enabled: True
+  enabled: False
   provider: 'langchain-huggingface'
   model_name: 'intfloat/e5-large-v2'
 
 destination_connectors:
-  enabled: True
+  enabled: False
   type: 'chroma'
   batch_size: 80
   chroma:

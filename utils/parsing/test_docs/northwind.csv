@@ -1,0 +1,47 @@
+customer_id,company_name,contact_name,contact_title,address,city,region,postal_code,country,phone,fax,description
+FAMIA,Familia Arquibaldo,Aria Cruz,Marketing Assistant,Rua Orós 92,Sao Paulo,SP,05442-030,Brazil,(11) 555-9857,,Brazilian food distributor with a focus on marketing
+VINET,Vins et alcools Chevalier,Paul Henriot,Accounting Manager,59 rue de l'Abbaye,Reims,,51100,France,26.47.15.10,26.47.15.11,French wine and spirits merchant with strong financial management
+TOMSP,Toms Spezialitäten,Karin Josephs,Marketing Manager,Luisenstr. 48,Münster,,44087,Germany,0251-031259,0251-035695,German specialty food retailer with a focus on marketing strategies
+HANAR,Hanari Carnes,Mario Pontes,Accounting Officer,Rua do Paço 67,Rio de Janeiro,RJ,05454-876,Brazil,(21) 555-0091,,"Brazilian meat supplier with a strong accounting department"
+SUPRD,Suprêmes délices,Pascale Cartrain,Accounting Manager,Boulevard Tirou 255,Charleroi,,B-6000,Belgium,(071) 23 67 22 20,(071) 23 67 22 21,Belgian gourmet food supplier with detailed financial oversight
+RICSU,Richter Supermarkt,Michael Holz,Sales Manager,Grenzacherweg 237,Genève,,1203,Switzerland,0897-034214,,Swiss supermarket chain focusing on sales and distribution
+BSBEV,B's Beverages,Victoria Ashworth,Sales Representative,Fauntleroy Circus,London,,EC2 5NT,UK,(171) 555-1212,,UK-based beverage company with a strong sales team
+CONSH,Consolidated Holdings,Elizabeth Brown,Sales Representative,Berkeley Gardens 12 Brewery,London,,WX1 6LT,UK,(171) 555-2282,(171) 555-9199,British holdings company specializing in sales and acquisitions
+EASTC,Eastern Connection,Ann Devon,Sales Agent,35 King George,London,,WX3 6FW,UK,(171) 555-0297,(171) 555-3373,UK shipping company with a focus on eastern routes and sales
+NORTS,North/South,Simon Crowther,Sales Associate,South House 300 Queensbridge,London,,SW7 1RZ,UK,(171) 555-7733,(171) 555-2530,British import/export company specializing in north-south trade routes
+ISLAT,Island Trading,Helen Bennett,Marketing Manager,Garden House Crowther Way,Cowes,Isle of Wight,PO31 7PJ,UK,(198) 555-8888,,UK-based trading company located on the Isle of Wight with strong marketing
+KOENE,Königlich Essen,Philip Cramer,Sales Associate,Maubelstr. 90,Brandenburg,,14776,Germany,0555-09876,,German royal food supplier focusing on high-end clientele
+OLDWO,Old World Delicatessen,Rene Phillips,Sales Representative,2743 Bering St.,Anchorage,AK,99508,USA,(907) 555-7584,(907) 555-2880,Alaskan delicatessen specializing in traditional and exotic foods
+FRANK,Frankenversand,Peter Franken,Marketing Manager,Berliner Platz 43,München,,80805,Germany,089-0877310,089-0877451,German shipping company with a strong focus on marketing strategies
+WHITC,White Clover Markets,Karl Jablonski,Owner,305 - 14th Ave. S. Suite 3B,Seattle,WA,98128,USA,(206) 555-4112,(206) 555-4115,American organic market chain owned and operated locally
+WARTH,Wartian Herkku,Pirkko Koskitalo,Accounting Manager,Torikatu 38,Oulu,,90110,Finland,981-443655,981-443655,Finnish gourmet food company with strong financial management
+SPLIR,Split Rail Beer & Ale,Art Braunschweiger,Sales Manager,P.O. Box 555,Lander,WY,82520,USA,(307) 555-4680,(307) 555-6525,American craft beer company specializing in sales and distribution
+RATTC,Rattlesnake Canyon Grocery,Paula Wilson,Assistant Sales Representative,2817 Milton Dr.,Albuquerque,NM,87110,USA,(505) 555-5939,(505) 555-3620,Southwestern US grocery chain focusing on local and specialty products
+LONEP,Lonesome Pine Restaurant,Fran Wilson,Sales Manager,89 Chiaroscuro Rd.,Portland,OR,97219,USA,(503) 555-9573,(503) 555-9646,Oregon-based restaurant chain specializing in pine-inspired cuisine
+TRAIH,Trail's Head Gourmet Provisioners,Helvetius Nagy,Sales Associate,722 DaVinci Blvd.,Kirkland,WA,98034,USA,(206) 555-8257,(206) 555-2174,American gourmet food supplier catering to outdoor enthusiasts
+VAFFE,Vaffeljernet,Palle Ibsen,Sales Manager,Smagsloget 45,Århus,,8200,Denmark,86 21 32 43,86 22 33 44,Danish waffle maker and distributor with a focus on sales
+DRACD,Drachenblut Delikatessen,Sven Ottlieb,Order Administrator,Walserweg 21,Aachen,,52066,Germany,0241-039123,0241-059428,German delicatessen specializing in unique and exotic flavors
+GREAL,Great Lakes Food Market,Howard Snyder,Marketing Manager,2732 Baker Blvd.,Eugene,OR,97403,USA,(503) 555-7555,,American food market chain focused on products from the Great Lakes region
+SAVEA,Save-a-lot Markets,Jose Pavarotti,Sales Representative,187 Suffolk Ln.,Boise,ID,83720,USA,(208) 555-8097,,Discount supermarket chain with a strong sales team
+HUNGC,Hungry Coyote Import Store,Yoshi Latimer,Sales Representative,City Center Plaza 516 Main St.,Elgin,OR,97827,USA,(503) 555-6874,(503) 555-2376,Specialty import store focusing on coyote-themed products
+LAZYK,Lazy K Kountry Store,John Steel,Marketing Manager,12 Orchestra Terrace,Walla Walla,WA,99362,USA,(509) 555-7969,(509) 555-6221,Rural-themed general store with a strong marketing presence
+LETSS,Let's Stop N Shop,Jaime Yorres,Owner,87 Polk St. Suite 5,San Francisco,CA,94117,USA,(415) 555-5938,,Owner-operated convenience store chain in San Francisco
+MAGAA,Magazzini Alimentari Riuniti,Giovanni Rovelli,Marketing Manager,Via Ludovico il Moro 22,Bergamo,,24100,Italy,035-640230,035-640231,Italian food warehouse company with a focus on marketing strategies
+MAISD,Maison Dewey,Catherine Dewey,Sales Agent,Rue Joseph-Bens 532,Bruxelles,,B-1180,Belgium,(02) 201 24 67,(02) 201 24 68,Belgian home goods retailer with a strong sales department
+MEREP,Mère Paillarde,Jean Fresnière,Marketing Assistant,43 rue St. Laurent,Montréal,Québec,H1J 1C3,Canada,(514) 555-8054,(514) 555-8055,French-Canadian restaurant chain specializing in traditional cuisine
+MORGK,Morgenstern Gesundkost,Alexander Feuer,Marketing Assistant,Heerstr. 22,Leipzig,,04179,Germany,0342-023176,,German health food store with a focus on marketing organic products
+OCEAN,Océano Atlántico Ltda.,Yvonne Moncada,Sales Agent,Ing. Gustavo Moncada 8585 Piso 20-A,Buenos Aires,,1010,Argentina,(1) 135-5333,(1) 135-5535,Argentinian seafood company specializing in Atlantic Ocean products
+QUEDE,Que Delícia,Bernardo Batista,Accounting Manager,Rua da Panificadora 12,Rio de Janeiro,RJ,02389-673,Brazil,(21) 555-4252,(21) 555-4545,Brazilian delicatessen with strong financial management
+QUEEN,Queen Cozinha,Lúcia Carvalho,Marketing Assistant,Alameda dos Canàrios 891,Sao Paulo,SP,05487-020,Brazil,(11) 555-1189,,Brazilian kitchen supply company with a focus on marketing
+QUICK,QUICK-Stop,Horst Kloss,Accounting Manager,Taucherstraße 10,Cunewalde,,01307,Germany,0372-035188,,German convenience store chain with efficient financial operations
+RANCH,Rancho grande,Sergio Gutiérrez,Sales Representative,Av. del Libertador 900,Buenos Aires,,1010,Argentina,(1) 123-5555,(1) 123-5556,Argentinian ranch supply company with a strong sales team
+RICAR,Ricardo Adocicados,Janete Limeira,Assistant Sales Agent,Av. Copacabana 267,Rio de Janeiro,RJ,02389-890,Brazil,(21) 555-3412,,Brazilian confectionery company specializing in sweet treats
+ROMEY,Romero y tomillo,Alejandra Camino,Accounting Manager,Gran Vía 1,Madrid,,28001,Spain,(91) 745 6200,(91) 745 6210,Spanish herb and spice retailer with detailed financial oversight
+SANTG,Santé Gourmet,Jonas Bergulfsen,Owner,Erling Skakkes gate 78,Stavern,,4110,Norway,07-98 92 35,07-98 92 47,Norwegian gourmet health food store owned and operated locally
+SEVES,Seven Seas Imports,Hari Kumar,Sales Manager,90 Wadhurst Rd.,London,,OX15 4NB,UK,(171) 555-1717,(171) 555-5646,UK-based import company specializing in seafood products
+SIMOB,Simons bistro,Jytte Petersen,Owner,Vinbæltet 34,Kobenhavn,,1734,Denmark,31 12 34 56,31 13 35 57,Danish bistro owned and operated with a focus on local cuisine
+THEBI,The Big Cheese,Liz Nixon,Marketing Manager,89 Jefferson Way Suite 2,Portland,OR,97201,USA,(503) 555-3612,,American cheese retailer with strong marketing strategies
+THECR,The Cracker Box,Liu Wong,Marketing Assistant,55 Grizzly Peak Rd.,Butte,MT,59801,USA,(406) 555-5834,(406) 555-8083,Montana-based cracker and snack food company focusing on local distribution
+VICTE,Victuailles en stock,Mary Saveley,Sales Agent,2 rue du Commerce,Lyon,,69004,France,78.32.54.86,78.32.54.87,French gourmet food stockist with a strong sales department
+WILMK,Wilman Kala,Matti Karttunen,Owner/Marketing Assistant,Keskuskatu 45,Helsinki,,21240,Finland,90-224 8858,90-224 8858,Finnish fish market owned and operated with a focus on marketing
+WOLZA,Wolski Zajazd,Zbyszek Piestrzeniewicz,Owner,ul. Filtrowa 68,Warszawa,,01-012,Poland,(26) 642-7012,(26) 642-7012,Polish inn and restaurant owned and operated locally
