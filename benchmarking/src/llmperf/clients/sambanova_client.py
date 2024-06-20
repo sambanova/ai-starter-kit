@@ -263,16 +263,18 @@ def _populate_client_metrics(
         metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
             metrics[common_metrics.NUM_OUTPUT_TOKENS] / total_request_time
         )
+        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (
+            prompt_len + num_output_tokens
+        ) / (total_request_time)
     else:
         metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
             metrics[common_metrics.NUM_OUTPUT_TOKENS] / (total_request_time - ttft)
             if not isclose(ttft, total_request_time, abs_tol=1e-8)
             else None
         )
-
-    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (
-        prompt_len + num_output_tokens
-    ) / (total_request_time - ttft)
+        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (
+            prompt_len + num_output_tokens
+        ) / (total_request_time - ttft)
     return metrics
 
 
