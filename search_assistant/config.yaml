@@ -20,6 +20,15 @@ retrieval:
 
 web_crawling:
     "max_scraped_websites": 20
+    "excluded_links":
+        - 'facebook.com'
+        - 'twitter.com'
+        - 'instagram.com'
+        - 'linkedin.com'
+        - 'telegram.me'
+        - 'reddit.com'
+        - 'whatsapp.com'
+        - 'wa.me' 
 
 extra_loaders:
     - "pdf"

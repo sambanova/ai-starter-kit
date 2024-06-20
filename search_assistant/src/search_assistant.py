@@ -404,23 +404,17 @@ class SearchAssistant:
         """
         if excluded_links is None:
             excluded_links = []
-        excluded_links.extend(
-            [
-                'facebook.com',
-                'twitter.com',
-                'instagram.com',
-                'linkedin.com',
-                'telagram.me',
-                'reddit.com',
-                'whatsapp.com',
-                'wa.me',
-            ]
-        )
+        excluded_links.extend(self.web_crawling_params['excluded_links'])
         excluded_link_suffixes = {'.ico', '.svg', '.jpg', '.png', '.jpeg', '.', '.docx', '.xls', '.xlsx'}
         scrapped_urls = []
 
         urls = [url for url in urls if not url.endswith(tuple(excluded_link_suffixes))]
         urls = self.link_filter(urls, set(excluded_links))
+        print(f'{urls=}')
+        if len(urls) == 0:
+            raise ValueError(
+                'not sites to scrape after filtering links, check the excluded_links config or increase Max number of results to retrieve'
+            )
         urls = list(urls)[: self.web_crawling_params['max_scraped_websites']]
 
         scraped_docs = self.load_htmls(urls, self.extra_loaders)
