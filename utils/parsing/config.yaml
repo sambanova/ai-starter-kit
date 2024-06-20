@@ -31,7 +31,7 @@ partitioning:
   metadata_include: []
   partition_endpoint: 'http://localhost'
   unstructured_port: 8005
-  partition_by_api: True
+  partition_by_api: False # set as true if using parsing Docker container
 
 chunking:
   enabled: True
