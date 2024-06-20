@@ -2,10 +2,6 @@ api: "sambaverse"
 
 embedding_model: "cpu"
 
-loaders: 
-    pdf: "unstructured"
-    txt: "text_loader"
-
 llm: 
     "temperature": 0.0
     "max_tokens_to_generate": 1200
@@ -13,9 +9,6 @@ llm:
     "sambaverse_select_expert": "llama-2-70b-chat-hf"
 
 retrieval:
-
-    "chunk_size": 1200
-    "chunk_overlap": 240
     "k_retrieved_documents": 15
     "score_threshold": 0.2
     "rerank": True

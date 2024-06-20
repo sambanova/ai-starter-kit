@@ -4,17 +4,14 @@ import yaml
 import fitz
 import torch
 from dotenv import load_dotenv
-from PyPDF2 import PdfReader
 from typing import Any, Dict, List, Optional
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from langchain.chains.base import Chain
 from langchain.prompts import BasePromptTemplate,  load_prompt
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.language_models import BaseLanguageModel
-from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain.docstore.document import Document
 import shutil
@@ -122,8 +119,7 @@ class DocumentRetrieval():
         self.llm_info =config_info[1] 
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
-        self.loaders = config_info[4]
-        self.prompts = config_info[5]
+        self.prompts = config_info[4]
         self.retriever = None
         self.llm=self.set_llm()
 
@@ -138,10 +134,9 @@ class DocumentRetrieval():
         llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
-        loaders = config["loaders"]
         prompts = config["prompts"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, loaders, prompts
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts
     
 
     def set_llm(self):
