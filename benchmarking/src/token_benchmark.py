@@ -1,33 +1,28 @@
-import argparse
-from collections.abc import Iterable
-import json
 import os
-from pathlib import Path
-import re
 import time
+from pathlib import Path
 import random
+import argparse
+import threading
+from collections.abc import Iterable
 from typing import Any, Dict, List, Optional, Tuple
+
+import re
+import json
 import pandas as pd
 from tqdm import tqdm
-from typing import Generator
-import threading
 
 import transformers
-import ray
+from transformers import AutoTokenizer
 from llmperf import common_metrics
 from llmperf.clients.sambanova_client import llm_request
-
-# from llmperf.common import SUPPORTED_APIS, construct_clients
 from llmperf.models import RequestConfig
-
-# from llmperf.requests_launcher import RequestsLauncher
 from llmperf.utils import (
     get_tokenizer,
     build_prompt,
     LLMPerfResults,
-    sample_random_positive_int,
 )
-from transformers import LlamaTokenizerFast
+
 from dotenv import load_dotenv
 import warnings
 
@@ -37,56 +32,67 @@ transformers.logging.set_verbosity_error()
 
 def send_requests(
     request_configs_for_thread: list,
-    # tokenizer,
+    tokenizer: AutoTokenizer,
     completed_requests: list,
-):
+    pbar: tqdm,
+    start_time: float,
+    timeout_s: int,
+) -> None:
+    """Sends multiple requests to LLM and collects results
+
+    Args:
+        request_configs_for_thread (list): list of request configs for LLM calls
+        tokenizer (AutoTokenizer): HuggingFace tokenizer
+        completed_requests (list): list of completed outputs from requests
+        pbar (tqdm): progress bar
+        start_time (float): start time of the process
+        timeout_s (int): time out in seconds
+    """
     for request_config in request_configs_for_thread:
-        # req_metrics = llm_request(request_config, tokenizer)
-        req_metrics = llm_request(request_config)
+        if time.monotonic() - start_time >= timeout_s:
+            break
+        req_metrics = llm_request(request_config, tokenizer)
         completed_requests.extend([req_metrics[0]])
-
-
-# def build_prompt_2(prompt_tokens_mean, prompt_tokens_stddev):
-#     # num_input_tokens = sample_random_positive_int(
-#     #     prompt_tokens_mean, prompt_tokens_stddev
-#     # )
-#     template = "In a small, forgotten village nestled deep within the dense, ancient forests of a remote region, life continued much as it had for centuries, largely untouched by the passage of time or the march of modernity. The villagers, a tight-knit community of fewer than a hundred souls, lived simple lives, their routines dictated by the rhythms of nature and the changing seasons. The village itself, a cluster of weather-worn cottages with thatched roofs and stone walls, stood as a testament to a bygone era. The cobblestone streets, winding and narrow, were lined with wildflowers in the warmer months and blanketed with snow in the winter, creating a picturesque yet melancholic scene. At the heart of the village stood a grand, ancient oak tree, its gnarled branches spreading wide like a protective canopy over the village square. This tree, known as the Elder Oak, was not just a physical landmark but also a central figure in the village's lore and traditions. It was said to be over a thousand years old, having witnessed countless generations come and go. Beneath its boughs, villagers gathered for festivals, markets, and communal meetings. The Elder Oak was believed to possess a deep wisdom and a connection to the spiritual realm, often serving as a place of reflection and meditation for the villagers. One crisp autumn morning, as the first golden rays of sunlight filtered through the mist, a stranger arrived in the village. He was a tall, enigmatic figure, clad in a long, dark coat and a wide-brimmed hat that cast a shadow over his face. His appearance was striking, with sharp, angular features and piercing green eyes that seemed to hold secrets untold. He introduced himself as Alaric, a traveler and scholar of ancient lore, on a quest to uncover forgotten knowledge and hidden truths. His arrival sparked a wave of curiosity and apprehension among the villagers, who were not accustomed to outsiders. Alaric's presence in the village quickly became a subject of both fascination and suspicion. Some saw him as a harbinger of change, a catalyst that could disrupt the delicate balance of their secluded lives. Others were intrigued by his tales of distant lands and lost civilizations, eager to learn more about the world beyond their forested haven. Despite the mixed reactions, Alaric was granted permission to stay in the village, taking up residence in a small, abandoned cottage on the outskirts. As days turned into weeks, Alaric's influence on the village began to grow. He spent his days exploring the surrounding forests, often disappearing for hours, only to return with ancient artifacts and strange, cryptic texts. He would spend his evenings in the village tavern, sharing stories and knowledge with the villagers, who gathered around him in rapt attention. Among his most ardent listeners was Elara, the village healer, a woman of great wisdom and curiosity. Elara was particularly fascinated by Alaric's knowledge of medicinal plants and ancient healing practices, and the two quickly formed a bond, exchanging knowledge and insights. One night, as a fierce storm raged outside, Alaric confided in Elara about the true nature of his quest. He revealed that he was searching for the fabled Crystal of Eternity, an artifact of immense power said to grant its possessor eternal life and unparalleled wisdom. According to ancient texts, the crystal was hidden somewhere within the forest, guarded by ancient spirits and protected by powerful enchantments. Alaric believed that the key to finding the crystal lay in deciphering the runes inscribed on the Elder Oak, which he suspected held clues to its location. Elara, intrigued by the possibility of uncovering such a powerful artifact, agreed to help Alaric. Together, they began to study the runes on the Elder Oak, spending countless hours in its shadow, poring over ancient manuscripts and comparing notes. Their quest soon became the talk of the village, with many villagers offering their assistance and sharing local legends that had been passed down through generations. The village, once a place of quiet routine, was now abuzz with excitement and anticipation. As they delved deeper into their research, Alaric and Elara uncovered a series of cryptic prophecies that seemed to hint at the challenges they would face on their quest. The prophecies spoke of trials of courage, wisdom, and heart, each guarded by ancient spirits who would test their worthiness. Determined to succeed, they prepared themselves for the journey ahead, gathering supplies and seeking guidance from the village elders. Their journey took them deep into the heart of the forest, where they encountered both wonders and dangers. They faced treacherous terrain, battled fierce creatures, and solved intricate puzzles, all while deciphering the cryptic clues that led them closer to the Crystal of Eternity. Along the way, they forged a deep bond, their shared experiences and mutual respect blossoming into a profound friendship. As they neared the end of their quest, they faced their greatest challenge yet: a final confrontation with the guardian spirit of the crystal, a powerful entity of ancient magic and wisdom. In a climactic battle of wits and strength, Alaric and Elara drew upon all they had learned, their combined knowledge and determination proving to be the key to their victory. With the Crystal of Eternity finally in their grasp, Alaric and Elara returned to the village as heroes. Their journey had not only uncovered a powerful artifact but also brought the village closer together, reigniting a sense of community and shared purpose. The villagers celebrated their return with a grand festival beneath the Elder Oak, honoring their bravery and the newfound knowledge they had brought back with them. In the end, Alaric chose to leave the Crystal of Eternity in the care of the village, believing that its power was best kept safe and used for the greater good. He bid farewell to the villagers and continued his travels, ever the seeker of knowledge and adventure. Elara, now a revered figure in the village, continued to share her wisdom and healing practices, her life forever changed by the journey she had undertaken. The village, once a quiet and forgotten place, now thrived with a renewed sense of purpose and wonder. The Elder Oak, standing tall and proud in the village square, continued to watch over the villagers, its ancient runes a reminder of the timeless wisdom and the enduring spirit of those who had come before. However, "
-#     random_number = random.randint(100, 1000)
-#     new_prompt = template[:random_number]
-#     return new_prompt, random_number
+        pbar.update(1)
 
 
 def get_request_configs(
     model: str,
     max_num_completed_requests: int,
-    num_concurrent_workers,
-    mean_output_tokens,
-    stddev_output_tokens,
-    mean_input_tokens,
-    stddev_input_tokens,
-    additional_sampling_params,
-    llm_api,
-    mode,
-):
+    num_concurrent_workers: int,
+    mean_output_tokens: int,
+    mean_input_tokens: int,
+    additional_sampling_params: dict,
+    llm_api: str,
+    mode: str,
+) -> list:
+    """Gets the list of request configs to be used as input for LLM calls
+
+    Args:
+        model (str): model name
+        max_num_completed_requests (int): maximum number of completed requests
+        num_concurrent_workers (int): number of concurrent workers
+        mean_output_tokens (int): number of output tokens
+        mean_input_tokens (int): number of input tokens
+        additional_sampling_params (dict): additional sampling parameters
+        llm_api (str): The name of the llm api to use. Static for now. Defaults to "sambastudio".
+        mode (str): mode of the API. Either "stream" or "batch". Defaults to "stream".
+
+    Returns:
+        list: _description_
+    """
+
     request_configs = []
 
     for _ in range(max_num_completed_requests):
         # Set request config
-        num_output_tokens = sample_random_positive_int(
-            mean_output_tokens, stddev_output_tokens
-        )
+        num_output_tokens = mean_output_tokens
 
         prompt = build_prompt(
             model_name=model,
             prompt_tokens_mean=mean_input_tokens,
-            prompt_tokens_stddev=stddev_input_tokens,
             num_output_tokens=num_output_tokens,
         )
-
-        # prompt = build_prompt_2(
-        #     prompt_tokens_mean=mean_input_tokens,
-        #     prompt_tokens_stddev=stddev_input_tokens,
-        # )
 
         default_sampling_params = {
             "max_tokens_to_generate": num_output_tokens,
@@ -111,10 +117,8 @@ def get_request_configs(
 def get_token_throughput_latencies(
     model: str,
     mean_input_tokens: int,
-    stddev_input_tokens: int,
     mean_output_tokens: int,
-    stddev_output_tokens: int,
-    test_timeout_s=90,
+    timeout_s=90,
     num_concurrent_workers: int = 1,
     max_num_completed_requests: int = 32,
     additional_sampling_params: Optional[Dict[str, Any]] = None,
@@ -126,10 +130,8 @@ def get_token_throughput_latencies(
     Args:
         model (str): The name of the model to query.
         mean_input_tokens (int): The mean number of tokens to send in the prompt for the request.
-        stddev_input_tokens (int): The standard deviation of the number of tokens to send in the prompt for the request.
         mean_output_tokens (int): The mean number of tokens to generate per request.
-        stddev_output_tokens (int): The standard deviation of the number of tokens to generate per request.
-        test_timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90.
+        timeout_s (int): The amount of time to run the test for before reporting results. Defaults to 90.
         num_concurrent_workers (int): The number of concurrent workers to make. Increase
             this to increase the amount of load and vice versa. Defaults to 1.
         max_num_completed_requests (int): The maximum number of completed requests. Defaults to 32.
@@ -148,9 +150,9 @@ def get_token_throughput_latencies(
     if not additional_sampling_params:
         additional_sampling_params = {}
 
-    # tokenizer = get_tokenizer(model)
-
     start_time = time.monotonic()
+
+    tokenizer = get_tokenizer(model)
 
     # Get all request configs
 
@@ -159,9 +161,7 @@ def get_token_throughput_latencies(
         max_num_completed_requests,
         num_concurrent_workers,
         mean_output_tokens,
-        stddev_output_tokens,
         mean_input_tokens,
-        stddev_input_tokens,
         additional_sampling_params,
         llm_api,
         mode,
@@ -186,14 +186,17 @@ def get_token_throughput_latencies(
 
     threads = []
     completed_requests = []
+    pbar = tqdm(total=max_num_completed_requests, desc="Running requests")
     for i, request_configs_for_thread in enumerate(request_config_batches):
-        print(f"Executing Thread {i}")
         thread = threading.Thread(
             target=send_requests,
             args=(
                 request_configs_for_thread,
-                # tokenizer,
+                tokenizer,
                 completed_requests,
+                pbar,
+                start_time,
+                timeout_s,
             ),
         )
         threads.append(thread)
@@ -220,9 +223,7 @@ def get_token_throughput_latencies(
     metadata = {
         "model": model,
         "mean_input_tokens": mean_input_tokens,
-        "stddev_input_tokens": stddev_input_tokens,
         "mean_output_tokens": mean_output_tokens,
-        "stddev_output_tokens": stddev_output_tokens,
         "num_concurrent_workers": num_concurrent_workers,
         "additional_sampling_params": additional_sampling_params,
     }
@@ -263,6 +264,7 @@ def metrics_summary(
     ret = {}
 
     def flatten(item):
+        """Flattens an iterable"""
         for sub_item in item:
             if isinstance(sub_item, Iterable) and not isinstance(sub_item, str):
                 yield from flatten(sub_item)
@@ -337,10 +339,8 @@ def metrics_summary(
 def run_token_benchmark(
     model: str,
     mean_input_tokens: int,
-    stddev_input_tokens: int,
     mean_output_tokens: int,
-    stddev_output_tokens: int,
-    test_timeout_s: int,
+    timeout_s: int,
     max_num_completed_requests: int,
     num_concurrent_workers: int,
     additional_sampling_params: str,
@@ -354,10 +354,8 @@ def run_token_benchmark(
 
         model (str): The name of the model to query.
         mean_input_tokens (int): The mean number of tokens to send in the prompt for the request.
-        stddev_input_tokens (int): The standard deviation of the number of tokens to send in the prompt for the request.
         mean_output_tokens (int): The mean number of tokens to generate per request.
-        stddev_output_tokens (int): The standard deviation of the number of tokens to generate per request.
-        test_timeout_s (int): The amount of time to run the test for before reporting results.
+        timeout_s (int): The amount of time to run the test for before reporting results.
         max_num_completed_requests (int): The number of requests to complete before finishing the test.
         num_concurrent_workers (int): The number of concurrent workers to make. Increase
             this to increase the amount of load and vice versa.
@@ -368,7 +366,6 @@ def run_token_benchmark(
         llm_api (str): The name of the llm api to use. Static for now. Defaults to "sambastudio".
         mode (str): mode of the API. Either "stream" or "batch". Defaults to "stream".
     """
-    # TODO: change according to new prompt
     if mean_input_tokens < 40:
         raise ValueError(
             "The minimum number of input tokens that will be sent is 40"
@@ -379,10 +376,8 @@ def run_token_benchmark(
     summary, individual_responses = get_token_throughput_latencies(
         model=model,
         mean_input_tokens=mean_input_tokens,
-        stddev_input_tokens=stddev_input_tokens,
         mean_output_tokens=mean_output_tokens,
-        stddev_output_tokens=stddev_output_tokens,
-        test_timeout_s=test_timeout_s,
+        timeout_s=timeout_s,
         max_num_completed_requests=max_num_completed_requests,
         num_concurrent_workers=num_concurrent_workers,
         additional_sampling_params=json.loads(additional_sampling_params),
@@ -441,30 +436,12 @@ args.add_argument(
     ),
 )
 args.add_argument(
-    "--stddev-input-tokens",
-    type=int,
-    default=150,
-    help=(
-        "The standard deviation of number of tokens to send in the prompt for the request. "
-        "(default: %(default)s)"
-    ),
-)
-args.add_argument(
     "--mean-output-tokens",
     type=int,
     default=150,
     help=(
         "The mean number of tokens to generate from each llm request. This is the max_tokens param "
         "for the completions API. Note that this is not always the number of tokens returned. "
-        "(default: %(default)s)"
-    ),
-)
-args.add_argument(
-    "--stddev-output-tokens",
-    type=int,
-    default=80,
-    help=(
-        "The stdandard deviation on the number of tokens to generate per llm request. "
         "(default: %(default)s)"
     ),
 )
@@ -535,10 +512,8 @@ if __name__ == "__main__":
     run_token_benchmark(
         model=args.model,
         mean_input_tokens=args.mean_input_tokens,
-        stddev_input_tokens=args.stddev_input_tokens,
         mean_output_tokens=args.mean_output_tokens,
-        stddev_output_tokens=args.stddev_output_tokens,
-        test_timeout_s=args.timeout,
+        timeout_s=args.timeout,
         max_num_completed_requests=args.max_num_completed_requests,
         num_concurrent_workers=args.num_concurrent_workers,
         additional_sampling_params=args.additional_sampling_params,
