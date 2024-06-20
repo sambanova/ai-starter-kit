@@ -181,6 +181,10 @@ next-env.d.ts
 fine_tuning_sql/data/
 yoda/data/
 
+# search assistant Data
+search_assistant/data/
+yoda/data/
+
 #snapi and snsdk
 SambaStudio_API_Client-*
 snsdk-*
