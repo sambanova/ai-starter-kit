@@ -9,15 +9,9 @@ Before using SambaParse, make sure you have the following:
 - Docker installed on your machine (or access to another API server)
 - An Unstructured.io API key
 
-
-
-
-
-## Prerequisites
-
 Before using SambaParse, make sure you have the following:
 
-- Create a `.env` file in the root directory of the project and add your Unstructured.io API key:
+- Create a `.env` file in the ai-starter-kit root directory (not in the parsing folder root):
 
      ```
      UNSTRUCTURED_API_KEY=your_api_key_here
@@ -25,26 +19,56 @@ Before using SambaParse, make sure you have the following:
 
 ## Setup
 
+# Pre Reqs
 
-1. Install the required dependencies:
+Using pyenv to manage virtualenv's is recommended
+Mac install instructions. See pyenv-virtualenv repo for more detailed instructions.
 
+```bash
+brew install pyenv-virtualenv
+```
+
+- Create a python venv using python version 3.10.12 
+ 
+```bash
+pyenv install 3.10.12
+pyenv  virtualenv 3.10.12 sambaparse
+pyenv activate sambaparse
+ ```
+
+1. Clone the ai-starter-kit repo and cd:
 
 
    ```bash
-   pip install git+https://github.com/sambanova/ai-starter-kit
+   git clone https://github.com/sambanova/ai-starter-kit
    ```
 
-2. Set up the Unstructured API server:
 
+2. cd into utils/parsing and pip install the requirements
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. cd into the unstructured-api foder and Install the unstructured-api make-file:
+
+    ```bash
+   cd  unstructured-api
+   ```
+
+   Run 
+   
+   ```bash
+   make install
+   ```
    
 
-   - Run the provided shell script to start the Unstructured API container (make it executable beforehand):
+   - Run The Web Server:
 
      ```bash
-     ./server_setup.sh
+    make run-web-app
      ```
 
-     This script will start the Unstructured API container using the specified API key and expose it on the custom port defined in the YAML configuration file (default: 8005).
+     This script will start the Unstructured API server using the specified API key and expose it on port 8005.
 
    - Alternatively, if you have another Unstructured API server running on a different instance, make sure to update the `partition_endpoint` and `unstructured_port` values in the YAML configuration file accordingly.
 
@@ -53,41 +77,80 @@ Before using SambaParse, make sure you have the following:
 1. Import the `SambaParse` class from the `ai-starter-kit` library:
 
    ```python
-   from ai-starter-kit.utils.parsing.sambaparse import SambaParse
+   from utils.parsing.sambaparse import SambaParse
    ```
 
-2. Create a YAML configuration file (e.g., `config.yaml`) to specify the desired settings for the ingestion process. Here's an example configuration:
+2. Create a YAML configuration file (e.g., `config.yaml`) to specify the desired settings for the ingestion process. Here's the configuration for use cases 1 and 2 ie local files and folders:
 
    ```yaml
-   processor:
-     verbose: True
-     output_dir: 'output'
-     num_processes: 2
+  processor:
+  verbose: True
+  output_dir: './output'
+  num_processes: 2
 
-   sources:
-     local:
-       recursive: True
+  sources:
+    local:
+      recursive: True
+    confluence:
+      api_token: 'your_confluence_api_token'
+      user_email: 'your_email@example.com'
+      url: 'https://your-confluence-url.atlassian.net'
+    github:
+      url: 'owner/repo'
+      branch: 'main'
+    google_drive:
+      service_account_key: 'path/to/service_account_key.json'
+      recursive: True
+      drive_id: 'your_drive_id'
 
-   partitioning:
-     partition_by_api: True
+  partitioning:
+    pdf_infer_table_structure: True
+    skip_infer_table_types: []
+    strategy: 'auto'
+    hi_res_model_name: 'yolox'
+    ocr_languages: ['eng']
+    encoding: 'utf-8'
+    fields_include: ['element_id', 'text', 'type', 'metadata', 'embeddings']
+    flatten_metadata: False
+    metadata_exclude: []
+    metadata_include: []
+    partition_endpoint: 'http://localhost'
+    unstructured_port: 8005
+    partition_by_api: True
 
-   chunking:
-     enabled: True
-     strategy: 'basic'
-     chunk_max_characters: 1500
-     chunk_overlap: 300
+  chunking:
+    enabled: True
+    strategy: 'basic'
+    chunk_max_characters: 1500
+    chunk_overlap: 300
 
-   embedding:
-     enabled: True
-     provider: 'langchain-huggingface'
-     model_name: 'your_model_name'
+  embedding:
+    enabled: False
+    provider: 'langchain-huggingface'
+    model_name: 'intfloat/e5-large-v2'
 
-   additional_processing:
-     enabled: True
-     extend_metadata: True
-     replace_table_text: True
-     table_text_key: 'text_as_html'
-     return_langchain_docs: True
+  destination_connectors:
+    enabled: False
+    type: 'chroma'
+    batch_size: 80
+    chroma:
+      host: 'localhost'
+      port: 8004
+      collection_name: 'snconf'
+      tenant: 'default_tenant'
+      database: 'default_database'
+    qdrant:
+      location: 'http://localhost:6333'
+      collection_name: 'test'
+
+  additional_processing:
+    enabled: True
+    extend_metadata: True
+    replace_table_text: True
+    table_text_key: 'text_as_html'
+    return_langchain_docs: True
+    convert_metadata_keys_to_string: True
+
 
 Make sure to place the `config.yaml` file in the desired folder.
 
@@ -100,22 +163,108 @@ sambaparse = SambaParse('path/to/config.yaml')
 4. Use the `run_ingest` method to process your data:
     - For a single file:
         
-       
         
-        `source_type = 'local' input_path = 'path/to/your/file.pdf' additional_metadata = {'key': 'value'} texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, input_path=input_path, additional_metadata=additional_metadata)`
-        
+    ```python
+    source_type = 'local' 
+    input_path = 'path/to/your/file.pdf' 
+    additional_metadata = {'key': 'value'} 
+    texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, input_path=input_path, additional_metadata=additional_metadata)
+    ```
+
     - For a folder:
+
+    ```python
+    source_type = 'local' 
+    input_path = 'path/to/your/file.pdf' 
+    additional_metadata = {'key': 'value'} 
+    texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, input_path=input_path, additional_metadata=additional_metadata)
+    ```
+   
+    - For Confluence:
         
       
-        
-        `source_type = 'local' input_path = 'path/to/your/folder' additional_metadata = {'key': 'value'} texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, input_path=input_path, additional_metadata=additional_metadata)`
-        
-    - For a data source like Confluence:
-        
+        ```python
+        source_type = 'confluence' 
+        additional_metadata = {'key': 'value'} 
+        texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, additional_metadata=additional_metadata)
+         ```
       
-        
-        `source_type = 'confluence' additional_metadata = {'key': 'value'} texts, metadata_list, langchain_docs = sambaparse.run_ingest(source_type, additional_metadata=additional_metadata)`
-        
+      Note that for conflence you must enable embedding and destinatation connectors automatically ie Chroma and turn off additional processing (ie langchain), an example yaml to do that is below
+
+         ```yaml
+          processor:
+          verbose: True
+          output_dir: './output'
+          num_processes: 2
+
+          sources:
+            local:
+              recursive: True
+            confluence:
+              api_token: 'your_confluence_api_token'
+              user_email: 'your_email@example.com'
+              url: 'https://your-confluence-url.atlassian.net'
+            github:
+              url: 'owner/repo'
+              branch: 'main'
+            google_drive:
+              service_account_key: 'path/to/service_account_key.json'
+              recursive: True
+              drive_id: 'your_drive_id'
+
+          partitioning:
+            pdf_infer_table_structure: True
+            skip_infer_table_types: []
+            strategy: 'auto'
+            hi_res_model_name: 'yolox'
+            ocr_languages: ['eng']
+            encoding: 'utf-8'
+            fields_include: ['element_id', 'text', 'type', 'metadata', 'embeddings']
+            flatten_metadata: False
+            metadata_exclude: []
+            metadata_include: []
+            partition_endpoint: 'http://localhost'
+            unstructured_port: 8005
+            partition_by_api: True
+
+          chunking:
+            enabled: True
+            strategy: 'basic'
+            chunk_max_characters: 1500
+            chunk_overlap: 300
+
+          embedding:
+            enabled: True
+            provider: 'langchain-huggingface'
+            model_name: 'intfloat/e5-large-v2'
+
+          destination_connectors:
+            enabled: True
+            type: 'chroma'
+            batch_size: 80
+            chroma:
+              host: 'localhost'
+              port: 8004
+              collection_name: 'snconf'
+              tenant: 'default_tenant'
+              database: 'default_database'
+            qdrant:
+              location: 'http://localhost:6333'
+              collection_name: 'test'
+
+          additional_processing:
+            enabled: False
+            extend_metadata: True
+            replace_table_text: True
+            table_text_key: 'text_as_html'
+            return_langchain_docs: True
+            convert_metadata_keys_to_string: True
+        ```
+      In addition for confluence you will need to have a Chroma Server running on port 8004, you can do this by running the docker command below
+
+      ```bash
+      docker run -d --rm --name chromadb -v ./chroma:/chroma/chroma -e IS_PERSISTENT=TRUE -e ANONYMIZED_TELEMETRY=TRUE -p 8004:8000 chromadb/chroma:latest
+      ```
     
     The `run_ingest` method returns a tuple containing the extracted texts, metadata, and LangChain documents (if `return_langchain_docs` is set to `True` in the configuration).
     
