@@ -230,9 +230,9 @@ This workflow uses the AI starter kit as is with an ingestion, retrieval, respon
 
 This workflow, included with this starter kit, is an example of parsing and indexing data for subsequent Q&A. The steps are:
 
-1. **Document parsing:** Python packages [pypdf2](https://pypi.org/project/PyPDF2/), [fitz](https://pymupdf.readthedocs.io/en/latest/) and [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from PDF documents. On the LangChain website, multiple [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) for text extraction from PDF are available. Depending on the quality and the format of the PDF files, this step might require customization for different use cases. For TXT file loading, the default [txt loading](https://python.langchain.com/docs/modules/data_connection/document_loaders/) implementation of langchain is used. 
+1. **Document parsing:** Python packages like [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from file documents. On the LangChain website, multiple [integrations](https://python.langchain.com/v0.2/docs/how_to/#document-loaders) for text extraction from multiple file types are available. Depending on the quality and the format of the files, this step might require customization for different use cases. this kit uses in behind for the document parsing step the [parser util](../utils/parser/), which leverages the unstructured module to parse the documents.
 
-2. **Split data:** After the data has been parsed and its content extracted, we need to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
+2. **Split data:** After the data has been parsed and its content extracted, is needed to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using the [parser util](../utils/parser/) that leverages unstructured module to split the parsed documents into chunks
 
 3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of the text. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
@@ -268,44 +268,37 @@ You can further customize the starter kit based on the use case.
 
 ## Import Data
 
-**PDF Format:** Different packages are available to extract text from PDF files. They can be broadly categorized as
+Different packages are available to extract text from different file documents. They can be broadly categorized as
 - OCR-based: [pytesseract](https://pypi.org/project/pytesseract/), [paddleOCR](https://pypi.org/project/paddleocr/), [unstructured](https://unstructured.io/)
 - Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
 Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
 
 You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md).
 
-This enterprixe knowledge retriever kit includes three PDF loaders, unstructured, pypdf2, and fitz and one TXT loader. 
+This enterprise knowledge retriever kit includes a custom implementation of unstructured loader that isd able to load files from the following extensions: `[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]`
 
-* You can change the default loader in the [config.yaml](./config.yaml) file in the parameter `loaders`
+* You can modify the loading method in the following location:
+```
+   file: src/document_retrieval
+   function: parse_doc
+```
 
-* You can include a new loader in the following location:
-```
-   file: streamlit/app.py
-   function: get_data_for_splitting
-```
+* You can also modify several parameters in the loading strategies changing the config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
 
 ## Split Data
 
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
-The **RecursiveCharacterTextSplitter** inside the `vectordb` class, which is used in this starter kit, can be further customized using the `chunk_size` and `chunk_overlap` parameters. For LLMs with a long sequence length, use a larger value of `chunk_size` to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
+The `chunking` inside the parser utils config, which is used in this starter kit, can be further customized using the `chunk_max_characters` and `chunk_overlap` parameters. For LLMs with a long sequence length, use a larger value of `chunk_max_characters` to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
-
-You can do this modification in the following location:
-file: [config.yaml](config.yaml)
-```yaml
-retrieval:
-    "chunk_size": 1200
-    "chunk_overlap": 240
-    ...
-```
+* You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
 
 ## Embed data
 
 Several open-source embedding models are available on Hugging Face. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
 
 You can do this modification in the following location:
+
 ```
 file: ai-starter-kit/vectordb/vector_db.py
 function: load_embedding_model
@@ -316,6 +309,7 @@ function: load_embedding_model
 The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/v0.1/docs/modules/data_connection/vectorstores/) provides a broad collection of vector stores that can be easily integrated.
 
 You can do this modification in the following location:
+
 ```
 file: app.py
 function: create_vector_store
@@ -411,7 +405,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - faiss-cpu (version 1.7.4)
 - PyPDF2 (version 3.0.1)
 - python-dotenv (version 1.0.0)
-streamlit-extras
+- streamlit-extras
 - pillow (version 9.1.0)
 - sseclient-py (version 1.8.0)
 - unstructured[pdf] (version 0.13.3)
