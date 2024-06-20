@@ -1,5 +1,6 @@
 import sys
 
+sys.path.append("../")
 sys.path.append("./src")
 sys.path.append("./streamlit")
 
@@ -12,7 +13,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
 
-from token_benchmark import run_token_benchmark
+from benchmarking.src.token_benchmark import run_token_benchmark
 
 from dotenv import load_dotenv
 import warnings
@@ -124,8 +125,8 @@ def _run_performance_evaluation() -> pd.DataFrame:
 
     run_token_benchmark(
         model=st.session_state.llm,
-        mean_input_tokens=st.session_state.input_tokens,
-        mean_output_tokens=st.session_state.output_tokens,
+        num_input_tokens=st.session_state.input_tokens,
+        num_output_tokens=st.session_state.output_tokens,
         timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
         num_concurrent_workers=num_concurrent_workers,
@@ -272,7 +273,7 @@ def main():
 
             except Exception as e:
                 st.error(
-                    f"Error: {e} For more error details, please look at the terminal."
+                    f"Error: {e}. For more error details, please look at the terminal."
                 )
 
 
