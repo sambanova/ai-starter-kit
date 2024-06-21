@@ -1,6 +1,10 @@
 api: "sambastudio"
 
-embedding_model: "cpu"
+embedding_model: 
+    "type": "sambastudio" # set either sambastudio or cpu
+    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
 
 loaders: 
     pdf: "pypdf2"
@@ -11,7 +15,7 @@ llm:
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "select_expert": "Meta-Llama-3-8B-Instruct"
-    "sambastudio_coe": True
+    "coe": True
 
 retrieval:
     "chunk_size": 1200

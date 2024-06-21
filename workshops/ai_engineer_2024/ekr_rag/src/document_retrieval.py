@@ -155,7 +155,7 @@ class DocumentRetrieval():
                 )
             
         elif self.api_info == "sambastudio":
-            if self.llm_info["sambastudio_coe"] == True:
+            if self.llm_info["coe"] == True:
                 llm = SambaStudio(
                     streaming=True,
                     model_kwargs={
@@ -341,7 +341,12 @@ class DocumentRetrieval():
         return chunks_list
 
     def load_embedding_model(self):
-        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info) 
+        embeddings = self.vectordb.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
         return embeddings  
 
     def create_vector_store(self, text_chunks, embeddings, output_db=None):
