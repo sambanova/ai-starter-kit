@@ -3,14 +3,14 @@ import sys
 import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, "..")) # absolute path for ekr_rag directory
+repo_dir = os.path.abspath(os.path.join(kit_dir, "../../../")) # absolute path for starter-kit directory
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
+from src.document_retrieval import DocumentRetrieval
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
