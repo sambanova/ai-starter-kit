@@ -20,6 +20,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaverseEndpoint
+
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 ##Get time tool
@@ -159,10 +161,19 @@ class QueryDBSchema(BaseModel):
 def query_db(query):
     """A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."""
 
-    fine_tunned_sql_llm = 'sql_expert'
-    llm = Sambaverse(
+    fine_tunned_sql_llm = 'Meta-Llama-3-70B-Instruct'  #'nsql-llama-2-7b'
+    llm = SambaverseEndpoint(
         sambaverse_model_name='Numbers Station/nsql-llama-2-7b',
-        model_kwargs={'max_tokens_to_generate': 2048, 'select_expert': fine_tunned_sql_llm},
+        streaming=True,
+        model_kwargs={
+            'max_tokens_to_generate': 200,
+            'select_expert': fine_tunned_sql_llm,
+            'temperature': 0.0,
+            'repetition_penalty': 1.0,
+            'top_k': 1,
+            'top_p': 1.0,
+            'do_sample': False,
+        },
     )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
