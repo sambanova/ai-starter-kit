@@ -74,18 +74,21 @@ We provide a simple module for using the Function Calling LLM, for this you will
 
 1. Create your set of tools:
 
-    you will need to create the set of tools that you want to model to be able to use, those tools, should be langchain tools the re is an example of different langchain tools and custom tools implementation in [src/tools.py](src/tools.py).
+    You should create a set of tools that you want the model to be able to use, those tools, should be langchain tools.
+
+    We provide an example of different langchain integrated tools and implementation of custom tools in [src/tools.py](src/tools.py), and in the [step by step notebook](./notebooks/function_calling_guide.ipynb).
 
     > See more in [langchain tools](https://python.langchain.com/v0.1/docs/modules/tools/)
 
-2. Instantiate your Function calling LLM, passing the model to use  (either  Sambaverse, or Sambanova) tools as arguments, then you can invoke the function calling pipeline using the function_call_llm method passing the user query
+2. Instantiate your Function calling LLM, passing the model to use (either Sambaverse or Sambastudio), and the required tools as argument, then you can invoke the function calling pipeline using the `function_call_llm` method passing the user query
 
     ``` python
         from function_calling.src.function_calling  import FunctionCallingLlm
         
         ### Define your tools
+        from function_calling.src.tools import get_time, calculator, python_repl
+        tools = [get_time, calculator, python_repl]
 
-        tools = [tool1, tool2, tool3]
         fc = FunctionCallingLlm("sambaverse", tools)
 
         fc.function_call_llm("<user query>", max_it=5, debug=True)
@@ -97,11 +100,11 @@ We provide a simple module for using the Function Calling LLM, for this you will
 
 The example module can be further customized based on the use case.
 
-the complete tools generation, methods, prompting and parsing for implementing function calling, can be fund and further customized for your specific use case following the [Guide notebook](function_calling_guide.ipynb)  
+The complete tools generation, methods, prompting and parsing for implementing function calling, can be found and further customized for your specific use case following the [Guide notebook](function_calling_guide.ipynb)  
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
 
 * python-dotenv (version 1.0.1)
 * langchain (version 0.2.3)
