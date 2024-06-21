@@ -1,0 +1,27 @@
+api: "sambastudio"
+
+embedding_model: "cpu"
+
+loaders: 
+    pdf: "pypdf2"
+    txt: "text_loader"
+
+llm: 
+    "temperature": 0.01
+    "max_tokens_to_generate": 1200
+    "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+    "select_expert": "Meta-Llama-3-8B-Instruct"
+    "sambastudio_coe": True
+
+retrieval:
+    "chunk_size": 1200
+    "chunk_overlap": 240
+    "k_retrieved_documents": 15
+    "score_threshold": 0.2
+    "rerank": True
+    "reranker": 'BAAI/bge-reranker-large'
+    "final_k_retrieved_documents": 3
+
+prompts: 
+    "qa_prompt": "prompts/qa_prompt.yaml"
+    "final_chain_prompt": "prompts/final_chain_prompt.yaml"
