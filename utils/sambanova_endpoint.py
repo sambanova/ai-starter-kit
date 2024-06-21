@@ -1036,7 +1036,7 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
         :returns: the full API URL for the sub-path
         :type: str
         """
-        return f'{self.sambastudio_embeddings_base_url}/{self.sambastudio_embeddings_base_uri}/{path}'  # noqa: E501
+        return f'{self.embed_base_url}/{self.embed_base_uri}/{path}'  # noqa: E501
 
     def _iterate_over_batches(self, texts: List[str], batch_size: int) -> Generator:
         """Generator for creating batches in the embed documents method
