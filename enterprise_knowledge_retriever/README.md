@@ -91,7 +91,7 @@ The next step sets you up to use one of the models available from SambaNova. It 
         SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
 
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`, and set the `sambaverse_model_name`  and `select_expert` configs.
 
 ### Setup for SambaStudio users
 
@@ -99,16 +99,22 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
 2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+
+    - You can enter the following in the env file (with no spaces):
 
     ``` bash
         SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+        SAMBASTUDIO_BASE_URI="api/predict/generic"
         SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
         SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
         SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
+4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
 
 ### Update the Embedding API information
 
@@ -116,7 +122,7 @@ You have these options to specify the embedding API info:
 
 * **Option 1: Use a CPU embedding model**
 
-    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
+    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
 * **Option 2: Set a SambaStudio embedding model**
 
@@ -124,20 +130,21 @@ To increase inference speed, you can use SambaStudio E5 embedding model endpoint
 
 NOTE: Be sure to set batch size model parameter to 32.
 
-1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
+1. Update API information for the SambaNova embedding endpoint in the **`ai-starter-kit/.env`** file in the root repo directory. For example:
 
     - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
     - You can enter the following in the env file (with no spaces):
 
         ```bash
-            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
-            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+            EMBED_BASE_URL="https://api-stage.sambanova.net"
+            EMBED_BASE_URI="api/predict/generic"
+            EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+            EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+            EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
         ```
 
-2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
     > 
@@ -161,6 +168,14 @@ NOTE: Be sure to set batch size model parameter to 32.
     > [Windows tessearct installation](https://github.com/UB-Mannheim/tesseract/wiki)
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
+
+### Deploy the AI starter kit Parser util 
+
+This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
+
+Go to  the [parser util readme](../utils/parsing/README.md), and follow the instructions to deploy the parser util
+
+> Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
 
 # Deploy the starter kit GUI
 
