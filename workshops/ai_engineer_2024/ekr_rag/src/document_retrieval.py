@@ -22,8 +22,6 @@ kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(kit_dir, "../../../"))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-print('Petro')
-print(repo_dir)
 
 from vectordb.vector_db import VectorDb
 from data_extraction.src.multi_column import column_boxes
