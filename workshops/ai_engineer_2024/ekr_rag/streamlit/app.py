@@ -3,18 +3,16 @@ import sys
 import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, "..")) # absolute path for ekr_rag directory
+repo_dir = os.path.abspath(os.path.join(kit_dir, "../../../")) # absolute path for starter-kit directory
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
-from enterprise_knowledge_retriever.src.langgraph_rag import RAG
-
+from src.document_retrieval import DocumentRetrieval
+ 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
-PROMPTS_PATH = os.path.join(kit_dir,'prompts')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
 
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +21,7 @@ logging.info("URL: http://localhost:8501")
 def handle_userinput(user_question):
     if user_question:
         with st.spinner("Processing..."):
-            response = st.session_state.conversation.call_rag(user_question)
+            response = st.session_state.conversation.invoke({"question":user_question})
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response["answer"])
 
@@ -64,7 +62,6 @@ def handle_userinput(user_question):
 
 def main(): 
     documentRetrieval =  DocumentRetrieval()
-    *_, embedding_model_info ,retrieval_info, _ = documentRetrieval.get_config_info()
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -76,13 +73,15 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "show_sources" not in st.session_state:
-        st.session_state.show_sources = True
+         st.session_state.show_sources = True
     if "sources_history" not in st.session_state:
         st.session_state.sources_history = []
-    if "embeddings" not in st.session_state:
-        st.session_state.embeddings = None
     if "vectorstore" not in st.session_state:
         st.session_state.vectorstore = None
+
+    st.title(":orange[SambaNova] Analyst Assistant")
+    user_question = st.chat_input("Ask questions about your data")
+    handle_userinput(user_question)
 
     with st.sidebar:
         st.title("Setup")
@@ -92,7 +91,7 @@ def main():
         )
         if "Upload" in datasource:
             docs = st.file_uploader(
-                "Add files", accept_multiple_files=True, type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
+                "Add PDF or TXT files", accept_multiple_files=True, type=["pdf","txt"]
             )
             st.markdown("**2. Process your documents and create vector store**")
             st.markdown(
@@ -102,79 +101,32 @@ def main():
             if st.button("Process"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    text_chunks = documentRetrieval.parse_doc(docs)
+                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
                     # get the text chunks
-                    # text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
                     embeddings = documentRetrieval.load_embedding_model()
-                    st.session_state.embeddings = embeddings
                     vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
                     st.session_state.vectorstore = vectorstore
-                    # instantiate retriever
-                    # search_kwargs = {"k": lg_configs["retrieval_configs"]["top_k"]}
-                    # st.session_state.retriever = st.session_state.vectorstore.as_retriever()
-
-                    # instantiate rag
-                    rag = RAG(
-                    config_path=CONFIG_PATH,
-                    embeddings = st.session_state.embeddings,
-                    vectorstore=st.session_state.vectorstore
-                    )
-
-                    lg_configs = rag.load_config(CONFIG_PATH)
-                    print(lg_configs) 
-                    
-                    # Initialize chains
-                    rag.init_llm()
-                    rag.init_qa_chain()
-                    rag.init_final_generation()
-                    # Build nodes
-                    workflow = rag.create_rag_nodes()
-                    # Build graph
-                    rag.build_rag_graph(workflow)
-
                     # create conversation chain
-                    st.session_state.conversation = rag 
+                    documentRetrieval.init_retriever(vectorstore)
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
             st.markdown("[Optional] Save database for reuse")
             save_location = st.text_input("Save location", "./data/my-vector-db").strip()
             if st.button("Process and Save database"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    text_chunks = documentRetrieval.parse_doc(docs)
+                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
                     # get the text chunks
-                    #text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
                     embeddings = documentRetrieval.load_embedding_model()
-                    st.session_state.embeddings = embeddings
-                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, save_location)
+                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
                     st.session_state.vectorstore = vectorstore
-                    # instantiate retriever
-                    # search_kwargs = {"k": lg_configs["retrieval_configs"]["top_k"]}
-                    # retriever = vectorstore.as_retriever()
-                    # st.session_state.retriever = retriever
-                    
-                    # instantiate rag
-                    rag = RAG(
-                    config_path=CONFIG_PATH,
-                    embeddings = st.session_state.embeddings,
-                    vectorstore=st.session_state.vectorstore
-                    )
-
-                    lg_configs = rag.load_config(CONFIG_PATH)
-                    print(lg_configs) 
-                    
-                    # Initialize chains
-                    rag.init_llm()
-                    rag.init_qa_chain()
-                    rag.init_final_generation()
-                    # Build nodes
-                    workflow = rag.create_rag_nodes()
-                    # Build graph
-                    rag.build_rag_graph(workflow)
-
-                    # create RAG chain
-                    st.session_state.conversation = rag 
+                    # create conversation chain
+                    documentRetrieval.init_retriever(vectorstore)
+                    st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
 
         else:
@@ -194,32 +146,15 @@ def main():
                         if os.path.exists(db_path):
                             # load the vectorstore
                             embeddings = documentRetrieval.load_embedding_model()
-                            st.session_state.embeddings = embeddings
                             vectorstore = documentRetrieval.load_vdb(db_path, embeddings)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session
                             st.session_state.vectorstore = vectorstore
-                            
-                            rag = RAG(
-                            config_path=CONFIG_PATH,
-                            embeddings = st.session_state.embeddings,
-                            vectorstore=st.session_state.vectorstore
-                            )
 
-                            lg_configs = rag.load_config(CONFIG_PATH)
-                            print(lg_configs) 
-                            
-                            # Initialize chains
-                            rag.init_llm()
-                            rag.init_qa_chain()
-                            rag.init_final_generation()
-                            # Build nodes
-                            workflow = rag.create_rag_nodes()
-                             # Build graph
-                            rag.build_rag_graph(workflow)
-
-                            st.session_state.conversation = st.session_state.conversation = rag 
+                            # create conversation chain
+                            documentRetrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
 
@@ -238,29 +173,15 @@ def main():
             )
             if st.button("Reset conversation"):
                 # reset create conversation chain
-                st.session_state.conversation = []
+                # st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
+                #     st.session_state.vectorstore
+                # )
                 st.session_state.chat_history = []
-
-                lg_configs = rag.load_config(CONFIG_PATH)
-                print(lg_configs) 
-                # Initialize chains
-                rag.init_llm()
-                rag.init_qa_chain()
-                # Build nodes
-                workflow = rag.create_rag_nodes()
-                # Build graph
-                rag.build_rag_graph(workflow)
-
-                # create RAG chain
-                st.session_state.conversation = rag
+                st.session_state.sources_history = []
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"
                 )
 
-
-    st.title(":orange[SambaNova] Analyst Assistant")
-    user_question = st.chat_input("Ask questions about your data")
-    handle_userinput(user_question)
 
 if __name__ == "__main__":
     main()
