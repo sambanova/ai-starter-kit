@@ -83,7 +83,7 @@ def calculator(expression: str) -> Union[str, int, float]:
 
     if len(tokens) == 0:
         raise ToolException(
-            f"Invalid expression '{expression}', should only contain one of the following operators + - * and /"
+            f"Invalid expression '{expression}', should only contain one of the following operators + - * x and ÷"
         )
 
     current_value = float(tokens.pop(0))
@@ -124,17 +124,17 @@ def _handle_error(error: ToolException) -> str:
 calculator = StructuredTool.from_function(
     func=calculator,
     args_schema=CalculatorSchema,
-    handle_tool_error=_handle_error,  # True,
+    handle_tool_error=_handle_error,  # set as True if you want the tool to trow a generic ToolError message "Tool execution error"
 )
 
-## Python repl
+## Python standard shell, or REPL (Read-Eval-Print Loop)
 
 
 # tool schema
 class ReplSchema(BaseModel):
-    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...), if you need a specific module you should import it`."
+    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it."
 
-    command: str = Field(..., description='python code to execute to evaluate')
+    command: str = Field(..., description='python code to evaluate')
 
 
 # tool definition
@@ -162,7 +162,7 @@ def query_db(query):
     fine_tunned_sql_llm = 'sql_expert'
     llm = Sambaverse(
         sambaverse_model_name='Numbers Station/nsql-llama-2-7b',
-        model_kwargs={'max_tokens_to_generate': 2048, 'select_expert': fine_tunned_sql_llm, 'process_prompt': False},
+        model_kwargs={'max_tokens_to_generate': 2048, 'select_expert': fine_tunned_sql_llm},
     )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
