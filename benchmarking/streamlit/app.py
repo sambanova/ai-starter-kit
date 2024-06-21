@@ -225,7 +225,7 @@ def main():
         )
 
         st.session_state.number_concurrent_workers = st.slider(
-            "Number of concurrent workers", min_value=1, max_value=10, value=1
+            "Number of concurrent workers", min_value=1, max_value=100, value=1
         )
 
         st.session_state.timeout = st.slider(
