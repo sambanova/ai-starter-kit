@@ -1,0 +1,21 @@
+# Set the maximum line length to 120
+line-length = 120
+
+# Add the flake8-annotations rules
+select = ["ANN"]
+
+# Additional file extensions
+extend-include = ["*.ipynb"]
+
+[lint]
+# Add the `line-too-long` rule to the enforced rule set
+# By default, Ruff omits rules that overlap with the use of a formatter, like Black,
+# but we can override this behavior by explicitly adding the rule
+extend-select = ["E501"]
+
+# # TO DO: Disable fix for unused imports (`F401`)
+# unfixable = ["F401"]
+
+[format]
+# Use single quotes for non-triple-quoted strings
+quote-style = "single"

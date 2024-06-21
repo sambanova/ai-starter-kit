@@ -20,9 +20,10 @@ import os
 
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-from utils.sambanova_endpoint import SambaNovaEmbeddingModel
+from langchain_community.embeddings import SambaStudioEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
+from utils.sambanova_endpoint import  SambaNovaEmbeddingModel
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 NORMALIZE_EMBEDDINGS = True
@@ -149,7 +150,7 @@ class VectorDb():
 
         return chunks
 
-    def load_embedding_model(self, type = "cpu"):
+    def load_embedding_model(self, type = "cpu", batch_size = None ,coe = False, select_expert = None):
         """Loads embedding model
         Args:
             type (str): wether to use sambastudio embedding model or in local cpu model
@@ -158,7 +159,21 @@ class VectorDb():
         """
         
         if type == "sambastudio":
-            embeddings = SambaNovaEmbeddingModel()
+            if coe:
+                if batch_size is None:
+                    batch_size = 1
+                embeddings = SambaNovaEmbeddingModel( #TODO change to langchain embeddings whe 0.2.6 released
+                    batch_size=1,
+                    model_kwargs = {
+                        "select_expert":select_expert
+                        }
+                    )
+            else:
+                if batch_size is None:
+                    batch_size = 32
+                embeddings = SambaNovaEmbeddingModel( #TODO change to langchain embeddings whe 0.2.6 released
+                    batch_size=batch_size
+                )
         elif type == "cpu":
             encode_kwargs = {"normalize_embeddings": NORMALIZE_EMBEDDINGS}
             embedding_model = EMBEDDING_MODEL

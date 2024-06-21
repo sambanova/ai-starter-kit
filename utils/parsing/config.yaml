@@ -1,6 +1,6 @@
 processor:
   verbose: True
-  output_dir: './app/output'
+  output_dir: './output'
   num_processes: 2
 
 sources:
@@ -31,7 +31,7 @@ partitioning:
   metadata_include: []
   partition_endpoint: 'http://localhost'
   unstructured_port: 8005
-  partition_by_api: True
+  partition_by_api: False # set as true if using API server
 
 chunking:
   enabled: True
@@ -42,7 +42,7 @@ chunking:
 embedding:
   enabled: False
   provider: 'langchain-huggingface'
-  model_name: 'your_model_name'
+  model_name: 'intfloat/e5-large-v2'
 
 destination_connectors:
   enabled: False
@@ -50,8 +50,8 @@ destination_connectors:
   batch_size: 80
   chroma:
     host: 'localhost'
-    port: 8000
-    collection_name: 'your_collection_name'
+    port: 8004
+    collection_name: 'snconf'
     tenant: 'default_tenant'
     database: 'default_database'
   qdrant:
@@ -64,3 +64,4 @@ additional_processing:
   replace_table_text: True
   table_text_key: 'text_as_html'
   return_langchain_docs: True
+  convert_metadata_keys_to_string: True

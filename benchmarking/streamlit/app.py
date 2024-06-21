@@ -1,54 +1,29 @@
-import os
-
-# paths added to PYTHONPATH for Ray
-streamlit_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.dirname(streamlit_dir)
-src_dir = os.path.abspath(f"{benchmarking_dir}/src")
-llmperf_dir = os.path.abspath(f"{src_dir}/llmperf")
-os.environ["PYTHONPATH"] = (
-    streamlit_dir
-    + ":"
-    + src_dir
-    + ":"
-    + llmperf_dir
-    + ":"
-    + benchmarking_dir
-    + ":"
-    + os.environ.get("PYTHONPATH", "")
-)
-
 import sys
 
+sys.path.append("../")
 sys.path.append("./src")
 sys.path.append("./streamlit")
 
 import re
 import time
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
+
+from benchmarking.src.token_benchmark import run_token_benchmark
+
 from dotenv import load_dotenv
-import ray
-from token_benchmark_ray import run_token_benchmark
 import warnings
-import logging
 
 warnings.filterwarnings("ignore")
 
 
 @st.cache_data
-def _init_ray():
+def _init():
     load_dotenv("../.env", override=True)
-    env_vars = dict(os.environ)
-    # set log_to_driver=True to see more ray logging details
-    ray.shutdown()
-    ray.init(
-        runtime_env={"env_vars": env_vars},
-        log_to_driver=True,
-        logging_level=logging.ERROR,
-    )
 
 
 def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
@@ -142,21 +117,23 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-    mode = "stream"  # static for now
+    num_concurrent_workers = st.session_state.number_concurrent_workers
+
+    # Call benchmarking process. Static param values are intentional and still WIP.
+    mode = "stream"
+    llm_api = "sambastudio"
 
     run_token_benchmark(
-        llm_api="sambastudio",
         model=st.session_state.llm,
-        test_timeout_s=st.session_state.timeout,
+        num_input_tokens=st.session_state.input_tokens,
+        num_output_tokens=st.session_state.output_tokens,
+        timeout_s=st.session_state.timeout,
         max_num_completed_requests=st.session_state.number_requests,
-        mean_input_tokens=st.session_state.input_tokens,
-        stddev_input_tokens=st.session_state.input_tokens_std,
-        mean_output_tokens=st.session_state.output_tokens,
-        stddev_output_tokens=st.session_state.output_tokens_std,
-        num_concurrent_requests=st.session_state.number_concurrent_requests,
+        num_concurrent_workers=num_concurrent_workers,
         additional_sampling_params="{}",
         results_dir=results_path,
         user_metadata="",
+        llm_api=llm_api,
         mode=mode,
     )
 
@@ -164,9 +141,9 @@ def _run_performance_evaluation() -> pd.DataFrame:
     df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_requests}_{mode}_individual_responses.json"
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
     )
-    df_user["concurrent_user"] = st.session_state.number_concurrent_requests
+    df_user["concurrent_user"] = num_concurrent_workers
     df = pd.concat([df, df_user])
     valid_df = df[(df["error_code"] != "")]
     renamed_df = _rename_metrics_df(valid_df)
@@ -183,16 +160,12 @@ def _initialize_sesion_variables():
     # Initialize llm params
     if "input_tokens" not in st.session_state:
         st.session_state.input_tokens = None
-    if "input_tokens_std" not in st.session_state:
-        st.session_state.input_tokens_std = None
     if "output_tokens" not in st.session_state:
         st.session_state.output_tokens = None
-    if "output_tokens_std" not in st.session_state:
-        st.session_state.output_tokens_std = None
     if "number_requests" not in st.session_state:
         st.session_state.number_requests = None
-    if "number_concurrent_requests" not in st.session_state:
-        st.session_state.number_concurrent_requests = None
+    if "number_concurrent_workers" not in st.session_state:
+        st.session_state.number_concurrent_workers = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
 
@@ -211,7 +184,7 @@ def main():
         ]
     )
 
-    _init_ray()
+    _init()
     _initialize_sesion_variables()
 
     st.title(":orange[SambaNova]Performance evaluation")
@@ -222,10 +195,7 @@ def main():
         "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token. Client metric is calculated using another request with output tokens = 1."
     )
     st.markdown(
-        "**Time per output token (TPOT):** Time to generate an output token for each user that is querying the system."
-    )
-    st.markdown(
-        "**E2E Latency:** TTFT + (TPOT) * (the number of tokens to be generated)"
+        "**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated)"
     )
     st.markdown(
         "**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"
@@ -245,26 +215,17 @@ def main():
         st.session_state.input_tokens = st.slider(
             "Number of input tokens", min_value=50, max_value=2048, value=1000
         )
-        st.session_state.input_tokens_std = st.slider(
-            "Input tokens standard deviation", min_value=10, max_value=256, value=10
-        )
 
         st.session_state.output_tokens = st.slider(
             "Number of output tokens", min_value=50, max_value=2048, value=1000
-        )
-        st.session_state.output_tokens_std = st.slider(
-            "Output tokens standard deviation", min_value=10, max_value=256, value=10
         )
 
         st.session_state.number_requests = st.slider(
             "Number of total requests", min_value=10, max_value=100, value=32
         )
-        st.session_state.number_concurrent_requests = st.slider(
-            "Number of concurrent requests",
-            min_value=1,
-            max_value=50,
-            value=1,
-            help="Client TTFT and Throughput will not be available for concurrent workers greater than 1",
+
+        st.session_state.number_concurrent_workers = st.slider(
+            "Number of concurrent workers", min_value=1, max_value=100, value=1
         )
 
         st.session_state.timeout = st.slider(
@@ -279,76 +240,41 @@ def main():
         with st.spinner("Processing"):
 
             performance_eval_start = time.time()
-            df = _run_performance_evaluation()
-            performance_eval_end = time.time()
-            process_duration = performance_eval_end - performance_eval_start
-            print(
-                f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
-            )
 
-            st.subheader("TTFT, Throughput and E2E Latency scatter plots")
+            try:
 
-            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-            sns.scatterplot(
-                data=df,
-                x="number_input_tokens",
-                y="ttft",
-                hue="type",
-                ax=ax[0],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Input Tokens",
-                ylabel="Time to First Token (secs)",
-                title="TTFT vs. Number of Input Tokens",
-            )
-            ax[0].legend(title="Type")
-            sns.scatterplot(
-                data=df,
-                x="number_output_tokens",
-                y="generation_throughput",
-                hue="type",
-                ax=ax[1],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Output Tokens",
-                ylabel="Throughput (tokens/sec)",
-                title="Throughput vs. Number of Output Tokens",
-            )
-            ax[1].legend(title="Type")
-            sns.scatterplot(
-                data=df,
-                x="number_output_tokens",
-                y="e2e_latency",
-                hue="type",
-                ax=ax[2],
-                alpha=0.5,
-            ).set(
-                xlabel="Number of Output Tokens",
-                ylabel="E2E Latency (secs)",
-                title="Latency vs. Number of Output Tokens",
-            )
-            ax[2].legend(title="Type")
-            st.pyplot(fig)
+                df = _run_performance_evaluation()
 
-            st.subheader("TTFT, Throughput and E2E Latency box plots")
+                performance_eval_end = time.time()
+                process_duration = performance_eval_end - performance_eval_start
+                print(
+                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
+                )
 
-            fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-            sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
-                xlabel="Time to First Token (secs)",
-                ylabel="Type",
-                title="Time to First Token Distribution",
-            )
-            sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
-                xlabel="E2E Latency (secs)",
-                ylabel="Type",
-                title="End-to-end Latency Distribution",
-            )
-            sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
-                xlabel="Throughput (tokens/sec)",
-                ylabel="Type",
-                title="Throughput Distribution",
-            )
-            st.pyplot(fig)
+                st.subheader("TTFT, Throughput and E2E Latency box plots")
+
+                fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
+                sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
+                    xlabel="Time to First Token (secs)",
+                    ylabel="Type",
+                    title="Time to First Token Distribution",
+                )
+                sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
+                    xlabel="E2E Latency (secs)",
+                    ylabel="Type",
+                    title="End-to-end Latency Distribution",
+                )
+                sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
+                    xlabel="Throughput (tokens/sec)",
+                    ylabel="Type",
+                    title="Throughput Distribution",
+                )
+                st.pyplot(fig)
+
+            except Exception as e:
+                st.error(
+                    f"Error: {e}. For more error details, please look at the terminal."
+                )
 
 
 if __name__ == "__main__":
