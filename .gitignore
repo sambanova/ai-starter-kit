@@ -223,13 +223,18 @@ multimodal_knowledge_retriever/data/upload
 #web crawled retriever data
 web_crawled_data_retriever/data/
 
+=======
+# benchmarking data
+benchmarking/data
+benchmarking/debug
 
-
+=======
 #evals
 eval_jumpstart/data
 eval_jumpstart/notebooks/wandb
 utils/eval/res.csv
 utils/eval/tepsys_eng_tran.csv
 
+=======
 #wandb
 wandb/

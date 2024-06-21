@@ -19,6 +19,10 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 
 <table style="width: 100%;">
 <tbody>
+</tr><td width="25%"><a href="code_copilot/README.md">Benchmarking</a> 
+</td>
+<td width="75%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface. </td>
+</tr>
 </tr><td width="25%"><a href="code_copilot/README.md">Code Copilot</a> 
 </td>
 <td width="75%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>

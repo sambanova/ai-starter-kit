@@ -1,16 +1,13 @@
 import json
-import math
-import pathlib
-import random
-import subprocess
 import time
 from typing import Any, Dict, Tuple
-import warnings
 
-from transformers import LlamaTokenizerFast
+from transformers import AutoTokenizer
 
 RESULTS_VERSION = "2023-08-31"
-NUM_RNG_ATTEMPTS = 10 # Unlikely to be used in practice: prevents eternal WHILE-loops
+NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
+MODEL_TYPE_IDENTIFIER = {"mistral": "mistral", "llama3": "llama-3"}
+
 
 class LLMPerfResults:
     """Class with LLM Performance results"""
@@ -50,141 +47,123 @@ class LLMPerfResults:
         return json.dumps(data)
 
 
-def upload_to_s3(results_path: str, s3_path: str) -> None:
-    """Upload the results to s3.
+def get_tokenizer(model_name: str) -> AutoTokenizer:
+    """Gets generic tokenizer according to model type
 
     Args:
-        results_path: The path to the results file.
-        s3_path: The s3 path to upload the results to.
+        model_name (str): model name
+
+    Returns:
+        AutoTokenizer: generic HuggingFace tokenizer
     """
 
-    command = ["aws", "s3", "sync", results_path, f"{s3_path}/"]
-    result = subprocess.run(command)
-    if result.returncode == 0:
-        print("Files uploaded successfully!")
+    # Using NousrResearch for calling out model tokenizers without requesting access. Ref: https://huggingface.co/NousResearch
+    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower():
+        tokenizer = AutoTokenizer.from_pretrained(
+            "NousResearch/Hermes-2-Pro-Mistral-7B"
+        )
+    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
+        tokenizer = AutoTokenizer.from_pretrained("NousResearch/Meta-Llama-3-8B")
     else:
-        print("An error occurred:")
-        print(result.stderr)
+        tokenizer = AutoTokenizer.from_pretrained("NousResearch/Llama-2-7b-chat-hf")
+    return tokenizer
 
 
-def randomly_sample_sonnet_lines_prompt(
+def build_prompt_user(
+    prompt_user_template: str,
+    prompt_user_template_tokens: int,
+    tokens_to_complement: int,
+) -> str:
+    """Builds a prompt based on template and tokens needed
+
+    Args:
+        prompt_user_template (str): prompt template
+        prompt_user_template_tokens (int): prompt template's number of tokens
+        tokens_to_complement (int): number of tokens needed
+
+    Returns:
+        str: prompt of user
+    """
+    offset = 3
+    tokens_to_complement = tokens_to_complement + prompt_user_template_tokens * offset
+    prompt_user = "".join(
+        [prompt_user_template * (tokens_to_complement // prompt_user_template_tokens)]
+    )
+    prompt_user += prompt_user_template[
+        : (tokens_to_complement % prompt_user_template_tokens)
+    ]
+    return prompt_user
+
+
+def build_prompt(
     model_name: str,
-    prompt_tokens_mean: int = 550,
-    prompt_tokens_stddev: int = 250,
-    expect_output_tokens: int = 150,
+    prompt_tokens: int,
+    num_output_tokens: int,
 ) -> Tuple[str, int]:
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
     Args:
-        model: name of the model
-        prompt_tokens_mean: The mean tokens of the prompt to generate.
-        prompt_tokens_stddev: The standard deviation of the tokens of the prompt to generate.
-        expect_output_tokens: The number of tokens to expect in the output. This is used to
-        determine the length of the prompt. The prompt will be generated such that the output
-        will be approximately this many tokens.
-
-    Note:
-        tokens will be counted from the sonnet using the Llama tokenizer. Using one tokenizer
-        ensures a fairer comparison across different LLMs. For example, if gpt 3.5 tokenizes
-        a prompt in less tokens than Llama2, then this will be reflected in the results since
-        they will be fed identical prompts.
+        model_name (str): name of the model
+        prompt_tokens (int): The number of tokens of the prompt to generate.
 
     Returns:
-        A tuple of the prompt and the length of the prompt.
+        Tuple[str, int]: A tuple of the prompt and the length of the prompt.
     """
 
-    tokenizer = LlamaTokenizerFast.from_pretrained(
-        "hf-internal-testing/llama-tokenizer"
-    )
-
+    # Get tokenizer
+    tokenizer = get_tokenizer(model_name)
     get_token_length = lambda text: len(tokenizer.encode(text))
 
-    llama3_type_name = "llama-3"
-    if llama3_type_name in model_name.lower():
-        prompt = (
-            "<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant that generates prompts for LLMs. <|eot_id|>"
-            f"<|start_header_id|>user<|end_header_id|> Randomly stream lines from the following text with {expect_output_tokens} output tokens. Don't generate eot tokens:\n\nAnswer: <|eot_id|>"
-            "<|start_header_id|>assistant<|end_header_id|>"
+    # Define prompt template
+    prompt_user_template = "Create a movie script of the whole Star Wars movie with details. Describe how every character felt, include environment details and onomatopoeias."
+    prompt_user_template_tokens = get_token_length(prompt_user_template)
+
+    num_prompt_tokens = prompt_tokens
+
+    # Prompt for Mistral models
+    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower():
+
+        tokens_to_complement = num_prompt_tokens
+
+        prompt_user = build_prompt_user(
+            prompt_user_template,
+            prompt_user_template_tokens,
+            tokens_to_complement,
         )
+
+        prompt = "[INST]" + prompt_user + "[/INST]"
+
+    # Prompt for Llama3 models
+    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
+
+        prompt_system = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<|eot_id|>"
+        tokens_to_complement = num_prompt_tokens - get_token_length(prompt_system)
+        prompt_user = build_prompt_user(
+            prompt_user_template,
+            prompt_user_template_tokens,
+            tokens_to_complement,
+        )
+        prompt = (
+            prompt_system
+            + "<|start_header_id|>user<|end_header_id|>"
+            + prompt_user
+            + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+        )
+
+    # Prompt for Llama2 and other models
     else:
-        prompt = (
-            "<INST> <SYSTEM> You are an assistant that generates prompts for LLMs. </SYSTEM>\nRandomly stream lines from the following text "
-            f"with {expect_output_tokens} output tokens. "
-            "Don't generate eos tokens:\n\n </INST>"
+
+        prompt_system = f"[INST]<<SYS>>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<</SYS>>"
+        tokens_to_complement = num_prompt_tokens - get_token_length(prompt_system)
+        prompt_user = build_prompt_user(
+            prompt_user_template,
+            prompt_user_template_tokens,
+            tokens_to_complement,
         )
+        prompt = prompt_system + prompt_user + "[/INST]"
 
-    # Get a prompt length that is at least as long as the base prompt
-    # n.b.: this means that we are not actually sampling from the Normal distribution but rather from a _censored_
-    #   Normal distribution. This will not necessarily have the requested mean and STD, but the difference is negligible 
-    #   when the mean (minus an STD or 3) is much larger than the base prompt length (i.e.: about 122 tokens for Llama-3 
-    #   model and about 57 tokens otherwise)
-    num_prompt_tokens = -1
-    num_attempts = 0
-    while num_prompt_tokens < get_token_length(prompt):
-        num_prompt_tokens = sample_random_positive_int(
-            prompt_tokens_mean, prompt_tokens_stddev
-        )
-        num_attempts += 1
-        if num_attempts > NUM_RNG_ATTEMPTS:
-            warnings.warn(
-                f"Could not generate a long enough prompt after {NUM_RNG_ATTEMPTS} attempts. \n"
-                f"Consider increasing prompt_tokens_mean (currently: {prompt_tokens_mean}). "
-                f"Returning the default prompt instead."
-                )
-            num_prompt_tokens = get_token_length(prompt)
-            break
+    return (prompt, get_token_length(prompt))
 
-    sonnet_path = pathlib.Path(__file__).parent.resolve() / "sonnet.txt"
-    with open(sonnet_path, "r") as f:
-        sonnet_lines = f.readlines()
-    random.shuffle(sonnet_lines)
-
-    # Because there isn't a 1:1 correspondence between text characters and tokens,
-    # it could be impossible to get exactly the number of input tokens requested.
-    # The following is guaranteed to return, will usually get things exactly correct,
-    # and very occasionally might generate a few tokens more than requested.
-    while num_prompt_tokens > get_token_length(prompt):
-        for line in sonnet_lines:
-            new_prompt = prompt + line
-            new_tokens = get_token_length(new_prompt)
-            if num_prompt_tokens > new_tokens:
-                prompt = new_prompt
-            elif num_prompt_tokens == new_tokens:
-                prompt = new_prompt
-                return (prompt, num_prompt_tokens)
-            else:
-                for character in line:
-                    prompt += character
-                    if num_prompt_tokens <= get_token_length(prompt):
-                        return (prompt, num_prompt_tokens)
-
-    return (prompt, num_prompt_tokens)
-
-
-def sample_random_positive_int(mean: int, stddev: int) -> int:
-    """Sample random numbers from a gaussian distribution until a positive number is sampled.
-
-    Args:
-        mean: The mean of the gaussian distribution to sample from.
-        stddev: The standard deviation of the gaussian distribution to sample from.
-
-    Returns:
-        A random positive integer sampled from the gaussian distribution.
-    """
-
-    ret = -1
-    num_attempts = 0
-    while ret <= 0:
-        ret = int(random.gauss(mean, stddev))
-        num_attempts += 1
-        if num_attempts > NUM_RNG_ATTEMPTS:
-            warnings.warn(
-                f"Could not generate a random, positive integer after {NUM_RNG_ATTEMPTS} attempts. \n"
-                f"Check your choices for mean (currently: {mean}) and stddev (currently: {stddev}). "
-                f"Returning 1 instead."
-                )
-            return 1
-    return ret
 
 def flatten_dict(d: dict, parent_key: str = "", sep: str = "_") -> dict:
     """Flattens dictionary
