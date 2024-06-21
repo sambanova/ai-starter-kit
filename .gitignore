@@ -215,6 +215,7 @@ utils/parsing/confluence-ingest-output
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
 enterprise_knowledge_retriever/app/output
+enterprise_knowledge_retriever/output
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload

@@ -4,17 +4,14 @@ import yaml
 import fitz
 import torch
 from dotenv import load_dotenv
-from PyPDF2 import PdfReader
 from typing import Any, Dict, List, Optional
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from langchain.chains.base import Chain
 from langchain.prompts import BasePromptTemplate,  load_prompt
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.language_models import BaseLanguageModel
-from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain.docstore.document import Document
 import shutil
@@ -122,8 +119,7 @@ class DocumentRetrieval():
         self.llm_info =config_info[1] 
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
-        self.loaders = config_info[4]
-        self.prompts = config_info[5]
+        self.prompts = config_info[4]
         self.retriever = None
         self.llm=self.set_llm()
 
@@ -138,43 +134,44 @@ class DocumentRetrieval():
         llm_info =  config["llm"]
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
-        loaders = config["loaders"]
         prompts = config["prompts"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, loaders, prompts
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts
     
 
     def set_llm(self):
         if self.api_info == "sambaverse":
             llm = Sambaverse(
-                    sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                    sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-                    model_kwargs={
-                        "do_sample": False, 
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "temperature": self.llm_info["temperature"],
-                        "process_prompt": True,
-                        "select_expert": self.llm_info["sambaverse_select_expert"]
-                        #"stop_sequences": { "type":"str", "value":""},
-                        # "repetition_penalty": {"type": "float", "value": "1"},
-                        # "top_k": {"type": "int", "value": "50"},
-                        # "top_p": {"type": "float", "value": "1"}
-                    }
-                )
-            
-        elif self.api_info == "sambastudio":
-            llm = SambaStudio(
+                sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
                 model_kwargs={
-                    "do_sample": False,
-                    "temperature": self.llm_info["temperature"],
+                    "do_sample": False, 
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
+                    "temperature": self.llm_info["temperature"],
+                    "process_prompt": True,
+                    "select_expert": self.llm_info["select_expert"]
                 }
             )
-        
+        elif self.api_info == "sambastudio":
+            if self.llm_info["coe"]:
+                llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                        "do_sample": False,
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "select_expert": self.llm_info["select_expert"]
+                    }
+                )
+            else:
+                llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                        "do_sample": False,
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
+                    }
+                )
         return llm
             
 
@@ -221,7 +218,12 @@ class DocumentRetrieval():
 
 
     def load_embedding_model(self):
-        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info) 
+        embeddings = self.vectordb.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
         return embeddings  
 
     def create_vector_store(self, text_chunks, embeddings, output_db=None):
