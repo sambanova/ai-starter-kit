@@ -1,0 +1,30 @@
+version: '3.9'
+
+networks:
+  net:
+    driver: bridge
+
+services:
+  unstructured-api:
+    image: downloads.unstructured.io/unstructured-io/unstructured-api:latest
+    command: --port 8000 --host 0.0.0.0
+    ports:
+      - "${UNSTRUCTURED_PORT:-8005}:8000"
+    env_file:
+      - ../../.env
+
+    networks:
+      - net
+
+  chromadb:
+    image: chromadb/chroma:latest
+    volumes:
+      - ./chromadb:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-TRUE}
+    ports:
+      - "${CHROMA_PORT:-8004}:8000"
+    networks:
+      - net

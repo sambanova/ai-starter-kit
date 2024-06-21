@@ -23,7 +23,7 @@ Benchmarking
         - [Using streamlit app](#using-streamlit-app)
         - [Using terminal](#using-terminal)
     - [Performance on chat workflow](#performance-on-chat-workflow)
-- [Customizing the template](#customizing-the-starter-kit)
+- [Batching vs non-batching benchmarking](#batching-vs-non-batching-benchmarking)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -58,6 +58,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 ## Set up the account and config file
 
 1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+
 2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
     ```env
     # SambaStudio endpoint URLs follow the format:
@@ -70,9 +71,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     API_KEY="your-samba-studio-model-apikey"
     ```
 
-3. Open the [config file](./config.yaml) and ensure that the key `api` is set to the value `sambastudio`
-
-4. (Optional) If you are planning to use the `run.sh` bash process, ensure that its `--llm-api` parameter is set to `sambastudio`. More details about the bash process will be covered later.
+3. (Optional) If you are planning to use the `run.sh` bash process. More details about the bash process will be covered later.
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it: 
@@ -96,7 +95,7 @@ streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 After deploying the starter kit, you will see the following user interface:
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+![perf_eval_image](./imgs/performance_eval.png)
 
 ## Use the starter kit 
 
@@ -116,7 +115,7 @@ There are two options that users can choose from. The first one is running the p
 
 Choose the option `Performance evaluation` on the left side bar, the following interface shows up: 
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_eval.png)
+![perf_eval_image](./imgs/performance_eval.png)
 
 In order to use this functionality, please follow the steps below:
 
@@ -128,12 +127,12 @@ Under the section `Configuration`, users need to introduce the LLM model that wi
 
 Different LLM parameters are available for experimentation, directly related to the previously introduced LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
 
-- Number of input tokens: average number of input tokens. Default value: 250.
-- Input tokens standard deviation: standard deviation of input tokens. Default value: 50.
-- Number of output tokens: average number of output tokens. Default value: 250.
-- Output tokens standard deviation: standard deviation of output tokens. Default value: 50.
-- Number of total requests: maximum number of completed requests. Default value: 50 
-- Number of concurrent requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available. If this parameter is greater than 1, then Time to First Token (TTFT) and Throughput won't be available.
+- Number of input tokens: average number of input tokens. Default value: 1000.
+- Input tokens standard deviation: standard deviation of input tokens. Default value: 10.
+- Number of output tokens: average number of output tokens. Default value: 1000.
+- Output tokens standard deviation: standard deviation of output tokens. Default value: 10.
+- Number of total requests: maximum number of completed requests. Default value: 32. 
+- Number of concurrent workers: number of concurrent workers. Default value: 1. 
 - Timeout: time when the process will stop. Default value: 600 seconds
 
 3. Run the performance evaluation process
@@ -144,17 +143,9 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     _Note: Not all model endpoints currently support the calculation of server-side statistics. Depending on your choice of endpoint, then, you may see either client and server information, or you may see just the client-side information._
 
-    **Scatter plots**
-
-    One part of the results is composed of three scatter plots. 
-
-    - Number of Input Tokens vs TTFT: users should expect to see relatively stable TTFT values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-    - Number of Output Tokens vs Throughput: users should expect to see relatively stable Throughput values across different number of input tokens for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-    - Number of Output Tokens vs Latency: users should expect to see a linear relationship between number of output tokens and throughput values for Server (if available) and Client side numbers. Also, Server and Client values should be fairly close.
-
     **Box plots**
 
-    The second part of the results is composed by three box plots. 
+    The second part of the results is composed by three box plots. (Performance metric values are based on a SambaTurbo endpoint.)
 
     - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
     - End-to-End Latency Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
@@ -172,11 +163,9 @@ Users have this option if they want to experiment using values that are beyond t
    - mean-output-tokens: average number of output tokens. It's recommended to choose no more than 1024 tokens to avoid long waitings. Default value: 1000.
    - stddev-output-tokens: standard deviation of output tokens. It's recommended to choose no more than 50% the amount of output tokens. Default value: 10.
    - max-num-completed-requests: maximum number of completed requests. Default value: 32 
+   - num-concurrent-workers: number of concurrent workers. Default value: 1. 
    - timeout: time when the process will stop. Default value: 600 seconds
-   - num-concurrent-requests: number of concurrent workers. Currently, using just 1 is suggested since all performance metrics will be available.
    - results-dir: path to the results directory. Default value: "./data/results/llmperf"
-   - llm-api: currently only supporting Sambanova Studio's models. Default value: "sambastudio"
-   - mode: whether the generation is in stream or batch mode. Default value: "stream" 
    - additional-sampling-params: additional params for LLM. Default value: '{}'
 
 2. Run the following command in terminal. The performance evaluation process will start running and a progress bar will be shown until it is done.
@@ -185,21 +174,31 @@ Users have this option if they want to experiment using values that are beyond t
 sh run.sh
 ```
 
-3. Review and analyze results. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode. Besides, for each run, two files are generated with the following suffixes: `individual_responses` and `summary`.
+3. Review and analyze results. Results will be saved in `results-dir` location, and the name of the output files will depend on the model name, number of mean input/output tokens, number of concurrent workers, and generation mode, like the following:
+
+```
+<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_WORKERS}_{MODE}
+```
+
+For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
 
 - Individual responses file 
 
 This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-token-benchmark-results.ipynb` with some charts that they can use to start.
 
+![individual_responses_image](./imgs/perf_eval_individual_responses_output.png)
+
 - Summary file
 
-This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute.
+This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute. 
+
+![summary_output_image](./imgs/perf_eval_summary_output.png)
 
 ### Performance on chat workflow
 
 Choose the option `Performance on chat` on the left side bar, the following interface shows up: 
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat.png)
+![perf_on_chat_image](./imgs/performance_on_chat.png)
 
 In order to use this functionality, please follow the steps below:
 
@@ -228,9 +227,34 @@ Users are able to ask anything and get a generated answer of their questions, as
 - Latency (s)
 - Throughput (tokens/s)
 - Time to first token (s)
-- Time per output token (ms)
 
-![capture of enterprise_knowledge_retriever_demo](./imgs/performance_on_chat_results.png)
+![perf_on_chat_image](./imgs/performance_on_chat_results.png)
+
+# Batching vs non-batching benchmarking
+
+This kit also supports SambaNova Studio models with Dynamic Batch Size, which improves the model performance significantly. 
+
+In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that. 
+
+About results, users will notice an increase in latency per request, but a higher number of completed requests per minute, compared against non-batching models. Moreover, overall throughput will be higher, and end-to-end latency of the whole process lower.
+
+Here's an example using a Meta-Llama-3-8B-Instruct endpoting with dynamic batching size.
+
+Non-batching setup
+- Parameters:
+  - Number of requests: 32
+  - Number of concurrent workers: 1
+- Results:
+  - Overall Output Throughput: 321.23 tokens/s
+  - Completed Requests Per Minute: 19.27 
+
+Batching setup
+- Parameters:
+  - Number of requests: 32
+  - Number of concurrent workers: 32
+- Results:
+  - Overall Output Throughput: 810.48 tokens/s
+  - Completed Requests Per Minute: 48.63
 
 # Third-party tools and data sources 
 
@@ -238,7 +262,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (version 1.34.0)
 - st-pages (version 0.4.5)
-- ray (version 2.22.0)
+- [llmperf framework](](https://github.com/ray-project/llmperf))
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
