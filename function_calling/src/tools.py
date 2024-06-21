@@ -81,19 +81,19 @@ def calculator(expression: str) -> Union[str, int, float]:
     }
     tokens = re.findall(r'\d+\.?\d*|\+|\-|\*|\/|÷|x|X', expression)
 
-    if not tokens:
+    if len(tokens) == 0:
         raise ToolException(
             f"Invalid expression '{expression}', should only contain one of the following operators + - * and /"
         )
 
     current_value = float(tokens.pop(0))
 
-    while tokens:
+    while len(tokens) > 0:
         # The next token should be an operator
         op = tokens.pop(0)
 
         # The next token should be a number
-        if not tokens:
+        if len(tokens) == 0:
             raise ToolException(f"Incomplete expression '{expression}'")
         try:
             next_value = float(tokens.pop(0))
@@ -110,7 +110,9 @@ def calculator(expression: str) -> Union[str, int, float]:
 
         current_value = ops[op](current_value, next_value)
 
-    return current_value
+    result = current_value
+
+    return result
 
 
 # tool error handler
