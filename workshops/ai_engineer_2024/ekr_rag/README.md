@@ -104,7 +104,6 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
     ``` bash
         SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-        SAMBASTUDIO_BASE_URI="api/predict/generic"
         SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
         SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
         SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
@@ -134,7 +133,6 @@ NOTE: Be sure to set batch size model parameter to 32.
 
         ```bash
             EMBED_BASE_URL="https://api-stage.sambanova.net"
-            EMBED_BASE_URI="api/predict/generic"
             EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
             EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
             EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
