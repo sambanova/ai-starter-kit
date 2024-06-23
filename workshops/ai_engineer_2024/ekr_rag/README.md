@@ -16,7 +16,6 @@ Table of Contents:
 
 <!-- TOC -->
 
-- [Enterprise Knowledge Retrieval](#enterprise-knowledge-q&a-with-rag)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
