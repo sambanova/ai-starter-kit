@@ -10,7 +10,7 @@ Basic Examples
 
 # Overview
 
-In this quickstart, we will show you how to load environment variables, initialize the LLM, and do a simple LLM call via SambaNova with LangChain in Python. We provide the following Jupyter notebooks:
+In this quickstart, we will show you how to load environment variables, initialize the LLM, and do a simple LLM call plus some prompting via SambaNova with LangChain in Python. We provide the following Jupyter notebooks:
 - `example_with_sambastudio.ipynb` (**recommended for the workshop**): using SambaStudio API key.
 - `example_with_sambaverse.ipynb`: using Sambaverse API key.
   
