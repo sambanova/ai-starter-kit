@@ -370,20 +370,19 @@ The starter kit uses a LLM model in SambaStudio. You can fine tune the SambaStud
 
 ## Experiment with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from Llama-3-8B-Instruct, where `question` is the user query and `context` is the documents retrieved by the retriever.
 
 ```python
-custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
-
-{context}    
-
-Question: {question}
-
-Helpful answer: [/INST]"""
-
-CUSTOMPROMPT = PromptTemplate(
-template=custom_prompt_template, input_variables=["context", "question"]
-)
+template: "<|begin_of_text|><|start_header_id|>system<|end_header_id|> \
+  \ You are a helpful assistant for question-answering tasks.\
+  \ Use the following pieces of retrieved context to answer the question.\n   \
+  \ each piece of context includes the Source for reference\n   if the question \
+  \ references a specific source then filter out that source and give a response based on that source\n   If\
+  \ the answer is not in the context, say that you don't know. Cross check if the\
+  \ answer is contained in provided context. If not than say \"I do not have information\
+  \ regarding this.\n    Do not use images or emojis in your answer. Keep the answer\
+  \ conversational and professional.<|eot_id|> <|start_header_id|>user<|end_header_id|> \n\n    {context} \n    \n    Question:\
+  \ {question} \n    Helpful answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
 ```
 
 You can make modifications in the following location:
