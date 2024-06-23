@@ -172,22 +172,34 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
 1. Install and update pip:
 
     ```bash
-    cd ai_starter_kit/enterprise_knowledge_retriever
+    cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
     python3 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
     ```
 
-2. To open the notebook, do:
-   
-   ```bash
-   jupyter notebook notebooks/rag_lcel.ipynb
+2. To run the Jupyter notebook, do:
+ 
+   - Create a folder `data/tmp` under `ekr_rag` and place the PDF you want to process
+     
+   ```bash 
+   cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
+   mkdir data/tmp
+   ```
+
+   - Open the notebook `notebooks/rag_lcel.ipynb` and specify the document you want to process. For example: 
+
+   ```bash 
+   # Specify PDF file
+   pdf_file = kit_dir + '/data/tmp/2405.07518v1_1page.pdf'
    ```
    
-3. To open the Streamlit app, do:
+   - Start executing each cell in the notebook.
+   
+4. To run the Streamlit app, do:
    
    ```bash
-   streamlit run streamlit/app.py --browser.gatherUsageStats false
+   streamlit run streamlit/app.py
    ```
 
 After deploying the starter kit you see the following user interface:
