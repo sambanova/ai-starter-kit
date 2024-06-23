@@ -21,7 +21,7 @@ Table of Contents:
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
         - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
-- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
+- [Deploy the starter kit](#deploy-the-starter-kit)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
 - [Use the starter kit](#use-the-starter-kit)
@@ -161,15 +161,15 @@ Go to  the [parser util readme](../utils/parsing/README.md), and follow the inst
 
 > Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
 
-# Deploy the starter kit GUI
+# Deploy the starter kit
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or conda environment (or use a container). The kit is based on a simple [LCEL](https://python.langchain.com/v0.1/docs/expression_language/) implementation and is available either in a Jupyter notebook or Streamlit app (GUI-based). 
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment:
+If you want to use virtualenv or conda environment (we recommend Python 3.10.11 or higher):
 
-1. Install and update pip.
+1. Install and update pip:
 
     ```bash
     cd ai_starter_kit/enterprise_knowledge_retriever
@@ -178,21 +178,17 @@ If you want to use virtualenv or conda environment:
     pip  install  -r  requirements.txt
     ```
 
-2. Run the following command:
-
-    > This kit can be deployed using either a simple [LCEL]() implementation or a [LangGraph]() implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
-
-    - LCEL version
-
-        ```bash
-            streamlit run streamlit/app.py --browser.gatherUsageStats false 
-        ```
-
-    - LangGraph version
-
-        ```bash
-            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
-        ```
+2. To open the notebook, do:
+   
+   ```bash
+   jupyter notebook notebooks/rag_lcel.ipynb
+   ```
+   
+3. To open the Streamlit app, do:
+   
+   ```bash
+   streamlit run streamlit/app.py --browser.gatherUsageStats false
+   ```
 
 After deploying the starter kit you see the following user interface:
 
