@@ -28,10 +28,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     SAMBASTUDIO_API_KEY="62096281-a7a3-48cd-8af0-54a6fd82158b"
     ```
 
-2. Update `pip` and install dependencies. It is recommended to use a virtual env or conda environment for installation. For example: 
+2. Update `pip` and install dependencies. It is recommended to use a virtual env or conda environment for installation, and Python version 3.10.11 or higher. For example: 
 ```
 cd ai-starter-kit/workshops/ai_engineer_2024/basic_examples
-conda create -n basic_ex python=3.10
+conda create -n basic_ex python=3.10.11
 conda activate basic_ex
 pip  install  -r  requirements.txt
 ```
