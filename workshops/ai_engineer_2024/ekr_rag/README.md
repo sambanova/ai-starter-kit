@@ -17,7 +17,7 @@ Table of Contents:
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+        - [Setup for SambaStudio users (recommended)](#setup-for-sambastudio-users-recommended)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
         - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
@@ -73,7 +73,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 The next step sets you up to use one of the models available from SambaNova. It depends on whether you're using SambaStudio or Sambaverse.
 
-### Setup for SambaStudio users
+### Setup for SambaStudio users (recommended)
  
 1. In the repo root directory, find or create the .env file in `ai-starter-kit/.env` and specify the SambaStudio API key and endpoint info (to be provided during the workshop):
    - Assume you have an endpoint with the URL:
