@@ -9,9 +9,6 @@
 Enterprise Knowledge Q&A with RAG
 ======================
 
-Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us</a> on Discord <a href="https://discord.gg/XF5Sf2sa" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
-
-
 Table of Contents:
 
 <!-- TOC -->
@@ -20,11 +17,11 @@ Table of Contents:
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file](#set-up-the-account-and-config-file)
+        - [Setup for SambaStudio users (recommended)](#setup-for-sambastudio-users-recommended)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
-        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
         - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
-- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
+- [Deploy the starter kit](#deploy-the-starter-kit)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
 - [Use the starter kit](#use-the-starter-kit)
@@ -74,41 +71,35 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
+The next step sets you up to use one of the models available from SambaNova. It depends on whether you're using SambaStudio or Sambaverse.
+
+### Setup for SambaStudio users (recommended)
+ 
+1. In the repo root directory, find or create the .env file in `ai-starter-kit/.env` and specify the SambaStudio API key and endpoint info (to be provided during the workshop):
+   - Assume you have an endpoint with the URL:
+  "https://sjc3-e2.sambanova.net/api/predict/generic/348281f6-4c62-4c39-b15a-4a9e3a9bbfef/cca1567d-0426-4967-9037-8255dee33f4d":
+  
+   - You can enter the following in the env file:
+
+    ``` bash
+    SAMBASTUDIO_BASE_URL="https://sjc3-e2.sambanova.net/"
+    SAMBASTUDIO_PROJECT_ID="348281f6-4c62-4c39-b15a-4a9e3a9bbfef"
+    SAMBASTUDIO_ENDPOINT_ID="cca1567d-0426-4967-9037-8255dee33f4d"
+    SAMBASTUDIO_API_KEY="62096281-a7a3-48cd-8af0-54a6fd82158b"
+    ```
+
+2. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `coe` and `select_expert` configs and save the file
 
 ### Setup for Sambaverse users 
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find or create the .env config file in `ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example: 
+1. Create a Sambaverse account at [Sambaverse](https://sambaverse.sambanova.ai/) and get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button)
+2. Update the `ai-starter-kit/.env` file in the root repo directory. Here's an example 
 
     ```bash
         SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
 
 4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`, and set the `sambaverse_model_name`  and `select_expert` configs.
-
-### Setup for SambaStudio users
-
-To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
-
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
-
-    - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-
-    - You can enter the following in the env file (with no spaces):
-
-    ``` bash
-        SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-        SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-        SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-        SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
-
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
 
 ### Update the Embedding API information
 
@@ -122,7 +113,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
-NOTE: Be sure to set batch size model parameter to 32.
+NOTE: Be sure to set batch size model parameter to 32 if using a non-coe endpoint
 
 1. Update API information for the SambaNova embedding endpoint in the **`ai-starter-kit/.env`** file in the root repo directory. For example:
 
@@ -137,11 +128,11 @@ NOTE: Be sure to set batch size model parameter to 32.
             EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
         ```
 
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
+2. In the [config file](./config.yaml), set the variable `type` under `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according to your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
     > 
-    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+    > You can see the difference in how they are set in the [vectordb.py file](../../../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 ### Install system dependencies
 
@@ -170,15 +161,15 @@ Go to  the [parser util readme](../utils/parsing/README.md), and follow the inst
 
 > Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
 
-# Deploy the starter kit GUI
+# Deploy the starter kit
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or conda environment (or use a container). The kit is based on a simple [LCEL](https://python.langchain.com/v0.1/docs/expression_language/) implementation and is available either in a Jupyter notebook or Streamlit app (GUI-based). 
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment:
+If you want to use virtualenv or conda environment (we recommend Python 3.10.11 or higher):
 
-1. Install and update pip.
+1. Install and update pip:
 
     ```bash
     cd ai_starter_kit/enterprise_knowledge_retriever
@@ -187,21 +178,17 @@ If you want to use virtualenv or conda environment:
     pip  install  -r  requirements.txt
     ```
 
-2. Run the following command:
-
-    > This kit can be deployed using either a simple [LCEL]() implementation or a [LangGraph]() implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
-
-    - LCEL version
-
-        ```bash
-            streamlit run streamlit/app.py --browser.gatherUsageStats false 
-        ```
-
-    - LangGraph version
-
-        ```bash
-            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
-        ```
+2. To open the notebook, do:
+   
+   ```bash
+   jupyter notebook notebooks/rag_lcel.ipynb
+   ```
+   
+3. To open the Streamlit app, do:
+   
+   ```bash
+   streamlit run streamlit/app.py --browser.gatherUsageStats false
+   ```
 
 After deploying the starter kit you see the following user interface:
 
