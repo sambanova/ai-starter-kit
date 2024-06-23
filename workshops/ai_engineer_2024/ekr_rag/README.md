@@ -275,7 +275,7 @@ Different packages are available to extract text from different file documents. 
 - Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
 Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
 
-You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md).
+You can find examples of the usage of these loaders in the [Data extraction starter kit](../../../data_extraction/README.md).
 
 This enterprise knowledge retriever kit includes a custom implementation of unstructured loader that isd able to load files from the following extensions: `[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]`
 
@@ -285,7 +285,7 @@ This enterprise knowledge retriever kit includes a custom implementation of unst
    function: parse_doc
 ```
 
-* You can also modify several parameters in the loading strategies changing the config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
+* You can also modify several parameters in the loading strategies changing the config in the [../../../utils/parsing/config.yaml](../../../utils/parsing/config.yaml) se more [here](../../../utils/parsing/README.md)
 
 ## Split Data
 
@@ -293,7 +293,7 @@ You can experiment with different ways of splitting the data, such as splitting 
 
 The `chunking` inside the parser utils config, which is used in this starter kit, can be further customized using the `chunk_max_characters` and `chunk_overlap` parameters. For LLMs with a long sequence length, use a larger value of `chunk_max_characters` to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
-* You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
+* You can modify this and other parameters in the `chunking` config in the [../../../utils/parsing/config.yaml](../../../utils/parsing/config.yaml) se more [here](../../../utils/parsing/README.md)
 
 ## Embed data
 
@@ -317,7 +317,7 @@ file: app.py
 function: create_vector_store
 ```
 
-For details about the SambaStudio hosted embedding models see the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md)
+For details about the SambaStudio hosted embedding models see the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../../../README.md)
 
 ## Retrieval and Reranking
 
@@ -342,7 +342,7 @@ and the implementation can be customized in file: [document_retrieval.py](src/do
 function: get_qa_retrieval_chain
 ```
 
-or in [utils/rag/rag_components.py](../utils/rag/rag_components.py) for LangGraph implementation
+or in [utils/rag/rag_components.py](../../../utils/rag/rag_components.py) for LangGraph implementation
 
 ``` python
 function: retrieve
