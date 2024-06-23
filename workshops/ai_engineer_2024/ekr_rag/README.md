@@ -180,18 +180,13 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
 
 2. To run the Jupyter notebook, do:
  
-   - Create a folder `data/tmp` under `ekr_rag` and place the PDF you want to process
-     
-   ```bash 
-   cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
-   mkdir data/tmp
-   ```
+   - Create a folder `data/tmp/` under the `ekr_rag` directory. Place the PDF document you want to process in this folder (you can also place the document in any other location).
 
    - Open the notebook `notebooks/rag_lcel.ipynb` and specify the document you want to process. For example: 
 
    ```bash 
    # Specify PDF file
-   pdf_file = kit_dir + '/data/tmp/2405.07518v1_1page.pdf'
+   pdf_file = kit_dir + '/data/tmp/2405.07518v1.pdf'
    ```
    
    - Start executing each cell in the notebook.
