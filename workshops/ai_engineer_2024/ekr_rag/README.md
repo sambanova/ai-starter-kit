@@ -75,11 +75,11 @@ The next step sets you up to use one of the models available from SambaNova. It 
 
 ### Setup for SambaStudio users
  
-In the repo root directory, find or create the .env file in `ai-starter-kit/.env` and specify the SambaStudio API key and endpoint info (to be provided during the workshop):
-- Assume you have an endpoint with the URL:
-  "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123":
+1. In the repo root directory, find or create the .env file in `ai-starter-kit/.env` and specify the SambaStudio API key and endpoint info (to be provided during the workshop):
+   - Assume you have an endpoint with the URL:
+  "https://sjc3-e2.sambanova.net/api/predict/generic/348281f6-4c62-4c39-b15a-4a9e3a9bbfef/cca1567d-0426-4967-9037-8255dee33f4d":
   
-- You can enter the following in the env file:
+   - You can enter the following in the env file:
 
     ``` bash
     SAMBASTUDIO_BASE_URL="https://sjc3-e2.sambanova.net/"
@@ -88,7 +88,7 @@ In the repo root directory, find or create the .env file in `ai-starter-kit/.env
     SAMBASTUDIO_API_KEY="62096281-a7a3-48cd-8af0-54a6fd82158b"
     ```
 
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
+2. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `coe` and `select_expert` configs and save the file
 
 ### Setup for Sambaverse users 
 
@@ -113,7 +113,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
-NOTE: Be sure to set batch size model parameter to 32.
+NOTE: Be sure to set batch size model parameter to 32 if using a non-coe endpoint
 
 1. Update API information for the SambaNova embedding endpoint in the **`ai-starter-kit/.env`** file in the root repo directory. For example:
 
@@ -128,11 +128,11 @@ NOTE: Be sure to set batch size model parameter to 32.
             EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
         ```
 
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
+2. In the [config file](./config.yaml), set the variable `type` under `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according to your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
     > 
-    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+    > You can see the difference in how they are set in the [vectordb.py file](../../../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 ### Install system dependencies
 
