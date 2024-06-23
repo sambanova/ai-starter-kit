@@ -182,7 +182,7 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
  
    - Create a folder `data/tmp/` under the `ekr_rag` directory. Place the PDF document you want to process in this folder (you can also place the document in any other location).
 
-   - Open the notebook `notebooks/rag_lcel.ipynb` and specify the document you want to process. For example: 
+   - Open the notebook `notebooks/rag_lcel.ipynb` and specify the path of the document you want to process. For example: 
 
    ```bash 
    # Specify PDF file
@@ -191,7 +191,7 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
    
    - Start executing each cell in the notebook.
    
-4. To run the Streamlit app, do:
+4. To run the Streamlit app (GUI-based), do:
    
    ```bash
    streamlit run streamlit/app.py
