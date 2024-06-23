@@ -20,6 +20,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaverseEndpoint
+
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 ##Get time tool
@@ -81,19 +83,19 @@ def calculator(expression: str) -> Union[str, int, float]:
     }
     tokens = re.findall(r'\d+\.?\d*|\+|\-|\*|\/|÷|x|X', expression)
 
-    if not tokens:
+    if len(tokens) == 0:
         raise ToolException(
-            f"Invalid expression '{expression}', should only contain one of the following operators + - * and /"
+            f"Invalid expression '{expression}', should only contain one of the following operators + - * x and ÷"
         )
 
     current_value = float(tokens.pop(0))
 
-    while tokens:
+    while len(tokens) > 0:
         # The next token should be an operator
         op = tokens.pop(0)
 
         # The next token should be a number
-        if not tokens:
+        if len(tokens) == 0:
             raise ToolException(f"Incomplete expression '{expression}'")
         try:
             next_value = float(tokens.pop(0))
@@ -110,7 +112,9 @@ def calculator(expression: str) -> Union[str, int, float]:
 
         current_value = ops[op](current_value, next_value)
 
-    return current_value
+    result = current_value
+
+    return result
 
 
 # tool error handler
@@ -122,17 +126,17 @@ def _handle_error(error: ToolException) -> str:
 calculator = StructuredTool.from_function(
     func=calculator,
     args_schema=CalculatorSchema,
-    handle_tool_error=_handle_error,  # True,
+    handle_tool_error=_handle_error,  # set as True if you want the tool to trow a generic ToolError message "Tool execution error"
 )
 
-## Python repl
+## Python standard shell, or REPL (Read-Eval-Print Loop)
 
 
 # tool schema
 class ReplSchema(BaseModel):
-    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...), if you need a specific module you should import it`."
+    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it."
 
-    command: str = Field(..., description='python code to execute to evaluate')
+    command: str = Field(..., description='python code to evaluate')
 
 
 # tool definition
@@ -157,10 +161,19 @@ class QueryDBSchema(BaseModel):
 def query_db(query):
     """A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."""
 
-    fine_tunned_sql_llm = 'sql_expert'
-    llm = Sambaverse(
+    fine_tunned_sql_llm = 'Meta-Llama-3-70B-Instruct'  #'nsql-llama-2-7b'
+    llm = SambaverseEndpoint(
         sambaverse_model_name='Numbers Station/nsql-llama-2-7b',
-        model_kwargs={'max_tokens_to_generate': 2048, 'select_expert': fine_tunned_sql_llm, 'process_prompt': False},
+        streaming=True,
+        model_kwargs={
+            'max_tokens_to_generate': 200,
+            'select_expert': fine_tunned_sql_llm,
+            'temperature': 0.0,
+            'repetition_penalty': 1.0,
+            'top_k': 1,
+            'top_p': 1.0,
+            'do_sample': False,
+        },
     )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
