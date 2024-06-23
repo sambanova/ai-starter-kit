@@ -5,7 +5,7 @@
 </picture>
 </a>
 
-Basic Example
+Basic Examples
 ====================
 
 # Overview
