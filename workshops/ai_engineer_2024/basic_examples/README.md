@@ -5,21 +5,21 @@
 </picture>
 </a>
 
-Basic Examples
+Basic Example
 ====================
 
 # Overview
 
-These are basic examples to get you started
-
-# Setup instructions
+In the Jupyter notebook `test_sambastudio.ipynb`, we will show you how to load environment variables, initialize the LLM, and do a simple LLM call via SambaNova with LangChain in Python. 
+  
+# Setup and run instructions
 
 1. Clone this repo:
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git 
 ```
 
-2. Set your SambaStudio API key
+2. Set your environment variables
    - In the repo root directory, find or create the `.env` config file in `ai-starter-kit/.env` and specify the SambaStudio API key and endpoint info (with no spaces). For example:
     ``` bash
     SAMBASTUDIO_BASE_URL="https://sjc3-e2.sambanova.net/"
@@ -36,4 +36,4 @@ conda activate basic_ex
 pip  install  -r  requirements.txt
 ```
 
-4. Open the Jupyter Notebook `test_sambastudio.ipynb` and start executing the cells
+4. Open the Jupyter notebook `test_sambastudio.ipynb` and start executing the cells. 
