@@ -230,8 +230,10 @@ The final line will make the kernel available for selection in Jupyter
 
 Note: if you get the error below, run `SYSTEM_VERSION_COMPAT=0 pip install --no-cache-dir "onnxruntime>=1.17"` and then re-run `pip install -r requirements.txt`
 
-```ERROR: Could not find a version that satisfies the requirement onnxruntime>=1.17.0 (from unstructured-inference) (from versions: 1.12.0, 1.12.1, 1.13.1, 1.14.1, 1.15.0, 1.15.1, 1.16.0, 1.16.1, 1.16.2, 1.16.3)
-ERROR: No matching distribution found for onnxruntime>=1.17.0```
+```
+ERROR: Could not find a version that satisfies the requirement onnxruntime>=1.17.0 (from unstructured-inference) (from versions: 1.12.0, 1.12.1, 1.13.1, 1.14.1, 1.15.0, 1.15.1, 1.16.0, 1.16.1, 1.16.2, 1.16.3)
+ERROR: No matching distribution found for onnxruntime>=1.17.0
+```
 
 # Use the starter kit 
 
