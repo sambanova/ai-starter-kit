@@ -181,7 +181,7 @@ def query_db(query):
     db = SQLDatabase.from_uri(db_uri)
 
     prompt = PromptTemplate.from_template(
-        '{table_info}\n\n-- Using valid SQLite, answer the following questions for the tables provided above.\n\n-- {input} {top_k}\n\nSELECT'
+        '"{table_info}\n\n-- Using valid SQLite, answer the following questions for the tables provided above.\n\n-- {input} {top_k}\n\nSELECT"\n '
     )
     write_query = create_sql_query_chain(llm, db, prompt=prompt)
     print(write_query.invoke({'question': query}))
