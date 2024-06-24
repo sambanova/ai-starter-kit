@@ -13,17 +13,21 @@ SambaNova AI Starter Kits are a collection of open-source examples and guides to
 
 To run these examples, you need access to a SambaStudio environment with your models deployed to endpoints. Most code examples are written in Python, though the concepts can be applied in any language.
 
-If you have any issues with the examples or to provide feedback, [create an issue](https://github.com/sambanova/ai-starter-kit/issues/new/choose) in GitHub.
+Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us</a> on Discord <a href="https://discord.gg/XF5Sf2sa" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
 # Available AI Starter Kits
 
 <table style="width: 100%;">
 <tbody>
+</tr><td width="25%"><a href="code_copilot/README.md">Benchmarking</a> 
+</td>
+<td width="75%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface. </td>
+</tr>
 </tr><td width="25%"><a href="code_copilot/README.md">Code Copilot</a> 
 </td>
 <td width="75%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
 </tr>
-</tr><td width="25%"><a href="complex_rag/README.md">Complex RAG</a> 
+</tr><td width="25%"><a href="workshops/genai_summit/complex_rag/README.md">Complex RAG</a> 
 </td>
 <td width="75%"> Sample implementation of a complex RAG workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo. </td>
 </tr>
@@ -57,7 +61,7 @@ If you have any issues with the examples or to provide feedback, [create an issu
 </td>
 <td width="75%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
 </tr>
-</tr><td width="25%"><a href="multimodal_knowlwdge_retriever/README.md">Multimodal Knowledge Retriever</a> 
+</tr><td width="25%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a> 
 </td>
 <td width="75%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
 </tr>

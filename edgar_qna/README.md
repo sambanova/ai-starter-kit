@@ -14,32 +14,31 @@ EDGAR Q&A
 - [EDGAR Q&A](#edgar-qa)
 - [Overview](#overview)
 - [Workflow overview](#workflow-overview)
-  - [Perform ingestion](#perform-ingestion)
-  - [Perform retrieval](#perform-retrieval)
-  - [Answer questions](#answer-questions)
+    - [Perform ingestion](#perform-ingestion)
+    - [Perform retrieval](#perform-retrieval)
+    - [Answer questions](#answer-questions)
 - [Use the AI starter kit](#use-the-ai-starter-kit)
     - [Clone the repo](#clone-the-repo)
     - [Integrate a LLM with the starter kit](#integrate-a-llm-with-the-starter-kit)
         - [Option 1: Sambaverse endpoint](#option-1-sambaverse-endpoint)
         - [Option 2: SambaStudio endpoint](#option-2-sambastudio-endpoint)
     - [Deploy the starter kit](#deploy-the-starter-kit)
-        - [Option 1: Run a Streamlit UI from local install](#option-1-run-streamlit-ui-from-local-install)
+        - [Option 1: Run Streamlit UI from local install](#option-1-run-streamlit-ui-from-local-install)
         - [Option 2: Run a Multiturn-chat Streamlit UI from local install](#option-2-run-a-multiturn-chat-streamlit-ui-from-local-install)
         - [Option 3: Run a comparative-Q&A-chat Streamlit UI from local install](#option-3-run-a-comparative-qa-chat-streamlit-ui-from-local-install)
         - [Option 4: Run via Docker](#option-4-run-via-docker)
-- [Customize the starter kit](#customize-retrieval)
+- [Customizing the starter kit](#customizing-the-starter-kit)
     - [Customize data import](#customize-data-import)
-    - [Customize data splittingSplit Data](#customize-data-splitting)
-    - [Customize embedding storage](#customize-data-embedding)
-    - [Store embeddings](#customize-embedding-storage)
-    - [Customize Retrieval](#customize-retrieval)
+    - [Customize data splitting](#customize-data-splitting)
+    - [Customize data embedding](#customize-data-embedding)
+    - [Customize embedding storage](#customize-embedding-storage)
+    - [Customize retrieval](#customize-retrieval)
     - [Compare models with Sambaverse](#compare-models-with-sambaverse)
     - [Finetune a SambaStudio model](#finetune-a-sambastudio-model)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
     - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
-
 # Overview
 
 This AI starter kit is an example of building semantic search workflow with the SambaNova platform. Edgar Q&A uses data from companies' 10-K annual reports to answer questions. It includes:
@@ -127,6 +126,39 @@ would be entered in the env file (with no spaces) as:
     API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
    ```
 3. In the [config file](./config.yaml) file, set the variable *api* to: "sambastudio".
+
+### Update the Embedding API information
+
+You have these options to specify the embedding API info: 
+
+* **Option 1: Use a CPU embedding model**
+
+    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
+
+* **Option 2: Set a SambaStudio embedding model**
+
+To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+
+NOTE: Be sure to set batch size model parameter to 32.
+
+1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
+
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+    - You can enter the following in the env file (with no spaces):
+
+        ```bash
+            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+        ```
+
+2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+    > 
+    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 ## Deploy the starter kit
 
@@ -260,6 +292,7 @@ function: create_load_vector_store
 
 Several open-source embedding models are available on Hugging Face. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). Several of these models are available in SambaStudio. You can fine tune one of these models on specific datasets to improve performance.
 
+
 To customize data embeddings, make modifications in the following location:
 ```
 file: edgar_sec.py
@@ -346,8 +379,8 @@ file: edgar_qna/prompts
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 - streamlit (version 1.25.0)
 - llama-hub (version 0.0.25)
-- langchain (version 0.0.266)
-- langchain_community (version 0.0.16)
+- langchain (version 0.2.1)
+- langchain_community (version 0.2.1)
 - llama-index (version 0.8.20)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)

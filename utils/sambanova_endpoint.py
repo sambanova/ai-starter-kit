@@ -4,13 +4,13 @@ import json
 from typing import Any, Dict, Generator, Iterator, List, Optional, Union
 
 import requests
+from langchain.callbacks.base import BaseCallbackHandler  # type: ignore
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
+from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.llms import LLM
 from langchain_core.outputs import GenerationChunk
 from langchain_core.pydantic_v1 import BaseModel, Extra, root_validator
 from langchain_core.utils import get_from_dict_or_env
-from langchain.callbacks.base import BaseCallbackHandler  # type: ignore
-from langchain_core.embeddings import Embeddings
 
 
 class SVEndpointHandler:
@@ -20,7 +20,7 @@ class SVEndpointHandler:
     :param str host_url: Base URL of the DaaS API service
     """
 
-    API_BASE_PATH = "/api/predict"
+    API_BASE_PATH = '/api/predict'
 
     def __init__(self, host_url: str):
         """
@@ -47,27 +47,25 @@ class SVEndpointHandler:
 
         :param requests.Response response: the response object to process
         :return: the response dict
-        :rtype: dict
+        :type: dict
         """
         result: Dict[str, Any] = {}
         try:
-            lines_result = response.text.strip().split("\n")
+            lines_result = response.text.strip().split('\n')
             text_result = lines_result[-1]
-            if response.status_code == 200 and json.loads(text_result).get("error"):
-                completion = ""
+            if response.status_code == 200 and json.loads(text_result).get('error'):
+                completion = ''
                 for line in lines_result[:-1]:
-                    completion += json.loads(line)["result"]["responses"][0][
-                        "stream_token"
-                    ]
+                    completion += json.loads(line)['result']['responses'][0]['stream_token']
                 text_result = lines_result[-2]
                 result = json.loads(text_result)
-                result["result"]["responses"][0]["completion"] = completion
+                result['result']['responses'][0]['completion'] = completion
             else:
                 result = json.loads(text_result)
         except Exception as e:
-            result["detail"] = str(e)
-        if "status_code" not in result:
-            result["status_code"] = response.status_code
+            result['detail'] = str(e)
+        if 'status_code' not in result:
+            result['status_code'] = response.status_code
         return result
 
     @staticmethod
@@ -78,29 +76,29 @@ class SVEndpointHandler:
         try:
             for line in response.iter_lines():
                 chunk = json.loads(line)
-                if "status_code" not in chunk:
-                    chunk["status_code"] = response.status_code
-                if chunk["status_code"] == 200 and chunk.get("error"):
-                    chunk["result"] = {"responses": [{"stream_token": ""}]}
+                if 'status_code' not in chunk:
+                    chunk['status_code'] = response.status_code
+                if chunk['status_code'] == 200 and chunk.get('error'):
+                    chunk['result'] = {'responses': [{'stream_token': ''}]}
                     return chunk
                 yield chunk
         except Exception as e:
-            raise RuntimeError(f"Error processing streaming response: {e}")
+            raise RuntimeError(f'Error processing streaming response: {e}')
 
     def _get_full_url(self) -> str:
         """
         Return the full API URL for a given path.
         :returns: the full API URL for the sub-path
-        :rtype: str
+        :type: str
         """
-        return f"{self.host_url}{self.API_BASE_PATH}"
+        return f'{self.host_url}{self.API_BASE_PATH}'
 
     def nlp_predict(
         self,
         key: str,
         sambaverse_model_name: Optional[str],
         input: Union[List[str], str],
-        params: Optional[str] = "",
+        params: Optional[str] = '',
         stream: bool = False,
     ) -> Dict:
         """
@@ -112,29 +110,18 @@ class SVEndpointHandler:
         :param str input_str: Input string
         :param str params: Input params string
         :returns: Prediction results
-        :rtype: dict
+        :type: dict
         """
-        parsed_element = {
-            "conversation_id": "sambaverse-conversation-id",
-            "messages": [
-                {
-                    "message_id": 0,
-                    "role": "user",
-                    "content": input,
-                }
-            ],
-        }
-        parsed_input = json.dumps(parsed_element)
         if params:
-            data = {"instance": parsed_input, "params": json.loads(params)}
+            data = {'instance': input, 'params': json.loads(params)}
         else:
-            data = {"instance": parsed_input}
+            data = {'instance': input}
         response = self.http_session.post(
             self._get_full_url(),
             headers={
-                "key": key,
-                "Content-Type": "application/json",
-                "modelName": sambaverse_model_name,
+                'key': key,
+                'Content-Type': 'application/json',
+                'modelName': sambaverse_model_name,
             },
             json=data,
         )
@@ -145,7 +132,7 @@ class SVEndpointHandler:
         key: str,
         sambaverse_model_name: Optional[str],
         input: Union[List[str], str],
-        params: Optional[str] = "",
+        params: Optional[str] = '',
     ) -> Iterator[Dict]:
         """
         NLP predict using inline input string.
@@ -156,30 +143,19 @@ class SVEndpointHandler:
         :param str input_str: Input string
         :param str params: Input params string
         :returns: Prediction results
-        :rtype: dict
+        :type: dict
         """
-        parsed_element = {
-            "conversation_id": "sambaverse-conversation-id",
-            "messages": [
-                {
-                    "message_id": 0,
-                    "role": "user",
-                    "content": input,
-                }
-            ],
-        }
-        parsed_input = json.dumps(parsed_element)
         if params:
-            data = {"instance": parsed_input, "params": json.loads(params)}
+            data = {'instance': input, 'params': json.loads(params)}
         else:
-            data = {"instance": parsed_input}
+            data = {'instance': input}
         # Streaming output
         response = self.http_session.post(
             self._get_full_url(),
             headers={
-                "key": key,
-                "Content-Type": "application/json",
-                "modelName": sambaverse_model_name,
+                'key': key,
+                'Content-Type': 'application/json',
+                'modelName': sambaverse_model_name,
             },
             json=data,
             stream=True,
@@ -233,10 +209,10 @@ class SambaverseEndpoint(LLM):
         )
     """
 
-    sambaverse_url: str = ""
+    sambaverse_url: str = ''
     """Sambaverse url to use"""
 
-    sambaverse_api_key: str = ""
+    sambaverse_api_key: str = ''
     """sambaverse api key"""
 
     sambaverse_model_name: Optional[str] = None
@@ -260,29 +236,25 @@ class SambaverseEndpoint(LLM):
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key exists in environment."""
-        values["sambaverse_url"] = get_from_dict_or_env(
-            values, 
-            "sambaverse_url",
-            "SAMBAVERSE_URL",
-            default="https://sambaverse.sambanova.ai"
+        values['sambaverse_url'] = get_from_dict_or_env(
+            values,
+            'sambaverse_url',
+            'SAMBAVERSE_URL',
+            default='https://sambaverse.sambanova.ai',
         )
-        values["sambaverse_api_key"] = get_from_dict_or_env(
-            values, "sambaverse_api_key", "SAMBAVERSE_API_KEY"
-        )
-        values["sambaverse_model_name"] = get_from_dict_or_env(
-            values, "sambaverse_model_name", "SAMBAVERSE_MODEL_NAME"
-        )
+        values['sambaverse_api_key'] = get_from_dict_or_env(values, 'sambaverse_api_key', 'SAMBAVERSE_API_KEY')
+        values['sambaverse_model_name'] = get_from_dict_or_env(values, 'sambaverse_model_name', 'SAMBAVERSE_MODEL_NAME')
         return values
 
     @property
     def _identifying_params(self) -> Dict[str, Any]:
         """Get the identifying parameters."""
-        return {**{"model_kwargs": self.model_kwargs}}
+        return {**{'model_kwargs': self.model_kwargs}}
 
     @property
     def _llm_type(self) -> str:
         """Return type of llm."""
-        return "Sambaverse LLM"
+        return 'Sambaverse LLM'
 
     def _get_tuning_params(self, stop: Optional[List[str]]) -> str:
         """
@@ -296,17 +268,12 @@ class SambaverseEndpoint(LLM):
             The tuning parameters as a JSON string.
         """
         _model_kwargs = self.model_kwargs or {}
-        _kwarg_stop_sequences = _model_kwargs.get("stop_sequences", [])
+        _kwarg_stop_sequences = _model_kwargs.get('stop_sequences', [])
         _stop_sequences = stop or _kwarg_stop_sequences
         if not _kwarg_stop_sequences:
-            _model_kwargs["stop_sequences"] = ",".join(
-                f'"{x}"' for x in _stop_sequences
-            )
-        tuning_params_dict = {
-            k: {"type": type(v).__name__, "value": str(v)}
-            for k, v in (_model_kwargs.items())
-        }
-        _model_kwargs["stop_sequences"] = _kwarg_stop_sequences
+            _model_kwargs['stop_sequences'] = ','.join(f'"{x}"' for x in _stop_sequences)
+        tuning_params_dict = {k: {'type': type(v).__name__, 'value': str(v)} for k, v in (_model_kwargs.items())}
+        _model_kwargs['stop_sequences'] = _kwarg_stop_sequences
         tuning_params = json.dumps(tuning_params_dict)
         return tuning_params
 
@@ -330,15 +297,13 @@ class SambaverseEndpoint(LLM):
         Raises:
             ValueError: If the prediction fails.
         """
-        response = sdk.nlp_predict(
-            self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params
-        )
-        if response["status_code"] != 200:
-            error = response.get("error")
+        response = sdk.nlp_predict(self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params)
+        if response['status_code'] != 200:
+            error = response.get('error')
             if error:
-                optional_code = error.get("code")
-                optional_details = error.get("details")
-                optional_message = error.get("message")
+                optional_code = error.get('code')
+                optional_details = error.get('details')
+                optional_message = error.get('message')
                 raise RuntimeError(
                     f"Sambanova /complete call failed with status code "
                     f"{response['status_code']}.\n"
@@ -346,17 +311,13 @@ class SambaverseEndpoint(LLM):
                     f"Details: {optional_details}\n"
                     f"Code: {optional_code}\n"
                 )
-            else: 
+            else:
                 raise RuntimeError(
-                    f"Sambanova /complete call failed with status code "
-                    f"{response['status_code']}."
-                    f"{response}."
+                    f"Sambanova /complete call failed with status code " f"{response['status_code']}." f"{response}."
                 )
-        return response["result"]["responses"][0]["completion"]
+        return response['result']['responses'][0]['completion']
 
-    def _handle_completion_requests(
-        self, prompt: Union[List[str], str], stop: Optional[List[str]]
-    ) -> str:
+    def _handle_completion_requests(self, prompt: Union[List[str], str], stop: Optional[List[str]]) -> str:
         """
         Perform a prediction using the Sambaverse endpoint handler.
 
@@ -388,15 +349,13 @@ class SambaverseEndpoint(LLM):
         Returns:
             An iterator of GenerationChunks.
         """
-        for chunk in sdk.nlp_predict_stream(
-            self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params
-        ):
-            if chunk["status_code"] != 200:
-                error = chunk.get("error")
+        for chunk in sdk.nlp_predict_stream(self.sambaverse_api_key, self.sambaverse_model_name, prompt, tuning_params):
+            if chunk['status_code'] != 200:
+                error = chunk.get('error')
                 if error:
-                    optional_code = error.get("code")
-                    optional_details = error.get("details")
-                    optional_message = error.get("message")
+                    optional_code = error.get('code')
+                    optional_details = error.get('details')
+                    optional_message = error.get('message')
                     raise ValueError(
                         f"Sambanova /complete call failed with status code "
                         f"{chunk['status_code']}.\n"
@@ -404,15 +363,13 @@ class SambaverseEndpoint(LLM):
                         f"Details: {optional_details}\n"
                         f"Code: {optional_code}\n"
                     )
-                else: 
+                else:
                     raise RuntimeError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{chunk['status_code']}."
-                        f"{chunk}."
+                        f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                     )
-            text = chunk["result"]["responses"][0]["stream_token"]
+            text = chunk['result']['responses'][0]['stream_token']
             generated_chunk = GenerationChunk(text=text)
-            yield generated_chunk  
+            yield generated_chunk
 
     def _stream(
         self,
@@ -437,9 +394,7 @@ class SambaverseEndpoint(LLM):
         tuning_params = self._get_tuning_params(stop)
         try:
             if self.streaming:
-                for chunk in self._handle_nlp_predict_stream(
-                    ss_endpoint, prompt, tuning_params
-                ):
+                for chunk in self._handle_nlp_predict_stream(ss_endpoint, prompt, tuning_params):
                     if run_manager:
                         run_manager.on_llm_new_token(chunk.text)
                     yield chunk
@@ -447,7 +402,7 @@ class SambaverseEndpoint(LLM):
                 return
         except Exception as e:
             # Handle any errors raised by the inference endpoint
-            raise ValueError(f"Error raised by the inference endpoint: {e}") from e
+            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
     def _handle_stream_request(
         self,
@@ -470,10 +425,8 @@ class SambaverseEndpoint(LLM):
         Returns:
             The model output as a string.
         """
-        completion = ""
-        for chunk in self._stream(
-            prompt=prompt, stop=stop, run_manager=run_manager, **kwargs
-        ):
+        completion = ''
+        for chunk in self._stream(prompt=prompt, stop=stop, run_manager=run_manager, **kwargs):
             completion += chunk.text
         return completion
 
@@ -503,7 +456,7 @@ class SambaverseEndpoint(LLM):
             return self._handle_completion_requests(prompt, stop)
         except Exception as e:
             # Handle any errors raised by the inference endpoint
-            raise ValueError(f"Error raised by the inference endpoint: {e}") from e
+            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
 
 class SSEndpointHandler:
@@ -512,7 +465,6 @@ class SSEndpointHandler:
 
     :param str host_url: Base URL of the DaaS API service
     """
-
 
     def __init__(self, host_url: str, api_base_uri: str):
         """
@@ -540,57 +492,55 @@ class SSEndpointHandler:
 
         :param requests.Response response: the response object to process
         :return: the response dict
-        :rtype: dict
+        :type: dict
         """
         result: Dict[str, Any] = {}
         try:
             result = response.json()
         except Exception as e:
-            result["detail"] = str(e)
-        if "status_code" not in result:
-            result["status_code"] = response.status_code
+            result['detail'] = str(e)
+        if 'status_code' not in result:
+            result['status_code'] = response.status_code
         return result
 
     def _process_streaming_response(
-        self, response: requests.Response,
+        self,
+        response: requests.Response,
     ) -> Generator[Dict, None, None]:
         """Process the streaming response"""
-        if "nlp" in self.api_base_uri:
+        if 'nlp' in self.api_base_uri:
             try:
                 import sseclient
             except ImportError:
                 raise ImportError(
-                    "could not import sseclient library"
-                    "Please install it with `pip install sseclient-py`."
+                    'could not import sseclient library' 'Please install it with `pip install sseclient-py`.'
                 )
             client = sseclient.SSEClient(response)
             close_conn = False
             for event in client.events():
-                if event.event == "error_event":
+                if event.event == 'error_event':
                     close_conn = True
                 chunk = {
-                    "event": event.event, 
-                    "data": event.data, 
-                    "status_code": response.status_code
-                    }
+                    'event': event.event,
+                    'data': event.data,
+                    'status_code': response.status_code,
+                }
                 yield chunk
             if close_conn:
                 client.close()
-        elif "generic" in self.api_base_uri:
+        elif 'generic' in self.api_base_uri:
             try:
                 for line in response.iter_lines():
                     chunk = json.loads(line)
-                    if "status_code" not in chunk:
-                        chunk["status_code"] = response.status_code
-                    if chunk["status_code"] == 200 and chunk.get("error"):
-                        chunk["result"] = {"responses": [{"stream_token": ""}]}
+                    if 'status_code' not in chunk:
+                        chunk['status_code'] = response.status_code
+                    if chunk['status_code'] == 200 and chunk.get('error'):
+                        chunk['result'] = {'responses': [{'stream_token': ''}]}
                     yield chunk
             except Exception as e:
-                raise RuntimeError(f"Error processing streaming response: {e}")
+                raise RuntimeError(f'Error processing streaming response: {e}')
         else:
-           raise ValueError(
-                f"handling of endpoint uri: {self.api_base_uri} not implemented"
-                )
+            raise ValueError(f'handling of endpoint uri: {self.api_base_uri} not implemented')
 
     def _get_full_url(self, path: str) -> str:
         """
@@ -598,9 +548,9 @@ class SSEndpointHandler:
 
         :param str path: the sub-path
         :returns: the full API URL for the sub-path
-        :rtype: str
+        :type: str
         """
-        return f"{self.host_url}/{self.api_base_uri}/{path}"
+        return f'{self.host_url}/{self.api_base_uri}/{path}'
 
     def nlp_predict(
         self,
@@ -608,7 +558,7 @@ class SSEndpointHandler:
         endpoint: str,
         key: str,
         input: Union[List[str], str],
-        params: Optional[str] = "",
+        params: Optional[str] = '',
         stream: bool = False,
     ) -> Dict:
         """
@@ -620,27 +570,25 @@ class SSEndpointHandler:
         :param str input_str: Input string
         :param str params: Input params string
         :returns: Prediction results
-        :rtype: dict
+        :type: dict
         """
         if isinstance(input, str):
             input = [input]
-        if "nlp" in self.api_base_uri:
+        if 'nlp' in self.api_base_uri:
             if params:
-                data = {"inputs": input, "params": json.loads(params)}
+                data = {'inputs': input, 'params': json.loads(params)}
             else:
-                data = {"inputs": input}
-        elif "generic" in self.api_base_uri:
+                data = {'inputs': input}
+        elif 'generic' in self.api_base_uri:
             if params:
-                data = {"instances": input, "params": json.loads(params)}
+                data = {'instances': input, 'params': json.loads(params)}
             else:
-                data = {"instances": input}
-        else: 
-            raise ValueError(
-                f"handling of endpoint uri: {self.api_base_uri} not implemented"
-                )
+                data = {'instances': input}
+        else:
+            raise ValueError(f'handling of endpoint uri: {self.api_base_uri} not implemented')
         response = self.http_session.post(
-            self._get_full_url(f"{project}/{endpoint}"),
-            headers={"key": key},
+            self._get_full_url(f'{project}/{endpoint}'),
+            headers={'key': key},
             json=data,
         )
         return self._process_response(response)
@@ -651,7 +599,7 @@ class SSEndpointHandler:
         endpoint: str,
         key: str,
         input: Union[List[str], str],
-        params: Optional[str] = "",
+        params: Optional[str] = '',
     ) -> Iterator[Dict]:
         """
         NLP predict using inline input string.
@@ -662,30 +610,28 @@ class SSEndpointHandler:
         :param str input_str: Input string
         :param str params: Input params string
         :returns: Prediction results
-        :rtype: dict
+        :type: dict
         """
-        if "nlp" in self.api_base_uri:
+        if 'nlp' in self.api_base_uri:
             if isinstance(input, str):
                 input = [input]
             if params:
-                data = {"inputs": input, "params": json.loads(params)}
+                data = {'inputs': input, 'params': json.loads(params)}
             else:
-                data = {"inputs": input}
-        elif "generic" in self.api_base_uri:
+                data = {'inputs': input}
+        elif 'generic' in self.api_base_uri:
             if isinstance(input, list):
                 input = input[0]
             if params:
-                data = {"instance": input, "params": json.loads(params)}
+                data = {'instance': input, 'params': json.loads(params)}
             else:
-                data = {"instance": input}
-        else: 
-            raise ValueError(
-                f"handling of endpoint uri: {self.api_base_uri} not implemented"
-                )
+                data = {'instance': input}
+        else:
+            raise ValueError(f'handling of endpoint uri: {self.api_base_uri} not implemented')
         # Streaming output
         response = self.http_session.post(
-            self._get_full_url(f"stream/{project}/{endpoint}"),
-            headers={"key": key},
+            self._get_full_url(f'stream/{project}/{endpoint}'),
+            headers={'key': key},
             json=data,
             stream=True,
         )
@@ -704,8 +650,8 @@ class SvStreamingHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         """Run on new LLM token. Only available when streaming is enabled."""
         self.queue.put(token)
-       
-       
+
+
 class SambaNovaEndpoint(LLM):
     """
     SambaStudio large language models.
@@ -743,19 +689,19 @@ class SambaNovaEndpoint(LLM):
         )
     """
 
-    base_url: str = ""
+    base_url: str = ''
     """Base url to use"""
-    
-    base_uri: str = ""
+
+    base_uri: str = ''
     """endpoint base uri"""
 
-    project_id: str = ""
+    project_id: str = ''
     """Project id on sambastudio for model"""
 
-    endpoint_id: str = ""
+    endpoint_id: str = ''
     """endpoint id on sambastudio for model"""
 
-    api_key: str = ""
+    api_key: str = ''
     """sambastudio api key"""
 
     model_kwargs: Optional[dict] = None
@@ -776,34 +722,21 @@ class SambaNovaEndpoint(LLM):
     @property
     def _identifying_params(self) -> Dict[str, Any]:
         """Get the identifying parameters."""
-        return {**{"model_kwargs": self.model_kwargs}}
+        return {**{'model_kwargs': self.model_kwargs}}
 
     @property
     def _llm_type(self) -> str:
         """Return type of llm."""
-        return "Sambastudio LLM"
+        return 'Sambastudio LLM'
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values["base_url"] = get_from_dict_or_env(
-            values, "base_url", "BASE_URL"
-        )
-        values["base_uri"] = get_from_dict_or_env(
-            values, 
-            "base_uri", 
-            "BASE_URI", 
-            default="api/predict/nlp"
-        )
-        values["project_id"] = get_from_dict_or_env(
-            values, "project_id", "PROJECT_ID"
-        )
-        values["endpoint_id"] = get_from_dict_or_env(
-            values, "endpoint_id", "ENDPOINT_ID"
-        )
-        values["api_key"] = get_from_dict_or_env(
-            values, "api_key", "API_KEY"
-        )
+        values['base_url'] = get_from_dict_or_env(values, 'base_url', 'BASE_URL')
+        values['base_uri'] = get_from_dict_or_env(values, 'base_uri', 'BASE_URI', default='api/predict/nlp')
+        values['project_id'] = get_from_dict_or_env(values, 'project_id', 'PROJECT_ID')
+        values['endpoint_id'] = get_from_dict_or_env(values, 'endpoint_id', 'ENDPOINT_ID')
+        values['api_key'] = get_from_dict_or_env(values, 'api_key', 'API_KEY')
         return values
 
     def _get_tuning_params(self, stop: Optional[List[str]]) -> str:
@@ -818,23 +751,18 @@ class SambaNovaEndpoint(LLM):
             The tuning parameters as a JSON string.
         """
         _model_kwargs = self.model_kwargs or {}
-        _kwarg_stop_sequences = _model_kwargs.get("stop_sequences", [])
+        _kwarg_stop_sequences = _model_kwargs.get('stop_sequences', [])
         _stop_sequences = stop or _kwarg_stop_sequences
-        #if not _kwarg_stop_sequences:
-            #_model_kwargs["stop_sequences"] = ",".join(
-            #    f'"{x}"' for x in _stop_sequences
-            #)
-        tuning_params_dict = {
-            k: {"type": type(v).__name__, "value": str(v)}
-            for k, v in (_model_kwargs.items())
-        }
-        #_model_kwargs["stop_sequences"] = _kwarg_stop_sequences
+        # if not _kwarg_stop_sequences:
+        # _model_kwargs["stop_sequences"] = ",".join(
+        #    f'"{x}"' for x in _stop_sequences
+        # )
+        tuning_params_dict = {k: {'type': type(v).__name__, 'value': str(v)} for k, v in (_model_kwargs.items())}
+        # _model_kwargs["stop_sequences"] = _kwarg_stop_sequences
         tuning_params = json.dumps(tuning_params_dict)
         return tuning_params
 
-    def _handle_nlp_predict(
-        self, sdk: SSEndpointHandler, prompt: Union[List[str], str], tuning_params: str
-    ) -> str:
+    def _handle_nlp_predict(self, sdk: SSEndpointHandler, prompt: Union[List[str], str], tuning_params: str) -> str:
         """
         Perform an NLP prediction using the SambaStudio endpoint handler.
 
@@ -856,31 +784,26 @@ class SambaNovaEndpoint(LLM):
             prompt,
             tuning_params,
         )
-        if response["status_code"] != 200:
-                optional_detail = response.get("detail")
-                if optional_detail:
-                    raise RuntimeError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{response['status_code']}.\n Details: {optional_detail}"
-                    )
-                else:
-                    raise RuntimeError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{response['status_code']}.\n response {response}"
-                    )
-        if "nlp" in self.base_uri:
-            return response["data"][0]["completion"]
-        elif "generic" in self.base_uri:
-            return response["predictions"][0]["completion"]
-        else: 
-            raise ValueError(
-                f"handling of endpoint uri: {self.base_uri} not implemented"
+        if response['status_code'] != 200:
+            optional_detail = response.get('detail')
+            if optional_detail:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code "
+                    f"{response['status_code']}.\n Details: {optional_detail}"
                 )
+            else:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code "
+                    f"{response['status_code']}.\n response {response}"
+                )
+        if 'nlp' in self.base_uri:
+            return response['data'][0]['completion']
+        elif 'generic' in self.base_uri:
+            return response['predictions'][0]['completion']
+        else:
+            raise ValueError(f'handling of endpoint uri: {self.base_uri} not implemented')
 
-
-    def _handle_completion_requests(
-        self, prompt: Union[List[str], str], stop: Optional[List[str]]
-    ) -> str:
+    def _handle_completion_requests(self, prompt: Union[List[str], str], stop: Optional[List[str]]) -> str:
         """
         Perform a prediction using the SambaStudio endpoint handler.
 
@@ -912,15 +835,13 @@ class SambaNovaEndpoint(LLM):
         Returns:
             An iterator of GenerationChunks.
         """
-        for chunk in sdk.nlp_predict_stream(
-            self.project_id, self.endpoint_id, self.api_key, prompt, tuning_params
-        ):
-            if chunk["status_code"] != 200:
-                error = chunk.get("error")
+        for chunk in sdk.nlp_predict_stream(self.project_id, self.endpoint_id, self.api_key, prompt, tuning_params):
+            if chunk['status_code'] != 200:
+                error = chunk.get('error')
                 if error:
-                    optional_code = error.get("code")
-                    optional_details = error.get("details")
-                    optional_message = error.get("message")
+                    optional_code = error.get('code')
+                    optional_details = error.get('details')
+                    optional_message = error.get('message')
                     raise ValueError(
                         f"Sambanova /complete call failed with status code "
                         f"{chunk['status_code']}.\n"
@@ -928,20 +849,16 @@ class SambaNovaEndpoint(LLM):
                         f"Details: {optional_details}\n"
                         f"Code: {optional_code}\n"
                     )
-                else: 
+                else:
                     raise RuntimeError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{chunk['status_code']}."
-                        f"{chunk}."
+                        f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                     )
-            if "nlp" in self.base_uri: 
-                text = json.loads(chunk["data"])["stream_token"]
-            elif "generic" in self.base_uri:
-                text = chunk["result"]["responses"][0]["stream_token"]
+            if 'nlp' in self.base_uri:
+                text = json.loads(chunk['data'])['stream_token']
+            elif 'generic' in self.base_uri:
+                text = chunk['result']['responses'][0]['stream_token']
             else:
-                raise ValueError(
-                    f"handling of endpoint uri: {self.base_uri} not implemented"
-                    )
+                raise ValueError(f'handling of endpoint uri: {self.base_uri} not implemented')
             generated_chunk = GenerationChunk(text=text)
             yield generated_chunk
 
@@ -965,9 +882,7 @@ class SambaNovaEndpoint(LLM):
         tuning_params = self._get_tuning_params(stop)
         try:
             if self.streaming:
-                for chunk in self._handle_nlp_predict_stream(
-                    ss_endpoint, prompt, tuning_params
-                ):
+                for chunk in self._handle_nlp_predict_stream(ss_endpoint, prompt, tuning_params):
                     if run_manager:
                         run_manager.on_llm_new_token(chunk.text)
                     yield chunk
@@ -975,7 +890,7 @@ class SambaNovaEndpoint(LLM):
                 return
         except Exception as e:
             # Handle any errors raised by the inference endpoint
-            raise ValueError(f"Error raised by the inference endpoint: {e}") from e
+            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
     def _handle_stream_request(
         self,
@@ -998,10 +913,8 @@ class SambaNovaEndpoint(LLM):
         Returns:
             The model output as a string.
         """
-        completion = ""
-        for chunk in self._stream(
-            prompt=prompt, stop=stop, run_manager=run_manager, **kwargs
-        ):
+        completion = ''
+        for chunk in self._stream(prompt=prompt, stop=stop, run_manager=run_manager, **kwargs):
             completion += chunk.text
         return completion
 
@@ -1022,77 +935,109 @@ class SambaNovaEndpoint(LLM):
             The string generated by the model.
         """
         if stop is not None:
-            raise Exception("stop not implemented")
+            raise Exception('stop not implemented')
         try:
             if self.streaming:
                 return self._handle_stream_request(prompt, stop, run_manager, kwargs)
             return self._handle_completion_requests(prompt, stop)
         except Exception as e:
             # Handle any errors raised by the inference endpoint
-            raise ValueError(f"Error raised by the inference endpoint: {e}") from e
+            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
 
 class SambaNovaEmbeddingModel(BaseModel, Embeddings):
     """SambaNova embedding models.
+
     To use, you should have the environment variables
-    ``EMBED_BASE_URL``, ``EMBED_PROJECT_ID``,
-    ``EMBED_ENDPOINT_ID``, ``EMBED_API_KEY``,
+    ``EMBED_BASE_URL``, ``EMBED_BASE_URI``
+    ``EMBED_PROJECT_ID``, ``EMBED_ENDPOINT_ID``,
+    ``EMBED_API_KEY``
     set with your personal sambastudio variable or pass it as a named parameter
     to the constructor.
+
     Example:
         .. code-block:: python
-            from langchain_community.embeddings import SambaStudioEmbeddings
-            embeddings = SambaStudioEmbeddings(embed_base_url=base_url,
-                                          embed_base_url_project_id=project_id,
-                                          embed_base_url_endpoint_id=endpoint_id,
-                                          embed_base_url_api_key=api_key)
-                             (or)
-            embeddings = SambaNovaEmbeddingModel()
-    """
-    
-    API_BASE_PATH = "/api/predict/nlp/"
-    """Base path to use for the API usage"""
 
-    embed_base_url: str = ""
+            from langchain_community.embeddings import SambaStudioEmbeddings
+
+            embeddings = SambaStudioEmbeddings(embed_base_url=base_url,
+                                          embed_base_uri=base_uri,
+                                          embed_project_id=project_id,
+                                          embed_endpoint_id=endpoint_id,
+                                          embed_api_key=api_key,
+                                          batch_size=32)
+            (or)
+
+            embeddings = SambaStudioEmbeddings(batch_size=32)
+
+            (or)
+
+            # CoE example
+            embeddings = SambaStudioEmbeddings(
+                batch_size=1,
+                model_kwargs={
+                    'select_expert':'e5-mistral-7b-instruct'
+                }
+            )
+    """
+
+    embed_base_url: str = ''
     """Base url to use"""
 
-    embed_project_id: str = ""
+    embed_base_uri: str = ''
+    """endpoint base uri"""
+
+    embed_project_id: str = ''
     """Project id on sambastudio for model"""
 
-    embed_endpoint_id: str = ""
+    embed_endpoint_id: str = ''
     """endpoint id on sambastudio for model"""
 
-    embed_api_key: str = ""
+    embed_api_key: str = ''
     """sambastudio api key"""
-    
+
+    model_kwargs: dict = {}
+    """Key word arguments to pass to the model."""
+
+    batch_size: int = 32
+    """Batch size for the embedding models"""
+
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values["embed_base_url"] = get_from_dict_or_env(
-            values, "embed_base_url", "EMBED_BASE_URL"
-            )
-        values["embed_project_id"] = get_from_dict_or_env(
-            values, "embed_project_id", "EMBED_PROJECT_ID"
-            )
-        values["embed_endpoint_id"] = get_from_dict_or_env(
-            values, "embed_endpoint_id", "EMBED_ENDPOINT_ID"
-            )
-        values["embed_api_key"] = get_from_dict_or_env(
-            values, "embed_api_key", "EMBED_API_KEY"
-            )
+        values['embed_base_url'] = get_from_dict_or_env(values, 'embed_base_url', 'EMBED_BASE_URL')
+        values['embed_base_uri'] = get_from_dict_or_env(
+            values,
+            'embed_base_uri',
+            'EMBED_BASE_URI',
+            default='api/predict/generic',
+        )
+        values['embed_project_id'] = get_from_dict_or_env(values, 'embed_project_id', 'EMBED_PROJECT_ID')
+        values['embed_endpoint_id'] = get_from_dict_or_env(values, 'embed_endpoint_id', 'EMBED_ENDPOINT_ID')
+        values['embed_api_key'] = get_from_dict_or_env(values, 'embed_api_key', 'EMBED_API_KEY')
         return values
-    
 
+    def _get_tuning_params(self) -> str:
+        """
+        Get the tuning parameters to use when calling the model
+
+        Returns:
+            The tuning parameters as a JSON string.
+        """
+        tuning_params_dict = {k: {'type': type(v).__name__, 'value': str(v)} for k, v in (self.model_kwargs.items())}
+        tuning_params = json.dumps(tuning_params_dict)
+        return tuning_params
 
     def _get_full_url(self, path: str) -> str:
         """
         Return the full API URL for a given path.
+
         :param str path: the sub-path
         :returns: the full API URL for the sub-path
-        :rtype: str
+        :type: str
         """
-        return f"{self.embed_base_url}{self.API_BASE_PATH}{path}"
-    
+        return f'{self.embed_base_url}/{self.embed_base_uri}/{path}'  # noqa: E501
+
     def _iterate_over_batches(self, texts: List[str], batch_size: int) -> Generator:
         """Generator for creating batches in the embed documents method
         Args:
@@ -1104,10 +1049,8 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
         """
         for i in range(0, len(texts), batch_size):
             yield texts[i : i + batch_size]
-    
-    def embed_documents(
-        self, texts: List[str], batch_size: int = 32
-    ) -> List[List[float]]:
+
+    def embed_documents(self, texts: List[str], batch_size: Optional[int] = None) -> List[List[float]]:
         """Returns a list of embeddings for the given sentences.
         Args:
             texts (`List[str]`): List of texts to encode
@@ -1116,25 +1059,55 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
             `List[np.ndarray]` or `List[tensor]`: List of embeddings
             for the given sentences
         """
+        if batch_size is None:
+            batch_size = self.batch_size
         http_session = requests.Session()
-        url = self._get_full_url(
-            f"{self.embed_project_id}/{self.embed_endpoint_id}"
-        )
-
+        url = self._get_full_url(f'{self.embed_project_id}/{self.embed_endpoint_id}')
+        params = json.loads(self._get_tuning_params())
         embeddings = []
 
-        for batch in self._iterate_over_batches(texts, batch_size):
-            data = {"inputs": batch}
-            response = http_session.post(
-                url,
-                headers={"key": self.embed_api_key},
-                json=data,
-            )
-            embedding = response.json()["data"]
-            embeddings.extend(embedding)
+        if 'nlp' in self.embed_base_uri:
+            for batch in self._iterate_over_batches(texts, batch_size):
+                data = {'inputs': batch, 'params': params}
+                response = http_session.post(
+                    url,
+                    headers={'key': self.embed_api_key},
+                    json=data,
+                )
+                try:
+                    embedding = response.json()['data']
+                    embeddings.extend(embedding)
+                except KeyError:
+                    raise KeyError(
+                        "'data' not found in endpoint response",
+                        response.json(),
+                    )
+
+        elif 'generic' in self.embed_base_uri:
+            for batch in self._iterate_over_batches(texts, batch_size):
+                data = {'instances': batch, 'params': params}
+                response = http_session.post(
+                    url,
+                    headers={'key': self.embed_api_key},
+                    json=data,
+                )
+                try:
+                    if params.get('select_expert'):
+                        embedding = response.json()['predictions'][0]
+                    else:
+                        embedding = response.json()['predictions']
+                    embeddings.extend(embedding)
+                except KeyError:
+                    raise KeyError(
+                        "'predictions' not found in endpoint response",
+                        response.json(),
+                    )
+
+        else:
+            raise ValueError(f'handling of endpoint uri: {self.embed_base_uri} not implemented')
 
         return embeddings
-    
+
     def embed_query(self, text: str) -> List[float]:
         """Returns a list of embeddings for the given sentences.
         Args:
@@ -1144,17 +1117,45 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
             for the given sentences
         """
         http_session = requests.Session()
-        url = self._get_full_url(
-            f"{self.embed_project_id}/{self.embed_endpoint_id}"
-        )
+        url = self._get_full_url(f'{self.embed_project_id}/{self.embed_endpoint_id}')
+        params = json.loads(self._get_tuning_params())
 
-        data = {"inputs": [text]}
+        if 'nlp' in self.embed_base_uri:
+            data = {'inputs': [text], 'params': params}
+            response = http_session.post(
+                url,
+                headers={'key': self.embed_api_key},
+                json=data,
+            )
+            try:
+                embedding = response.json()['data'][0]
+            except KeyError:
+                raise KeyError(
+                    "'data' not found in endpoint response",
+                    response.json(),
+                )
 
-        response = http_session.post(
-            url,
-            headers={"key": self.embed_api_key},
-            json=data,
-        )
-        embedding = response.json()["data"][0]
+        elif 'generic' in self.embed_base_uri:
+            data = {'instances': [text], 'params': params}
+            response = http_session.post(
+                url,
+                headers={'key': self.embed_api_key},
+                json=data,
+            )
+            try:
+                if params.get('select_expert'):
+                    embedding = response.json()['predictions'][0][0]
+                else:
+                    embedding = response.json()['predictions'][0]
+            except KeyError:
+                raise KeyError(
+                    "'predictions' not found in endpoint response",
+                    response.json(),
+                )
+
+        else:
+            raise ValueError(
+                f'handling of endpoint uri: {self.embed_base_uri} not implemented'  # noqa: E501
+            )
 
         return embedding

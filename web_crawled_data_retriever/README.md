@@ -76,7 +76,7 @@ The next step sets you up to use one of the models available from SambaNova. It 
 2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
 3. In the repo root directory find the config file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example: 
 
-```yaml
+``` bash 
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
@@ -91,12 +91,12 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
 
-```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
+    ``` bash
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    ```
 
 4. Update the Embedding API information in your target SambaNova application.
 
@@ -112,12 +112,14 @@ API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     (Step 1) Update API information for the SambaNova embedding endpoint.  These are represented as configurable variables in the environment variables file in the root repo directory **```sn-ai-starter-kit/.env```**. For example, an endpoint with the URL
     "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
     would be entered in the env file (with no spaces) as:
+
+    ``` bash
+    SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
-    EMBED_BASE_URL="https://api-stage.sambanova.net"
-    EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
+    
     (Step 2) In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
 
   > Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
@@ -137,14 +139,14 @@ If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
-    ```
+    ``` bash
     cd ai-starter-kit/web_crawled_data_retriever
     python3 -m venv web_crawled_data_retriever_env
     source web_crawled_data_retriever_env/bin/activate
     pip install -r requirements.txt
     ```
 2. Run the following command:
-    ```
+    ``` bash
     streamlit run streamlit/app.py --browser.gatherUsageStats false 
     ```
 
@@ -293,8 +295,6 @@ This modification can be done in the following location:
 >    "k_retrieved_documents": 4
 >    "score_treshold": 0.5
 >```
-
-
 
 ## Customize data embedding
 

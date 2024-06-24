@@ -92,7 +92,7 @@ def main():
         )
         if "Upload" in datasource:
             docs = st.file_uploader(
-                "Add PDF or TXT files", accept_multiple_files=True, type=["pdf","txt"]
+                "Add files", accept_multiple_files=True, type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
             )
             st.markdown("**2. Process your documents and create vector store**")
             st.markdown(
@@ -102,9 +102,9 @@ def main():
             if st.button("Process"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
+                    text_chunks = documentRetrieval.parse_doc(docs)
                     # get the text chunks
-                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    # text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
                     embeddings = documentRetrieval.load_embedding_model()
                     st.session_state.embeddings = embeddings
@@ -141,9 +141,9 @@ def main():
             if st.button("Process and Save database"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
+                    text_chunks = documentRetrieval.parse_doc(docs)
                     # get the text chunks
-                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    #text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
                     # create vector store
                     embeddings = documentRetrieval.load_embedding_model()
                     st.session_state.embeddings = embeddings
