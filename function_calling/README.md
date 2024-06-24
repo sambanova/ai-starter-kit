@@ -36,11 +36,17 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 2. Select the model you want to use (e.g. CoE containing Meta-Llama-Guard-2-8B) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables ([view your endpoint information](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_view_endpoint_information)), Here's an example:
 
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+
+    - You can enter the following in the env file (with no spaces):
+
     ``` bash
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_BASE_URI="api/predict/generic"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
 ### Setup for Sambaverse users 

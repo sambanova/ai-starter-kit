@@ -90,10 +90,12 @@ class FunctionCallingLlm:
     def get_tools_schemas(
         self, tools: Optional[Union[Tool, list]] = None, default: Optional[Union[Tool, BaseModel]] = None
     ):
-        if tools is None:
+        if tools is None or isinstance(tools, list):
             pass
         elif isinstance(tools, Tool):
             tools = [tools]
+        else:
+            raise TypeError('tools must be a Tool or a list of Tools')
 
         tools_schemas = []
         if tools is not None:
@@ -141,7 +143,7 @@ class FunctionCallingLlm:
         for tool in tools:
             final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
-                response = tools_map[tool['tool'].lower()](tool['tool_input'])
+                response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
