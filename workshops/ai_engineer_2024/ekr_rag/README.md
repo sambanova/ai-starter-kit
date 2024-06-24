@@ -172,6 +172,8 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
     pip  install  -r  requirements.txt
     ```
 
+    **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
+
 2. To run the Jupyter notebook, do:
  
    - Create a folder `data/tmp/` under the `ekr_rag` directory. Place the PDF document you want to process in this folder (you can also place the document in any other location).
