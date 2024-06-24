@@ -9,6 +9,24 @@
 Function Calling kit
 ======================
 
+<!-- TOC -->
+
+- [Function Calling kit](#function-calling-kit)
+- [Overview](#overview)
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
+        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+        - [Install dependencies](#install-dependencies)
+- [Use the Function Calling kit](#use-the-funtion-calling-kit)
+    - [Quick start](#quick-start)
+    - [Streamlit App](#streamlit-app)
+    - [Customizing the Function Calling module](#customizing-the-funtion-calling-module)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
+
 # Overview
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
@@ -74,7 +92,9 @@ NOTE: python 3.10 or higher is required to use this kit.
     pip  install  -r  requirements.txt
     ```
 
-# Use the Funtion Calling kit 
+# Use the Function Calling kit 
+
+## Quick start
 
 We provide a simple module for using the Function Calling LLM, for this you will need:
 
@@ -102,7 +122,24 @@ We provide a simple module for using the Function Calling LLM, for this you will
 
     we provide an [usage notebook](notebooks/usage.ipynb) that you can use as a guide for using the function calling module
 
-# Customizing the Funtion Calling module
+
+## Streamlit App
+
+We provide a simple GUI that allows you to interact with your function calling model
+
+To run it execute the following command 
+
+```bash
+    streamlit run streamlit/app.py --browser.gatherUsageStats false 
+```
+
+After deploying the starter kit GUI App you see the following user interface:
+
+![capture of function calling streamlit application](./docs/function_calling_app.png)
+
+there you will be able to select which tools you want the model to have access to and the max number of iterations you want the model to run to solve your query.
+
+## Customizing the Function Calling module
 
 The example module can be further customized based on the use case.
 
