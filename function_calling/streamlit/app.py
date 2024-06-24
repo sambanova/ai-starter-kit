@@ -1,6 +1,9 @@
 import logging
 import os
 import sys
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
+from time import sleep
 
 import streamlit as st
 
@@ -24,17 +27,33 @@ TOOLS = {
 }
 
 
+@contextmanager
+def st_capture(output_func):
+    with StringIO() as stdout, redirect_stdout(stdout):
+        old_write = stdout.write
+
+        def new_write(string):
+            ret = old_write(string)
+            output_func(stdout.getvalue())
+            return ret
+
+        stdout.write = new_write
+        yield
+
+
 def set_fc_llm(tools):
     set_tools = [TOOLS[name] for name in tools]
     st.session_state.fc = FunctionCallingLlm('sambaverse', set_tools)
 
 
 def handle_userinput(user_question):
+    global output
     if user_question:
         with st.spinner('Processing...'):
-            response = st.session_state.fc.function_call_llm(
-                query=user_question, max_it=st.session_state.max_iterations, debug=True
-            )
+            with st_capture(output.code):
+                response = st.session_state.fc.function_call_llm(
+                    query=user_question, max_it=st.session_state.max_iterations, debug=True
+                )
 
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response)
@@ -54,6 +73,7 @@ def handle_userinput(user_question):
 
 
 def main():
+    global output
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
@@ -70,7 +90,6 @@ def main():
 
     st.title(':orange[SambaNova] Function Calling Assistant')
     user_question = st.chat_input('Ask something')
-    handle_userinput(user_question)
 
     with st.sidebar:
         st.title('Setup')
@@ -88,6 +107,9 @@ def main():
 
         st.markdown('**3. Ask questions about your data!**')
 
+        with st.expander('**Execution scratchpad**', expanded=True):
+            output = st.empty()
+
         with st.expander('Additional settings', expanded=False):
             st.markdown('**Interaction options**')
 
@@ -97,6 +119,8 @@ def main():
                 st.session_state.chat_history = []
                 st.session_state.sources_history = []
                 st.toast('Interactions reset. The next response will clear the history on the screen')
+
+    handle_userinput(user_question)
 
 
 if __name__ == '__main__':
