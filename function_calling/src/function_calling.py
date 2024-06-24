@@ -14,7 +14,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
-from langchain_core.tools import Tool
+from langchain_core.tools import StructuredTool, Tool
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -92,7 +92,7 @@ class FunctionCallingLlm:
     ):
         if tools is None or isinstance(tools, list):
             pass
-        elif isinstance(tools, Tool):
+        elif isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
         else:
             raise TypeError('tools must be a Tool or a list of Tools')
@@ -111,7 +111,7 @@ class FunctionCallingLlm:
                 tools_schemas.append(schema)
 
         if default is not None:
-            if isinstance(default, Tool):
+            if isinstance(default, Tool) or isinstance(default, StructuredTool):
                 tool_schema = default.get_input_schema().schema()
             elif issubclass(default, BaseModel):
                 tool_schema = default.schema()
