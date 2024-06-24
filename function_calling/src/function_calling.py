@@ -54,7 +54,7 @@ class ConversationalResponse(BaseModel):
 
 
 class FunctionCallingLlm:
-    def __init__(self, model, tools, default_tool=None, system_prompt=None):
+    def __init__(self, model, tools, default_tool=None, system_prompt=None) -> None:
         self.llm = self.set_llm(model)
         self.tools = tools
         if system_prompt is None:
@@ -74,7 +74,7 @@ class FunctionCallingLlm:
                 }
             )
         elif api == 'sambaverse':
-            llm = Sambaverse(
+            llm = Sambaverse(  # type:ignore
                 sambaverse_model_name='Meta/Meta-Llama-3-70B-Instruct',
                 model_kwargs={
                     'max_tokens_to_generate': 2048,
@@ -87,31 +87,31 @@ class FunctionCallingLlm:
             raise ValueError(f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported.")
         return llm
 
-    def get_tools_schemas(self, tools: Union[Tool, list] = None, default: Union[Tool, BaseModel] = None):
+    def get_tools_schemas(
+        self, tools: Optional[Union[Tool, list]] = None, default: Optional[Union[Tool, BaseModel]] = None
+    ):
         if tools is None:
             pass
         elif isinstance(tools, Tool):
             tools = [tools]
-        else:
-            raise TypeError('tools must be a Tool or a list of Tools')
 
         tools_schemas = []
-
-        for tool in tools:
-            tool_schema = tool.get_input_schema().schema()
-            schema = {
-                'name': tool.name,
-                'description': tool_schema['description'],
-                'properties': tool_schema['properties'],
-            }
-            if 'required' in schema:
-                schema['required'] = tool_schema['required']
-            tools_schemas.append(schema)
+        if tools is not None:
+            for tool in tools:
+                tool_schema = tool.get_input_schema().schema()
+                schema = {
+                    'name': tool.name,
+                    'description': tool_schema['description'],
+                    'properties': tool_schema['properties'],
+                }
+                if 'required' in schema:
+                    schema['required'] = tool_schema['required']
+                tools_schemas.append(schema)
 
         if default is not None:
             if isinstance(default, Tool):
                 tool_schema = default.get_input_schema().schema()
-            elif isinstance(default, BaseModel):
+            elif issubclass(default, BaseModel):
                 tool_schema = default.schema()
             else:
                 raise TypeError('default must be a Tool or a BaseModel')
