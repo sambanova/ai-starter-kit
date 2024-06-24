@@ -153,13 +153,7 @@ NOTE: Be sure to set batch size model parameter to 32 if using a non-coe endpoin
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
-### Deploy the AI starter kit Parser util 
-
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
-
-Go to  the [parser util readme](../utils/parsing/README.md), and follow the instructions to deploy the parser util
-
-> Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
+**Note**: you may also need to install poppler if you don't have it already installed. On Mac, for example, do `brew install poppler`. 
 
 # Deploy the starter kit
 
