@@ -215,6 +215,23 @@ Here's a short video demonstrating docker deployment:
 
 https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-961d-a4b369be5ec4
 
+## Option 3: Use a Conda environment
+
+Run the following commands in a terminal:  
+```
+conda create --name ai_engineer_2024 python=3.10
+conda activate ai_engineer_2024
+pip install -r requirements.txt
+pip install ipykernel
+pip install jupyter
+python -m ipykernel install --user --name=ai_engineer_2024
+```
+The final line will make the kernel available for selection in Jupyter
+
+Note: if you get the error below, run `SYSTEM_VERSION_COMPAT=0 pip install --no-cache-dir "onnxruntime>=1.17"` and then re-run `pip install -r requirements.txt`
+
+```ERROR: Could not find a version that satisfies the requirement onnxruntime>=1.17.0 (from unstructured-inference) (from versions: 1.12.0, 1.12.1, 1.13.1, 1.14.1, 1.15.0, 1.15.1, 1.16.0, 1.16.1, 1.16.2, 1.16.3)
+ERROR: No matching distribution found for onnxruntime>=1.17.0```
 
 # Use the starter kit 
 
