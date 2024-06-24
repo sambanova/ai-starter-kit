@@ -7,7 +7,17 @@ output_parser: null
 partial_variables: {}
 template: |
     <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a helpful ai assistant that identifies entities in query/question.  You should not split words and/or numbers when assigning entities.
-    Return the a JSON with a single key 'entity_name' and no premable or explaination.  <|eot_id|><|start_header_id|>user<|end_header_id|>
-    Here is the query: {question}  <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+    Return the a JSON with a single key 'entity_name' and no premable or explaination.  <|eot_id|><|start_header_id|>user<|end_header_id|>  Here are examples:
+    Question: What is the revision date of the max20710?
+    Entities:
+     - max20710
+    Question: What is input voltage of the adp5050?
+    Entities:
+     - adp5050
+    Question: What is the switching frequency of the ltr70810?
+    Entities:
+     - ltr70810
+    Here is the query: {question}  
+    Entities: <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
 template_format: f-string
 validate_template: false

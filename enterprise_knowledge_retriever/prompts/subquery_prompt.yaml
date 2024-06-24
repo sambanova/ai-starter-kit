@@ -7,7 +7,16 @@ output_parser: null
 partial_variables: {}
 template: |
     <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a helpful ai assistant that decomposes queries in plural form into a list of subqueries that only contain a single entity.  Pay special attention to entities and patterns that denote them so you ask meaningful subquestions.  Only create subquestions that include the exact same name as an etity that was determined; do not modify them in any way.  Do not split words or entities when generating subquestions; only ever split on spaces and new lines.  <|eot_id|><|start_header_id|>assistant<|end_header_id|> \n
-    You should only provide the list of subqueries; no preamble, entities or list of entities, or explanations. <|eot_id|><|start_header_id|>user<|end_header_id|>
+    You should only provide the list of subqueries; no preamble, entities or list of entities, or explanations. Here are examples:
+    Question: What are the input voltages, output voltages and witching frequencies of the max3000 and max2000?
+    Subquestions:
+        What is the input voltage for the max3000?
+        What is the input voltage for the max2000?
+        What is the output voltage for the max3000?
+        What is the output voltage for the max2000?
+        What is the switching frequency for the max3000?
+        What is the switching frequency for the max2000?
+    <|eot_id|><|start_header_id|>user<|end_header_id|>
     Here is the query: {question}  <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 template_format: f-string
 validate_template: false
