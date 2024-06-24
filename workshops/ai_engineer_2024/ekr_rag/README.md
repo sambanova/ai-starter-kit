@@ -153,13 +153,7 @@ NOTE: Be sure to set batch size model parameter to 32 if using a non-coe endpoin
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
-### Deploy the AI starter kit Parser util 
-
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
-
-Go to  the [parser util readme](../utils/parsing/README.md), and follow the instructions to deploy the parser util
-
-> Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
+**Note**: you may also need to install poppler if you don't have it already installed. On Mac, for example, do `brew install poppler`. 
 
 # Deploy the starter kit
 
@@ -177,6 +171,8 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
     ```
+
+    **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
 
 2. To run the Jupyter notebook, do:
  
