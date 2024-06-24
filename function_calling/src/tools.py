@@ -171,6 +171,7 @@ def sql_finder(text):
 def query_db(query):
     """A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."""
 
+    # Using Sambaverse expert as model for generating the SQL Query
     # llm = Sambaverse(
     #     sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
     #     streaming=True,
@@ -184,6 +185,8 @@ def query_db(query):
     #         'do_sample': False,
     #     },
     # )
+
+    # Using SambaStudio CoE expert as model for generating the SQL Query
     llm = SambaStudio(
         streaming=True,
         model_kwargs={
