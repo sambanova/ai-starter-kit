@@ -22,7 +22,7 @@ retrieval:
     "chunk_overlap": 240
     "k_retrieved_documents": 15
     "score_threshold": 0.2
-    "rerank": True
+    "rerank": False
     "reranker": 'BAAI/bge-reranker-large'
     "final_k_retrieved_documents": 3
 
