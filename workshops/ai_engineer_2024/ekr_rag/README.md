@@ -169,16 +169,14 @@ If you want to use virtualenv or conda environment:
 
     ```bash
     cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
-    python3 -m venv enterprise_knowledge_env
+    python3.10 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
     pip install ipykernel
     python -m ipykernel install --user --name=enterprise_knowledge_env
     ```
 
-    **Note 1**: You can replace python3 with python3.10 in the above commands if you have specifically configured Python3.10 in your bashrc
-
-    **Note 2**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
+    **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
 
 4. To run the Jupyter notebook, do:
  
@@ -188,7 +186,7 @@ If you want to use virtualenv or conda environment:
 
    ```bash 
    # Specify PDF file
-   pdf_file = kit_dir + '/data/tmp/2405.07518v1.pdf'
+   pdf_file = kit_dir + '/data/tmp/SN40LPaper2Pages.pdf'
    ```
    
    - Start executing each cell in the notebook.
