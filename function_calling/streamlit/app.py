@@ -84,7 +84,7 @@ def main():
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
     if 'tools' not in st.session_state:
-        st.session_state.tools = ['get_time', 'calculator']
+        st.session_state.tools = ['get_time', 'calculator', 'python_repl', 'query_db']
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
 
@@ -95,7 +95,9 @@ def main():
         st.title('Setup')
         st.markdown('**1. Select the tools you want the model to have access to**')
         st.session_state.tools = st.multiselect(
-            'Available tools', ['get_time', 'calculator', 'python_repl', 'query_db'], ['get_time', 'calculator']
+            'Available tools',
+            ['get_time', 'calculator', 'python_repl', 'query_db'],
+            ['get_time', 'calculator', 'python_repl', 'query_db'],
         )
         st.markdown('**2. Set the maximum number of iterations your want the model to run**')
         st.number_input('Max iterations', value=5, max_value=20)
