@@ -161,9 +161,11 @@ We recommend that you run the starter kit in a virtual environment or conda envi
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment (we recommend Python 3.10.11 or higher):
+If you want to use virtualenv or conda environment: 
 
-1. Install and update pip:
+1. We recommend Python 3.10 (or higher), which you can install, for example, on a Mac, using `brew install python@3.10`. Additionally, you can configure this version in your shell by adding it to your `bashrc` or `zshrc` file. For example: `export PATH="/opt/homebrew/bin/python3.10:$PATH"`
+
+2. Install and update pip:
 
     ```bash
     cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
@@ -174,9 +176,11 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
     python -m ipykernel install --user --name=enterprise_knowledge_env
     ```
 
-    **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
+    **Note 1**: You can replace python3 with python3.10 in the above commands if you have specifically configured Python3.10 in your bashrc
 
-2. To run the Jupyter notebook, do:
+    **Note 2**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
+
+4. To run the Jupyter notebook, do:
  
    - Create a folder `data/tmp/` under the `ekr_rag` directory. Place the PDF document you want to process in this folder (you can also place the document in any other location).
 
@@ -189,7 +193,7 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
    
    - Start executing each cell in the notebook.
    
-4. To run the Streamlit app (GUI-based), do:
+5. To run the Streamlit app (GUI-based), do:
    
    ```bash
    streamlit run streamlit/app.py
