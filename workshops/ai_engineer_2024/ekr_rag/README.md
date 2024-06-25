@@ -153,13 +153,7 @@ NOTE: Be sure to set batch size model parameter to 32 if using a non-coe endpoin
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
-### Deploy the AI starter kit Parser util 
-
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
-
-Go to  the [parser util readme](../utils/parsing/README.md), and follow the instructions to deploy the parser util
-
-> Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
+**Note**: you may also need to install poppler if you don't have it already installed. On Mac, for example, do `brew install poppler`. 
 
 # Deploy the starter kit
 
@@ -167,18 +161,24 @@ We recommend that you run the starter kit in a virtual environment or conda envi
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment (we recommend Python 3.10.11 or higher):
+If you want to use virtualenv or conda environment: 
 
-1. Install and update pip:
+1. We recommend Python 3.10 (or higher), which you can install, for example, on a Mac, using `brew install python@3.10`. Additionally, you can configure this version in your shell by adding it to your `bashrc` or `zshrc` file. For example: `export PATH="/opt/homebrew/bin/python3.10:$PATH"`
+
+2. Install and update pip:
 
     ```bash
     cd ai-starter-kit/workshops/ai_engineer_2024/ekr_rag
-    python3 -m venv enterprise_knowledge_env
+    python3.10 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
+    pip install ipykernel
+    python -m ipykernel install --user --name=enterprise_knowledge_env
     ```
 
-2. To run the Jupyter notebook, do:
+    **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
+
+4. To run the Jupyter notebook, do:
  
    - Create a folder `data/tmp/` under the `ekr_rag` directory. Place the PDF document you want to process in this folder (you can also place the document in any other location).
 
@@ -186,12 +186,12 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
 
    ```bash 
    # Specify PDF file
-   pdf_file = kit_dir + '/data/tmp/2405.07518v1.pdf'
+   pdf_file = kit_dir + '/data/tmp/SN40LPaper2Pages.pdf'
    ```
    
    - Start executing each cell in the notebook.
    
-4. To run the Streamlit app (GUI-based), do:
+5. To run the Streamlit app (GUI-based), do:
    
    ```bash
    streamlit run streamlit/app.py
