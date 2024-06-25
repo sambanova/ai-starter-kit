@@ -170,6 +170,8 @@ If you want to use virtualenv or conda environment (we recommend Python 3.10.11 
     python3 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
+    pip install ipykernel
+    python -m ipykernel install --user --name=enterprise_knowledge_env
     ```
 
     **Note**: When running the app (see Steps 2 and 3 below), if you encounter issues related to nltk and ssl certificate, please run the following script in `ekr_rag/` in your local environment (you only need to do this once): `python install_nltk_ssl.py`.
