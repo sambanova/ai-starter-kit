@@ -119,6 +119,11 @@ def calculator(expression: str) -> Union[str, int, float]:
 
 # tool error handler
 def _handle_error(error: ToolException) -> str:
+    """
+    tool error handler
+    Args:
+        error: tool error
+    """
     return f'The following errors occurred during Calculator tool execution: `{error.args}`'
 
 

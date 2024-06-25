@@ -20,6 +20,8 @@ from function_calling.src.tools import calculator, get_time, python_repl, query_
 
 logging.basicConfig(level=logging.INFO)
 
+
+# tool mapping of available tools
 TOOLS = {
     'get_time': get_time,
     'calculator': calculator,
@@ -30,6 +32,15 @@ TOOLS = {
 
 @contextmanager
 def st_capture(output_func: Callable[[str], None]) -> Generator:
+    """
+    context manager to catch stdout and send it to an output streamlit element
+
+    Args:
+        output_func (function to write terminal output in
+
+    Yields:
+        Generator:
+    """
     with StringIO() as stdout, redirect_stdout(stdout):
         old_write = stdout.write
 
@@ -43,11 +54,23 @@ def st_capture(output_func: Callable[[str], None]) -> Generator:
 
 
 def set_fc_llm(tools: list) -> None:
+    """
+    Set the FunctionCallingLlm object with the selected tools
+
+    Args:
+        tools (list): list of tools to be used
+    """
     set_tools = [TOOLS[name] for name in tools]
     st.session_state.fc = FunctionCallingLlm('sambaverse', set_tools)
 
 
 def handle_userinput(user_question: Optional[str]) -> None:
+    """
+    Handle user input and generate a response, also update chat UI in streamlit app
+
+    Args:
+        user_question (str): The user's question or input.
+    """
     global output
     if user_question:
         with st.spinner('Processing...'):
