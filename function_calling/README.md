@@ -137,7 +137,7 @@ After deploying the starter kit GUI App you see the following user interface:
 
 ![capture of function calling streamlit application](./docs/function_calling_app.png)
 
-there you will be able to select which tools you want the model to have access to and the max number of iterations you want the model to run to solve your query.
+On that page you will be able to select your function calling tools and the max number of iterations available for the model to answer your query.
 
 ## Customizing the Function Calling module
 

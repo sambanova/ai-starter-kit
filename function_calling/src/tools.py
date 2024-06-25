@@ -152,33 +152,41 @@ python_repl = Tool(
 ## SQL tool
 # tool schema
 class QueryDBSchema(BaseModel):
-    "A query generation tool. Use this to generate sql querys and retrieve the results from a database. Do not pass sql querys directly Input must be a natural language question or instruction."
+    "A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."
 
     query: str = Field(..., description='natural language question or instruction.')
 
 
 def sql_finder(text):
-    # print(text)
+    """Search in a string for a SQL query or code with format"""
+
+    # regex for finding sql_code_pattern with format:
+    # ```sql
+    #    <query>
+    # ```
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
     match = sql_code_pattern.search(text)
-    if match:
+    if len(match) > 0:
         query = match.group(1)
         return query
     else:
+        # regex for finding sql_code_pattern with format:
+        # ```
+        # <quey>
+        # ```
         code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
         match = code_pattern.search(text)
-        if match:
+        if len(match) > 0:
             query = match.group(1)
             return query
         else:
-            raise Exception('No sql code found in LLM generation')
+            raise Exception('No SQL code found in LLM generation')
 
 
 @tool(args_schema=QueryDBSchema)
 def query_db(query):
-    """query generation tool. Use this to generate sql querys and retrieve the results from a database. Do not pass sql querys directly Input must be a natural language question or instruction."""
+    """query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
-    # print(query)
     # Using Sambaverse expert as model for generating the SQL Query
     llm = Sambaverse(
         sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
@@ -218,8 +226,8 @@ def query_db(query):
         
         {table_info}
         
-        Generate a query Using valid SQLite to answer the following questions for the summarized tables schemas provided above.
-        Do not assume the values on the database tables before generating the SQL Query, always generate a SQL that query what is asked 
+        Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
+        Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked. 
         The query must be in the format: ```sql\nquery\n```
         
         Example:
@@ -234,10 +242,12 @@ def query_db(query):
         <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
     )
 
+    # Chain that receives the natural language input and the table schema, then pass the teh formmated prompt to the llm
+    # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
     table_info = db.get_table_info()
     query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
-    # print(query)
+
     query_executor = QuerySQLDataBaseTool(db=db)
     result = query_executor.invoke(query)
 

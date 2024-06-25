@@ -93,7 +93,7 @@ def main():
 
     with st.sidebar:
         st.title('Setup')
-        st.markdown('**1. Select the tools you want the model to have access to**')
+        st.markdown('**1. Select the tools for function calling.**')
         st.session_state.tools = st.multiselect(
             'Available tools',
             ['get_time', 'calculator', 'python_repl', 'query_db'],
@@ -101,7 +101,7 @@ def main():
         )
         st.markdown('**2. Set the maximum number of iterations your want the model to run**')
         st.number_input('Max iterations', value=5, max_value=20)
-        st.markdown('**Note:** The response could be not completed if the max number of iterations is to low')
+        st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
         if st.button('Set'):
             with st.spinner('Processing'):
                 set_fc_llm(st.session_state.tools)
