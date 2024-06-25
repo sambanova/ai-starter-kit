@@ -34,12 +34,13 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ``` 
 
-2. Update `pip` and install dependencies. It is recommended to use a virtual env or conda environment for installation, and Python version 3.10.11 or higher. For example: 
+2. Update `pip` and install dependencies. It is recommended to use a virtual env or conda environment for installation, and Python version 3.10 or higher. For example: 
 ```
 cd ai-starter-kit/workshops/ai_engineer_2024/basic_examples
-conda create -n basic_ex python=3.10.11
+conda create -n basic_ex python=3.10
 conda activate basic_ex
 pip  install  -r  requirements.txt
+python -m ipykernel install --user --name=basic_ex
 ```
 
 4. Open the Jupyter notebook `example_with_sambastudio.ipynb` if you're using a SambaStudio API key and start executing the cells. Alternatively, open `example_with_sambaverse.ipynb` if you're using a Sambaverse API key.
