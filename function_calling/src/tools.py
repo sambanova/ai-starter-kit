@@ -126,15 +126,19 @@ def _handle_error(error: ToolException) -> str:
 calculator = StructuredTool.from_function(
     func=calculator,
     args_schema=CalculatorSchema,
-    handle_tool_error=_handle_error,  # set as True if you want the tool to trow a generic ToolError message "Tool execution error"
-)
+    handle_tool_error=_handle_error,
+)  # type: ignore
 
 ## Python standard shell, or REPL (Read-Eval-Print Loop)
 
 
 # tool schema
 class ReplSchema(BaseModel):
-    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it."
+    (
+        'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. '
+        'If you want to see the output of a value, you should print it out with `print(...)`, '
+        'if you need a specific module you should import it.'
+    )
 
     command: str = Field(..., description='python code to evaluate')
 
@@ -143,21 +147,27 @@ class ReplSchema(BaseModel):
 python_repl = PythonREPL()
 python_repl = Tool(
     name='python_repl',
-    description='A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.',
+    description=(
+        'A Python shell. Use this to execute python commands. Input should be a valid python command. '
+        'If you want to see the output of a value, you should print it out with `print(...)`.'
+    ),
     func=python_repl.run,
     args_schema=ReplSchema,
-)
+)  # type: ignore
 
 
 ## SQL tool
 # tool schema
 class QueryDBSchema(BaseModel):
-    "A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."
+    (
+        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
+        'Do not pass sql queries directly. Input must be a natural language question or instruction.'
+    )
 
     query: str = Field(..., description='natural language question or instruction.')
 
 
-def sql_finder(text):
+def sql_finder(text: str) -> str:
     """Search in a string for a SQL query or code with format"""
 
     # regex for finding sql_code_pattern with format:
@@ -184,8 +194,9 @@ def sql_finder(text):
 
 
 @tool(args_schema=QueryDBSchema)
-def query_db(query):
-    """query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."""
+def query_db(query: str) -> str:
+    """query generation tool. Use this to generate sql queries and retrieve the results from a database.
+    Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
     # Using Sambaverse expert as model for generating the SQL Query
     llm = Sambaverse(
@@ -239,10 +250,10 @@ def query_db(query):
         <|eot_id|><|start_header_id|>user<|end_header_id|>\
             
         {input}
-        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""  # noqa E501
     )
 
-    # Chain that receives the natural language input and the table schema, then pass the teh formmated prompt to the llm
+    # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
     # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
     table_info = db.get_table_info()
