@@ -40,17 +40,20 @@ You must always select one or more of the above tools and answer with only a lis
 ```
 
 Think step by step
-Do not call a tool if the input depends on another tool output that you do not have yet
+Do not call a tool if the input depends on another tool output that you do not have yet.
 Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
+Your answer should be in the same language as the initial query.
 
 """
 
 
 # tool schema
 class ConversationalResponse(BaseModel):
-    "Respond conversationally only if no other tools should be called for a given query, or if you have a final answer."
+    "Respond conversationally only if no other tools should be called for a given query, or if you have a final answer. response must be in the same language as the user query"
 
-    response: str = Field(..., description='Conversational response to the user.')
+    response: str = Field(
+        ..., description='Conversational response to the user. must be in the same language as the user query'
+    )
 
 
 class FunctionCallingLlm:
