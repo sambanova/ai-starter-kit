@@ -6,11 +6,12 @@ from datetime import datetime
 from typing import Optional, Union
 
 from dotenv import load_dotenv
-from langchain.chains import create_sql_query_chain
-from langchain_community.llms.sambanova import SambaStudio
+from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
+from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
 from langchain_experimental.utilities import PythonREPL
 
@@ -20,7 +21,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaverseEndpoint
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -152,40 +152,105 @@ python_repl = Tool(
 ## SQL tool
 # tool schema
 class QueryDBSchema(BaseModel):
-    "A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."
+    "A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."
 
-    query: str = Field(..., description='python code to execute to evaluate')
+    query: str = Field(..., description='natural language question or instruction.')
+
+
+def sql_finder(text):
+    """Search in a string for a SQL query or code with format"""
+
+    # regex for finding sql_code_pattern with format:
+    # ```sql
+    #    <query>
+    # ```
+    sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
+    match = sql_code_pattern.search(text)
+    if match is not None:
+        query = match.group(1)
+        return query
+    else:
+        # regex for finding sql_code_pattern with format:
+        # ```
+        # <quey>
+        # ```
+        code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
+        match = code_pattern.search(text)
+        if match is not None:
+            query = match.group(1)
+            return query
+        else:
+            raise Exception('No SQL code found in LLM generation')
 
 
 @tool(args_schema=QueryDBSchema)
 def query_db(query):
-    """A database querying tool. Use this to generate sql querys and retrieve the results from a database. Input should be a natural language question to the db."""
+    """query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
-    fine_tunned_sql_llm = 'Meta-Llama-3-70B-Instruct'  #'nsql-llama-2-7b'
-    llm = SambaverseEndpoint(
-        sambaverse_model_name='Numbers Station/nsql-llama-2-7b',
+    # Using Sambaverse expert as model for generating the SQL Query
+    llm = Sambaverse(
+        sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
         streaming=True,
         model_kwargs={
-            'max_tokens_to_generate': 200,
-            'select_expert': fine_tunned_sql_llm,
+            'max_tokens_to_generate': 512,
+            'select_expert': 'Meta-Llama-3-8B-Instruct',
             'temperature': 0.0,
             'repetition_penalty': 1.0,
             'top_k': 1,
             'top_p': 1.0,
             'do_sample': False,
+            'process_prompt': True,
         },
     )
+
+    # Using SambaStudio CoE expert as model for generating the SQL Query
+    # llm = SambaStudio(
+    #     streaming=True,
+    #     model_kwargs={
+    #         'max_tokens_to_generate': 512,
+    #         'select_expert': 'Meta-Llama-3-8B-Instruct',
+    #         'temperature': 0.0,
+    #         'repetition_penalty': 1.0,
+    #         'top_k': 1,
+    #         'top_p': 1.0,
+    #         'do_sample': False,
+    #     },
+    # )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 
     prompt = PromptTemplate.from_template(
-        '{table_info}\n\n-- Using valid SQLite, answer the following questions for the tables provided above.\n\n-- {input} {top_k}\n\nSELECT'
+        """<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
+        
+        {table_info}
+        
+        Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
+        Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked. 
+        The query must be in the format: ```sql\nquery\n```
+        
+        Example:
+        
+        ```sql
+        SELECT * FROM mainTable;
+        ```
+        
+        <|eot_id|><|start_header_id|>user<|end_header_id|>\
+            
+        {input}
+        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
     )
-    write_query = create_sql_query_chain(llm, db, prompt=prompt)
-    print(write_query.invoke({'question': query}))
-    execute_query = QuerySQLDataBaseTool(db=db)
-    sql_chain = write_query | execute_query
 
-    return sql_chain.invoke({'question': query})
+    # Chain that receives the natural language input and the table schema, then pass the teh formmated prompt to the llm
+    # and finally execute the sql finder method, retrieving only the filtered SQL query
+    query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
+    table_info = db.get_table_info()
+    query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
+
+    query_executor = QuerySQLDataBaseTool(db=db)
+    result = query_executor.invoke(query)
+
+    result = f'Query {query} executed with result {result}'
+
+    return result

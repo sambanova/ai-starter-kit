@@ -14,7 +14,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
-from langchain_core.tools import Tool
+from langchain_core.tools import StructuredTool, Tool
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -40,21 +40,24 @@ You must always select one or more of the above tools and answer with only a lis
 ```
 
 Think step by step
-Do not call a tool if the input depends on another tool output that you do not have yet
+Do not call a tool if the input depends on another tool output that you do not have yet.
 Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
+Your answer should be in the same language as the initial query.
 
 """
 
 
 # tool schema
 class ConversationalResponse(BaseModel):
-    "Respond conversationally only if no other tools should be called for a given query, or if you have a final answer."
+    "Respond conversationally only if no other tools should be called for a given query, or if you have a final answer. response must be in the same language as the user query"
 
-    response: str = Field(..., description='Conversational response to the user.')
+    response: str = Field(
+        ..., description='Conversational response to the user. must be in the same language as the user query'
+    )
 
 
 class FunctionCallingLlm:
-    def __init__(self, model, tools, default_tool=None, system_prompt=None):
+    def __init__(self, model, tools, default_tool=None, system_prompt=None) -> None:
         self.llm = self.set_llm(model)
         self.tools = tools
         if system_prompt is None:
@@ -74,7 +77,7 @@ class FunctionCallingLlm:
                 }
             )
         elif api == 'sambaverse':
-            llm = Sambaverse(
+            llm = Sambaverse(  # type:ignore
                 sambaverse_model_name='Meta/Meta-Llama-3-70B-Instruct',
                 model_kwargs={
                     'max_tokens_to_generate': 2048,
@@ -87,31 +90,33 @@ class FunctionCallingLlm:
             raise ValueError(f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported.")
         return llm
 
-    def get_tools_schemas(self, tools: Union[Tool, list] = None, default: Union[Tool, BaseModel] = None):
-        if tools is None:
+    def get_tools_schemas(
+        self, tools: Optional[Union[Tool, list]] = None, default: Optional[Union[Tool, BaseModel]] = None
+    ):
+        if tools is None or isinstance(tools, list):
             pass
-        elif isinstance(tools, Tool):
+        elif isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
         else:
             raise TypeError('tools must be a Tool or a list of Tools')
 
         tools_schemas = []
-
-        for tool in tools:
-            tool_schema = tool.get_input_schema().schema()
-            schema = {
-                'name': tool.name,
-                'description': tool_schema['description'],
-                'properties': tool_schema['properties'],
-            }
-            if 'required' in schema:
-                schema['required'] = tool_schema['required']
-            tools_schemas.append(schema)
+        if tools is not None:
+            for tool in tools:
+                tool_schema = tool.get_input_schema().schema()
+                schema = {
+                    'name': tool.name,
+                    'description': tool_schema['description'],
+                    'properties': tool_schema['properties'],
+                }
+                if 'required' in schema:
+                    schema['required'] = tool_schema['required']
+                tools_schemas.append(schema)
 
         if default is not None:
-            if isinstance(default, Tool):
+            if isinstance(default, Tool) or isinstance(default, StructuredTool):
                 tool_schema = default.get_input_schema().schema()
-            elif isinstance(default, BaseModel):
+            elif issubclass(default, BaseModel):
                 tool_schema = default.schema()
             else:
                 raise TypeError('default must be a Tool or a BaseModel')
@@ -141,7 +146,7 @@ class FunctionCallingLlm:
         for tool in tools:
             final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
-                response = tools_map[tool['tool'].lower()](tool['tool_input'])
+                response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
