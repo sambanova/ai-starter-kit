@@ -166,7 +166,7 @@ def sql_finder(text):
     # ```
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
     match = sql_code_pattern.search(text)
-    if len(match) > 0:
+    if match is not None:
         query = match.group(1)
         return query
     else:
@@ -176,7 +176,7 @@ def sql_finder(text):
         # ```
         code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
         match = code_pattern.search(text)
-        if len(match) > 0:
+        if match is not None:
             query = match.group(1)
             return query
         else:
