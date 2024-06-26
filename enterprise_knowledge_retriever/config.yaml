@@ -16,9 +16,9 @@ llm:
 retrieval:
     "k_retrieved_documents": 15 #set if rerank enabled 
     "score_threshold": 0.2
-    "rerank": False # set if you want to rerank retriever results 
+    "rerank": True # set if you want to rerank retriever results 
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
-    "final_k_retrieved_documents": 3
+    "final_k_retrieved_documents": 5
 
 prompts: 
     "qa_prompt": "prompts/qa_prompt.yaml"

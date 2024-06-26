@@ -119,6 +119,11 @@ def calculator(expression: str) -> Union[str, int, float]:
 
 # tool error handler
 def _handle_error(error: ToolException) -> str:
+    """
+    tool error handler
+    Args:
+        error: tool error
+    """
     return f'The following errors occurred during Calculator tool execution: `{error.args}`'
 
 
@@ -126,15 +131,19 @@ def _handle_error(error: ToolException) -> str:
 calculator = StructuredTool.from_function(
     func=calculator,
     args_schema=CalculatorSchema,
-    handle_tool_error=_handle_error,  # set as True if you want the tool to trow a generic ToolError message "Tool execution error"
-)
+    handle_tool_error=_handle_error,
+)  # type: ignore
 
 ## Python standard shell, or REPL (Read-Eval-Print Loop)
 
 
 # tool schema
 class ReplSchema(BaseModel):
-    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it."
+    (
+        'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. '
+        'If you want to see the output of a value, you should print it out with `print(...)`, '
+        'if you need a specific module you should import it.'
+    )
 
     command: str = Field(..., description='python code to evaluate')
 
@@ -143,21 +152,27 @@ class ReplSchema(BaseModel):
 python_repl = PythonREPL()
 python_repl = Tool(
     name='python_repl',
-    description='A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`.',
+    description=(
+        'A Python shell. Use this to execute python commands. Input should be a valid python command. '
+        'If you want to see the output of a value, you should print it out with `print(...)`.'
+    ),
     func=python_repl.run,
     args_schema=ReplSchema,
-)
+)  # type: ignore
 
 
 ## SQL tool
 # tool schema
 class QueryDBSchema(BaseModel):
-    "A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."
+    (
+        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
+        'Do not pass sql queries directly. Input must be a natural language question or instruction.'
+    )
 
     query: str = Field(..., description='natural language question or instruction.')
 
 
-def sql_finder(text):
+def sql_finder(text: str) -> str:
     """Search in a string for a SQL query or code with format"""
 
     # regex for finding sql_code_pattern with format:
@@ -184,27 +199,13 @@ def sql_finder(text):
 
 
 @tool(args_schema=QueryDBSchema)
-def query_db(query):
-    """query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."""
+def query_db(query: str) -> str:
+    """query generation tool. Use this to generate sql queries and retrieve the results from a database.
+    Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
     # Using Sambaverse expert as model for generating the SQL Query
-    llm = Sambaverse(
-        sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
-        streaming=True,
-        model_kwargs={
-            'max_tokens_to_generate': 512,
-            'select_expert': 'Meta-Llama-3-8B-Instruct',
-            'temperature': 0.0,
-            'repetition_penalty': 1.0,
-            'top_k': 1,
-            'top_p': 1.0,
-            'do_sample': False,
-            'process_prompt': True,
-        },
-    )
-
-    # Using SambaStudio CoE expert as model for generating the SQL Query
-    # llm = SambaStudio(
+    # llm = Sambaverse(
+    #     sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
     #     streaming=True,
     #     model_kwargs={
     #         'max_tokens_to_generate': 512,
@@ -214,8 +215,22 @@ def query_db(query):
     #         'top_k': 1,
     #         'top_p': 1.0,
     #         'do_sample': False,
+    #         'process_prompt': False,
     #     },
     # )
+    # Using SambaStudio CoE expert as model for generating the SQL Query
+    llm = SambaStudio(
+        streaming=True,
+        model_kwargs={
+            'max_tokens_to_generate': 512,
+            'select_expert': 'Meta-Llama-3-8B-Instruct',
+            'temperature': 0.0,
+            'repetition_penalty': 1.0,
+            'top_k': 1,
+            'top_p': 1.0,
+            'do_sample': False,
+        },
+    )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
     db_uri = f'sqlite:///{db_path}'
@@ -239,10 +254,10 @@ def query_db(query):
         <|eot_id|><|start_header_id|>user<|end_header_id|>\
             
         {input}
-        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""  # noqa E501
     )
 
-    # Chain that receives the natural language input and the table schema, then pass the teh formmated prompt to the llm
+    # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
     # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
     table_info = db.get_table_info()
@@ -252,5 +267,4 @@ def query_db(query):
     result = query_executor.invoke(query)
 
     result = f'Query {query} executed with result {result}'
-
     return result
