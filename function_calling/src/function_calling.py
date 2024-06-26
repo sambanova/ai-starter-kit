@@ -99,11 +99,13 @@ class FunctionCallingLlm:
         """
         if api == 'sambastudio':
             llm = SambaStudio(
+                streaming=True,
                 model_kwargs={
                     'max_tokens_to_generate': 2048,
                     'select_expert': 'Meta-Llama-3-70B-Instruct',  # if using CoE
                     'process_prompt': False,
-                }
+                    'temperature': 0.01,
+                },
             )
         elif api == 'sambaverse':
             llm = Sambaverse(  # type:ignore
@@ -111,7 +113,7 @@ class FunctionCallingLlm:
                 model_kwargs={
                     'max_tokens_to_generate': 2048,
                     'select_expert': 'Meta-Llama-3-70B-Instruct',
-                    'process_prompt': True,
+                    'process_prompt': False,
                     'temperature': 0.01,
                 },
             )

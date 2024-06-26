@@ -204,23 +204,8 @@ def query_db(query: str) -> str:
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
     # Using Sambaverse expert as model for generating the SQL Query
-    llm = Sambaverse(
-        sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
-        streaming=True,
-        model_kwargs={
-            'max_tokens_to_generate': 512,
-            'select_expert': 'Meta-Llama-3-8B-Instruct',
-            'temperature': 0.0,
-            'repetition_penalty': 1.0,
-            'top_k': 1,
-            'top_p': 1.0,
-            'do_sample': False,
-            'process_prompt': True,
-        },
-    )
-
-    # Using SambaStudio CoE expert as model for generating the SQL Query
-    # llm = SambaStudio(
+    # llm = Sambaverse(
+    #     sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
     #     streaming=True,
     #     model_kwargs={
     #         'max_tokens_to_generate': 512,
@@ -230,8 +215,22 @@ def query_db(query: str) -> str:
     #         'top_k': 1,
     #         'top_p': 1.0,
     #         'do_sample': False,
+    #         'process_prompt': False,
     #     },
     # )
+    # Using SambaStudio CoE expert as model for generating the SQL Query
+    llm = SambaStudio(
+        streaming=True,
+        model_kwargs={
+            'max_tokens_to_generate': 512,
+            'select_expert': 'Meta-Llama-3-8B-Instruct',
+            'temperature': 0.0,
+            'repetition_penalty': 1.0,
+            'top_k': 1,
+            'top_p': 1.0,
+            'do_sample': False,
+        },
+    )
 
     db_path = os.path.join(kit_dir, 'data/chinook.db')
     db_uri = f'sqlite:///{db_path}'
@@ -268,5 +267,4 @@ def query_db(query: str) -> str:
     result = query_executor.invoke(query)
 
     result = f'Query {query} executed with result {result}'
-
     return result
