@@ -12,6 +12,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
+from typing import List
+from matplotlib.axes._axes import Axes
+
 
 from benchmarking.src.token_benchmark import run_token_benchmark
 
@@ -24,88 +27,6 @@ warnings.filterwarnings("ignore")
 @st.cache_data
 def _init():
     load_dotenv("../.env", override=True)
-
-
-def _rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
-    """Rename metric names from input dataframe.
-
-    Args:
-        valid_df (pd.DataFrame): input dataframe
-
-    Returns:
-        pd.DataFrame: dataframe with renamed fields
-    """
-
-    final_df = pd.DataFrame()
-    final_df["number_input_tokens"] = valid_df["number_input_tokens"]
-    final_df["number_output_tokens"] = valid_df["number_output_tokens"]
-    final_df["number_total_tokens"] = valid_df["number_total_tokens"]
-    final_df["concurrent_user"] = valid_df["concurrent_user"]
-
-    # server metrics
-    final_df["ttft_server_s"] = valid_df["ttft_server_s"]
-    final_df["end_to_end_latency_server_s"] = valid_df["end_to_end_latency_server_s"]
-    final_df["generation_throughput_server"] = valid_df[
-        "request_output_throughput_server_token_per_s"
-    ]
-
-    # client metrics
-    final_df["ttft_s"] = valid_df["ttft_s"]
-    final_df["end_to_end_latency_s"] = valid_df["end_to_end_latency_s"]
-    final_df["generation_throughput"] = valid_df[
-        "request_output_throughput_token_per_s"
-    ]
-
-    return final_df
-
-
-def _transform_df_for_plotting(df: pd.DataFrame) -> pd.DataFrame:
-    """Transforms input dataframe into another with server and client types
-
-    Args:
-        df (pd.DataFrame): input dataframe
-
-    Returns:
-        pd.DataFrame: transformed dataframe with server and client type
-    """
-
-    df_server = df[
-        [
-            "ttft_server_s",
-            "number_input_tokens",
-            "number_total_tokens",
-            "generation_throughput_server",
-            "number_output_tokens",
-            "end_to_end_latency_server_s",
-        ]
-    ].copy()
-    df_server = df_server.rename(
-        columns={
-            "ttft_server_s": "ttft",
-            "generation_throughput_server": "generation_throughput",
-            "end_to_end_latency_server_s": "e2e_latency",
-        }
-    )
-    df_server["type"] = "Server side"
-
-    df_client = df[
-        [
-            "ttft_s",
-            "number_input_tokens",
-            "number_total_tokens",
-            "generation_throughput",
-            "number_output_tokens",
-            "end_to_end_latency_s",
-        ]
-    ].copy()
-    df_client = df_client.rename(
-        columns={"ttft_s": "ttft", "end_to_end_latency_s": "e2e_latency"}
-    )
-    df_client["type"] = "Client side"
-
-    df_ttft_throughput_latency = pd.concat([df_server, df_client], ignore_index=True)
-
-    return df_ttft_throughput_latency
 
 
 def _run_performance_evaluation() -> pd.DataFrame:
@@ -138,18 +59,57 @@ def _run_performance_evaluation() -> pd.DataFrame:
     )
 
     # read generated json and output formatted results
-    df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
         f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
     )
     df_user["concurrent_user"] = num_concurrent_workers
-    df = pd.concat([df, df_user])
-    valid_df = df[(df["error_code"] != "")]
-    renamed_df = _rename_metrics_df(valid_df)
-    df_ttft_throughput_latency = _transform_df_for_plotting(renamed_df)
+    df_user = df_user[(df_user["error_code"] != "")]
+    # renamed_df = _rename_metrics_df(valid_df)
+    # df_ttft_throughput_latency = _transform_df_for_plotting(valid_df)
 
-    return df_ttft_throughput_latency
+    return df_user
+
+
+def plot_client_vs_server_barplots(
+    df_user: pd.DataFrame,
+    x_col: str,
+    y_cols: List[str],
+    title: str,
+    ylabel: str,
+    ax: Axes,
+) -> None:
+    """
+    Plots bar plots for client vs server metrics from a DataFrame.
+
+    Args:
+        df_user (pd.DataFrame): The DataFrame containing the data to plot.
+        x_col (str): The column name to be used as the x-axis.
+        y_cols (List[str]): A list of column names to be used as the y-axis.
+        title (str): The title of the plot.
+        ylabel (str): The label for the y-axis.
+
+    Returns:
+        None
+    """
+    # Melt the DataFrame to have a long-form DataFrame suitable for Seaborn
+    df_melted = df_user.melt(
+        id_vars=[x_col], value_vars=y_cols, var_name="Metric", value_name="Value"
+    )
+
+    # Create the plot
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax)
+
+    # Customize the plot
+    plt.title(title)
+    plt.xlabel("Batch Size Used")
+    plt.ylabel(ylabel)
+
+    # Show the plot
+    plt.legend(title="Metric")
+    plt.show()
 
 
 def _initialize_sesion_variables():
@@ -192,7 +152,7 @@ def main():
         "This performance evaluation assesses the following LLM's performance metrics using concurrent processes. _client represent the metrics computed from the client-side and _server represents the metrics computed from the server-side."
     )
     st.markdown(
-        "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token. Client metric is calculated using another request with output tokens = 1."
+        "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token."
     )
     st.markdown(
         "**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated)"
@@ -243,38 +203,82 @@ def main():
 
             try:
 
-                df = _run_performance_evaluation()
-
+                df_req_info = _run_performance_evaluation()
                 performance_eval_end = time.time()
                 process_duration = performance_eval_end - performance_eval_start
                 print(
                     f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
                 )
 
-                st.subheader("TTFT, Throughput and E2E Latency box plots")
-
-                fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(8, 20))
-                sns.boxplot(data=df, x="ttft", y="type", ax=ax[0]).set(
-                    xlabel="Time to First Token (secs)",
-                    ylabel="Type",
-                    title="Time to First Token Distribution",
+                st.subheader("Performance menterics plots")
+                fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
+                plot_client_vs_server_barplots(
+                    df_req_info,
+                    "batch_size_used",
+                    ["server_ttft_s", "client_ttft_s"],
+                    "Boxplots for Server token/s and Client token/s per request",
+                    "seconds",
+                    ax[0],
                 )
-                sns.boxplot(data=df, x="e2e_latency", y="type", ax=ax[1]).set(
-                    xlabel="E2E Latency (secs)",
-                    ylabel="Type",
-                    title="End-to-end Latency Distribution",
+                plot_client_vs_server_barplots(
+                    df_req_info,
+                    "batch_size_used",
+                    ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
+                    "Boxplots for Server latency and Client latency",
+                    "seconds",
+                    ax[1],
                 )
-                sns.boxplot(data=df, x="generation_throughput", y="type", ax=ax[2]).set(
-                    xlabel="Throughput (tokens/sec)",
-                    ylabel="Type",
-                    title="Throughput Distribution",
+                plot_client_vs_server_barplots(
+                    df_req_info,
+                    "batch_size_used",
+                    [
+                        "server_output_token_per_s_per_request",
+                        "client_output_token_per_s_per_request",
+                    ],
+                    "Boxplots for Server token/s and Client token/s per request",
+                    "tokens/s",
+                    ax[2],
                 )
+                # Compute total throughput per batch
+                plot_dataframe_summary(df_req_info, ax[3])
                 st.pyplot(fig)
 
             except Exception as e:
                 st.error(
                     f"Error: {e}. For more error details, please look at the terminal."
                 )
+
+
+def plot_dataframe_summary(df_req_info, ax):
+    df_req_summary = (
+        df_req_info.groupby("batch_size_used")[
+            [
+                "server_output_token_per_s_per_request",
+                "client_output_token_per_s_per_request",
+            ]
+        ]
+        .mean()
+        .reset_index()
+    )
+    df_req_summary["server_throughput_token_per_s"] = (
+        df_req_summary["server_output_token_per_s_per_request"]
+        * df_req_summary["batch_size_used"]
+    )
+    df_req_summary["client_throughput_token_per_s"] = (
+        df_req_summary["client_output_token_per_s_per_request"]
+        * df_req_summary["batch_size_used"]
+    )
+    df_melted = pd.melt(
+        df_req_summary,
+        id_vars="batch_size_used",
+        value_vars=[
+            "server_throughput_token_per_s",
+            "client_throughput_token_per_s",
+        ],
+        var_name="Value Type",
+        value_name="Value",
+    )
+    sns.barplot(x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax)
 
 
 if __name__ == "__main__":
