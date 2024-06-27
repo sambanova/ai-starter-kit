@@ -19,72 +19,88 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 
 <table style="width: 100%;">
 <tbody>
-</tr><td width="25%"><a href="code_copilot/README.md">Benchmarking</a> 
-</td>
+
+<tr>
+<td width="25%"><a href="code_copilot/README.md">Benchmarking</a></td>
 <td width="75%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface. </td>
 </tr>
-</tr><td width="25%"><a href="code_copilot/README.md">Code Copilot</a> 
-</td>
+
+<tr>
+<td width="25%"><a href="code_copilot/README.md">Code Copilot</a></td>
 <td width="75%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
 </tr>
-</tr><td width="25%"><a href="workshops/genai_summit/complex_rag/README.md">Complex RAG</a> 
-</td>
+
+<tr>
+<td width="25%"><a href="workshops/genai_summit/complex_rag/README.md">Complex RAG</a></td>
 <td width="75%"> Sample implementation of a complex RAG workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo. </td>
 </tr>
+
 <tr>
-<td width="25%"><a href="CoE_jump_start/README.md">CoE jump start</a>
-</td>
+<td width="25%"><a href="CoE_jump_start/README.md">CoE jump start</a></td>
 <td width="75%">This kit demonstrates how to call <a href=https://coe-1.cloud.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using Sambaverse, using SambaStudio with a named expert, and using SambaStudio with routing.</td>
 </tr>
+
 <tr>
-<td width="25%"><a href="data_extraction/README.md">Data Extraction</a>
-</td>
+<td width="25%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="75%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
 </tr>
-<td width="25%"><a href="edgar_qna/README.md">EDGAR Q&A</a> 
-</td>
+<tr>
+<td width="25%"><a href="edgar_qna/README.md">EDGAR Q&A</a></td>
 <td width="75%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
 </tr>
+
 <tr>
-<td width="25%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</td>
+<td width="25%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 </td>
 <td width="75%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 </tr>
-<td width="25%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a>
-</td>
+
+<tr>
+<td width="25%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a></td>
 <td width="75%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
 </tr>
-<td width="25%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a>
-</td>
+
+<tr>
+<td width="25%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a></td>
 <td width="75%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
-</tr><td width="25%"><a href="image_search/README.md">Image Search</a> 
-</td>
+</tr>
+
+<tr>
+<td width="25%"><a href="function_calling/README.md"> Function Calling</a></td>
+<td width="75%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
+</tr>
+<td width="25%"><a href="image_search/README.md">Image Search</a></td>
 <td width="75%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
 </tr>
-</tr><td width="25%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a> 
-</td>
+
+<tr>
+<td width="25%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="75%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
 </tr>
-<td width="25%"><a href="post_call_analysis/README.md">Post Call Analysis</a> 
-</td>
+
+<tr>
+<td width="25%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
 <td width="75%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
 </tr>
+
 <tr>
-<td width="25%"><a href="prompt_engineering/README.md">Prompt Engineering</td>
+<td width="25%"><a href="prompt_engineering/README.md">Prompt Engineering</a></td>
 </td>
 <td width="75%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
 </tr>
-<td width="25%"><a href="search_assistant/README.md">Search Assistant</a>
-</td>
+
+<tr>
+<td width="25%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="75%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
 </tr>
-<td width="25%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a>
-</td>
+
+<tr>
+<td width="25%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a></td>
 <td width="75%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
 </tr>
+
 <tr>
-<td width="25%"><a href="yoda/README.md">YoDA: Your Data Your model</td>
-</td>
+<td width="25%"><a href="yoda/README.md">YoDA: Your Data Your model</a></td>
 <td width="75%">Sample training recipe to train a Language Model (LLM) using a customer's private data. </td>
 </tr>
 
