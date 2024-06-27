@@ -40,10 +40,6 @@ def get_config_info(config_path: str) -> tuple[dict]:
     return (tools_info,)
 
 
-tools_info = get_config_info(CONFIG_PATH)[0]
-query_db_info = tools_info['query_db']
-
-
 ##Get time tool
 
 
@@ -223,6 +219,9 @@ def query_db(query: str) -> str:
     """query generation tool. Use this to generate sql queries and retrieve the results from a database.
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
+    # get tool configs
+    query_db_info = get_config_info(CONFIG_PATH)[0]['query_db']
+
     # set the llm based in tool configs
     if query_db_info['llm']['api'] == 'sambastudio':
         if query_db_info['llm']['coe']:
@@ -294,3 +293,36 @@ def query_db(query: str) -> str:
 
     result = f'Query {query} executed with result {result}'
     return result
+
+
+## translation tool
+# tool schema
+
+
+# tool schema
+class TranslateSchema(BaseModel):
+    """Returns translated input sentence to desired language"""
+
+    origin_language: str = Field(description='language of the original sentence')
+    final_language: str = Field(description='language to translate the sentence into')
+    input_sentence: str = Field(description='sentence to translate')
+
+
+@tool(args_schema=TranslateSchema)
+def translate(origin_language: str, final_language: str, input_sentence: str) -> str:
+    """Returns translated input sentence to desired language
+
+    Args:
+        origin_language: language of the original sentence
+        final_language: language to translate the sentence into
+        input_sentence: sentence to translate
+    """
+    llm = SambaStudio(
+        streaming=True,
+        model_kwargs={
+            'max_tokens_to_generate': 2048,
+            'select_expert': 'Meta-Llama-3-8B-Instruct',
+            'temperature': 0.2,
+        },
+    )
+    return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')

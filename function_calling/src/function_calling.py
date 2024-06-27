@@ -302,4 +302,4 @@ class FunctionCallingLlm:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))
                 tool_call_id += 1
 
-        raise Exception('not a final response yet', json.dumps(history))
+        raise Exception('not a final response yet', history)

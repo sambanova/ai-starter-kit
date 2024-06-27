@@ -124,7 +124,7 @@ def main() -> None:
             ['get_time', 'calculator', 'python_repl', 'query_db'],
         )
         st.markdown('**2. Set the maximum number of iterations your want the model to run**')
-        st.number_input('Max iterations', value=5, max_value=20)
+        st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
         st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
         if st.button('Set'):
             with st.spinner('Processing'):
