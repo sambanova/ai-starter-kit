@@ -3,6 +3,7 @@ import streamlit as st
 
 sys.path.append("../")
 
+from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.chat_performance_evaluation import SambaStudioCOEHandler
 
 import warnings
@@ -37,12 +38,13 @@ def _parse_llm_response(llm: SambaStudioCOEHandler, prompt: str) -> dict:
     Returns:
         dict: dictionary with performance metrics and completion text
     """
+    
     llm_output = llm.generate(prompt=prompt)
     response = {
         "completion": llm_output[1],
-        "time_to_first_token": llm_output[0]["ttft_s"],
-        "latency": llm_output[0]["end_to_end_latency_s"],
-        "throughput": llm_output[0]["request_output_throughput_token_per_s"],
+        "time_to_first_token": llm_output[0][common_metrics.TTFT],
+        "latency": llm_output[0][common_metrics.E2E_LAT],
+        "throughput": llm_output[0][common_metrics.REQ_OUTPUT_THROUGHPUT],
     }
     return response
 
