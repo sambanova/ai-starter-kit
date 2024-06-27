@@ -170,11 +170,11 @@ def main():
         st.session_state.llm = f"{llm_model}"
 
         st.session_state.input_tokens = st.slider(
-            "Number of input tokens", min_value=50, max_value=2048, value=1000
+            "Number of input tokens", min_value=50, max_value=2000, value=1000
         )
 
         st.session_state.output_tokens = st.slider(
-            "Number of output tokens", min_value=50, max_value=2048, value=1000
+            "Number of output tokens", min_value=50, max_value=2000, value=1000
         )
 
         st.session_state.number_requests = st.slider(

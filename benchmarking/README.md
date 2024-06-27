@@ -158,9 +158,9 @@ Users have this option if they want to experiment using values that are beyond t
 1. Open the file `run.sh` and configure the following parameters in there:
 
    - model: model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
-   - mean-input-tokens: average number of input tokens. It's recommended to choose no more than 1024 tokens to avoid long waitings. Default value: 1000.
+   - mean-input-tokens: average number of input tokens. It's recommended to choose no more than 2000 tokens to avoid long waitings. Default value: 1000.
    - stddev-input-tokens: standard deviation of input tokens. It's recommended to choose no more than 50% the amount of input tokens. Default value: 10.
-   - mean-output-tokens: average number of output tokens. It's recommended to choose no more than 1024 tokens to avoid long waitings. Default value: 1000.
+   - mean-output-tokens: average number of output tokens. It's recommended to choose no more than 2000 tokens to avoid long waitings. Default value: 1000.
    - stddev-output-tokens: standard deviation of output tokens. It's recommended to choose no more than 50% the amount of output tokens. Default value: 10.
    - max-num-completed-requests: maximum number of completed requests. Default value: 32 
    - num-concurrent-workers: number of concurrent workers. Default value: 1. 
