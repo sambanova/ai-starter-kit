@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from typing import Optional, Union
 
+import yaml
 from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
@@ -21,8 +22,27 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+
+
+## Get configs for tools
+def get_config_info(config_path: str) -> tuple[dict]:
+    """
+    Loads json config file
+    """
+    # Read config file
+    with open(config_path, 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+    tools_info = config['tools']
+
+    return (tools_info,)
+
+
+tools_info = get_config_info(CONFIG_PATH)[0]
+query_db_info = tools_info['query_db']
+
 
 ##Get time tool
 
@@ -203,36 +223,42 @@ def query_db(query: str) -> str:
     """query generation tool. Use this to generate sql queries and retrieve the results from a database.
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
-    # Using Sambaverse expert as model for generating the SQL Query
-    # llm = Sambaverse(
-    #     sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
-    #     streaming=True,
-    #     model_kwargs={
-    #         'max_tokens_to_generate': 512,
-    #         'select_expert': 'Meta-Llama-3-8B-Instruct',
-    #         'temperature': 0.0,
-    #         'repetition_penalty': 1.0,
-    #         'top_k': 1,
-    #         'top_p': 1.0,
-    #         'do_sample': False,
-    #         'process_prompt': False,
-    #     },
-    # )
-    # Using SambaStudio CoE expert as model for generating the SQL Query
-    llm = SambaStudio(
-        streaming=True,
-        model_kwargs={
-            'max_tokens_to_generate': 512,
-            'select_expert': 'Meta-Llama-3-8B-Instruct',
-            'temperature': 0.0,
-            'repetition_penalty': 1.0,
-            'top_k': 1,
-            'top_p': 1.0,
-            'do_sample': False,
-        },
-    )
+    # set the llm based in tool configs
+    if query_db_info['llm']['api'] == 'sambastudio':
+        if query_db_info['llm']['coe']:
+            # Using SambaStudio CoE expert as model for generating the SQL Query
+            llm = SambaStudio(
+                streaming=True,
+                model_kwargs={
+                    'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                    'select_expert': query_db_info['llm']['select_expert'],
+                    'temperature': query_db_info['llm']['temperature'],
+                },
+            )
+        else:
+            # Using SambaStudio endpoint as model for generating the SQL Query
+            llm = SambaStudio(
+                model_kwargs={
+                    'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                    'temperature': query_db_info['llm']['temperature'],
+                },
+            )
+    elif query_db_info['llm']['api'] == 'sambaverse':
+        # Using Sambaverse expert as model for generating the SQL Query
+        llm = Sambaverse(  # type:ignore
+            sambaverse_model_name=query_db_info['llm']['sambaverse_model_name'],
+            model_kwargs={
+                'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                'select_expert': query_db_info['llm']['select_expert'],
+                'temperature': query_db_info['llm']['temperature'],
+            },
+        )
+    else:
+        raise ValueError(
+            f"Invalid LLM API: {query_db_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+        )
 
-    db_path = os.path.join(kit_dir, 'data/chinook.db')
+    db_path = os.path.join(kit_dir, query_db_info['db']['path'])
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 

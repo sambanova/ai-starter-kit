@@ -1,0 +1,19 @@
+llm: 
+  "api": "sambastudio"  # set either sambastudio or sambaverse
+  "temperature": 0.01
+  "max_tokens_to_generate": 2048
+  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
+  "coe": True #set as true if using Sambastudio CoE endpoint
+  "select_expert": "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+
+tools:
+    query_db:
+      llm: 
+        "api": "sambastudio"  # set either sambastudio or sambaverse
+        "temperature": 0.01 
+        "max_tokens_to_generate": 2048
+        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+        "coe": True #set as true if using Sambastudio CoE endpoint
+        "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+      db:
+        "path": "data/chinook.db" 

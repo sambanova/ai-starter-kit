@@ -61,7 +61,7 @@ def set_fc_llm(tools: list) -> None:
         tools (list): list of tools to be used
     """
     set_tools = [TOOLS[name] for name in tools]
-    st.session_state.fc = FunctionCallingLlm('sambastudio', set_tools)
+    st.session_state.fc = FunctionCallingLlm(set_tools)
 
 
 def handle_userinput(user_question: Optional[str]) -> None:
