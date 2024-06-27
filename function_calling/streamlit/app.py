@@ -16,7 +16,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm  # type: ignore
-from function_calling.src.tools import calculator, get_time, python_repl, query_db  # type: ignore
+from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate  # type: ignore
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,6 +27,8 @@ TOOLS = {
     'calculator': calculator,
     'python_repl': python_repl,
     'query_db': query_db,
+    'translate': translate,
+    'rag': rag,
 }
 
 
@@ -108,7 +110,7 @@ def main() -> None:
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
     if 'tools' not in st.session_state:
-        st.session_state.tools = ['get_time', 'calculator', 'python_repl', 'query_db']
+        st.session_state.tools = ['get_time', 'python_repl', 'query_db']
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
 
@@ -120,8 +122,8 @@ def main() -> None:
         st.markdown('**1. Select the tools for function calling.**')
         st.session_state.tools = st.multiselect(
             'Available tools',
-            ['get_time', 'calculator', 'python_repl', 'query_db'],
-            ['get_time', 'calculator', 'python_repl', 'query_db'],
+            ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
+            ['get_time', 'python_repl', 'query_db'],
         )
         st.markdown('**2. Set the maximum number of iterations your want the model to run**')
         st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
