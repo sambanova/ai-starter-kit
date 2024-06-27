@@ -157,6 +157,9 @@ def main():
     st.markdown(
         "**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"
     )
+    st.markdown(
+        "**Total Throughput:** Number of total output tokens per batch and per second"
+    )
 
     with st.sidebar:
         st.title("Configuration")
