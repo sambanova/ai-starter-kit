@@ -65,8 +65,9 @@ def _run_performance_evaluation() -> pd.DataFrame:
     )
     df_user["concurrent_user"] = num_concurrent_workers
     df_user = df_user[(df_user["error_code"] != "")]
-    # renamed_df = _rename_metrics_df(valid_df)
-    # df_ttft_throughput_latency = _transform_df_for_plotting(valid_df)
+    # for non-batching endpoints, batch_size_used will be 1
+    if df_user["batch_size_used"].isnull().all():
+        df_user["batch_size_used"] = 1
 
     return df_user
 
@@ -100,16 +101,12 @@ def plot_client_vs_server_barplots(
     # Create the plot
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax)
-
-    # Customize the plot
-    plt.title(title)
-    plt.xlabel("Batch Size Used")
-    plt.ylabel(ylabel)
-
-    # Show the plot
-    plt.legend(title="Metric")
-    plt.show()
+    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax).set(
+        xlabel="Batch Size Used",
+        ylabel=ylabel,
+        title=title,
+    )
+    ax.legend(title="Metric")
 
 
 def _initialize_sesion_variables():
@@ -210,7 +207,7 @@ def main():
                     f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
                 )
 
-                st.subheader("Performance menterics plots")
+                st.subheader("Performance metrics plots")
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
                 plot_client_vs_server_barplots(
                     df_req_info,
@@ -259,13 +256,18 @@ def plot_dataframe_summary(df_req_info, ax):
         ]
         .mean()
         .reset_index()
+    ).rename(
+        columns={
+            "server_output_token_per_s_per_request": "server_output_token_per_s_mean",
+            "client_output_token_per_s_per_request": "client_output_token_per_s_mean",
+        }
     )
     df_req_summary["server_throughput_token_per_s"] = (
-        df_req_summary["server_output_token_per_s_per_request"]
+        df_req_summary["server_output_token_per_s_mean"]
         * df_req_summary["batch_size_used"]
     )
     df_req_summary["client_throughput_token_per_s"] = (
-        df_req_summary["client_output_token_per_s_per_request"]
+        df_req_summary["client_output_token_per_s_mean"]
         * df_req_summary["batch_size_used"]
     )
     df_melted = pd.melt(
@@ -278,7 +280,13 @@ def plot_dataframe_summary(df_req_info, ax):
         var_name="Value Type",
         value_name="Value",
     )
-    sns.barplot(x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax)
+    sns.barplot(
+        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax
+    ).set(
+        xlabel="Batch Size Used",
+        ylabel="tokens/s",
+        title="Total throughput per batch",
+    )
 
 
 if __name__ == "__main__":
