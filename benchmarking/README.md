@@ -143,13 +143,14 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     _Note: Not all model endpoints currently support the calculation of server-side statistics. Depending on your choice of endpoint, then, you may see either client and server information, or you may see just the client-side information._
 
-    **Box plots**
+    **Bar plots**
 
-    The second part of the results is composed by three box plots. (Performance metric values are based on a SambaTurbo endpoint.)
+    Results are composed by four bar plots. (Performance metric values are based on a SambaTurbo endpoint.)
 
-    - Time to First Token Distribution: users should expect to see a distribution around 0.70 seconds from Client side numbers. 
-    - End-to-End Latency Distribution: users should expect to see a distribution around 2.68 seconds from Client side numbers.
-    - Throughput Distribution: users should expect to see a distribution around 518 tokens/second from Client side numbers.
+    - Time to First Token bar plot: users should expect to see a value around 1.2 seconds from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the TTFT per batch.
+    - End-to-End Latency bar plot: users should expect to see a value around 8 seconds from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the latency per batch.
+    - Throughput bar plot: users should expect to see a value around 140 tokens/second from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the throughput per request, per batch.
+    - Total throughput per batch: users should expect to see a value around 140 tokens/second from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the number of total throughput per batch.
 
 #### Using terminal
 
