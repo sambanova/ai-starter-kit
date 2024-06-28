@@ -4,3 +4,5 @@ langchain-community==0.2.6
 langchain-experimental==0.0.60
 sseclient-py==1.8.0
 streamlit==1.36.0
+chromadb==0.4.24
+types-PyYAML==6.0.12.20240311

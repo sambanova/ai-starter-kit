@@ -19,10 +19,10 @@ Function Calling kit
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
         - [Install dependencies](#install-dependencies)
-- [Use the Function Calling kit](#use-the-funtion-calling-kit)
+- [Use the Function Calling kit](#use-the-function-calling-kit)
     - [Quick start](#quick-start)
     - [Streamlit App](#streamlit-app)
-    - [Customizing the Function Calling module](#customizing-the-funtion-calling-module)
+    - [Customizing the Function Calling module](#customizing-the-function-calling-module)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -67,6 +67,8 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
     SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
+4. Open the [config file](./config.yaml), in `llm` section set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file.
+
 ### Setup for Sambaverse users 
 
 1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
@@ -77,9 +79,11 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
         SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
 
+4. In the [config file](./config.yaml), in `llm` section set the `api` variable to `"sambaverse"`, and set the `sambaverse_model_name`  and `select_expert` configs.
+
 ###  Install dependencies
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment.
 
 NOTE: python 3.10 or higher is required to use this kit.
 
@@ -112,10 +116,10 @@ We provide a simple module for using the Function Calling LLM, for this you will
         from function_calling.src.function_calling  import FunctionCallingLlm
         
         ### Define your tools
-        from function_calling.src.tools import get_time, calculator, python_repl
-        tools = [get_time, calculator, python_repl]
+        from function_calling.src.tools import get_time, calculator, python_repl, query_db
+        tools = [get_time, calculator, python_repl, query_db]
 
-        fc = FunctionCallingLlm("sambaverse", tools)
+        fc = FunctionCallingLlm(tools)
 
         fc.function_call_llm("<user query>", max_it=5, debug=True)
     ```
