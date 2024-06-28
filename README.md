@@ -21,7 +21,7 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 <tbody>
 
 <tr>
-<td width="25%"><a href="code_copilot/README.md">Benchmarking</a></td>
+<td width="25%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="75%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface. </td>
 </tr>
 
