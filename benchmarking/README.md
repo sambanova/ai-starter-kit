@@ -15,9 +15,8 @@ Benchmarking
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+    - [Create the (virtual) environment](#create-the-virtual-environment)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-  - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
 - [Use the starter kit](#use-the-starter-kit)
     - [Performance evaluation workflow](#performance-evaluation-workflow)
         - [Using streamlit app](#using-streamlit-app)
@@ -57,7 +56,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file
 
-1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for a general reference, and the [Dynamic batching documentation](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html#_create_a_dynamic_batching_coe_endpoint) for more information on how to deploy a dynamic batching endpoint.  
 
 2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
     ```env
@@ -233,7 +232,7 @@ Users are able to ask anything and get a generated answer of their questions, as
 
 # Batching vs non-batching benchmarking
 
-This kit also supports SambaNova Studio models with Dynamic Batch Size, which improves the model performance significantly. 
+This kit also supports [SambaNova Studio models with Dynamic Batch Size](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), which improves the model performance significantly. 
 
 In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that. 
 
