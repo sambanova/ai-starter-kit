@@ -6,13 +6,15 @@ name: null
 output_parser: null
 partial_variables: {}
 template: |
-          <s>[INST] <<SYS>>\Use the following conversation extrated from a call trascription to do a brief abstractive summary of what happened, for a call quallity ensurance personel
-          some times there could be some wrong translated words so be carefull and adhere to the context
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+          Use the following conversation extracted from a call transcription to do a brief abstractive summary of what happened, for a call quality endurance personnel
+          some times there could be some wrong translated words so be careful and adhere to the context
           do not include anything that is not given in the conversation, don try to make up details that are not part of the conversation
+          <|eot_id|><|start_header_id|>user<|end_header_id|>
           conversation
           {conversation}
           end of conversation
-          <</SYS>>/n
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
           Summary: [/INST]
 template_format: f-string
 validate_template: false

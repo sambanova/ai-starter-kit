@@ -31,14 +31,20 @@ asr:
 
   output:
     output_path: results/output.csv
-    
-api: sambaverse
 
 llm: 
-    "temperature": 0.1
+    "api": "sambaverse" # set either sambastudio or sambaverse
+    "temperature": 0.06
     "max_tokens_to_generate": 500
-    "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
-    "smabaverse_select_expert": "llama-2-70b-chat-hf"
+    "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+    "coe": True #set as true if using Sambastudio CoE endpoint
+    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+
+embedding_model: 
+    "type": "sambastudio" # set either sambastudio or cpu
+    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
 
 retrieval:
     "chunk_size": 1000
