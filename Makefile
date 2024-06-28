@@ -1,22 +1,25 @@
 # Makefile for AI Starter Kit project setup and management using Poetry and pip
 
 # Variables
-PYTHON := python3
+PYENV_ROOT := $(HOME)/.pyenv
+PATH := $(PYENV_ROOT)/bin:$(PATH)
+
+DEFAULT_PYTHON_VERSION := 3.11.3
+EKR_PYTHON_VERSION := 3.9.4
+
+PYTHON := $(PYENV_ROOT)/versions/$(DEFAULT_PYTHON_VERSION)/bin/python
+EKR_PYTHON := $(PYENV_ROOT)/versions/$(EKR_PYTHON_VERSION)/bin/python
+
 POETRY := poetry
 VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
 REQUIREMENTS_FILE := base-requirements.txt
 
-# Parsing service specific variables
-PARSING_PYTHON_VERSION := 3.11.3
-PYENV_ROOT := $(HOME)/.pyenv
-PATH := $(PYENV_ROOT)/bin:$(PATH)
-PARSING_PYTHON := $(PYENV_ROOT)/versions/$(PARSING_PYTHON_VERSION)/bin/python
-
 # Project-specific variables
 EKR_DIR := enterprise_knowledge_retriever
 PARSING_DIR := utils/parsing/unstructured-api
 PARSING_VENV := venv
+EKR_VENV := venv
 EKR_COMMAND := streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 # Default target
@@ -35,14 +38,20 @@ ensure-pyenv:
 		source ~/.bashrc; \
 	fi
 
-# Install specific Python version using pyenv
-.PHONY: install-python-version
-install-python-version: ensure-pyenv
-	@if [ ! -d $(PYENV_ROOT)/versions/$(PARSING_PYTHON_VERSION) ]; then \
-		echo "Installing Python $(PARSING_PYTHON_VERSION)..."; \
-		pyenv install $(PARSING_PYTHON_VERSION); \
+# Install specific Python versions using pyenv
+.PHONY: install-python-versions
+install-python-versions: ensure-pyenv
+	@if [ ! -d $(PYENV_ROOT)/versions/$(DEFAULT_PYTHON_VERSION) ]; then \
+		echo "Installing Python $(DEFAULT_PYTHON_VERSION)..."; \
+		pyenv install $(DEFAULT_PYTHON_VERSION); \
 	else \
-		echo "Python $(PARSING_PYTHON_VERSION) is already installed."; \
+		echo "Python $(DEFAULT_PYTHON_VERSION) is already installed."; \
+	fi
+	@if [ ! -d $(PYENV_ROOT)/versions/$(EKR_PYTHON_VERSION) ]; then \
+		echo "Installing Python $(EKR_PYTHON_VERSION)..."; \
+		pyenv install $(EKR_PYTHON_VERSION); \
+	else \
+		echo "Python $(EKR_PYTHON_VERSION) is already installed."; \
 	fi
 
 # Install Poetry if not already installed
@@ -63,7 +72,7 @@ init-poetry: ensure-poetry
 
 # Create or use existing virtual environment
 .PHONY: venv
-venv: ensure-poetry init-poetry
+venv: ensure-poetry init-poetry install-python-versions
 	@echo "Checking for virtual environment..."
 	@if [ ! -d $(VENV_PATH) ]; then \
 		echo "Creating new virtual environment..."; \
@@ -95,16 +104,16 @@ add-dependencies: ensure-poetry
 
 # Set up Enterprise Knowledge Retriever project using pip and run the app
 .PHONY: ekr
-ekr: start-parsing-service
+ekr: start-parsing-service install-python-versions
 	@echo "Setting up Enterprise Knowledge Retriever project..."
 	@cd $(EKR_DIR) && ( \
-		if [ ! -d venv ]; then \
-			echo "Creating new virtual environment for EKR..."; \
-			$(PYTHON) -m venv venv; \
+		if [ ! -d $(EKR_VENV) ]; then \
+			echo "Creating new virtual environment for EKR using Python $(EKR_PYTHON_VERSION)..."; \
+			$(EKR_PYTHON) -m venv $(EKR_VENV); \
 		else \
 			echo "Using existing virtual environment for EKR."; \
 		fi; \
-		source venv/bin/activate && \
+		. $(EKR_VENV)/bin/activate && \
 		pip install --upgrade pip && \
 		if [ -f requirements.txt ]; then \
 			pip install -r requirements.txt; \
@@ -117,12 +126,12 @@ ekr: start-parsing-service
 
 # Set up parsing service
 .PHONY: setup-parsing-service
-setup-parsing-service: install-python-version
+setup-parsing-service: install-python-versions
 	@echo "Setting up parsing service..."
 	@cd $(PARSING_DIR) && ( \
 		if [ ! -d $(PARSING_VENV) ]; then \
 			echo "Creating new virtual environment for parsing service..."; \
-			$(PARSING_PYTHON) -m venv $(PARSING_VENV); \
+			$(PYTHON) -m venv $(PARSING_VENV); \
 		else \
 			echo "Using existing virtual environment for parsing service."; \
 		fi; \
@@ -182,39 +191,13 @@ parsing-status:
 		echo "Parsing service is not running (no PID file found)"; \
 	fi
 
-# Template for adding new subprojects using pip
-define subproject_template
-.PHONY: $(1)
-$(1):
-	@echo "Setting up $(1) project..."
-	@cd $(2) && ( \
-		if [ ! -d venv ]; then \
-			echo "Creating new virtual environment for $(1)..."; \
-			$$(PYTHON) -m venv venv; \
-		else \
-			echo "Using existing virtual environment for $(1)."; \
-		fi; \
-		source venv/bin/activate; \
-		pip install --upgrade pip; \
-		if [ -f requirements.txt ]; then \
-			pip install -r requirements.txt; \
-		else \
-			echo "requirements.txt not found in $(2). Skipping dependency installation."; \
-		fi; \
-		deactivate; \
-	)
-endef
-
-# Example of how to add a new subproject
-# $(eval $(call subproject_template,subproject_name,subproject_directory))
-
 # Clean up
 .PHONY: clean
 clean: stop-parsing-service
 	@echo "Cleaning up..."
 	@rm -rf $(VENV_PATH)
 	@rm -rf $(PARSING_DIR)/$(PARSING_VENV)
-	@rm -rf $(EKR_DIR)/venv
+	@rm -rf $(EKR_DIR)/$(EKR_VENV)
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' -delete
 
@@ -235,7 +218,7 @@ help:
 	@echo "Available targets:"
 	@echo "  all                    : Set up main project, create or use venv, install dependencies, and add from $(REQUIREMENTS_FILE)"
 	@echo "  ensure-pyenv           : Install pyenv if not already installed"
-	@echo "  install-python-version : Install specific Python version for parsing service"
+	@echo "  install-python-versions: Install specific Python versions ($(DEFAULT_PYTHON_VERSION) and $(EKR_PYTHON_VERSION))"
 	@echo "  ensure-poetry          : Install Poetry if not already installed"
 	@echo "  init-poetry            : Initialize Poetry project if not already initialized"
 	@echo "  venv                   : Create or use existing virtual environment"

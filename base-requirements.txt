@@ -36,6 +36,10 @@ requests>=2.32.2
 aiohttp==3.9.1
 fastapi==0.110.1
 uvicorn==0.23.2
+serpapi==0.1.5
+google-search-results==2.4.2
+nest_asyncio==1.6.0
+
 
 # Visualization
 plotly==5.19.0

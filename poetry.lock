@@ -1476,6 +1476,19 @@ proto-plus = ">=1.15.0"
 libcst = ["libcst (>=0.2.5)"]
 
 [[package]]
+name = "google-search-results"
+version = "2.4.2"
+description = "Scrape and search localized results from Google, Bing, Baidu, Yahoo, Yandex, Ebay, Homedepot, youtube at scale using SerpApi.com"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "google_search_results-2.4.2.tar.gz", hash = "sha256:603a30ecae2af8e600b22635757a6df275dad4b934f975e67878ccd640b78245"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "googleapis-common-protos"
 version = "1.63.2"
 description = "Common protobufs used in Google APIs"
@@ -5413,6 +5426,24 @@ files = [
 ]
 
 [[package]]
+name = "serpapi"
+version = "0.1.5"
+description = "The official Python client for SerpApi.com."
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "serpapi-0.1.5-py2.py3-none-any.whl", hash = "sha256:6467b6adec1231059f754ccaa952b229efeaa8b9cae6e71f879703ec9e5bb3d1"},
+    {file = "serpapi-0.1.5.tar.gz", hash = "sha256:b9707ed54750fdd2f62dc3a17c6a3fb7fa421dc37902fd65b2263c0ac765a1a5"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[package.extras]
+color = ["pygments"]
+test = ["pytest"]
+
+[[package]]
 name = "setuptools"
 version = "70.1.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -7129,4 +7160,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "8ee54fef9c635d57d2ed79e92508d110f073ef10d2dc33f1863f6e1f71bf95a6"
+content-hash = "59db578cd293649f6943ad0a8b8d8e7a4e9ee20507c89e8d16e9eae23a5fee58"
