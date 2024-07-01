@@ -2,9 +2,9 @@ streamlit==1.25.0
 pydantic==2.7.0
 pydantic_core==2.18.1
 
-langchain-community==0.2.1
-langchain-core==0.2.1
-langchain==0.2.1
+langchain-community==0.2.6
+langchain-core==0.2.10
+langchain==0.2.6
 
 sentence_transformers==2.2.2
 instructorembedding==1.0.1

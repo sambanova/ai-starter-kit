@@ -127,7 +127,9 @@ class SearchAssistant:
             )
         elif self.api_info == 'sambastudio':
             if self.llm_info['coe'] == True:
-                model_kwargs = {
+                llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs = {
                     'do_sample': True,
                     'do_sample': self.llm_info['do_sample'],
                     'top_p': self.llm_info['top_p'],
@@ -135,8 +137,12 @@ class SearchAssistant:
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
                     'select_expert': self.llm_info['select_expert'],
                 }
+                    
+                )
+                
             else:
                 llm = SambaStudio(
+                    streaming=True,
                     model_kwargs={
                         'do_sample': True,
                         'do_sample': self.llm_info['do_sample'],

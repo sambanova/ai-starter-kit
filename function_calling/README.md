@@ -9,6 +9,24 @@
 Function Calling kit
 ======================
 
+<!-- TOC -->
+
+- [Function Calling kit](#function-calling-kit)
+- [Overview](#overview)
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
+        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+        - [Install dependencies](#install-dependencies)
+- [Use the Function Calling kit](#use-the-function-calling-kit)
+    - [Quick start](#quick-start)
+    - [Streamlit App](#streamlit-app)
+    - [Customizing the Function Calling module](#customizing-the-function-calling-module)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
+
 # Overview
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
@@ -36,12 +54,20 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 2. Select the model you want to use (e.g. CoE containing Meta-Llama-Guard-2-8B) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables ([view your endpoint information](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_view_endpoint_information)), Here's an example:
 
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+
+    - You can enter the following in the env file (with no spaces):
+
     ``` bash
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_BASE_URI="api/predict/generic"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
+
+4. Open the [config file](./config.yaml), in `llm` section set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file.
 
 ### Setup for Sambaverse users 
 
@@ -53,9 +79,11 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
         SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
 
+4. In the [config file](./config.yaml), in `llm` section set the `api` variable to `"sambaverse"`, and set the `sambaverse_model_name`  and `select_expert` configs.
+
 ###  Install dependencies
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment.
 
 NOTE: python 3.10 or higher is required to use this kit.
 
@@ -68,7 +96,9 @@ NOTE: python 3.10 or higher is required to use this kit.
     pip  install  -r  requirements.txt
     ```
 
-# Use the Funtion Calling kit 
+# Use the Function Calling kit 
+
+## Quick start
 
 We provide a simple module for using the Function Calling LLM, for this you will need:
 
@@ -86,17 +116,34 @@ We provide a simple module for using the Function Calling LLM, for this you will
         from function_calling.src.function_calling  import FunctionCallingLlm
         
         ### Define your tools
-        from function_calling.src.tools import get_time, calculator, python_repl
-        tools = [get_time, calculator, python_repl]
+        from function_calling.src.tools import get_time, calculator, python_repl, query_db
+        tools = [get_time, calculator, python_repl, query_db]
 
-        fc = FunctionCallingLlm("sambaverse", tools)
+        fc = FunctionCallingLlm(tools)
 
         fc.function_call_llm("<user query>", max_it=5, debug=True)
     ```
 
     we provide an [usage notebook](notebooks/usage.ipynb) that you can use as a guide for using the function calling module
 
-# Customizing the Funtion Calling module
+
+## Streamlit App
+
+We provide a simple GUI that allows you to interact with your function calling model
+
+To run it execute the following command 
+
+```bash
+    streamlit run streamlit/app.py --browser.gatherUsageStats false 
+```
+
+After deploying the starter kit GUI App you see the following user interface:
+
+![capture of function calling streamlit application](./docs/function_calling_app.png)
+
+On that page you will be able to select your function calling tools and the max number of iterations available for the model to answer your query.
+
+## Customizing the Function Calling module
 
 The example module can be further customized based on the use case.
 
