@@ -41,7 +41,7 @@ def _run_custom_performance_evaluation():
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
-        dataset=st.session_state.file_path
+        input_file_path=st.session_state.file_path
     )
 
     custom_performance_evaluator.run_benchmark(

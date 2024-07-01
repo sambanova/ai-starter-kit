@@ -12,7 +12,7 @@ import pandas as pd
 import tqdm
 
 from llmperf import common_metrics
-from llmperf.clients.sambanova_client import llm_request
+from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
@@ -252,12 +252,27 @@ class BasePerformanceEvaluator(abc.ABC):
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
         self, 
-        dataset: List[Dict],  # TODO: Need to figure out where and how to convert the dataset from an absolute path to a list of input prompts
+        input_file_path: str,
         *args, 
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.dataset = dataset
+        self.dataset = self.read_dataset(input_file_path)
+        self.prompt_key = self.dataset[0].keys()[0]
+    
+    @staticmethod
+    def read_dataset(input_file_path: str):
+        """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
+        
+        Args:
+            input_file_path (str): The absolute file path of the input file provided by the user
+
+        Returns:
+            List[Dict]: A list of json objects (python dictionaries) containing the individual prompts the user wants to evaluate on
+        """
+        with open(input_file_path, 'r') as file:
+            data = [json.loads(line) for line in file]
+        return data
 
     def create_output_filename(self):
         """Utility for creating a unique filename for a custom benchmarking experiment with a dataset.
@@ -319,7 +334,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         random.seed(11111)        
         start_time = time.monotonic()
 
-        request_configs = self.build_request_configs(  # TODO: Clean this path
+        request_configs = self.build_request_configs(
                 sampling_params,
             )
         
@@ -403,10 +418,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
         
         # Iterate through data points and build a request config for each
-        for raw_prompt in self.dataset:
+        for data_point in self.dataset:
             
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(raw_prompt)
+            prompt_tuple = self.build_prompt(
+                raw_prompt=data_point[self.prompt_key]
+            )
             
             request_config = RequestConfig(
                 model=self.model_name,
