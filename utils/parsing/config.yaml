@@ -22,7 +22,7 @@ sources:
 partitioning:
   pdf_infer_table_structure: True
   skip_infer_table_types: []
-  strategy: 'fast'
+  strategy: 'auto'
   hi_res_model_name: 'yolox'
   ocr_languages: ['eng']
   encoding: 'utf-8'

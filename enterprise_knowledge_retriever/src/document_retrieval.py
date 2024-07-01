@@ -149,7 +149,6 @@ class DocumentRetrieval():
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     "temperature": self.llm_info["temperature"],
                     "process_prompt": True,
-                    "select_expert": self.llm_info["select_expert"]
                 }
             )
         elif self.api_info == "sambastudio":
