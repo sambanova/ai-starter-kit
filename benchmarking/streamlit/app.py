@@ -14,6 +14,7 @@ import streamlit as st
 from st_pages import Page, show_pages
 
 from src.token_benchmark import run_token_benchmark
+from src.performance_evaluation import SyntheticPerformanceEvaluator
 
 from dotenv import load_dotenv
 import warnings
@@ -123,25 +124,25 @@ def _run_performance_evaluation() -> pd.DataFrame:
     mode = "stream"
     llm_api = "sambastudio"
 
-    run_token_benchmark(
-        model=st.session_state.llm,
+    performance_evaluator = SyntheticPerformanceEvaluator(
+        model_name=st.session_state.llm,
+        results_dir=results_path,
+        num_workers=num_concurrent_workers,
+        timeout=st.session_state.timeout
+    )
+
+    performance_evaluator.run_benchmark(
         num_input_tokens=st.session_state.input_tokens,
         num_output_tokens=st.session_state.output_tokens,
-        timeout_s=st.session_state.timeout,
-        max_num_completed_requests=st.session_state.number_requests,
-        num_concurrent_workers=num_concurrent_workers,
-        additional_sampling_params="{}",
-        results_dir=results_path,
-        user_metadata="",
-        llm_api=llm_api,
-        mode=mode,
+        num_requests=st.session_state.number_requests,
+        sampling_params={}
     )
 
     # read generated json and output formatted results
     df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_stream_individual_responses.json"
     )
     df_user["concurrent_user"] = num_concurrent_workers
     df = pd.concat([df, df_user])

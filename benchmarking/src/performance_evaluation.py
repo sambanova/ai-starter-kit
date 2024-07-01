@@ -25,7 +25,7 @@ class BasePerformanceEvaluator(abc.ABC):
             model_name: str,
             results_dir: str,
             num_workers: int,
-            user_metadata: Dict[str, Any],
+            user_metadata: Dict[str, Any] = {},
             llm_api: str = "sambastudio",
             generation_mode: str = "stream",
             timeout: int = 90,
@@ -300,7 +300,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def get_token_throughput_latencies(
             self,
             sampling_params: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function is used to measure the token throughput and latencies.
 
         Args:
@@ -422,7 +422,10 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         return request_configs
     
 
-    def build_prompt(self, raw_prompt: str):
+    def build_prompt(
+        self, 
+        raw_prompt: str
+    ) -> Tuple[str, int]:
         """Builds an input prompt from the given raw prompt by applying prompt templating based on the model type.
 
         Args:
@@ -473,7 +476,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self,
         num_input_tokens: int,
         num_output_tokens: int
-    ):
+    ) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
 
         Returns:
@@ -534,7 +537,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_output_tokens: int, 
         num_requests, 
         sampling_params
-    ):
+    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function runs a token benchmark for the given model and API, 
         measuring the throughput and latencies for the specified number of input and output tokens, 
         and the specified number of requests.
