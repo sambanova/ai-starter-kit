@@ -1,9 +1,10 @@
-import sys
-import streamlit as st
-from custom_performance_evaluation import CustomPerformanceEvaluator
-from token_benchmark import run_token_benchmark
+import re
+
+import pandas as pd
+from streamlit_utils import rename_metrics_df, transform_df_for_plotting
 
 import streamlit as st
+from performance_evaluation import CustomPerformanceEvaluator
 
 
 def _initialize_sesion_variables():
@@ -34,37 +35,31 @@ def _initialize_sesion_variables():
 def _run_custom_performance_evaluation():
 
     results_path = "./data/results/llmperf"
-    num_concurrent_workers = st.session_state.number_concurrent_workers
 
-    mode = "stream"
-    llm_api = "sambastudio"
-
-    run_token_benchmark(
-        model=st.session_state.llm,
-        num_input_tokens=st.session_state.input_tokens,
-        num_output_tokens=st.session_state.output_tokens,
-        timeout_s=st.session_state.timeout,
-        max_num_completed_requests=st.session_state.number_requests,
-        num_concurrent_workers=num_concurrent_workers,
-        additional_sampling_params="{}",
+    custom_performance_evaluator = CustomPerformanceEvaluator(
+        model_name=st.session_state.llm,
         results_dir=results_path,
-        user_metadata="",
-        llm_api=llm_api,
-        mode=mode,
+        num_workers=st.session_state.number_concurrent_workers,
+        timeout=st.session_state.timeout,
+        dataset=st.session_state.file_path
     )
 
-    # evaluator = CustomPerformanceEvaluator(
-    #     st.session_state.file_path,
-    #     st.session_state.endpoint_url,
-    #     st.session_state.project_id,
-    #     st.session_state.endpoint_id,
-    #     st.session_state.endpoint_api_key,
-    #     st.session_state.max_tokens
-    # )
-    
-    # results = evaluator.run_rdu_perf_test()
+    custom_performance_evaluator.run_benchmark(
+        sampling_params={},
+    )
 
-    # return results
+    df = pd.DataFrame()
+    model = re.sub("\/|\.", "-", st.session_state.llm)
+    df_user = pd.read_json(
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_workers}_stream_individual_responses.json"
+    )
+    df_user["concurrent_user"] = st.session_state.number_concurrent_workers
+    df = pd.concat([df, df_user])
+    valid_df = df[(df["error_code"] != "")]
+    renamed_df = rename_metrics_df(valid_df)
+    df_ttft_throughput_latency = transform_df_for_plotting(renamed_df)
+
+    return df_ttft_throughput_latency
 
 def main():
 

@@ -1,20 +1,20 @@
 import abc
-import time
 import json
+import os
 import random
 import re
-import os
 import threading
-import tqdm
-import pandas as pd
+import time
 from pathlib import Path
-from transformers import AutoTokenizer
-from typing import List, Dict, Tuple, Any
+from typing import Any, Dict, List, Tuple
+
+import pandas as pd
+import tqdm
 
 from llmperf import common_metrics
 from llmperf.clients.sambanova_client import llm_request
-from llmperf.utils import get_tokenizer, flatten, LLMPerfResults
 from llmperf.models import RequestConfig
+from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
 MODEL_TYPE_IDENTIFIER = {"mistral": "mistral", "llama3": "llama-3"}
 PROMPT_GENERATION_OFFSET = 3
