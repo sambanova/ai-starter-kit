@@ -1,6 +1,7 @@
 import sys
 import streamlit as st
 from custom_performance_evaluation import CustomPerformanceEvaluator
+from token_benchmark import run_token_benchmark
 
 import streamlit as st
 
@@ -32,18 +33,38 @@ def _initialize_sesion_variables():
 
 def _run_custom_performance_evaluation():
 
-    evaluator = CustomPerformanceEvaluator(
-        st.session_state.file_path,
-        st.session_state.endpoint_url,
-        st.session_state.project_id,
-        st.session_state.endpoint_id,
-        st.session_state.endpoint_api_key,
-        st.session_state.max_tokens
-    )
-    
-    results = evaluator.run_rdu_perf_test()
+    results_path = "./data/results/llmperf"
+    num_concurrent_workers = st.session_state.number_concurrent_workers
 
-    return results
+    mode = "stream"
+    llm_api = "sambastudio"
+
+    run_token_benchmark(
+        model=st.session_state.llm,
+        num_input_tokens=st.session_state.input_tokens,
+        num_output_tokens=st.session_state.output_tokens,
+        timeout_s=st.session_state.timeout,
+        max_num_completed_requests=st.session_state.number_requests,
+        num_concurrent_workers=num_concurrent_workers,
+        additional_sampling_params="{}",
+        results_dir=results_path,
+        user_metadata="",
+        llm_api=llm_api,
+        mode=mode,
+    )
+
+    # evaluator = CustomPerformanceEvaluator(
+    #     st.session_state.file_path,
+    #     st.session_state.endpoint_url,
+    #     st.session_state.project_id,
+    #     st.session_state.endpoint_id,
+    #     st.session_state.endpoint_api_key,
+    #     st.session_state.max_tokens
+    # )
+    
+    # results = evaluator.run_rdu_perf_test()
+
+    # return results
 
 def main():
 
@@ -71,42 +92,13 @@ def main():
             help="", # TODO: Fill in help
             key="file_path"
         )
-                
-
-        ####################
-        # Endpoint Details #
-        ####################
-        st.title("Endpoint Configuration")
-        st.text_input(
-            "Endpoint URL",
-            help="",  # TODO: Fill in help
-            key="endpoint_url"
-        )
-
-        st.text_input(
-            "Project ID",
-            help="",  # TODO: Fill in help
-            key="project_id"
-        )
-
-        st.text_input(
-            "Endpoint ID",
-            help="",  # TODO: Fill in help
-            key="endpoint_id"
-        )
-
-        st.session_state.endpoint_api_key = st.text_input(
-            "Endpoint API Key",
-            help="",  # TODO: Fill in help
-            key="endpoint_api_key"
-        )
 
         #########################
         # Runtime Configuration #
         #########################
         st.title("Runtime Configuration")
 
-        st.session_state.max_tokens =  st.slider(
+        st.slider(
             "Max Output Tokens", 
             min_value=1, 
             max_value=2048, 

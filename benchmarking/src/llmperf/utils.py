@@ -1,5 +1,6 @@
 import json
 import time
+from collections.abc import Iterable
 from typing import Any, Dict, Tuple
 
 from transformers import AutoTokenizer
@@ -45,6 +46,15 @@ class LLMPerfResults:
         """
         data = self.to_dict()
         return json.dumps(data)
+    
+
+def flatten(item):
+    """Flattens an iterable"""
+    for sub_item in item:
+        if isinstance(sub_item, Iterable) and not isinstance(sub_item, str):
+            yield from flatten(sub_item)
+        else:
+            yield sub_item
 
 
 def get_tokenizer(model_name: str) -> AutoTokenizer:

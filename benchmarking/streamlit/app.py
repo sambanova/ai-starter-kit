@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from st_pages import Page, show_pages
 
-from benchmarking.src.token_benchmark import run_token_benchmark
+from src.token_benchmark import run_token_benchmark
 
 from dotenv import load_dotenv
 import warnings
