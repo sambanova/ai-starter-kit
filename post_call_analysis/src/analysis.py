@@ -51,12 +51,13 @@ if llm_info['api'] == 'sambaverse':
 elif llm_info['api'] == 'sambastudio':
     if llm_info['coe']:
         model = SambaStudio(
+            streaming=True,
             model_kwargs={
                 'do_sample': True,
                 'temperature': llm_info['temperature'],
                 'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
                 'select_expert': llm_info['select_expert'],
-            }
+            },
         )
     else:
         model = SambaStudio(

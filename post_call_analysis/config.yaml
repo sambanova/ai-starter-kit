@@ -33,7 +33,7 @@ asr:
     output_path: results/output.csv
 
 llm: 
-    "api": "sambaverse" # set either sambastudio or sambaverse
+    "api": "sambastudio" # set either sambastudio or sambaverse
     "temperature": 0.06
     "max_tokens_to_generate": 500
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
