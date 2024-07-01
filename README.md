@@ -33,6 +33,7 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 * 📚 Enterprise Knowledge Retriever
 * 🔎 Search Assistant
 * 🖼️ Image Search
+* 🖼️ Multi-Modal Knowledge Retriver
 
 ## Advanced AI Capabilities
 * 🧭 CoE Routing
@@ -368,11 +369,12 @@ source .venv/bin/activate
 ```bash
 cd path/to/starter_kit
 ```
-Within the starter kit there will be instructions on how to start the kit.
+Within the starter kit there will be instructions on how to start the kit. You can skip the virtual environment creation 
+part in the kits README.md as we've done it here.
 
 
 4. **Enterprise Knowledge Retriever One Click Deploy:**
-For the EKR Kit specificially we have enabled a one click deploy via makefile
+For the EKR Kit specifically we have enabled a one click deploy via makefile
 
 
 ### Enterprise Knowledge Retriever (EKR) Setup
@@ -417,6 +419,63 @@ To clean up all virtual environments created by the makefile and stop parsing se
 make clean
 ```
 This command removes all virtual environments created with the makefile, stops the parsing service, and cleans up any temporary files.
+
+
+## Troubleshooting
+
+If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
+
+### Lock file mismatch
+
+If you see an error message like this:
+
+```
+ERROR
+Installing dependencies... Installing dependencies from lock file
+pyproject.toml changed significantly since poetry.lock was last generated. Run `poetry lock [--no-update]` to fix the lock file. make: *** [install] Error 1
+```
+
+This means there's a mismatch between your `pyproject.toml` and `poetry.lock` files. To resolve this:
+
+1. Run the following command to update the lock file:
+   ```
+   poetry lock
+   ```
+
+2. Then, try running `make all` again.
+
+### Python version issues
+
+If you're having problems with Python versions:
+
+1. Ensure you have pyenv installed: `make ensure-pyenv`
+2. Install the required Python versions: `make install-python-versions`
+3. If issues persist, check your system's Python installation and PATH settings.
+
+### Dependency conflicts
+
+If you're experiencing dependency conflicts:
+
+1. Try cleaning your environment: `make clean`
+2. Update the lock file: `poetry lock --no-update`
+3. Reinstall dependencies: `make install`
+
+### Parsing service issues
+
+If the parsing service isn't starting or is behaving unexpectedly:
+
+1. Check its status: `make parsing-status`
+2. View its logs: `make parsing-log`
+3. Try stopping and restarting it: `make stop-parsing-service` followed by `make start-parsing-service`
+
+### General troubleshooting steps
+
+1. Ensure all prerequisites (Python, pyenv, Poetry) are correctly installed.
+2. Try cleaning and rebuilding the environment: `make clean all`
+3. Check for any error messages in the console output and address them specifically.
+4. Ensure your `.env` file is correctly set up in the ai-starter-kit root with all necessary environment variables.
+
+If you continue to experience issues, please [open an issue](https://github.com/sambanova/ai-starter-kit/issues/new) with details about your environment, the full error message, and steps to reproduce the problem.
 
 ### Important Notes for Users
 

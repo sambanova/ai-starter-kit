@@ -24,7 +24,7 @@ EKR_COMMAND := streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 # Default target
 .PHONY: all
-all: venv install add-dependencies
+all: venv update-lock validate install add-dependencies
 
 # Install pyenv if not already installed
 .PHONY: ensure-pyenv
@@ -82,11 +82,27 @@ venv: ensure-poetry init-poetry install-python-versions
 		echo "Using existing virtual environment."; \
 	fi
 
+# Update lock file
+.PHONY: update-lock
+update-lock:
+	@echo "Updating poetry.lock file..."
+	@if [ -f poetry.lock ]; then \
+		$(POETRY) lock --no-update; \
+	else \
+		$(POETRY) lock; \
+	fi
+
+# Validate project setup
+.PHONY: validate
+validate: update-lock
+	@echo "Validating project setup..."
+	@$(POETRY) check
+
 # Install dependencies
 .PHONY: install
-install: venv
+install: update-lock
 	@echo "Installing dependencies..."
-	@$(POETRY) install --no-root
+	@$(POETRY) install --no-root --sync
 
 # Add dependencies from base-requirements.txt
 .PHONY: add-dependencies
@@ -207,12 +223,6 @@ format:
 	@echo "Formatting code..."
 	@$(POETRY) run black .
 
-# Run the main application (placeholder)
-.PHONY: run
-run:
-	@echo "Running the application..."
-	@$(POETRY) run python main.py
-
 .PHONY: help
 help:
 	@echo "Available targets:"
@@ -222,6 +232,8 @@ help:
 	@echo "  ensure-poetry          : Install Poetry if not already installed"
 	@echo "  init-poetry            : Initialize Poetry project if not already initialized"
 	@echo "  venv                   : Create or use existing virtual environment"
+	@echo "  update-lock            : Update the poetry.lock file"
+	@echo "  validate               : Validate the project setup"
 	@echo "  install                : Install dependencies using Poetry (without installing the root project)"
 	@echo "  add-dependencies       : Add dependencies from $(REQUIREMENTS_FILE) to Poetry"
 	@echo "  ekr                    : Set up Enterprise Knowledge Retriever project, start parsing service, and run the EKR app"
@@ -232,5 +244,4 @@ help:
 	@echo "  parsing-status         : Check the status of the parsing service"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"
-	@echo "  run                    : Run the main application"
 	@echo "  help                   : Show this help message"
