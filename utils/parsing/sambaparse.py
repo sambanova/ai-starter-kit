@@ -57,6 +57,9 @@ class SambaParse:
             str(self.config["processor"]["num_processes"]),
         ]
 
+        if self.config["processor"]["reprocess"] == True:
+            command.extend(["--reprocess"])
+
         # Add partition arguments
         command.extend(
             [
@@ -171,6 +174,20 @@ class SambaParse:
                     str(self.config["chunking"]["chunk_overlap"]),
                 ]
             )
+
+            if self.config["chunking"]["strategy"] == "by_title":
+                command.extend(
+                    [
+                        "--chunk-combine-text-under-n-chars",
+                        str(self.config["chunking"]["combine_under_n_chars"]),
+                    ]
+                )
+            if self.config["chunking"]["chunk_elements"] == True:
+                command.extend(
+                    [
+                        "--chunk-elements",
+                    ]
+                )
 
         if self.config["embedding"]["enabled"]:
             command.extend(

@@ -211,6 +211,7 @@ edgar_qna/data
 
 utils/parsing/output
 utils/parsing/confluence-ingest-output
+utils/parsing/unstructured-api/parsing_service.pid
 =======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
