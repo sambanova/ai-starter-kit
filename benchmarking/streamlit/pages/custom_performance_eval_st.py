@@ -49,11 +49,8 @@ def _run_custom_performance_evaluation():
     )
 
     df = pd.DataFrame()
-    model = re.sub("\/|\.", "-", st.session_state.llm)
-    df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_workers}_stream_individual_responses.json"
-    )
-    df_user["concurrent_user"] = st.session_state.number_concurrent_workers
+    df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
+    df_user["concurrent_user"] = custom_performance_evaluator.num_workers
     df = pd.concat([df, df_user])
     valid_df = df[(df["error_code"] != "")]
     renamed_df = rename_metrics_df(valid_df)
@@ -91,8 +88,36 @@ def main():
         #########################
         # Runtime Configuration #
         #########################
-        st.title("Runtime Configuration")
+        st.title("Configuration")
 
+        st.text_input(
+            "Introduce a valid LLM model name",
+            value="COE/Meta-Llama-3-8B-Instruct",
+            key="llm",
+            help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
+        )
+
+        st.slider(
+            "Num Concurrent Workers", 
+            min_value=1, 
+            max_value=100, 
+            value=1,
+            key="number_concurrent_workers"
+        )
+
+        st.slider(
+            "Timeout", 
+            min_value=60, 
+            max_value=1800, 
+            value=600,
+            key="timeout"
+        )
+
+        #####################
+        # Tuning Parameters #
+        #####################
+        st.title("Tuning Parameters")
+        
         st.slider(
             "Max Output Tokens", 
             min_value=1, 
@@ -100,6 +125,8 @@ def main():
             value=256,
             key="max_tokens"
         )
+
+        # TODO: Add more tuning params below (temperature, top_k, etc.)
 
         job_submitted = st.sidebar.button("Run!")
 

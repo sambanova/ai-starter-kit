@@ -19,7 +19,7 @@ def rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
     final_df["concurrent_user"] = valid_df["concurrent_user"]
 
     # server metrics
-    final_df["ttft_server_s"] = valid_df["ttft_server_s"]
+    final_df["server_ttft_s"] = valid_df["server_ttft_s"]
     final_df["end_to_end_latency_server_s"] = valid_df["end_to_end_latency_server_s"]
     final_df["generation_throughput_server"] = valid_df[
         "request_output_throughput_server_token_per_s"

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
-import tqdm
+from tqdm import tqdm
 
 from llmperf import common_metrics
 from llmperf.sambanova_client import llm_request
@@ -38,6 +38,10 @@ class BasePerformanceEvaluator(abc.ABC):
         self.generation_mode = generation_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
+
+        # To be set upon saving of results
+        self.summary_file_path = None
+        self.individual_responses_file_path = None
 
     @staticmethod
     def get_token_length(tokenizer, input_text):
@@ -228,21 +232,23 @@ class BasePerformanceEvaluator(abc.ABC):
         summary.update(self.user_metadata)
 
         results = LLMPerfResults(name=summary_filename, metadata=summary)
-        results_dir = Path(results_dir)
+        results_dir = Path(self.results_dir)
         if not results_dir.exists():
             results_dir.mkdir(parents=True)
         elif not results_dir.is_dir():
             raise ValueError(f"{results_dir} is not a directory")
 
         try:
-            with open(results_dir / f"{summary_filename}.json", "w") as f:
+            self.summary_file_path = f"{results_dir}/{summary_filename}.json"
+            with open(self.summary_file_path, "w") as f:
                 json.dump(results.to_dict(), f, indent=4, default=str)
         except Exception as e:
             print(results.to_dict())
             raise e
 
         try:
-            with open(results_dir / f"{individual_responses_filename}.json", "w") as f:
+            self.individual_responses_file_path = f"{results_dir}/{individual_responses_filename}.json"
+            with open(self.individual_responses_file_path, "w") as f:
                 json.dump(individual_responses, f, indent=4)
         except Exception as e:
             print(individual_responses)
@@ -257,8 +263,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+        self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
-        self.prompt_key = self.dataset[0].keys()[0]
+        self.prompt_key = list(self.dataset[0].keys())[0]
     
     @staticmethod
     def read_dataset(input_file_path: str):
@@ -280,7 +287,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the custom benchmark run.
         """
-        return f"{self.model_name}_{os.path.basename(self.dataset)}_{self.num_workers}_{self.generation_mode}"
+        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
 
     def run_benchmark(
             self, 
@@ -299,8 +306,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Calculate performance metrics individually and summary
         summary, individual_responses = self.get_token_throughput_latencies(
-            model=self.model_name,
-            sampling_params=json.loads(sampling_params),
+            sampling_params=sampling_params,
         )
         
         # Save benchmarking results to the specified results directory, it it exists
