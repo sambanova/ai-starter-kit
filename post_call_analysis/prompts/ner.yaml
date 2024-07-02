@@ -8,14 +8,15 @@ name: null
 output_parser: null
 partial_variables: {}
 template: |
-          <s>[INST] <<SYS>> Given the following conversation
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+          Given the following conversation
           {conversation}
           extract th following named entities
           {entities}
           if there is not a given value for one entity in the list keep it blank
                     
           {format_instructions}
-          <</SYS>>\n
-          NER: [/INST]
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+          NER: 
 template_format: f-string
 validate_template: false

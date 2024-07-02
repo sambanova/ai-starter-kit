@@ -6,10 +6,15 @@ name: null
 output_parser: null
 partial_variables: {}
 template: |
-          <s>[INST] <<SYS>>The following is trascript of a conversation
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+          You will be given  transcript of a conversation
+          Take it and distill it into a final, consolidated shortened conversation containing main ideas, don't omit entities in the new shortened conversation. 
+          <|eot_id|><|start_header_id|>user<|end_header_id|>
+          
+          Transcript of a conversation:
           {transcription_chunks}
-          Take these and distill it into a final, consolidated shortened conversation contaning main ideas, don't omit entities in the new shortened conversation. 
-          <</SYS>>\n
-          Shortened conversation: [/INST]
+
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+          Shortened conversation:
 template_format: f-string
 validate_template: false

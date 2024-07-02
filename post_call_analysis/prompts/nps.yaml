@@ -7,11 +7,16 @@ name: null
 output_parser: null
 partial_variables: {}
 template: |
-          <s>[INST] <<SYS>>
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+          You are the customer in the following input conversation your task is set a net promoter score between 0 and 10 given the attention received by the agent during the call
+
+          {format_instructions}
+          
+          <|eot_id|><|start_header_id|>user<|end_header_id|>
+
           input conversation:
           {conversation}
-          {format_instructions}
-          <</SYS>> 
-          You are the customer in the input conversation your task is set a net promoter score betwen 0 and 10 given the atention recibed by the agent during the call [/INST]
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+  
 template_format: f-string
 validate_template: false
