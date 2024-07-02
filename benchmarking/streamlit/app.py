@@ -16,7 +16,8 @@ from typing import List
 from matplotlib.axes._axes import Axes
 
 
-from benchmarking.src.token_benchmark import run_token_benchmark
+from performance_evaluation import SyntheticPerformanceEvaluator
+from streamlit_utils import rename_metrics_df, transform_df_for_plotting
 
 from dotenv import load_dotenv
 import warnings
@@ -38,36 +39,33 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-    num_concurrent_workers = st.session_state.number_concurrent_workers
 
-    # Call benchmarking process. Static param values are intentional and still WIP.
-    mode = "stream"
-    llm_api = "sambastudio"
+    # Call benchmarking process
+    performance_evaluator = SyntheticPerformanceEvaluator(
+        model_name=st.session_state.llm,
+        results_dir=results_path,
+        num_workers=st.session_state.number_concurrent_workers,
+        timeout=st.session_state.timeout
+    )
 
-    run_token_benchmark(
-        model=st.session_state.llm,
+    performance_evaluator.run_benchmark(
         num_input_tokens=st.session_state.input_tokens,
         num_output_tokens=st.session_state.output_tokens,
-        timeout_s=st.session_state.timeout,
-        max_num_completed_requests=st.session_state.number_requests,
-        num_concurrent_workers=num_concurrent_workers,
-        additional_sampling_params="{}",
-        results_dir=results_path,
-        user_metadata="",
-        llm_api=llm_api,
-        mode=mode,
+        num_requests=st.session_state.number_requests,
+        sampling_params={}
     )
 
-    # read generated json and output formatted results
+    # Read generated json and output formatted results
+    df = pd.DataFrame()
     model = re.sub("\/|\.", "-", st.session_state.llm)
     df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
+        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{st.session_state.number_concurrent_workers}_stream_individual_responses.json"
     )
-    df_user["concurrent_user"] = num_concurrent_workers
-    df_user = df_user[(df_user["error_code"] != "")]
-    # for non-batching endpoints, batch_size_used will be 1
-    if df_user["batch_size_used"].isnull().all():
-        df_user["batch_size_used"] = 1
+    df_user["concurrent_user"] = st.session_state.number_concurrent_workers
+    df = pd.concat([df, df_user])
+    valid_df = df[(df["error_code"] != "")]
+    renamed_df = rename_metrics_df(valid_df)
+    df_ttft_throughput_latency = transform_df_for_plotting(renamed_df)
 
     return df_user
 
@@ -137,6 +135,7 @@ def main():
     show_pages(
         [
             Page("streamlit/app.py", "Performance evaluation"),
+            Page("streamlit/pages/custom_performance_eval_st.py", "Custom Performance Evaluation"),
             Page("streamlit/pages/chat_performance_st.py", "Performance on chat"),
         ]
     )
