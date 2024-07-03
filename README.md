@@ -19,27 +19,27 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 # AI Starter Kits - Ecosystem
 
 ## Data Ingestion & Preparation
-* 🔍 Data Extraction
-* 📊 Web-crawled Data Retriever
-* 🧠 Synthetic Q&A Pair Creation
+* 🔍 [Data Extraction](./data_extraction)
+* 📊 [Web-crawled Data Retriever](./web_crawled_data_retriever)
+* 🧠 [Synthetic Q&A Pair Creation](./yoda)
 
 ## Model Development & Optimization
-* 🚀 YoDA - Your Data, Your Model Recipe
-* 🎯 Q&A Fine-tuning
-* 💾 SQL Model Fine-tuning
-* 🔬 Fine-tuning Embeddings
+* 🚀 [YoDA - Your Data, Your Model Recipe](./yoda)
+* 🎯 [Q&A Fine-tuning](./fine_tuning_embeddings)
+* 💾 [SQL Model Fine-tuning](./fine_tuning_sql)
+* 🔬 [Fine-tuning Embeddings](./fine_tuning_embeddings)
 
 ## Intelligent Information Retrieval
-* 📚 Enterprise Knowledge Retriever
-* 🔎 Search Assistant
-* 🖼️ Image Search
-* 🖼️ Multi-Modal Knowledge Retriver
+* 📚 [Enterprise Knowledge Retriever](./enterprise_knowledge_retriever)
+* 🔎 [Search Assistant](./search_assistant)
+* 🖼️ [Image Search](./image_search)
+* 🖼️ [Multi-Modal Knowledge Retriever](./multimodal_knowledge_retriever)
 
 ## Advanced AI Capabilities
-* 🧭 CoE Routing
-* 💡 Prompt Engineering
-* 🔀 Performance Benchmarking
-* 🔧 Function Calling
+* 🧭 [CoE Routing](./CoE_jump_start)
+* 💡 [Prompt Engineering](./prompt_engineering)
+* 🔀 [Performance Benchmarking](./benchmarking)
+* 🔧 [Function Calling](./function_calling)
 
 ## Deployment & Integration
 * 🖥️ Endpoint Creation
@@ -340,6 +340,7 @@ Benefits of the base environment approach:
 
 - **Poetry**: The Makefile will attempt to install Poetry if it's not already installed.
 - **pyenv**: The Makefile will attempt to install pyenv if it's not already installed.
+- **Docker**: (Optional) If you want to use the Docker-based setup, ensure Docker is installed on your system.
 
 #### What the Base Setup Does
 
@@ -347,6 +348,9 @@ Benefits of the base environment approach:
 2. Sets up a Python virtual environment using a specified Python version (default is 3.11.3).
 3. Installs all necessary dependencies for the base environment.
 4. Sets up the parsing service required by some kits.
+5. Installs system dependencies like Tesseract OCR and Poppler.
+6. Provides Docker-based setup options for consistent environments across different systems.
+
 
 
 #### Setting Up the Base Environment
@@ -412,6 +416,28 @@ make parsing-status
 make make parsing-log
 ```
 
+### Docker-based Setup
+
+To use the Docker-based setup:
+
+1. Ensure Docker is installed on your system.
+2. Build the Docker image:
+
+```bash
+make docker-build
+```
+
+3. Run a specific kit in the Docker container:
+```bash
+make docker-run-kit KIT=<kit_name>
+```
+Replace `<kit_name>` with the name of the starter kit you want to run (e.g., `function_calling`).
+
+4. To open a shell in the Docker container:
+```bash
+make docker-shell
+```
+
 ### Cleanup
 
 To clean up all virtual environments created by the makefile and stop parsing services run the following command:
@@ -460,6 +486,31 @@ If you're experiencing dependency conflicts:
 2. Update the lock file: `poetry lock --no-update`
 3. Reinstall dependencies: `make install`
 
+### pikepdf installation issues
+
+If you encounter an error while installing `pikepdf`, such as:
+
+```
+ERROR: Failed building wheel for pikepdf
+Failed to build pikepdf
+```
+
+This is likely due to missing `qpdf` dependency. The Makefile should automatically install `qpdf` for you, but if you're still encountering issues:
+
+1. Ensure you have proper permissions to install system packages.
+2. If you're on macOS, you can manually install `qpdf` using Homebrew:
+   ```bash
+   brew install qpdf
+   ```
+3. On Linux, you can install it using your package manager, e.g., on Ubuntu:
+   ```
+   sudo apt-get update && sudo apt-get install -y qpdf
+   ```
+4. After installing `qpdf`, try running `make install` again.
+
+If you continue to face issues, please ensure your system meets all the requirements for building `pikepdf` and consider checking the [pikepdf documentation](https://pikepdf.readthedocs.io/en/latest/installation.html) for more detailed installation instructions.
+
+
 ### Parsing service issues
 
 If the parsing service isn't starting or is behaving unexpectedly:
@@ -467,6 +518,30 @@ If the parsing service isn't starting or is behaving unexpectedly:
 1. Check its status: `make parsing-status`
 2. View its logs: `make parsing-log`
 3. Try stopping and restarting it: `make stop-parsing-service` followed by `make start-parsing-service`
+
+### System Dependencies Issues
+
+If you encounter issues related to Tesseract OCR or Poppler:
+
+1. Ensure the Makefile has successfully installed these dependencies.
+2. On macOS, you can manually install them using Homebrew:
+ ```bash
+   brew install tesseract poppler
+   ```
+3. On Linux (Ubuntu/Debian), you can install them manually:
+ ```bash
+   sudo apt-get update && sudo apt-get install -y tesseract-ocr poppler-utils
+   ```
+4. On Windows, you may need to install these dependencies manually and ensure they are in your system PATH.
+
+### Docker-related Issues
+
+If you're using the Docker-based setup and encounter issues:
+
+1. Ensure Docker is properly installed and running on your system.
+2. Try rebuilding the Docker image: `make docker-build`
+3. Check Docker logs for any error messages.
+4. Ensure your firewall or antivirus is not blocking Docker operations.
 
 ### General troubleshooting steps
 
