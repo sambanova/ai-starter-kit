@@ -1,3 +1,4 @@
+import json
 import operator
 import os
 import re
@@ -5,7 +6,10 @@ import sys
 from datetime import datetime
 from typing import Optional, Union
 
+import yaml
 from dotenv import load_dotenv
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
@@ -21,8 +25,25 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from vectordb.vector_db import VectorDb  # type: ignore
+
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+
+
+## Get configs for tools
+def get_config_info(config_path: str) -> dict:
+    """
+    Loads json config file
+    """
+    # Read config file
+    with open(config_path, 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+    tools_info = config['tools']
+
+    return tools_info
+
 
 ##Get time tool
 
@@ -203,36 +224,45 @@ def query_db(query: str) -> str:
     """query generation tool. Use this to generate sql queries and retrieve the results from a database.
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
-    # Using Sambaverse expert as model for generating the SQL Query
-    # llm = Sambaverse(
-    #     sambaverse_model_name='Meta/Meta-Llama-3-8B-Instruct',
-    #     streaming=True,
-    #     model_kwargs={
-    #         'max_tokens_to_generate': 512,
-    #         'select_expert': 'Meta-Llama-3-8B-Instruct',
-    #         'temperature': 0.0,
-    #         'repetition_penalty': 1.0,
-    #         'top_k': 1,
-    #         'top_p': 1.0,
-    #         'do_sample': False,
-    #         'process_prompt': False,
-    #     },
-    # )
-    # Using SambaStudio CoE expert as model for generating the SQL Query
-    llm = SambaStudio(
-        streaming=True,
-        model_kwargs={
-            'max_tokens_to_generate': 512,
-            'select_expert': 'Meta-Llama-3-8B-Instruct',
-            'temperature': 0.0,
-            'repetition_penalty': 1.0,
-            'top_k': 1,
-            'top_p': 1.0,
-            'do_sample': False,
-        },
-    )
+    # get tool configs
+    query_db_info = get_config_info(CONFIG_PATH)['query_db']
 
-    db_path = os.path.join(kit_dir, 'data/chinook.db')
+    # set the llm based in tool configs
+    if query_db_info['llm']['api'] == 'sambastudio':
+        if query_db_info['llm']['coe']:
+            # Using SambaStudio CoE expert as model for generating the SQL Query
+            llm = SambaStudio(
+                streaming=True,
+                model_kwargs={
+                    'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                    'select_expert': query_db_info['llm']['select_expert'],
+                    'temperature': query_db_info['llm']['temperature'],
+                },
+            )
+        else:
+            # Using SambaStudio endpoint as model for generating the SQL Query
+            llm = SambaStudio(
+                model_kwargs={
+                    'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                    'temperature': query_db_info['llm']['temperature'],
+                },
+            )
+    elif query_db_info['llm']['api'] == 'sambaverse':
+        # Using Sambaverse expert as model for generating the SQL Query
+        llm = Sambaverse(  # type:ignore
+            sambaverse_model_name=query_db_info['llm']['sambaverse_model_name'],
+            model_kwargs={
+                'max_tokens_to_generate': query_db_info['llm']['max_tokens_to_generate'],
+                'select_expert': query_db_info['llm']['select_expert'],
+                'temperature': query_db_info['llm']['temperature'],
+            },
+        )
+    else:
+        raise ValueError(
+            f"Invalid LLM API: {query_db_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+        )
+
+    db_path = os.path.join(kit_dir, query_db_info['db']['path'])
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 
@@ -263,8 +293,186 @@ def query_db(query: str) -> str:
     table_info = db.get_table_info()
     query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
 
+    queries = query.split(';')
+
     query_executor = QuerySQLDataBaseTool(db=db)
+
+    results = []
+    for query in queries:
+        results.append(query_executor.invoke(query))
+
     result = query_executor.invoke(query)
 
-    result = f'Query {query} executed with result {result}'
+    result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
     return result
+
+
+## translation tool
+# tool schema
+
+
+class TranslateSchema(BaseModel):
+    """Returns translated input sentence to desired language"""
+
+    origin_language: str = Field(description='language of the original sentence')
+    final_language: str = Field(description='language to translate the sentence into')
+    input_sentence: str = Field(description='sentence to translate')
+
+
+@tool(args_schema=TranslateSchema)
+def translate(origin_language: str, final_language: str, input_sentence: str) -> str:
+    """Returns translated input sentence to desired language
+
+    Args:
+        origin_language: language of the original sentence
+        final_language: language to translate the sentence into
+        input_sentence: sentence to translate
+    """
+
+    # get tool configs
+    translate_info = get_config_info(CONFIG_PATH)['translate']
+
+    # set the llm based in tool configs
+    if translate_info['llm']['api'] == 'sambastudio':
+        if translate_info['llm']['coe']:
+            # Using SambaStudio CoE expert as model for generating the SQL Query
+            llm = SambaStudio(
+                streaming=True,
+                model_kwargs={
+                    'max_tokens_to_generate': translate_info['llm']['max_tokens_to_generate'],
+                    'select_expert': translate_info['llm']['select_expert'],
+                    'temperature': translate_info['llm']['temperature'],
+                },
+            )
+        else:
+            # Using SambaStudio endpoint as model for generating the SQL Query
+            llm = SambaStudio(
+                model_kwargs={
+                    'max_tokens_to_generate': translate_info['llm']['max_tokens_to_generate'],
+                    'temperature': translate_info['llm']['temperature'],
+                },
+            )
+    elif translate_info['llm']['api'] == 'sambaverse':
+        # Using Sambaverse expert as model for generating the SQL Query
+        llm = Sambaverse(  # type:ignore
+            sambaverse_model_name=translate_info['llm']['sambaverse_model_name'],
+            model_kwargs={
+                'max_tokens_to_generate': translate_info['llm']['max_tokens_to_generate'],
+                'select_expert': translate_info['llm']['select_expert'],
+                'temperature': translate_info['llm']['temperature'],
+            },
+        )
+    else:
+        raise ValueError(
+            f"Invalid LLM API: {translate_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+        )
+
+    return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
+
+
+## RAG tool
+# tool schema
+
+
+class RAGSchema(BaseModel):
+    """Returns information from a document knowledge base"""
+
+    query: str = Field(description='input question to solve using the knowledge base')
+
+
+@tool(args_schema=RAGSchema)
+def rag(query: str) -> str:
+    """Returns information from a document knowledge base
+
+    Args:
+        query: str = input question to solve using the knowledge base
+    """
+
+    # get tool configs
+    rag_info = get_config_info(CONFIG_PATH)['rag']
+
+    # set the llm based in tool configs
+    if rag_info['llm']['api'] == 'sambastudio':
+        if rag_info['llm']['coe']:
+            # Using SambaStudio CoE expert as model for generating the SQL Query
+            llm = SambaStudio(
+                streaming=True,
+                model_kwargs={
+                    'max_tokens_to_generate': rag_info['llm']['max_tokens_to_generate'],
+                    'select_expert': rag_info['llm']['select_expert'],
+                    'temperature': rag_info['llm']['temperature'],
+                },
+            )
+        else:
+            # Using SambaStudio endpoint as model for generating the SQL Query
+            llm = SambaStudio(
+                model_kwargs={
+                    'max_tokens_to_generate': rag_info['llm']['max_tokens_to_generate'],
+                    'temperature': rag_info['llm']['temperature'],
+                },
+            )
+    elif rag_info['llm']['api'] == 'sambaverse':
+        # Using Sambaverse expert as model for generating the SQL Query
+        llm = Sambaverse(  # type:ignore
+            sambaverse_model_name=rag_info['llm']['sambaverse_model_name'],
+            model_kwargs={
+                'max_tokens_to_generate': rag_info['llm']['max_tokens_to_generate'],
+                'select_expert': rag_info['llm']['select_expert'],
+                'temperature': rag_info['llm']['temperature'],
+            },
+        )
+    else:
+        raise ValueError(
+            f"Invalid LLM API: {rag_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+        )
+
+    vdb = VectorDb()
+
+    # load embedding model
+    embeddings = vdb.load_embedding_model(
+        type=rag_info['embedding_model']['type'],
+        batch_size=rag_info['embedding_model']['batch_size'],
+        coe=rag_info['embedding_model']['coe'],
+        select_expert=rag_info['embedding_model']['select_expert'],
+    )
+
+    # set vectorstore and retriever
+    vectorstore = vdb.load_vdb(os.path.join(kit_dir, rag_info['vector_db']['path']), embeddings, db_type='chroma')
+    retriever = vectorstore.as_retriever(
+        search_type='similarity_score_threshold',
+        search_kwargs={
+            'score_threshold': rag_info['retrieval']['score_treshold'],
+            'k': rag_info['retrieval']['k_retrieved_documents'],
+        },
+    )
+    #  qa_chain definition
+    prompt = (
+        '<|begin_of_text|><|start_header_id|>system<|end_header_id|> '
+        'You are an assistant for question-answering tasks.\n'
+        'Use the following pieces of retrieved contexts to answer the question. '
+        'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
+        'say "Could not find information.". Provide a concise answer to the question. '
+        'Do not provide any information that is not asked for in the question. '
+        '<|eot_id|><|start_header_id|>user<|end_header_id|>\n'
+        'Question: {question} \n'
+        'Context: {context} \n'
+        '\n ------- \n'
+        'Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>'
+    )
+    retrieval_qa_prompt = PromptTemplate.from_template(prompt)
+    qa_chain = RetrievalQA.from_llm(
+        llm=llm,
+        retriever=retriever,
+        return_source_documents=True,
+        verbose=False,
+        input_key='question',
+        output_key='answer',
+        prompt=retrieval_qa_prompt,
+    )
+
+    response = qa_chain.invoke({'question': query})
+
+    answer = response['answer']
+    source_documents = set([json.loads(doc.metadata['data_source'])['url'] for doc in response['source_documents']])
+
+    return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'

@@ -5,6 +5,7 @@ import sys
 from pprint import pprint
 from typing import List, Optional, Type, Union
 
+import yaml
 from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.messages.ai import AIMessage
@@ -25,6 +26,7 @@ sys.path.append(repo_dir)
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 FUNCTION_CALLING_SYSTEM_PROMPT = """you are an helpful assistant and you have access to the following tools:
 
@@ -66,20 +68,22 @@ class FunctionCallingLlm:
 
     def __init__(
         self,
-        model: str,
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
+        config_path: str = CONFIG_PATH,
     ) -> None:
         """
         Args:
-            model (str): The model to use (sambastudio or sambaverse )
             tools (Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]]): The tools to use.
             default_tool (Optional[Union[StructuredTool, Tool, Type[BaseModel]]]): The default tool to use.
                 defaults to ConversationalResponse
             system_prompt (Optional[str]): The system prompt to use. defaults to FUNCTION_CALLING_SYSTEM_PROMPT
+            config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
-        self.llm = self.set_llm(model)
+        configs = self.get_config_info(config_path)
+        self.llm_info = configs[0]
+        self.llm = self.set_llm()
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
         self.tools = tools
@@ -90,35 +94,53 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def set_llm(self, api: str) -> Union[SambaStudio, Sambaverse]:
+    def get_config_info(self, config_path: str) -> tuple[dict]:
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(config_path, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        llm_info = config['llm']
+
+        return (llm_info,)
+
+    def set_llm(self) -> Union[SambaStudio, Sambaverse]:
         """
         Set the LLM to use.
-        only sambaverse or sambastudio CoE endpoints implemented.
-        Args:
-            api (str): The LLM API to use (sambastudio or sambaverse)
+        sambaverse, sambastudio and  CoE endpoints implemented.
         """
-        if api == 'sambastudio':
-            llm = SambaStudio(
-                streaming=True,
-                model_kwargs={
-                    'max_tokens_to_generate': 2048,
-                    'select_expert': 'Meta-Llama-3-70B-Instruct',  # if using CoE
-                    'process_prompt': False,
-                    'temperature': 0.01,
-                },
-            )
-        elif api == 'sambaverse':
+
+        if self.llm_info['api'] == 'sambastudio':
+            if self.llm_info['coe']:
+                llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
+                        'select_expert': self.llm_info['select_expert'],
+                        'temperature': self.llm_info['temperature'],
+                    },
+                )
+            else:
+                llm = SambaStudio(
+                    model_kwargs={
+                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
+                        'temperature': self.llm_info['temperature'],
+                    },
+                )
+        elif self.llm_info['api'] == 'sambaverse':
             llm = Sambaverse(  # type:ignore
-                sambaverse_model_name='Meta/Meta-Llama-3-70B-Instruct',
+                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
                 model_kwargs={
-                    'max_tokens_to_generate': 2048,
-                    'select_expert': 'Meta-Llama-3-70B-Instruct',
-                    'process_prompt': False,
-                    'temperature': 0.01,
+                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
+                    'select_expert': self.llm_info['select_expert'],
+                    'temperature': self.llm_info['temperature'],
                 },
             )
         else:
-            raise ValueError(f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported.")
+            raise ValueError(
+                f"Invalid LLM API: {self.llm_info['api']}, only 'sambastudio' and 'sambaverse' are supported."
+            )
         return llm
 
     def get_tools_schemas(
@@ -280,4 +302,4 @@ class FunctionCallingLlm:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))
                 tool_call_id += 1
 
-        raise Exception('not a final response yet', json.dumps(history))
+        raise Exception('not a final response yet', history)

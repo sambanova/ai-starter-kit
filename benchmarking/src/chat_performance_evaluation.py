@@ -1,6 +1,6 @@
 import os
 
-from llmperf.clients.sambanova_client import llm_request
+from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 import llmperf.utils as utils
 

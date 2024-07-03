@@ -15,7 +15,7 @@ from tqdm import tqdm
 import transformers
 from transformers import AutoTokenizer
 from llmperf import common_metrics
-from llmperf.clients.sambanova_client import llm_request
+from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 from llmperf.utils import (
     get_tokenizer,
