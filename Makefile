@@ -1,11 +1,16 @@
-# Makefile for AI Starter Kit project setup and management using Poetry and pip
-
 # Detect the operating system
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
 else
     DETECTED_OS := $(shell uname -s)
 endif
+
+# Project-specific variables
+EKR_DIR := enterprise_knowledge_retriever
+PARSING_DIR := utils/parsing/unstructured-api
+PARSING_VENV := venv
+EKR_VENV := venv
+EKR_COMMAND := streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 # Set OS-specific variables and commands
 ifeq ($(DETECTED_OS),Windows)
@@ -15,14 +20,16 @@ ifeq ($(DETECTED_OS),Windows)
     MKDIR := mkdir
     RM := rmdir /s /q
     FIND := where
-    VENV_ACTIVATE := $(VENV_PATH)\Scripts\activate.bat
+    EKR_VENV_ACTIVATE := $(EKR_DIR)\$(EKR_VENV)\Scripts\activate.bat
+    PARSING_VENV_ACTIVATE := $(PARSING_DIR)\$(PARSING_VENV)\Scripts\activate.bat
 else
     PYTHON := python3
     PIP := pip3
     MKDIR := mkdir -p
     RM := rm -rf
     FIND := find
-    VENV_ACTIVATE := . $(VENV_PATH)/bin/activate
+    EKR_VENV_ACTIVATE := . $(EKR_DIR)/$(EKR_VENV)/bin/activate
+    PARSING_VENV_ACTIVATE := . $(PARSING_DIR)/$(PARSING_VENV)/bin/activate
 endif
 
 # Common variables
@@ -37,12 +44,6 @@ VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
 REQUIREMENTS_FILE := base-requirements.txt
 
-# Project-specific variables
-EKR_DIR := enterprise_knowledge_retriever
-PARSING_DIR := utils/parsing/unstructured-api
-PARSING_VENV := venv
-EKR_VENV := venv
-EKR_COMMAND := streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 # Default target
 .PHONY: all
@@ -220,20 +221,26 @@ add-dependencies: ensure-poetry
 ekr: start-parsing-service install-python-versions
 	@echo "Setting up Enterprise Knowledge Retriever project..."
 	@cd $(EKR_DIR) && ( \
+		echo "Current directory: $(shell pwd)"; \
+		echo "EKR_DIR: $(EKR_DIR)"; \
+		echo "EKR_VENV: $(EKR_VENV)"; \
 		if [ ! -d $(EKR_VENV) ]; then \
 			echo "Creating new virtual environment for EKR using Python $(EKR_PYTHON_VERSION)..."; \
 			$(PYTHON) -m venv $(EKR_VENV); \
 		else \
 			echo "Using existing virtual environment for EKR."; \
 		fi; \
-		$(VENV_ACTIVATE) && \
+		echo "Activating virtual environment: $(EKR_VENV_ACTIVATE)"; \
+		. $(EKR_VENV_ACTIVATE) && \
+		echo "Upgrading pip..."; \
 		$(PIP) install --upgrade pip && \
 		if [ -f requirements.txt ]; then \
+			echo "Installing requirements from requirements.txt..."; \
 			$(PIP) install -r requirements.txt; \
 		else \
 			echo "requirements.txt not found in $(EKR_DIR). Skipping dependency installation."; \
 		fi && \
-		echo "Starting EKR application..." && \
+		echo "Starting EKR application..."; \
 		$(EKR_COMMAND); \
 	)
 
@@ -242,15 +249,22 @@ ekr: start-parsing-service install-python-versions
 setup-parsing-service: install-python-versions
 	@echo "Setting up parsing service..."
 	@cd $(PARSING_DIR) && ( \
+		echo "Current directory: $(shell pwd)"; \
+		echo "PARSING_DIR: $(PARSING_DIR)"; \
+		echo "PARSING_VENV: $(PARSING_VENV)"; \
 		if [ ! -d $(PARSING_VENV) ]; then \
 			echo "Creating new virtual environment for parsing service..."; \
 			$(PYTHON) -m venv $(PARSING_VENV); \
 		else \
 			echo "Using existing virtual environment for parsing service."; \
 		fi; \
-		$(VENV_ACTIVATE) && \
+		echo "Activating virtual environment: $(PARSING_VENV_ACTIVATE)"; \
+		. $(PARSING_VENV_ACTIVATE) && \
+		echo "Upgrading pip..."; \
 		$(PIP) install --upgrade pip && \
+		echo "Installing requirements..."; \
 		make install && \
+		echo "Deactivating virtual environment..."; \
 		deactivate || true; \
 	)
 
@@ -260,14 +274,14 @@ start-parsing-service: setup-parsing-service
 	@echo "Starting parsing service in the background..."
 ifeq ($(DETECTED_OS),Windows)
 	@cd $(PARSING_DIR) && ( \
-		$(VENV_ACTIVATE) && \
+		$(PARSING_VENV_ACTIVATE) && \
 		start /b make run-web-app > parsing_service.log 2>&1 && \
 		echo "Parsing service started. Check parsing_service.log for details." && \
 		deactivate \
 	)
 else
 	@cd $(PARSING_DIR) && ( \
-		$(VENV_ACTIVATE) && \
+		$(PARSING_VENV_ACTIVATE) && \
 		nohup make run-web-app > parsing_service.log 2>&1 & \
 		echo $$! > parsing_service.pid && \
 		deactivate || true; \
