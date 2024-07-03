@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     make \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
+
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH="/root/.local/bin:$PATH"
@@ -33,10 +36,12 @@ RUN poetry config virtualenvs.create false \
 # Expose the ports for the parsing service and Streamlit
 EXPOSE 8005 8501
 
-# Set the entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# Copy the startup script and make it executable
+COPY docker-startup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-startup.sh
+
+# Set the startup script as the entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-startup.sh"]
 
 # Default command
 CMD ["/bin/bash"]

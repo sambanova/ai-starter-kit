@@ -350,9 +350,9 @@ docker-run-kit: docker-build
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit run-kit $(KIT) streamlit run streamlit/app.py --browser.gatherUsageStats false; \
+		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && streamlit run streamlit/app.py --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit run-kit $(KIT) $(COMMAND); \
+		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && $(COMMAND)"; \
 	fi
 
 # Clean up
