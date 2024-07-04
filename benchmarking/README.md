@@ -11,16 +11,17 @@ Benchmarking
 
 <!-- TOC -->
 
+- [Benchmarking](#benchmarking)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
-    - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-    - [Create the (virtual) environment](#create-the-virtual-environment)
+  - [Clone this repository](#clone-this-repository)
+  - [Set up the account and config file](#set-up-the-account-and-config-file)
+  - [Create the (virtual) environment](#create-the-virtual-environment)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-- [Use the starter kit](#use-the-starter-kit)
+  - [Use the starter kit](#use-the-starter-kit)
     - [Performance evaluation workflow](#performance-evaluation-workflow)
-        - [Using streamlit app](#using-streamlit-app)
-        - [Using terminal](#using-terminal)
+      - [Using streamlit app](#using-streamlit-app)
+      - [Using terminal](#using-terminal)
     - [Performance on chat workflow](#performance-on-chat-workflow)
 - [Batching vs non-batching benchmarking](#batching-vs-non-batching-benchmarking)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -32,9 +33,9 @@ Benchmarking
 This AI Starter Kit evaluates the performance of different LLM models hosted in SambaStudio. It allows users to configure various LLMs with diverse parameters, enabling experiments to not only generate different outputs but also measurement metrics simultaneously. The Kit includes:
 - A configurable SambaStudio connector. The connector generates answers from a deployed model.
 - An app with two functionalities:
-    - A performance evaluation process with configurable options that users will utilize to obtain and compare different results 
+    - A performance evaluation process with configurable options that users will utilize to obtain and compare different metrics 
     - A chat interface with configurable options that users will set to interact and get performance metrics
-- A bash process that is the core of the performance evaluation and provides more flexibility to users
+- A bash script that is the core of the performance evaluation and provides more flexibility to users
 
 This sample is ready-to-use. We provide:
 - Instructions for setup with SambaStudio
@@ -127,14 +128,12 @@ Under the section `Configuration`, users need to introduce the LLM model that wi
 Different LLM parameters are available for experimentation, directly related to the previously introduced LLM. The app provides toggles and sliders to facilitate the configuration of all these parameters. Users can use the default values or modify them as needed.
 
 - Number of input tokens: average number of input tokens. Default value: 1000.
-- Input tokens standard deviation: standard deviation of input tokens. Default value: 10.
 - Number of output tokens: average number of output tokens. Default value: 1000.
-- Output tokens standard deviation: standard deviation of output tokens. Default value: 10.
 - Number of total requests: maximum number of completed requests. Default value: 32. 
-- Number of concurrent workers: number of concurrent workers. Default value: 1. 
+- Number of concurrent workers: number of concurrent workers. Default value: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - Timeout: time when the process will stop. Default value: 600 seconds
 
-3. Run the performance evaluation process
+1. Run the performance evaluation process
 
 Click on the `Run!` button. It will automatically start the process. Depending on the previous parameter configuration, it should take between 1 min and 20 min. Some diagnostic/progress information will be displayed in the terminal shell.
 
@@ -144,13 +143,23 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     **Bar plots**
 
-    Results are composed by four bar plots. (Performance metric values are based on a SambaTurbo endpoint.)
+    Here is the edited version of the text for clarity and consistency:
 
-    - Time to First Token bar plot: users should expect to see a value around 1.2 seconds from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the TTFT per batch.
-    - End-to-End Latency bar plot: users should expect to see a value around 8 seconds from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the latency per batch.
-    - Throughput bar plot: users should expect to see a value around 140 tokens/second from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the throughput per request, per batch.
-    - Total throughput per batch: users should expect to see a value around 140 tokens/second from Client side numbers. If the endpoint supports dynamic batch size, this plot will show the number of total throughput per batch.
+    The plots compare (if available) the following:
 
+    - **Server metrics**: These are performance metrics from the API.
+    - **Client metrics**: These are performance metrics computed on the client side.
+    Additionally, if the endpoint supports dynamic batching, the plots will show per-batch metrics.
+
+    The results are composed of four bar plots:
+
+    - ```ttft_s``` bar plot: This plot shows the Time to First Token (TTFT). One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics. There is also a small additional factor on the client-side due to the added latency of the API call to the client computer.
+
+    - ```end_to_end_latency_s``` bar plot: This plot shows the end-to-end latency. One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is also mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics. There is also a small additional factor on the client-side due to the added latency of the API call to the client computer.
+
+    - ```output_token_per_s_per_request``` bar plot: This plot shows the number of output tokens per second per request. One should see good agreement between the client and server-side metrics. For endpoints that support dynamic batching, one should see a decreasing trend in metrics as the batch size increases.
+
+    - ```throughput_token_per_s``` bar plot: This plot shows the total tokens generated per second per batch. One should see good agreement between the client and server-side metrics. This metric represents the total number of tokens generated per second, which is the same as the previous metric for batch size = 1. However, for batch size > 1, it is estimated as the average of ```output_token_per_s_per_request * batch_size_used``` for each batch, to account for more tokens being generated due to concurrent requests being served in batch mode.
 #### Using terminal
 
 Users have this option if they want to experiment using values that are beyond the limits specified in the Streamlit app parameters.
@@ -159,9 +168,7 @@ Users have this option if they want to experiment using values that are beyond t
 
    - model: model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
    - mean-input-tokens: average number of input tokens. It's recommended to choose no more than 2000 tokens to avoid long waitings. Default value: 1000.
-   - stddev-input-tokens: standard deviation of input tokens. It's recommended to choose no more than 50% the amount of input tokens. Default value: 10.
    - mean-output-tokens: average number of output tokens. It's recommended to choose no more than 2000 tokens to avoid long waitings. Default value: 1000.
-   - stddev-output-tokens: standard deviation of output tokens. It's recommended to choose no more than 50% the amount of output tokens. Default value: 10.
    - max-num-completed-requests: maximum number of completed requests. Default value: 32 
    - num-concurrent-workers: number of concurrent workers. Default value: 1. 
    - timeout: time when the process will stop. Default value: 600 seconds
@@ -234,27 +241,20 @@ Users are able to ask anything and get a generated answer of their questions, as
 
 This kit also supports [SambaNova Studio models with Dynamic Batch Size](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), which improves the model performance significantly. 
 
-In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that. 
+In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that to test different batch sizes. 
 
-About results, users will notice an increase in latency per request, but a higher number of completed requests per minute, compared against non-batching models. Moreover, overall throughput will be higher, and end-to-end latency of the whole process lower.
-
-Here's an example using a Meta-Llama-3-8B-Instruct endpoting with dynamic batching size.
+Here's an example with parameters for using an endpoint with and without dynamic batching size.
 
 Non-batching setup
 - Parameters:
   - Number of requests: 32
   - Number of concurrent workers: 1
-- Results:
-  - Overall Output Throughput: 321.23 tokens/s
-  - Completed Requests Per Minute: 19.27 
 
 Batching setup
 - Parameters:
   - Number of requests: 32
   - Number of concurrent workers: 32
-- Results:
-  - Overall Output Throughput: 810.48 tokens/s
-  - Completed Requests Per Minute: 48.63
+
 
 # Third-party tools and data sources 
 
@@ -262,7 +262,6 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (version 1.34.0)
 - st-pages (version 0.4.5)
-- [llmperf framework](](https://github.com/ray-project/llmperf))
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
