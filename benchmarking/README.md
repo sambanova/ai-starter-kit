@@ -143,8 +143,6 @@ Click on the `Run!` button. It will automatically start the process. Depending o
 
     **Bar plots**
 
-    Here is the edited version of the text for clarity and consistency:
-
     The plots compare (if available) the following:
 
     - **Server metrics**: These are performance metrics from the API.
