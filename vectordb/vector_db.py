@@ -162,7 +162,7 @@ class VectorDb():
                 if batch_size is None:
                     batch_size = 1
                 embeddings = SambaStudioEmbeddings(
-                    batch_size=1,
+                    batch_size=batch_size,
                     model_kwargs = {
                         "select_expert":select_expert
                         }
