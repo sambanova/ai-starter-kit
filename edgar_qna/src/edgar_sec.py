@@ -103,8 +103,7 @@ class SecFiling:
                     model_kwargs={
                         "do_sample": False,
                         "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "process_prompt": False
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
                     }
                 )
         

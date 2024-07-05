@@ -169,7 +169,6 @@ class DocumentRetrieval():
                         "do_sample": False,
                         "temperature": self.llm_info["temperature"],
                         "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "process_prompt": False
                     }
                 )
         return llm
