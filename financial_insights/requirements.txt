@@ -1,0 +1,10 @@
+chromadb==0.4.24
+langchain==0.2.6
+langchain-community==0.2.6
+langchain-experimental==0.0.60
+plotly == 5.22.0
+python-dotenv==1.0.1
+sseclient-py==1.8.0
+streamlit==1.36.0
+types-PyYAML==6.0.12.20240311
+yfinance==0.2.40
