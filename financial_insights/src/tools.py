@@ -22,7 +22,8 @@ import plotly.graph_objects as go
 import pandas
 import datetime
 import yfinance as yf
-from typing import List
+from typing import List, Tuple, Any
+import plotly
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -37,13 +38,57 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-@tool
-def get_stock_info(symbol: str = '', key: str = ''):
-    """Return the correct stock info value given the appropriate symbol and key. Infer valid key from the user prompt; it must be one of the following:
+class StockInfoSchema(BaseModel):
+    """Return the correct stock info value given the appropriate symbol and key. Infer valid key from the user prompt.
+    It must be one of the following:
+    address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
+    sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
+    shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
+    previousClose, open, dayLow, dayHigh, regularMarketPreviousClose, regularMarketOpen, regularMarketDayLow,
+    regularMarketDayHigh, dividendRate, dividendYield, exDividendDate, beta, trailingPE, forwardPE, volume,
+    regularMarketVolume, averageVolume, averageVolume10days, averageDailyVolume10Day, bid, ask, bidSize, askSize,
+    marketCap, fiftyTwoWeekLow, fiftyTwoWeekHigh, priceToSalesTrailing12Months, fiftyDayAverage, twoHundredDayAverage,
+    currency, enterpriseValue, profitMargins, floatShares, sharesOutstanding, sharesShort, sharesShortPriorMonth,
+    sharesShortPreviousMonthDate, dateShortInterest, sharesPercentSharesOut, heldPercentInsiders,
+    heldPercentInstitutions,shortRatio, shortPercentOfFloat, impliedSharesOutstanding, bookValue, priceToBook,
+    lastFiscalYearEnd, nextFiscalYearEnd, mostRecentQuarter, earningsQuarterlyGrowth, netIncomeToCommon, trailingEps,
+    forwardEps, pegRatio, enterpriseToRevenue, enterpriseToEbitda, 52WeekChange, SandP52WeekChange, lastDividendValue,
+    lastDividendDate, exchange, quoteType, symbol, underlyingSymbol, shortName, longName, firstTradeDateEpochUtc,
+    timeZoneFullName, timeZoneShortName, uuid, messageBoardId, gmtOffSetMilliseconds, currentPrice, targetHighPrice,
+    targetLowPrice, targetMeanPrice, targetMedianPrice, recommendationMean, recommendationKey, numberOfAnalystOpinions,
+    totalCash, totalCashPerShare, ebitda, totalDebt, quickRatio, currentRatio, totalRevenue, debtToEquity,
+    revenuePerShare, returnOnAssets, returnOnEquity, freeCashflow, operatingCashflow, earningsGrowth, revenueGrowth,
+    grossMargins, ebitdaMargins, operatingMargins, financialCurrency, trailingPegRatio.
+    If asked generically for 'stock price', use currentPrice.
+    """
 
-    address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey, sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk, shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint, previousClose, open, dayLow, dayHigh, regularMarketPreviousClose, regularMarketOpen, regularMarketDayLow, regularMarketDayHigh, dividendRate, dividendYield, exDividendDate, beta, trailingPE, forwardPE, volume, regularMarketVolume, averageVolume, averageVolume10days, averageDailyVolume10Day, bid, ask, bidSize, askSize, marketCap, fiftyTwoWeekLow, fiftyTwoWeekHigh, priceToSalesTrailing12Months, fiftyDayAverage, twoHundredDayAverage, currency, enterpriseValue, profitMargins, floatShares, sharesOutstanding, sharesShort, sharesShortPriorMonth, sharesShortPreviousMonthDate, dateShortInterest, sharesPercentSharesOut, heldPercentInsiders, heldPercentInstitutions, shortRatio, shortPercentOfFloat, impliedSharesOutstanding, bookValue, priceToBook, lastFiscalYearEnd, nextFiscalYearEnd, mostRecentQuarter, earningsQuarterlyGrowth, netIncomeToCommon, trailingEps, forwardEps, pegRatio, enterpriseToRevenue, enterpriseToEbitda, 52WeekChange, SandP52WeekChange, lastDividendValue, lastDividendDate, exchange, quoteType, symbol, underlyingSymbol, shortName, longName, firstTradeDateEpochUtc, timeZoneFullName, timeZoneShortName, uuid, messageBoardId, gmtOffSetMilliseconds, currentPrice, targetHighPrice, targetLowPrice, targetMeanPrice, targetMedianPrice, recommendationMean, recommendationKey, numberOfAnalystOpinions, totalCash, totalCashPerShare, ebitda, totalDebt, quickRatio, currentRatio, totalRevenue, debtToEquity, revenuePerShare, returnOnAssets, returnOnEquity, freeCashflow, operatingCashflow, earningsGrowth, revenueGrowth, grossMargins, ebitdaMargins, operatingMargins, financialCurrency, trailingPegRatio
+    symbol: str = Field('Stock ticker symbol.')
+    key: str = Field('Key to be retrieved or inferred from the user prompt.')
 
-    If asked generically for 'stock price', use currentPrice
+
+@tool(args_schema=StockInfoSchema)
+def get_stock_info(symbol: str = '', key: str = '') -> Any:
+    """Return the correct stock info value given the appropriate symbol and key. Infer valid key from the user prompt.
+    It must be one of the following:
+    address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
+    sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
+    shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
+    previousClose, open, dayLow, dayHigh, regularMarketPreviousClose, regularMarketOpen, regularMarketDayLow,
+    regularMarketDayHigh, dividendRate, dividendYield, exDividendDate, beta, trailingPE, forwardPE, volume,
+    regularMarketVolume, averageVolume, averageVolume10days, averageDailyVolume10Day, bid, ask, bidSize, askSize,
+    marketCap, fiftyTwoWeekLow, fiftyTwoWeekHigh, priceToSalesTrailing12Months, fiftyDayAverage, twoHundredDayAverage,
+    currency, enterpriseValue, profitMargins, floatShares, sharesOutstanding, sharesShort, sharesShortPriorMonth,
+    sharesShortPreviousMonthDate, dateShortInterest, sharesPercentSharesOut, heldPercentInsiders,
+    heldPercentInstitutions,shortRatio, shortPercentOfFloat, impliedSharesOutstanding, bookValue, priceToBook,
+    lastFiscalYearEnd, nextFiscalYearEnd, mostRecentQuarter, earningsQuarterlyGrowth, netIncomeToCommon, trailingEps,
+    forwardEps, pegRatio, enterpriseToRevenue, enterpriseToEbitda, 52WeekChange, SandP52WeekChange, lastDividendValue,
+    lastDividendDate, exchange, quoteType, symbol, underlyingSymbol, shortName, longName, firstTradeDateEpochUtc,
+    timeZoneFullName, timeZoneShortName, uuid, messageBoardId, gmtOffSetMilliseconds, currentPrice, targetHighPrice,
+    targetLowPrice, targetMeanPrice, targetMedianPrice, recommendationMean, recommendationKey, numberOfAnalystOpinions,
+    totalCash, totalCashPerShare, ebitda, totalDebt, quickRatio, currentRatio, totalRevenue, debtToEquity,
+    revenuePerShare, returnOnAssets, returnOnEquity, freeCashflow, operatingCashflow, earningsGrowth, revenueGrowth,
+    grossMargins, ebitdaMargins, operatingMargins, financialCurrency, trailingPegRatio.
+    If asked generically for 'stock price', use currentPrice.
     """
     data = yf.Ticker(symbol)
     stock_info = data.info
@@ -82,11 +127,11 @@ def get_historical_price(
         data_history = data.history(start=start_date, end=end_date)
         data_close[symbol] = data_history['Close']
 
-    plot_price_over_time(data_close)
-    return data_close
+    fig = plot_price_over_time(data_close)
+    return data_close, fig
 
 
-def plot_price_over_time(data_close: pandas.DataFrame) -> None:
+def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figure:
     full_df = pandas.DataFrame(columns=['Date'])
     for column in data_close:
         full_df = full_df.merge(data_close[column], on='Date', how='outer')
@@ -126,9 +171,12 @@ def plot_price_over_time(data_close: pandas.DataFrame) -> None:
     # Show the figure
     streamlit.plotly_chart(fig, use_container_width=True)
 
+    # Return plot
+    return fig
+
 
 ## Get configs for tools
-def get_config_info(config_path: str) -> dict:
+def get_config_info(config_path: str) -> Any:
     """
     Loads json config file
     """
@@ -141,8 +189,6 @@ def get_config_info(config_path: str) -> dict:
 
 
 ##Get time tool
-
-
 # tool schema
 class GetTimeSchema(BaseModel):
     """Returns current date, current time or both."""
@@ -171,6 +217,9 @@ def get_time(kind: str = 'both') -> str:
 
 
 ## Calculator Tool
+
+
+# Tool schema
 class CalculatorSchema(BaseModel):
     """allow calculation of only basic operations: + - * and /
     with a string input expression"""
@@ -178,7 +227,7 @@ class CalculatorSchema(BaseModel):
     expression: str = Field(..., description="expression to calculate, example '12 * 3'")
 
 
-# function to use in the tool
+# Function to use in the tool
 def calculator(expression: str) -> Union[str, int, float]:
     """
     allow calculation of basic operations
@@ -248,9 +297,8 @@ calculator = StructuredTool.from_function(
     handle_tool_error=_handle_error,
 )  # type: ignore
 
+
 ## Python standard shell, or REPL (Read-Eval-Print Loop)
-
-
 # tool schema
 class ReplSchema(BaseModel):
     (
@@ -313,7 +361,7 @@ def sql_finder(text: str) -> str:
 
 
 @tool(args_schema=QueryDBSchema)
-def query_db(query: str) -> str:
+def query_db(query: str) -> Any:
     """query generation tool. Use this to generate sql queries and retrieve the results from a database.
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
@@ -402,8 +450,6 @@ def query_db(query: str) -> str:
 
 ## translation tool
 # tool schema
-
-
 class TranslateSchema(BaseModel):
     """Returns translated input sentence to desired language"""
 
@@ -465,8 +511,6 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
 
 ## RAG tool
 # tool schema
-
-
 class RAGSchema(BaseModel):
     """Returns information from a document knowledge base"""
 

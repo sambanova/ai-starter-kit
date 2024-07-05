@@ -10,8 +10,9 @@ import streamlit
 from datetime import date
 import pandas
 import plotly.graph_objects as go
-from typing import List
+from typing import List, Tuple, Any
 import datetime
+import plotly
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -105,26 +106,22 @@ def handle_userinput(user_question: Optional[str]) -> None:
             streamlit.write(f'{ans}')
 
 
-from typing import Any
-
-
-def handle_stock_data_analysis(ticker_list: str, start_date: datetime.date, end_date: datetime.date) -> None:
+def handle_financial_filings_analysis(user_question: Optional[str], filing_type: str) -> None:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
 
     Args:
-        symbol (str): The user's question or input.
+        user_question (str): The user's question or input.
     """
-    symbol_list = ticker_list.split(',')
     global output
-    if len(symbol_list) > 0:
+    if user_question:
         with streamlit.spinner('Processing...'):
             with st_capture(output.code):  # type: ignore
-                response = get_historical_price.invoke(
-                    input={'symbol_list': symbol_list, 'start_date': start_date, 'end_date': end_date}
+                response = streamlit.session_state.fc.function_call_llm(
+                    query=user_question, max_it=streamlit.session_state.max_iterations, debug=True
                 )
 
-        streamlit.session_state.chat_history.append(symbol_list)
+        streamlit.session_state.chat_history.append(user_question)
         streamlit.session_state.chat_history.append(response)
 
     for ques, ans in zip(
@@ -139,7 +136,27 @@ def handle_stock_data_analysis(ticker_list: str, start_date: datetime.date, end_
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             streamlit.write(f'{ans}')
-    return None
+
+
+def handle_stock_data_analysis(
+    ticker_list: str, start_date: datetime.date, end_date: datetime.date
+) -> Tuple[pandas.DataFrame, plotly.graph_objs.Figure]:
+    """
+    Handle user input and generate a response, also update chat UI in streamlit app
+
+    Args:
+        symbol (str): The user's question or input.
+    """
+    symbol_list = [word.strip() for word in ticker_list.split(',')]
+    global output
+    if len(symbol_list) > 0:
+        with streamlit.spinner('Processing...'):
+            with st_capture(output.code):  # type: ignore
+                data, fig = get_historical_price.invoke(
+                    input={'symbol_list': symbol_list, 'start_date': start_date, 'end_date': end_date}
+                )
+
+    return data, fig
 
 
 def main() -> None:
@@ -280,9 +297,12 @@ def main() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             output = streamlit.empty()  # type: ignore
             streamlit.title('Financial Filings Analysis')
-            ticker = streamlit.text_input('Enter Ticker Symbols, separated by commas:')
+            user_request = streamlit.text_input('Enter Ticker Symbols, separated by commas:')
             filing_type = streamlit.selectbox('Select Filing Type:', ['10-K', '10-Q'])
             if streamlit.button('Analyze Filings'):
+                streamlit.session_state.tools = ['get_stock_info', 'get_historical_price']
+                set_fc_llm(streamlit.session_state.tools)
+                filings = handle_financial_filings_analysis(user_request, filing_type)
                 filings = scrape_sec_filings(ticker, filing_type)
                 summarized_filings = process_documents(filings)
                 streamlit.write(summarized_filings)
@@ -294,12 +314,29 @@ def main() -> None:
         ticker_list = streamlit.text_input('Enter Ticker Symbols, separated by commas:')
         start_date = streamlit.date_input('Start Date')
         end_date = streamlit.date_input('End Date')
-        if streamlit.button('Analyze Stock Data'):
-            set_fc_llm(streamlit.session_state.tools)
-            data = handle_stock_data_analysis(ticker_list, start_date, end_date)
 
-            # streamlit.line_chart(stock_data['Close'])
-            # Add more stock analysis as needed
+        # Analyze stock data
+        if streamlit.button('Analyze Stock Data'):
+            streamlit.session_state.tools = ['get_stock_info', 'get_historical_price']
+            set_fc_llm(streamlit.session_state.tools)
+            data, fig = handle_stock_data_analysis(ticker_list, start_date, end_date)
+
+            # Save analysis
+            def saving_button_callback(data: pandas.DataFrame, fig: plotly.graph_objs.Figure) -> None:
+                # Create temporary cache for storing historical price data
+                temp_dir = 'financial_insights/streamlit/cache/'
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir)
+                # Write the dataframe to a csv file
+                data.to_csv(temp_dir + f'stock_data_{ticker_list}.csv', index=False)
+                # Save the plots
+                fig_bytes = fig.to_image(format='png')
+                with open(temp_dir + f'stock_data_{ticker_list}.png', 'wb') as f:
+                    f.write(fig_bytes)
+                fig.write_image(temp_dir + f'stock_data_{ticker_list}.png')
+
+            if streamlit.button('Save Analysis', on_click=saving_button_callback, args=(data, fig)):
+                pass
 
     # Custom Queries page
     elif menu == 'Custom Queries':
@@ -363,11 +400,11 @@ def main() -> None:
                     csv_data = pd.read_csv(csv_file)
                     documents.extend(csv_data.to_dict(orient='records'))  # Adjust processing as needed
 
-                streamlit.session_state.tools = streamlit.multiselect(
-                    'Available tools',
-                    ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
-                    ['get_time', 'python_repl', 'query_db'],
-                )
+                # streamlit.session_state.tools = streamlit.multiselect(
+                #     'Available tools',
+                #     ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
+                # )
+                streamlit.session_state.tools = ['get_stock_info', 'get_historical_price']
                 set_fc_llm(streamlit.session_state.tools)
                 handle_userinput(query)
                 documents = retrieve_documents(query)
