@@ -82,28 +82,31 @@ class SecFiling:
                     "do_sample": True, 
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     "temperature": self.llm_info["temperature"],
-                    "process_prompt": True,
-                    "select_expert": self.llm_info["sambaverse_select_expert"]
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
+                    "select_expert": self.llm_info["select_expert"],
+                    "process_prompt": False,
                 }
             )
         elif self.api_info=="sambastudio":
-            self.llm = SambaStudio(
-                model_kwargs={
-                    "do_sample": True, 
-                    "temperature": self.llm_info["temperature"],
-                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
-                }
-            )
-        
-
+            if self.llm_info["coe"]:
+                self.llm = SambaStudio(
+                    model_kwargs={
+                        "do_sample": True, 
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "select_expert": self.llm_info["select_expert"],
+                        "process_prompt": False
+                    }
+                )
+            else:
+                self.llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                        "do_sample": False,
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "process_prompt": False
+                    }
+                )
         
     def download_sec_data(self, ticker: str) -> list:
         """Downloads SEC data based on ticker name
@@ -174,7 +177,12 @@ class SecFiling:
         force_reload = self.config.get("force_reload", None)
         
         vectordb = VectorDb()
-        embeddings = vectordb.load_embedding_model(type=self.embedding_model_info)
+        embeddings = vectordb.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            )
         
         if persist_directory and os.path.exists(persist_directory) and not force_reload:
             self.vector_store = vectordb.load_vdb(persist_directory, embeddings)
