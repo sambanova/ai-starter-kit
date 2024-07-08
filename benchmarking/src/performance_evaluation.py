@@ -43,9 +43,8 @@ class BasePerformanceEvaluator(abc.ABC):
         self.summary_file_path = None
         self.individual_responses_file_path = None
 
-    @staticmethod
-    def get_token_length(tokenizer, input_text):
-        return len(tokenizer.encode(input_text))
+    def get_token_length(self, input_text):
+        return len(self.tokenizer.encode(input_text))
     
     @abc.abstractmethod
     def create_output_filename(self, *args, **kwargs):
@@ -397,7 +396,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             "model": self.model_name,
             "num_concurrent_workers": self.num_workers,
             "results": results,
-            "request_count": len(self.dataset),  # TODO: May need work depending on where we convert the dataset
+            "request_count": len(self.dataset),
             "sampling_params": sampling_params,
         }
 
@@ -483,7 +482,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             system_prompt = "[INST]<<SYS>>You are a helpful assistant that provides concise and helpful assistance on a variety of subjects<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
 
-        return (prompt, self.get_token_length(self.tokenizer, prompt))
+        return (prompt, self.get_token_length(prompt))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
@@ -512,7 +511,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             num_input_tokens: int,
             num_output_tokens: int,
             num_requests: int,
-            sampling_params: str,
+            sampling_params: Dict[str, Any],
     ):
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
@@ -540,7 +539,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             num_input_tokens=num_input_tokens,
             num_output_tokens=num_output_tokens,
             num_requests=num_requests,
-            sampling_params=json.loads(sampling_params),
+            sampling_params=sampling_params,
         )
         
         if self.results_dir:

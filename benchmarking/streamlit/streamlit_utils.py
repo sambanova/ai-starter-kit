@@ -1,84 +1,84 @@
+from matplotlib.axes._axes import Axes
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from typing import List
 
 
-
-def rename_metrics_df(valid_df: pd.DataFrame) -> pd.DataFrame:
-    """Rename metric names from input dataframe.
-
-    Args:
-        valid_df (pd.DataFrame): input dataframe
-
-    Returns:
-        pd.DataFrame: dataframe with renamed fields
-    """
-
-    final_df = pd.DataFrame()
-    final_df["number_input_tokens"] = valid_df["number_input_tokens"]
-    final_df["number_output_tokens"] = valid_df["number_output_tokens"]
-    final_df["number_total_tokens"] = valid_df["number_total_tokens"]
-    final_df["concurrent_user"] = valid_df["concurrent_user"]
-
-    # server metrics
-    final_df["server_ttft_s"] = valid_df["server_ttft_s"]
-    final_df["end_to_end_latency_server_s"] = valid_df["end_to_end_latency_server_s"]
-    final_df["generation_throughput_server"] = valid_df[
-        "request_output_throughput_server_token_per_s"
-    ]
-
-    # client metrics
-    final_df["ttft_s"] = valid_df["ttft_s"]
-    final_df["end_to_end_latency_s"] = valid_df["end_to_end_latency_s"]
-    final_df["generation_throughput"] = valid_df[
-        "request_output_throughput_token_per_s"
-    ]
-
-    return final_df
-
-
-def transform_df_for_plotting(df: pd.DataFrame) -> pd.DataFrame:
-    """Transforms input dataframe into another with server and client types
-
-    Args:
-        df (pd.DataFrame): input dataframe
-
-    Returns:
-        pd.DataFrame: transformed dataframe with server and client type
-    """
-
-    df_server = df[
-        [
-            "ttft_server_s",
-            "number_input_tokens",
-            "number_total_tokens",
-            "generation_throughput_server",
-            "number_output_tokens",
-            "end_to_end_latency_server_s",
+def plot_dataframe_summary(df_req_info, ax):
+    df_req_summary = (
+        df_req_info.groupby("batch_size_used")[
+            [
+                "server_output_token_per_s_per_request",
+                "client_output_token_per_s_per_request",
+            ]
         ]
-    ].copy()
-    df_server = df_server.rename(
+        .mean()
+        .reset_index()
+    ).rename(
         columns={
-            "ttft_server_s": "ttft",
-            "generation_throughput_server": "generation_throughput",
-            "end_to_end_latency_server_s": "e2e_latency",
+            "server_output_token_per_s_per_request": "server_output_token_per_s_mean",
+            "client_output_token_per_s_per_request": "client_output_token_per_s_mean",
         }
     )
-    df_server["type"] = "Server side"
-
-    df_client = df[
-        [
-            "ttft_s",
-            "number_input_tokens",
-            "number_total_tokens",
-            "generation_throughput",
-            "number_output_tokens",
-            "end_to_end_latency_s",
-        ]
-    ].copy()
-    df_client = df_client.rename(
-        columns={"ttft_s": "ttft", "end_to_end_latency_s": "e2e_latency"}
+    df_req_summary["server_throughput_token_per_s"] = (
+        df_req_summary["server_output_token_per_s_mean"]
+        * df_req_summary["batch_size_used"]
     )
-    df_client["type"] = "Client side"
+    df_req_summary["client_throughput_token_per_s"] = (
+        df_req_summary["client_output_token_per_s_mean"]
+        * df_req_summary["batch_size_used"]
+    )
+    df_melted = pd.melt(
+        df_req_summary,
+        id_vars="batch_size_used",
+        value_vars=[
+            "server_throughput_token_per_s",
+            "client_throughput_token_per_s",
+        ],
+        var_name="Value Type",
+        value_name="Value",
+    )
+    sns.barplot(
+        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax
+    ).set(
+        xlabel="Batch Size Used",
+        ylabel="tokens/s",
+        title="Total throughput per batch",
+    )
 
-    df_ttft_throughput_latency = pd.concat([df_server, df_client], ignore_index=True)
+def plot_client_vs_server_barplots(
+    df_user: pd.DataFrame,
+    x_col: str,
+    y_cols: List[str],
+    title: str,
+    ylabel: str,
+    ax: Axes,
+) -> None:
+    """
+    Plots bar plots for client vs server metrics from a DataFrame.
 
-    return df_ttft_throughput_latency
+    Args:
+        df_user (pd.DataFrame): The DataFrame containing the data to plot.
+        x_col (str): The column name to be used as the x-axis.
+        y_cols (List[str]): A list of column names to be used as the y-axis.
+        title (str): The title of the plot.
+        ylabel (str): The label for the y-axis.
+
+    Returns:
+        None
+    """
+    # Melt the DataFrame to have a long-form DataFrame suitable for Seaborn
+    df_melted = df_user.melt(
+        id_vars=[x_col], value_vars=y_cols, var_name="Metric", value_name="Value"
+    )
+
+    # Create the plot
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax).set(
+        xlabel="Batch Size Used",
+        ylabel=ylabel,
+        title=title,
+    )
+    ax.legend(title="Metric")

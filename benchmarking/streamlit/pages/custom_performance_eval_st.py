@@ -1,7 +1,8 @@
-import re
+import matplotlib.pyplot as plt
+import time
 
 import pandas as pd
-from streamlit_utils import rename_metrics_df, transform_df_for_plotting
+from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 import streamlit as st
 from performance_evaluation import CustomPerformanceEvaluator
@@ -48,15 +49,14 @@ def _run_custom_performance_evaluation():
         sampling_params={},
     )
 
-    df = pd.DataFrame()
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
     df_user["concurrent_user"] = custom_performance_evaluator.num_workers
-    df = pd.concat([df, df_user])
-    valid_df = df[(df["error_code"] != "")]
-    renamed_df = rename_metrics_df(valid_df)
-    df_ttft_throughput_latency = transform_df_for_plotting(renamed_df)
+    valid_df = df_user[(df_user["error_code"] != "")]
+    
+    if valid_df["batch_size_used"].isnull().all():
+        valid_df["batch_size_used"] = 1
 
-    return df_ttft_throughput_latency
+    return valid_df
 
 def main():
 
@@ -135,7 +135,55 @@ def main():
         st.toast("Performance evaluation in progress. This could take a while depending on the dataset size and max tokens setting.")
         with st.spinner("Processing"):
             
-            results_df = _run_custom_performance_evaluation()
+            performance_eval_start = time.time()
+
+            try:
+
+                results_df = _run_custom_performance_evaluation()
+                performance_eval_end = time.time()
+                process_duration = performance_eval_end - performance_eval_start
+
+                print(
+                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
+                )
+
+                st.subheader("Performance metrics plots")
+                fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
+                plot_client_vs_server_barplots(
+                    results_df,
+                    "batch_size_used",
+                    ["server_ttft_s", "client_ttft_s"],
+                    "Boxplots for Server token/s and Client token/s per request",
+                    "seconds",
+                    ax[0],
+                )
+                plot_client_vs_server_barplots(
+                    results_df,
+                    "batch_size_used",
+                    ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
+                    "Boxplots for Server latency and Client latency",
+                    "seconds",
+                    ax[1],
+                )
+                plot_client_vs_server_barplots(
+                    results_df,
+                    "batch_size_used",
+                    [
+                        "server_output_token_per_s_per_request",
+                        "client_output_token_per_s_per_request",
+                    ],
+                    "Boxplots for Server token/s and Client token/s per request",
+                    "tokens/s",
+                    ax[2],
+                )
+                # Compute total throughput per batch
+                plot_dataframe_summary(results_df, ax[3])
+                st.pyplot(fig)
+
+            except Exception as e:
+                st.error(
+                    f"Error: {e}. For more error details, please look at the terminal."
+                )
             
 
 
