@@ -78,8 +78,6 @@ class SambaParse:
             ]
         )
 
-        if self.config["partitioning"]["pdf_infer_table_structure"]:
-            command.append("--pdf-infer-table-structure")
 
         if self.config["partitioning"]["skip_infer_table_types"]:
             command.extend(
@@ -142,7 +140,6 @@ class SambaParse:
             if api_key:
                 command.extend(["--partition-by-api", "--api-key", api_key])
                 command.extend(["--partition-endpoint", partition_endpoint_url])
-                command.extend(["--pdf-infer-table-structure"])
             else:
                 raise ValueError(
                     "UNSTRUCTURED_API_KEY environment variable is not set."
@@ -180,12 +177,6 @@ class SambaParse:
                     [
                         "--chunk-combine-text-under-n-chars",
                         str(self.config["chunking"]["combine_under_n_chars"]),
-                    ]
-                )
-            if self.config["chunking"]["chunk_elements"] == True:
-                command.extend(
-                    [
-                        "--chunk-elements",
                     ]
                 )
 

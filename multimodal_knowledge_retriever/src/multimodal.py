@@ -26,7 +26,7 @@ from langchain_core.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms.sambanova import Sambaverse, SambaStudio
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from langchain_community.embeddings import SambaStudioEmbeddings, HuggingFaceInstructEmbeddings
 from utils.sambanova_endpoint import SambaNovaEmbeddingModel
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
@@ -44,11 +44,11 @@ class MultimodalRetrieval():
         initialize MultimodalRetrieval object.
         """
         config_info = self.get_config_info()
-        self.api_info =config_info[0]
-        self.llm_info =config_info[1]
-        self.lvlm_info =config_info[2]
-        self.embedding_model_info =config_info[3] 
-        self.retrieval_info =config_info[4]
+        self.api_info = config_info[0]
+        self.llm_info = config_info[1]
+        self.lvlm_info = config_info[2]
+        self.embedding_model_info = config_info[3] 
+        self.retrieval_info = config_info[4]
         self.llm = self.set_llm()
         
     def get_config_info(self):
@@ -145,26 +145,30 @@ class MultimodalRetrieval():
                         "do_sample": False, 
                         "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                         "temperature": self.llm_info["temperature"],
-                        "process_prompt": True,
-                        "select_expert": self.llm_info["sambaverse_select_expert"]
-                        #"stop_sequences": { "type":"str", "value":""},
-                        # "repetition_penalty": {"type": "float", "value": "1"},
-                        # "top_k": {"type": "int", "value": "50"},
-                        # "top_p": {"type": "float", "value": "1"}
+                        "select_expert": self.llm_info["select_expert"],
+                        "process_prompt": False
                     }
                 )
         elif self.api_info == "sambastudio":
-            llm = SambaStudio(
-                model_kwargs={
-                    "do_sample": False,
-                    "temperature": self.llm_info["temperature"],
-                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    #"stop_sequences": { "type":"str", "value":""},
-                    # "repetition_penalty": {"type": "float", "value": "1"},
-                    # "top_k": {"type": "int", "value": "50"},
-                    # "top_p": {"type": "float", "value": "1"}
-                }
-            )
+            if self.llm_info["coe"]:
+                self.llm = SambaStudio(
+                    streaming=True,
+                    model_kwargs={
+                        "do_sample": False,
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
+                        "select_expert": self.llm_info["select_expert"],
+                        "process_prompt": False
+                    }
+                )
+            else:
+                llm = SambaStudio(
+                    model_kwargs={
+                        "do_sample": False,
+                        "temperature": self.llm_info["temperature"],
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
+                    }
+                )
         return llm
     
     def extract_pdf(self, file_path):
@@ -289,9 +293,24 @@ class MultimodalRetrieval():
         Returns:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
-        if self.embedding_model_info == "sambastudio":
-            self.embeddings = SambaNovaEmbeddingModel()
-        elif self.embedding_model_info == "cpu":
+        if self.embedding_model_info["type"] == "sambastudio":
+            batch_size = self.embedding_model_info["batch_size"]
+            if self.embedding_model_info["coe"]:
+                if batch_size is None:
+                    batch_size = 1
+                self.embeddings = SambaStudioEmbeddings(
+                    batch_size=batch_size,
+                    model_kwargs = {
+                        "select_expert":self.embedding_model_info["select_expert"]
+                        }
+                    )
+            else:
+                if batch_size is None:
+                    batch_size = 32
+                embeddings = SambaStudioEmbeddings(
+                    batch_size=batch_size
+                )
+        elif self.embedding_model_info["type"] == "cpu":
             encode_kwargs = {"normalize_embeddings": True}
             embedding_model = "intfloat/e5-large-v2"
             self.embeddings = HuggingFaceInstructEmbeddings(

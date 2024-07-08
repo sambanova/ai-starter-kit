@@ -1,8 +1,8 @@
+import json
 import operator
 import os
 import re
 import sys
-import json
 from datetime import datetime
 from typing import Optional, Union
 
@@ -25,7 +25,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from vectordb.vector_db import VectorDb # type: ignore
+from vectordb.vector_db import VectorDb  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -293,10 +293,17 @@ def query_db(query: str) -> str:
     table_info = db.get_table_info()
     query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
 
+    queries = query.split(';')
+
     query_executor = QuerySQLDataBaseTool(db=db)
+
+    results = []
+    for query in queries:
+        results.append(query_executor.invoke(query))
+
     result = query_executor.invoke(query)
 
-    result = f'Query {query} executed with result {result}'
+    result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
     return result
 
 
