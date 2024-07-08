@@ -121,8 +121,8 @@ class SearchAssistant:
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
                     'temperature': self.llm_info['temperature'],
                     'top_p': self.llm_info['top_p'],
-                    'process_prompt': True,
                     'select_expert': self.llm_info['select_expert'],
+                    'process_prompt': False
                 },
             )
         elif self.api_info == 'sambastudio':
@@ -130,21 +130,17 @@ class SearchAssistant:
                 llm = SambaStudio(
                     streaming=True,
                     model_kwargs = {
-                    'do_sample': True,
                     'do_sample': self.llm_info['do_sample'],
                     'top_p': self.llm_info['top_p'],
                     'temperature': self.llm_info['temperature'],
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
                     'select_expert': self.llm_info['select_expert'],
-                }
-                    
+                    'process_prompt': False
+                    } 
                 )
-                
             else:
                 llm = SambaStudio(
-                    streaming=True,
                     model_kwargs={
-                        'do_sample': True,
                         'do_sample': self.llm_info['do_sample'],
                         'top_p': self.llm_info['top_p'],
                         'temperature': self.llm_info['temperature'],
@@ -464,7 +460,12 @@ class SearchAssistant:
 
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
-        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
+        embeddings = self.vectordb.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
 
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(
@@ -503,7 +504,12 @@ class SearchAssistant:
         chunks = self.get_text_chunks_with_references(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
+        embeddings = self.vectordb.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(

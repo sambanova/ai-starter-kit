@@ -45,6 +45,7 @@ if llm_info['api'] == 'sambaverse':
             'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
             'temperature': llm_info['temperature'],
             'select_expert': llm_info['select_expert'],
+            'process_prompt': False
         },
     )
 
@@ -57,6 +58,7 @@ elif llm_info['api'] == 'sambastudio':
                 'temperature': llm_info['temperature'],
                 'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
                 'select_expert': llm_info['select_expert'],
+                'process_prompt': False
             },
         )
     else:

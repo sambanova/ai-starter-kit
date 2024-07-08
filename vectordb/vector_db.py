@@ -23,7 +23,6 @@ from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.embeddings import SambaStudioEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
-from utils.sambanova_endpoint import  SambaNovaEmbeddingModel
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 NORMALIZE_EMBEDDINGS = True
@@ -162,8 +161,8 @@ class VectorDb():
             if coe:
                 if batch_size is None:
                     batch_size = 1
-                embeddings = SambaNovaEmbeddingModel( #TODO change to langchain embeddings whe 0.2.6 released
-                    batch_size=1,
+                embeddings = SambaStudioEmbeddings(
+                    batch_size=batch_size,
                     model_kwargs = {
                         "select_expert":select_expert
                         }
@@ -171,7 +170,7 @@ class VectorDb():
             else:
                 if batch_size is None:
                     batch_size = 32
-                embeddings = SambaNovaEmbeddingModel( #TODO change to langchain embeddings whe 0.2.6 released
+                embeddings = SambaStudioEmbeddings(
                     batch_size=batch_size
                 )
         elif type == "cpu":
