@@ -44,6 +44,7 @@ class RAGEvalConfig:
             "sambastudio_project_id": os.getenv(f"{llm_name.upper()}_PROJECT_ID"),
             "sambastudio_endpoint_id": os.getenv(f"{llm_name.upper()}_ENDPOINT_ID"),
             "sambastudio_api_key": os.getenv(f"{llm_name.upper()}_API_KEY"),
+            "streaming": True,
             "model_kwargs": config_dict.get("model_kwargs", {}),
         }
         return llm_name, full_config_dict
