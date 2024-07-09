@@ -33,10 +33,10 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
         The request_config used to make the request. This is mainly for logging purposes.
     """
 
-    base_url = os.environ.get("BASE_URL")
-    project_id = os.environ.get("PROJECT_ID")
-    endpoint_id = os.environ.get("ENDPOINT_ID")
-    api_key = os.environ.get("API_KEY")
+    base_url = os.environ.get("SAMBASTUDIO_BASE_URL")
+    project_id = os.environ.get("SAMBASTUDIO_PROJECT_ID")
+    endpoint_id = os.environ.get("SAMBASTUDIO_ENDPOINT_ID")
+    api_key = os.environ.get("SAMBASTUDIO_API_KEY")
 
     generated_text = ""
     metrics = {}
