@@ -10,9 +10,12 @@ import streamlit
 from datetime import date
 import pandas
 import plotly.graph_objects as go
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Union, Type
 import datetime
 import plotly
+from langchain_core.tools import StructuredTool, Tool
+from financial_insights.src.function_calling import ConversationalResponse
+from langchain_core.pydantic_v1 import BaseModel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -21,9 +24,17 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+
 from financial_insights.src.function_calling import FunctionCallingLlm  # type: ignore
 from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate  # type: ignore
-from financial_insights.src.tools import get_stock_info, get_historical_price, plot_price_over_time
+from financial_insights.src.tools import (
+    get_stock_info,
+    get_historical_price,
+    plot_price_over_time,
+    retrieve_symbol_list,
+    retrieve_symbol_quantity_list,
+    yahoo_finance_news,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +48,9 @@ TOOLS = {
     'rag': rag,
     'get_stock_info': get_stock_info,
     'get_historical_price': get_historical_price,
+    'retrieve_symbol_list': retrieve_symbol_list,
+    'retrieve_symbol_quantity_list': retrieve_symbol_quantity_list,
+    'yfinance_news': yahoo_finance_news,
 }
 
 
@@ -63,7 +77,10 @@ def st_capture(output_func: Callable[[str], None]) -> Generator:
         yield
 
 
-def set_fc_llm(tools: list) -> None:
+def set_fc_llm(
+    tools: list,
+    default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
+) -> None:
     """
     Set the FunctionCallingLlm object with the selected tools
 
@@ -71,7 +88,7 @@ def set_fc_llm(tools: list) -> None:
         tools (list): list of tools to be used
     """
     set_tools = [TOOLS[name] for name in tools]
-    streamlit.session_state.fc = FunctionCallingLlm(set_tools)
+    streamlit.session_state.fc = FunctionCallingLlm(tools=set_tools, default_tool=default_tool)
 
 
 def handle_userinput(user_question: Optional[str]) -> None:
@@ -106,7 +123,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
             streamlit.write(f'{ans}')
 
 
-def handle_financial_filings_analysis(user_question: Optional[str], filing_type: str) -> None:
+def handle_stock_info(user_question: Optional[str]) -> None:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
 
@@ -139,7 +156,7 @@ def handle_financial_filings_analysis(user_question: Optional[str], filing_type:
 
 
 def handle_stock_data_analysis(
-    ticker_list: str, start_date: datetime.date, end_date: datetime.date
+    user_request: str, start_date: datetime.date, end_date: datetime.date
 ) -> Tuple[pandas.DataFrame, plotly.graph_objs.Figure]:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
@@ -147,16 +164,48 @@ def handle_stock_data_analysis(
     Args:
         symbol (str): The user's question or input.
     """
-    symbol_list = [word.strip() for word in ticker_list.split(',')]
+    if start_date is not None or end_date is not None:
+        user_request = (
+            'Please fetch the following market information for the following stocks '
+            '(expressed via their ticker symbols) '
+            'and within the following dates.\n' + user_request
+        )
+        user_request += f'\n. The requested dates are from {start_date} to {end_date}'
+
     global output
-    if len(symbol_list) > 0:
-        with streamlit.spinner('Processing...'):
-            with st_capture(output.code):  # type: ignore
-                data, fig = get_historical_price.invoke(
-                    input={'symbol_list': symbol_list, 'start_date': start_date, 'end_date': end_date}
-                )
+    with streamlit.spinner('Processing...'):
+        with st_capture(output.code):  # type: ignore
+            message, response = streamlit.session_state.fc.function_call_llm(
+                query=user_request, max_it=streamlit.session_state.max_iterations, debug=True
+            )
+
+    data = response[0]
+    fig = response[1]
 
     return data, fig
+
+
+def handle_yfinance_news(user_request: str) -> Any:
+    """
+    Handle user input and generate a response, also update chat UI in streamlit app
+
+    Args:
+    user_request (str): The user's question or input.
+    """
+    user_request = (
+        'Please scrape the YahooFinanceNews tool to retrieve financial news of the following desired companies, '
+        '(expressed via their ticker symbols).\n'
+        'The retrieved modified query should be the input for the YahooFinanceNews tool.' + user_request
+    )
+
+    global output
+    if len(user_request) > 0:
+        with streamlit.spinner('Processing...'):
+            with st_capture(output.code):  # type: ignore
+                response = streamlit.session_state.fc.function_call_llm(
+                    query=user_request, max_it=streamlit.session_state.max_iterations, debug=True
+                )
+    return response
 
 
 def main() -> None:
@@ -283,7 +332,10 @@ def main() -> None:
     if menu == 'Home':
         streamlit.title('Financial Insights with LLMs')
         streamlit.write("""
-            Welcome to the Financial Insights application. This app demonstrates the capabilities of large language models (LLMs) in extracting and analyzing financial data using function calling, web scraping, and retrieval-augmented generation (RAG).
+            Welcome to the Financial Insights application.
+            This app demonstrates the capabilities of large language models (LLMs)
+            in extracting and analyzing financial data using function calling, web scraping,
+            and retrieval-augmented generation (RAG).
             
             Use the navigation menu to explore various features including:
             - Financial Filings Analysis
@@ -297,7 +349,9 @@ def main() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             output = streamlit.empty()  # type: ignore
             streamlit.title('Financial Filings Analysis')
-            user_request = streamlit.text_input('Enter Ticker Symbols, separated by commas:')
+            user_request = streamlit.text_input(
+                'Enter the info that you want to retrieve for a given company:', key='stock_info'
+            )
             filing_type = streamlit.selectbox('Select Filing Type:', ['10-K', '10-Q'])
             if streamlit.button('Analyze Filings'):
                 streamlit.session_state.tools = ['get_stock_info', 'get_historical_price']
@@ -309,34 +363,77 @@ def main() -> None:
 
     # Stock Data Analysis page
     elif menu == 'Stock Data Analysis':
-        output = streamlit.empty()  # type: ignore
         streamlit.title('Stock Data Analysis')
-        ticker_list = streamlit.text_input('Enter Ticker Symbols, separated by commas:')
+        streamlit.markdown(
+            '<a href="https://pypi.org/project/yfinance/" target="_blank" '
+            'style="color:cornflowerblue;text-decoration:underline;"><h3>via Yahoo! Finance API</h3></a>',
+            unsafe_allow_html=True,
+        )
+        streamlit.markdown('<h3> Info retrieval </h3>', unsafe_allow_html=True)
+        with streamlit.expander('**Execution scratchpad**', expanded=True):
+            output = streamlit.empty()  # type: ignore
+
+            user_request = streamlit.text_input(
+                'Enter the info that you want to retrieve for given companies', key='ticker_symbol'
+            )
+            if streamlit.button('Retrieve stock info'):
+                streamlit.session_state.tools = ['get_stock_info']
+                set_fc_llm(streamlit.session_state.tools)
+                handle_stock_info(user_request)
+
+        streamlit.markdown('<br><br>', unsafe_allow_html=True)
+        streamlit.markdown('<h3> Stock data analysis </h3>', unsafe_allow_html=True)
+        output = streamlit.empty()  # type: ignore
+        ticker_list = streamlit.text_input(
+            'Enter the quantities that you want to plot for given companies\n' 'Suggested values: xxx'
+        )
         start_date = streamlit.date_input('Start Date')
         end_date = streamlit.date_input('End Date')
 
         # Analyze stock data
         if streamlit.button('Analyze Stock Data'):
-            streamlit.session_state.tools = ['get_stock_info', 'get_historical_price']
-            set_fc_llm(streamlit.session_state.tools)
-            data, fig = handle_stock_data_analysis(ticker_list, start_date, end_date)
+            with streamlit.expander('**Execution scratchpad**', expanded=False):
+                streamlit.session_state.tools = ['retrieve_symbol_quantity_list', 'get_historical_price']
+                set_fc_llm(
+                    tools=streamlit.session_state.tools,
+                    default_tool=None,
+                )
+                data, fig = handle_stock_data_analysis(ticker_list, start_date, end_date)
 
-            # Save analysis
-            def saving_button_callback(data: pandas.DataFrame, fig: plotly.graph_objs.Figure) -> None:
-                # Create temporary cache for storing historical price data
-                temp_dir = 'financial_insights/streamlit/cache/'
-                if not os.path.exists(temp_dir):
-                    os.makedirs(temp_dir)
-                # Write the dataframe to a csv file
-                data.to_csv(temp_dir + f'stock_data_{ticker_list}.csv', index=False)
-                # Save the plots
-                fig_bytes = fig.to_image(format='png')
-                with open(temp_dir + f'stock_data_{ticker_list}.png', 'wb') as f:
-                    f.write(fig_bytes)
-                fig.write_image(temp_dir + f'stock_data_{ticker_list}.png')
+                # Save analysis
+                def saving_button_callback(data: pandas.DataFrame, fig: plotly.graph_objs.Figure) -> None:
+                    # Create temporary cache for storing historical price data
+                    temp_dir = 'financial_insights/streamlit/cache/'
+                    if not os.path.exists(temp_dir):
+                        os.makedirs(temp_dir)
+                    # Write the dataframe to a csv file
+                    data.to_csv(temp_dir + f'stock_data_{ticker_list}.csv', index=False)
+                    # Save the plots
+                    fig_bytes = fig.to_image(format='png')
+                    with open(temp_dir + f'stock_data_{ticker_list}.png', 'wb') as f:
+                        f.write(fig_bytes)
+                    fig.write_image(temp_dir + f'stock_data_{ticker_list}.png')
 
-            if streamlit.button('Save Analysis', on_click=saving_button_callback, args=(data, fig)):
-                pass
+                if streamlit.button('Save Analysis', on_click=saving_button_callback, args=(data, fig)):
+                    pass
+
+        streamlit.markdown('<br><br>', unsafe_allow_html=True)
+        streamlit.markdown('<h3> Financial news scraping </h3>', unsafe_allow_html=True)
+        with streamlit.expander('**Execution scratchpad**', expanded=True):
+            output = streamlit.empty()  # type: ignore
+
+            user_request = streamlit.text_input(
+                'Enter the yfinance news that you want to retrieve for given companies', key='yahoo_news'
+            )
+
+            # Retrieve news
+            if streamlit.button('Retrieve news'):
+                streamlit.session_state.tools = ['retrieve_symbol_list', 'yfinance_news']
+                set_fc_llm(
+                    tools=streamlit.session_state.tools,
+                    default_tool=None,
+                )
+                data, fig = handle_yfinance_news(user_request)
 
     # Custom Queries page
     elif menu == 'Custom Queries':

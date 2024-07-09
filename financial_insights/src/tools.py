@@ -39,8 +39,9 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 class StockInfoSchema(BaseModel):
-    """Return the correct stock info value given the appropriate symbol and key. Infer valid key from the user prompt.
-    It must be one of the following:
+    """Return the correct stock info value given the appropriate symbol and key.
+    Infer valid ticker symbol and key from the user prompt.
+    The key must be one of the following:
     address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
     sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
     shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
@@ -68,8 +69,9 @@ class StockInfoSchema(BaseModel):
 
 @tool(args_schema=StockInfoSchema)
 def get_stock_info(symbol: str = '', key: str = '') -> Any:
-    """Return the correct stock info value given the appropriate symbol and key. Infer valid key from the user prompt.
-    It must be one of the following:
+    """Return the correct stock info value given the appropriate symbol and key.
+    Infer valid ticker symbol and key from the user prompt.
+    The key must be one of the following:
     address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
     sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
     shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
@@ -95,28 +97,76 @@ def get_stock_info(symbol: str = '', key: str = '') -> Any:
     return stock_info[key]
 
 
+class RetrievalSymbolSchema(BaseModel):
+    """
+    Retrieve a list of ticker symbols.
+    """
+
+    symbol_list: List[str] = Field('List of stock ticker symbols', example=['AAPL', 'MSFT'])
+    # modified_query: str = Field(
+    #     'Modified query, where all company names are replaced by their corresponding stock ticker symbols'
+    # )
+
+
+@tool(args_schema=RetrievalSymbolSchema)
+def retrieve_symbol_list(symbol_list: List[str]) -> List[str]:
+    """Retrieve a list of ticker symbols."""
+
+    return symbol_list
+
+
+class RetrievalSymbolQuantitySchema(BaseModel):
+    """
+    Retrieve a list of ticker symbols and the quantity that the user wants to analyze.
+
+    The quantity must be one of the following:
+
+    Open, High, Low, Close, Volume, Dividends, Stock Splits.
+    If you can't retrieve the quantity, use 'Close'.
+    """
+
+    symbol_list: List[str] = Field('List of stock ticker symbols', example=['AAPL', 'MSFT'])
+    quantity: str = Field('Quantity to analize', example=['Open', 'Close'])
+
+
+@tool(args_schema=RetrievalSymbolQuantitySchema)
+def retrieve_symbol_quantity_list(symbol_list: List[str], quantity: str) -> Tuple[List[str], str]:
+    """Retrieve a list of ticker symbols and the quantity that the user wants to analyze."""
+
+    return symbol_list, quantity
+
+
 # tool schema
 class HistoricalPriceSchema(BaseModel):
-    """Fetches historical stock prices for a list of given symbols from 'start_date' to 'end_date'."""
+    """Fetches historical stock prices for a given list of ticker symbols from 'start_date' to 'end_date'."""
 
     symbol_list: List[str] = Field('List of stock ticker symbol list.')
+    quantity: str = Field('Quantity to analize', example=['Open', 'Close'])
     end_date: datetime.date = Field(
         'Typically today unless a specific end date is provided. End date MUST be greater than start date.'
     )
     start_date: datetime.date = Field(
-        "Set explicitly, or calculated as 'end_date - date interval' (for example, if prompted 'over the past 6 months', date interval = 6 months so start_date would be 6 months earlier than today's date). Default to '1900-01-01' if vaguely asked for historical price. Start date must always be before the current date"
+        "Set explicitly, or calculated as 'end_date - date interval' "
+        "(for example, if prompted 'over the past 6 months', "
+        "date interval = 6 months so start_date would be 6 months earlier than today's date). "
+        "Default to '1900-01-01' if vaguely asked for historical price. "
+        'Start date must always be before the current date'
     )
 
 
 @tool(args_schema=HistoricalPriceSchema)
 def get_historical_price(
-    symbol_list: List[str], start_date: datetime.date, end_date: datetime.date
+    symbol_list: List[str], quantity: str, start_date: datetime.date, end_date: datetime.date
 ) -> pandas.DataFrame:
     """
-    Fetches historical stock prices for a given symbol from 'start_date' to 'end_date'.
+    Fetches historical stock prices for a given list of ticker symbols from 'start_date' to 'end_date'.
     - symbol (str): Stock ticker symbol.
+    - quantity (str): Quantity to analize.
     - end_date (date): Typically today unless a specific end date is provided. End date MUST be greater than start date
-    - start_date (date): Set explicitly, or calculated as 'end_date - date interval' (for example, if prompted 'over the past 6 months', date interval = 6 months so start_date would be 6 months earlier than today's date). Default to '1900-01-01' if vaguely asked for historical price. Start date must always be before the current date
+    - start_date (date): Set explicitly, or calculated as 'end_date - date interval'
+        (for example, if prompted 'over the past 6 months',
+        date interval = 6 months so start_date would be 6 months earlier than today's date).
+        Default to '1900-01-01' if vaguely asked for historical price. Start date must always be before the current date
     """
 
     # Initialise a pandas DataFrame with symbols as columns and dates as index
@@ -125,7 +175,7 @@ def get_historical_price(
     for symbol in symbol_list:
         data = yf.Ticker(symbol)
         data_history = data.history(start=start_date, end=end_date)
-        data_close[symbol] = data_history['Close']
+        data_close[symbol] = data_history[quantity]
 
     fig = plot_price_over_time(data_close)
     return data_close, fig
@@ -173,6 +223,31 @@ def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figu
 
     # Return plot
     return fig
+
+
+from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
+
+
+class YahooFinanceNewsInput(BaseModel):
+    """Input for the YahooFinanceNews tool."""
+
+    query: List[str] = Field(
+        description='Modified query to look up, after replacing each comany name with its ticker symbol.'
+    )
+
+
+@tool(args_schema=YahooFinanceNewsInput)
+def yahoo_finance_news(query: str) -> str:
+    """
+    Tool that searches financial news on Yahoo Finance.
+    Useful for when you need to find financial news
+    about a public company.
+    Input should be a company ticker.
+    For example, AAPL for Apple, MSFT for Microsoft.
+    """
+    # Extract the company names from the query and replace them with their tickers
+
+    return YahooFinanceNewsTool._run(query=query)
 
 
 ## Get configs for tools

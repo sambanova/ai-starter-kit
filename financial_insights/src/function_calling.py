@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from pprint import pprint
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Type, Union, Tuple
 
 import yaml
 from dotenv import load_dotenv
@@ -19,7 +19,7 @@ from langchain_core.tools import StructuredTool, Tool
 
 import functools
 import operator
-from typing import Sequence, TypedDict
+from typing import Sequence, TypedDict, Any
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -32,7 +32,27 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 
-FUNCTION_CALLING_SYSTEM_PROMPT = """you are an helpful assistant and you have access to the following tools:
+# FUNCTION_CALLING_SYSTEM_PROMPT = """You are an helpful assistant and you have access to the following tools:
+
+# {tools}
+
+# You must always select one or more of the above tools and answer with only a list of JSON objects matching the following schema:
+
+# ```json
+# [{{
+#   "tool": <name of the selected tool>,
+#   "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
+# }}]
+# ```
+
+# Think step by step.
+# Do not call a tool if the input depends on another tool output that you do not have yet.
+# Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
+# Your answer should be in the same language as the initial query.
+
+# """  # noqa E501
+
+FUNCTION_CALLING_SYSTEM_PROMPT = """You are an helpful assistant and you have access to the following tools:
 
 {tools}
 
@@ -45,9 +65,6 @@ You must always select one or more of the above tools and answer with only a lis
 }}]
 ```
 
-Think step by step
-Do not call a tool if the input depends on another tool output that you do not have yet.
-Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
 Your answer should be in the same language as the initial query.
 
 """  # noqa E501
@@ -73,7 +90,7 @@ class FunctionCallingLlm:
     def __init__(
         self,
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
-        default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
+        default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
         system_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
     ) -> None:
@@ -93,8 +110,6 @@ class FunctionCallingLlm:
         self.tools = tools
         if system_prompt is None:
             self.system_prompt = FUNCTION_CALLING_SYSTEM_PROMPT
-        if default_tool is None:
-            default_tool = ConversationalResponse
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
@@ -183,8 +198,6 @@ class FunctionCallingLlm:
                 tool_schema = default.get_input_schema().schema()
             elif issubclass(default, BaseModel):
                 tool_schema = default.schema()
-            else:
-                raise TypeError('default must be a Tool or a BaseModel')
             schema = {
                 'name': tool_schema['title'],
                 'description': tool_schema['description'],
@@ -196,7 +209,7 @@ class FunctionCallingLlm:
 
         return tools_schemas
 
-    def execute(self, invoked_tools: List[dict]) -> tuple[bool, List[str]]:
+    def execute(self, invoked_tools: List[dict]) -> tuple[List[str], Any]:
         """
         Given a list of tool executions the llm return as required
         execute them given the name with the mane in tools_map and the input arguments
@@ -211,15 +224,15 @@ class FunctionCallingLlm:
             tools_map = {}
         tool_msg = "Tool '{name}'response: {response}"
         tools_msgs = []
+
         if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':
-            final_answer = True
-            return final_answer, [invoked_tools[0]['tool_input']['response']]
+            return [invoked_tools[0]['tool_input']['response']], None
         for tool in invoked_tools:
-            final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
                 response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
-        return final_answer, tools_msgs
+        # The last response will be returned
+        return tools_msgs, response
 
     def jsonFinder(self, input_string: str) -> Optional[str]:
         """
@@ -275,7 +288,7 @@ class FunctionCallingLlm:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
 
-    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
+    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> Tuple[str, Any]:
         """
         invocation method for function calling workflow
 
@@ -287,23 +300,17 @@ class FunctionCallingLlm:
         function_calling_chat_template = ChatPromptTemplate.from_messages([('system', self.system_prompt)])
         history = function_calling_chat_template.format_prompt(tools=self.tools_schemas).to_messages()
         history.append(HumanMessage(query))
-        tool_call_id = 0  # identification for each tool calling required to create ToolMessages
 
-        for i in range(max_it):
-            json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
+        json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            prompt = self.msgs_to_llama3_str(history)
-            llm_response = self.llm.invoke(prompt)
-            parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
-            history.append(AIMessage(llm_response))
-            final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
-            if final_answer:  # if response was marked as final response in execution
-                final_response = tools_msgs[0]
-                if debug:
-                    pprint(history)
-                return final_response
-            else:
-                history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))
-                tool_call_id += 1
+        prompt = self.msgs_to_llama3_str(history)
+        llm_response = self.llm.invoke(prompt)
+        print(llm_response)
+        parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
+        history.append(AIMessage(llm_response))
+        tools_msgs, response = self.execute(parsed_tools_llm_response)
 
-        raise Exception('not a final response yet', history)
+        final_message = tools_msgs[0]
+        if debug:
+            pprint(history)
+        return final_message, response
