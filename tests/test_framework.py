@@ -26,6 +26,7 @@ STARTER_KITS: List[str] = [
     'enterprise_knowledge_retriever',
     'function_calling',
     'search_assistant',
+    'benchmarking'
 ]
 
 # Dictionary to store CLI test commands for each kit
