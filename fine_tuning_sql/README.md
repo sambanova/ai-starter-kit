@@ -5,6 +5,7 @@
 We recommend that you run the starter kit in a virtual environment
 
 ```bash
+git submodule update --init.  
 cd ai_starter_kit/fine_tuning_sql
 python3 -m venv fine_tuning_sql_env
 source fine_tuning_sql_env/enterprise_knowledge_env/bin/activate
