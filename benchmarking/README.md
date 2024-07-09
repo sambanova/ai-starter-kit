@@ -191,7 +191,7 @@ For each run, two files are generated with the following suffixes in the output 
 
 - Individual responses file 
 
-This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-token-benchmark-results.ipynb` with some charts that they can use to start.
+This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-results.ipynb` with some charts that they can use to start.
 
 ![individual_responses_image](./imgs/perf_eval_individual_responses_output.png)
 
@@ -260,7 +260,7 @@ Batching setup
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- streamlit (version 1.36.0)
+- streamlit (version 1.35.0)
 - st-pages (version 0.5.0)
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
