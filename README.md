@@ -314,7 +314,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 There are two approaches to setting up your environment for the AI Starter Kits:
 
 1. **Individual Kit Setup (Traditional Method)**
-2. **Base Environment Setup (Recommended)**
+2. **Base Environment Setup (WIP)**
 
 ### 1. Individual Kit Setup
 

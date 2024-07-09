@@ -6,11 +6,8 @@ else
 endif
 
 # Project-specific variables
-EKR_DIR := enterprise_knowledge_retriever
 PARSING_DIR := utils/parsing/unstructured-api
 PARSING_VENV := venv
-EKR_VENV := venv
-EKR_COMMAND := streamlit run streamlit/app.py --browser.gatherUsageStats false
 
 # Set OS-specific variables and commands
 ifeq ($(DETECTED_OS),Windows)
@@ -20,7 +17,6 @@ ifeq ($(DETECTED_OS),Windows)
     MKDIR := mkdir
     RM := rmdir /s /q
     FIND := where
-    EKR_VENV_ACTIVATE := $(EKR_DIR)\$(EKR_VENV)\Scripts\activate.bat
     PARSING_VENV_ACTIVATE := $(PARSING_DIR)\$(PARSING_VENV)\Scripts\activate.bat
 else
     PYTHON := python3
@@ -28,7 +24,6 @@ else
     MKDIR := mkdir -p
     RM := rm -rf
     FIND := find
-    EKR_VENV_ACTIVATE := $(EKR_VENV)/bin/activate
     PARSING_VENV_ACTIVATE := $(PARSING_VENV)/bin/activate
 endif
 
@@ -37,16 +32,14 @@ PYENV_ROOT := $(HOME)/.pyenv
 PATH := $(PYENV_ROOT)/bin:$(PATH)
 
 DEFAULT_PYTHON_VERSION := 3.11.3
-EKR_PYTHON_VERSION := 3.9.4
 
 POETRY := poetry
 VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
-REQUIREMENTS_FILE := base-requirements.txt
 
 # Default target
 .PHONY: all
-all: ensure-system-dependencies venv update-lock validate install
+all: ensure-system-dependencies venv update-lock validate install start-parsing-service post-process
 
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
@@ -98,7 +91,7 @@ endif
 .PHONY: ensure-pyenv
 ensure-pyenv:
 ifeq ($(DETECTED_OS),Windows)
-	@echo "pyenv is not supported on Windows. Please install Python $(DEFAULT_PYTHON_VERSION) and $(EKR_PYTHON_VERSION) manually."
+	@echo "pyenv is not supported on Windows. Please install Python $(DEFAULT_PYTHON_VERSION) manually."
 else
 	@if ! command -v pyenv &> /dev/null; then \
 		echo "pyenv not found. Installing pyenv..."; \
@@ -114,19 +107,13 @@ endif
 .PHONY: install-python-versions
 install-python-versions: ensure-pyenv
 ifeq ($(DETECTED_OS),Windows)
-	@echo "Please ensure Python $(DEFAULT_PYTHON_VERSION) and $(EKR_PYTHON_VERSION) are installed manually on Windows."
+	@echo "Please ensure Python $(DEFAULT_PYTHON_VERSION) is installed manually on Windows."
 else
 	@if [ ! -d $(PYENV_ROOT)/versions/$(DEFAULT_PYTHON_VERSION) ]; then \
 		echo "Installing Python $(DEFAULT_PYTHON_VERSION)..."; \
 		pyenv install $(DEFAULT_PYTHON_VERSION); \
 	else \
 		echo "Python $(DEFAULT_PYTHON_VERSION) is already installed."; \
-	fi
-	@if [ ! -d $(PYENV_ROOT)/versions/$(EKR_PYTHON_VERSION) ]; then \
-		echo "Installing Python $(EKR_PYTHON_VERSION)..."; \
-		pyenv install $(EKR_PYTHON_VERSION); \
-	else \
-		echo "Python $(EKR_PYTHON_VERSION) is already installed."; \
 	fi
 endif
 
@@ -201,33 +188,12 @@ install: update-lock ensure-qpdf ensure-system-dependencies
 	@echo "Installing dependencies..."
 	@$(POETRY) install --no-root --sync
 
-# Set up Enterprise Knowledge Retriever project using pip and run the app
-.PHONY: ekr
-ekr: start-parsing-service install-python-versions
-	@echo "Setting up Enterprise Knowledge Retriever project..."
-	@cd $(EKR_DIR) && ( \
-		echo "Current directory: $(shell pwd)"; \
-		echo "EKR_DIR: $(EKR_DIR)"; \
-		echo "EKR_VENV: $(EKR_VENV)"; \
-		if [ ! -d $(EKR_VENV) ]; then \
-			echo "Creating new virtual environment for EKR using Python $(EKR_PYTHON_VERSION)..."; \
-			$(PYTHON) -m venv $(EKR_VENV); \
-		else \
-			echo "Using existing virtual environment for EKR."; \
-		fi; \
-		echo "Activating virtual environment: $(EKR_VENV_ACTIVATE)"; \
-		. $(EKR_VENV_ACTIVATE) && \
-		echo "Upgrading pip..."; \
-		$(PIP) install --upgrade pip && \
-		if [ -f requirements.txt ]; then \
-			echo "Installing requirements from requirements.txt..."; \
-			$(PIP) install -r requirements.txt; \
-		else \
-			echo "requirements.txt not found in $(EKR_DIR). Skipping dependency installation."; \
-		fi && \
-		echo "Starting EKR application..."; \
-		$(EKR_COMMAND); \
-	)
+# Post-process installation
+.PHONY: post-process
+post-process:
+	@echo "Post-processing installation..."
+	@$(POETRY) run pip uninstall -y google-search-results
+	@$(POETRY) run pip install google-search-results==2.4.2
 
 # Set up parsing service
 .PHONY: setup-parsing-service
@@ -361,13 +327,11 @@ clean: stop-parsing-service
 ifeq ($(DETECTED_OS),Windows)
 	@if exist $(VENV_PATH) rmdir /s /q $(VENV_PATH)
 	@if exist $(PARSING_DIR)\$(PARSING_VENV) rmdir /s /q $(PARSING_DIR)\$(PARSING_VENV)
-	@if exist $(EKR_DIR)\$(EKR_VENV) rmdir /s /q $(EKR_DIR)\$(EKR_VENV)
 	@for /r %x in (*.pyc) do @del "%x"
 	@for /d /r %x in (__pycache__) do @if exist "%x" rd /s /q "%x"
 else
 	@rm -rf $(VENV_PATH)
 	@rm -rf $(PARSING_DIR)/$(PARSING_VENV)
-	@rm -rf $(EKR_DIR)/$(EKR_VENV)
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' -delete
 endif
@@ -381,12 +345,12 @@ format:
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all                    : Set up main project, create or use venv, install dependencies"
+	@echo "  all                    : Set up main project, create or use venv, install dependencies, start parsing service, and post-process"
 	@echo "  ensure-system-dependencies : Ensure Poppler and Tesseract are installed"
 	@echo "  ensure-poppler         : Install Poppler if not already installed"
 	@echo "  ensure-tesseract       : Install Tesseract if not already installed"
 	@echo "  ensure-pyenv           : Install pyenv if not already installed (not supported on Windows)"
-	@echo "  install-python-versions: Install specific Python versions ($(DEFAULT_PYTHON_VERSION) and $(EKR_PYTHON_VERSION)) (not supported on Windows)"
+	@echo "  install-python-versions: Install specific Python version ($(DEFAULT_PYTHON_VERSION)) (not supported on Windows)"
 	@echo "  ensure-poetry          : Install Poetry if not already installed"
 	@echo "  ensure-qpdf            : Install qpdf if not already installed (required for pikepdf)"
 	@echo "  init-poetry            : Initialize Poetry project if not already initialized"
@@ -394,16 +358,16 @@ help:
 	@echo "  update-lock            : Update the poetry.lock file"
 	@echo "  validate               : Validate the project setup"
 	@echo "  install                : Install dependencies using Poetry (without installing the root project)"
-	@echo "  ekr                    : Set up Enterprise Knowledge Retriever project, start parsing service, and run the EKR app"
+	@echo "  post-process           : Perform post-installation steps (reinstall google-search-results)"
 	@echo "  setup-parsing-service  : Set up the parsing service environment"
 	@echo "  start-parsing-service  : Start the parsing service in the background"
 	@echo "  stop-parsing-service   : Stop the running parsing service"
 	@echo "  parsing-log            : View the parsing service log"
+	@echo "  parsing-status         : Check the status of the parsing service"
 	@echo "  docker-build           : Build Docker image"
 	@echo "  docker-run             : Run Docker container"
 	@echo "  docker-shell           : Open a shell in the Docker container"
 	@echo "  docker-run-kit         : Run a specific kit in the Docker container. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"
-	@echo "  parsing-status         : Check the status of the parsing service"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"
 	@echo "  help                   : Show this help message"

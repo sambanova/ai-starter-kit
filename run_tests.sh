@@ -1,5 +1,32 @@
 #!/bin/bash
 
+# AI Starter Kit Test Runner
+# --------------------------
+#
+# This script runs tests for the AI Starter Kit project. It can run tests in local
+# environment, Docker environment, or both. It also supports verbose mode for
+# more detailed output.
+#
+# Usage:
+#   ./run_tests.sh [environment] [options]
+#
+# Environment:
+#   local   - Run tests in local environment only
+#   docker  - Run tests in Docker environment only
+#   all     - Run tests in both local and Docker environments (default)
+#
+# Options:
+#   -v, --verbose  Run tests in verbose mode
+#
+# Examples:
+#   ./run_tests.sh                  # Run all tests
+#   ./run_tests.sh local            # Run local tests with make only
+#   ./run_tests.sh docker -v        # Run Docker tests in verbose mode
+#   ./run_tests.sh all --verbose    # Run all tests in verbose mode
+#
+# Note: Make sure you have the necessary dependencies installed and
+# Docker running (if testing Docker environment) before running this script.
+
 # Change to the directory containing this script
 cd "$(dirname "$0")"
 
@@ -42,8 +69,14 @@ while [[ $# -gt 0 ]]; do
             verbose="true"
             shift
             ;;
+        -h|--help)
+            # Display usage information
+            sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# //'
+            exit 0
+            ;;
         *)
             echo "Unknown option: $1"
+            echo "Use -h or --help for usage information"
             exit 1
             ;;
     esac

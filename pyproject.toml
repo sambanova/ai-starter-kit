@@ -2,8 +2,8 @@
 name = "ai-starter-kit"
 version = "0.1.0"
 description = ""
-authors = ["Kwasi Ankomah [kwasi.ankomah@sambanovasystems.com](mailto:kwasi.ankomah@sambanovasystems.com)"]
-readme = "[README.md](http://readme.md/)"
+authors = ["Kwasi Ankomah <kwasi.ankomah@sambanovasystems.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"

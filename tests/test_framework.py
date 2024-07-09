@@ -4,6 +4,8 @@ Test framework for AI Starter Kit.
 This module provides a unittest-based framework for testing various starter kits
 in both local and Docker environments. It includes functionality to set up the
 testing environment, run Streamlit applications, and validate their operation.
+
+#TODO : Add in CLI Tests, to actually test functionality of kits. 
 """
 
 import os
@@ -33,42 +35,24 @@ class TestEnvironment:
     DOCKER = 'docker'
 
 class StarterKitTest(unittest.TestCase):
-    """
-    Test case class for AI Starter Kit testing.
-
-    This class provides methods for setting up the test environment,
-    running tests for different starter kits in both local and Docker environments.
-    """
-
     root_dir: str
     env: str
 
     @classmethod
     def setUpClass(cls) -> None:
-        """
-        Set up the test environment before running any tests.
-
-        This method initializes the test environment, runs make clean,
-        and sets up either the local or Docker environment based on the specified test environment.
-        """
         cls.root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
-        cls.run_make_clean()
-        
         if cls.env == TestEnvironment.LOCAL:
+            cls.run_make_clean()
+            cls.run_make_all()
             cls.setup_local()
         elif cls.env == TestEnvironment.DOCKER:
+            cls.run_make_clean()
             cls.check_docker_daemon()
             cls.setup_docker()
 
     @classmethod
     def check_docker_daemon(cls) -> None:
-        """
-        Check if the Docker daemon is running.
-
-        Raises:
-            unittest.SkipTest: If the Docker daemon is not running.
-        """
         try:
             subprocess.run(['docker', 'info'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
@@ -76,69 +60,41 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def run_make_clean(cls) -> None:
-        """Run 'make clean' command in the root directory."""
         logging.info("Running make clean...")
-        result = subprocess.run(['make', 'clean'], cwd=cls.root_dir, capture_output=True, text=True)
-        logging.debug(result.stdout)
-        logging.debug(result.stderr)
-        assert result.returncode == 0, "make clean failed"
+        subprocess.run(['make', 'clean'], cwd=cls.root_dir, check=True, capture_output=False)
+
+    @classmethod
+    def run_make_all(cls) -> None:
+        logging.info("Running make all...")
+        subprocess.run(['make', 'all'], cwd=cls.root_dir, check=True, capture_output=False)
 
     @classmethod
     def setup_local(cls) -> None:
-        """Set up the local test environment."""
-        cls.run_make_all()
         cls.activate_venv()
 
     @classmethod
     def setup_docker(cls) -> None:
-        """Set up the Docker test environment."""
         cls.run_docker_build()
 
     @classmethod
-    def run_make_all(cls) -> None:
-        """Run 'make all' command in the root directory."""
-        logging.info("Running make all...")
-        result = subprocess.run(['make', 'all'], cwd=cls.root_dir, capture_output=True, text=True)
-        logging.debug(result.stdout)
-        logging.debug(result.stderr)
-        assert result.returncode == 0, "make all failed"
-
-    @classmethod
     def run_docker_build(cls) -> None:
-        """Build the Docker image."""
         logging.info("Building Docker image...")
-        result = subprocess.run(['make', 'docker-build'], cwd=cls.root_dir, capture_output=True, text=True)
-        logging.debug(result.stdout)
-        logging.debug(result.stderr)
-        assert result.returncode == 0, "Docker build failed"
+        subprocess.run(['make', 'docker-build'], cwd=cls.root_dir, check=True, capture_output=False)
 
     @classmethod
     def activate_venv(cls) -> None:
-        """Activate the virtual environment."""
         venv_path = os.path.join(cls.root_dir, '.venv')
         activate_this = os.path.join(venv_path, 'bin', 'activate_this.py')
         exec(open(activate_this).read(), {'__file__': activate_this})
-        sys.path.insert(0, venv_path)
+        os.environ['PATH'] = f"{venv_path}/bin:{os.environ['PATH']}"
 
     def run_streamlit_test(self, kit: str) -> None:
-        """
-        Run Streamlit test for a specific kit.
-
-        Args:
-            kit (str): Name of the starter kit to test.
-        """
         if self.env == TestEnvironment.LOCAL:
             self.run_local_streamlit_test(kit)
         elif self.env == TestEnvironment.DOCKER:
             self.run_docker_streamlit_test(kit)
 
     def run_local_streamlit_test(self, kit: str) -> None:
-        """
-        Run Streamlit test for a specific kit in the local environment.
-
-        Args:
-            kit (str): Name of the starter kit to test.
-        """
         logging.info(f"\nTesting {kit} locally...")
         kit_dir = os.path.join(self.root_dir, kit)
         process = subprocess.Popen(['streamlit', 'run', 'streamlit/app.py', '--browser.gatherUsageStats', 'false'],
@@ -152,12 +108,6 @@ class StarterKitTest(unittest.TestCase):
             process.wait()
 
     def run_docker_streamlit_test(self, kit: str) -> None:
-        """
-        Run Streamlit test for a specific kit in the Docker environment.
-
-        Args:
-            kit (str): Name of the starter kit to test.
-        """
         logging.info(f"\nTesting {kit} in Docker...")
         container_id = subprocess.check_output([
             'docker', 'run', '-d', 
@@ -191,12 +141,6 @@ class StarterKitTest(unittest.TestCase):
             subprocess.run(['docker', 'rm', container_id], check=True)
 
     def _check_streamlit_accessibility(self, kit: str) -> None:
-        """
-        Check if the Streamlit app is accessible.
-
-        Args:
-            kit (str): Name of the starter kit being tested.
-        """
         logging.info("Checking Streamlit accessibility...")
         for attempt in range(3):
             try:
@@ -212,11 +156,6 @@ class StarterKitTest(unittest.TestCase):
         self.fail(f"Streamlit app for {kit} failed to start after 3 attempts")
 
 def create_test_methods() -> None:
-    """
-    Dynamically create test methods for each starter kit.
-
-    This function creates a test method for each starter kit and adds it to the StarterKitTest class.
-    """
     for kit in STARTER_KITS:
         def test_streamlit(self, kit=kit):
             self.run_streamlit_test(kit)
