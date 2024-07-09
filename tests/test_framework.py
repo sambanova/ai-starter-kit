@@ -4,8 +4,7 @@ Test framework for AI Starter Kit.
 This module provides a unittest-based framework for testing various starter kits
 in both local and Docker environments. It includes functionality to set up the
 testing environment, run Streamlit applications, and validate their operation.
-
-#TODO : Add in CLI Tests, to actually test functionality of kits. 
+It also includes placeholders for CLI/script tests.
 """
 
 import os
@@ -13,7 +12,7 @@ import sys
 import unittest
 import subprocess
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict
 import requests
 import argparse
 import logging
@@ -28,6 +27,13 @@ STARTER_KITS: List[str] = [
     'function_calling',
     'search_assistant',
 ]
+
+# Dictionary to store CLI test commands for each kit
+CLI_TEST_COMMANDS: Dict[str, str] = {
+    'enterprise_knowledge_retriever': 'python cli_test.py --mode retrieve',
+    'function_calling': 'python cli_test.py --function example_function',
+    'search_assistant': 'python cli_test.py --query "test query"',
+}
 
 class TestEnvironment:
     """Enum-like class for test environments."""
@@ -155,12 +161,62 @@ class StarterKitTest(unittest.TestCase):
         logging.error(f"Streamlit app for {kit} failed to start after 3 attempts")
         self.fail(f"Streamlit app for {kit} failed to start after 3 attempts")
 
+    def run_cli_test(self, kit: str) -> None:
+        if self.env == TestEnvironment.LOCAL:
+            self.run_local_cli_test(kit)
+        elif self.env == TestEnvironment.DOCKER:
+            self.run_docker_cli_test(kit)
+
+    def run_local_cli_test(self, kit: str) -> None:
+        logging.info(f"\nRunning CLI test for {kit} locally...")
+        kit_dir = os.path.join(self.root_dir, kit)
+        
+        # Get the CLI test command for this kit
+        cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
+        
+        # Placeholder: Run the CLI test command (commented out for now)
+        # result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True)
+        # self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
+        # logging.info(f"CLI test output for {kit}:\n{result.stdout}")
+
+        # Placeholder: Always pass
+        logging.info(f"CLI test for {kit} passed (placeholder)")
+        pass
+
+    def run_docker_cli_test(self, kit: str) -> None:
+        logging.info(f"\nRunning CLI test for {kit} in Docker...")
+        container_id = subprocess.check_output([
+            'docker', 'run', '-d', 
+            'ai-starter-kit', 
+            'tail', '-f', '/dev/null'
+        ]).decode().strip()
+        
+        try:
+            # Get the CLI test command for this kit
+            cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
+            docker_cli_command = f"cd /app/{kit} && {cli_command}"
+            
+            # Placeholder: Run the CLI test command in Docker (commented out for now)
+            # result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
+            #                         capture_output=True, text=True)
+            # self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
+            # logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
+
+            # Placeholder: Always pass
+            logging.info(f"Docker CLI test for {kit} passed (placeholder)")
+            pass
+            
+        finally:
+            subprocess.run(['docker', 'stop', container_id], check=True)
+            subprocess.run(['docker', 'rm', container_id], check=True)
+
 def create_test_methods() -> None:
     for kit in STARTER_KITS:
-        def test_streamlit(self, kit=kit):
+        def test_kit(self, kit=kit):
             self.run_streamlit_test(kit)
-        test_streamlit.__name__ = f'test_streamlit_{kit}'
-        setattr(StarterKitTest, test_streamlit.__name__, test_streamlit)
+            self.run_cli_test(kit)
+        test_kit.__name__ = f'test_{kit}'
+        setattr(StarterKitTest, test_kit.__name__, test_kit)
 
 create_test_methods()
 
