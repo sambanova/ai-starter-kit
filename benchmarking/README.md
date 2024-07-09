@@ -76,7 +76,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     ```
 
 ## Create the (virtual) environment
-1. (Recommended) Create a virtual environment and activate it: 
+1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
     ```bash
     python<version> -m venv <virtual-environment-name>
     source <virtual-environment-name>/bin/activate
@@ -260,8 +260,8 @@ Batching setup
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- streamlit (version 1.34.0)
-- st-pages (version 0.4.5)
+- streamlit (version 1.36.0)
+- st-pages (version 0.5.0)
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
