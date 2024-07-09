@@ -28,8 +28,8 @@ else
     MKDIR := mkdir -p
     RM := rm -rf
     FIND := find
-    EKR_VENV_ACTIVATE := . $(EKR_DIR)/$(EKR_VENV)/bin/activate
-    PARSING_VENV_ACTIVATE := . $(PARSING_DIR)/$(PARSING_VENV)/bin/activate
+    EKR_VENV_ACTIVATE := $(EKR_VENV)/bin/activate
+    PARSING_VENV_ACTIVATE := $(PARSING_VENV)/bin/activate
 endif
 
 # Common variables
@@ -281,7 +281,7 @@ ifeq ($(DETECTED_OS),Windows)
 	)
 else
 	@cd $(PARSING_DIR) && ( \
-		$(PARSING_VENV_ACTIVATE) && \
+		. $(PARSING_VENV_ACTIVATE) && \
 		nohup make run-web-app > parsing_service.log 2>&1 & \
 		echo $$! > parsing_service.pid && \
 		deactivate || true; \
