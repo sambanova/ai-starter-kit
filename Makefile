@@ -44,10 +44,9 @@ VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
 REQUIREMENTS_FILE := base-requirements.txt
 
-
 # Default target
 .PHONY: all
-all: ensure-system-dependencies venv update-lock validate install add-dependencies
+all: ensure-system-dependencies venv update-lock validate install
 
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
@@ -201,20 +200,6 @@ endif
 install: update-lock ensure-qpdf ensure-system-dependencies
 	@echo "Installing dependencies..."
 	@$(POETRY) install --no-root --sync
-
-# Add dependencies from base-requirements.txt
-.PHONY: add-dependencies
-add-dependencies: ensure-poetry
-	@echo "Adding dependencies from $(REQUIREMENTS_FILE)..."
-	@if [ -f $(REQUIREMENTS_FILE) ]; then \
-		while read -r line; do \
-			if [[ $$line != \#* && -n $$line ]]; then \
-				$(POETRY) add $$line || echo "Failed to add: $$line"; \
-			fi \
-		done < $(REQUIREMENTS_FILE); \
-	else \
-		echo "$(REQUIREMENTS_FILE) not found. Skipping dependency addition."; \
-	fi
 
 # Set up Enterprise Knowledge Retriever project using pip and run the app
 .PHONY: ekr
@@ -396,7 +381,7 @@ format:
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all                    : Set up main project, create or use venv, install dependencies, and add from $(REQUIREMENTS_FILE)"
+	@echo "  all                    : Set up main project, create or use venv, install dependencies"
 	@echo "  ensure-system-dependencies : Ensure Poppler and Tesseract are installed"
 	@echo "  ensure-poppler         : Install Poppler if not already installed"
 	@echo "  ensure-tesseract       : Install Tesseract if not already installed"
@@ -409,16 +394,15 @@ help:
 	@echo "  update-lock            : Update the poetry.lock file"
 	@echo "  validate               : Validate the project setup"
 	@echo "  install                : Install dependencies using Poetry (without installing the root project)"
-	@echo "  add-dependencies       : Add dependencies from $(REQUIREMENTS_FILE) to Poetry"
 	@echo "  ekr                    : Set up Enterprise Knowledge Retriever project, start parsing service, and run the EKR app"
 	@echo "  setup-parsing-service  : Set up the parsing service environment"
 	@echo "  start-parsing-service  : Start the parsing service in the background"
 	@echo "  stop-parsing-service   : Stop the running parsing service"
 	@echo "  parsing-log            : View the parsing service log"
-	@echo "  docker-build          : Build Docker image"
-	@echo "  docker-run            : Run Docker container"
-	@echo "  docker-shell          : Open a shell in the Docker container"
-	@echo "  docker-run-kit        : Run a specific kit in the Docker container. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"
+	@echo "  docker-build           : Build Docker image"
+	@echo "  docker-run             : Run Docker container"
+	@echo "  docker-shell           : Open a shell in the Docker container"
+	@echo "  docker-run-kit         : Run a specific kit in the Docker container. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"
 	@echo "  parsing-status         : Check the status of the parsing service"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"

@@ -2,8 +2,8 @@
 name = "ai-starter-kit"
 version = "0.1.0"
 description = ""
-authors = ["Kwasi Ankomah <kwasi.ankomah@sambanovasystems.com>"]
-readme = "README.md"
+authors = ["Kwasi Ankomah [kwasi.ankomah@sambanovasystems.com](mailto:kwasi.ankomah@sambanovasystems.com)"]
+readme = "[README.md](http://readme.md/)"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
@@ -41,13 +41,15 @@ matplotlib = "3.8.0"
 seaborn = "0.12.2"
 beautifulsoup4 = "4.12.3"
 html2text = "2024.2.26"
-unstructured = {version = "0.13.6", extras = ["pdf"]}
+unstructured = {version = "0.14.9", extras = ["pdf"]}
 unstructured-client = "0.18.0"
-unstructured-inference = "0.7.29"
+unstructured-inference = "0.7.36"
 tqdm = ">=4.66.3"
 watchdog = "4.0.0"
 pillow = "10.2.0"
 pycountry = "23.12.11"
+backoff = "2.2.1"
+httpx = "0.27.0"
 omegaconf = "2.3.0"
 jsonlines = "4.0.0"
 black = "^24.4.2"
@@ -56,7 +58,6 @@ google-search-results = "2.4.2"
 nest-asyncio = "1.6.0"
 torch = "2.2.2"
 st-pages = "0.4.5"
-
 
 [build-system]
 requires = ["poetry-core"]
