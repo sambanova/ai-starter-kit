@@ -15,7 +15,7 @@ tools:
         "max_tokens_to_generate": 1024
         "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "Meta-Llama-3-70B-Instruct" #"Meta-Llama-3-8B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+        "select_expert": "Meta-Llama-3-70B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
         #fascoe expert name -> "llama3-70b"
       db:
         "path": "data/chinook.db" 
