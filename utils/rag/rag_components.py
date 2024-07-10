@@ -1,3 +1,5 @@
+import os
+import sys
 from typing import List
 from utils.rag.base_components import BaseComponents
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
@@ -6,6 +8,13 @@ from langchain.vectorstores import Chroma
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import load_prompt
+
+current_dir = os.getcwd()
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
 
 class RAGComponents(BaseComponents):
 
@@ -16,49 +25,64 @@ class RAGComponents(BaseComponents):
         self.embeddings = embeddings
         self.examples = examples
         
-        self.configs = configs
-        self.prompts_paths = configs["prompts"]
+        self.configs = self.load_config(configs)
+        self.prompts_paths = self.configs["prompts"]
         
     ### RAG Chains
 
     def init_router(self) -> None:
 
-        router_prompt =  load_prompt(self.prompts_paths["router_prompt.yaml"]) 
+        router_prompt =  load_prompt(repo_dir + "/" + self.prompts_paths["router_prompt"]) 
         self.router = router_prompt | self.llm | JsonOutputParser()
     
     def init_example_judge(self) -> None:
         
-        example_judge_prompt = load_prompt(self.prompts_paths["example_judge_prompt.yaml"])
+        example_judge_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["example_judge_prompt"])
         self.example_judge = example_judge_prompt | self.llm | JsonOutputParser()
 
     def init_reform_chain(self) -> None:
 
-        reformulation_prompt = load_prompt(self.prompts_paths["reformulation_prompt.yaml"])
+        reformulation_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["reformulation_prompt"])
         self.reformulation_chain = reformulation_prompt | self.llm | StrOutputParser()
 
     def init_entity_chain(self) -> None:
         
-        entity_prompt = load_prompt(self.prompts_paths["entity_prompt.yaml"])
+        entity_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["entity_prompt"])
         self.entity_chain = entity_prompt | self.llm | JsonOutputParser()
 
     def init_subquery_chain(self) -> None:
 
-        subquery_prompt = load_prompt(self.prompts_paths["subquery_prompt"])
+        subquery_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["subquery_prompt"])
         self.subquery_chain = subquery_prompt | self.llm | StrOutputParser()
 
     def init_retrieval_grader(self) -> None:
 
-        retrieval_grader_prompt = load_prompt(self.prompts_paths["retrieval_grader_prompt"])
+        retrieval_grader_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["retrieval_grader_prompt"])
         self.retrieval_grader = retrieval_grader_prompt | self.llm | JsonOutputParser()
 
     def init_qa_chain(self) -> None:
 
-        qa_prompt = load_prompt(self.prompts_paths["qa_prompt"])
+        qa_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["qa_prompt"])
         self.qa_chain = qa_prompt | self.llm | StrOutputParser()
+
+    def init_hallucination_chain(self) -> None:
+
+        hallucination_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["hallucination_prompt"])
+        self.hallucination_chain = hallucination_prompt | self.llm | JsonOutputParser()
+
+    def init_grading_chain(self) -> None:
+
+        grading_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["grading_prompt"])
+        self.grading_chain = grading_prompt | self.llm | JsonOutputParser()
+
+    def init_aggregation_chain(self) -> None:
+
+        aggregation_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["aggregation_prompt"])
+        self.aggregation_chain = aggregation_prompt | self.llm | StrOutputParser()
 
     def init_final_generation(self) -> None:
 
-        final_chain_prompt = load_prompt(self.prompts_paths["final_chain_prompt"])
+        final_chain_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["final_chain_prompt"])
         self.final_chain = final_chain_prompt | self.llm | StrOutputParser()
 
     ### RAG functionalities
