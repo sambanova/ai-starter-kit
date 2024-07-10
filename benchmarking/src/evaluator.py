@@ -62,7 +62,7 @@ def main():
         '--timeout', 
         type=int, 
         required=False, 
-        default=90,
+        default=600,
         help="The amount of time to run the load test for. (default: %(default)s)"
     )
 

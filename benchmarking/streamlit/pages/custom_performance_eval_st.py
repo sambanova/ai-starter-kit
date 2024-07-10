@@ -67,7 +67,7 @@ def main():
 
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Custom Performance Evaluation")
+    st.title(":orange[SambaNova] Custom Performance Evaluation")
     st.markdown(
             "Here you can select a custom dataset that you want to benchmark performance with. Note that with models that support dynamic \
             batching, you are limited to the number of cpus available on your machine to send concurrent requests."
@@ -91,7 +91,7 @@ def main():
         st.title("Configuration")
 
         st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",

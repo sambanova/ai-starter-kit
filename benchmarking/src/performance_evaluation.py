@@ -28,7 +28,7 @@ class BasePerformanceEvaluator(abc.ABC):
             user_metadata: Dict[str, Any] = {},
             llm_api: str = "sambastudio",
             generation_mode: str = "stream",
-            timeout: int = 90,
+            timeout: int = 600,
     ):
         self.model_name = model_name
         self.results_dir = results_dir
@@ -821,40 +821,3 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         prompt_content += prompt_template[: (total_token_count % prompt_template_length)]
 
         return prompt_content
-
-    def _save_results(
-        self, 
-        summary, 
-        individual_responses, 
-        user_metadata, 
-        num_workers
-    ):
-        if self.results_dir:
-            filename = f"{self.model_name}_{summary['num_input_tokens']}_{summary['num_output_tokens']}_{num_workers}_{self.generation_mode}"
-            filename = re.sub(r"[^\w\d-]+", "-", filename)
-            filename = re.sub(r"-{2,}", "-", filename)
-            summary_filename = f"{filename}_summary"
-            individual_responses_filename = f"{filename}_individual_responses"
-
-            summary.update(user_metadata)
-
-            results = LLMPerfResults(name=summary_filename, metadata=summary)
-            results_dir = Path(self.results_dir)
-            if not results_dir.exists():
-                results_dir.mkdir(parents=True)
-            elif not results_dir.is_dir():
-                raise ValueError(f"{results_dir} is not a directory")
-
-            try:
-                with open(results_dir / f"{summary_filename}.json", "w") as f:
-                    json.dump(results.to_dict(), f, indent=4, default=str)
-            except Exception as e:
-                print(results.to_dict())
-                raise e
-
-            try:
-                with open(results_dir / f"{individual_responses_filename}.json", "w") as f:
-                    json.dump(individual_responses, f, indent=4)
-            except Exception as e:
-                print(individual_responses)
-                raise e

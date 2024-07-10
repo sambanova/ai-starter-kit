@@ -93,16 +93,16 @@ def main():
 
     show_pages(
         [
-            Page("streamlit/app.py", "Performance evaluation"),
+            Page("streamlit/app.py", "Synthetic Performance Evaluation"),
             Page("streamlit/pages/custom_performance_eval_st.py", "Custom Performance Evaluation"),
-            Page("streamlit/pages/chat_performance_st.py", "Performance on chat"),
+            Page("streamlit/pages/chat_performance_st.py", "Performance on Chat"),
         ]
     )
 
     _init()
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Performance evaluation")
+    st.title(":orange[SambaNova] Synthetic Performance Evaluation")
     st.markdown(
         "This performance evaluation assesses the following LLM's performance metrics using concurrent processes. _client represent the metrics computed from the client-side and _server represents the metrics computed from the server-side."
     )
@@ -124,7 +124,7 @@ def main():
         st.markdown("**Modify the following parameters before running the process**")
 
         llm_model = st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
