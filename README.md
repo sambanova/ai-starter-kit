@@ -177,10 +177,11 @@ For example, enter an endpoint with the URL
 in the env file (with no spaces) as:
 
 ```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+SAMBASTUDIO_BASE_URI="api/predict/nlp"
+SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
 #### Sambaverse model
@@ -204,30 +205,12 @@ Update API information for the SambaNova embedding endpoint. These are represent
 would be entered in the env file (with no spaces) as:
 
 ```
-EMBED_BASE_URL="https://api-stage.sambanova.net"
-EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+SAMBASTUDIO_EMBEDDINGS_BASE_URI="api/predict/nlp"
+SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
-
-> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
->
-> with **CPU Huggingface embeddings**:
->
-> ```python
->            embeddings = HuggingFaceInstructEmbeddings(
->                model_name="hkunlp/instructor-large",
->                embed_instruction="",
->                query_instruction="Represent this sentence for searching relevant passages:",
->                encode_kwargs={"normalize_embeddings": True},
->            )
-> ```
->
-> with **Sambastudio embeddings**:
->
-> ```pyhton
-> embeddings = SambaNovaEmbeddingModel()
-> ```
 
 ### 4. Run the desired starter kit
 
@@ -241,20 +224,21 @@ Set your environment as shown in [integrate your model](#integrate-your-model-in
 
 #### Using Sambaverse LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaverseEndpoint** LLM:
+1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **Sambaverse** LLM:
 
 ```python
-from utils.sambanova_endpoint import SambaverseEndpoint
+from langchain_community.llms.sambanova import Sambaverse
 
 load_dotenv('.env')
 
-llm = SambaverseEndpoint(
-    sambaverse_model_name="Meta/llama-2-7b-chat-hf",
+llm = Sambaverse(
+    sambaverse_model_name="Meta/Meta-Llama-3-8B-Instruct",
     model_kwargs={
       "do_sample": False,
       "temperature": 0.0,
       "max_tokens_to_generate": 512,
-      "select_expert": "llama-2-7b-chat-hf"
+      "select_expert": "Meta-Llama-3-8B-Instruct",
+      "process_prompt": "False"
       },
 )
 ```
@@ -267,10 +251,12 @@ llm.invoke("your prompt")
 
 #### Using Sambastudio LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEndpoint** LLM:
+1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaStudio* LLM:
+
+- If using a CoE endpont
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from langchain_community.llms.sambanova import SambaStudio
 
 load_dotenv('.env')
 
@@ -278,7 +264,26 @@ llm = SambaNovaEndpoint(
     model_kwargs={
       "do_sample": False,
       "max_tokens_to_generate": 512,
-      "temperature": 0.0
+      "temperature": 0.0,
+      "select_expert": "Meta-Llama-3-8B-Instruct",
+      "process_prompt": "False"
+      },
+)
+```
+
+- If using a single model endpont
+
+```python
+from langchain_community.llms.sambanova import SambaStudio
+
+load_dotenv('.env')
+
+llm = SambaNovaEndpoint(
+    model_kwargs={
+      "do_sample": False,
+      "max_tokens_to_generate": 512,
+      "temperature": 0.0,
+      "process_prompt": "False"
       },
 )
 ```
@@ -293,15 +298,34 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Embedding Wrapper
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
+1. Import the **sambastudio_endpoint** langchain wrapper in your project and define your **SambaStudioEmbeddings** embedding:
+
+- If using a CoE endpont
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEmbeddingModel
+from langchain_community.embeddings import SambaStudioEmbeddings
 
 load_dotenv('.env')
 
-embedding = SambaNovaEmbeddingModel()
+embedding = SambaStudioEmbeddings(
+              batch_size=1,
+              model_kwargs = {
+                  "select_expert":e5-mistral-7b-instruct
+                  }
+              )
 ```
+
+- If using a single embedding model endpont
+
+```python
+from langchain_community.embeddings import SambaStudioEmbeddings
+
+load_dotenv('.env')
+
+embedding = SambaStudioEmbeddings(batch_size=32)
+```
+
+> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
 
 2. Use your embedding model in your langchain pipeline
 
