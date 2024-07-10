@@ -14,7 +14,6 @@ This function calling kit is an example of tools calling implementation and a ge
 <!-- TOC -->
 
 - [Function Calling kit](#function-calling-kit)
-- [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
@@ -28,7 +27,7 @@ This function calling kit is an example of tools calling implementation and a ge
     - [Customizing the Function Calling module](#customizing-the-function-calling-module)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
-<!-- /TOC --> 
+<!-- /TOC -->
 
 # Before you begin
 
