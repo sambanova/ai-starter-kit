@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from datetime import datetime
+from pprint import pprint
 from typing import Optional, Union
 
 import yaml
@@ -13,7 +14,7 @@ from langchain.prompts import PromptTemplate
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
@@ -25,6 +26,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaStudioFastCoE
 from vectordb.vector_db import VectorDb  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -200,6 +202,8 @@ def sql_finder(text: str) -> str:
     # ```sql
     #    <query>
     # ```
+    
+    print(f'query_db: query generation LLM raw response: \n{text}\n')
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
     match = sql_code_pattern.search(text)
     if match is not None:
@@ -257,9 +261,14 @@ def query_db(query: str) -> str:
                 'temperature': query_db_info['llm']['temperature'],
             },
         )
+    elif query_db_info['llm']['api'] == 'fastcoe':
+        llm = SambaStudioFastCoE(
+            max_tokens=query_db_info['llm']['max_tokens_to_generate'],
+            model=query_db_info['llm']['select_expert'],
+        )
     else:
         raise ValueError(
-            f"Invalid LLM API: {query_db_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+            f"Invalid LLM API: {query_db_info['llm']['api']}, only 'sambastudio', 'sambaverse' and 'fastcoe' are supported."
         )
 
     db_path = os.path.join(kit_dir, query_db_info['db']['path'])
@@ -290,8 +299,14 @@ def query_db(query: str) -> str:
     # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
     # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
+    
     table_info = db.get_table_info()
+    
+    print(f'query_db: Calling query generation LLM with input: \n{query}\n')
+    
     query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
+
+    print(f'query_db: query generation LLM filtered response: \n{query}\n')
 
     queries = query.split(';')
 
@@ -299,9 +314,10 @@ def query_db(query: str) -> str:
 
     results = []
     for query in queries:
-        results.append(query_executor.invoke(query))
-
-    result = query_executor.invoke(query)
+         if query.strip() != '':
+            print(f'query_db: executing query: \n{query}\n')
+            results.append(query_executor.invoke(query))
+            print(f'query_db: query result: \n{results[-1]}\n')
 
     result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
     return result
@@ -335,7 +351,6 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
     # set the llm based in tool configs
     if translate_info['llm']['api'] == 'sambastudio':
         if translate_info['llm']['coe']:
-            # Using SambaStudio CoE expert as model for generating the SQL Query
             llm = SambaStudio(
                 streaming=True,
                 model_kwargs={
@@ -345,7 +360,6 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
                 },
             )
         else:
-            # Using SambaStudio endpoint as model for generating the SQL Query
             llm = SambaStudio(
                 model_kwargs={
                     'max_tokens_to_generate': translate_info['llm']['max_tokens_to_generate'],
@@ -353,7 +367,6 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
                 },
             )
     elif translate_info['llm']['api'] == 'sambaverse':
-        # Using Sambaverse expert as model for generating the SQL Query
         llm = Sambaverse(  # type:ignore
             sambaverse_model_name=translate_info['llm']['sambaverse_model_name'],
             model_kwargs={
@@ -362,9 +375,14 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
                 'temperature': translate_info['llm']['temperature'],
             },
         )
+    elif translate_info['llm']['api'] == 'fastcoe':
+        llm = SambaStudioFastCoE(
+            max_tokens=translate_info['llm']['max_tokens_to_generate'],
+            model=translate_info['llm']['select_expert'],
+        )
     else:
         raise ValueError(
-            f"Invalid LLM API: {translate_info['llm']['api']}, only 'sambastudio' and'sambaverse' are supported."
+            f"Invalid LLM API: {translate_info['llm']['api']}, only 'sambastudio', 'fastcoe' and'sambaverse' are supported."
         )
 
     return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
@@ -420,6 +438,11 @@ def rag(query: str) -> str:
                 'select_expert': rag_info['llm']['select_expert'],
                 'temperature': rag_info['llm']['temperature'],
             },
+        )
+    elif rag_info['llm']['api'] == 'fastcoe':
+        llm = SambaStudioFastCoE(
+            max_tokens=rag_info['llm']['max_tokens_to_generate'],
+            model=rag_info['llm']['select_expert'],
         )
     else:
         raise ValueError(
