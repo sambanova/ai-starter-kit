@@ -9,7 +9,7 @@
 Function Calling kit
 ======================
 
-<!-- TOC -->
+This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 
 <!-- TOC -->
 
@@ -28,7 +28,7 @@ Function Calling kit
     - [Customizing the Function Calling module](#customizing-the-function-calling-module)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
-<!-- /TOC --> calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
+<!-- /TOC --> 
 
 # Before you begin
 
