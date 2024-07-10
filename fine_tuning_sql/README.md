@@ -22,10 +22,6 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
     - [Data preparation](#data-preparation)
     - [Basic QA-QC](#basic-qa-qc)
     - [Dataset Uploading and Training](#dataset-uploading-and-training)
-        - [Load the dataset on Sambastudio](#load-the-dataset-on-sambastudio)
-        - [Training](#training)
-            - [Pre-training](#pre-training)
-            - [Fine-tuning](#fine-tuning)
     - [Inference](#inference)
         - [Hosting](#hosting)
         - [Inference Pipeline](#inference-pipeline)
@@ -73,6 +69,8 @@ Then login with your hugging face account in your terminal through [HuggingFace 
 
 # Use the starter kit 
 
+This starter kit is covered on the jupyter notebooks in the [notebooks folder](notebooks/), you can sequentially follow them to do the complete fine-tuning and pretraining process, from downloading the datasets to hosting and using your trained model.
+
 ## Data download
 Follow the notebook [1_download_data.ipynb](notebooks/1_download_data.ipynb) to download and store pre-training and fine-tuning datasets.
 
@@ -88,30 +86,7 @@ One can do basic QA-QC by loading the HDF5 and jsonl files as shown in the noteb
 
 ## Dataset Uploading and Training
 
-### Load the dataset on Sambastudio
-
-Once the data preparation is done the datasets can be uploaded directly to SambaStudio.
-Please refer to the [SambaStudio documentation for uploading datasets](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) 
-
-### Training
-
-#### Pre-training
-Once the datasets are uploaded, one can pre-train and fine-tune base-models on these datasets.
-We use **Llama7B Base** as the starting model for further training. Below is a snapshot showing the hyperparameters
-for the training job.
-
-![](images/Pretraining_SN.png)
-
-#### Fine-tuning
-We start with a continuously pretrained model to do further fine-tuning. Below is a snapshot showing the hyperparameters
-for the fine-tuning job.
-
-![](images/Fine_tuning_SN.png)
-
-The training loss curve for the fine-tuning job is shown below.
-
-![](images/Fine_tuning_loss_SN.png)
-
+You will find comprehensive guide of how to upload an train your models in the notebook [4_upload_and_train.ipynb](notebooks/4_upload_and_train.ipynb)
 
 ## Inference
 
@@ -131,11 +106,11 @@ The [Archerfix repository](https://github.com/archerfish-bench/benchmark) can be
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-langchain (version 0.2.6)
-langchain-community (version 0.2.6)
-transformers (version 4.41.2)
-datasets (version 2.20.0)
-jupyter_client (version 8.6.0)
-jupyter_core (version 5.7.1)
-jupyterlab-widgets (version 3.0.9)
-SQLAlchemy (version 2.0.30)
+- langchain (version 0.2.6)
+- langchain-community (version 0.2.6)
+- transformers (version 4.41.2)
+- datasets (version 2.20.0)
+- jupyter_client (version 8.6.0)
+- jupyter_core (version 5.7.1)
+- jupyterlab-widgets (version 3.0.9)
+- SQLAlchemy (version 2.0.30)
