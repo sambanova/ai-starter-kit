@@ -22,6 +22,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaStudioFastCoE
 from vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
@@ -171,6 +172,18 @@ class DocumentRetrieval():
                         "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     }
                 )
+    
+        elif self.api_info == "fastcoe":
+            llm = SambaStudioFastCoE(
+                max_tokens=self.llm_info['max_tokens_to_generate'],
+                model=self.llm_info['select_expert'],
+            )
+        
+        else:
+            raise ValueError(
+                f"Invalid LLM API: {self.api_info}, only 'fastcoe' 'sambastudio' and 'sambaverse' are supported."
+            )
+            
         return llm
             
 
