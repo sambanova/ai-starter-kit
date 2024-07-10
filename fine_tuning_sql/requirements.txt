@@ -6,3 +6,4 @@ jupyter_client==8.6.0
 jupyter_core==5.7.1
 jupyterlab-widgets==3.0.9
 SQLAlchemy==2.0.30
+python-dotenv==1.0.1
