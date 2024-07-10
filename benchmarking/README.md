@@ -57,24 +57,26 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file
 
-1. Log in to SambaStudio, select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct), and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for a general reference, and the [Dynamic batching documentation](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html#_create_a_dynamic_batching_coe_endpoint) for more information on how to deploy a dynamic batching endpoint.  
+1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup. 
 
-2. Update the `ai-starter-kit/.env` config file in the root repo directory with information on this endpoint:
-    ```env
-    # SambaStudio endpoint URLs follow the format:
-    # <BASE_URL>/api/predict/generic/<PROJECT_ID>/<ENDPOINT_ID>
-    # Both the endpoint URL and the endpoint API key can be found by clicking into an endpoint's details page
+2. Select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for a general reference, and the [Dynamic batching documentation](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html#_create_a_dynamic_batching_coe_endpoint) for more information on how to deploy a dynamic batching endpoint. 
 
-    BASE_URL="https://yoursambastudio.url"
-    PROJECT_ID="your-samba-studio_model-projectid"
-    ENDPOINT_ID="your-samba-studio-model-endpointid"
-    API_KEY="your-samba-studio-model-apikey"
+3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example:
+    - Assume you have an endpoint with the URL
+        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+
+    - You can enter the following in the env file (with no spaces):
+
+    ``` bash
+        SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+        SAMBASTUDIO_BASE_URI="api/predict/generic"
+        SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+        SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+        SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
-3. (Optional) If you are planning to use the `run.sh` bash process. More details about the bash process will be covered later.
-
 ## Create the (virtual) environment
-1. (Recommended) Create a virtual environment and activate it: 
+1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
     ```bash
     python<version> -m venv <virtual-environment-name>
     source <virtual-environment-name>/bin/activate
@@ -189,7 +191,7 @@ For each run, two files are generated with the following suffixes in the output 
 
 - Individual responses file 
 
-This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-token-benchmark-results.ipynb` with some charts that they can use to start.
+This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-results.ipynb` with some charts that they can use to start.
 
 ![individual_responses_image](./imgs/perf_eval_individual_responses_output.png)
 
@@ -258,8 +260,8 @@ Batching setup
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- streamlit (version 1.34.0)
-- st-pages (version 0.4.5)
+- streamlit (version 1.35.0)
+- st-pages (version 0.5.0)
 - transformers (version 4.40.1)
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
