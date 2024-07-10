@@ -39,7 +39,7 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 This Starter Kit is an example of LLM fine-tuning process leveraging SambaStudio platform, this workflow shows how to fine-tune an SQL model for Question-Answering purpose, enhancing SQL generation tasks performance. The Kit includes:
 
 - A Jupyter Notebook for downloading pre-training and fine-tuning SQL datasets
-- A detailed guide for generating the training files
+- A detailed in Notebook guide for generating the training files
 - A Notebook for quality control and evaluation of the generated training files
 - A guide on uploading datasets and fine-tuning a model of choice using the SambaStudio graphical user interface
 - A Notebook for performing inference with the trained model
@@ -69,49 +69,22 @@ source fine_tuning_sql_env/enterprise_knowledge_env/bin/activate
 pip  install  -r  requirements.txt
 ```
 
+Then login with your hugging face account in your terminal through [HuggingFace CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli)
+
 # Use the starter kit 
 
 ## Data download
 Follow the notebook [1_download_data.ipynb](notebooks/1_download_data.ipynb) to download and store pre-training and fine-tuning datasets.
 
-> You will need to request access to each of the example datasets in the notebook in their HuggingFace datasets page, and install and login with the [HuggingFace CLI](https://huggingface.co/docs/huggingface_hub/en/guides/cli) in your terminal
+> You will need to request access to each of the example datasets in the notebook in their HuggingFace datasets page.
 
 ## Data preparation
 
-Clone the [generative_data_prep](https://github.com/sambanova/generative_data_prep) github repo and follow the instructions. The repo required jsonl files produced in [Data download](#data-download) section above.
-
-Below are the example commands used to prepare the data
-
-### Pretraining data prep
-
-Sample command:
-```python
-python -m generative_data_prep pipeline \
---input_file_path={input_path}/pretrain-squad-smol-sql.jsonl \
---output_path={output_path} \
---pretrained_tokenizer=meta-llama/Llama-2-7b-hf \
---max_seq_length=4096 \
---shuffle=on_RAM \
---keep_split_jsonls
-```
-
-### Fine-tuning data prep
-
-Sample command:
-```python
-python -m generative_data_prep pipeline \
---input_file_path={input_path}/fine-tune-nstext2_test.jsonl \
---output_path={output_path} \
---pretrained_tokenizer=meta-llama/Llama-2-7b-hf \
---max_seq_length=4096 \
---shuffle=on_RAM \
---input_packing_config=greedy::drop \
---keep_split_jsonls
-```
+Follow the Notebook [2_data_preparation.ipynb](notebooks/2_data_preparation.ipynb) to do the data preparation step in which the downloaded data of the previous steps will be converted to .hdf5 files, which will be used as dataset for SambaStudio training jobs
 
 ## Basic QA-QC
 
-One can do basic QA-QC by loading the HDF5 and jsonl files as shown in the notebook [2_qa_data.ipynb](notebooks/2_qa_data.ipynb).
+One can do basic QA-QC by loading the HDF5 and jsonl files as shown in the notebook [3_qa_data.ipynb](notebooks/3_qa_data.ipynb).
 
 ## Load the dataset on Sambastudio
 
