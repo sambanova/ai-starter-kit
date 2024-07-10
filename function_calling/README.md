@@ -88,6 +88,8 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
         FAST_COE_API_KEY = "456789abcdef0123456789abcdef0123"
     ```
 
+- In the [config file](./config.yaml), in `llm` section set the `api` variable to `"fastcoe"`, and set the `select_expert` config.
+
 ###  Install dependencies
 
 We recommend that you run the starter kit in a virtual environment.
