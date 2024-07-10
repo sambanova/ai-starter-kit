@@ -31,9 +31,10 @@ STARTER_KITS: List[str] = [
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
-    'enterprise_knowledge_retriever': 'python cli_test.py --mode retrieve',
-    'function_calling': 'python cli_test.py --function example_function',
-    'search_assistant': 'python cli_test.py --query "test query"',
+    # 'enterprise_knowledge_retriever': 'python cli_test.py --mode retrieve',
+    # 'function_calling': 'python cli_test.py --function example_function',
+    # 'search_assistant': 'python cli_test.py --query "test query"',
+    'benchmarking': './run.sh' #This runs the benchmarking suite. 
 }
 
 class TestEnvironment:
@@ -175,10 +176,10 @@ class StarterKitTest(unittest.TestCase):
         # Get the CLI test command for this kit
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
         
-        # Placeholder: Run the CLI test command (commented out for now)
-        # result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True)
-        # self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
-        # logging.info(f"CLI test output for {kit}:\n{result.stdout}")
+        # Placeholder: Run the CLI test command 
+        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False)
+        self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
+        logging.info(f"CLI test output for {kit}:\n{result.stdout}")
 
         # Placeholder: Always pass
         logging.info(f"CLI test for {kit} passed (placeholder)")
@@ -197,11 +198,11 @@ class StarterKitTest(unittest.TestCase):
             cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
             docker_cli_command = f"cd /app/{kit} && {cli_command}"
             
-            # Placeholder: Run the CLI test command in Docker (commented out for now)
-            # result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
-            #                         capture_output=True, text=True)
-            # self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
-            # logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
+            # Placeholder: Run the CLI test command in Docker 
+            result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
+                                    capture_output=False)
+            self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
+            logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
 
             # Placeholder: Always pass
             logging.info(f"Docker CLI test for {kit} passed (placeholder)")

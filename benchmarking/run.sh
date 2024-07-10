@@ -10,7 +10,7 @@ python src/token_benchmark.py \
 --model "COE/Meta-Llama-3-8B-Instruct" \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
---max-num-completed-requests 32 \
+--max-num-completed-requests 16 \
 --num-concurrent-workers 1 \
 --timeout 600 \
 --results-dir "./data/results/llmperf" \

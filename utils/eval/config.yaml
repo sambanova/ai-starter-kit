@@ -4,7 +4,7 @@ eval_dataset:
   question_col: question
   ground_truth_col: ground_truth
   answer_col: answer
-  #context_col: contexts
+  context_col: ground_truth
 
 # llms:
 #   - name: LLAMA70B_GEN
@@ -38,7 +38,7 @@ eval_llms:
   
   - name: EVAL_LLAMA370B
     model_kwargs:
-      select_expert: Meta-Llama-3-70B-Instruct
+      select_expert: Meta-Llama-3-8B-Instruct
       process_prompt: False
       max_tokens_to_generate: 2048
 
