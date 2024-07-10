@@ -297,9 +297,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Args:
             sampling_params (str): The sampling parameters in JSON format.
 
-        Raises:
-            ValueError: If the number of input tokens is less than 40.
-
         Returns:
             None
         """
@@ -519,7 +516,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             num_input_tokens (int): The number of input tokens to be sent.
             num_output_tokens (int): The number of output tokens to be received.
             num_requests (int): The number of requests to be made.
-            num_workers (int): The number of workers to be used.
             sampling_params (str): The sampling parameters in JSON format.
 
         Raises:

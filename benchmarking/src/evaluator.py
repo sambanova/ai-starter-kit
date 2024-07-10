@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 from dotenv import load_dotenv
@@ -74,6 +75,14 @@ def main():
         help="""A comma separated list of metadata to include in the results, e.g. name=foo,bar=1. These will be added 
             to the metadata field of the results."""
     )
+
+    parser.add_argument(
+        '--sampling-params',
+        type=str,
+        required=False,
+        default="{}",
+        help="Sampling parameters to send with the each request to the LLM API. (default: %(default)s)"
+    )
     
     args, unknown = parser.parse_known_args()
 
@@ -108,7 +117,7 @@ def main():
 
         # Run performance evaluation
         evaluator.run_benchmark(
-            sampling_params={}  # TODO: Add in support for other sampling/tuning params
+            sampling_params=json.loads(args.sampling_params)
         )
 
     # Synthetic dataset evaluation path
@@ -116,21 +125,21 @@ def main():
 
         # Synthetic dataset specific arguments
         parser.add_argument(
-            '--num_input_tokens', 
+            '--num-input-tokens', 
             type=int, 
             default=550,
             help="""The number of tokens to include in the prompt for each request made from the synthetic 
                 dataset. (default: %(default)s)"""
         )
         parser.add_argument(
-            '--num_output_tokens', 
+            '--num-output-tokens', 
             type=int, 
             default=150,
             help="""The number of tokens to generate from each llm request. This is the `max_tokens` param for the 
                 completions API. (default: %(default)s)"""
         )
         parser.add_argument(
-            '--num_requests', 
+            '--num-requests', 
             type=int, 
             default=10,
             help="""The number of requests to make from the synthetic dataset. Note that it is possible for the test 
@@ -152,7 +161,7 @@ def main():
             num_input_tokens=args.num_input_tokens,
             num_output_tokens=args.num_output_tokens,
             num_requests=args.num_requests,
-            sampling_params={} # TODO: Add in support for other sampling/tuning params
+            sampling_params=json.loads(args.sampling_params)
         )
     
 if __name__ == "__main__":
