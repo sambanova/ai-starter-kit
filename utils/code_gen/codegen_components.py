@@ -31,7 +31,7 @@ class CodeGenComponents(BaseComponents):
             str: The extracted Python code blocks, or the original text if no code blocks are found.
         """
          
-        text = text.content # For Ollama only
+        # text = text.content # For Ollama only
         code_blocks = re.findall(r"```python\s+(.*?)\s+```", text, re.S)
 
         if code_blocks:
@@ -178,8 +178,11 @@ class CodeGenComponents(BaseComponents):
 
         print(question)
 
-        code = self.codegen.invoke({"question": question, "intermediate_answers": answers})
-        print("Generated code: \n", code)
+        try:
+            code = self.codegen.invoke({"question": question, "intermediate_answers": answers})
+            print("Generated code: \n", code)
+        except Exception as e:
+            print(e)
 
         return {"original_question": question, "code": code}
         

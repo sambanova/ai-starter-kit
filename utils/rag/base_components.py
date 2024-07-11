@@ -49,16 +49,18 @@ class BaseComponents:
                 )
             
         elif self.configs["api"] == "sambastudio":
-            # self.llm = SambaStudio(
-            #     model_kwargs={
-            #         "do_sample": False,
-            #         "temperature": self.configs["llm"]["temperature"],
-            #         "max_tokens_to_generate": self.configs["llm"]["max_tokens_to_generate"],
-            #     }
-            # )
+            self.llm = SambaStudio(
+                streaming=True,
+                model_kwargs={
+                    "do_sample": False,
+                    "max_tokens_to_generate": self.configs["llm"]["max_tokens_to_generate"],
+                    "process_prompt": False,
+                    "select_expert": self.configs["llm"]["sambaverse_select_expert"],
+                }
+            )
 
-            local_llm = 'llama3'
-            self.llm = ChatOllama(model=local_llm, temperature=0)
+            # local_llm = 'llama3'
+            # self.llm = ChatOllama(model=local_llm, temperature=0)
 
     def _format_docs(self, docs):
     

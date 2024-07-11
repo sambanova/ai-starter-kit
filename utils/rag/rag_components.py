@@ -395,7 +395,7 @@ class RAGComponents(BaseComponents):
         print("---ANSWERING---")
         print(question)
 
-        docs: List[str] = self._format_docs(documents)
+        docs = self._format_docs(documents)
 
         print("---DOCS---")
         print("length: ", len(docs))
@@ -403,7 +403,7 @@ class RAGComponents(BaseComponents):
 
         generation: str = self.qa_chain.invoke({"question": question, "context": docs})
 
-        "---ANSWER---"
+        print("---ANSWER---")
         print(generation)
         if not isinstance(answers, List):
             answers = [answers]
@@ -436,7 +436,7 @@ class RAGComponents(BaseComponents):
         # Score each doc
         filtered_docs: List = []
         for d in documents:
-            print(d.page_content)
+            # print(d.page_content)
             try:
                 score: Dict[str, str] = self.retrieval_grader.invoke({"question": question, "document": d.page_content})
             except Exception as e:
@@ -557,10 +557,16 @@ class RAGComponents(BaseComponents):
         question = state["question"]
         documents = state["documents"]
         generation = state["generation"]
+
+        # print(self.hallucination_chain.get_prompts())
         
-        score = self.hallucination_chain.invoke(
-        {"documents": documents, "generation": generation}
-    )
+        try:
+            score = self.hallucination_chain.invoke(
+            {"documents": documents, "generation": generation}
+        )
+        except Exception as e:
+            print(e)
+        print(score)
         grade = score["score"]
 
         # Check hallucination

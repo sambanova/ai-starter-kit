@@ -10,14 +10,14 @@ llm:
     "temperature": 0.0
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/llama-3-70b-chat-hf"
-    "sambaverse_select_expert": "llama-3-70b-chat-hf"
+    "sambaverse_select_expert": "Meta-Llama-3-70B-Instruct"
 
 retrieval:
-    "chunk_size": 2400
+    "chunk_size": 1028
     "chunk_overlap": 240
     "example_selector_k": 1
     "entity_key": "filename"
-    "k_retrieved_documents": 15
+    "k_retrieved_documents": 20
     "score_threshold": 0.2
     "rerank": True
     "reranker": 'BAAI/bge-reranker-large'
