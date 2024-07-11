@@ -242,3 +242,5 @@ utils/eval/data
 #wandb
 wandb/
 
+utils/eval/.deepeval-cache.json
+utils/eval/results

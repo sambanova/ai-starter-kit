@@ -23,6 +23,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger(__name__)
 
+#Configure Utils Location
+current_dir = os.path.dirname(os.path.abspath(__file__))
+utils_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
+
 class SambaStudioLLM(DeepEvalBaseLLM):
     """
     A wrapper class for the SambaStudio LLM, implementing DeepEvalBaseLLM interface.
@@ -216,7 +221,6 @@ class RAGEvaluator:
         """
         metrics = [
             AnswerRelevancyMetric(threshold=0.7, model=eval_llm, verbose_mode=True),
-            #HallucinationMetric(threshold=0.7, model=eval_llm, verbose_mode=True),
             GEval(
                 name="Correctness",
                 criteria="Correctness - determine if the actual output is correct according to the expected output.",
@@ -224,6 +228,11 @@ class RAGEvaluator:
                     LLMTestCaseParams.ACTUAL_OUTPUT,
                     LLMTestCaseParams.EXPECTED_OUTPUT,
                 ],
+                evaluation_steps=[
+       'Compare the actual output directly with the expected output to verify factual accuracy.',
+       'Check if all elements mentioned in the expected output are present and correctly represented in the actual output.',
+       'Assess if there are any discrepancies in details, values, or information between the actual and expected outputs.'
+    ],
                 model=eval_llm
             )
         ]
@@ -262,55 +271,68 @@ class RAGEvaluator:
         
         return results
 
-def save_results_to_json(results: Dict[str, Any], output_dir: str = "results") -> str:
-    """
-    Save evaluation results to a JSON file with a timestamp.
-
-    Args:
-        results (Dict[str, Any]): Evaluation results to save.
-        output_dir (str): Directory to save the results file.
-
-    Returns:
-        str: Path to the saved JSON file.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"rag_eval_results_{timestamp}.json"
-    filepath = os.path.join(output_dir, filename)
-    
-    with open(filepath, 'w') as f:
-        json.dump(results, f, indent=2)
-    
-    logger.info(f"Results saved to {filepath}")
-    return filepath
-
-def log_results_to_wandb(results: Dict[str, Any], config: RAGEvalConfig):
+def log_results_to_wandb(results_file: str = ".deepeval-cache.json"):
     """
     Log evaluation results to Weights & Biases.
 
     Args:
-        results (Dict[str, Any]): Evaluation results to log.
-        config (RAGEvalConfig): Configuration object.
+        results_file (str): Path to the results file. Defaults to ".deepeval-cache.json".
     """
-    wandb.init(project="rag-evaluation", config=config.config)
-    
-    for llm_name, result in results.items():
-        table_data = []
-        for metric_name, metric_value in result.items():
-            table_data.append([llm_name, metric_name, metric_value])
-        
-        results_table = wandb.Table(data=table_data, columns=["LLM", "Metric", "Value"])
-        wandb.log({"results": results_table})
-    
+    # Read the JSON file
+    with open(results_file, 'r') as f:
+        results_data = json.load(f)
+
+    # Extract the test cases and their metrics
+    test_cases = results_data.get("test_cases_lookup_map", {})
+
+    # Prepare data for the DataFrame
+    data = []
+    for test_case, metrics in test_cases.items():
+        test_case_data = json.loads(test_case)
+        for metric in metrics.get("cached_metrics_data", []):
+            data.append({
+                "input": test_case_data.get("input"),
+                "actual_output": test_case_data.get("actual_output"),
+                "expected_output": test_case_data.get("expected_output"),
+                "metric": metric["metric_metadata"]["metric"],
+                "score": metric["metric_metadata"]["score"],
+                "threshold": metric["metric_metadata"]["threshold"],
+                "success": metric["metric_metadata"]["success"],
+                "reason": metric["metric_metadata"]["reason"]
+            })
+
+    # Create DataFrame
+    df = pd.DataFrame(data)
+
+    # Initialize W&B run
+    wandb.init(project="rag-evaluation")
+
+    # Log the DataFrame as a table
+    wandb_table = wandb.Table(dataframe=df)
+    wandb.log({"results": wandb_table})
+
+    # Log summary metrics
+    summary_metrics = df.groupby("metric").agg({
+        "score": "mean",
+        "success": "mean"
+    }).reset_index()
+
+    for _, row in summary_metrics.iterrows():
+        wandb.log({
+            f"{row['metric']}_avg_score": row['score'],
+            f"{row['metric']}_success_rate": row['success']
+        })
+
     wandb.finish()
 
 def main():
     """
     Main function to run the RAG evaluation.
     """
-    config_path = "config.yaml"
-    eval_csv_path = "data/test.csv"
     
+    config_path = os.path.abspath(os.path.join(current_dir, "config.yaml"))
+    eval_csv_path = os.path.abspath(os.path.join(current_dir, "data/test.csv"))
+ 
     logger.info("Initializing RAG Evaluator...")
     evaluator = RAGEvaluator(config_path)
     
@@ -324,10 +346,8 @@ def main():
         logger.info(f"Results for {llm_name}:")
         logger.info(result)
     
-    results_file = save_results_to_json(results)
-    
     logger.info("Logging results to Weights & Biases...")
-    log_results_to_wandb(results, evaluator.config)
+    log_results_to_wandb()
     
     logger.info("Evaluation completed successfully.")
 
