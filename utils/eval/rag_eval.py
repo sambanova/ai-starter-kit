@@ -296,9 +296,9 @@ class RAGEvaluator:
                         llm=eval_llm,
                         embeddings=self.eval_embeddings,
                     )
-                    results[
-                        f"{gen_llm_name}_{eval_llm_name}"
-                    ] = result.to_pandas()  # Use result.to_pandas()
+                    results[f"{gen_llm_name}_{eval_llm_name}"] = (
+                        result.to_pandas()
+                    )  # Use result.to_pandas()
         else:
             for eval_llm_name, eval_llm in self.eval_llms:
                 ragas_dataset = self.create_ragas_dataset(

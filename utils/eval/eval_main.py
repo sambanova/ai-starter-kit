@@ -9,7 +9,14 @@ from deepeval.models.base_model import DeepEvalBaseLLM
 from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.runnables import RunnablePassthrough
 from langchain.prompts import PromptTemplate
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric, ContextualRecallMetric, ContextualPrecisionMetric, HallucinationMetric, GEval
+from deepeval.metrics import (
+    AnswerRelevancyMetric,
+    FaithfulnessMetric,
+    ContextualRecallMetric,
+    ContextualPrecisionMetric,
+    HallucinationMetric,
+    GEval,
+)
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 from deepeval.dataset import EvaluationDataset
 from deepeval import evaluate
@@ -20,13 +27,18 @@ import logging
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
-#Configure Utils Location
+# Configure Utils Location
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
+
 
 class SambaStudioLLM(DeepEvalBaseLLM):
     """
@@ -65,12 +77,10 @@ class SambaStudioLLM(DeepEvalBaseLLM):
             str: The generated response.
         """
         model = self.load_model()
-        template = PromptTemplate.from_template("<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are JSON generator<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>machine-readable JSON<|end_header_id|>\n\n")
-        chain = (
-            {"prompt": RunnablePassthrough()}    
-            | template
-            | model
+        template = PromptTemplate.from_template(
+            "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are JSON generator<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>machine-readable JSON<|end_header_id|>\n\n"
         )
+        chain = {"prompt": RunnablePassthrough()} | template | model
         return chain.invoke(prompt)
 
     async def a_generate(self, prompt: str) -> str:
@@ -92,8 +102,11 @@ class SambaStudioLLM(DeepEvalBaseLLM):
         Returns:
             str: The model name.
         """
-        select_expert = self.config.get('model_kwargs', {}).get('select_expert', 'Unknown')
+        select_expert = self.config.get("model_kwargs", {}).get(
+            "select_expert", "Unknown"
+        )
         return f"SambaStudio-{select_expert}"
+
 
 class RAGEvalConfig:
     """
@@ -161,6 +174,7 @@ class RAGEvalConfig:
         """Get the configurations for evaluation LLMs."""
         return [(llm["name"], llm) for llm in self.config["eval_llms"]]
 
+
 class RAGEvaluator:
     """
     Class for performing RAG evaluation.
@@ -204,7 +218,7 @@ class RAGEvaluator:
                 input=row[self.config.eval_dataset_question_col],
                 actual_output=row[self.config.eval_dataset_answer_col],
                 expected_output=row[self.config.eval_dataset_ground_truth_col],
-                retrieval_context=context
+                retrieval_context=context,
             )
             test_cases.append(test_case)
         return test_cases
@@ -229,24 +243,26 @@ class RAGEvaluator:
                     LLMTestCaseParams.EXPECTED_OUTPUT,
                 ],
                 evaluation_steps=[
-       'Compare the actual output directly with the expected output to verify factual accuracy.',
-       'Check if all elements mentioned in the expected output are present and correctly represented in the actual output.',
-       'Assess if there are any discrepancies in details, values, or information between the actual and expected outputs.'
-    ],
-                model=eval_llm
-            )
+                    "Compare the actual output directly with the expected output to verify factual accuracy.",
+                    "Check if all elements mentioned in the expected output are present and correctly represented in the actual output.",
+                    "Assess if there are any discrepancies in details, values, or information between the actual and expected outputs.",
+                ],
+                model=eval_llm,
+            ),
         ]
-        
+
         if self.config.eval_dataset_context_col:
             context_metrics = [
                 FaithfulnessMetric(threshold=0.7, model=eval_llm),
                 ContextualRecallMetric(threshold=0.7, model=eval_llm),
-                ContextualPrecisionMetric(threshold=0.7, model=eval_llm)
+                ContextualPrecisionMetric(threshold=0.7, model=eval_llm),
             ]
             metrics.extend(context_metrics)
         else:
-            logger.warning("Context column not found in config. Skipping context-dependent metrics.")
-        
+            logger.warning(
+                "Context column not found in config. Skipping context-dependent metrics."
+            )
+
         return metrics
 
     def evaluate(self, eval_df: pd.DataFrame) -> Dict[str, Any]:
@@ -261,15 +277,16 @@ class RAGEvaluator:
         """
         self.test_cases = self.create_test_cases(eval_df)
         dataset = EvaluationDataset(test_cases=self.test_cases)
-        
+
         results = {}
         for llm_name, eval_llm in self.eval_llms:
             logger.info(f"Evaluating {llm_name}...")
             metrics = self.create_metrics(eval_llm)
             result = evaluate(dataset, metrics)
             results[llm_name] = result
-        
+
         return results
+
 
 def log_results_to_wandb(results_file: str = ".deepeval-cache.json"):
     """
@@ -279,7 +296,7 @@ def log_results_to_wandb(results_file: str = ".deepeval-cache.json"):
         results_file (str): Path to the results file. Defaults to ".deepeval-cache.json".
     """
     # Read the JSON file
-    with open(results_file, 'r') as f:
+    with open(results_file, "r") as f:
         results_data = json.load(f)
 
     # Extract the test cases and their metrics
@@ -290,16 +307,18 @@ def log_results_to_wandb(results_file: str = ".deepeval-cache.json"):
     for test_case, metrics in test_cases.items():
         test_case_data = json.loads(test_case)
         for metric in metrics.get("cached_metrics_data", []):
-            data.append({
-                "input": test_case_data.get("input"),
-                "actual_output": test_case_data.get("actual_output"),
-                "expected_output": test_case_data.get("expected_output"),
-                "metric": metric["metric_metadata"]["metric"],
-                "score": metric["metric_metadata"]["score"],
-                "threshold": metric["metric_metadata"]["threshold"],
-                "success": metric["metric_metadata"]["success"],
-                "reason": metric["metric_metadata"]["reason"]
-            })
+            data.append(
+                {
+                    "input": test_case_data.get("input"),
+                    "actual_output": test_case_data.get("actual_output"),
+                    "expected_output": test_case_data.get("expected_output"),
+                    "metric": metric["metric_metadata"]["metric"],
+                    "score": metric["metric_metadata"]["score"],
+                    "threshold": metric["metric_metadata"]["threshold"],
+                    "success": metric["metric_metadata"]["success"],
+                    "reason": metric["metric_metadata"]["reason"],
+                }
+            )
 
     # Create DataFrame
     df = pd.DataFrame(data)
@@ -312,44 +331,47 @@ def log_results_to_wandb(results_file: str = ".deepeval-cache.json"):
     wandb.log({"results": wandb_table})
 
     # Log summary metrics
-    summary_metrics = df.groupby("metric").agg({
-        "score": "mean",
-        "success": "mean"
-    }).reset_index()
+    summary_metrics = (
+        df.groupby("metric").agg({"score": "mean", "success": "mean"}).reset_index()
+    )
 
     for _, row in summary_metrics.iterrows():
-        wandb.log({
-            f"{row['metric']}_avg_score": row['score'],
-            f"{row['metric']}_success_rate": row['success']
-        })
+        wandb.log(
+            {
+                f"{row['metric']}_avg_score": row["score"],
+                f"{row['metric']}_success_rate": row["success"],
+            }
+        )
 
     wandb.finish()
+
 
 def main():
     """
     Main function to run the RAG evaluation.
     """
-    
+
     config_path = os.path.abspath(os.path.join(current_dir, "config.yaml"))
     eval_csv_path = os.path.abspath(os.path.join(current_dir, "data/test.csv"))
- 
+
     logger.info("Initializing RAG Evaluator...")
     evaluator = RAGEvaluator(config_path)
-    
+
     logger.info(f"Loading evaluation data from {eval_csv_path}...")
     eval_df = pd.read_csv(eval_csv_path)
-    
+
     logger.info("Starting evaluation...")
     results = evaluator.evaluate(eval_df)
-    
+
     for llm_name, result in results.items():
         logger.info(f"Results for {llm_name}:")
         logger.info(result)
-    
+
     logger.info("Logging results to Weights & Biases...")
     log_results_to_wandb()
-    
+
     logger.info("Evaluation completed successfully.")
+
 
 if __name__ == "__main__":
     main()

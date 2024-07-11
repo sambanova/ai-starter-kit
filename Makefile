@@ -43,7 +43,14 @@ TEST_SUITE_REQUIREMENTS := tests/requirements.txt
 
 # Default target
 .PHONY: all
-all: ensure-system-dependencies venv update-lock validate install start-parsing-service post-process
+all: 
+	@make ensure-system-dependencies && \
+	make venv && \
+	make update-lock && \
+	make validate && \
+	make install && \
+	make start-parsing-service && \
+	make post-process
 
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
@@ -171,7 +178,7 @@ venv: create-base-venv ensure-poetry init-poetry install-python-versions
 update-lock:
 	@echo "Updating poetry.lock file..."
 	@if [ -f poetry.lock ]; then \
-		$(POETRY) lock --no-update; \
+		$(POETRY) lock --no-update || (echo "Error updating lock file. Trying without --no-update flag..." && $(POETRY) lock); \
 	else \
 		$(POETRY) lock; \
 	fi

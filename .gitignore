@@ -244,3 +244,4 @@ wandb/
 
 utils/eval/.deepeval-cache.json
 utils/eval/results
+utils/eval/weave
