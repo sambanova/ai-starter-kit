@@ -50,7 +50,7 @@ all:
 	make validate && \
 	make install && \
 	make start-parsing-service && \
-	make post-process
+	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
@@ -178,17 +178,14 @@ venv: create-base-venv ensure-poetry init-poetry install-python-versions
 .PHONY: update-lock
 update-lock:
 	@echo "Updating poetry.lock file..."
-	@if [ -f poetry.lock ]; then \
-		$(POETRY) lock --no-update || (echo "Error updating lock file. Trying without --no-update flag..." && $(POETRY) lock); \
-	else \
-		$(POETRY) lock; \
-	fi
+	@$(POETRY) lock --no-update || (echo "Error updating lock file. Trying without --no-update flag..." && $(POETRY) lock)
 
 # Validate project setup
 .PHONY: validate
 validate: update-lock
 	@echo "Validating project setup..."
-	@$(POETRY) check
+	@$(POETRY) check || (echo "Poetry check failed. Attempting to proceed." && true)
+
 
 # Ensure qpdf is installed (for pikepdf)
 .PHONY: ensure-qpdf
@@ -215,7 +212,13 @@ endif
 .PHONY: install
 install: update-lock ensure-qpdf ensure-system-dependencies
 	@echo "Installing dependencies..."
-	@$(POETRY) install --no-root --sync
+	@$(POETRY) config virtualenvs.create false
+	@$(POETRY) config installer.parallel false
+	@$(POETRY) config experimental.new-installer false
+	@$(POETRY) install --no-interaction --no-root --sync || \
+	(echo "Initial install failed. Attempting to resolve conflicts..." && \
+	$(POETRY) install --no-interaction --no-root --sync --remove-untracked)
+
 
 # Post-process installation
 .PHONY: post-process

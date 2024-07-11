@@ -29,7 +29,11 @@ else
 fi
 
 # Set up and activate the test suite environment
-make setup-test-suite
+if ! make setup-test-suite; then
+    echo "Error: Failed to set up test suite environment. Exiting."
+    exit 1
+fi
+
 if [ -f .test_suite_venv/bin/activate ]; then
     . .test_suite_venv/bin/activate
 else
