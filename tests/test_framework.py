@@ -26,7 +26,12 @@ STARTER_KITS: List[str] = [
     'enterprise_knowledge_retriever',
     'function_calling',
     'search_assistant',
-    'benchmarking'
+    'benchmarking', 
+    'image_search',
+    'multimodal_knowledge_retriever',
+    'post_call_analysis',
+    'prompt_engineering',
+    'web_crawled_data_retriever'
 ]
 
 # Dictionary to store CLI test commands for each kit
@@ -47,8 +52,9 @@ class StarterKitTest(unittest.TestCase):
     env: str
 
     @classmethod
-    def setUpClass(cls) -> None:
+    def setUpClass(cls):
         cls.root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cls.activate_base_venv()
         
         if cls.env == TestEnvironment.LOCAL:
             cls.run_make_clean()
@@ -78,11 +84,29 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def setup_local(cls) -> None:
-        cls.activate_venv()
+        cls.activate_base_venv()
 
     @classmethod
     def setup_docker(cls) -> None:
         cls.run_docker_build()
+    
+    @classmethod
+    def activate_base_venv(cls):
+        base_venv_path = os.path.join(cls.root_dir, '.venv')
+        if not os.path.exists(base_venv_path):
+            logging.info("Base virtual environment not found. Creating it...")
+            subprocess.run(['make', 'create-base-venv'], cwd=cls.root_dir, check=True)
+        
+        activate_this = os.path.join(base_venv_path, 'bin', 'activate_this.py')
+        if os.path.exists(activate_this):
+            exec(open(activate_this).read(), {'__file__': activate_this})
+        else:
+            logging.warning(f"activate_this.py not found at {activate_this}. Falling back to manual activation.")
+            os.environ['VIRTUAL_ENV'] = base_venv_path
+            os.environ['PATH'] = f"{base_venv_path}/bin:{os.environ['PATH']}"
+            sys.prefix = base_venv_path
+
+        logging.info(f"Activated base virtual environment at {base_venv_path}")
 
     @classmethod
     def run_docker_build(cls) -> None:

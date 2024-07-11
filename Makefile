@@ -37,6 +37,10 @@ POETRY := poetry
 VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
 
+TEST_SUITE_VENV := .test_suite_venv
+TEST_SUITE_REQUIREMENTS := tests/requirements.txt
+
+
 # Default target
 .PHONY: all
 all: ensure-system-dependencies venv update-lock validate install start-parsing-service post-process
@@ -133,9 +137,26 @@ init-poetry: ensure-poetry
 		$(POETRY) init --no-interaction --python $(PYTHON_VERSION_RANGE); \
 	fi
 
+
+# Create base virtual environment
+.PHONY: create-base-venv
+create-base-venv: ensure-pyenv
+	@echo "Creating or updating base virtual environment..."
+	@if [ ! -d $(VENV_PATH) ]; then \
+		pyenv install -s $(DEFAULT_PYTHON_VERSION); \
+		pyenv local $(DEFAULT_PYTHON_VERSION); \
+		$(PYTHON) -m venv $(VENV_PATH); \
+		. $(VENV_PATH)/bin/activate; \
+		pip install --upgrade pip; \
+		pip install poetry; \
+		deactivate; \
+	else \
+		echo "Base virtual environment already exists."; \
+	fi
+
 # Create or use existing virtual environment
 .PHONY: venv
-venv: ensure-poetry init-poetry install-python-versions
+venv: create-base-venv ensure-poetry init-poetry install-python-versions
 	@echo "Checking for virtual environment..."
 	@if [ ! -d $(VENV_PATH) ]; then \
 		echo "Creating new virtual environment..."; \
@@ -320,9 +341,37 @@ docker-run-kit: docker-build
 		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && $(COMMAND)"; \
 	fi
 
+# Test Suite Related Commands
+.PHONY: setup-test-suite
+setup-test-suite: ensure-pyenv
+	@echo "Setting up test suite environment..."
+	@if [ ! -d $(PYENV_ROOT)/versions/$(DEFAULT_PYTHON_VERSION) ]; then \
+		echo "Installing Python $(DEFAULT_PYTHON_VERSION) for test suite..."; \
+		pyenv install $(DEFAULT_PYTHON_VERSION); \
+	fi
+	@pyenv local $(DEFAULT_PYTHON_VERSION)
+	@$(PYTHON) -m venv $(TEST_SUITE_VENV)
+	@. $(TEST_SUITE_VENV)/bin/activate && \
+		pip install --upgrade pip && \
+		pip install -r $(TEST_SUITE_REQUIREMENTS)
+
+.PHONY: ensure-poetry-venv
+ensure-poetry-venv:
+	@if ! command -v poetry &> /dev/null; then \
+		echo "Installing Poetry in test suite venv..."; \
+		pip install poetry; \
+	fi
+
+.PHONY: clean-test-suite
+clean-test-suite:
+	@echo "Cleaning up test suite environment..."
+	@rm -rf $(TEST_SUITE_VENV)
+	@pyenv local --unset
+
+
 # Clean up
 .PHONY: clean
-clean: stop-parsing-service
+clean: stop-parsing-service 
 	@echo "Cleaning up..."
 ifeq ($(DETECTED_OS),Windows)
 	@if exist $(VENV_PATH) rmdir /s /q $(VENV_PATH)
@@ -368,6 +417,8 @@ help:
 	@echo "  docker-run             : Run Docker container"
 	@echo "  docker-shell           : Open a shell in the Docker container"
 	@echo "  docker-run-kit         : Run a specific kit in the Docker container. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"
+	@echo "  setup-test-suite       : Set up the test suite environment"
+	@echo "  clean-test-suite       : Clean up the test suite environment"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"
 	@echo "  help                   : Show this help message"

@@ -377,24 +377,9 @@ Within the starter kit there will be instructions on how to start the kit. You c
 part in the kits README.md as we've done it here.
 
 
-4. **Enterprise Knowledge Retriever One Click Deploy:**
-For the EKR Kit specifically we have enabled a one click deploy via makefile
-
-
-### Enterprise Knowledge Retriever (EKR) Setup
-
-To set up and run the Enterprise Knowledge Retriever:
-
-1. **Set Up and Start EKR:**
-
-```bash
-make ekr
-```
-This command sets up the EKR environment, starts the parsing service, and launches the EKR application.
-
 
 ### Parsing Service Management
-For certain kits, we utilise a standard parsing service. To work with this service, following the steps in this section.
+For certain kits, we utilise a standard parsing service. By Default it's started automatically with the base environment. To work with this service in isolation, following the steps in this section.
 
 - **Start Parsing Service:**
 ```bash
