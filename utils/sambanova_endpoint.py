@@ -799,7 +799,10 @@ class SambaNovaEndpoint(LLM):
         if 'nlp' in self.base_uri:
             return response['data'][0]['completion']
         elif 'generic' in self.base_uri:
-            return response['predictions'][0]['completion']
+            if isinstance(response['predictions'][0], str):
+                return response['predictions'][0]
+            else:
+                return response['predictions'][0]['completion']
         else:
             raise ValueError(f'handling of endpoint uri: {self.base_uri} not implemented')
 
