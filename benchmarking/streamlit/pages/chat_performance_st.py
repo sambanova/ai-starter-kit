@@ -84,7 +84,7 @@ def main():
 
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Performance evaluation")
+    st.title(":orange[SambaNova] Chat Performance Evaluation")
     st.markdown(
         "With this option, users have a way to know performance metrics per response. Set your LLM first on the left side bar and then have a nice conversation, also know more about our performance metrics per each response."
     )
@@ -95,7 +95,7 @@ def main():
 
         # Show LLM parameters
         llm_model = st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
@@ -132,7 +132,7 @@ def main():
 
         if sidebar_run_option:
             params = _get_params()
-            st.session_state.llm = SambaStudioCOEHandler(
+            st.session_state.selected_llm = SambaStudioCOEHandler(
                 model_name=llm_selected, params=params
             )
             st.toast("LLM setup ready! 🙌 Start asking!")
@@ -148,7 +148,7 @@ def main():
             with st.spinner("Processing"):
 
                 # Display llm response
-                llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
+                llm_response = _parse_llm_response(st.session_state.selected_llm, user_prompt)
 
                 # Add user message to chat history
                 st.session_state.chat_history.append(
