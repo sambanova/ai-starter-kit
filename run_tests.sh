@@ -22,7 +22,6 @@ if command -v pyenv &> /dev/null; then
     echo "pyenv found. Setting up environment..."
     export PATH="$HOME/.pyenv/bin:$PATH"
     eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
 else
     echo "pyenv not found. Please install pyenv and run this script again."
     echo "You can install pyenv by following the instructions at: https://github.com/pyenv/pyenv#installation"
