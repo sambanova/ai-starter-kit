@@ -97,8 +97,8 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 When using the benchmarking starter kit, you have two options for running the program:
 
-- [*GUI Option*](#GUI-Option): This option contains plots and configurations from a web browser.
-- [*CLI Option*](#CLI-Option): This option allows you to run the program from the command line.
+- [*GUI Option*](#gui-option): This option contains plots and configurations from a web browser.
+- [*CLI Option*](#cli-option): This option allows you to run the program from the command line.
 
 
 
@@ -128,7 +128,7 @@ After you've deployed the GUI, you can use the starter kit. More details will co
   - [`Custom Performance Evaluation`](#custom-performance-evaluation): Evaluate the performance of the selected LLM on custom data specified by you.
   - [`Performance on Chat`](#performance-on-chat): Evaluate the performance of the selected LLM in a chat interface.
 
-2. If the deployed LLM is a Composition of Experts (CoE), specify the desired expert in the corresponding text box, then set the configuration paramters. If the deployed LLM is not a CoE, simply set the configuration parameters.
+2. If the deployed LLM is a Composition of Experts (CoE), specify the desired expert in the corresponding text box, then set the configuration parameters. If the deployed LLM is not a CoE, simply set the configuration parameters.
 
 3. After pressing the `Run` button, the program will perform inference on the data and product results in the middle of the screen. In the case of `Performance on Chat` functionality, users are able to interact with the LLM in a multi-turn chat interface.  
 
@@ -142,10 +142,10 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 1. Enter a model name
 
-  - If the model specified in the `ai_starter-kit/.env` file is not a CoE model, you can skip this step.
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
 
 2. Set the configuration parameters
 
@@ -201,10 +201,10 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 3. Enter a model name
 
-  - If the model specified in the `ai_starter-kit/.env` file is not a CoE model, you can skip this step.
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
 
 4. Set the configuration and tuning parameters
 
@@ -242,10 +242,10 @@ This option allows you to measure performance during a multi-turn conversation w
 
 1. Enter a model name
 
-  - If the model specified in the `ai_starter-kit/.env` file is not a CoE model, you can skip this step.
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
 
 2. Set the configuration parameters
 
@@ -323,7 +323,7 @@ sh run_custom_dataset.sh
 ### Synthetic Dataset
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
-  - **model_nmae**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
+  - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-workers**: Number of concurrent workers. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
