@@ -119,6 +119,7 @@ env.bak/
 venv.bak/
 server/ask-venv/*
 secret.txt
+.test_suite_venv
 
 # Spyder project settings
 .spyderproject

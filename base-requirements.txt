@@ -43,13 +43,14 @@ google-search-results==2.4.2
 nest_asyncio==1.6.0
 httpx==0.27.0
 backoff==2.2.1
-streamlit_javascript==0.1.5
+streamlit-javascript==0.1.5
 
 
 # Visualization
 plotly==5.19.0
 matplotlib==3.8.0
 seaborn==0.12.2
+librosa==0.10.1
 
 # Text processing
 beautifulsoup4==4.12.3
