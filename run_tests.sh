@@ -15,9 +15,23 @@ fi
 unset VIRTUAL_ENV
 unset CONDA_DEFAULT_ENV
 
+# Check if pyenv is installed
+if ! command -v pyenv &> /dev/null; then
+    echo "pyenv not found. Installing pyenv..."
+    curl https://pyenv.run | bash
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+fi
+
 # Set up and activate the test suite environment
 make setup-test-suite
-source .test_suite_venv/bin/activate
+if [ -f .test_suite_venv/bin/activate ]; then
+    source .test_suite_venv/bin/activate
+else
+    echo "Error: Virtual environment not created. Check the setup-test-suite make target."
+    exit 1
+fi
 
 # Add the current directory to PYTHONPATH
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
@@ -58,7 +72,9 @@ else
 fi
 
 # Deactivate the test suite environment
-deactivate
+if [ -n "$VIRTUAL_ENV" ]; then
+    deactivate
+fi
 
 # Clean up the test suite environment
 make clean-test-suite

@@ -348,7 +348,7 @@ docker-run-kit: docker-build
 		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && $(COMMAND)"; \
 	fi
 
-# Test Suite Related Commands
+# Set up test suite
 .PHONY: setup-test-suite
 setup-test-suite: ensure-pyenv
 	@echo "Setting up test suite environment..."
