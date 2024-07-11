@@ -132,7 +132,7 @@ def main():
 
         if sidebar_run_option:
             params = _get_params()
-            st.session_state.llm = SambaStudioCOEHandler(
+            st.session_state.selected_llm = SambaStudioCOEHandler(
                 model_name=llm_selected, params=params
             )
             st.toast("LLM setup ready! 🙌 Start asking!")
@@ -148,7 +148,7 @@ def main():
             with st.spinner("Processing"):
 
                 # Display llm response
-                llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
+                llm_response = _parse_llm_response(st.session_state.selected_llm, user_prompt)
 
                 # Add user message to chat history
                 st.session_state.chat_history.append(
