@@ -98,19 +98,21 @@ else
 	fi
 endif
 
-# Install pyenv if not already installed
+# Ensure pyenv is available and set up
 .PHONY: ensure-pyenv
 ensure-pyenv:
 ifeq ($(DETECTED_OS),Windows)
 	@echo "pyenv is not supported on Windows. Please install Python $(DEFAULT_PYTHON_VERSION) manually."
 else
-	@if ! command -v pyenv &> /dev/null; then \
-		echo "pyenv not found. Installing pyenv..."; \
-		curl https://pyenv.run | bash; \
-		echo 'export PYENV_ROOT="$$HOME/.pyenv"' >> ~/.bashrc; \
-		echo 'command -v pyenv >/dev/null || export PATH="$$PYENV_ROOT/bin:$$PATH"' >> ~/.bashrc; \
-		echo 'eval "$$(pyenv init -)"' >> ~/.bashrc; \
-		source ~/.bashrc; \
+	@if command -v pyenv &> /dev/null; then \
+		echo "pyenv found. Setting up environment..."; \
+		export PATH="$(HOME)/.pyenv/bin:$$PATH"; \
+		eval "$$(pyenv init -)"; \
+		eval "$$(pyenv virtualenv-init -)"; \
+	else \
+		echo "pyenv not found. Please install pyenv and run this script again."; \
+		echo "You can install pyenv by following the instructions at: https://github.com/pyenv/pyenv#installation"; \
+		exit 1; \
 	fi
 endif
 
@@ -355,6 +357,8 @@ setup-test-suite: ensure-pyenv
 	@if [ ! -d $(PYENV_ROOT)/versions/$(DEFAULT_PYTHON_VERSION) ]; then \
 		echo "Installing Python $(DEFAULT_PYTHON_VERSION) for test suite..."; \
 		pyenv install $(DEFAULT_PYTHON_VERSION); \
+	else \
+		echo "Python $(DEFAULT_PYTHON_VERSION) is already installed."; \
 	fi
 	@pyenv local $(DEFAULT_PYTHON_VERSION)
 	@$(PYTHON) -m venv $(TEST_SUITE_VENV)

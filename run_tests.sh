@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Ensure this script runs with bash
+
 # Change to the directory containing this script
 cd "$(dirname "$0")"
 
@@ -15,19 +17,22 @@ fi
 unset VIRTUAL_ENV
 unset CONDA_DEFAULT_ENV
 
-# Check if pyenv is installed
-if ! command -v pyenv &> /dev/null; then
-    echo "pyenv not found. Installing pyenv..."
-    curl https://pyenv.run | bash
+# Check if pyenv is installed and set it up if it exists
+if command -v pyenv &> /dev/null; then
+    echo "pyenv found. Setting up environment..."
     export PATH="$HOME/.pyenv/bin:$PATH"
     eval "$(pyenv init -)"
     eval "$(pyenv virtualenv-init -)"
+else
+    echo "pyenv not found. Please install pyenv and run this script again."
+    echo "You can install pyenv by following the instructions at: https://github.com/pyenv/pyenv#installation"
+    exit 1
 fi
 
 # Set up and activate the test suite environment
 make setup-test-suite
 if [ -f .test_suite_venv/bin/activate ]; then
-    source .test_suite_venv/bin/activate
+    . .test_suite_venv/bin/activate
 else
     echo "Error: Virtual environment not created. Check the setup-test-suite make target."
     exit 1
