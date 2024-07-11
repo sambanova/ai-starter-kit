@@ -73,7 +73,7 @@ else
 		echo "Poppler not found. Installing Poppler..."; \
 		sudo apt-get update && sudo apt-get install -y poppler-utils; \
 	else \
-		echo "Poppler is already installed."; \
+		echo "Poppler is already installed: $$(which pdftoppm)"; \
 	fi
 endif
 
