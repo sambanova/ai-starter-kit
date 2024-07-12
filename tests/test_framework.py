@@ -21,6 +21,12 @@ import logging
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
+# Timeout variables (in seconds)
+STREAMLIT_START_TIMEOUT = 25
+DOCKER_START_TIMEOUT = 15
+STREAMLIT_CHECK_TIMEOUT = 5
+CLI_COMMAND_TIMEOUT = 300  # 5 minutes
+
 # List of starter kits to test
 STARTER_KITS: List[str] = [
     'enterprise_knowledge_retriever',
@@ -132,8 +138,8 @@ class StarterKitTest(unittest.TestCase):
         process = subprocess.Popen(['streamlit', 'run', 'streamlit/app.py', '--browser.gatherUsageStats', 'false'],
                                    cwd=kit_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
-            logging.info("Waiting for Streamlit to start...")
-            time.sleep(25)  # Wait longer for Streamlit to start
+            logging.info(f"Waiting for Streamlit to start (timeout: {STREAMLIT_START_TIMEOUT}s)...")
+            time.sleep(STREAMLIT_START_TIMEOUT)
             self._check_streamlit_accessibility(kit)
         finally:
             process.terminate()
@@ -150,8 +156,8 @@ class StarterKitTest(unittest.TestCase):
         logging.info(f"Started container: {container_id}")
         
         try:
-            logging.info("Waiting for container to start...")
-            time.sleep(15)
+            logging.info(f"Waiting for container to start (timeout: {DOCKER_START_TIMEOUT}s)...")
+            time.sleep(DOCKER_START_TIMEOUT)
             
             logging.info("Checking container status...")
             container_status = subprocess.check_output(['docker', 'inspect', '-f', '{{.State.Status}}', container_id]).decode().strip()
@@ -162,8 +168,8 @@ class StarterKitTest(unittest.TestCase):
             streamlit_cmd = f"cd /app/{kit} && streamlit run streamlit/app.py --browser.gatherUsageStats false"
             subprocess.run(['docker', 'exec', '-d', container_id, 'sh', '-c', streamlit_cmd], check=True)
             
-            logging.info("Waiting for Streamlit to start...")
-            time.sleep(25)
+            logging.info(f"Waiting for Streamlit to start (timeout: {STREAMLIT_START_TIMEOUT}s)...")
+            time.sleep(STREAMLIT_START_TIMEOUT)
             
             self._check_streamlit_accessibility(kit)
             
@@ -176,18 +182,17 @@ class StarterKitTest(unittest.TestCase):
         logging.info("Checking Streamlit accessibility...")
         for attempt in range(3):
             try:
-                response = requests.get('http://localhost:8501')
+                response = requests.get('http://localhost:8501', timeout=STREAMLIT_CHECK_TIMEOUT)
                 self.assertEqual(response.status_code, 200, f"Streamlit app for {kit} is not running")
                 logging.info(f"Streamlit app for {kit} is running successfully")
                 return
-            except requests.ConnectionError:
+            except (requests.ConnectionError, requests.Timeout):
                 logging.info(f"Attempt {attempt + 1}: Streamlit not accessible yet. Waiting...")
-                time.sleep(5)
+                time.sleep(STREAMLIT_CHECK_TIMEOUT)
         
         logging.error(f"Streamlit app for {kit} failed to start after 3 attempts")
         self.fail(f"Streamlit app for {kit} failed to start after 3 attempts")
 
-    
     def run_cli_test(self, kit: str) -> None:
         if self.env == TestEnvironment.LOCAL:
             self.run_local_cli_test(kit)
@@ -201,14 +206,15 @@ class StarterKitTest(unittest.TestCase):
         # Get the CLI test command for this kit
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
         
-        # Run the CLI test command 
-        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False)
-        self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
-        logging.info(f"CLI test output for {kit}:\n{result.stdout}")
-
-        # Placeholder: Always pass
-        logging.info(f"CLI test for {kit} passed (placeholder)")
-        pass
+        try:
+            # Run the CLI test command with timeout
+            result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True, timeout=CLI_COMMAND_TIMEOUT)
+            self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
+            logging.info(f"CLI test output for {kit}:\n{result.stdout}")
+            logging.info(f"CLI test for {kit} passed")
+        except subprocess.TimeoutExpired:
+            logging.error(f"CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds")
+            self.fail(f"CLI test for {kit} timed out")
 
     def run_docker_cli_test(self, kit: str) -> None:
         logging.info(f"\nRunning CLI test for {kit} in Docker...")
@@ -223,15 +229,16 @@ class StarterKitTest(unittest.TestCase):
             cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
             docker_cli_command = f"cd /app/{kit} && {cli_command}"
             
-            # Run the CLI test command in Docker 
-            result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
-                                    capture_output=False)
-            self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
-            logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
-
-            # Placeholder: Always pass
-            logging.info(f"Docker CLI test for {kit} passed (placeholder)")
-            pass
+            try:
+                # Run the CLI test command in Docker with timeout
+                result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
+                                        capture_output=True, text=True, timeout=CLI_COMMAND_TIMEOUT)
+                self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
+                logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
+                logging.info(f"Docker CLI test for {kit} passed")
+            except subprocess.TimeoutExpired:
+                logging.error(f"Docker CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds")
+                self.fail(f"Docker CLI test for {kit} timed out")
             
         finally:
             subprocess.run(['docker', 'stop', container_id], check=True)
