@@ -24,6 +24,11 @@ class CodeRAGGraphState(TypedDict):
     examples: Optional[list]
 
 class CodeRAG(RAGComponents, CodeGenComponents):
+    """
+    A class that combines RAG and CodeGen components to generate responses, including code generation as needed.
+
+    It uses the RAG and CodeGen components to generate the code.
+    """
     
     def __init__(self, 
                  configs: Dict, 
@@ -41,7 +46,7 @@ class CodeRAG(RAGComponents, CodeGenComponents):
             state (Dict[str, str]): A dictionary containing the state of the RAG, including the question.
 
         Returns:
-            None
+            The initial state dictionary for the CodeRAG class.
         """
 
         print("---Initializing---")
@@ -167,6 +172,19 @@ class CodeRAG(RAGComponents, CodeGenComponents):
         self.init_final_generation()
     
     def call_rag(self, app, question: str, kwargs: Dict[str,int] = {"recursion_limit": 50}):
+        """
+        Calls the RAG (Reasoning and Generation) app to generate an answer to a given question.
+
+        Args:
+            app (object): The RAG app object.
+            question (str): The question to be answered.
+            kwargs (Dict[str, int], optional): Keyword arguments to be passed to the app. Defaults to {"recursion_limit": 50}.
+
+        Returns:
+            response (Dict): A dictionary containing the answer and source documents.
+                - "answer" (str): The generated answer to the question.
+                - "source_documents" (List[str]): A list of source documents used to generate the answer.
+        """
         
         response = {}
         output = app.invoke({"question": question}, kwargs)

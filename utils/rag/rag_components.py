@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from utils.rag.base_components import BaseComponents
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain.embeddings import HuggingFaceInstructEmbeddings
@@ -17,70 +17,206 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 class RAGComponents(BaseComponents):
+    """
+    This class represents the components of the RAG system.
 
-    def __init__(self, configs, embeddings, vectorstore, examples=None):
+    Attributes:
+    - qa_chain: The QA chain component of the RAG model.
+    - vectorstore: The vector store component of the RAG model.
+    - embeddings: The embeddings component of the RAG model.
+    - examples: Optional examples dictionary.
+    - configs (Dict): The configuration dictionary.
+    - prompts_paths (Dict): The paths to the prompts in the configuration dictionary.
+    """
+
+    def __init__(self, 
+                configs: str, 
+                embeddings, 
+                vectorstore: Chroma, 
+                examples: Dict=None):
+        """
+        Initializes the RAG components.
+
+        Args:
+            configs (str): The configuration file path.
+            embeddings: The embeddings model.
+            vectorstore (Chroma): The vector store object.
+            examples (Dict, optional): The examples dictionary. Defaults to None.
+
+        Returns:
+            The populated attributes for the class.
+        """
 
         self.qa_chain = None
         self.vectorstore = vectorstore
         self.embeddings = embeddings
-        self.examples = examples
+        self.examples: Optional[Dict] = examples
         
-        self.configs = self.load_config(configs)
-        self.prompts_paths = self.configs["prompts"]
+        self.configs: Dict = self.load_config(configs)
+        self.prompts_paths: Dict = self.configs["prompts"]
         
     ### RAG Chains
 
     def init_router(self) -> None:
+        """
+        Initializes the router component.
+
+        This method loads the router prompt and combines it with the language model and a JSON output parser.
+
+        Args:
+            self (object): The object instance.
+
+        Returns:
+            The self.router attribute.
+        """
 
         router_prompt =  load_prompt(repo_dir + "/" + self.prompts_paths["router_prompt"]) 
         self.router = router_prompt | self.llm | JsonOutputParser()
     
     def init_example_judge(self) -> None:
+        """
+        Initializes the example judge component.
+
+        This method loads the example judge prompt from the repository and combines it with the language model and a JSON output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.example_judge attribute.
+        """
         
         example_judge_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["example_judge_prompt"])
         self.example_judge = example_judge_prompt | self.llm | JsonOutputParser()
 
     def init_reform_chain(self) -> None:
+        """
+        Initializes the reformulation chain by loading the reformulation prompt and combining it with the language model and a string output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.reformulation_chain attribute.
+        """
 
         reformulation_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["reformulation_prompt"])
         self.reformulation_chain = reformulation_prompt | self.llm | StrOutputParser()
 
     def init_entity_chain(self) -> None:
+        """
+        Initializes the entity chain by loading the entity prompt and combining it with the language model and a JSON output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.entity_chain attribute.
+        """
         
         entity_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["entity_prompt"])
         self.entity_chain = entity_prompt | self.llm | JsonOutputParser()
 
     def init_subquery_chain(self) -> None:
+        """
+        Initializes the subquery chain by loading the subquery prompt and combining it with the language model and string output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.subquery_chain attribute.
+        """
 
         subquery_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["subquery_prompt"])
         self.subquery_chain = subquery_prompt | self.llm | StrOutputParser()
 
     def init_retrieval_grader(self) -> None:
+        """
+        Initializes the retrieval grader component.
+
+        This method loads the retrieval grader prompt from the repository and combines it with the language model and a JSON output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.retrieval_grader attribute.
+        """
 
         retrieval_grader_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["retrieval_grader_prompt"])
         self.retrieval_grader = retrieval_grader_prompt | self.llm | JsonOutputParser()
 
     def init_qa_chain(self) -> None:
+        """
+        Initializes the QA chain by loading the QA prompt and combining it with the large language model and a string output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.qa_chain attribute.
+        """
 
         qa_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["qa_prompt"])
         self.qa_chain = qa_prompt | self.llm | StrOutputParser()
 
     def init_hallucination_chain(self) -> None:
+        """
+        Initializes the hallucination chain for the model.
+
+        This method loads the hallucination prompt from the repository and combines it with the language model (LLM) and a JSON output parser to create the hallucination chain.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.hallucination_chain attribute.
+        """
 
         hallucination_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["hallucination_prompt"])
         self.hallucination_chain = hallucination_prompt | self.llm | JsonOutputParser()
 
     def init_grading_chain(self) -> None:
+        """
+        Initializes the grading chain by loading the grading prompt and combining it with the LLM and a JSON output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.grading_chain attribute.
+        """
 
         grading_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["grading_prompt"])
         self.grading_chain = grading_prompt | self.llm | JsonOutputParser()
 
     def init_aggregation_chain(self) -> None:
+        """
+        Initializes the aggregation chain for the model.
+
+        This method loads the aggregation prompt from the repository and combines it with the language model and a string output parser to form the aggregation chain.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.aggregation_chain attribute.
+        """
 
         aggregation_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["aggregation_prompt"])
         self.aggregation_chain = aggregation_prompt | self.llm | StrOutputParser()
 
     def init_final_generation(self) -> None:
+        """
+        Initializes the final generation process by loading the final chain prompt and combining it with the language model (LLM) and a string output parser.
+
+        Args:
+            self (object): The current object instance.
+
+        Returns:
+            The self.final_generation attribute.
+        """
 
         final_chain_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["final_chain_prompt"])
         self.final_chain = final_chain_prompt | self.llm | StrOutputParser()
@@ -95,7 +231,7 @@ class RAGComponents(BaseComponents):
             state (Dict[str, Any]): A dictionary containing the state of the RAG components.
 
         Returns:
-            None
+            The initialized state dict.
         """
 
         print("---Initializing---")
@@ -112,7 +248,7 @@ class RAGComponents(BaseComponents):
             state (Dict[str, str]): A dictionary containing the state of the RAG, including the question.
 
         Returns:
-            None
+            The initialized state dict.
         """
 
         print("---Initializing---")
@@ -307,7 +443,7 @@ class RAGComponents(BaseComponents):
             state (Dict): A dictionary containing the current state of the RAG model.
 
         Returns:
-            Dict: A dictionary containing the retrieved documents, the current question, the rag counter, the subquestions, and the original question.
+            Dict: The state dict, with updated retrieved documents, the current question, the rag counter, the subquestions, and the original question.
         """
 
         question = state["question"]
@@ -330,7 +466,6 @@ class RAGComponents(BaseComponents):
         question_list: List[str] = question.replace("?", "").replace("*", "").lower().split()
 
         try:
-            # Double check logic here
             for e in entities:
                 if e.split(".")[0] in question_list:  # A dumb hack to avoid messing with the vectorstore creation
                     q_entities.append(e)
@@ -369,7 +504,7 @@ class RAGComponents(BaseComponents):
                 - answers (List[str]): A list of previous answers.
 
         Returns:
-            Dict[str, List[str]]: A dictionary containing the generated answer and the updated list of answers.
+            Dict[str, List[str]]: The updated state dict containing the generated answer and the updated list of answers.
                 - generation (str): The generated answer.
                 - answers (List[str]): The updated list of answers.
         """
@@ -451,12 +586,9 @@ class RAGComponents(BaseComponents):
             state (Dict): A dictionary containing the current state.
 
         Returns:
-            Dict: A dictionary containing the new query.
+            state (Dict): A dictionary containing the current state.
         """
 
-        # question: str = state["question"]
-
-        # return {"question": question}
         return state
     
     def generate_subquestions(self, state: Dict[str, str]) -> Dict[str, List[str]]:
@@ -464,10 +596,10 @@ class RAGComponents(BaseComponents):
         Generates subquestions based on the given question.
 
         Args:
-            state (Dict[str, str]): A dictionary containing the question to generate subquestions for.
+            state (Dict): The input state dict.
 
         Returns:
-            Dict[str, List[str]]: A dictionary containing the subquestions as a list of strings.
+            state (Dict): The updated state dict containing the subquestions as a list of strings.
         """
 
         question = state["question"]
@@ -484,10 +616,10 @@ class RAGComponents(BaseComponents):
         Detects entities in a given question or subquestion.
 
         Args:
-            state (Dict): A dictionary containing the question and subquestions.
+            state (Dict): The input state dict.
 
         Returns:
-            Dict: A dictionary containing the detected entities.
+            state (Dict): The updated state dict containing the detected entities.
         """
 
         print("---DETERMINING ENTITIES---")
@@ -537,7 +669,16 @@ class RAGComponents(BaseComponents):
             print("---ITERATING ON RAG CHAIN---")
             return "iterate"
         
-    def check_hallucinations(self, state):
+    def check_hallucinations(self, state: Dict):
+        """
+        Checks if the generated text is grounded in the provided documents and addresses the question.
+
+        Args:
+            state (Dict): The state dictionary containing the question, documents, and generation, and other variables.
+
+        Returns:
+            str: A string indicating the usefulness of the generated text.
+        """
 
         print("---CHECK FOR HALLUCINATIONS---")
         question = state["question"]
@@ -570,7 +711,16 @@ class RAGComponents(BaseComponents):
             print("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS---")
             return "not supported"
         
-    def failure_msg(self, state):
+    def failure_msg(self, state: Dict):
+        """
+        This method generates a failure message based on the given state.
+
+        Args:
+            state (Dict): A dictionary containing the current state of the system.
+
+        Returns:
+            Dict: The updated state dictionary containing the failure message.
+        """
 
         question = state["question"]
 
@@ -608,7 +758,16 @@ class RAGComponents(BaseComponents):
 
         return {"generation": final_answer}
     
-    def final_answer(self, state):
+    def final_answer(self, state: Dict):
+        """
+        This method is used to generate the final answer based on the original question and the generated text.
+
+        Args:
+            state (Dict): The state dictionary containing the original question, the generated text, and other variables.
+
+        Returns:
+            Dict: The updated state dictionary containing the final answer.
+        """
 
         original_question: str = state["original_question"]
         generation = state["generation"]

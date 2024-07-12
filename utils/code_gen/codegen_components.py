@@ -52,7 +52,7 @@ class CodeGenComponents(BaseComponents):
             self (object): The object instance.
 
         Returns:
-            None
+            The self.code_router attribute.
         """
 
         code_router_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["code_router_prompt"]) 
@@ -66,7 +66,7 @@ class CodeGenComponents(BaseComponents):
             self (object): The object instance.
 
         Returns: 
-            None
+            The self.codegen attribute.
         """
         
         codegen_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_prompt"]) 
@@ -74,13 +74,13 @@ class CodeGenComponents(BaseComponents):
 
     def init_codegen_qc_chain(self) -> None:
         """
-        This class represents a codegen QC chain.
+        This method initializes the codegen QC chain.
 
         Args:
             self (object): The object instance.
 
         Returns: 
-            None
+            The self.codegen_qc attribute.
         """
 
         codegen_qc_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_qc_prompt"]) 
@@ -94,13 +94,22 @@ class CodeGenComponents(BaseComponents):
             self (object): The object instance.
 
         Returns: 
-            None
+            The self.refactor attribute.
         """
         
         refactor_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["refactor_prompt"]) 
         self.refactor: Any = refactor_prompt | self.llm | self.python_parser
 
     def init_failure_chain(self) -> None:
+        """
+        Initializes the failure chain by loading the failure prompt and combining it with the language model and a string output parser.
+
+        Args:
+            self (object): The object instance.
+
+        Returns:
+            The self.failure_chain attribute.
+        """
 
         failure_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["failure_prompt"])
         self.failure_chain = failure_prompt | self.llm | StrOutputParser()
@@ -113,7 +122,7 @@ class CodeGenComponents(BaseComponents):
             state (Dict): The current state of the code generation process.
 
         Returns:
-            Dict: A dictionary containing the initialized counter.
+            Dict: The state dictionary containing the initialized counters.
         """
 
         print("Initializing counter and dataframe")
@@ -125,10 +134,10 @@ class CodeGenComponents(BaseComponents):
         Route question to llm chain or code chain.
 
         Args:
-            state (dict): The current graph state
+            state (dict): The current graph state.
 
         Returns:
-            str: Next node to call
+            str: Next node to call; llm or codegen.
         """
 
         print("---ROUTE QUESTION---")
@@ -153,7 +162,7 @@ class CodeGenComponents(BaseComponents):
             state (Dict): A dictionary containing the current state.
 
         Returns:
-            Dict: A dictionary containing the new query.
+            Dict: The state updated dictionary containing the new query.
         """
 
         question: str = state["original_question"]
@@ -165,10 +174,10 @@ class CodeGenComponents(BaseComponents):
         Generates code based on the given question.
 
         Args:
-            state (Dict[str, str]): A dictionary containing the question to generate code for.
+            state (Dict[str, str]): The state dictionary containing the question to generate code for.
 
         Returns:
-            Dict[str, str]: A dictionary containing the question and the generated code.
+            Dict[str, str]: The updated state dictionary containing the generated code.
         """
 
         print("---GENERATING CODE---")
@@ -191,10 +200,10 @@ class CodeGenComponents(BaseComponents):
         This function runs the given code and checks if it's runnable.
 
         Args:
-            state (Dict[str, Any]): A dictionary containing the code to be run.
+            state (Dict[str, Any]): The current state dictionary.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the result of the code run and a boolean indicating if the code is runnable.
+            state (Dict): The updated state dictionary containing the result of the code run and a boolean indicating if the code is runnable.
         """
 
         code = state["code"]
@@ -251,10 +260,10 @@ class CodeGenComponents(BaseComponents):
         Refactor the given code.
 
         Args:
-            state (Dict[str, Any]): A dictionary containing the code, error, and counter.
+            state (Dict[str, Any]): The current state dictionary containing the code, error, and counter, and other variables.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the refactored code, generation result, and counter.
+            state (Dict[str, Any]): The updated state dictionary containing the refactored code, generation result, and counter.
         """
 
         print("--REFACTORING CODE---")
@@ -286,10 +295,10 @@ class CodeGenComponents(BaseComponents):
         Generate an error message for code generation.
 
         Args:
-            state (Dict[str, str]): A dictionary containing the code and error information.
+            state (Dict[str, str]): The current state dictionary containing the code and error information.
 
         Returns:
-            Dict[str, str]: A dictionary containing the error message.
+            Dict[str, str]: The updated dictionary containing the error message.
         """
 
         code = state["code"]
