@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # Ensure this script runs with bash
 
-# Disable conda auto-activation
-conda config --set auto_activate_base false 2>/dev/null || true
-
 # Change to the directory containing this script
 cd "$(dirname "$0")"
 
