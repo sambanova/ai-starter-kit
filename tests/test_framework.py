@@ -202,7 +202,7 @@ class StarterKitTest(unittest.TestCase):
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
         
         # Run the CLI test command 
-        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True)
+        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False)
         self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
         logging.info(f"CLI test output for {kit}:\n{result.stdout}")
 
@@ -225,7 +225,7 @@ class StarterKitTest(unittest.TestCase):
             
             # Run the CLI test command in Docker 
             result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
-                                    capture_output=True, text=True)
+                                    capture_output=False)
             self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
             logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
 
