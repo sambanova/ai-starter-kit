@@ -108,8 +108,7 @@ def _get_data(request_config: RequestConfig) -> dict:
         dict: data structure needed for API
     """
 
-    prompt = request_config.prompt
-    prompt, _ = prompt
+    prompt = request_config.prompt_tuple[0]
     # if isinstance(prompt, str):
     #     prompt = [prompt]
     sampling_params = request_config.sampling_params
@@ -151,7 +150,7 @@ def _compute_client_metrics(
 
     # Get data
     input_data = _get_data(request_config)
-    prompt_len = request_config.prompt[1]
+    prompt_len = request_config.prompt_tuple[1]
 
     metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
     start_time = chunk_start_time = time.monotonic()
