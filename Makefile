@@ -214,7 +214,6 @@ install: update-lock ensure-qpdf ensure-system-dependencies
 	@echo "Installing dependencies..."
 	@$(POETRY) config virtualenvs.create false
 	@$(POETRY) config installer.parallel false
-	@$(POETRY) config experimental.new-installer false
 	@$(POETRY) install --no-interaction --no-root --sync || \
 	(echo "Initial install failed. Attempting to resolve conflicts..." && \
 	$(POETRY) install --no-interaction --no-root --sync --remove-untracked)
