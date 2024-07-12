@@ -338,7 +338,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 There are two approaches to setting up your environment for the AI Starter Kits:
 
 1. **Individual Kit Setup (Traditional Method)**
-2. **Base Environment Setup (Recommended)**
+2. **Base Environment Setup (WIP)**
 
 ### 1. Individual Kit Setup
 
@@ -362,7 +362,6 @@ Benefits of the base environment approach:
 
 #### Prerequisites
 
-- **Poetry**: The Makefile will attempt to install Poetry if it's not already installed.
 - **pyenv**: The Makefile will attempt to install pyenv if it's not already installed.
 - **Docker**: (Optional) If you want to use the Docker-based setup, ensure Docker is installed on your system.
 
@@ -401,24 +400,9 @@ Within the starter kit there will be instructions on how to start the kit. You c
 part in the kits README.md as we've done it here.
 
 
-4. **Enterprise Knowledge Retriever One Click Deploy:**
-For the EKR Kit specifically we have enabled a one click deploy via makefile
-
-
-### Enterprise Knowledge Retriever (EKR) Setup
-
-To set up and run the Enterprise Knowledge Retriever:
-
-1. **Set Up and Start EKR:**
-
-```bash
-make ekr
-```
-This command sets up the EKR environment, starts the parsing service, and launches the EKR application.
-
 
 ### Parsing Service Management
-For certain kits, we utilise a standard parsing service. To work with this service, following the steps in this section.
+For certain kits, we utilise a standard parsing service. By Default it's started automatically with the base environment. To work with this service in isolation, following the steps in this section.
 
 - **Start Parsing Service:**
 ```bash
@@ -475,24 +459,6 @@ This command removes all virtual environments created with the makefile, stops t
 
 If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
 
-### Lock file mismatch
-
-If you see an error message like this:
-
-```
-ERROR
-Installing dependencies... Installing dependencies from lock file
-pyproject.toml changed significantly since poetry.lock was last generated. Run `poetry lock [--no-update]` to fix the lock file. make: *** [install] Error 1
-```
-
-This means there's a mismatch between your `pyproject.toml` and `poetry.lock` files. To resolve this:
-
-1. Run the following command to update the lock file:
-   ```
-   poetry lock
-   ```
-
-2. Then, try running `make all` again.
 
 ### Python version issues
 
