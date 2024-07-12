@@ -262,12 +262,12 @@ ifeq ($(DETECTED_OS),Windows)
 		deactivate \
 	)
 else
-	@cd $(PARSING_DIR) && ( \
-		. $(PARSING_VENV_ACTIVATE) && \
-		nohup make run-web-app > parsing_service.log 2>&1 & \
-		echo $$! > parsing_service.pid && \
-		deactivate || true; \
-	)
+	@cd $(PARSING_DIR) && \
+	bash -c '. $(PARSING_VENV_ACTIVATE) && \
+	make run-web-app > parsing_service.log 2>&1 & \
+	echo $$! > parsing_service.pid && \
+	conda deactivate \
+	deactivate' || true
 	@echo "Parsing service started. PID stored in $(PARSING_DIR)/parsing_service.pid"
 endif
 	@echo "Use 'make parsing-log' to view the service log."

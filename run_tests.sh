@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # Ensure this script runs with bash
 
+# Disable conda auto-activation
+conda config --set auto_activate_base false 2>/dev/null || true
+
 # Change to the directory containing this script
 cd "$(dirname "$0")"
+
+# Run Make-Clean
+make clean-test-suite
 
 # Deactivate any active virtual environment or conda environment
 if [ -n "$VIRTUAL_ENV" ]; then
