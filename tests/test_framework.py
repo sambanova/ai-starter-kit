@@ -208,7 +208,7 @@ class StarterKitTest(unittest.TestCase):
         
         try:
             # Run the CLI test command with timeout
-            result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True, timeout=CLI_COMMAND_TIMEOUT)
+            result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False, timeout=CLI_COMMAND_TIMEOUT)
             self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
             logging.info(f"CLI test output for {kit}:\n{result.stdout}")
             logging.info(f"CLI test for {kit} passed")
@@ -232,7 +232,7 @@ class StarterKitTest(unittest.TestCase):
             try:
                 # Run the CLI test command in Docker with timeout
                 result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
-                                        capture_output=True, text=True, timeout=CLI_COMMAND_TIMEOUT)
+                                        capture_output=False, timeout=CLI_COMMAND_TIMEOUT)
                 self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
                 logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
                 logging.info(f"Docker CLI test for {kit} passed")

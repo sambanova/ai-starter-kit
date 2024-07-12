@@ -14,14 +14,10 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     qpdf \
     make \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
     && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
-
-
-# Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:$PATH"
 
 # Set working directory in the container
 WORKDIR /app
@@ -29,9 +25,9 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install project dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+# Upgrade pip and install project dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r base-requirements.txt
 
 # Expose the ports for the parsing service and Streamlit
 EXPOSE 8005 8501
