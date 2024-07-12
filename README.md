@@ -338,7 +338,6 @@ Benefits of the base environment approach:
 
 #### Prerequisites
 
-- **Poetry**: The Makefile will attempt to install Poetry if it's not already installed.
 - **pyenv**: The Makefile will attempt to install pyenv if it's not already installed.
 - **Docker**: (Optional) If you want to use the Docker-based setup, ensure Docker is installed on your system.
 
@@ -436,24 +435,6 @@ This command removes all virtual environments created with the makefile, stops t
 
 If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
 
-### Lock file mismatch
-
-If you see an error message like this:
-
-```
-ERROR
-Installing dependencies... Installing dependencies from lock file
-pyproject.toml changed significantly since poetry.lock was last generated. Run `poetry lock [--no-update]` to fix the lock file. make: *** [install] Error 1
-```
-
-This means there's a mismatch between your `pyproject.toml` and `poetry.lock` files. To resolve this:
-
-1. Run the following command to update the lock file:
-   ```
-   poetry lock
-   ```
-
-2. Then, try running `make all` again.
 
 ### Python version issues
 
