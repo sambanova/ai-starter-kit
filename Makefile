@@ -33,21 +33,18 @@ PATH := $(PYENV_ROOT)/bin:$(PATH)
 
 DEFAULT_PYTHON_VERSION := 3.11.3
 
-POETRY := poetry
 VENV_PATH := .venv
 PYTHON_VERSION_RANGE := ">=3.10,<3.13"
 
 TEST_SUITE_VENV := .test_suite_venv
 TEST_SUITE_REQUIREMENTS := tests/requirements.txt
-
+BASE_REQUIREMENTS := base-requirements.txt
 
 # Default target
 .PHONY: all
 all: 
 	@make ensure-system-dependencies && \
 	make venv && \
-	make update-lock && \
-	make validate && \
 	make install && \
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
@@ -66,7 +63,7 @@ else ifeq ($(DETECTED_OS),Darwin)
 		echo "Poppler not found. Installing Poppler..."; \
 		brew install poppler; \
 	else \
-		echo "Poppler is already installed."; \
+		echo "Poppler is already installed: $$(which pdftoppm)"; \
 	fi
 else
 	@if ! command -v pdftoppm &> /dev/null; then \
@@ -129,23 +126,6 @@ else
 	fi
 endif
 
-# Install Poetry if not already installed
-.PHONY: ensure-poetry
-ensure-poetry:
-	@if ! command -v $(POETRY) &> /dev/null; then \
-		echo "Poetry not found. Installing Poetry..."; \
-		curl -sSL https://install.python-poetry.org | $(PYTHON) -; \
-	fi
-
-# Initialize Poetry project if pyproject.toml doesn't exist
-.PHONY: init-poetry
-init-poetry: ensure-poetry
-	@if [ ! -f pyproject.toml ]; then \
-		echo "Initializing Poetry project..."; \
-		$(POETRY) init --no-interaction --python $(PYTHON_VERSION_RANGE); \
-	fi
-
-
 # Create base virtual environment
 .PHONY: create-base-venv
 create-base-venv: ensure-pyenv
@@ -155,8 +135,7 @@ create-base-venv: ensure-pyenv
 		pyenv local $(DEFAULT_PYTHON_VERSION); \
 		$(PYTHON) -m venv $(VENV_PATH); \
 		. $(VENV_PATH)/bin/activate; \
-		pip install --upgrade pip; \
-		pip install poetry; \
+		$(PIP) install --upgrade pip; \
 		deactivate; \
 	else \
 		echo "Base virtual environment already exists."; \
@@ -164,28 +143,14 @@ create-base-venv: ensure-pyenv
 
 # Create or use existing virtual environment
 .PHONY: venv
-venv: create-base-venv ensure-poetry init-poetry install-python-versions
+venv: create-base-venv install-python-versions
 	@echo "Checking for virtual environment..."
 	@if [ ! -d $(VENV_PATH) ]; then \
 		echo "Creating new virtual environment..."; \
-		$(POETRY) config virtualenvs.in-project true; \
-		$(POETRY) env use $(PYTHON); \
+		$(PYTHON) -m venv $(VENV_PATH); \
 	else \
 		echo "Using existing virtual environment."; \
 	fi
-
-# Update lock file
-.PHONY: update-lock
-update-lock:
-	@echo "Updating poetry.lock file..."
-	@$(POETRY) lock --no-update || (echo "Error updating lock file. Trying without --no-update flag..." && $(POETRY) lock)
-
-# Validate project setup
-.PHONY: validate
-validate: update-lock
-	@echo "Validating project setup..."
-	@$(POETRY) check || (echo "Poetry check failed. Attempting to proceed." && true)
-
 
 # Ensure qpdf is installed (for pikepdf)
 .PHONY: ensure-qpdf
@@ -210,21 +175,21 @@ endif
 
 # Install dependencies
 .PHONY: install
-install: update-lock ensure-qpdf ensure-system-dependencies
+install: ensure-qpdf ensure-system-dependencies
 	@echo "Installing dependencies..."
-	@$(POETRY) config virtualenvs.create false
-	@$(POETRY) config installer.parallel false
-	@$(POETRY) install --no-interaction --no-root --sync || \
-	(echo "Initial install failed. Attempting to resolve conflicts..." && \
-	$(POETRY) install --no-interaction --no-root --sync --remove-untracked)
-
+	@. $(VENV_PATH)/bin/activate && \
+	$(PIP) install --upgrade pip && \
+	$(PIP) install -r $(BASE_REQUIREMENTS) && \
+	deactivate
 
 # Post-process installation
 .PHONY: post-process
 post-process:
 	@echo "Post-processing installation..."
-	@$(POETRY) run pip uninstall -y google-search-results
-	@$(POETRY) run pip install google-search-results==2.4.2
+	@. $(VENV_PATH)/bin/activate && \
+	$(PIP) uninstall -y google-search-results && \
+	$(PIP) install google-search-results==2.4.2 && \
+	deactivate
 
 # Set up parsing service
 .PHONY: setup-parsing-service
@@ -364,22 +329,15 @@ setup-test-suite: ensure-pyenv
 	@pyenv local $(DEFAULT_PYTHON_VERSION)
 	@$(PYTHON) -m venv $(TEST_SUITE_VENV)
 	@. $(TEST_SUITE_VENV)/bin/activate && \
-		pip install --upgrade pip && \
-		pip install -r $(TEST_SUITE_REQUIREMENTS)
-
-.PHONY: ensure-poetry-venv
-ensure-poetry-venv:
-	@if ! command -v poetry &> /dev/null; then \
-		echo "Installing Poetry in test suite venv..."; \
-		pip install poetry; \
-	fi
+		$(PIP) install --upgrade pip && \
+		$(PIP) install -r $(TEST_SUITE_REQUIREMENTS) && \
+		deactivate
 
 .PHONY: clean-test-suite
 clean-test-suite:
 	@echo "Cleaning up test suite environment..."
 	@rm -rf $(TEST_SUITE_VENV)
 	@pyenv local --unset
-
 
 # Clean up
 .PHONY: clean
@@ -401,7 +359,9 @@ endif
 .PHONY: format
 format:
 	@echo "Formatting code..."
-	@$(POETRY) run black .
+	@. $(VENV_PATH)/bin/activate && \
+	black . && \
+	deactivate
 
 .PHONY: help
 help:
@@ -412,13 +372,9 @@ help:
 	@echo "  ensure-tesseract       : Install Tesseract if not already installed"
 	@echo "  ensure-pyenv           : Install pyenv if not already installed (not supported on Windows)"
 	@echo "  install-python-versions: Install specific Python version ($(DEFAULT_PYTHON_VERSION)) (not supported on Windows)"
-	@echo "  ensure-poetry          : Install Poetry if not already installed"
 	@echo "  ensure-qpdf            : Install qpdf if not already installed (required for pikepdf)"
-	@echo "  init-poetry            : Initialize Poetry project if not already initialized"
 	@echo "  venv                   : Create or use existing virtual environment"
-	@echo "  update-lock            : Update the poetry.lock file"
-	@echo "  validate               : Validate the project setup"
-	@echo "  install                : Install dependencies using Poetry (without installing the root project)"
+	@echo "  install                : Install dependencies using pip"
 	@echo "  post-process           : Perform post-installation steps (reinstall google-search-results)"
 	@echo "  setup-parsing-service  : Set up the parsing service environment"
 	@echo "  start-parsing-service  : Start the parsing service in the background"

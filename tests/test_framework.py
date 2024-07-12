@@ -95,7 +95,7 @@ class StarterKitTest(unittest.TestCase):
         base_venv_path = os.path.join(cls.root_dir, '.venv')
         if not os.path.exists(base_venv_path):
             logging.info("Base virtual environment not found. Creating it...")
-            subprocess.run(['make', 'create-base-venv'], cwd=cls.root_dir, check=True)
+            subprocess.run(['make', 'venv'], cwd=cls.root_dir, check=True)
         
         activate_this = os.path.join(base_venv_path, 'bin', 'activate_this.py')
         if os.path.exists(activate_this):
@@ -187,6 +187,7 @@ class StarterKitTest(unittest.TestCase):
         logging.error(f"Streamlit app for {kit} failed to start after 3 attempts")
         self.fail(f"Streamlit app for {kit} failed to start after 3 attempts")
 
+    
     def run_cli_test(self, kit: str) -> None:
         if self.env == TestEnvironment.LOCAL:
             self.run_local_cli_test(kit)
@@ -200,8 +201,8 @@ class StarterKitTest(unittest.TestCase):
         # Get the CLI test command for this kit
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
         
-        # Placeholder: Run the CLI test command 
-        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False)
+        # Run the CLI test command 
+        result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
         logging.info(f"CLI test output for {kit}:\n{result.stdout}")
 
@@ -222,9 +223,9 @@ class StarterKitTest(unittest.TestCase):
             cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
             docker_cli_command = f"cd /app/{kit} && {cli_command}"
             
-            # Placeholder: Run the CLI test command in Docker 
+            # Run the CLI test command in Docker 
             result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
-                                    capture_output=False)
+                                    capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
             logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
 
