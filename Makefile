@@ -69,6 +69,9 @@ else
 	@if ! command -v pdftoppm &> /dev/null; then \
 		echo "Poppler not found. Installing Poppler..."; \
 		sudo apt-get update && sudo apt-get install -y poppler-utils; \
+	elif ! dpkg-query -W -f='$${Status}' poppler-utils 2>/dev/null | grep -q "ok installed"; then \
+		echo "Poppler not found. Installing Poppler..."; \
+		sudo apt-get update && sudo apt-get install -y poppler-utils; \
 	else \
 		echo "Poppler is already installed: $$(which pdftoppm)"; \
 	fi
