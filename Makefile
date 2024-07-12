@@ -77,6 +77,29 @@ else
 	fi
 endif
 
+
+# Ensure libheif is installed
+.PHONY: ensure-libheif
+ensure-libheif:
+ifeq ($(DETECTED_OS),Windows)
+	@echo "libheif installation on Windows is not supported in this Makefile. Please install it manually."
+else ifeq ($(DETECTED_OS),Darwin)
+	@if ! brew list libheif &>/dev/null; then \
+		echo "libheif not found. Installing libheif..."; \
+		brew install libheif; \
+	else \
+		echo "libheif is already installed."; \
+	fi
+else
+	@if ! dpkg -s libheif-dev &>/dev/null; then \
+		echo "libheif not found. Installing libheif..."; \
+		sudo apt-get update && sudo apt-get install -y libheif-dev; \
+	else \
+		echo "libheif is already installed."; \
+	fi
+endif
+
+
 # Ensure Tesseract is installed
 .PHONY: ensure-tesseract
 ensure-tesseract:
@@ -109,9 +132,18 @@ else
 		export PATH="$(HOME)/.pyenv/bin:$$PATH"; \
 		eval "$$(pyenv init -)"; \
 	else \
-		echo "pyenv not found. Please install pyenv and run this script again."; \
-		echo "You can install pyenv by following the instructions at: https://github.com/pyenv/pyenv#installation"; \
-		exit 1; \
+		echo "pyenv not found. Installing pyenv..."; \
+		if [ "$(DETECTED_OS)" = "Darwin" ]; then \
+			brew install pyenv; \
+		else \
+			curl https://pyenv.run | bash; \
+			echo 'export PYENV_ROOT="$$HOME/.pyenv"' >> ~/.bashrc; \
+			echo 'command -v pyenv >/dev/null || export PATH="$$PYENV_ROOT/bin:$$PATH"' >> ~/.bashrc; \
+			echo 'eval "$$(pyenv init -)"' >> ~/.bashrc; \
+			source ~/.bashrc; \
+		fi; \
+		export PATH="$(HOME)/.pyenv/bin:$$PATH"; \
+		eval "$$(pyenv init -)"; \
 	fi
 endif
 
@@ -178,7 +210,7 @@ endif
 
 # Install dependencies
 .PHONY: install
-install: ensure-qpdf ensure-system-dependencies
+install: ensure-qpdf ensure-system-dependencies ensure-libheif
 	@echo "Installing dependencies..."
 	@. $(VENV_PATH)/bin/activate && \
 	$(PIP) install --upgrade pip && \

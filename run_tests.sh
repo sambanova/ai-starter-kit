@@ -17,14 +17,9 @@ fi
 unset VIRTUAL_ENV
 unset CONDA_DEFAULT_ENV
 
-# Check if pyenv is installed and set it up if it exists
-if command -v pyenv &> /dev/null; then
-    echo "pyenv found. Setting up environment..."
-    export PATH="$HOME/.pyenv/bin:$PATH"
-    eval "$(pyenv init -)"
-else
-    echo "pyenv not found. Please install pyenv and run this script again."
-    echo "You can install pyenv by following the instructions at: https://github.com/pyenv/pyenv#installation"
+# Ensure pyenv is installed and set up
+if ! make ensure-pyenv; then
+    echo "Error: Failed to set up pyenv. Exiting."
     exit 1
 fi
 
@@ -40,6 +35,7 @@ else
     echo "Error: Virtual environment not created. Check the setup-test-suite make target."
     exit 1
 fi
+
 
 # Add the current directory to PYTHONPATH
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
