@@ -437,7 +437,7 @@ make parsing-status
 
 - **View Parsing Service Logs:**
 ```bash
-make make parsing-log
+make parsing-log
 ```
 
 ### Docker-based Setup
