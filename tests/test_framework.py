@@ -25,7 +25,7 @@ sys.path.insert(0, project_root)
 STREAMLIT_START_TIMEOUT = 25
 DOCKER_START_TIMEOUT = 15
 STREAMLIT_CHECK_TIMEOUT = 5
-CLI_COMMAND_TIMEOUT = 300  # 5 minutes
+CLI_COMMAND_TIMEOUT = 180  # 3 minutes
 
 # List of starter kits to test
 STARTER_KITS: List[str] = [
