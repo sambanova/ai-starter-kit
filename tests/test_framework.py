@@ -45,7 +45,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     # 'enterprise_knowledge_retriever': 'python cli_test.py --mode retrieve',
     # 'function_calling': 'python cli_test.py --function example_function',
     # 'search_assistant': 'python cli_test.py --query "test query"',
-    'benchmarking': './run.sh' #This runs the benchmarking suite. 
+    'benchmarking': './run_synthetic_dataset.sh' #This runs the benchmarking suite. 
 }
 
 class TestEnvironment:
