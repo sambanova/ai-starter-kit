@@ -23,6 +23,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaStudioFastCoE
+
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -137,9 +139,14 @@ class FunctionCallingLlm:
                     'temperature': self.llm_info['temperature'],
                 },
             )
+        elif self.llm_info['api'] == 'fastcoe':
+            llm = SambaStudioFastCoE(
+                max_tokens=self.llm_info['max_tokens_to_generate'],
+                model=self.llm_info['select_expert'],
+            )
         else:
             raise ValueError(
-                f"Invalid LLM API: {self.llm_info['api']}, only 'sambastudio' and 'sambaverse' are supported."
+                f"Invalid LLM API: {self.llm_info['api']}, only 'fastcoe' 'sambastudio' and 'sambaverse' are supported."
             )
         return llm
 
@@ -213,7 +220,9 @@ class FunctionCallingLlm:
         for tool in invoked_tools:
             final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
+                print(f"\n\n---\nTool {tool['tool'].lower()} invoked with input {tool['tool_input']}\n")
                 response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
+                print(f'Tool response: {str(response)}\n---\n\n')
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
@@ -270,6 +279,27 @@ class FunctionCallingLlm:
             else:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
+    
+    def msgs_to_fast_coe(self, msgs: list) -> list:
+        """
+        convert a list of langchain messages with roles to expected FastCoE input
+
+        Args:
+            msgs (list): The list of langchain messages.
+        """
+        formatted_msgs = []
+        for msg in msgs:
+            if msg.type == 'system':
+                formatted_msgs.append({'role': 'system', 'content': msg.content})
+            elif msg.type == 'human':
+                formatted_msgs.append({'role': 'user', 'content': msg.content})
+            elif msg.type == 'ai':
+                formatted_msgs.append({'role': 'assistant', 'content': msg.content})
+            elif msg.type == 'tool':
+                formatted_msgs.append({'role': 'tools', 'content': msg.content})
+            else:
+                raise ValueError(f'Invalid message type: {msg.type}')
+        return json.dumps(formatted_msgs)
 
     def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
         """
@@ -288,15 +318,21 @@ class FunctionCallingLlm:
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            prompt = self.msgs_to_llama3_str(history)
+            if self.llm_info['api'] == 'fastcoe':
+                prompt = self.msgs_to_fast_coe(history)
+            else:
+                prompt = self.msgs_to_llama3_str(history)
+            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   
             llm_response = self.llm.invoke(prompt)
+            print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
             history.append(AIMessage(llm_response))
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
                 final_response = tools_msgs[0]
                 if debug:
-                    pprint(history)
+                    print('\n\n---\nFinal function calling LLM history: \n')
+                    pprint(f'{history}')
                 return final_response
             else:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))
