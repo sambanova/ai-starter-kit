@@ -22,3 +22,4 @@ langgraph==0.0.55
 openpyxl==3.1.4
 psutil==6.0.0
 pillow_heif==0.16.0
+ipython==8.26.0
