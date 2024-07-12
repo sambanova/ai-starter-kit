@@ -218,21 +218,6 @@ class RAGComponents(BaseComponents):
             List[str]: A list of example strings, where each string is in the format "query\nexample".
         """
 
-        # example_prompt = PromptTemplate(input_variables=["query", "example"], 
-        #                                        template="Input: {query}\nOuptut: {example}"
-        # )
-
-        # Might need to follow the proper prompt template for the model here.
-        # similar_prompt = FewShotPromptTemplate(
-        # example_selector=example_selector,
-        # example_prompt=example_prompt,
-        # prefix="Provide a new query based on the example query-response pairs.",
-        # suffix="Input: {query}\nOutput:",
-        # input_variables=["query"],
-        # )
-
-        # sel_examples = similar_prompt.format(query=query)
-
         sel_examples: List[str] = []
         selected_examples = example_selector.select_examples({"query": query})
         print("selected examples", selected_examples)
@@ -368,6 +353,8 @@ class RAGComponents(BaseComponents):
 
         print("---NUM DOCUMENTS RETRIEVED---")
         print(len(documents))
+        for d in documents:
+            print(d.page_content)
 
         return {"documents": documents, "question": question, "rag_counter": counter, "subquestions": subquestions, "original_question": original_question}
 
@@ -398,7 +385,8 @@ class RAGComponents(BaseComponents):
         docs = self._format_docs(documents)
 
         print("---DOCS---")
-        print("length: ", len(docs))
+        n_tokens = len(docs.split())*1.3
+        print("number of approximate tokens (n words *1.3): ", n_tokens)
         print(docs)
 
         generation: str = self.qa_chain.invoke({"question": question, "context": docs})
@@ -410,7 +398,7 @@ class RAGComponents(BaseComponents):
 
         answers.append(generation)
 
-        return {"generation": generation, "answers": answers}
+        return {"generation": generation, "answers": answers, "documents": docs}
     
     def grade_documents(self, state: Dict[str, str]) -> Dict[str, List]:
         """
@@ -519,8 +507,6 @@ class RAGComponents(BaseComponents):
                 entities: List[str] =[response["entity_name"]]
             else:
                 entities: List[str] = response["entity_name"]
-            # entities: List[str] = response["entity_name"].split()
-            # entities: List[str] = response["entity_name"]
             entities: List[str] = [e.lower() for e in entities]
             entities: List[str] = [e.replace(",", "") for e in entities]
             entities: List[str] = [e + ".pdf" for e in entities]  # Dumb hack to avoid dealing with the vectorstore logic, for now.
@@ -557,8 +543,6 @@ class RAGComponents(BaseComponents):
         question = state["question"]
         documents = state["documents"]
         generation = state["generation"]
-
-        # print(self.hallucination_chain.get_prompts())
         
         try:
             score = self.hallucination_chain.invoke(
@@ -628,6 +612,9 @@ class RAGComponents(BaseComponents):
 
         original_question: str = state["original_question"]
         generation = state["generation"]
+
+        print("---Final Generation---")
+        print(generation)
 
         final_answer = self.final_chain.invoke({"question": original_question, "generation": generation})
         

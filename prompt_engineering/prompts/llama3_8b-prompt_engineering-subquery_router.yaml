@@ -6,8 +6,7 @@ name: null
 output_parser: null
 partial_variables: {}
 template: |
-    <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an expert at routing a 
-    user question to answer generation or subquery generation.  Questions in plural form or that contain numerous entities and/or require numerous extracions typically require subquery generation.  
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an expert at routing a user question to answer generation or subquery generation.  Questions in plural form or that contain numerous entities and/or require numerous extracions typically require subquery generation.  
     Here some examples to help provide insight if subqueries are required:
         - Query: What are the revenues for Delta for 2018 and 2019?
         - Thought: I have determined that there is only one entity, but numerous dates. I should generate subqueries.
@@ -26,8 +25,9 @@ template: |
             * What is the weight of the Ford Taurus in 2021?
             * What is the mileage of the Ford Taurus in 2021?
         - Query: What is the revenue for Uber in 2020?
-        - Thought: I have determined a single entity and a single date.  I do not need to generate subquestions.
+        - Thought: I have determined a single entity and a single date (specification).  I do not need to generate subquestions and should route the original query to "answer_generation".
+        - Query: What is the revenue for Uber in 2020?
         - Step: answer_generation
-    Note that when there are  either numerous dates, entities, or specifications that require extraction, they should never be asked simultaneously in a single query.  Try to generalize the patterns from these examples to other cases to make a determination.  Give a binary choice 'answer_generation' or 'subquery_generation' based on the question. Return the a JSON with a single key 'answer_type' and no preamable or explaination. Question to route: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+    Note that when there are  either numerous dates, entities, or specifications that require extraction, they should never be asked simultaneously in a single query.  Try to generalize the patterns from these examples to other cases to make a determination.  When there is a single entity with a single epcification that requires extraction, always route to answer_generation.  Give a binary choice 'answer_generation' or 'subquery_generation' based on the question. Return the a JSON with a single key 'answer_type' and no preamable or explaination. Question to route: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 template_format: f-string
 validate_template: false

@@ -70,7 +70,7 @@ class BaseComponents:
 
         self.embeddings = SambaStudioEmbeddings()
     
-    def _display_image(self, image_bytes: bytes, width=256):
+    def _display_image(self, image_bytes: bytes, width=512):
         decoded_img_bytes = base64.b64encode(image_bytes).decode('utf-8')
         html = f'<img src="data:image/png;base64,{decoded_img_bytes}" style="width: {width}px;" />'
         display(HTML(html))
