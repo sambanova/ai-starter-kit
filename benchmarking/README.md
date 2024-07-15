@@ -142,6 +142,8 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 1. Enter a model name
 
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
@@ -200,6 +202,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
   - For example: `/Users/johndoe/Documents/my_dataset.jsonl`
 
 3. Enter a model name
+
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
@@ -281,6 +285,8 @@ This method can be ran from a terminal session. Users have this option if they w
 
 ### Custom Dataset
 
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
@@ -321,6 +327,8 @@ sh run_custom_dataset.sh
 
 
 ### Synthetic Dataset
+
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
