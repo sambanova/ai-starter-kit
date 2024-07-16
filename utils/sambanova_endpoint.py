@@ -735,9 +735,15 @@ class SambaStudio(LLM):
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
         values['sambastudio_base_url'] = get_from_dict_or_env(values, 'sambastudio_base_url', 'SAMBASTUDIO_BASE_URL')
-        values['sambastudio_base_uri'] = get_from_dict_or_env(values, 'sambastudio_base_uri', 'SAMBASTUDIO_BASE_URI', default='api/predict/generic')
-        values['sambastudio_project_id'] = get_from_dict_or_env(values, 'sambastudio_project_id', 'SAMBASTUDIO_PROJECT_ID')
-        values['sambastudio_endpoint_id'] = get_from_dict_or_env(values, 'sambastudio_endpoint_id', 'SAMBASTUDIO_ENDPOINT_ID')
+        values['sambastudio_base_uri'] = get_from_dict_or_env(
+            values, 'sambastudio_base_uri', 'SAMBASTUDIO_BASE_URI', default='api/predict/generic'
+        )
+        values['sambastudio_project_id'] = get_from_dict_or_env(
+            values, 'sambastudio_project_id', 'SAMBASTUDIO_PROJECT_ID'
+        )
+        values['sambastudio_endpoint_id'] = get_from_dict_or_env(
+            values, 'sambastudio_endpoint_id', 'SAMBASTUDIO_ENDPOINT_ID'
+        )
         values['sambastudio_api_key'] = get_from_dict_or_env(values, 'sambastudio_api_key', 'SAMBASTUDIO_API_KEY')
         return values
 
@@ -840,7 +846,9 @@ class SambaStudio(LLM):
         Returns:
             An iterator of GenerationChunks.
         """
-        for chunk in sdk.nlp_predict_stream(self.sambastudio_project_id, self.sambastudio_endpoint_id, self.sambastudio_api_key, prompt, tuning_params):
+        for chunk in sdk.nlp_predict_stream(
+            self.sambastudio_project_id, self.sambastudio_endpoint_id, self.sambastudio_api_key, prompt, tuning_params
+        ):
             if chunk['status_code'] != 200:
                 error = chunk.get('error')
                 if error:
@@ -1040,7 +1048,6 @@ class SambaStudioFastCoE(LLM):
         except:
             formatted_prompt = [{'role': 'user', 'content': prompt}]
 
-        
         http_session = requests.Session()
         if not stop:
             stop = self.stop_tokens
@@ -1157,6 +1164,7 @@ class SambaStudioFastCoE(LLM):
             # Handle any errors raised by the inference endpoint
             raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
+
 class SambaStudioEmbeddings(BaseModel, Embeddings):
     """SambaNova embedding models.
 
@@ -1217,16 +1225,24 @@ class SambaStudioEmbeddings(BaseModel, Embeddings):
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values['sambastudio_embeddings_base_url'] = get_from_dict_or_env(values, 'sambastudio_embeddings_base_url', 'SAMBASTUDIO_EMBEDDINGS_BASE_URL')
+        values['sambastudio_embeddings_base_url'] = get_from_dict_or_env(
+            values, 'sambastudio_embeddings_base_url', 'SAMBASTUDIO_EMBEDDINGS_BASE_URL'
+        )
         values['sambastudio_embeddings_base_uri'] = get_from_dict_or_env(
             values,
             'sambastudio_embeddings_base_uri',
             'SAMBASTUDIO_EMBEDDINGS_BASE_URI',
             default='api/predict/generic',
         )
-        values['sambastudio_embeddings_project_id'] = get_from_dict_or_env(values, 'sambastudio_embeddings_project_id', 'SAMBASTUDIO_EMBEDDINGS_PROJECT_ID')
-        values['sambastudio_embeddings_endpoint_id'] = get_from_dict_or_env(values, 'sambastudio_embeddings_endpoint_id', 'SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID')
-        values['sambastudio_embeddings_api_key'] = get_from_dict_or_env(values, 'sambastudio_embeddings_api_key', 'SAMBASTUDIO_EMBEDDINGS_API_KEY')
+        values['sambastudio_embeddings_project_id'] = get_from_dict_or_env(
+            values, 'sambastudio_embeddings_project_id', 'SAMBASTUDIO_EMBEDDINGS_PROJECT_ID'
+        )
+        values['sambastudio_embeddings_endpoint_id'] = get_from_dict_or_env(
+            values, 'sambastudio_embeddings_endpoint_id', 'SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID'
+        )
+        values['sambastudio_embeddings_api_key'] = get_from_dict_or_env(
+            values, 'sambastudio_embeddings_api_key', 'SAMBASTUDIO_EMBEDDINGS_API_KEY'
+        )
         return values
 
     def _get_tuning_params(self) -> str:
