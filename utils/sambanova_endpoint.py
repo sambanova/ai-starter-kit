@@ -177,7 +177,7 @@ class SsStreamingHandler(BaseCallbackHandler):
         self.queue.put(token)
 
 
-class SambaverseEndpoint(LLM):
+class Sambaverse(LLM):
     """
     Sambaverse large language models.
 
@@ -653,7 +653,7 @@ class SvStreamingHandler(BaseCallbackHandler):
         self.queue.put(token)
 
 
-class SambaNovaEndpoint(LLM):
+class SambaStudio(LLM):
     """
     SambaStudio large language models.
 
@@ -671,7 +671,7 @@ class SambaNovaEndpoint(LLM):
     Example:
     .. code-block:: python
 
-        from langchain_community.llms.sambanova  import Sambaverse
+        from langchain_community.llms.sambanova  import SambaStudio
         SambaStudio(
             sambastudio_base_url="your SambaStudio environment URL",
             sambastudio_base_uri="your-SambaStudio-base-URI",
@@ -1157,13 +1157,13 @@ class SambaStudioFastCoE(LLM):
             # Handle any errors raised by the inference endpoint
             raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
-class SambaNovaEmbeddingModel(BaseModel, Embeddings):
+class SambaStudioEmbeddings(BaseModel, Embeddings):
     """SambaNova embedding models.
 
     To use, you should have the environment variables
-    ``EMBED_BASE_URL``, ``EMBED_BASE_URI``
-    ``EMBED_PROJECT_ID``, ``EMBED_ENDPOINT_ID``,
-    ``EMBED_API_KEY``
+    ``SAMBASTUDIO_EMBEDDINGS_BASE_URL``, ``SAMBASTUDIO_EMBEDDINGS_BASE_URI``
+    ``SAMBASTUDIO_EMBEDDINGS_PROJECT_ID``, ``SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID``,
+    ``SAMBASTUDIO_EMBEDDINGS_API_KEY``
     set with your personal sambastudio variable or pass it as a named parameter
     to the constructor.
 
@@ -1172,11 +1172,11 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
 
             from langchain_community.embeddings import SambaStudioEmbeddings
 
-            embeddings = SambaStudioEmbeddings(embed_base_url=base_url,
-                                          embed_base_uri=base_uri,
-                                          embed_project_id=project_id,
-                                          embed_endpoint_id=endpoint_id,
-                                          embed_api_key=api_key,
+            embeddings = SambaStudioEmbeddings(sambastudio_embeddings_base_url=base_url,
+                                          sambastudio_embeddings_base_uri=base_uri,
+                                          sambastudio_embeddings_project_id=project_id,
+                                          sambastudio_embeddings_endpoint_id=endpoint_id,
+                                          sambastudio_embeddings_api_key=api_key,
                                           batch_size=32)
             (or)
 
@@ -1193,19 +1193,19 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
             )
     """
 
-    embed_base_url: str = ''
+    sambanova_embeddings_base_url: str = ''
     """Base url to use"""
 
-    embed_base_uri: str = ''
+    sambastudio_embeddings_base_uri: str = ''
     """endpoint base uri"""
 
-    embed_project_id: str = ''
+    sambastudio_embeddings_project_id: str = ''
     """Project id on sambastudio for model"""
 
-    embed_endpoint_id: str = ''
+    sambastudio_embeddings_endpoint_id: str = ''
     """endpoint id on sambastudio for model"""
 
-    embed_api_key: str = ''
+    sambastudio_embeddings_api_key: str = ''
     """sambastudio api key"""
 
     model_kwargs: dict = {}
@@ -1217,16 +1217,16 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values['embed_base_url'] = get_from_dict_or_env(values, 'embed_base_url', 'EMBED_BASE_URL')
-        values['embed_base_uri'] = get_from_dict_or_env(
+        values['sambastudio_embeddings_base_url'] = get_from_dict_or_env(values, 'sambastudio_embeddings_base_url', 'SAMBASTUDIO_EMBEDDINGS_BASE_URL')
+        values['sambastudio_embeddings_base_uri'] = get_from_dict_or_env(
             values,
-            'embed_base_uri',
-            'EMBED_BASE_URI',
+            'sambastudio_embeddings_base_uri',
+            'SAMBASTUDIO_EMBEDDINGS_BASE_URI',
             default='api/predict/generic',
         )
-        values['embed_project_id'] = get_from_dict_or_env(values, 'embed_project_id', 'EMBED_PROJECT_ID')
-        values['embed_endpoint_id'] = get_from_dict_or_env(values, 'embed_endpoint_id', 'EMBED_ENDPOINT_ID')
-        values['embed_api_key'] = get_from_dict_or_env(values, 'embed_api_key', 'EMBED_API_KEY')
+        values['sambastudio_embeddings_project_id'] = get_from_dict_or_env(values, 'sambastudio_embeddings_project_id', 'SAMBASTUDIO_EMBEDDINGS_PROJECT_ID')
+        values['sambastudio_embeddings_endpoint_id'] = get_from_dict_or_env(values, 'sambastudio_embeddings_endpoint_id', 'SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID')
+        values['sambastudio_embeddings_api_key'] = get_from_dict_or_env(values, 'sambastudio_embeddings_api_key', 'SAMBASTUDIO_EMBEDDINGS_API_KEY')
         return values
 
     def _get_tuning_params(self) -> str:
@@ -1248,7 +1248,7 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
         :returns: the full API URL for the sub-path
         :type: str
         """
-        return f'{self.embed_base_url}/{self.embed_base_uri}/{path}'  # noqa: E501
+        return f'{self.sambastudio_embeddings_base_url}/{self.sambastudio_embeddings_base_uri}/{path}'  # noqa: E501
 
     def _iterate_over_batches(self, texts: List[str], batch_size: int) -> Generator:
         """Generator for creating batches in the embed documents method
@@ -1274,16 +1274,16 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
         if batch_size is None:
             batch_size = self.batch_size
         http_session = requests.Session()
-        url = self._get_full_url(f'{self.embed_project_id}/{self.embed_endpoint_id}')
+        url = self._get_full_url(f'{self.sambastudio_embeddings_project_id}/{self.sambastudio_embeddings_endpoint_id}')
         params = json.loads(self._get_tuning_params())
         embeddings = []
 
-        if 'nlp' in self.embed_base_uri:
+        if 'nlp' in self.sambastudio_embeddings_base_uri:
             for batch in self._iterate_over_batches(texts, batch_size):
                 data = {'inputs': batch, 'params': params}
                 response = http_session.post(
                     url,
-                    headers={'key': self.embed_api_key},
+                    headers={'key': self.sambastudio_embeddings_api_key},
                     json=data,
                 )
                 try:
@@ -1295,12 +1295,12 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
                         response.json(),
                     )
 
-        elif 'generic' in self.embed_base_uri:
+        elif 'generic' in self.sambastudio_embeddings_base_uri:
             for batch in self._iterate_over_batches(texts, batch_size):
                 data = {'instances': batch, 'params': params}
                 response = http_session.post(
                     url,
-                    headers={'key': self.embed_api_key},
+                    headers={'key': self.sambastudio_embeddings_api_key},
                     json=data,
                 )
                 try:
@@ -1316,7 +1316,7 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
                     )
 
         else:
-            raise ValueError(f'handling of endpoint uri: {self.embed_base_uri} not implemented')
+            raise ValueError(f'handling of endpoint uri: {self.sambastudio_embeddings_base_uri} not implemented')
 
         return embeddings
 
@@ -1329,14 +1329,14 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
             for the given sentences
         """
         http_session = requests.Session()
-        url = self._get_full_url(f'{self.embed_project_id}/{self.embed_endpoint_id}')
+        url = self._get_full_url(f'{self.sambastudio_embeddings_project_id}/{self.sambastudio_embeddings_endpoint_id}')
         params = json.loads(self._get_tuning_params())
 
-        if 'nlp' in self.embed_base_uri:
+        if 'nlp' in self.sambastudio_embeddings_base_uri:
             data = {'inputs': [text], 'params': params}
             response = http_session.post(
                 url,
-                headers={'key': self.embed_api_key},
+                headers={'key': self.sambastudio_embeddings_api_key},
                 json=data,
             )
             try:
@@ -1347,11 +1347,11 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
                     response.json(),
                 )
 
-        elif 'generic' in self.embed_base_uri:
+        elif 'generic' in self.sambastudio_embeddings_base_uri:
             data = {'instances': [text], 'params': params}
             response = http_session.post(
                 url,
-                headers={'key': self.embed_api_key},
+                headers={'key': self.sambastudio_embeddings_api_key},
                 json=data,
             )
             try:
@@ -1367,7 +1367,7 @@ class SambaNovaEmbeddingModel(BaseModel, Embeddings):
 
         else:
             raise ValueError(
-                f'handling of endpoint uri: {self.embed_base_uri} not implemented'  # noqa: E501
+                f'handling of endpoint uri: {self.sambastudio_embeddings_base_uri} not implemented'  # noqa: E501
             )
 
         return embedding
