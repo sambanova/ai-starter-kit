@@ -1,9 +1,9 @@
-api: "sambastudio" # set either sambastudio or sambaverse
+api: "sambastudio" #  set either sambastudio, sambaverse or fastcoe
 
 embedding_model: 
     "type": "sambastudio" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
-    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+    "coe": False #set true if using Sambastudio embeddings in a CoE endpoint 
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
 
 llm: 
@@ -11,7 +11,8 @@ llm:
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    #fascoe expert name -> "llama3-8b"
 
 retrieval:
     "k_retrieved_documents": 15 #set if rerank enabled 

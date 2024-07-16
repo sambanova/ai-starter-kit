@@ -36,7 +36,7 @@ class SambaStudioCOEHandler:
         tokenizer = utils.get_tokenizer(self.model)
 
         request_config = RequestConfig(
-            prompt=(prompt_template, 10),
+            prompt_tuple=(prompt_template, 10),
             model=self.model,
             sampling_params=self.params,
             mode="stream",
