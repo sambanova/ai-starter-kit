@@ -5,7 +5,7 @@ import shutil
 import time
 
 current_dir = os.getcwd()
-kit_dir = os.path.abspath(os.path.join(current_dir, "..")) # absolute path for ekr_rag directory
+kit_dir = current_dir # absolute path for ekr directory, NOTE: this assumes you run the script from ekr/
 repo_dir = os.path.abspath(os.path.join(kit_dir, "..")) # absolute path for starter-kit directory
 print('kit_dir: %s'%kit_dir)
 print('repo_dir: %s'%repo_dir)
