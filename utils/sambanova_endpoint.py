@@ -205,6 +205,7 @@ class SambaverseEndpoint(LLM):
                 "top_p": 1.0,
                 "repetition_penalty": 1.0,
                 "top_k": 50,
+                "process_prompt": False
             },
         )
     """
@@ -657,11 +658,11 @@ class SambaNovaEndpoint(LLM):
     SambaStudio large language models.
 
     To use, you should have the environment variables
-    ``BASE_URL`` set with your SambaStudio environment URL.
-    ``BASE_URI`` set with your SambaStudio api base URI.
-    ``PROJECT_ID`` set with your SambaStudio project ID.
-    ``ENDPOINT_ID`` set with your SambaStudio endpoint ID.
-    ``API_KEY``  set with your SambaStudio endpoint API key.
+    ``SAMBASTUDIO_BASE_URL`` set with your SambaStudio environment URL.
+    ``SAMBASTUDIO_BASE_URI`` set with your SambaStudio api base URI.
+    ``SAMBASTUDIO_PROJECT_ID`` set with your SambaStudio project ID.
+    ``SAMBASTUDIO_ENDPOINT_ID`` set with your SambaStudio endpoint ID.
+    ``SAMBASTUDIO_API_KEY``  set with your SambaStudio endpoint API key.
 
     https://sambanova.ai/products/enterprise-ai-platform-sambanova-suite
 
@@ -672,11 +673,11 @@ class SambaNovaEndpoint(LLM):
 
         from langchain_community.llms.sambanova  import Sambaverse
         SambaStudio(
-            base_url="your SambaStudio environment URL",
-            base_uri="your-SambaStudio-base-URI",
-            project_id=set with your SambaStudio project ID.,
-            endpoint_id=set with your SambaStudio endpoint ID.,
-            api_token= set with your SambaStudio endpoint API key.,
+            sambastudio_base_url="your SambaStudio environment URL",
+            sambastudio_base_uri="your-SambaStudio-base-URI",
+            sambastudio_project_id=set with your SambaStudio project ID.,
+            sambastudio_endpoint_id=set with your SambaStudio endpoint ID.,
+            sambastudio_api_token= set with your SambaStudio endpoint API key.,
             streaming=false
             model_kwargs={
                 "do_sample": False,
@@ -685,23 +686,24 @@ class SambaNovaEndpoint(LLM):
                 "top_p": 1.0,
                 "repetition_penalty": 1,
                 "top_k": 50,
+                "process_prompt": False,
             },
         )
     """
 
-    base_url: str = ''
+    sambastudio_base_url: str = ''
     """Base url to use"""
 
-    base_uri: str = ''
+    sambastudio_base_uri: str = ''
     """endpoint base uri"""
 
-    project_id: str = ''
+    sambastudio_project_id: str = ''
     """Project id on sambastudio for model"""
 
-    endpoint_id: str = ''
+    sambastudio_endpoint_id: str = ''
     """endpoint id on sambastudio for model"""
 
-    api_key: str = ''
+    sambastudio_api_key: str = ''
     """sambastudio api key"""
 
     model_kwargs: Optional[dict] = None
@@ -732,11 +734,11 @@ class SambaNovaEndpoint(LLM):
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values['base_url'] = get_from_dict_or_env(values, 'base_url', 'BASE_URL')
-        values['base_uri'] = get_from_dict_or_env(values, 'base_uri', 'BASE_URI', default='api/predict/nlp')
-        values['project_id'] = get_from_dict_or_env(values, 'project_id', 'PROJECT_ID')
-        values['endpoint_id'] = get_from_dict_or_env(values, 'endpoint_id', 'ENDPOINT_ID')
-        values['api_key'] = get_from_dict_or_env(values, 'api_key', 'API_KEY')
+        values['sambastudio_base_url'] = get_from_dict_or_env(values, 'sambastudio_base_url', 'SAMBASTUDIO_BASE_URL')
+        values['sambastudio_base_uri'] = get_from_dict_or_env(values, 'sambastudio_base_uri', 'SAMBASTUDIO_BASE_URI', default='api/predict/generic')
+        values['sambastudio_project_id'] = get_from_dict_or_env(values, 'sambastudio_project_id', 'SAMBASTUDIO_PROJECT_ID')
+        values['sambastudio_endpoint_id'] = get_from_dict_or_env(values, 'sambastudio_endpoint_id', 'SAMBASTUDIO_ENDPOINT_ID')
+        values['sambastudio_api_key'] = get_from_dict_or_env(values, 'sambastudio_api_key', 'SAMBASTUDIO_API_KEY')
         return values
 
     def _get_tuning_params(self, stop: Optional[List[str]]) -> str:
@@ -778,9 +780,9 @@ class SambaNovaEndpoint(LLM):
             ValueError: If the prediction fails.
         """
         response = sdk.nlp_predict(
-            self.project_id,
-            self.endpoint_id,
-            self.api_key,
+            self.sambastudio_project_id,
+            self.sambastudio_endpoint_id,
+            self.sambastudio_api_key,
             prompt,
             tuning_params,
         )
@@ -796,15 +798,15 @@ class SambaNovaEndpoint(LLM):
                     f"Sambanova /complete call failed with status code "
                     f"{response['status_code']}.\n response {response}"
                 )
-        if 'nlp' in self.base_uri:
+        if 'nlp' in self.sambastudio_base_uri:
             return response['data'][0]['completion']
-        elif 'generic' in self.base_uri:
+        elif 'generic' in self.sambastudio_base_uri:
             if isinstance(response['predictions'][0], str):
                 return response['predictions'][0]
             else:
                 return response['predictions'][0]['completion']
         else:
-            raise ValueError(f'handling of endpoint uri: {self.base_uri} not implemented')
+            raise ValueError(f'handling of endpoint uri: {self.sambastudio_base_uri} not implemented')
 
     def _handle_completion_requests(self, prompt: Union[List[str], str], stop: Optional[List[str]]) -> str:
         """
@@ -820,7 +822,7 @@ class SambaNovaEndpoint(LLM):
         Raises:
             ValueError: If the prediction fails.
         """
-        ss_endpoint = SSEndpointHandler(self.base_url, self.base_uri)
+        ss_endpoint = SSEndpointHandler(self.sambastudio_base_url, self.sambastudio_base_uri)
         tuning_params = self._get_tuning_params(stop)
         return self._handle_nlp_predict(ss_endpoint, prompt, tuning_params)
 
@@ -838,7 +840,7 @@ class SambaNovaEndpoint(LLM):
         Returns:
             An iterator of GenerationChunks.
         """
-        for chunk in sdk.nlp_predict_stream(self.project_id, self.endpoint_id, self.api_key, prompt, tuning_params):
+        for chunk in sdk.nlp_predict_stream(self.sambastudio_project_id, self.sambastudio_endpoint_id, self.sambastudio_api_key, prompt, tuning_params):
             if chunk['status_code'] != 200:
                 error = chunk.get('error')
                 if error:
@@ -856,12 +858,12 @@ class SambaNovaEndpoint(LLM):
                     raise RuntimeError(
                         f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                     )
-            if 'nlp' in self.base_uri:
+            if 'nlp' in self.sambastudio_base_uri:
                 text = json.loads(chunk['data'])['stream_token']
-            elif 'generic' in self.base_uri:
+            elif 'generic' in self.sambastudio_base_uri:
                 text = chunk['result']['responses'][0]['stream_token']
             else:
-                raise ValueError(f'handling of endpoint uri: {self.base_uri} not implemented')
+                raise ValueError(f'handling of endpoint uri: {self.sambastudio_base_uri} not implemented')
             generated_chunk = GenerationChunk(text=text)
             yield generated_chunk
 
@@ -881,7 +883,7 @@ class SambaNovaEndpoint(LLM):
         Returns:
             The string generated by the model.
         """
-        ss_endpoint = SSEndpointHandler(self.base_url, self.base_uri)
+        ss_endpoint = SSEndpointHandler(self.sambastudio_base_url, self.sambastudio_base_uri)
         tuning_params = self._get_tuning_params(stop)
         try:
             if self.streaming:
