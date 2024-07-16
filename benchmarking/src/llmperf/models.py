@@ -7,7 +7,7 @@ class RequestConfig(BaseModel):
 
     Args:
         model: The model to use.
-        prompt: The prompt to provide to the LLM API.
+        prompt_tuple: A tuple containing the prompt to provide to the LLM API along with the tokenized prompt length.
         sampling_params: Additional sampling parameters to send with the request.
             For more information see the Router app's documentation for the completions
         llm_api: The name of the LLM API to send the request to.
@@ -17,7 +17,7 @@ class RequestConfig(BaseModel):
     """
 
     model: str
-    prompt: Tuple[str, int]
+    prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
     mode: Optional[str] = None

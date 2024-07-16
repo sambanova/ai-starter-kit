@@ -19,27 +19,27 @@ Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us
 # AI Starter Kits - Ecosystem
 
 ## Data Ingestion & Preparation
-* 🔍 Data Extraction
-* 📊 Web-crawled Data Retriever
-* 🧠 Synthetic Q&A Pair Creation
+* 🔍 [Data Extraction](./data_extraction)
+* 📊 [Web-crawled Data Retriever](./web_crawled_data_retriever)
+* 🧠 [Synthetic Q&A Pair Creation](./yoda)
 
 ## Model Development & Optimization
-* 🚀 YoDA - Your Data, Your Model Recipe
-* 🎯 Q&A Fine-tuning
-* 💾 SQL Model Fine-tuning
-* 🔬 Fine-tuning Embeddings
+* 🚀 [YoDA - Your Data, Your Model Recipe](./yoda)
+* 🎯 [Q&A Fine-tuning](./fine_tuning_embeddings)
+* 💾 [SQL Model Fine-tuning](./fine_tuning_sql)
+* 🔬 [Fine-tuning Embeddings](./fine_tuning_embeddings)
 
 ## Intelligent Information Retrieval
-* 📚 Enterprise Knowledge Retriever
-* 🔎 Search Assistant
-* 🖼️ Image Search
-* 🖼️ Multi-Modal Knowledge Retriver
+* 📚 [Enterprise Knowledge Retriever](./enterprise_knowledge_retriever)
+* 🔎 [Search Assistant](./search_assistant)
+* 🖼️ [Image Search](./image_search)
+* 🖼️ [Multi-Modal Knowledge Retriever](./multimodal_knowledge_retriever)
 
 ## Advanced AI Capabilities
-* 🧭 CoE Routing
-* 💡 Prompt Engineering
-* 🔀 Performance Benchmarking
-* 🔧 Function Calling
+* 🧭 [CoE Routing](./CoE_jump_start)
+* 💡 [Prompt Engineering](./prompt_engineering)
+* 🔀 [Performance Benchmarking](./benchmarking)
+* 🔧 [Function Calling](./function_calling)
 
 ## Deployment & Integration
 * 🖥️ Endpoint Creation
@@ -177,10 +177,11 @@ For example, enter an endpoint with the URL
 in the env file (with no spaces) as:
 
 ```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+SAMBASTUDIO_BASE_URI="api/predict/nlp"
+SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
 #### Sambaverse model
@@ -204,30 +205,12 @@ Update API information for the SambaNova embedding endpoint. These are represent
 would be entered in the env file (with no spaces) as:
 
 ```
-EMBED_BASE_URL="https://api-stage.sambanova.net"
-EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
+SAMBASTUDIO_EMBEDDINGS_BASE_URI="api/predict/nlp"
+SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
-
-> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
->
-> with **CPU Huggingface embeddings**:
->
-> ```python
->            embeddings = HuggingFaceInstructEmbeddings(
->                model_name="hkunlp/instructor-large",
->                embed_instruction="",
->                query_instruction="Represent this sentence for searching relevant passages:",
->                encode_kwargs={"normalize_embeddings": True},
->            )
-> ```
->
-> with **Sambastudio embeddings**:
->
-> ```pyhton
-> embeddings = SambaNovaEmbeddingModel()
-> ```
 
 ### 4. Run the desired starter kit
 
@@ -241,20 +224,21 @@ Set your environment as shown in [integrate your model](#integrate-your-model-in
 
 #### Using Sambaverse LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaverseEndpoint** LLM:
+1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **Sambaverse** LLM:
 
 ```python
-from utils.sambanova_endpoint import SambaverseEndpoint
+from langchain_community.llms.sambanova import Sambaverse
 
 load_dotenv('.env')
 
-llm = SambaverseEndpoint(
-    sambaverse_model_name="Meta/llama-2-7b-chat-hf",
+llm = Sambaverse(
+    sambaverse_model_name="Meta/Meta-Llama-3-8B-Instruct",
     model_kwargs={
       "do_sample": False,
       "temperature": 0.0,
       "max_tokens_to_generate": 512,
-      "select_expert": "llama-2-7b-chat-hf"
+      "select_expert": "Meta-Llama-3-8B-Instruct",
+      "process_prompt": "False"
       },
 )
 ```
@@ -267,10 +251,12 @@ llm.invoke("your prompt")
 
 #### Using Sambastudio LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEndpoint** LLM:
+1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaStudio* LLM:
+
+- If using a CoE endpont
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEndpoint
+from langchain_community.llms.sambanova import SambaStudio
 
 load_dotenv('.env')
 
@@ -278,7 +264,26 @@ llm = SambaNovaEndpoint(
     model_kwargs={
       "do_sample": False,
       "max_tokens_to_generate": 512,
-      "temperature": 0.0
+      "temperature": 0.0,
+      "select_expert": "Meta-Llama-3-8B-Instruct",
+      "process_prompt": "False"
+      },
+)
+```
+
+- If using a single model endpont
+
+```python
+from langchain_community.llms.sambanova import SambaStudio
+
+load_dotenv('.env')
+
+llm = SambaNovaEndpoint(
+    model_kwargs={
+      "do_sample": False,
+      "max_tokens_to_generate": 512,
+      "temperature": 0.0,
+      "process_prompt": "False"
       },
 )
 ```
@@ -293,15 +298,34 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Embedding Wrapper
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaNovaEmbeddingModel** embedding:
+1. Import the **sambastudio_endpoint** langchain wrapper in your project and define your **SambaStudioEmbeddings** embedding:
+
+- If using a CoE endpont
 
 ```python
-from utils.sambanova_endpoint import SambaNovaEmbeddingModel
+from langchain_community.embeddings import SambaStudioEmbeddings
 
 load_dotenv('.env')
 
-embedding = SambaNovaEmbeddingModel()
+embedding = SambaStudioEmbeddings(
+              batch_size=1,
+              model_kwargs = {
+                  "select_expert":e5-mistral-7b-instruct
+                  }
+              )
 ```
+
+- If using a single embedding model endpont
+
+```python
+from langchain_community.embeddings import SambaStudioEmbeddings
+
+load_dotenv('.env')
+
+embedding = SambaStudioEmbeddings(batch_size=32)
+```
+
+> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
 
 2. Use your embedding model in your langchain pipeline
 
@@ -314,7 +338,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 There are two approaches to setting up your environment for the AI Starter Kits:
 
 1. **Individual Kit Setup (Traditional Method)**
-2. **Base Environment Setup (Recommended)**
+2. **Base Environment Setup (WIP)**
 
 ### 1. Individual Kit Setup
 
@@ -338,8 +362,8 @@ Benefits of the base environment approach:
 
 #### Prerequisites
 
-- **Poetry**: The Makefile will attempt to install Poetry if it's not already installed.
 - **pyenv**: The Makefile will attempt to install pyenv if it's not already installed.
+- **Docker**: (Optional) If you want to use the Docker-based setup, ensure Docker is installed on your system.
 
 #### What the Base Setup Does
 
@@ -347,6 +371,9 @@ Benefits of the base environment approach:
 2. Sets up a Python virtual environment using a specified Python version (default is 3.11.3).
 3. Installs all necessary dependencies for the base environment.
 4. Sets up the parsing service required by some kits.
+5. Installs system dependencies like Tesseract OCR and Poppler.
+6. Provides Docker-based setup options for consistent environments across different systems.
+
 
 
 #### Setting Up the Base Environment
@@ -373,24 +400,9 @@ Within the starter kit there will be instructions on how to start the kit. You c
 part in the kits README.md as we've done it here.
 
 
-4. **Enterprise Knowledge Retriever One Click Deploy:**
-For the EKR Kit specifically we have enabled a one click deploy via makefile
-
-
-### Enterprise Knowledge Retriever (EKR) Setup
-
-To set up and run the Enterprise Knowledge Retriever:
-
-1. **Set Up and Start EKR:**
-
-```bash
-make ekr
-```
-This command sets up the EKR environment, starts the parsing service, and launches the EKR application.
-
 
 ### Parsing Service Management
-For certain kits, we utilise a standard parsing service. To work with this service, following the steps in this section.
+For certain kits, we utilise a standard parsing service. By Default it's started automatically with the base environment. To work with this service in isolation, following the steps in this section.
 
 - **Start Parsing Service:**
 ```bash
@@ -409,7 +421,29 @@ make parsing-status
 
 - **View Parsing Service Logs:**
 ```bash
-make make parsing-log
+make parsing-log
+```
+
+### Docker-based Setup
+
+To use the Docker-based setup:
+
+1. Ensure Docker is installed on your system.
+2. Build the Docker image:
+
+```bash
+make docker-build
+```
+
+3. Run a specific kit in the Docker container:
+```bash
+make docker-run-kit KIT=<kit_name>
+```
+Replace `<kit_name>` with the name of the starter kit you want to run (e.g., `function_calling`).
+
+4. To open a shell in the Docker container:
+```bash
+make docker-shell
 ```
 
 ### Cleanup
@@ -425,24 +459,6 @@ This command removes all virtual environments created with the makefile, stops t
 
 If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
 
-### Lock file mismatch
-
-If you see an error message like this:
-
-```
-ERROR
-Installing dependencies... Installing dependencies from lock file
-pyproject.toml changed significantly since poetry.lock was last generated. Run `poetry lock [--no-update]` to fix the lock file. make: *** [install] Error 1
-```
-
-This means there's a mismatch between your `pyproject.toml` and `poetry.lock` files. To resolve this:
-
-1. Run the following command to update the lock file:
-   ```
-   poetry lock
-   ```
-
-2. Then, try running `make all` again.
 
 ### Python version issues
 
@@ -460,6 +476,31 @@ If you're experiencing dependency conflicts:
 2. Update the lock file: `poetry lock --no-update`
 3. Reinstall dependencies: `make install`
 
+### pikepdf installation issues
+
+If you encounter an error while installing `pikepdf`, such as:
+
+```
+ERROR: Failed building wheel for pikepdf
+Failed to build pikepdf
+```
+
+This is likely due to missing `qpdf` dependency. The Makefile should automatically install `qpdf` for you, but if you're still encountering issues:
+
+1. Ensure you have proper permissions to install system packages.
+2. If you're on macOS, you can manually install `qpdf` using Homebrew:
+   ```bash
+   brew install qpdf
+   ```
+3. On Linux, you can install it using your package manager, e.g., on Ubuntu:
+   ```
+   sudo apt-get update && sudo apt-get install -y qpdf
+   ```
+4. After installing `qpdf`, try running `make install` again.
+
+If you continue to face issues, please ensure your system meets all the requirements for building `pikepdf` and consider checking the [pikepdf documentation](https://pikepdf.readthedocs.io/en/latest/installation.html) for more detailed installation instructions.
+
+
 ### Parsing service issues
 
 If the parsing service isn't starting or is behaving unexpectedly:
@@ -467,6 +508,30 @@ If the parsing service isn't starting or is behaving unexpectedly:
 1. Check its status: `make parsing-status`
 2. View its logs: `make parsing-log`
 3. Try stopping and restarting it: `make stop-parsing-service` followed by `make start-parsing-service`
+
+### System Dependencies Issues
+
+If you encounter issues related to Tesseract OCR or Poppler:
+
+1. Ensure the Makefile has successfully installed these dependencies.
+2. On macOS, you can manually install them using Homebrew:
+ ```bash
+   brew install tesseract poppler
+   ```
+3. On Linux (Ubuntu/Debian), you can install them manually:
+ ```bash
+   sudo apt-get update && sudo apt-get install -y tesseract-ocr poppler-utils
+   ```
+4. On Windows, you may need to install these dependencies manually and ensure they are in your system PATH.
+
+### Docker-related Issues
+
+If you're using the Docker-based setup and encounter issues:
+
+1. Ensure Docker is properly installed and running on your system.
+2. Try rebuilding the Docker image: `make docker-build`
+3. Check Docker logs for any error messages.
+4. Ensure your firewall or antivirus is not blocking Docker operations.
 
 ### General troubleshooting steps
 

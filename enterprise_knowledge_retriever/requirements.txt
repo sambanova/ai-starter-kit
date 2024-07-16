@@ -1,4 +1,4 @@
-streamlit==1.25.0
+streamlit==1.36.0
 pydantic==2.7.0
 pydantic_core==2.18.1
 
@@ -9,15 +9,17 @@ langchain==0.2.6
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 faiss-cpu==1.7.4
-PyPDF2==3.0.1
 python-dotenv==1.0.0
-streamlit-extras
-pillow==9.1.0
+streamlit-extras==0.4.3
+pillow==10.4.0
 sseclient-py==1.8.0
-unstructured[pdf]==0.13.3
-unstructured_inference==0.7.27
-PyMuPDF==1.23.4
-PyMuPDFb==1.23.3
-chromadb==0.4.24
+unstructured==0.14.9
+unstructured_inference==0.7.36
+unstructured_pytesseract==0.3.12
+pytesseract==0.3.10
+chromadb==0.5.3
 langgraph==0.0.55
 openpyxl==3.1.4
+psutil==6.0.0
+pillow_heif==0.16.0
+ipython==8.26.0

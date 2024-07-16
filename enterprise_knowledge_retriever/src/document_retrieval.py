@@ -1,7 +1,6 @@
 import os
 import sys
 import yaml
-import fitz
 import torch
 from dotenv import load_dotenv
 from typing import Any, Dict, List, Optional
@@ -23,8 +22,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.sambanova_endpoint import SambaStudioFastCoE
 from vectordb.vector_db import VectorDb
-from data_extraction.src.multi_column import column_boxes
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
@@ -148,7 +147,8 @@ class DocumentRetrieval():
                     "do_sample": False, 
                     "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     "temperature": self.llm_info["temperature"],
-                    "select_expert": self.llm_info["select_expert"]
+                    "select_expert": self.llm_info["select_expert"],
+                    "process_prompt": False
                 }
             )
         elif self.api_info == "sambastudio":
@@ -159,7 +159,8 @@ class DocumentRetrieval():
                         "do_sample": False,
                         "temperature": self.llm_info["temperature"],
                         "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "select_expert": self.llm_info["select_expert"]
+                        "select_expert": self.llm_info["select_expert"],
+                        "process_prompt": False
                     }
                 )
             else:
@@ -168,9 +169,21 @@ class DocumentRetrieval():
                     model_kwargs={
                         "do_sample": False,
                         "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
+                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
                     }
                 )
+    
+        elif self.api_info == "fastcoe":
+            llm = SambaStudioFastCoE(
+                max_tokens=self.llm_info['max_tokens_to_generate'],
+                model=self.llm_info['select_expert'],
+            )
+        
+        else:
+            raise ValueError(
+                f"Invalid LLM API: {self.api_info}, only 'fastcoe' 'sambastudio' and 'sambaverse' are supported."
+            )
+            
         return llm
             
 
