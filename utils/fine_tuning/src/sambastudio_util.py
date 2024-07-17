@@ -18,7 +18,7 @@ class SnsdkWrapper:
 
     def __init__(self, config_path=None) -> None:
         self.config = self._load_config(config_path)
-        self.project_id = None
+        self.dataset_id = "d80f6355-af9d-406b-95c5-c31854f36f2c"
         #self.snapi_path = self.config["sambastudio"]["snapi_path"]
 
         #if self.snapi_path is None or len(self.snapi_path) == 0:
@@ -58,9 +58,7 @@ class SnsdkWrapper:
 
     """Project"""
 
-    def search_project(self, project_name: Optional[str] = None):
-        if project_name is None:
-            project_name = self.config["project"]["project_name"]
+    def search_project(self, project_name: str):
         search_project_response=self.snsdk_client.search_project(project_name=project_name)
         if search_project_response["status_code"]==200:
             project_id = search_project_response["data"]["project_id"]
@@ -80,15 +78,14 @@ class SnsdkWrapper:
                 description=self.config["project"]["project_description"]
                 )
             if create_project_response["status_code"]==200:
-                self.project_id = create_project_response["data"]["project_id"]
-                logging.info(f"Project with name {project_name} created with id {self.project_id}")
+                project_id = create_project_response["data"]["project_id"]
+                logging.info(f"Project with name {project_name} created with id {project_id}")
             else:
                 logging.error(f"Failed to create project with name '{project_name}'. Details: {create_project_response['detail']}")
                 raise Exception(f"Error message: {create_project_response['detail']}")
         else:
-            self.project_id=project_id
-            logging.info(f"Project with name '{project_name}' already exists with id '{self.project_id}', using it")
-        return self.project_id
+            logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
+        return project_id
     
     def list_projects(self):
         list_projects_response = self.snsdk_client.list_projects()
@@ -117,12 +114,69 @@ class SnsdkWrapper:
         print(delete_project_response)
         
     """Job"""
-
-    def run_job(self, dataset_name):
-        # runs a job
-        # has to consider hyperparams for finetuning
-        # if run outputs error, show it and stop e2e process
-        pass
+    
+    def run_job(self,
+                project_name: Optional[str] = None,
+                job_name: Optional[str] = None,
+                job_description: Optional[str] = None,
+                job_type: Optional[str] = None,
+                model: Optional[str] = None,
+                dataset_name: Optional[str] = None,
+                parallel_instances: Optional[int] = None,
+                load_state: Optional[bool] = None,
+                sub_path: Optional[str] = None,
+                rdu_arch: Optional[str] = None,
+                hyperparams: Optional[dict] = None,
+                ):
+        # check if project selected exists
+        if project_name is not None:
+            project_id = self.search_project(project_name)
+        else:
+            project_id = self.search_project(self.config["project"]["project_name"])
+            
+        if project_id is None:
+            raise Exception(f"project with name '{project_name}' not found")
+        
+        # check if model selected is found and is trainable
+        if model is not None:
+            model_id = self.search_trainable_model(model)
+        else: 
+            model_id = self.search_trainable_model(self.config["job"]["model"])
+            
+        if model_id is None:
+            raise Exception(f"model with name '{model}' not found")
+            
+        # check if dataset exist
+        if dataset_name is not None:
+            dataset_id = self.search_dataset(dataset_name)
+        else:
+            dataset_id = self.search_dataset(self.config["dataset"]["dataset_name"])
+            
+        if dataset_id is None:
+            raise Exception(f"dataset with name '{dataset_name}' not found")
+        
+        # create job
+        create_job_response=self.snsdk_client.create_job(
+            project = project_id,
+            job_name = job_name or self.config["job"]["job_name"],
+            description = job_description or self.config["job"]["job_description"],
+            job_type = job_type or self.config["job"]["job_type"],
+            model_checkpoint = model_id,
+            dataset = dataset_id,
+            parallel_instances = parallel_instances or self.config["job"]["parallel_instances"],
+            load_state = load_state or self.config["job"]["load_state"],
+            sub_path = sub_path or self.config["job"]["sub_path"],
+            rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
+            hyperparams = json.dumps(hyperparams or self.config["job"]["hyperparams"]),
+        )
+        
+        if create_job_response["status_code"] == 200:
+            job_id = create_job_response["job_id"]
+            logging.info(f"Job with name '{job_name}' created: '{create_job_response}'")
+            return job_id
+        else:
+            logging.error(f"Failed to create job with name '{job_name}'. Details: {create_job_response}")
+            raise Exception(f"Error message: {create_job_response}")
 
     def check_job_progress(self, job_id):
         # checks job progress
@@ -153,11 +207,44 @@ class SnsdkWrapper:
 
     """generic stuff"""
 
-    def list_models():
-        pass
-
-    def list_tenants():
-        pass
+    def list_models(self):
+        list_models_response = self.snsdk_client.list_models()
+        if list_models_response["status_code"] == 200:
+            models={}
+            for model in list_models_response["models"]:
+                if set(["train","deploy"]).issubset(model.get("jobTypes")):
+                    models[model.get("model_checkpoint_name")] = model.get("model_id")
+            return models
+        else:
+            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
+            raise Exception(f"Error message: {list_models_response['detail']}")
     
-    def list_datasets():
-        pass
+    def search_model(self, model_name: str):
+        search_model_response=self.snsdk_client.search_model(model_name=model_name) 
+        if search_model_response["status_code"]==200:
+            model_id = search_model_response["data"]["model_id"]
+            logging.info(f"Model with name '{model_name}' found with id {model_id}")
+            return model_id
+        else:
+            logging.info(f"Project with name '{model_name}' not found")
+            return None
+    
+    def search_trainable_model(self, model_name):
+        models = self.list_models()
+        model_id = models.get(model_name)
+        if model_id is not None:
+            logging.info(f"Model '{model_name}' with id '{model_id}' available for training and deployment found") 
+            return model_id
+        else:
+            logging.info(f"Model '{model_name}' available for training and deployment not found")
+            return None
+            
+    def search_dataset(self, dataset_name):
+        search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name) 
+        if search_dataset_response["status_code"]==200:
+            dataset_id = search_dataset_response["data"]["dataset_id"]
+            logging.info(f"Dataset with name '{dataset_name}' found with id {dataset_id}")
+            return dataset_id
+        else:
+            logging.info(f"Dataset with name '{dataset_name}' not found")
+            return None
