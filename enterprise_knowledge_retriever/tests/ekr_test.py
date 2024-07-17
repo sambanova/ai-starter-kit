@@ -6,7 +6,7 @@ This script tests the functionality of the Enterprise Knowledge Retriever using 
 It parses documents using the SambaParse service, creates a vector store, and tests the question-answering capabilities.
 
 Usage:
-    python ekr_test.py
+    python tests/ekr_test.py
 
 Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
@@ -89,6 +89,7 @@ class EKRTestCase(unittest.TestCase):
         self.assertIn('answer', response, "Response should have an 'answer' key")
         self.assertTrue(response['answer'], "The response should not be empty")
 
+        
     @classmethod
     def tearDownClass(cls):
         time_end = time.time()
