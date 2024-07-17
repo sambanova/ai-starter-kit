@@ -16,19 +16,24 @@ from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
-MODEL_TYPE_IDENTIFIER = {"mistral": "mistral", "llama3": "llama-3"}
-PROMPT_GENERATION_OFFSET = 3
+MODEL_TYPE_IDENTIFIER = {
+    "mistral": "mistral",
+    "llama3": "llama-3",
+    "deepseek": "deepseek",
+}
+PROMPT_GENERATION_OFFSET = 2
+
 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
-            self,
-            model_name: str,
-            results_dir: str,
-            num_workers: int,
-            user_metadata: Dict[str, Any] = {},
-            llm_api: str = "sambastudio",
-            generation_mode: str = "stream",
-            timeout: int = 600,
+        self,
+        model_name: str,
+        results_dir: str,
+        num_workers: int,
+        user_metadata: Dict[str, Any] = {},
+        llm_api: str = "sambastudio",
+        generation_mode: str = "stream",
+        timeout: int = 600,
     ):
         self.model_name = model_name
         self.results_dir = results_dir
@@ -45,18 +50,13 @@ class BasePerformanceEvaluator(abc.ABC):
 
     def get_token_length(self, input_text):
         return len(self.tokenizer.encode(input_text))
-    
+
     @abc.abstractmethod
     def create_output_filename(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
-    def run_benchmark(
-        self, 
-        sampling_params: Dict = {},
-        *args, 
-        **kwargs
-    ):
+    def run_benchmark(self, sampling_params: Dict = {}, *args, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -66,7 +66,7 @@ class BasePerformanceEvaluator(abc.ABC):
     @abc.abstractmethod
     def build_request_configs(self, *args, **kwargs):
         pass
-    
+
     @abc.abstractmethod
     def build_prompt(self, *args, **kwargs):
         pass
@@ -94,18 +94,18 @@ class BasePerformanceEvaluator(abc.ABC):
             req_metrics = llm_request(request_config, self.tokenizer)
             completed_requests.extend([req_metrics[0]])
             progress_bar.update(1)
-    
+
     def build_metrics_summary(
-            self,
-            metrics: List[Dict[str, Any]],
-            start_time: time,
-            end_time: time,
+        self,
+        metrics: List[Dict[str, Any]],
+        start_time: time,
+        end_time: time,
     ) -> Dict[str, Any]:
         """Builds a summary of metrics from a list of dictionaries.
 
         This function takes a list of dictionaries, each representing a metric, and a start and end time.
-        It filters out any metrics that resulted in an error, calculates descriptive statistics for a 
-        number of metrics, and records various other metrics such as the number of requests started, 
+        It filters out any metrics that resulted in an error, calculates descriptive statistics for a
+        number of metrics, and records various other metrics such as the number of requests started,
         the error rate and count, the overall throughput, and the number of completed requests.
 
         Parameters:
@@ -118,13 +118,13 @@ class BasePerformanceEvaluator(abc.ABC):
         """
         # Create empty metrics summary to be filled and returned
         metrics_summary = {}
-        
+
         # Create base df from metrics returned from request responses
         raw_df = pd.DataFrame(metrics)
-        
+
         # Remove errored requests
         metrics_df = raw_df[raw_df[common_metrics.ERROR_CODE].isna()]
-        
+
         # Record descriptive statistics for the metrics in the following list
         for metric in [
             common_metrics.TTFT,
@@ -135,7 +135,7 @@ class BasePerformanceEvaluator(abc.ABC):
         ]:
             print(f"Building Metrics Summary for metric: {metric}")
             metrics_summary[metric] = {}
-            
+
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
@@ -147,11 +147,11 @@ class BasePerformanceEvaluator(abc.ABC):
                 print(f"    {reformatted_key} = {value}")
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]["quantiles"] = quantiles_reformatted_keys
-            
+
             series_mean = series.mean()
             print(f"    mean = {series_mean}")
             metrics_summary[metric]["mean"] = series_mean
-            
+
             series_min = series.min()
             print(f"    min = {series_min}")
             metrics_summary[metric]["min"] = series_min
@@ -159,18 +159,20 @@ class BasePerformanceEvaluator(abc.ABC):
             series_max = series.max()
             print(f"    max = {series_max}")
             metrics_summary[metric]["max"] = series_max
-            
+
             series_std = series.std()
             print(f"    stddev = {series_std}")
             metrics_summary[metric]["stddev"] = series_std
-        
+
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
-        
+
         # Record error count and rate
         error_codes = raw_df[common_metrics.ERROR_CODE].dropna()
         num_errors = len(error_codes)
-        metrics_summary[common_metrics.ERROR_RATE] = num_errors / len(metrics) if len(metrics) else 0
+        metrics_summary[common_metrics.ERROR_RATE] = (
+            num_errors / len(metrics) if len(metrics) else 0
+        )
         metrics_summary[common_metrics.NUM_ERRORS] = num_errors
         print(f"Number Of Errored Requests: {num_errors}")
 
@@ -181,14 +183,14 @@ class BasePerformanceEvaluator(abc.ABC):
             print("Error Code Frequency")
             print(error_code_frequency)
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
-        
+
         # Record overall throughput
         overall_output_throughput = metrics_df[
             common_metrics.NUM_OUTPUT_TOKENS
         ].sum() / (end_time - start_time)
         print(f"Overall Output Throughput: {overall_output_throughput}")
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
-        
+
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = (
@@ -199,16 +201,13 @@ class BasePerformanceEvaluator(abc.ABC):
         print(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
-        metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = num_completed_requests_per_min
+        metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = (
+            num_completed_requests_per_min
+        )
 
         return metrics_summary
-    
-    def save_results(
-        self,
-        filename,
-        summary,
-        individual_responses
-    ):
+
+    def save_results(self, filename, summary, individual_responses):
         """Save the performance evaluation results to a file.
 
         Args:
@@ -246,7 +245,9 @@ class BasePerformanceEvaluator(abc.ABC):
             raise e
 
         try:
-            self.individual_responses_file_path = f"{results_dir}/{individual_responses_filename}.json"
+            self.individual_responses_file_path = (
+                f"{results_dir}/{individual_responses_filename}.json"
+            )
             with open(self.individual_responses_file_path, "w") as f:
                 json.dump(individual_responses, f, indent=4)
         except Exception as e:
@@ -255,28 +256,23 @@ class BasePerformanceEvaluator(abc.ABC):
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(
-        self, 
-        input_file_path: str,
-        *args, 
-        **kwargs
-    ):
+    def __init__(self, input_file_path: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
         self.prompt_key = list(self.dataset[0].keys())[0]
-    
+
     @staticmethod
     def read_dataset(input_file_path: str):
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
-        
+
         Args:
             input_file_path (str): The absolute file path of the input file provided by the user
 
         Returns:
             List[Dict]: A list of json objects (python dictionaries) containing the individual prompts the user wants to evaluate on
         """
-        with open(input_file_path, 'r') as file:
+        with open(input_file_path, "r") as file:
             data = [json.loads(line) for line in file]
         return data
 
@@ -288,10 +284,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
 
-    def run_benchmark(
-            self, 
-            sampling_params: Dict[str, Any]
-    ):
+    def run_benchmark(self, sampling_params: Dict[str, Any]):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
@@ -304,19 +297,14 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         summary, individual_responses = self.get_token_throughput_latencies(
             sampling_params=sampling_params,
         )
-        
+
         # Save benchmarking results to the specified results directory, it it exists
         if self.results_dir:
             filename = self.create_output_filename()
-            self.save_results(
-                filename,
-                summary,
-                individual_responses
-            )
+            self.save_results(filename, summary, individual_responses)
 
     def get_token_throughput_latencies(
-            self,
-            sampling_params: Dict[str, Any]
+        self, sampling_params: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function is used to measure the token throughput and latencies.
 
@@ -333,13 +321,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             This function uses threading to send requests concurrently. It splits the total request count evenly among the threads.
             If there is a remainder, it assigns one extra request to the first threads.
         """
-        random.seed(11111)        
+        random.seed(11111)
         start_time = time.monotonic()
 
         request_configs = self.build_request_configs(
-                sampling_params,
-            )
-        
+            sampling_params,
+        )
+
         # Get batch size details
         total_request_count = len(request_configs)
         requests_per_thread = total_request_count // self.num_workers
@@ -348,8 +336,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         request_config_batches = []
         idx = 0
         for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
-            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
+            num_requests_for_thread = requests_per_thread + (
+                1 if worker < remainder else 0
+            )
+            request_config_batch = request_configs[
+                idx : idx + num_requests_for_thread
+            ].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
@@ -364,12 +356,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                     request_config_batch,
                     completed_requests,
                     progress_bar,
-                    start_time
-                )
+                    start_time,
+                ),
             )
             threads.append(thread)
             thread.start()
-        
 
         for thread in threads:
             thread.join()
@@ -378,11 +369,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"Unexpected error happened when executing requests: {completed_requests[0]['error_code']}. Additional message: {completed_requests[0]['error_msg']}"
             )
-        
+
         end_time = time.monotonic()
         print("Tasks Executed!")
 
-        print(f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n")
+        print(
+            f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n"
+        )
         results = self.build_metrics_summary(
             completed_requests,
             start_time,
@@ -398,16 +391,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         }
 
         metadata["results"]
-        
+
         return metadata, completed_requests
 
     def build_request_configs(
-            self,
-            sampling_params: Dict[str, Any]
+        self, sampling_params: Dict[str, Any]
     ) -> List[RequestConfig]:
-        """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and builds a 
-        RequestConfig object for each data point. The RequestConfig object contains the necessary information to send a 
-        request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint, generation mode, 
+        """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and builds a
+        RequestConfig object for each data point. The RequestConfig object contains the necessary information to send a
+        request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint, generation mode,
         and number of concurrent workers. The method returns a list of these RequestConfig objects.
 
         Args:
@@ -418,15 +410,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
-        
+
         # Iterate through data points and build a request config for each
         for data_point in self.dataset:
-            
+
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(
-                raw_prompt=data_point[self.prompt_key]
-            )
-            
+            prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
+
             request_config = RequestConfig(
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
@@ -437,14 +427,10 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
             request_configs.append(request_config)
-        
-        return request_configs
-    
 
-    def build_prompt(
-        self, 
-        raw_prompt: str
-    ) -> Tuple[str, int]:
+        return request_configs
+
+    def build_prompt(self, raw_prompt: str) -> Tuple[str, int]:
         """Builds an input prompt from the given raw prompt by applying prompt templating based on the model type.
 
         Args:
@@ -459,14 +445,17 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         For other models, it applies a default templating.
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
+
+        sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
+
         # Specific prompt templating for mistral models
         if MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
             prompt = "[INST]" + raw_prompt + "[/INST]"
-        
+
         # Specific prompt templating for Llama-3 models
         elif MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
-            system_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful assistant that provides concise and helpful assistance on a variety of subjects<|eot_id|>"
-            
+            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
+
             prompt = (
                 system_prompt
                 + "<|start_header_id|>user<|end_header_id|>"
@@ -474,27 +463,26 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
 
+        # Specific prompt templating for Deepseek models
+        elif MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
+            system_prompt = f"{sys_prompt_template}"
+            prompt = system_prompt + raw_prompt
+
         # Prompt templating for Llama-2 and all other models
         else:
-            system_prompt = "[INST]<<SYS>>You are a helpful assistant that provides concise and helpful assistance on a variety of subjects<</SYS>>"
+            system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
 
         return (prompt, self.get_token_length(prompt))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
-    
-    def __init__(
-        self, 
-        *args, 
-        **kwargs
-    ):
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def create_output_filename(
-        self,
-        num_input_tokens: int,
-        num_output_tokens: int
+        self, num_input_tokens: int, num_output_tokens: int
     ) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
 
@@ -504,11 +492,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
 
     def run_benchmark(
-            self,
-            num_input_tokens: int,
-            num_output_tokens: int,
-            num_requests: int,
-            sampling_params: Dict[str, Any],
+        self,
+        num_input_tokens: int,
+        num_output_tokens: int,
+        num_requests: int,
+        sampling_params: Dict[str, Any],
     ):
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
@@ -537,27 +525,20 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             num_requests=num_requests,
             sampling_params=sampling_params,
         )
-        
+
         if self.results_dir:
-            filename = self.create_output_filename(
-                num_input_tokens,
-                num_output_tokens
-            )
-            self.save_results(
-                filename,
-                summary,
-                individual_responses
-            )
+            filename = self.create_output_filename(num_input_tokens, num_output_tokens)
+            self.save_results(filename, summary, individual_responses)
 
     def get_token_throughput_latencies(
-        self, 
-        num_input_tokens: int, 
-        num_output_tokens: int, 
-        num_requests, 
-        sampling_params
+        self,
+        num_input_tokens: int,
+        num_output_tokens: int,
+        num_requests,
+        sampling_params,
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
-        """This function runs a token benchmark for the given model and API, 
-        measuring the throughput and latencies for the specified number of input and output tokens, 
+        """This function runs a token benchmark for the given model and API,
+        measuring the throughput and latencies for the specified number of input and output tokens,
         and the specified number of requests.
 
         Args:
@@ -567,9 +548,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             sampling_params (dict): User specified sampling parameters for generation.
 
         Returns:
-            metadata (dict): A dictionary containing the results of the benchmark, 
-                            including the model name, number of concurrent workers, 
-                            results, number of input tokens, number of output tokens, 
+            metadata (dict): A dictionary containing the results of the benchmark,
+                            including the model name, number of concurrent workers,
+                            results, number of input tokens, number of output tokens,
                             and additional sampling parameters.
             completed_requests (list): A list of completed requests.
 
@@ -578,37 +559,38 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         random.seed(11111)
         start_time = time.monotonic()
-        
+
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(
-            num_requests,
-            num_input_tokens,
-            num_output_tokens,
-            sampling_params
+            num_requests, num_input_tokens, num_output_tokens, sampling_params
         )
-        
+
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
         requests_per_thread = total_request_count // self.num_workers
         remainder = total_request_count % self.num_workers
-        
+
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
         idx = 0
 
         # Create batches of requests for each worker
         for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
-            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
+            num_requests_for_thread = requests_per_thread + (
+                1 if worker < remainder else 0
+            )
+            request_config_batch = request_configs[
+                idx : idx + num_requests_for_thread
+            ].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
-        
-        # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and 
+
+        # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
         # completed requests respectively
         threads = []
         completed_requests = []
         progress_bar = tqdm(total=total_request_count, desc="Running Requests")
-        
+
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
             thread = threading.Thread(
@@ -617,12 +599,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     request_config_batch,
                     completed_requests,
                     progress_bar,
-                    start_time
-                )
+                    start_time,
+                ),
             )
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
@@ -632,11 +614,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"Unexpected error happened when executing requests: {completed_requests[0]['error_code']}. Additional message: {completed_requests[0]['error_msg']}"
             )
-        
+
         # Capture end time and notify user
         end_time = time.monotonic()
         print("Tasks Executed!")
-        print(f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n")
+        print(
+            f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n"
+        )
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
@@ -644,7 +628,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             start_time,
             end_time,
         )
-        
+
         # Construct metadata payload to be returned
         metadata = {
             "model": self.model_name,
@@ -654,20 +638,19 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             "num_output_tokens": num_output_tokens,
             "additional_sampling_params": sampling_params,
         }
-        
+
         return metadata, completed_requests
 
-
     def build_request_configs(
-        self, 
-        num_requests: int, 
+        self,
+        num_requests: int,
         input_token_count: int,
         output_token_count: int,
-        sampling_params: dict, 
-    )-> List[RequestConfig]:
-        """Builds a list of request configuration objects used to send requests to the LLM. It iterates through the specified 
-        number of requests, builds an input prompt for each request, updates the sampling parameters with the maximum number 
-        of tokens to generate, and then creates the request configuration object. The request configurations are then returned 
+        sampling_params: dict,
+    ) -> List[RequestConfig]:
+        """Builds a list of request configuration objects used to send requests to the LLM. It iterates through the specified
+        number of requests, builds an input prompt for each request, updates the sampling parameters with the maximum number
+        of tokens to generate, and then creates the request configuration object. The request configurations are then returned
         as a list.
 
         Args:
@@ -677,7 +660,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             sampling_params (dict): A dictionary of sampling parameters for the LLM.
 
         Returns:
-            List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling parameters, 
+            List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling parameters,
             LLM API, generation mode, and number of concurrent workers.
         """
         # Empty list to be filled with valid request configs and then returned
@@ -685,19 +668,16 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Iterate through data points and build a request config for each
         for _ in range(num_requests):
-            
+
             # Build input prompt to be sent in LLM request
-            prompt_tuple = self.build_prompt(
-                input_token_count, 
-                output_token_count
-            )
-            
+            prompt_tuple = self.build_prompt(input_token_count, output_token_count)
+
             # Add max_tokens_to_generate to `sampling_params` dictionary
             updated_sampling_params = {
                 "max_tokens_to_generate": output_token_count,
             }
             updated_sampling_params.update(sampling_params)
-            
+
             # Create request config object
             request_config = RequestConfig(
                 model=self.model_name,
@@ -713,11 +693,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         return request_configs
 
     def build_prompt(
-        self, 
-        num_input_tokens: int, 
-        num_output_tokens: int
+        self, num_input_tokens: int, num_output_tokens: int
     ) -> Tuple[str, int]:
-        """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template 
+        """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
         multiple times to reach a user set input_token_count. Depending on the LLM being queried, there may be an added
         system prompt.
 
@@ -733,10 +711,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
-        prompt_template = "Create a movie script of the whole Star Wars movie with details. Describe how every character felt, \
-                           include environment details and onomatopoeias."
-        
-         # Prompt for Mistral models
+
+        sys_prompt_template = f"You are a helpful assistant that generates movie scripts with at least {num_output_tokens*10} words. "
+        prompt_template = "Generate a detailed, extensive and complex movie script of the Star Wars movie 'The Empire strikes back', describing how every character felt, environment details and onomatopoeias. After that, generate a complete and extensive end-to-end plot of the movie. Finally, generate a detailed explanation of each character biograhy in multiple paragraphs. "
+
+        # Prompt for Mistral models
         if MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
 
             prompt_content = self.generate_prompt_content(
@@ -749,12 +728,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Prompt for Llama3 models
         elif MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
 
-            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<|eot_id|>"
-            prompt_content_length = num_input_tokens - self.get_token_length(system_prompt)
+            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
+            prompt_content_length = num_input_tokens - self.get_token_length(
+                system_prompt
+            )
 
             prompt_content = self.generate_prompt_content(
-                prompt_template,
-                prompt_content_length
+                prompt_template, prompt_content_length
             )
 
             full_input_prompt = (
@@ -763,34 +743,46 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 + prompt_content
                 + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
-        
-        # Prompt for Llama2 and other models
-        else:
-            
-            system_prompt = f"[INST]<<SYS>>You are a helpful assistant that generates movie scripts with at least {num_output_tokens} words<</SYS>>"
-            prompt_content_length = num_input_tokens - self.get_token_length(system_prompt)
+
+        # Prompt for Deepseek models
+        elif MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
+
+            system_prompt = f"{sys_prompt_template}"
+            prompt_content_length = num_input_tokens - self.get_token_length(
+                system_prompt
+            )
 
             prompt_content = self.generate_prompt_content(
-                prompt_template,
-                prompt_content_length
+                prompt_template, prompt_content_length
+            )
+
+            full_input_prompt = system_prompt + prompt_content
+
+        # Prompt for Llama2 and other models
+        else:
+
+            system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
+            prompt_content_length = num_input_tokens - self.get_token_length(
+                system_prompt
+            )
+
+            prompt_content = self.generate_prompt_content(
+                prompt_template, prompt_content_length
             )
 
             full_input_prompt = system_prompt + prompt_content + "[/INST]"
 
         return (full_input_prompt, self.get_token_length(full_input_prompt))
 
-    
     def generate_prompt_content(
-        self,
-        prompt_template: int,
-        input_prompt_length: int
+        self, prompt_template: int, input_prompt_length: int
     ) -> str:
         """Generate prompt content based on the given prompt template and input prompt length.
 
-        This function works by first determining the length of the prompt template and the total number of tokens needed to generate 
-        from the prompt template. It then generates the prompt content by repeating the prompt template n times, where n is the 
-        number of times the prompt template fits into the total token count. After that, it adds on the first m tokens of the prompt 
-        template to the prompt content generated above until the total token count is reached, where m is the number of tokens that 
+        This function works by first determining the length of the prompt template and the total number of tokens needed to generate
+        from the prompt template. It then generates the prompt content by repeating the prompt template n times, where n is the
+        number of times the prompt template fits into the total token count. After that, it adds on the first m tokens of the prompt
+        template to the prompt content generated above until the total token count is reached, where m is the number of tokens that
         didn't fit in the full repetitions of the prompt template.
 
         Args:
@@ -804,16 +796,20 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         prompt_template_length = self.get_token_length(prompt_template)
 
         # Determine the number of tokens needed to generate from the prompt template
-        total_token_count = input_prompt_length + prompt_template_length * PROMPT_GENERATION_OFFSET
-        
-        # Generate prompt contnet by repeating `prompt_template` n times, where n is the number of times the prompt template fits 
+        total_token_count = (
+            input_prompt_length + prompt_template_length * PROMPT_GENERATION_OFFSET
+        )
+
+        # Generate prompt contnet by repeating `prompt_template` n times, where n is the number of times the prompt template fits
         # into  the total token count calculated above
         prompt_content = "".join(
             [prompt_template * (total_token_count // prompt_template_length)]
         )
-        
-        # Add on the first m tokens of the prompt template to the `prompt_content` generated above up until the total token count 
+
+        # Add on the first m tokens of the prompt template to the `prompt_content` generated above up until the total token count
         # is reached, where m is calculated by using the modulo operator to see how many tokens didn't fit in the repetitions above.
-        prompt_content += prompt_template[: (total_token_count % prompt_template_length)]
+        prompt_content += prompt_template[
+            : (total_token_count % prompt_template_length)
+        ]
 
         return prompt_content

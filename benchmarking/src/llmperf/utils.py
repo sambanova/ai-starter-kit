@@ -7,7 +7,11 @@ from transformers import AutoTokenizer
 
 RESULTS_VERSION = "2023-08-31"
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
-MODEL_TYPE_IDENTIFIER = {"mistral": "mistral", "llama3": "llama-3"}
+MODEL_TYPE_IDENTIFIER = {
+    "mistral": "mistral",
+    "llama3": "llama-3",
+    "deepseek": "deepseek",
+}
 
 
 class LLMPerfResults:
@@ -46,7 +50,7 @@ class LLMPerfResults:
         """
         data = self.to_dict()
         return json.dumps(data)
-    
+
 
 def flatten(item):
     """Flattens an iterable"""
@@ -74,6 +78,16 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
         )
     elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
         tokenizer = AutoTokenizer.from_pretrained("NousResearch/Meta-Llama-3-8B")
+    elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower():
+        if "coder" in model_name.lower():
+            print("using coder tokenizer")
+            tokenizer = AutoTokenizer.from_pretrained(
+                "deepseek-ai/deepseek-coder-1.3b-base"
+            )
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(
+                "deepseek-ai/deepseek-llm-7b-base"
+            )
     else:
         tokenizer = AutoTokenizer.from_pretrained("NousResearch/Llama-2-7b-chat-hf")
     return tokenizer
