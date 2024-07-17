@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
     prompt = "This is a test example, so tell me about anything"
     request_config = RequestConfig(
-        prompt=(prompt, 10),
+        prompt_tuple=(prompt, 10),
         model=model,
         sampling_params={
             # "do_sample": False,
