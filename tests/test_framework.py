@@ -5,6 +5,8 @@ This module provides a unittest-based framework for testing various starter kits
 in both local and Docker environments. It includes functionality to set up the
 testing environment, run Streamlit applications, and validate their operation.
 It also includes placeholders for CLI/script tests.
+
+If you are running .sh files as CLI tests, ensure you have made them executable.
 """
 
 import os
@@ -42,7 +44,7 @@ STARTER_KITS: List[str] = [
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
-    # 'enterprise_knowledge_retriever': 'python cli_test.py --mode retrieve',
+    'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     # 'function_calling': 'python cli_test.py --function example_function',
     # 'search_assistant': 'python cli_test.py --query "test query"',
     'benchmarking': './run_synthetic_dataset.sh' #This runs the benchmarking suite. 
@@ -56,6 +58,8 @@ class TestEnvironment:
 class StarterKitTest(unittest.TestCase):
     root_dir: str
     env: str
+    run_streamlit: bool
+    run_cli: bool
 
     @classmethod
     def setUpClass(cls):
@@ -127,6 +131,10 @@ class StarterKitTest(unittest.TestCase):
         os.environ['PATH'] = f"{venv_path}/bin:{os.environ['PATH']}"
 
     def run_streamlit_test(self, kit: str) -> None:
+        if not self.run_streamlit:
+            logging.info(f"Skipping Streamlit test for {kit}")
+            return
+        
         if self.env == TestEnvironment.LOCAL:
             self.run_local_streamlit_test(kit)
         elif self.env == TestEnvironment.DOCKER:
@@ -194,6 +202,10 @@ class StarterKitTest(unittest.TestCase):
         self.fail(f"Streamlit app for {kit} failed to start after 3 attempts")
 
     def run_cli_test(self, kit: str) -> None:
+        if not self.run_cli:
+            logging.info(f"Skipping CLI test for {kit}")
+            return
+        
         if self.env == TestEnvironment.LOCAL:
             self.run_local_cli_test(kit)
         elif self.env == TestEnvironment.DOCKER:
@@ -203,15 +215,17 @@ class StarterKitTest(unittest.TestCase):
         logging.info(f"\nRunning CLI test for {kit} locally...")
         kit_dir = os.path.join(self.root_dir, kit)
         
-        # Get the CLI test command for this kit
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
         
         try:
-            # Run the CLI test command with timeout
             result = subprocess.run(cli_command, shell=True, cwd=kit_dir, capture_output=False, timeout=CLI_COMMAND_TIMEOUT)
-            self.assertEqual(result.returncode, 0, f"CLI test for {kit} failed")
             logging.info(f"CLI test output for {kit}:\n{result.stdout}")
-            logging.info(f"CLI test for {kit} passed")
+            
+            if result.returncode == 0:
+                logging.info(f"All CLI tests for {kit} passed")
+            else:
+                logging.error(f"CLI test for {kit} failed. {result.returncode} test(s) failed.")
+                self.fail(f"CLI test for {kit} failed. {result.returncode} test(s) failed.")
         except subprocess.TimeoutExpired:
             logging.error(f"CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds")
             self.fail(f"CLI test for {kit} timed out")
@@ -233,9 +247,13 @@ class StarterKitTest(unittest.TestCase):
                 # Run the CLI test command in Docker with timeout
                 result = subprocess.run(['docker', 'exec', container_id, 'sh', '-c', docker_cli_command], 
                                         capture_output=False, timeout=CLI_COMMAND_TIMEOUT)
-                self.assertEqual(result.returncode, 0, f"Docker CLI test for {kit} failed")
                 logging.info(f"Docker CLI test output for {kit}:\n{result.stdout}")
-                logging.info(f"Docker CLI test for {kit} passed")
+                
+                if result.returncode == 0:
+                    logging.info(f"All Docker CLI tests for {kit} passed")
+                else:
+                    logging.error(f"Docker CLI test for {kit} failed. {result.returncode} test(s) failed.")
+                    self.fail(f"Docker CLI test for {kit} failed. {result.returncode} test(s) failed.")
             except subprocess.TimeoutExpired:
                 logging.error(f"Docker CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds")
                 self.fail(f"Docker CLI test for {kit} timed out")
@@ -260,10 +278,17 @@ if __name__ == '__main__':
                         help='Specify the test environment (default: all)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Run tests in verbose mode')
+    parser.add_argument('--skip-streamlit', action='store_true',
+                        help='Skip Streamlit tests')
+    parser.add_argument('--skip-cli', action='store_true',
+                        help='Skip CLI tests')
     args, unknown = parser.parse_known_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    StarterKitTest.run_streamlit = not args.skip_streamlit
+    StarterKitTest.run_cli = not args.skip_cli
 
     if args.env in ['local', 'all']:
         logging.info("Running local tests...")
