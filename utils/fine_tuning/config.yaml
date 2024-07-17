@@ -1,6 +1,7 @@
 sambastudio:
   tenant: "default"
-  rdu_arch: "sn10"
+  rdu_arch: "sn20"
+  snapi_path: ""
 
 dataset:
   dataset_name: "smol_sql_dataset"
@@ -10,7 +11,8 @@ dataset:
     - 'Mistral'
     - 'Llama 3'
     - 'Llama 2 with dynamic batching'
-    - 'Llama 2 7B','Llama 2 70B with dynamic batching'
+    - 'Llama 2 7B'
+    - 'Llama 2 70B with dynamic batching'
     - 'Llama 2 70B'
     - 'Llama 2 13B'
   dataset_job_types:
