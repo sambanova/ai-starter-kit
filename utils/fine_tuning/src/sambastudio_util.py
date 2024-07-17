@@ -81,13 +81,13 @@ class SnsdkWrapper:
                 )
             if create_project_response["status_code"]==200:
                 self.project_id = create_project_response["data"]["project_id"]
-                logging.info(f"Project with name {project_name} created with id {project_id}")
+                logging.info(f"Project with name {project_name} created with id {self.project_id}")
             else:
                 logging.error(f"Failed to create project with name '{project_name}'. Details: {create_project_response['detail']}")
                 raise Exception(f"Error message: {create_project_response['detail']}")
         else:
-            logging.info(f"Project with name '{project_name}' already exists, using it")
             self.project_id=project_id
+            logging.info(f"Project with name '{project_name}' already exists with id '{self.project_id}', using it")
         return self.project_id
     
     def list_projects(self):
@@ -101,14 +101,18 @@ class SnsdkWrapper:
             logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
             raise Exception(f"Error message: {list_projects_response['detail']}")
         
-    def delete_project(self,  project_name:Optional[str] = None):
-        if project_name is None:
-            project_name = self.config["project"]["project_name"]
-        delete_project_response = self.snsdk_client.delete_project(project=project_name)
-        if delete_project_response["status_code"] == 200:
-            logging.info(f"Project with name '{project_name}' deleted")
+    def delete_project(self,  project_name:Optional[str] = None, project_id:Optional[str] = None):
+        if project_id is not None:
+            project=project_id
+        elif project_name is not None:
+            project=project_name
         else:
-            logging.error(f"Failed to delete project with name '{project_name}'. Details: {delete_project_response['detail']}")
+            project = self.config["project"]["project_name"]
+        delete_project_response = self.snsdk_client.delete_project(project=project)
+        if delete_project_response["status_code"] == 200:
+            logging.info(f"Project with name or id '{project_name}' deleted")
+        else:
+            logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response['detail']}")
             raise Exception(f"Error message: {delete_project_response['detail']}")
         print(delete_project_response)
         
