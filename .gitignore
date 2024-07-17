@@ -119,6 +119,7 @@ env.bak/
 venv.bak/
 server/ask-venv/*
 secret.txt
+.test_suite_venv
 
 # Spyder project settings
 .spyderproject
@@ -235,8 +236,12 @@ benchmarking/debug
 eval_jumpstart/data
 eval_jumpstart/notebooks/wandb
 utils/eval/res.csv
-utils/eval/tepsys_eng_tran.csv
+utils/eval/data
 
 =======
 #wandb
 wandb/
+
+utils/eval/.deepeval-cache.json
+utils/eval/results
+utils/eval/weave
