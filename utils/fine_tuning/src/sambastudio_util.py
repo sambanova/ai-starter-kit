@@ -68,14 +68,19 @@ class SnsdkWrapper:
             logging.info(f"Project with name '{project_name}' not found")
             return None
 
-    def create_project(self, project_name: Optional[str] = None):
+    def create_project(
+        self, project_name: Optional[str] = None, 
+        project_description: Optional[str] = None
+        ):
         if project_name is None:
             project_name = self.config["project"]["project_name"]
+        if project_description is None:
+            project_description = self.config.get["project"]["project_description"]
         project_id=self.search_project(project_name)
         if project_id is None:
             create_project_response = self.snsdk_client.create_project(    
                 project_name=project_name,
-                description=self.config["project"]["project_description"]
+                description=project_description
                 )
             if create_project_response["status_code"]==200:
                 project_id = create_project_response["data"]["project_id"]
