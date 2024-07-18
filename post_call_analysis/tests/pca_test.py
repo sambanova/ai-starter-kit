@@ -59,10 +59,33 @@ entities = ["name", "address", "city", "phone number"]
 sentiments = ["positive", "neutral" ,"negative"] 
 
 dialogue = convert_to_dialogue_structure(transcription)
-print('Petro: finish converting dialogue')
+print('Finished converting dialogue')
 conversation = analysis.load_conversation(dialogue, transcription_path)
-print('Petro: finish loading conversation')
+print('Finished loading conversation')
 conversation_chunks = analysis.get_chunks(conversation)
-print('Petro: finish chunking')
+print('Finished chunking')
 result=analysis.call_analysis_parallel(conversation_chunks, documents_path=facts_path, facts_urls=facts_urls, procedures_path=procedures_path, classes_list=classes, entities_list=entities, sentiment_list=sentiments)
-print('Petro: finish analysis')
+
+print("\nConversation summary:")
+print(result["summary"])
+
+print("\nClassification:")
+print(result["classification"])
+
+print("\nSentiment analysis:")
+print(result["sentiment"])
+
+print("\nNPS prediction:")
+print(result["nps_analysis"])
+print("Predicted NPS: %d"%(result['nps_score']))
+
+print("\nFactual accuracy analysis:")
+print("correct: %s"%(result["factual_analysis"]['correct']))
+print("errors: %s"%(result["factual_analysis"]['errors']))
+
+#print("Procedures analysis")
+
+#print("Extracted entities")
+
+print("\nCall quality assessment:")
+print(result["quality_score"])
