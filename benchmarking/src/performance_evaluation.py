@@ -10,17 +10,24 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 from tqdm import tqdm
+import transformers
 
 from llmperf import common_metrics
 from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
+import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
-MODEL_TYPE_IDENTIFIER = {
-    "mistral": "mistral",
-    "llama3": "llama-3",
-    "deepseek": "deepseek",
-}
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
+transformers.logging.set_verbosity_error()
+
 PROMPT_GENERATION_OFFSET = 2
 
 
@@ -133,7 +140,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
         ]:
-            print(f"Building Metrics Summary for metric: {metric}")
+            logger.info(f"Building Metrics Summary for metric: {metric}")
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
@@ -144,24 +151,24 @@ class BasePerformanceEvaluator(abc.ABC):
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f"p{int(quantile * 100)}"
-                print(f"    {reformatted_key} = {value}")
+                logger.info(f"    {reformatted_key} = {value}")
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]["quantiles"] = quantiles_reformatted_keys
 
             series_mean = series.mean()
-            print(f"    mean = {series_mean}")
+            logger.info(f"    mean = {series_mean}")
             metrics_summary[metric]["mean"] = series_mean
 
             series_min = series.min()
-            print(f"    min = {series_min}")
+            logger.info(f"    min = {series_min}")
             metrics_summary[metric]["min"] = series_min
 
             series_max = series.max()
-            print(f"    max = {series_max}")
+            logger.info(f"    max = {series_max}")
             metrics_summary[metric]["max"] = series_max
 
             series_std = series.std()
-            print(f"    stddev = {series_std}")
+            logger.info(f"    stddev = {series_std}")
             metrics_summary[metric]["stddev"] = series_std
 
         # Record number of requests started
@@ -174,21 +181,21 @@ class BasePerformanceEvaluator(abc.ABC):
             num_errors / len(metrics) if len(metrics) else 0
         )
         metrics_summary[common_metrics.NUM_ERRORS] = num_errors
-        print(f"Number Of Errored Requests: {num_errors}")
+        logger.info(f"Number Of Errored Requests: {num_errors}")
 
         # Record specific error code frequencies
         error_code_frequency = dict(error_codes.value_counts())
         if num_errors:
             error_code_frequency = dict(error_codes.value_counts())
-            print("Error Code Frequency")
-            print(error_code_frequency)
+            logger.error("Error Code Frequency")
+            logger.error(error_code_frequency)
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
         overall_output_throughput = metrics_df[
             common_metrics.NUM_OUTPUT_TOKENS
         ].sum() / (end_time - start_time)
-        print(f"Overall Output Throughput: {overall_output_throughput}")
+        logger.info(f"Overall Output Throughput: {overall_output_throughput}")
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
 
         # Record number of requests completed
@@ -196,9 +203,9 @@ class BasePerformanceEvaluator(abc.ABC):
         num_completed_requests_per_min = (
             num_completed_requests / (end_time - start_time) * 60
         )
-        print(f"Number Of Completed Requests: {num_completed_requests}")
-        print(f"Number Of Concurrent Workers: {self.num_workers}")
-        print(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
+        logger.info(f"Number Of Completed Requests: {num_completed_requests}")
+        logger.info(f"Number Of Concurrent Workers: {self.num_workers}")
+        logger.info(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
         metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = (
@@ -241,7 +248,7 @@ class BasePerformanceEvaluator(abc.ABC):
             with open(self.summary_file_path, "w") as f:
                 json.dump(results.to_dict(), f, indent=4, default=str)
         except Exception as e:
-            print(results.to_dict())
+            logger.error(results.to_dict())
             raise e
 
         try:
@@ -251,7 +258,7 @@ class BasePerformanceEvaluator(abc.ABC):
             with open(self.individual_responses_file_path, "w") as f:
                 json.dump(individual_responses, f, indent=4)
         except Exception as e:
-            print(individual_responses)
+            logger.error(individual_responses)
             raise e
 
 
@@ -371,10 +378,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
         end_time = time.monotonic()
-        print("Tasks Executed!")
-
-        print(
-            f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n"
+        logger.info("Tasks Executed!")
+        logger.info(
+            f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
         )
         results = self.build_metrics_summary(
             completed_requests,
@@ -449,11 +455,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
 
         # Specific prompt templating for mistral models
-        if MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
+        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
             prompt = "[INST]" + raw_prompt + "[/INST]"
 
         # Specific prompt templating for Llama-3 models
-        elif MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
             system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
 
             prompt = (
@@ -464,7 +470,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
         # Specific prompt templating for Deepseek models
-        elif MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
             system_prompt = f"{sys_prompt_template}"
             prompt = system_prompt + raw_prompt
 
@@ -617,9 +623,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Capture end time and notify user
         end_time = time.monotonic()
-        print("Tasks Executed!")
-        print(
-            f"\Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.\n"
+        logger.info("Tasks Executed!")
+        logger.info(
+            f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
         )
 
         # Build a metrics summary for the results of the benchmarking run
@@ -716,7 +722,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         prompt_template = "Generate a detailed, extensive and complex movie script of the Star Wars movie 'The Empire strikes back', describing how every character felt, environment details and onomatopoeias. After that, generate a complete and extensive end-to-end plot of the movie. Finally, generate a detailed explanation of each character biograhy in multiple paragraphs. "
 
         # Prompt for Mistral models
-        if MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
+        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
 
             prompt_content = self.generate_prompt_content(
                 prompt_template,
@@ -726,7 +732,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             full_input_prompt = "[INST]" + prompt_content + "[/INST]"
 
         # Prompt for Llama3 models
-        elif MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
 
             system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
             prompt_content_length = num_input_tokens - self.get_token_length(
@@ -745,7 +751,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
         # Prompt for Deepseek models
-        elif MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
 
             system_prompt = f"{sys_prompt_template}"
             prompt_content_length = num_input_tokens - self.get_token_length(
