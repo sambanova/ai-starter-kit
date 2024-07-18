@@ -112,7 +112,40 @@ class SnsdkWrapper:
         else:
             logging.error(f"Failed to delete project with name or id '{project}'. Details: {delete_project_response}")
             raise Exception(f"Error message: {delete_project_response}")
-        
+    
+    """models"""
+    def list_models(self):
+        list_models_response = self.snsdk_client.list_models()
+        if list_models_response["status_code"] == 200:
+            models={}
+            for model in list_models_response["models"]:
+                if set(["train","deploy"]).issubset(model.get("jobTypes")):
+                    models[model.get("model_checkpoint_name")] = model.get("model_id")
+            return models
+        else:
+            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
+            raise Exception(f"Error message: {list_models_response['detail']}")
+    
+    def search_model(self, model_name: str):
+        search_model_response=self.snsdk_client.search_model(model_name=model_name) 
+        if search_model_response["status_code"]==200:
+            model_id = search_model_response["data"]["model_id"]
+            logging.info(f"Model with name '{model_name}' found with id {model_id}")
+            return model_id
+        else:
+            logging.info(f"Project with name '{model_name}' not found")
+            return None
+    
+    def search_trainable_model(self, model_name):
+        models = self.list_models()
+        model_id = models.get(model_name)
+        if model_id is not None:
+            logging.info(f"Model '{model_name}' with id '{model_id}' available for training and deployment found") 
+            return model_id
+        else:
+            logging.info(f"Model '{model_name}' available for training and deployment not found")
+            return None
+    
     """Job"""
     
     def run_job(self,
@@ -236,7 +269,6 @@ class SnsdkWrapper:
         if project_id is None:
             logging.info(f"Project '{project_name}' not found listing all user jobs")
         list_jobs_response = self.snsdk_client.list_jobs(project_id=project_id)
-        print(list_jobs_response)
         if list_jobs_response["status_code"] == 200:
             jobs=[]
             for job in list_jobs_response["jobs"]:
@@ -366,53 +398,90 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {delete_checkpoint_response}")
 
     """endpoint"""
-    def list_endpoints():
+    def list_endpoints(self, project_name: Optional[str] = None):
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found listing all user endpoints")
+        list_endpoints_response = self.snsdk_client.list_endpoints(project=project_id)
+        print(list_endpoints_response)
+        if list_endpoints_response["status_code"] == 200:
+            endpoints=[]
+            for endpoint in list_endpoints_response["endpoints"]:
+                endpoints.append(
+                    {k:v for k,v in endpoint.items() if k in ["name", "id", "project_id",  "status", ]}
+                    )
+            return endpoints
+        else:
+            logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
+            raise Exception(f"Error message: {list_endpoints_response['detail']}")
+    def create_endpoint(self,
+                        project_name: Optional[str]=None,
+                        endpoint_name: Optional[str]=None,
+                        endpoint_description: Optional[str]=None,
+                        model_name: Optional[str]=None,
+                        instances: Optional[str]=None,
+                        rdu_arch: Optional[str]=None,
+                        hyperparams: Optional[str]=None,
+                        ):
+        # check if project selected exists
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found")   
+            
+        # check if model selected exists   
+        if model_name is None:
+            model_name = self.config["model_checkpoint"]["model_name"]
+        model_id = self.search_model(model_name=model_name)
+        if model_id is None:
+            raise Exception(f"Model with name '{model_name}' not found")
+        
+        # check if endpoint selected exists
+        if endpoint_name is None:
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_id = self.get_endpoint_details(endpoint_name)
+        if endpoint_id is not None:
+            logging.info(f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}")
+
+        create_endpoint_response=self.snsdk_client.create_endpoint(
+            project=project_id,
+            endpoint_name=endpoint_name,
+            description=endpoint_description or self.config["endpoint"]["endpoint_description"],
+            model_checkpoint=model_id,
+            instances=instances or self.config["endpoint"]["endpoint_instances"],
+            rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
+            hyperparams = json.dumps(hyperparams or self.config["endpoint"]["hyperparams"]),
+        ) #TODO: check if this should be gets in order to not set a config file
+        
+        if create_endpoint_response["status_code"] == 200:
+            logging.info(f"Endpoint '{endpoint_name}' created")
+            endpoint_id = create_endpoint_response["id"]
+            return endpoint_id
+            
+        else:
+            logging.error(f"Failed to create endpoint {endpoint_name}. Details: {create_endpoint_response}")
+            raise Exception(f"Error message: {create_endpoint_response}") 
+        
+
+    def search_endpoint_details(self, endpoint_name: Optional[str]=None):
+        if endpoint_name is None:
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_info_response = self.snsdk_client.endpoint_info(endpoint_name)
+        print(endpoint_info_response) #TODO check response to return id or none 
+        
+        
+    def get_endpoint_details():
+        #TODO return details
         pass
-    def create_endpoint():
-        pass
-    
-    def stop_endpoint():
-        pass
-    
-    def delete_endpoint():
+        
+    def delete_endpoint(self, endpoint_name: Optional[str]=None):
+        #TODO search first if exist
         pass
 
-    def check_endpoint_progress():
-        # check rdus available
-        pass
-
-    """generic stuff"""
-    def list_models(self):
-        list_models_response = self.snsdk_client.list_models()
-        if list_models_response["status_code"] == 200:
-            models={}
-            for model in list_models_response["models"]:
-                if set(["train","deploy"]).issubset(model.get("jobTypes")):
-                    models[model.get("model_checkpoint_name")] = model.get("model_id")
-            return models
-        else:
-            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
-            raise Exception(f"Error message: {list_models_response['detail']}")
-    
-    def search_model(self, model_name: str):
-        search_model_response=self.snsdk_client.search_model(model_name=model_name) 
-        if search_model_response["status_code"]==200:
-            model_id = search_model_response["data"]["model_id"]
-            logging.info(f"Model with name '{model_name}' found with id {model_id}")
-            return model_id
-        else:
-            logging.info(f"Project with name '{model_name}' not found")
-            return None
-    
-    def search_trainable_model(self, model_name):
-        models = self.list_models()
-        model_id = models.get(model_name)
-        if model_id is not None:
-            logging.info(f"Model '{model_name}' with id '{model_id}' available for training and deployment found") 
-            return model_id
-        else:
-            logging.info(f"Model '{model_name}' available for training and deployment not found")
-            return None
+    """datasets"""
             
     def search_dataset(self, dataset_name):
         search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name) 
