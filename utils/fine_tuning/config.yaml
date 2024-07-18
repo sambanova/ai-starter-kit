@@ -58,9 +58,9 @@ job:
 
 model_checkpoint:
   model_checkpoint_id: "" #set after listing the generated checkpoints after training
-  model_checkpoint_name: "llama2_7b_fine_tuned_nstext2sql"
-  model_checkpoint_description: "finetuned llama2_7b model for nstext2sql"
-  model_checkpoint_type: "finetuned"
+  model_name: "llama2_7b_fine_tuned_nstext2sql"
+  model_description: "finetuned llama2_7b model for nstext2sql"
+  model_type: "finetuned"
 
 endpoint:
   endpoint_name: "test-endpoint-sql"

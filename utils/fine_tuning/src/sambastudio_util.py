@@ -103,18 +103,14 @@ class SnsdkWrapper:
             logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
             raise Exception(f"Error message: {list_projects_response['detail']}")
         
-    def delete_project(self,  project_name:Optional[str] = None, project_id:Optional[str] = None):
-        if project_id is not None:
-            project=project_id
-        elif project_name is not None:
-            project=project_name
-        else:
+    def delete_project(self,  project: Optional[str] = None):
+        if project is not None:
             project = self.config["project"]["project_name"]
         delete_project_response = self.snsdk_client.delete_project(project=project)
         if delete_project_response["status_code"] == 200:
-            logging.info(f"Project with name or id '{project_name}' deleted")
+            logging.info(f"Project with name or id '{project}' deleted")
         else:
-            logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}")
+            logging.error(f"Failed to delete project with name or id '{project}'. Details: {delete_project_response}")
             raise Exception(f"Error message: {delete_project_response}")
         
     """Job"""
@@ -133,29 +129,23 @@ class SnsdkWrapper:
                 hyperparams: Optional[dict] = None,
                 ):
         # check if project selected exists
-        if project_name is not None:
-            project_id = self.search_project(project_name)
-        else:
-            project_id = self.search_project(self.config["project"]["project_name"])
-            
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
         if project_id is None:
-            raise Exception(f"project with name '{project_name}' not found")
+            raise Exception(f"Project '{project_name}' not found")
         
         # check if model selected is found and is trainable
         if model is not None:
-            model_id = self.search_trainable_model(model)
-        else: 
-            model_id = self.search_trainable_model(self.config["job"]["model"])
-            
+            model = self.config["job"]["model"]
+        model_id = self.search_trainable_model(model)   
         if model_id is None:
             raise Exception(f"model with name '{model}' not found")
             
         # check if dataset exist
         if dataset_name is not None:
-            dataset_id = self.search_dataset(dataset_name)
-        else:
-            dataset_id = self.search_dataset(self.config["dataset"]["dataset_name"])
-            
+            dataset_name = self.config["dataset"]["dataset_name"]
+        dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
         
@@ -172,7 +162,7 @@ class SnsdkWrapper:
             sub_path = sub_path or self.config["job"]["sub_path"],
             rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
             hyperparams = json.dumps(hyperparams or self.config["job"]["hyperparams"]),
-        )
+        ) #TODO: check if this should be gets in order to not set a config file
         
         if create_job_response["status_code"] == 200:
             job_id = create_job_response["job_id"]
@@ -185,10 +175,17 @@ class SnsdkWrapper:
     def search_job(self, job_name: Optional[str] = None, project_name: Optional[str]=None):
         if job_name is None:
             job_name = self.config["job"]["job_name"]
+            
+        # check if project selected exists
         if project_name is None:
             project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            raise Exception(f"Project '{project_name}' not found")
+        
+        # search for job 
         search_job_response = self.snsdk_client.search_job(
-            project=project_name,
+            project=project_id,
             job_name=job_name
             )
         if search_job_response["status_code"] == 200:
@@ -204,15 +201,23 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None
         ):
-        if job_name is None:
-            job_name = self.config["job"]["job_name"]
+        # check if project selected exists
         if project_name is None:
             project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            raise Exception(f"Project '{project_name}' not found")
+        
+        # check if job selected exists
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
             raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+        
+        # check job progress
         check_job_progress_response = self.snsdk_client.job_info(
-            project = project_name,
+            project = project_id,
             job = job_id
             )
         if check_job_progress_response["status_code"] == 200:
@@ -244,13 +249,24 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {list_jobs_response['detail']}")
 
     def delete_job(self, project_name: Optional[str]=None, job_name: Optional[str]=None):
+        # check if project selected exists
         if project_name is None:
             project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found")   
+            
+        #check if job selected exists
         if job_name is None:
             job_name = self.config["job"]["job_name"]
+        job_id = self.search_job(project_name=project_name, job_name=job_name)
+        if job_id is None:
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")  
+            
+        # delete job
         delete_job_response = self.snsdk_client.delete_job(
-            project = project_name,
-            job = job_name
+            project = project_id,
+            job = job_id
         )
         if delete_job_response["status_code"] == 200:
             logging.info(f"Job with name '{job_name}' in project '{project_name}' deleted")
@@ -261,13 +277,104 @@ class SnsdkWrapper:
 
     """checkpoints"""
 
-    def list_checkpoints():
-        # check metrics: loss
-        pass
+    def list_checkpoints(self, project_name: Optional[str]=None, job_name: Optional[str]=None):
+        # check if project selected exists
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found")   
+            
+        # check if job selected exists
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
+        job_id = self.search_job(project_name=project_name, job_name=job_name)
+        if job_id is None:
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+        
+        list_checkpoints_response=self.snsdk_client.list_checkpoints(
+            project = project_id,
+            job = job_id
+        )
+        if list_checkpoints_response["status_code"] == 200:
+            checkpoints=[]
+            #TODO implement logic to filter out response, blocked by authorization error
+            #for checkpoint in list_checkpoints_response:
+            #    pass
+            return checkpoints
+        else:
+            logging.error(f"Failed to list checkpoints. Details: {list_checkpoints_response}")
+            raise Exception(f"Error message: {list_checkpoints_response}")
+        
+    
+    def promote_checkpoint(self, 
+                           checkpoint_id: Optional[str] = None,
+                           project_name: Optional[str] = None,
+                           job_name: Optional[str] = None,
+                           model_name: Optional[str] = None,
+                           model_description: Optional[str] = None,
+                           model_type: Optional[str] = None,
+                           ):
+        
+        # check if project selected exists
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found")   
+            
+        # check if job selected exists
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
+        job_id = self.search_job(project_name=project_name, job_name=job_name)
+        if job_id is None:
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+        
+        if checkpoint_id is None:
+            checkpoint_id = self.config["model_checkpoint"]["model_checkpoint_id"]
+            if not checkpoint_id:
+                raise Exception("No model checkpoint_id provided")
+            # TODO: check if checkpoint in list checkpoints list blocked because authorization error in lists checkpoints method
+            # if checkpoint_id not in self.list_checkpoints(project_name=project_name, job_name=job_name):
+            #     raise Exception(f"Checkpoint id '{checkpoint_id}' not found in job '{job_name}'")
+        
+        add_model_response = self.snsdk_client.add_model(
+            project = project_name or self.config["project"]["project_name"],
+            job = job_name or self.config["job"]["job_name"],
+            model_checkpoint=checkpoint_id,
+            model_checkpoint_name=model_name or self.config["model_checkpoint"]["model_name"],
+            description=model_description or self.config["model_checkpoint"]["model_description"],
+            checkpoint_type=model_type or self.config["model_checkpoint"]["model_type"]
+        ) #TODO: check if this should be gets in order to not set a config file
+        if add_model_response["status_code"] == 200:
+            logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
+            #TODO test blocked because of authorization error 
+        else:
+            logging.error(f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}")
+            raise Exception(f"Error message: {add_model_response}")
+    
+    def delete_checkpoint(self, checkpoint: str = None):
+        if checkpoint is None:
+            checkpoint = self.config["model_checkpoint"]["model_checkpoint_id"]
+            if not checkpoint:
+                raise Exception("No model checkpoint_id provided")
+        delete_checkpoint_response = self.snsdk_client.delete_checkpoint(checkpoint=checkpoint)
+        if delete_checkpoint_response["status_code"] == 200:
+            logging.info(f"Model checkpoint '{checkpoint}' deleted")
+        else:
+            logging.error(f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}")
+            raise Exception(f"Error message: {delete_checkpoint_response}")
 
     """endpoint"""
-
+    def list_endpoints():
+        pass
     def create_endpoint():
+        pass
+    
+    def stop_endpoint():
+        pass
+    
+    def delete_endpoint():
         pass
 
     def check_endpoint_progress():
