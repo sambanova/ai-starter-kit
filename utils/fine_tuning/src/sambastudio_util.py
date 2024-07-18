@@ -114,9 +114,8 @@ class SnsdkWrapper:
         if delete_project_response["status_code"] == 200:
             logging.info(f"Project with name or id '{project_name}' deleted")
         else:
-            logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response['detail']}")
-            raise Exception(f"Error message: {delete_project_response['detail']}")
-        print(delete_project_response)
+            logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}")
+            raise Exception(f"Error message: {delete_project_response}")
         
     """Job"""
     
@@ -180,20 +179,85 @@ class SnsdkWrapper:
             logging.info(f"Job with name '{job_name}' created: '{create_job_response}'")
             return job_id
         else:
-            logging.error(f"Failed to create job with name '{job_name}'. Details: {create_job_response}")
+            logging.error(f"Failed to create job with name '{job_name or self.config['job']['job_name']}'. Details: {create_job_response}")
             raise Exception(f"Error message: {create_job_response}")
 
-    def check_job_progress(self, job_id):
-        # checks job progress
-        # e2e process has to wait while this is working, showing progress
-        pass
+    def search_job(self, job_name: Optional[str] = None, project_name: Optional[str]=None):
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        search_job_response = self.snsdk_client.search_job(
+            project=project_name,
+            job_name=job_name
+            )
+        if search_job_response["status_code"] == 200:
+             job_id = search_job_response["data"]["job_id"]
+             logging.info(f"Job with name '{job_name}' in project '{project_name}' found with id '{job_id}'")
+             return job_id
+        else:
+            logging.info(f"Job with name '{job_name}' in project '{project_name}' not found")
+            return None
+        
+    def check_job_progress(
+        self,
+        project_name: Optional[str] = None,
+        job_name: Optional[str] = None
+        ):
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        job_id = self.search_job(project_name=project_name, job_name=job_name)
+        if job_id is None:
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+        check_job_progress_response = self.snsdk_client.job_info(
+            project = project_name,
+            job = job_id
+            )
+        if check_job_progress_response["status_code"] == 200:
+            #TODO implement logic to filter out response, blocked by authorization error
+            #job_progress = {}
+            #logging.info(f"Job '{job_name}' with progress status: {job_progress}")
+            return job_progress
+        else:
+            logging.error(f"Failed to check job progress. Details: {check_job_progress_response}")
+            raise Exception(f"Error message: {check_job_progress_response}")
+        
+    def list_jobs(self, project_name: Optional[str]):
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            logging.info(f"Project '{project_name}' not found listing all user jobs")
+        list_jobs_response = self.snsdk_client.list_jobs(project_id=project_id)
+        print(list_jobs_response)
+        if list_jobs_response["status_code"] == 200:
+            jobs=[]
+            for job in list_jobs_response["jobs"]:
+                jobs.append(
+                    {k:v for k,v in job.items() if k in ["job_name", "job_id", "job_type", "project_id", "status"]}
+                    )
+            return jobs
+        else:
+            logging.error(f"Failed to list jobs. Details: {list_jobs_response['detail']}")
+            raise Exception(f"Error message: {list_jobs_response['detail']}")
 
-    def delete_job(self, job_id):
-        pass
-
-    def retrieve_results(self, job_id):
-        # todo for batch inference
-        pass
+    def delete_job(self, project_name: Optional[str]=None, job_name: Optional[str]=None):
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        if job_name is None:
+            job_name = self.config["job"]["job_name"]
+        delete_job_response = self.snsdk_client.delete_job(
+            project = project_name,
+            job = job_name
+        )
+        if delete_job_response["status_code"] == 200:
+            logging.info(f"Job with name '{job_name}' in project '{project_name}' deleted")
+            #TODO check if working, blocked by authorization error
+        else:
+            logging.error(f"Failed to delete job with name '{job_name}' in project '{project_name}'. Details: {delete_job_response}")
+            raise Exception(f"Error message: {delete_job_response}")
 
     """checkpoints"""
 
@@ -211,7 +275,6 @@ class SnsdkWrapper:
         pass
 
     """generic stuff"""
-
     def list_models(self):
         list_models_response = self.snsdk_client.list_models()
         if list_models_response["status_code"] == 200:
