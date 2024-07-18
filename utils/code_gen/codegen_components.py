@@ -22,16 +22,17 @@ class CodeGenComponents(BaseComponents):
 
     def python_parser(self, text: str) -> str:
         """
-        Parse the given text to extract Python code blocks.
+        Parse the given text to extract Python code blocks.  If Python code is parsed based on
+        the regex pattern, it will return the merged code blocks.  
+        Otherwise, it will return the original text.
 
         Args:
-            text (str): The input text to parse.
+            text: The input text to parse.
 
         Returns:
-            str: The extracted Python code blocks, or the original text if no code blocks are found.
+            The extracted Python code blocks, or the original text if no code blocks are found.
         """
          
-        # text = text.content # For Ollama only
         code_blocks = re.findall(r"```python\s+(.*?)\s+```", text, re.S)
 
         if code_blocks:
@@ -49,52 +50,54 @@ class CodeGenComponents(BaseComponents):
         The resulting code router is then parsed into a JSON output.
 
         Args:
-            self (object): The object instance.
+            None
 
         Returns:
-            The self.code_router attribute.
+            None
         """
 
-        code_router_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["code_router_prompt"]) 
-        self.code_router: Any = code_router_prompt | self.llm | JsonOutputParser()
+        code_router_prompt: str = load_prompt(repo_dir + "/" + self.prompts_paths["code_router_prompt"]) 
+        self.code_router = code_router_prompt | self.llm | JsonOutputParser()
 
     def init_codegen_chain(self) -> None:
         """
-        Initializes the code generation chain by loading the codegen prompt and combining it with the LLM and Python parser.
+        Initializes the code generation chain by loading the codegen prompt and 
+        combining it with the LLM and Python parser.
 
         Args:
-            self (object): The object instance.
+            None
 
         Returns: 
-            The self.codegen attribute.
+            None
         """
         
-        codegen_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_prompt"]) 
-        self.codegen: Any = codegen_prompt | self.llm | self.python_parser
+        codegen_prompt: str = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_prompt"]) 
+        self.codegen = codegen_prompt | self.llm | self.python_parser
 
     def init_codegen_qc_chain(self) -> None:
         """
         This method initializes the codegen QC chain.
 
         Args:
-            self (object): The object instance.
+            None
 
         Returns: 
-            The self.codegen_qc attribute.
+            None
         """
 
-        codegen_qc_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_qc_prompt"]) 
-        self.codegen_qc: Any = codegen_qc_prompt | self.llm | JsonOutputParser()
+        codegen_qc_prompt: str = load_prompt(repo_dir + "/" + self.prompts_paths["codegen_qc_prompt"]) 
+        self.codegen_qc = codegen_qc_prompt | self.llm | JsonOutputParser()
 
     def init_refactor_chain(self) -> None:
         """
-        Initializes the refactor chain by loading the refactor prompt and combining it with the LLM and Python parser.
+        Initializes the refactor chain by loading the refactor prompt and 
+        combining it with the LLM and Python parser.
 
         Args:
-            self (object): The object instance.
+            None
 
         Returns: 
-            The self.refactor attribute.
+            None
         """
         
         refactor_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["refactor_prompt"]) 
@@ -102,21 +105,22 @@ class CodeGenComponents(BaseComponents):
 
     def init_failure_chain(self) -> None:
         """
-        Initializes the failure chain by loading the failure prompt and combining it with the language model and a string output parser.
+        Initializes the failure chain by loading the failure prompt and 
+        combining it with the language model and a string output parser.
 
         Args:
-            self (object): The object instance.
+            None
 
         Returns:
-            The self.failure_chain attribute.
+            None
         """
 
-        failure_prompt = load_prompt(repo_dir + "/" + self.prompts_paths["failure_prompt"])
+        failure_prompt: str = load_prompt(repo_dir + "/" + self.prompts_paths["failure_prompt"])
         self.failure_chain = failure_prompt | self.llm | StrOutputParser()
 
-    def initialize_codegen(state: Dict) -> Dict:
+    def initialize_codegen(self, state: dict) -> dict:
         """
-        Initializes the code generation process by creating a counter.
+        Initializes the code generation state and the required counters.
 
         Args:
             state (Dict): The current state of the code generation process.
@@ -129,15 +133,15 @@ class CodeGenComponents(BaseComponents):
 
         return {"code_counter": 0, "rag_counter": 0}
         
-    def route_question_to_code(self, state):
+    def route_question_to_code(self, state: dict) -> str:
         """
         Route question to llm chain or code chain.
 
         Args:
-            state (dict): The current graph state.
+            state: The current graph state.
 
         Returns:
-            str: Next node to call; llm or codegen.
+            Next node to call, llm or codegen.
         """
 
         print("---ROUTE QUESTION---")
@@ -154,30 +158,31 @@ class CodeGenComponents(BaseComponents):
             print("---ROUTE QUESTION TO CODEGEN---")
             return "codegen"
         
-    def pass_to_codegen(self, state: Dict) -> Dict:
+    def pass_to_codegen(self, state: dict) -> dict:
         """
         Get a new query based on the given state.
 
         Args:
-            state (Dict): A dictionary containing the current state.
+            state: A dictionary containing the current state.
 
         Returns:
-            Dict: The state updated dictionary containing the new query.
+            The state updated dictionary containing the new query.
         """
 
         question: str = state["original_question"]
 
         return {"original_question": question}
         
-    def code_generation(self, state: Dict) -> Dict:
+    def code_generation(self, state: dict) -> dict:
         """
         Generates code based on the given question.
 
         Args:
-            state (Dict[str, str]): The state dictionary containing the question to generate code for.
+            state: The state dictionary containing the question 
+            to generate code for.
 
         Returns:
-            Dict[str, str]: The updated state dictionary containing the generated code.
+            The updated state dictionary containing the generated code.
         """
 
         print("---GENERATING CODE---")
@@ -195,29 +200,31 @@ class CodeGenComponents(BaseComponents):
 
         return {"original_question": question, "code": code}
         
-    def determine_runnable_code(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def determine_runnable_code(self, state: dict) -> dict:
         """
         This function runs the given code and checks if it's runnable.
+        WARNING - this could be potentially dangerous.
 
         Args:
-            state (Dict[str, Any]): The current state dictionary.
+            state: The current state dictionary.
 
         Returns:
-            state (Dict): The updated state dictionary containing the result of the code run and a boolean indicating if the code is runnable.
+            The updated state dictionary containing the result of the 
+            code run and a boolean indicating if the code is runnable.
         """
 
-        code = state["code"]
+        code: str = state["code"]
 
         print("---QCING CODE---")
 
         python_repl = PythonREPL()
         try:
-            result: Any = python_repl.run(code, timeout=30)
+            result: str = python_repl.run(code, timeout=30)
             print(result)
         except Exception as e:
-            result: Any = e
+            result = e
             print(result)
-        result = result.replace("}","").replace("{","")       
+        result: str = result.replace("}","").replace("{","")       
         output: Dict[str, Any] = self.codegen_qc.invoke({"output": result})
         print(output)
         is_runnable = output["runnable"]
@@ -225,15 +232,15 @@ class CodeGenComponents(BaseComponents):
 
         return {"runnable": is_runnable, "generation": result, "code": code}
     
-    def decide_to_refactor(self, state: Dict[str, str]) -> str:
+    def decide_to_refactor(self, state: dict) -> str:
         """
         Determine whether to refactor based on the given state.
 
         Args:
-            state (Dict[str, str]): A dictionary containing the current state of the system.
+            state: A dictionary containing the current state of the system.
 
         Returns:
-            str: A string indicating the result of the decision. Possible values are:
+            A string indicating the result of the decision. Possible values are:
                 - "unsuccessful": Refactoring is not needed.
                 - "executed": The code is executable.
                 - "exception": An exception occurred and refactoring is needed.
@@ -255,15 +262,17 @@ class CodeGenComponents(BaseComponents):
             print("--ROUTING TO CODE REFACTOR---")
             return "exception"
         
-    def refactor_code(self, state: Dict) -> Dict:
+    def refactor_code(self, state: dict) -> dict:
         """
         Refactor the given code.
 
         Args:
-            state (Dict[str, Any]): The current state dictionary containing the code, error, and counter, and other variables.
+            state: The current state dictionary containing the code, error, 
+            and counter, and other variables.
 
         Returns:
-            state (Dict[str, Any]): The updated state dictionary containing the refactored code, generation result, and counter.
+            The updated state dictionary containing the refactored code, 
+            generation result, and counter.
         """
 
         print("--REFACTORING CODE---")
@@ -271,7 +280,7 @@ class CodeGenComponents(BaseComponents):
         code: str = state["code"]
         print("---CODE TO REFACTOR---")
         print(code)
-        error: Any = state["error"]
+        error: str = state["error"]
         counter: int = state["code_counter"]
         counter += 1
         print("updated codegen counter: ", counter)
@@ -283,32 +292,32 @@ class CodeGenComponents(BaseComponents):
         python_repl = PythonREPL()
         print("---TESTING CODE---")
         try:
-            result: Any = python_repl.run(refactor, timeout=30)
+            result = python_repl.run(refactor, timeout=30)
             return {"code": refactor, "generation": result, "code_counter": counter}
         except Exception as e:
             print(e)
-            result: Any = e
+            result = e
             return {"code": refactor, "error": result, "code_counter": counter}
         
-    def code_error_msg(self, state: Dict):
+    def code_error_msg(self, state: dict) -> dict:
         """
         Generate an error message for code generation.
 
         Args:
-            state (Dict[str, str]): The current state dictionary containing the code and error information.
+            state: The current state dictionary containing the code and error information.
 
         Returns:
-            Dict[str, str]: The updated dictionary containing the error message.
+            The updated dictionary containing the error message.
         """
 
-        code = state["code"]
-        error = state["error"]
-        answers = state["answers"]
+        code: str = state["code"]
+        error: str = state["error"]
+        answers: List[str] = state["answers"]
 
         msg = f"""I'm sorry, but I cannot fix the code at this time.  Here is as far as I could get:
         {code}.\n\n  The underlying error is: {error}"""
 
-        if not isinstance(answers, List):
+        if not isinstance(answers, list):
             answers = [answers]
         answers.append(msg)
 
