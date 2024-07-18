@@ -4,7 +4,7 @@ import yaml
 import torch
 import base64
 import nest_asyncio
-from typing import List, Dict
+from typing import List
 from langchain_core.output_parsers import StrOutputParser
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from IPython.display import display, HTML

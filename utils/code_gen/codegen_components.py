@@ -3,10 +3,6 @@ import sys
 from typing import List, Any, Dict
 from utils.rag.base_components import BaseComponents
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
-from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import load_prompt
 from langchain_experimental.utilities import PythonREPL
 import re
@@ -100,8 +96,8 @@ class CodeGenComponents(BaseComponents):
             None
         """
         
-        refactor_prompt: Any = load_prompt(repo_dir + "/" + self.prompts_paths["refactor_prompt"]) 
-        self.refactor: Any = refactor_prompt | self.llm | self.python_parser
+        refactor_prompt: str = load_prompt(repo_dir + "/" + self.prompts_paths["refactor_prompt"]) 
+        self.refactor = refactor_prompt | self.llm | self.python_parser
 
     def init_failure_chain(self) -> None:
         """
