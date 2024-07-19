@@ -6,6 +6,8 @@ from langchain_community.vectorstores import Chroma
 from utils.rag.rag_components import RAGComponents
 from utils.code_gen.codegen_components import CodeGenComponents
 from langgraph.graph import END, StateGraph
+from langgraph.checkpoint import MemorySaver
+
 
 class CodeRAGGraphState(TypedDict):
 
@@ -32,18 +34,18 @@ class CodeRAG(RAGComponents, CodeGenComponents):
     
     def __init__(self, 
                  configs: Dict, 
-                 embeddings: HuggingFaceInstructEmbeddings, 
+                 embeddings: object, 
                  vectorstore: Chroma, 
                  examples: Optional[list] = None):
         super().__init__(configs=configs, embeddings=embeddings, vectorstore=vectorstore, examples=examples)
         self.app = None 
 
-    def initialize_code_rag(self, state) -> None:
+    def initialize_code_rag(self, state: dict) -> dict:
         """
         Initializes the complex RAG with the given state.
 
         Args:
-            state (Dict[str, str]): A dictionary containing the state of the RAG, including the question.
+            state: A dictionary containing the state of the RAG, including the question.
 
         Returns:
             The initial state dictionary for the CodeRAG class.
@@ -53,11 +55,22 @@ class CodeRAG(RAGComponents, CodeGenComponents):
         question: str = state["question"]
         print(question)
 
-        return {"rag_counter": 0, "subquestions": [], "answers": [], "examples": self.examples, "original_question": question, "code_counter": 0}
+        return {"rag_counter": 0, "subquestions": [], "answers": [], 
+                "examples": self.examples, "original_question": question, 
+                "code_counter": 0}
 
-    def create_rag_nodes(self):
+    def create_rag_nodes(self) -> None:
+        """
+        Creates the nodes for the CodeRAG graph state.
 
-        workflow = StateGraph(CodeRAGGraphState)
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+        workflow: StateGraph[CodeRAGGraphState] = StateGraph(CodeRAGGraphState)
 
         # Define the nodes
         workflow.add_node("initialize_code_rag", self.initialize_code_rag)
@@ -80,9 +93,11 @@ class CodeRAG(RAGComponents, CodeGenComponents):
 
         return workflow
 
-    def build_rag_graph(self, workflow):
+    def build_rag_graph(self, workflow: object) -> object:
 
         # Build graph
+
+        checkpointer: MemorySaver = MemorySaver()
 
         workflow.set_entry_point("initialize_code_rag")
         workflow.add_conditional_edges(
@@ -147,11 +162,20 @@ class CodeRAG(RAGComponents, CodeGenComponents):
         workflow.add_edge("aggregate_answers", "return_final_answer")
         workflow.add_edge("return_final_answer", END)
 
-        app = workflow.compile()
+        app: object = workflow.compile(checkpointer=checkpointer)
 
         return app
     
-    def initialize(self):
+    def initialize(self) -> None:
+        """
+        Initializes all the components of the static CodeRAG model.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
 
         self.init_llm()
         self.init_router()
@@ -171,17 +195,20 @@ class CodeRAG(RAGComponents, CodeGenComponents):
         self.init_aggregation_chain()
         self.init_final_generation()
     
-    def call_rag(self, app, question: str, kwargs: Dict[str,int] = {"recursion_limit": 50}):
+    def call_rag(self, app: object, question: str, kwargs: Dict[str, int] = {"recursion_limit": 50}):
         """
         Calls the RAG (Reasoning and Generation) app to generate an answer to a given question.
 
         Args:
-            app (object): The RAG app object.
-            question (str): The question to be answered.
-            kwargs (Dict[str, int], optional): Keyword arguments to be passed to the app. Defaults to {"recursion_limit": 50}.
+            app: The RAG app object.
+            question: The question to be answered.
+            kwargs: Keyword arguments to be passed to the app. 
+            Defaults to {"recursion_limit": 50}  
+            Recursion limit controls how many runnables to invoke without 
+            reaching a terminal node.
 
         Returns:
-            response (Dict): A dictionary containing the answer and source documents.
+            response: A dictionary containing the answer and source documents.
                 - "answer" (str): The generated answer to the question.
                 - "source_documents" (List[str]): A list of source documents used to generate the answer.
         """
