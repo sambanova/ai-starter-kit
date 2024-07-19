@@ -80,7 +80,7 @@ git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
 3. Some text extraction examples use the `Unstructured` library. Register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API key and create an enviroment file to store the API key and URL:
 ```
-echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="http://localhost:8005/general/v0/general"' > .env
+echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
 - Or start the parsing service, add parsing service url and API key (can be any value): 
 ```
