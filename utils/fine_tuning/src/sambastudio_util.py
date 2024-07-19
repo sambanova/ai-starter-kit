@@ -27,7 +27,7 @@ class SnsdkWrapper:
         #host_url, tenant_id, access_key = self._get_sambastudio_variables()
 
         self.snsdk_client = SnSdk(
-            host_url="https://sjc3-demo1.sambanova.net/",
+            host_url="https://sjc3-demo1.sambanova.net",
             access_key="8f73e0b3e0026c2c15996c6ebf3312b3af138d040bae072c292402092b155b84",
             tenant_id="41ceaded-9f08-47ae-aa02-15f39c899618",
         )
@@ -286,7 +286,7 @@ class SnsdkWrapper:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
-            logging.info(f"Project '{project_name}' not found")   
+            raise Exception(f"Project '{project_name}' not found")  
             
         #check if job selected exists
         if job_name is None:
@@ -314,8 +314,8 @@ class SnsdkWrapper:
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
-        if project_id is None:
-            logging.info(f"Project '{project_name}' not found")   
+        if project_id is None: 
+            raise Exception(f"Project '{project_name}' not found")
             
         # check if job selected exists
         if job_name is None:
@@ -353,7 +353,7 @@ class SnsdkWrapper:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
-            logging.info(f"Project '{project_name}' not found")   
+            raise Exception(f"Project '{project_name}' not found")  
             
         # check if job selected exists
         if job_name is None:
@@ -430,7 +430,7 @@ class SnsdkWrapper:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
-            logging.info(f"Project '{project_name}' not found")   
+            raise Exception(f"Project '{project_name}' not found")
             
         # check if model selected exists   
         if model_name is None:
@@ -442,10 +442,11 @@ class SnsdkWrapper:
         # check if endpoint selected exists
         if endpoint_name is None:
             endpoint_name = self.config["endpoint"]["endpoint_name"]
-        endpoint_id = self.get_endpoint_details(endpoint_name)
+        endpoint_id = self.search_endpoint(project = project_id, endpoint_name = endpoint_name)
         if endpoint_id is not None:
             logging.info(f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}")
-
+            return endpoint_id
+        
         create_endpoint_response=self.snsdk_client.create_endpoint(
             project=project_id,
             endpoint_name=endpoint_name,
@@ -466,21 +467,88 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {create_endpoint_response}") 
         
 
-    def search_endpoint_details(self, endpoint_name: Optional[str]=None):
+    def search_endpoint(self, project: Optional[str]=None, endpoint_name: Optional[str]=None):
+        if project is None:
+            project = self.config["project"]["project_name"]
         if endpoint_name is None:
             endpoint_name = self.config["endpoint"]["endpoint_name"]
-        endpoint_info_response = self.snsdk_client.endpoint_info(endpoint_name)
-        print(endpoint_info_response) #TODO check response to return id or none 
+        endpoint_info_response = self.snsdk_client.endpoint_info(
+            project = project, 
+            endpoint = endpoint_name
+            )
+         
+        if endpoint_info_response["status_code"] == 200:
+            endpoint_id = endpoint_info_response["id"]
+            return endpoint_id
+        elif endpoint_info_response["status_code"] == 404:
+            logging.info(f"Endpoint with name '{endpoint_name}' not found in project '{project}'")
+            return None
+        else:
+            logging.error(f"Failed to retrieve information for endpoint Details: {endpoint_info_response}")
+            raise Exception(f"Error message: {endpoint_info_response}")         
         
         
-    def get_endpoint_details():
-        #TODO return details
-        pass
+    def get_endpoint_details(self, project_name: Optional[str]=None, endpoint_name: Optional[str]=None):
+        # check if project selected exists
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            raise Exception(f"Project '{project_name}' not found")  
         
-    def delete_endpoint(self, endpoint_name: Optional[str]=None):
-        #TODO search first if exist
-        pass
-
+        if endpoint_name is None:
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+            
+        endpoint_info_response = self.snsdk_client.endpoint_info(
+            project = project_id, 
+            endpoint = endpoint_name
+            )
+        
+        if endpoint_info_response["status_code"] == 200:
+            endpoint_url = endpoint_info_response["url"]
+            endpoint_details={
+                "status":endpoint_info_response["status"],
+                "url": endpoint_url,
+                "langchain wrapper env":{
+                    "SAMBASTUDIO_BASE_URL": self.snsdk_client.host_url,
+                    "SAMBASTUDIO_BASE_URI": "/".join(endpoint_url.split("/")[1:4]),
+                    "SAMBASTUDIO_PROJECT_ID": endpoint_url.split("/")[-2],
+                    "SAMBASTUDIO_ENDPOINT_ID": endpoint_url.split("/")[-1] ,
+                    "SAMBASTUDIO_API_KEY": endpoint_info_response["api_key"],
+                }
+            }
+            return endpoint_details
+        else:
+            logging.error(f"Failed to get details for endpoint '{endpoint_name}' in project '{project_name}'. Details: {endpoint_info_response}")
+            raise Exception(f"Error message: {endpoint_info_response}")
+        
+    def delete_endpoint(self, project_name: Optional[str]=None, endpoint_name: Optional[str]=None):
+        # check if project selected exists
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name)
+        if project_id is None:
+            raise Exception(f"Project '{project_name}' not found")  
+        
+        # check if endpoint selected exists
+        if endpoint_name is None:
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_id = self.search_endpoint(project=project_id, endpoint_name = endpoint_name)
+        if endpoint_id is None:
+            raise Exception(f"Endpoint with name '{endpoint_name}' not found in project '{project_name}'")
+        
+        delete_endpoint_response = self.snsdk_client.delete_endpoint(
+            project=project_id, 
+            endpoint=endpoint_id
+            )
+        
+        if delete_endpoint_response["status_code"] == 200:
+            logging.info(f"Endpoint '{endpoint_name}' deleted in project '{project_name}'")
+            
+        else:
+            logging.error(f"Failed to delete endpoint '{endpoint_name}' in project '{project_name}'. Details: {delete_endpoint_response}")
+            raise Exception(f"Error message: {delete_endpoint_response}")
+        
     """datasets"""
             
     def search_dataset(self, dataset_name):
