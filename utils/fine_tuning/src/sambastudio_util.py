@@ -58,7 +58,9 @@ class SnsdkWrapper:
 
     """Project"""
 
-    def search_project(self, project_name: str):
+    def search_project(self, project_name: str = None):
+        if project_name is None:
+            project_name = self.config["project"]["project_name"]
         search_project_response=self.snsdk_client.search_project(project_name=project_name)
         if search_project_response["status_code"]==200:
             project_id = search_project_response["data"]["project_id"]
@@ -93,6 +95,7 @@ class SnsdkWrapper:
         return project_id
     
     def list_projects(self):
+        # TODO: for lists check if add verbose option returning full list 
         list_projects_response = self.snsdk_client.list_projects()
         if list_projects_response["status_code"] == 200:
             projects=[]
@@ -103,30 +106,36 @@ class SnsdkWrapper:
             logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
             raise Exception(f"Error message: {list_projects_response['detail']}")
         
-    def delete_project(self,  project: Optional[str] = None):
-        if project is not None:
-            project = self.config["project"]["project_name"]
-        delete_project_response = self.snsdk_client.delete_project(project=project)
+    def delete_project(self,  project_name: Optional[str] = None):
+        if project_name is not None:
+            project_name = self.config["project"]["project_name"]
+        project_id = self.search_project(project_name=project_name)
+        if project_id is None:
+            raise Exception(f"Project with name '{project_name}' not found")
+        delete_project_response = self.snsdk_client.delete_project(project=project_id)
         if delete_project_response["status_code"] == 200:
-            logging.info(f"Project with name or id '{project}' deleted")
+            logging.info(f"Project with name '{project_name}' deleted")
         else:
-            logging.error(f"Failed to delete project with name or id '{project}'. Details: {delete_project_response}")
+            logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}")
             raise Exception(f"Error message: {delete_project_response}")
+        #TODO check if jobs in project
     
     """models"""
-    def list_models(self):
+    def list_models(self): #TODO add filter condition 
+        # TODO: for lists check if add verbose option returning full list 
         list_models_response = self.snsdk_client.list_models()
         if list_models_response["status_code"] == 200:
             models={}
             for model in list_models_response["models"]:
                 if set(["train","deploy"]).issubset(model.get("jobTypes")):
-                    models[model.get("model_checkpoint_name")] = model.get("model_id")
+                    models[model.get("model_checkpoint_name")] = model.get("model_id") # TODO standarize to other list methods 
             return models
         else:
             logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
             raise Exception(f"Error message: {list_models_response['detail']}")
     
     def search_model(self, model_name: str):
+        #TODO agregar search desde el config file
         search_model_response=self.snsdk_client.search_model(model_name=model_name) 
         if search_model_response["status_code"]==200:
             model_id = search_model_response["data"]["model_id"]
@@ -137,6 +146,7 @@ class SnsdkWrapper:
             return None
     
     def search_trainable_model(self, model_name):
+        #TODO update to new list model out structure
         models = self.list_models()
         model_id = models.get(model_name)
         if model_id is not None:
@@ -161,6 +171,7 @@ class SnsdkWrapper:
                 rdu_arch: Optional[str] = None,
                 hyperparams: Optional[dict] = None,
                 ):
+        
         # check if project selected exists
         if project_name is None:
             project_name = self.config["project"]["project_name"]
@@ -195,7 +206,7 @@ class SnsdkWrapper:
             sub_path = sub_path or self.config["job"]["sub_path"],
             rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
             hyperparams = json.dumps(hyperparams or self.config["job"]["hyperparams"]),
-        ) #TODO: check if this should be gets in order to not set a config file
+        ) #TODO: should be gets in order to not set a config file
         
         if create_job_response["status_code"] == 200:
             job_id = create_job_response["job_id"]
@@ -263,6 +274,7 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {check_job_progress_response}")
         
     def list_jobs(self, project_name: Optional[str]):
+        #TODO add verbose
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
@@ -377,7 +389,8 @@ class SnsdkWrapper:
             model_checkpoint_name=model_name or self.config["model_checkpoint"]["model_name"],
             description=model_description or self.config["model_checkpoint"]["model_description"],
             checkpoint_type=model_type or self.config["model_checkpoint"]["model_type"]
-        ) #TODO: check if this should be gets in order to not set a config file
+        ) #TODO: should be gets in order to not set a config file
+        
         if add_model_response["status_code"] == 200:
             logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
             #TODO test blocked because of authorization error 
@@ -386,6 +399,7 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {add_model_response}")
     
     def delete_checkpoint(self, checkpoint: str = None):
+        #check if checkpoint exist
         if checkpoint is None:
             checkpoint = self.config["model_checkpoint"]["model_checkpoint_id"]
             if not checkpoint:
@@ -399,13 +413,16 @@ class SnsdkWrapper:
 
     """endpoint"""
     def list_endpoints(self, project_name: Optional[str] = None):
+        #TODO: add verbose option
+        #check if project exist
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
+            #TODO change for raise
             logging.info(f"Project '{project_name}' not found listing all user endpoints")
+            
         list_endpoints_response = self.snsdk_client.list_endpoints(project=project_id)
-        print(list_endpoints_response)
         if list_endpoints_response["status_code"] == 200:
             endpoints=[]
             for endpoint in list_endpoints_response["endpoints"]:
@@ -416,6 +433,7 @@ class SnsdkWrapper:
         else:
             logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
             raise Exception(f"Error message: {list_endpoints_response['detail']}")
+        
     def create_endpoint(self,
                         project_name: Optional[str]=None,
                         endpoint_name: Optional[str]=None,
@@ -455,7 +473,7 @@ class SnsdkWrapper:
             instances=instances or self.config["endpoint"]["endpoint_instances"],
             rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
             hyperparams = json.dumps(hyperparams or self.config["endpoint"]["hyperparams"]),
-        ) #TODO: check if this should be gets in order to not set a config file
+        ) #TODO: this should be gets in order to not set a config file
         
         if create_endpoint_response["status_code"] == 200:
             logging.info(f"Endpoint '{endpoint_name}' created")

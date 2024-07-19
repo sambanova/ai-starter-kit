@@ -57,7 +57,7 @@ job:
       weight_decay: 0.1
 
 model_checkpoint:
-  model_checkpoint_id: "" #set after listing the generated checkpoints after training #a876668b-fc48-49b9-af23-6b078c40ef84-50
+  model_checkpoint_id: "" #set after listing the generated checkpoints after training #a876668b-fc48-49b9-af23-6b078c40ef84-d
   model_name: "llama2_7b_fine_tuned_nstext2sql"
   model_description: "finetuned llama2_7b model for nstext2sql"
   model_type: "finetuned"
