@@ -77,7 +77,7 @@ class SnsdkWrapper:
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         if project_description is None:
-            project_description = self.config.get["project"]["project_description"]
+            project_description = self.config["project"]["project_description"]
         project_id=self.search_project(project_name)
         if project_id is None:
             create_project_response = self.snsdk_client.create_project(    
@@ -107,7 +107,7 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {list_projects_response['detail']}")
         
     def delete_project(self,  project_name: Optional[str] = None):
-        if project_name is not None:
+        if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name=project_name)
         if project_id is None:
@@ -118,24 +118,25 @@ class SnsdkWrapper:
         else:
             logging.error(f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}")
             raise Exception(f"Error message: {delete_project_response}")
-        #TODO check if jobs in project
     
     """models"""
-    def list_models(self): #TODO add filter condition 
+    def list_models(self, filter: Optional[list[str]] = []):
+        #filter = ['train', 'batch_predict', 'deploy']
         # TODO: for lists check if add verbose option returning full list 
         list_models_response = self.snsdk_client.list_models()
         if list_models_response["status_code"] == 200:
-            models={}
+            models=[]
             for model in list_models_response["models"]:
-                if set(["train","deploy"]).issubset(model.get("jobTypes")):
-                    models[model.get("model_checkpoint_name")] = model.get("model_id") # TODO standarize to other list methods 
+                if set(filter).issubset(model.get("jobTypes")):
+                    models.append({"model_name": model.get("model_checkpoint_name"), "model_id":model.get("model_id")}) 
             return models
         else:
             logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
             raise Exception(f"Error message: {list_models_response['detail']}")
     
-    def search_model(self, model_name: str):
-        #TODO agregar search desde el config file
+    def search_model(self, model_name: Optional[str] = None):
+        if model_name is None:
+            model_name = self.config["job"]["model"]
         search_model_response=self.snsdk_client.search_model(model_name=model_name) 
         if search_model_response["status_code"]==200:
             model_id = search_model_response["data"]["model_id"]
@@ -145,13 +146,14 @@ class SnsdkWrapper:
             logging.info(f"Project with name '{model_name}' not found")
             return None
     
-    def search_trainable_model(self, model_name):
-        #TODO update to new list model out structure
-        models = self.list_models()
-        model_id = models.get(model_name)
-        if model_id is not None:
-            logging.info(f"Model '{model_name}' with id '{model_id}' available for training and deployment found") 
-            return model_id
+    def search_trainable_model(self, model_name: Optional[str] = None):
+        if model_name is None:
+            model_name = self.config["job"]["model"]
+        models = self.list_models(filter=['train', 'deploy'])
+        model_id = [model["model_id"] for model in models if model["model_name"]==model_name]
+        if len(model_id)>0:
+            logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found") 
+            return model_id[0]
         else:
             logging.info(f"Model '{model_name}' available for training and deployment not found")
             return None
@@ -180,19 +182,19 @@ class SnsdkWrapper:
             raise Exception(f"Project '{project_name}' not found")
         
         # check if model selected is found and is trainable
-        if model is not None:
+        if model is None:
             model = self.config["job"]["model"]
         model_id = self.search_trainable_model(model)   
         if model_id is None:
             raise Exception(f"model with name '{model}' not found")
             
         # check if dataset exist
-        if dataset_name is not None:
+        if dataset_name is None:
             dataset_name = self.config["dataset"]["dataset_name"]
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
-        
+            
         # create job
         create_job_response=self.snsdk_client.create_job(
             project = project_id,
