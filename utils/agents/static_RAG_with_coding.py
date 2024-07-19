@@ -1,7 +1,6 @@
 import yaml
 from typing import List, Dict, Optional
 from typing_extensions import TypedDict
-from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.vectorstores import Chroma
 from utils.rag.rag_components import RAGComponents
 from utils.code_gen.codegen_components import CodeGenComponents
@@ -36,7 +35,7 @@ class CodeRAG(RAGComponents, CodeGenComponents):
                  configs: Dict, 
                  embeddings: object, 
                  vectorstore: Chroma, 
-                 examples: Optional[list] = None):
+                 examples: Optional[list] = None) -> None:
         super().__init__(configs=configs, embeddings=embeddings, vectorstore=vectorstore, examples=examples)
         self.app = None 
 
@@ -48,7 +47,7 @@ class CodeRAG(RAGComponents, CodeGenComponents):
             state: A dictionary containing the state of the RAG, including the question.
 
         Returns:
-            The initial state dictionary for the CodeRAG class.
+            None
         """
 
         print("---Initializing---")
