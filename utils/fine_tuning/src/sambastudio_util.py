@@ -583,7 +583,9 @@ class SnsdkWrapper:
         
     """datasets"""
             
-    def search_dataset(self, dataset_name):
+    def search_dataset(self, dataset_name: Optional[str] = True):
+        if dataset_name is None:
+            dataset_name = self.config["dataset"]["dataset_name"]
         search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name) 
         if search_dataset_response["status_code"]==200:
             dataset_id = search_dataset_response["data"]["dataset_id"]
@@ -592,3 +594,18 @@ class SnsdkWrapper:
         else:
             logging.info(f"Dataset with name '{dataset_name}' not found")
             return None
+        
+    """list datasets"""
+    # {dataset.get("dataset_name"):dataset.get("id") for dataset in sambastudio.list_datasets().get("datasets")}
+    
+    """create dataset"""
+    # snapi
+    
+    """list apps"""
+    #available_apps = {app.get("name"): app.get("id") for app in sambastudio.list_apps().get("apps")}
+
+    """search app""" 
+    # define if is this needed
+    
+    """list tenants"""
+        #TODO add later as uti if dont known tenant by user before instantiation 
