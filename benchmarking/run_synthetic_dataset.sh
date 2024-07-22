@@ -9,7 +9,7 @@ python src/evaluator.py \
 --timeout 600 \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
---num-requests 32 \
+--num-requests 16 \
 
 # Notes:
 # 1. For CoE Models, make sure to include the prefix "COE/" before the expert name.
