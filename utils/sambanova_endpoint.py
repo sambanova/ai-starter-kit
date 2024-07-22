@@ -807,10 +807,7 @@ class SambaStudio(LLM):
         if 'nlp' in self.sambastudio_base_uri:
             return response['data'][0]['completion']
         elif 'generic' in self.sambastudio_base_uri:
-            if isinstance(response['predictions'][0], str):
-                return response['predictions'][0]
-            else:
-                return response['predictions'][0]['completion']
+            return response['predictions'][0]['completion']
         else:
             raise ValueError(f'handling of endpoint uri: {self.sambastudio_base_uri} not implemented')
 
