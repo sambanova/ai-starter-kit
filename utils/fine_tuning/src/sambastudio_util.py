@@ -94,13 +94,15 @@ class SnsdkWrapper:
             logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
         return project_id
     
-    def list_projects(self):
-        # TODO: for lists check if add verbose option returning full list 
+    def list_projects(self, verbose: Optional[bool] = False):
         list_projects_response = self.snsdk_client.list_projects()
         if list_projects_response["status_code"] == 200:
             projects=[]
             for project in list_projects_response["data"].get("projects"):
-                projects.append({k:v for k,v in project.items() if k in ["project_name", "project_id","status","user_id"]})
+                if verbose:
+                    projects.append({k:v for k,v in project.items()})
+                else:
+                    projects.append({k:v for k,v in project.items() if k in ["project_name", "project_id","status","user_id"]})
             return projects
         else:
             logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
@@ -120,15 +122,17 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {delete_project_response}")
     
     """models"""
-    def list_models(self, filter: Optional[list[str]] = []):
+    def list_models(self, filter: Optional[list[str]] = [], verbose: Optional[bool] = False):
         #filter = ['train', 'batch_predict', 'deploy']
-        # TODO: for lists check if add verbose option returning full list 
         list_models_response = self.snsdk_client.list_models()
         if list_models_response["status_code"] == 200:
             models=[]
             for model in list_models_response["models"]:
                 if set(filter).issubset(model.get("jobTypes")):
-                    models.append({"model_name": model.get("model_checkpoint_name"), "model_id":model.get("model_id")}) 
+                    if verbose:
+                        models.append({k:v for k,v in model.items()})
+                    else:
+                        models.append({k:v for k,v in model.items() if k in ["model_checkpoint_name","model_id"]}) 
             return models
         else:
             logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
@@ -150,7 +154,7 @@ class SnsdkWrapper:
         if model_name is None:
             model_name = self.config["job"]["model"]
         models = self.list_models(filter=['train', 'deploy'])
-        model_id = [model["model_id"] for model in models if model["model_name"]==model_name]
+        model_id = [model["model_id"] for model in models if model["model_checkpoint_name"]==model_name]
         if len(model_id)>0:
             logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found") 
             return model_id[0]
@@ -198,24 +202,24 @@ class SnsdkWrapper:
         # create job
         create_job_response=self.snsdk_client.create_job(
             project = project_id,
-            job_name = job_name or self.config["job"]["job_name"],
-            description = job_description or self.config["job"]["job_description"],
-            job_type = job_type or self.config["job"]["job_type"],
+            job_name = job_name or self.config.get("job",{}).get("job_name"),
+            description = job_description or self.config.get("job",{}).get("job_description"),
+            job_type = job_type or self.config.get("job",{}).get("job_type"),
             model_checkpoint = model_id,
             dataset = dataset_id,
-            parallel_instances = parallel_instances or self.config["job"]["parallel_instances"],
-            load_state = load_state or self.config["job"]["load_state"],
-            sub_path = sub_path or self.config["job"]["sub_path"],
-            rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
-            hyperparams = json.dumps(hyperparams or self.config["job"]["hyperparams"]),
-        ) #TODO: should be gets in order to not set a config file
+            parallel_instances = parallel_instances or self.config.get("job",{}).get("parallel_instances"),
+            load_state = load_state or self.config.get("job",{}).get("load_state"),
+            sub_path = sub_path or self.config.get("job",{}).get("sub_path"),
+            rdu_arch = rdu_arch or self.config.get("sambastudio",{}).get("rdu_arch"),
+            hyperparams = json.dumps(hyperparams or self.config.get("job",{}).get("hyperparams")),
+        )
         
         if create_job_response["status_code"] == 200:
             job_id = create_job_response["job_id"]
-            logging.info(f"Job with name '{job_name}' created: '{create_job_response}'")
+            logging.info(f"Job with name '{job_name or self.config.get('job',{}).get('job_name')}' created: '{create_job_response}'")
             return job_id
         else:
-            logging.error(f"Failed to create job with name '{job_name or self.config['job']['job_name']}'. Details: {create_job_response}")
+            logging.error(f"Failed to create job with name '{job_name or self.config.get('job',{}).get('job_name')}'. Details: {create_job_response}")
             raise Exception(f"Error message: {create_job_response}")
 
     def search_job(self, job_name: Optional[str] = None, project_name: Optional[str]=None):
@@ -275,8 +279,7 @@ class SnsdkWrapper:
             logging.error(f"Failed to check job progress. Details: {check_job_progress_response}")
             raise Exception(f"Error message: {check_job_progress_response}")
         
-    def list_jobs(self, project_name: Optional[str]):
-        #TODO add verbose
+    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False):
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
@@ -286,9 +289,12 @@ class SnsdkWrapper:
         if list_jobs_response["status_code"] == 200:
             jobs=[]
             for job in list_jobs_response["jobs"]:
-                jobs.append(
-                    {k:v for k,v in job.items() if k in ["job_name", "job_id", "job_type", "project_id", "status"]}
-                    )
+                if verbose:
+                    jobs.append({k:v for k,v in job.items()})
+                else:
+                    jobs.append(
+                        {k:v for k,v in job.items() if k in ["job_name", "job_id", "job_type", "project_id", "status"]}
+                        )
             return jobs
         else:
             logging.error(f"Failed to list jobs. Details: {list_jobs_response['detail']}")
@@ -323,7 +329,7 @@ class SnsdkWrapper:
 
     """checkpoints"""
 
-    def list_checkpoints(self, project_name: Optional[str]=None, job_name: Optional[str]=None):
+    def list_checkpoints(self, project_name: Optional[str]=None, job_name: Optional[str]=None, verbose: Optional[bool]=False):
         # check if project selected exists
         if project_name is None:
             project_name = self.config["project"]["project_name"]
@@ -346,7 +352,12 @@ class SnsdkWrapper:
             checkpoints=[]
             #TODO implement logic to filter out response, blocked by authorization error
             #for checkpoint in list_checkpoints_response:
-            #    pass
+            #    if verbose:
+            #        checkpoints.append({k:v for k,v in checkpoint.items()})
+            #    else:
+            #        checkpoints.append(
+            #            {k:v for k,v in checkpoint.items() if k in ["checkpoint_id", "status"]}
+            #        )
             return checkpoints
         else:
             logging.error(f"Failed to list checkpoints. Details: {list_checkpoints_response}")
@@ -385,13 +396,13 @@ class SnsdkWrapper:
             #     raise Exception(f"Checkpoint id '{checkpoint_id}' not found in job '{job_name}'")
         
         add_model_response = self.snsdk_client.add_model(
-            project = project_name or self.config["project"]["project_name"],
-            job = job_name or self.config["job"]["job_name"],
+            project = project_name or self.config.get("project",{}).get("project_name"),
+            job = job_name or self.config.get("job",{}).get("job_name"),
             model_checkpoint=checkpoint_id,
-            model_checkpoint_name=model_name or self.config["model_checkpoint"]["model_name"],
-            description=model_description or self.config["model_checkpoint"]["model_description"],
-            checkpoint_type=model_type or self.config["model_checkpoint"]["model_type"]
-        ) #TODO: should be gets in order to not set a config file
+            model_checkpoint_name=model_name or self.config.get("model_checkpoint",{}).get("model_name"),
+            description=model_description or self.config.get("model_checkpoint",{}).get("model_description"),
+            checkpoint_type=model_type or self.config.get("model_checkpoint",{}).get("model_type")
+        )
         
         if add_model_response["status_code"] == 200:
             logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
@@ -414,23 +425,24 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {delete_checkpoint_response}")
 
     """endpoint"""
-    def list_endpoints(self, project_name: Optional[str] = None):
-        #TODO: add verbose option
+    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None):
         #check if project exist
         if project_name is None:
             project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
-            #TODO change for raise
             logging.info(f"Project '{project_name}' not found listing all user endpoints")
             
         list_endpoints_response = self.snsdk_client.list_endpoints(project=project_id)
         if list_endpoints_response["status_code"] == 200:
             endpoints=[]
             for endpoint in list_endpoints_response["endpoints"]:
-                endpoints.append(
-                    {k:v for k,v in endpoint.items() if k in ["name", "id", "project_id",  "status", ]}
-                    )
+                if verbose:
+                    endpoints.append({k:v for k,v in endpoint.items()})
+                else:
+                    endpoints.append(
+                        {k:v for k,v in endpoint.items() if k in ["name", "id", "project_id",  "status", ]}
+                        )
             return endpoints
         else:
             logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
@@ -470,12 +482,12 @@ class SnsdkWrapper:
         create_endpoint_response=self.snsdk_client.create_endpoint(
             project=project_id,
             endpoint_name=endpoint_name,
-            description=endpoint_description or self.config["endpoint"]["endpoint_description"],
+            description=endpoint_description or self.config.get("endpoint",{}).get("endpoint_description"),
             model_checkpoint=model_id,
-            instances=instances or self.config["endpoint"]["endpoint_instances"],
+            instances=instances or self.config.get("endpoint",{}).get("endpoint_instances"),
             rdu_arch = rdu_arch or self.config["sambastudio"]["rdu_arch"],
-            hyperparams = json.dumps(hyperparams or self.config["endpoint"]["hyperparams"]),
-        ) #TODO: this should be gets in order to not set a config file
+            hyperparams = json.dumps(hyperparams or self.config.get("endpoint",{}).get("hyperparams")),
+        )
         
         if create_endpoint_response["status_code"] == 200:
             logging.info(f"Endpoint '{endpoint_name}' created")
