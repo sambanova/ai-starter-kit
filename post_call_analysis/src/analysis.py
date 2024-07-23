@@ -54,7 +54,7 @@ elif llm_info['api'] == 'sambastudio':
         model = SambaStudio(
             streaming=True,
             model_kwargs={
-                'do_sample': True,
+                'do_sample': False,
                 'temperature': llm_info['temperature'],
                 'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
                 'select_expert': llm_info['select_expert'],
@@ -64,7 +64,7 @@ elif llm_info['api'] == 'sambastudio':
     else:
         model = SambaStudio(
             model_kwargs={
-                'do_sample': True,
+                'do_sample': False,
                 'temperature': llm_info['temperature'],
                 'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
             }
