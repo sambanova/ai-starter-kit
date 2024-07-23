@@ -151,7 +151,7 @@ class MultimodalRetrieval():
                 )
         elif self.api_info == "sambastudio":
             if self.llm_info["coe"]:
-                self.llm = SambaStudio(
+                llm = SambaStudio(
                     streaming=True,
                     model_kwargs={
                         "do_sample": False,
