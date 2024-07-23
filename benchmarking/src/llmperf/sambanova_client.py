@@ -110,21 +110,24 @@ def _get_data(request_config: RequestConfig) -> dict:
     """
 
     prompt = request_config.prompt_tuple[0]
-    # if isinstance(prompt, str):
-    #     prompt = [prompt]
+    
     sampling_params = request_config.sampling_params
+    sampling_params["process_prompt"] = False
+    
     if "COE" in request_config.model:
         sampling_params["select_expert"] = request_config.model.split("/")[-1]
-        sampling_params["process_prompt"] = False
+    
     tuning_params_dict = {
         k: {"type": type(v).__name__, "value": str(v)}
         for k, v in (sampling_params.items())
     }
     tuning_params = json.dumps(tuning_params_dict)
+    
     if request_config.mode == "stream":
         data = {"instance": prompt, "params": json.loads(tuning_params)}
     else:
         data = {"instances": [prompt], "params": json.loads(tuning_params)}
+        
     return data
 
 
@@ -165,7 +168,6 @@ def _compute_client_metrics(
     with requests.post(
         url, headers=headers, json=input_data, stream=stream
     ) as response:
-
         if response.status_code != 200:
             response.raise_for_status()
         for chunk_orig in response.iter_lines(chunk_size=None):
