@@ -15,9 +15,16 @@ logging.basicConfig(
 
 
 class SnsdkWrapper:
-    """init"""
+    """ "Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio"""
 
-    def __init__(self, config_path=None) -> None:
+    """init and get configs"""
+
+    def __init__(self, config_path: Optional[str] = None) -> None:
+        """Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio
+        Args:
+            config_path (str , optional): path to config path. Defaults to None.
+            see a config file example in ./config.yaml
+        """
         self.config = {}
         self.tenant_name = None
         self.snapi_path = SNAPI_PATH
@@ -131,7 +138,17 @@ class SnsdkWrapper:
 
     """Project"""
 
-    def search_project(self, project_name: str = None) -> Optional[str]:
+    def search_project(self, project_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a project by its name in sambastudio environment.
+
+        Parameters:
+        project_name (str, optional): The name of the project to search for. 
+            If not provided, the name from the configuration is used.
+
+        Returns:
+        Optional[str]: The ID of the project if found, otherwise None.
+        """
         if project_name is None:
             project_name = self.config['project']['project_name']
         search_project_response = self.snsdk_client.search_project(project_name=project_name)
@@ -144,6 +161,20 @@ class SnsdkWrapper:
             return None
 
     def create_project(self, project_name: Optional[str] = None, project_description: Optional[str] = None) -> str:
+        """
+        Creates a new project in SambaStudio.
+
+        Parameters:
+        project_name (str, optional): The name of the project. If not provided, the name from the configs file is used.
+        project_description (str, optional): The description of the project. 
+            If not provided, the description from the configs file is used.
+
+        Returns:
+        str: The ID of the newly created or existent project.
+
+        Raises:
+        Exception: If the project creation fails.
+        """
         if project_name is None:
             project_name = self.config['project']['project_name']
         if project_description is None:
@@ -166,6 +197,21 @@ class SnsdkWrapper:
         return project_id
 
     def list_projects(self, verbose: Optional[bool] = False) -> list[dict]:
+        """
+        List all projects.
+
+        Parameters:
+        verbose (bool, optional): If True, detailed information about each project is returned. 
+            If False, only basic information is returned. Defaults to False.
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents a project. 
+            If verbose is True, each dictionary contains detailed information about the project. 
+            If verbose is False, each dictionary contains basic information about the project.
+
+        Raises:
+        Exception: If there is an error in listing the projects.
+        """
         list_projects_response = self.snsdk_client.list_projects()
         if list_projects_response['status_code'] == 200:
             projects = []
@@ -182,6 +228,20 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {list_projects_response['detail']}")
 
     def delete_project(self, project_name: Optional[str] = None) -> None:
+        """
+        Deletes a project from the SambaStudio.
+        Use with caution it will delete project, and its associated jobs, checkpoints, and endpoints
+
+        Parameters:
+        project_name (str, optional): The name of the project to be deleted. 
+            If not provided, the name from the configs file will be used.
+
+        Returns:
+        None
+
+        Raises:
+        Exception: If the project is not found or if there is an error in deleting the project.
+        """
         if project_name is None:
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name=project_name)
@@ -199,7 +259,24 @@ class SnsdkWrapper:
     """models"""
 
     def list_models(self, filter: Optional[list[str]] = [], verbose: Optional[bool] = False) -> list[dict]:
-        # filter = ['train', 'batch_predict', 'deploy']
+        """
+        List models in sambastudio based on the provided filter.
+
+        Parameters:
+        filter (list[str], optional): A list of job types to filter the models. Defaults to [].
+            Should include the job types supported by the models to filter 
+            example: ['train', 'batch_predict', 'deploy']
+        verbose (bool, optional): If True, return detailed information about each model. Defaults to False.
+
+        Returns:
+        list[dict]: A list of dictionaries, each representing a model. 
+            If verbose is True, each dictionary contains all model information. 
+            Otherwise, each dictionary contains only the model's checkpoint name and ID.
+
+        Raises:
+        Exception: If there is an error in listing models.
+        """
+
         list_models_response = self.snsdk_client.list_models()
         if list_models_response['status_code'] == 200:
             models = []
@@ -215,6 +292,16 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {list_models_response['detail']}")
 
     def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a model in the SambaStudio by its name.
+
+        Parameters:
+        model_name (str, optional): The name of the model to search for. 
+            If not provided, the name from the configs file is used.
+
+        Returns:
+        str or None: The ID of the model if found, otherwise None.
+        """
         if model_name is None:
             model_name = self.config['job']['model']
         search_model_response = self.snsdk_client.search_model(model_name=model_name)
@@ -227,6 +314,16 @@ class SnsdkWrapper:
             return None
 
     def search_trainable_model(self, model_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a trainable and deployable  model in the SambaStudio by its name.
+
+        Parameters:
+        model_name (str, optional): The name of the model to search for. 
+            If not provided, the name from the configs file is used.
+
+        Returns:
+        str or None: The ID of the model if found and is trainable and deployable, otherwise None.
+        """
         if model_name is None:
             model_name = self.config['job']['model']
         models = self.list_models(filter=['train', 'deploy'])
@@ -254,6 +351,63 @@ class SnsdkWrapper:
         rdu_arch: Optional[str] = None,
         hyperparams: Optional[dict] = None,
     ) -> str:
+        """
+        Creates a new job in an specific SambaStudio project with the given parameters.
+
+        Args:
+            project_name (str, optional). The name of the project to run the job in . 
+                If not provided, the project name from the configs file will be used.
+            job_name (str, optional).  The name of the job. 
+                If not provided, the job name from the configs file will be used.
+            job_description (str, optional).  the description for the job. 
+                If not provided, the description from the configs file will be used.
+            job_type (str, optional).  the type of job to run can be "train" or "batch_inference". 
+                If not provided, the type from the configs file will be used.
+            model (str, optional).  the name of the model to fine tune. 
+                If not provided, the model name from the configs file will be used.
+            dataset_name (str, optional).  the name of the dataset to finetune with. 
+                If not provided, the dataset name from the configs file will be used.
+            parallel_instances (int, optional). the number of instances to use for the Job. 
+                If not provided, the number of instances from the configs file will be used.
+            load_state (bool, optional). Only load weights from the model checkpoint, if True. 
+                If not provided, the param from the configs file will be used.
+            sub_path (str, optional). Folder/file path inside dataset. 
+                If not provided, the sub path from the configs file will be used.
+            rdu_arch (str, optional). RDU Architecture to train with. 
+                If not provided, the rdu arch from the configs file will be used.
+            hyperparams (dict, optional). hyperparameters for executing the job. 
+                If not provided, the hyperparameters from the configs file will be used.
+                hyperparams example={
+                    "batch_size": 256,
+                    "do_eval": False,
+                    "eval_steps": 50,
+                    "evaluation_strategy": "no",
+                    "learning_rate": 0.00001,
+                    "logging_steps": 1,
+                    "lr_schedule": "fixed_lr",
+                    "max_sequence_length": 4096,
+                    "num_iterations": 100,
+                    "prompt_loss_weight": 0.0,
+                    "save_optimizer_state": True,
+                    "save_steps": 50,
+                    "skip_checkpoint": False,
+                    "subsample_eval": 0.01,
+                    "subsample_eval_seed": 123,
+                    "use_token_type_ids": True,
+                    "vocab_size": 32000,
+                    "warmup_steps": 0,
+                    "weight_decay": 0.1,
+                }
+        Raises:
+            Exception: If the project is not found.
+            Exception: If the model is not found.
+            Exception: If the dataset is not found.
+            Exception: If there is an error creating the job.
+
+        Returns:
+            str: the job id
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -303,6 +457,21 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {create_job_response}')
 
     def search_job(self, job_name: Optional[str] = None, project_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a job in a specific SambaStudio project.
+
+        Parameters:
+        job_name (str, optional): The name of the job to search for. 
+            If not provided, the job name from the configs file is used.
+        project_name (str, optional): The name of the project to search in. 
+            If not provided, the project name from the configs file is used.
+
+        Returns:
+        str: The ID of the job if found, otherwise None.
+
+        Raises:
+        Exception: If the project does not exist.
+        """
         if job_name is None:
             job_name = self.config['job']['job_name']
 
@@ -324,6 +493,22 @@ class SnsdkWrapper:
             return None
 
     def check_job_progress(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> dict:
+        """
+        Check the progress of a job in a specific SambaStudio project.
+
+        Parameters:
+        project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.
+        job_name (str, optional): The name of the job. 
+            If not provided, the job name from the configs file is used.
+
+        Returns:
+        dict: A dictionary containing the job progress status.
+
+        Raises:
+        Exception: If the project or job is not found.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -350,6 +535,24 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {check_job_progress_response}')
 
     def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> list[dict]:
+        """
+        List all jobs in a specific SambaStudio project.
+
+        Parameters:
+        project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.  
+            If the project does not exist all user jobs are returned
+        verbose (bool, optional): If True, detailed information about each job is returned. 
+            If False, only basic information is returned.
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents a job. 
+            If verbose is True, each dictionary contains detailed information about the job. 
+            If verbose is False, each dictionary contains basic information about the job.
+
+        Raises:
+        Exception: If there is an error in listing the jobs.
+        """
         if project_name is None:
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
@@ -375,6 +578,24 @@ class SnsdkWrapper:
             raise Exception(f"Error message: {list_jobs_response['detail']}")
 
     def delete_job(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> None:
+        """
+        Deletes a job from a specified SambaStudio project.
+        Use with caution it deletes the job and all its associated checkpoints
+
+        Parameters:
+        project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configuration file is used.
+        job_name (str, optional): The name of the job. 
+            If not provided, the job name from the configuration file is used.
+
+        Returns:
+        None
+
+        Raises:
+        Exception: If the project or job is not found.
+        Exception: If there is an error in deleting the job.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -405,6 +626,26 @@ class SnsdkWrapper:
     def list_checkpoints(
         self, project_name: Optional[str] = None, job_name: Optional[str] = None, verbose: Optional[bool] = False
     ) -> list[dict]:
+        """
+        List all checkpoints in a specific job within a SambaStudio project.
+
+        Parameters:
+        project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.
+        job_name (str, optional): The name of the job. If not provided, the job name from the configs file is used.
+        verbose (bool, optional): If True, detailed information about each checkpoint is returned. 
+            If False, only basic information is returned.
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents a checkpoint. 
+            If verbose is True, each dictionary contains detailed information about the checkpoint. 
+            If verbose is False, each dictionary contains basic information about the checkpoint.
+
+        Raises:
+        Exception: If the project does not exist or if the job does not exist within the project.
+        Exception: If there is an error in listing the checkpoints.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -444,6 +685,32 @@ class SnsdkWrapper:
         model_description: Optional[str] = None,
         model_type: Optional[str] = None,
     ) -> str:
+        """
+        Promotes a model checkpoint from a specific training job to a model in SambaStudio model hub.
+
+        Parameters:
+        - checkpoint_id (str, optional): The ID of the model checkpoint to be promoted. 
+            If not provided, the checkpoint id from the configs file is used.
+        - project_name (str, optional): The name of the project where the model checkpoint will be promoted. 
+            If not provided, the project name from the configs file is used.
+        - job_name (str, optional): The name of the job where the model checkpoint will be promoted. 
+            If not provided, the job name from the configs file is used.
+        - model_name (str, optional): The name of the model to which the model checkpoint will be promoted. 
+            If not provided, the model name from the configs file is used.
+        - model_description (str, optional): The description of the model to which the checkpoint will be promoted. 
+            If not provided, the model description from the configs file is used.
+        - model_type (str, optional): The type of the model to which the model checkpoint will be promoted 
+            either "finetuned" or "pretrained". If not provided, the model type from the configs file is used.
+
+        Returns:
+        - str: The ID of the promoted model.
+
+        Raises:
+        - Exception: If the project or job is not found.
+        - Exception: If the model checkpoint ID is not provided.
+        - Exception: If there is an error promoting the model checkpoint to the model.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -484,11 +751,27 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {add_model_response}')
 
     def delete_checkpoint(self, checkpoint: str = None) -> None:
-        # check if checkpoint exist
+        """
+        Deletes a model checkpoint from the SambaStudio model hub.
+
+        Parameters:
+        - checkpoint (str, optional): The name/id of the checkpoint or promoted model to be deleted. 
+            If not provided, the checkpoint id from the configs file is used.
+
+        Returns:
+        - None
+
+        Raises:
+        - Exception: If no model checkpoint_id is provided.
+        - Exception: If there is an error deleting the model checkpoint.
+        """
+
+        # check if checkpoint is provided
         if checkpoint is None:
             checkpoint = self.config['model_checkpoint']['model_checkpoint_id']
             if not checkpoint:
                 raise Exception('No model checkpoint_id provided')
+
         delete_checkpoint_response = self.snsdk_client.delete_checkpoint(checkpoint=checkpoint)
         if delete_checkpoint_response['status_code'] == 200:
             logging.info(f"Model checkpoint '{checkpoint}' deleted")
@@ -499,6 +782,24 @@ class SnsdkWrapper:
     """endpoint"""
 
     def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> list[dict]:
+        """
+        List all endpoints in a specific project.
+
+        Parameters:
+        project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.
+        verbose (bool, optional): If True, detailed information about each endpoint is returned. 
+            If False, only basic information is returned.
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents an endpoint. 
+            If verbose is True, each dictionary contains detailed information about the endpoint. 
+            If verbose is False, each dictionary contains basic information about the endpoint.
+
+        Raises:
+        Exception: If the project does not exist or if there is an error in listing the endpoints.
+        """
+
         # check if project exist
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -541,6 +842,35 @@ class SnsdkWrapper:
         rdu_arch: Optional[str] = None,
         hyperparams: Optional[str] = None,
     ) -> Optional[str]:
+        """
+        Creates a new endpoint in a specified Smabastudio project using a specified model.
+
+        Parameters:
+        - project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configuration is used.
+        - endpoint_name (str, optional): The name of the endpoint. 
+            If not provided, the endpoint name from the configuration is used.
+        - endpoint_description (str, optional): The description of the endpoint. 
+            If not provided, the endpoint description from the configuration is used.
+        - model_name (str, optional): The name of the model. 
+            If not provided, the model name from the configuration is used.
+        - instances (str, optional): The number of instances for the endpoint. 
+            If not provided, the endpoint instances from the configuration is used.
+        - rdu_arch (str, optional): The RDU architecture for the endpoint. 
+            If not provided, the RDU architecture from the configuration is used.
+        - hyperparams (str, optional): The hyperparameters for the endpoint. 
+            If not provided, the hyperparameters from the configuration is used.
+
+        Raises:
+        Exception: If the project does not exist
+        Exeption: If the model does not exist
+        Exception: If there is an error in creating the endpoint.
+
+        Returns:
+        - str: The ID of the created endpoint if successful or the endpoint already exists. 
+            If unsuccessful, None is returned.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -583,6 +913,21 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {create_endpoint_response}')
 
     def search_endpoint(self, project: Optional[str] = None, endpoint_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for an endpoint in a specified project by its name.
+
+        Parameters:
+        - project (str, optional): The name of the project. 
+            If not provided, the project name from the configuration is used.
+        - endpoint_name (str, optional): The name of the endpoint.
+            If not provided, the endpoint name from the configuration is used.
+
+        Raises:
+        - Exception: if there is an error listing the endpoint
+
+        Returns:
+        - str: The ID of the endpoint if found. If not found or an error occurs, None is returned.
+        """
         if project is None:
             project = self.config['project']['project_name']
         if endpoint_name is None:
@@ -600,6 +945,23 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {endpoint_info_response}')
 
     def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> dict:
+        """
+        Retrieves the details of a specified endpoint in a given SambaStudio project.
+
+        Parameters:
+        - project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.
+        - endpoint_name (str, optional): The name of the endpoint. 
+            If not provided, the endpoint name from the configs file is used.
+
+        Raises:
+        - Exception: If the project does not exist or if the endpoint does not exist.
+        - Exception: If there is an error getting endpoint details
+
+        Returns:
+        - dict: Dictionary containing the endpoint's status, URL, and environment variables for the Langchain wrapper.
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -633,6 +995,23 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {endpoint_info_response}')
 
     def delete_endpoint(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> None:
+        """
+        Deletes a specified endpoint in a given SambaStudio project.
+
+        Parameters:
+        - project_name (str, optional): The name of the project. 
+            If not provided, the project name from the configs file is used.
+        - endpoint_name (str, optional): The name of the endpoint. 
+            If not provided, the endpoint name from the configs file is used.
+
+        Raises:
+        - Exception: If the project does not exist or if the endpoint does not exist.
+        - Exception: If there is an error deleting the endpoint.
+
+        Returns:
+        - None
+        """
+
         # check if project selected exists
         if project_name is None:
             project_name = self.config['project']['project_name']
@@ -661,6 +1040,16 @@ class SnsdkWrapper:
     """datasets"""
 
     def search_dataset(self, dataset_name: Optional[str] = True) -> Optional[str]:
+        """
+        Searches for a dataset in SambaStudio by its name.
+
+        Parameters:
+        - dataset_name (str, optional): The name of the dataset to search for. 
+            If not provided, the dataset name from the configs file is used.
+
+        Returns:
+        - str: The ID of the dataset if found. If not found, None is returned.
+        """
         if dataset_name is None:
             dataset_name = self.config['dataset']['dataset_name']
         search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name)
