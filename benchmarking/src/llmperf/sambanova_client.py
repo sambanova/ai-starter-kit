@@ -319,14 +319,21 @@ def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
         "time_to_first_response"
     )
     metrics[common_metrics.TTFT_SERVER] = ttft_server
-    metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get("total_latency")
-    throughput_server = response_dict.get(
-        "completion_tokens_after_first_per_sec"
-    ) or response_dict.get("completion_tokens_per_sec_after_first_response")
-    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = throughput_server
+    metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get(
+        "total_latency"
+    ) or response_dict.get("model_execution_time")
+    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = (
+        response_dict.get("completion_tokens_after_first_per_sec")
+        or response_dict.get("completion_tokens_per_sec_after_first_response")
+        or response_dict.get("throughput_after_first_token")
+    )
     metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get(
         "total_tokens_per_sec"
+    ) or (
+        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER]
+        / (metrics[common_metrics.E2E_LAT_SERVER] - metrics[common_metrics.TTFT_SERVER])
     )
+
     metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get("batch_size_used")
     return metrics
 
