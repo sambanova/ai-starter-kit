@@ -1,7 +1,7 @@
 sambastudio:
   tenant: "default"
   rdu_arch: "sn20"
-  snapi_path: ""
+  snapi_path: "~/.snapi"
 
 dataset:
   dataset_name: "smol_sql_pretraining_mm" #"smol_sql_dataset"
