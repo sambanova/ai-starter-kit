@@ -110,21 +110,24 @@ def _get_data(request_config: RequestConfig) -> dict:
     """
 
     prompt = request_config.prompt_tuple[0]
-    # if isinstance(prompt, str):
-    #     prompt = [prompt]
+    
     sampling_params = request_config.sampling_params
+    
     if "COE" in request_config.model:
         sampling_params["select_expert"] = request_config.model.split("/")[-1]
         sampling_params["process_prompt"] = False
+    
     tuning_params_dict = {
         k: {"type": type(v).__name__, "value": str(v)}
         for k, v in (sampling_params.items())
     }
     tuning_params = json.dumps(tuning_params_dict)
+    
     if request_config.mode == "stream":
         data = {"instance": prompt, "params": json.loads(tuning_params)}
     else:
         data = {"instances": [prompt], "params": json.loads(tuning_params)}
+        
     return data
 
 
@@ -165,7 +168,6 @@ def _compute_client_metrics(
     with requests.post(
         url, headers=headers, json=input_data, stream=stream
     ) as response:
-
         if response.status_code != 200:
             response.raise_for_status()
         for chunk_orig in response.iter_lines(chunk_size=None):
@@ -275,6 +277,7 @@ def _populate_client_metrics(
         metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (
             prompt_len + num_output_tokens
         ) / (total_request_time - ttft)
+    
     return metrics
 
 
@@ -317,14 +320,17 @@ def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
         "time_to_first_response"
     )
     metrics[common_metrics.TTFT_SERVER] = ttft_server
-    metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get("total_latency")
-    throughput_server = response_dict.get(
-        "completion_tokens_after_first_per_sec"
-    ) or response_dict.get("completion_tokens_per_sec_after_first_response")
-    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = throughput_server
-    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get(
-        "total_tokens_per_sec"
+    metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get(
+        "total_latency"
+    ) or response_dict.get("model_execution_time")
+    metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = (
+        response_dict.get("completion_tokens_after_first_per_sec")
+        or response_dict.get("completion_tokens_per_sec_after_first_response")
+        or response_dict.get("throughput_after_first_token")
     )
+    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get("total_tokens_per_sec") 
+    if (metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] is None) and (metrics[common_metrics.E2E_LAT_SERVER] is not None) and (metrics[common_metrics.TTFT_SERVER] is not None):
+        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] / (metrics[common_metrics.E2E_LAT_SERVER] - metrics[common_metrics.TTFT_SERVER])
     metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get("batch_size_used")
     return metrics
 

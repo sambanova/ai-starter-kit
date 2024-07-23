@@ -128,24 +128,24 @@ def main():
         )
         st.session_state.llm = f"{llm_model}"
 
-        st.session_state.input_tokens = st.slider(
-            "Number of input tokens", min_value=50, max_value=2000, value=1000
+        st.session_state.input_tokens = st.number_input(
+            "Number of input tokens", min_value=50, max_value=2000, value=1000, step=1
         )
 
-        st.session_state.output_tokens = st.slider(
-            "Number of output tokens", min_value=50, max_value=2000, value=1000
+        st.session_state.output_tokens = st.number_input(
+            "Number of output tokens", min_value=50, max_value=2000, value=1000, step=1
         )
 
-        st.session_state.number_requests = st.slider(
-            "Number of total requests", min_value=10, max_value=100, value=32
+        st.session_state.number_requests = st.number_input(
+            "Number of total requests", min_value=10, max_value=100, value=32, step=1
         )
 
-        st.session_state.number_concurrent_workers = st.slider(
-            "Number of concurrent workers", min_value=1, max_value=100, value=1
+        st.session_state.number_concurrent_workers = st.number_input(
+            "Number of concurrent workers", min_value=1, max_value=100, value=1, step=1
         )
 
-        st.session_state.timeout = st.slider(
-            "Timeout", min_value=60, max_value=1800, value=600
+        st.session_state.timeout = st.number_input(
+            "Timeout", min_value=60, max_value=1800, value=600, step=1
         )
 
         sidebar_option = st.sidebar.button("Run!")
@@ -160,6 +160,11 @@ def main():
                 df_req_info = _run_performance_evaluation()
 
                 st.subheader("Performance metrics plots")
+                expected_output_tokens = st.session_state.output_tokens
+                generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
+                if not pd.isnull(generated_output_tokens):
+                    st.markdown(f"Difference between expected output tokens {expected_output_tokens} and generated output tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)} token(s)")
+                
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
                 plot_client_vs_server_barplots(
                     df_req_info,

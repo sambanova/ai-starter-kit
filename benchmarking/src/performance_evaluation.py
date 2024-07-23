@@ -5,12 +5,14 @@ import random
 import re
 import threading
 import time
+import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 from tqdm import tqdm
 import transformers
+from langchain.prompts import PromptTemplate
 
 from llmperf import common_metrics
 from llmperf.sambanova_client import llm_request
@@ -28,8 +30,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
 
-PROMPT_GENERATION_OFFSET = 2
-
+SYSTEM_PROMPT_PATH = "./prompts/system-prompt_template.yaml"
+USER_PROMPT_PATH = "./prompts/user-prompt_template.yaml"
 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
@@ -77,6 +79,37 @@ class BasePerformanceEvaluator(abc.ABC):
     @abc.abstractmethod
     def build_prompt(self, *args, **kwargs):
         pass
+    
+    def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
+        """Modifies original text to desired number of output tokens based on corresponding tokenizer.
+        For smaller outputs, process trims original text. 
+        For larger outputs, process pads original text with multiple pad tokens.
+
+        Args:
+            text (str): text to adjust
+            target_token_count (int): number of desired tokens
+
+        Returns:
+            str: adjusted text
+        """
+        tokens = self.tokenizer.tokenize(text)
+        token_count = len(tokens)
+
+        if token_count > target_token_count:
+            # Trim the text
+            tokens = tokens[:target_token_count-1]
+        elif token_count < target_token_count:
+            # Pad the text
+            pad_token = self.tokenizer.pad_token if self.tokenizer.pad_token else "<pad>"
+            tokens += [pad_token] * (target_token_count - token_count - 1)
+        
+        # Convert tokens back to text
+        adjusted_text = self.tokenizer.convert_tokens_to_string(tokens)
+        
+        # Validate token count
+        assert len(self.tokenizer.tokenize(adjusted_text)) == (target_token_count - 1), "Token count mismatch!"
+        
+        return adjusted_text
 
     def send_requests(
         self,
@@ -147,7 +180,7 @@ class BasePerformanceEvaluator(abc.ABC):
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).to_dict()
+            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f"p{int(quantile * 100)}"
@@ -155,19 +188,19 @@ class BasePerformanceEvaluator(abc.ABC):
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]["quantiles"] = quantiles_reformatted_keys
 
-            series_mean = series.mean()
+            series_mean = round(series.mean(),4)
             logger.info(f"    mean = {series_mean}")
             metrics_summary[metric]["mean"] = series_mean
 
-            series_min = series.min()
+            series_min = round(series.min(),4)
             logger.info(f"    min = {series_min}")
             metrics_summary[metric]["min"] = series_min
 
-            series_max = series.max()
+            series_max = round(series.max(),4)
             logger.info(f"    max = {series_max}")
             metrics_summary[metric]["max"] = series_max
 
-            series_std = series.std()
+            series_std = round(series.std(),4)
             logger.info(f"    stddev = {series_std}")
             metrics_summary[metric]["stddev"] = series_std
 
@@ -192,17 +225,13 @@ class BasePerformanceEvaluator(abc.ABC):
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
-        overall_output_throughput = metrics_df[
-            common_metrics.NUM_OUTPUT_TOKENS
-        ].sum() / (end_time - start_time)
+        overall_output_throughput = round(metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum() / (end_time - start_time),4)
         logger.info(f"Overall Output Throughput: {overall_output_throughput}")
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
 
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
-        num_completed_requests_per_min = (
-            num_completed_requests / (end_time - start_time) * 60
-        )
+        num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60,4)
         logger.info(f"Number Of Completed Requests: {num_completed_requests}")
         logger.info(f"Number Of Concurrent Workers: {self.num_workers}")
         logger.info(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
@@ -676,7 +705,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         for _ in range(num_requests):
 
             # Build input prompt to be sent in LLM request
-            prompt_tuple = self.build_prompt(input_token_count, output_token_count)
+            prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
             updated_sampling_params = {
@@ -699,7 +728,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         return request_configs
 
     def build_prompt(
-        self, num_input_tokens: int, num_output_tokens: int
+        self, num_input_tokens: int
     ) -> Tuple[str, int]:
         """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
         multiple times to reach a user set input_token_count. Depending on the LLM being queried, there may be an added
@@ -718,104 +747,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
-        sys_prompt_template = f"You are a helpful assistant that generates movie scripts with at least {num_output_tokens*10} words. "
-        prompt_template = "Generate a detailed, extensive and complex movie script of the Star Wars movie 'The Empire strikes back', describing how every character felt, environment details and onomatopoeias. After that, generate a complete and extensive end-to-end plot of the movie. Finally, generate a detailed explanation of each character biograhy in multiple paragraphs. "
+        # Load from prompt files
+        sys_prompt_template = yaml.safe_load(PromptTemplate.from_file(SYSTEM_PROMPT_PATH).template)['template']
+        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
 
-        # Prompt for Mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template,
-                num_input_tokens,
-            )
-
-            full_input_prompt = "[INST]" + prompt_content + "[/INST]"
-
-        # Prompt for Llama3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
-
-            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = (
-                system_prompt
-                + "<|start_header_id|>user<|end_header_id|>"
-                + prompt_content
-                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-            )
-
-        # Prompt for Deepseek models
-        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
-
-            system_prompt = f"{sys_prompt_template}"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = system_prompt + prompt_content
-
-        # Prompt for Llama2 and other models
-        else:
-
-            system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = system_prompt + prompt_content + "[/INST]"
-
+        #  Adjust prompt according to desired input tokens
+        prompt_template = sys_prompt_template + prompt_template
+        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
+        
         return (full_input_prompt, self.get_token_length(full_input_prompt))
-
-    def generate_prompt_content(
-        self, prompt_template: int, input_prompt_length: int
-    ) -> str:
-        """Generate prompt content based on the given prompt template and input prompt length.
-
-        This function works by first determining the length of the prompt template and the total number of tokens needed to generate
-        from the prompt template. It then generates the prompt content by repeating the prompt template n times, where n is the
-        number of times the prompt template fits into the total token count. After that, it adds on the first m tokens of the prompt
-        template to the prompt content generated above until the total token count is reached, where m is the number of tokens that
-        didn't fit in the full repetitions of the prompt template.
-
-        Args:
-            prompt_template (int): The template from which to generate the prompt.
-            input_prompt_length (int): The user selected length of the input prompt.
-
-        Returns:
-            str: The generated prompt content.
-        """
-        # Get the length of the prompt template
-        prompt_template_length = self.get_token_length(prompt_template)
-
-        # Determine the number of tokens needed to generate from the prompt template
-        total_token_count = (
-            input_prompt_length + prompt_template_length * PROMPT_GENERATION_OFFSET
-        )
-
-        # Generate prompt contnet by repeating `prompt_template` n times, where n is the number of times the prompt template fits
-        # into  the total token count calculated above
-        prompt_content = "".join(
-            [prompt_template * (total_token_count // prompt_template_length)]
-        )
-
-        # Add on the first m tokens of the prompt template to the `prompt_content` generated above up until the total token count
-        # is reached, where m is calculated by using the modulo operator to see how many tokens didn't fit in the repetitions above.
-        prompt_content += prompt_template[
-            : (total_token_count % prompt_template_length)
-        ]
-
-        return prompt_content
