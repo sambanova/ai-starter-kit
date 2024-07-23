@@ -77,6 +77,37 @@ class BasePerformanceEvaluator(abc.ABC):
     @abc.abstractmethod
     def build_prompt(self, *args, **kwargs):
         pass
+    
+    def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
+        """Modifies original text to desired number of output tokens based on corresponding tokenizer.
+        For smaller outputs, process trims original text. 
+        For larger outputs, process pads original text with multiple pad tokens.
+
+        Args:
+            text (str): text to adjust
+            target_token_count (int): number of desired tokens
+
+        Returns:
+            str: adjusted text
+        """
+        tokens = self.tokenizer.tokenize(text)
+        token_count = len(tokens)
+
+        if token_count > target_token_count:
+            # Trim the text
+            tokens = tokens[:target_token_count-1]
+        elif token_count < target_token_count:
+            # Pad the text
+            pad_token = self.tokenizer.pad_token if self.tokenizer.pad_token else "<pad>"
+            tokens += [pad_token] * (target_token_count - token_count - 1)
+        
+        # Convert tokens back to text
+        adjusted_text = self.tokenizer.convert_tokens_to_string(tokens)
+        
+        # Validate token count
+        assert len(self.tokenizer.tokenize(adjusted_text)) == (target_token_count - 1), "Token count mismatch!"
+        
+        return adjusted_text
 
     def send_requests(
         self,
@@ -718,66 +749,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
-        sys_prompt_template = f"You are a helpful assistant that generates movie scripts with at least {num_output_tokens*10} words. "
-        prompt_template = "Generate a detailed, extensive and complex movie script of the Star Wars movie 'The Empire strikes back', describing how every character felt, environment details and onomatopoeias. After that, generate a complete and extensive end-to-end plot of the movie. Finally, generate a detailed explanation of each character biograhy in multiple paragraphs. "
+        sys_prompt_template = f"You are a helpful assistant that generates movie scripts. "
+        prompt_template = "Generate a detailed, extensive and complex movie script of the Star Wars movie The Empire strikes back, describing how every character felt, environment details and onomatopoeias. After that, generate a complete and extensive end-to-end plot of the movie. Finally, generate a detailed explanation of each character biograhy in multiple paragraphs. "*500
 
-        # Prompt for Mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template,
-                num_input_tokens,
-            )
-
-            full_input_prompt = "[INST]" + prompt_content + "[/INST]"
-
-        # Prompt for Llama3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
-
-            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = (
-                system_prompt
-                + "<|start_header_id|>user<|end_header_id|>"
-                + prompt_content
-                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-            )
-
-        # Prompt for Deepseek models
-        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
-
-            system_prompt = f"{sys_prompt_template}"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = system_prompt + prompt_content
-
-        # Prompt for Llama2 and other models
-        else:
-
-            system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
-            prompt_content_length = num_input_tokens - self.get_token_length(
-                system_prompt
-            )
-
-            prompt_content = self.generate_prompt_content(
-                prompt_template, prompt_content_length
-            )
-
-            full_input_prompt = system_prompt + prompt_content + "[/INST]"
-
+        #  Adjust prompt according to desired input tokens
+        prompt_template = sys_prompt_template + prompt_template
+        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
+        
         return (full_input_prompt, self.get_token_length(full_input_prompt))
 
     def generate_prompt_content(
