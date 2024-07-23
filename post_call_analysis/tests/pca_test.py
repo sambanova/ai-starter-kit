@@ -89,6 +89,13 @@ class PCATestCase(unittest.TestCase):
         return result
     
     # Add assertions
+    def test_load_conversation(self):
+        self.assertTrue(self.conversation[0].metadata, "Metadata shouldn't be empty")
+        self.assertTrue(self.conversation[0].page_content, "Page content shouldn't be empty")
+
+    def test_get_chunks(self):
+        self.assertTrue(len(self.conversation_chunks) > 0, "There should be at least one conversation chunk")
+
     def test_conversation_summary(self):
         self.assertTrue(self.result["summary"], "Summary is empty")
 
