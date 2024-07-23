@@ -112,10 +112,10 @@ def _get_data(request_config: RequestConfig) -> dict:
     prompt = request_config.prompt_tuple[0]
     
     sampling_params = request_config.sampling_params
-    sampling_params["process_prompt"] = False
     
     if "COE" in request_config.model:
         sampling_params["select_expert"] = request_config.model.split("/")[-1]
+        sampling_params["process_prompt"] = False
     
     tuning_params_dict = {
         k: {"type": type(v).__name__, "value": str(v)}
@@ -277,6 +277,7 @@ def _populate_client_metrics(
         metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (
             prompt_len + num_output_tokens
         ) / (total_request_time - ttft)
+    
     return metrics
 
 
@@ -327,13 +328,9 @@ def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
         or response_dict.get("completion_tokens_per_sec_after_first_response")
         or response_dict.get("throughput_after_first_token")
     )
-    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get(
-        "total_tokens_per_sec"
-    ) or (
-        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER]
-        / (metrics[common_metrics.E2E_LAT_SERVER] - metrics[common_metrics.TTFT_SERVER])
-    )
-
+    metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get("total_tokens_per_sec") 
+    if (metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] is None) and (metrics[common_metrics.E2E_LAT_SERVER] is not None) and (metrics[common_metrics.TTFT_SERVER] is not None):
+        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] / (metrics[common_metrics.E2E_LAT_SERVER] - metrics[common_metrics.TTFT_SERVER])
     metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get("batch_size_used")
     return metrics
 
