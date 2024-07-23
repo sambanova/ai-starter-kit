@@ -1,11 +1,13 @@
-import matplotlib.pyplot as plt
-import time
-
 import pandas as pd
-from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
-
 import streamlit as st
-from performance_evaluation import CustomPerformanceEvaluator
+from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
+import matplotlib.pyplot as plt
+
+from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
+
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def _initialize_sesion_variables():
@@ -33,6 +35,7 @@ def _initialize_sesion_variables():
     if "top_p" not in st.session_state:
         st.session_state.top_p = None
 
+
 def _run_custom_performance_evaluation():
 
     results_path = "./data/results/llmperf"
@@ -42,7 +45,7 @@ def _run_custom_performance_evaluation():
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
-        input_file_path=st.session_state.file_path
+        input_file_path=st.session_state.file_path,
     )
 
     custom_performance_evaluator.run_benchmark(
@@ -52,11 +55,12 @@ def _run_custom_performance_evaluation():
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
     df_user["concurrent_user"] = custom_performance_evaluator.num_workers
     valid_df = df_user[(df_user["error_code"] != "")]
-    
+
     if valid_df["batch_size_used"].isnull().all():
         valid_df["batch_size_used"] = 1
 
     return valid_df
+
 
 def main():
 
@@ -69,21 +73,17 @@ def main():
 
     st.title(":orange[SambaNova] Custom Performance Evaluation")
     st.markdown(
-            "Here you can select a custom dataset that you want to benchmark performance with. Note that with models that support dynamic \
+        "Here you can select a custom dataset that you want to benchmark performance with. Note that with models that support dynamic \
             batching, you are limited to the number of cpus available on your machine to send concurrent requests."
-        )
-    
+    )
+
     with st.sidebar:
 
         ##################
         # File Selection #
         ##################
         st.title("File Selection")
-        st.text_input(
-            "Full File Path",
-            help="", # TODO: Fill in help
-            key="file_path"
-        )
+        st.text_input("Full File Path", help="", key="file_path")  # TODO: Fill in help
 
         #########################
         # Runtime Configuration #
@@ -98,32 +98,26 @@ def main():
         )
 
         st.slider(
-            "Num Concurrent Workers", 
-            min_value=1, 
-            max_value=100, 
+            "Num Concurrent Workers",
+            min_value=1,
+            max_value=100,
             value=1,
-            key="number_concurrent_workers"
+            key="number_concurrent_workers",
         )
 
-        st.slider(
-            "Timeout", 
-            min_value=60, 
-            max_value=1800, 
-            value=600,
-            key="timeout"
-        )
+        st.slider("Timeout", min_value=60, max_value=1800, value=600, key="timeout")
 
         #####################
         # Tuning Parameters #
         #####################
         st.title("Tuning Parameters")
-        
+
         st.slider(
-            "Max Output Tokens", 
-            min_value=1, 
-            max_value=2048, 
+            "Max Output Tokens",
+            min_value=1,
+            max_value=2048,
             value=256,
-            key="max_tokens"
+            key="max_tokens",
         )
 
         # TODO: Add more tuning params below (temperature, top_k, etc.)
@@ -132,20 +126,14 @@ def main():
 
     if job_submitted:
 
-        st.toast("Performance evaluation in progress. This could take a while depending on the dataset size and max tokens setting.")
+        st.toast(
+            "Performance evaluation in progress. This could take a while depending on the dataset size and max tokens setting."
+        )
         with st.spinner("Processing"):
-            
-            performance_eval_start = time.time()
 
             try:
 
                 results_df = _run_custom_performance_evaluation()
-                performance_eval_end = time.time()
-                process_duration = performance_eval_end - performance_eval_start
-
-                print(
-                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
-                )
 
                 st.subheader("Performance metrics plots")
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
@@ -184,7 +172,6 @@ def main():
                 st.error(
                     f"Error: {e}. For more error details, please look at the terminal."
                 )
-            
 
 
 if __name__ == "__main__":

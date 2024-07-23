@@ -19,6 +19,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+API_BASE_PATH = "/api"
+
 
 def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tuple:
     """Makes a single completion request to a LLM API
@@ -93,7 +95,6 @@ def _get_url(
     else:
         path = f"/predict/generic/{project_id}/{endpoint_id}"
 
-    API_BASE_PATH = "/api"
     url = f"{base_url}{API_BASE_PATH}{path}"
     return url
 
@@ -344,7 +345,7 @@ if __name__ == "__main__":
 
     prompt = "This is a test example, so tell me about anything"
     request_config = RequestConfig(
-        prompt=(prompt, 10),
+        prompt_tuple=(prompt, 10),
         model=model,
         sampling_params={
             # "do_sample": False,

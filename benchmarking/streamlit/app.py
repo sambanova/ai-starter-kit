@@ -4,19 +4,13 @@ sys.path.append("../")
 sys.path.append("./src")
 sys.path.append("./streamlit")
 
-import re
-import time
-
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+from typing import List
 import streamlit as st
 from st_pages import Page, show_pages
-from typing import List
-from matplotlib.axes._axes import Axes
+import matplotlib.pyplot as plt
 
-
-from performance_evaluation import SyntheticPerformanceEvaluator
+from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
 from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 from dotenv import load_dotenv
@@ -45,21 +39,21 @@ def _run_performance_evaluation() -> pd.DataFrame:
         model_name=st.session_state.llm,
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
-        timeout=st.session_state.timeout
+        timeout=st.session_state.timeout,
     )
 
     performance_evaluator.run_benchmark(
         num_input_tokens=st.session_state.input_tokens,
         num_output_tokens=st.session_state.output_tokens,
         num_requests=st.session_state.number_requests,
-        sampling_params={}
+        sampling_params={},
     )
 
     # Read generated json and output formatted results
     df_user = pd.read_json(performance_evaluator.individual_responses_file_path)
     df_user["concurrent_user"] = st.session_state.number_concurrent_workers
     valid_df = df_user[(df_user["error_code"] != "")]
-    
+
     # For non-batching endpoints, batch_size_used will be 1
     if valid_df["batch_size_used"].isnull().all():
         valid_df["batch_size_used"] = 1
@@ -95,7 +89,10 @@ def main():
     show_pages(
         [
             Page("streamlit/app.py", "Synthetic Performance Evaluation"),
-            Page("streamlit/pages/custom_performance_eval_st.py", "Custom Performance Evaluation"),
+            Page(
+                "streamlit/pages/custom_performance_eval_st.py",
+                "Custom Performance Evaluation",
+            ),
             Page("streamlit/pages/chat_performance_st.py", "Performance on Chat"),
         ]
     )
@@ -158,16 +155,9 @@ def main():
         st.toast("Performance evaluation processing now. It should take few minutes.")
         with st.spinner("Processing"):
 
-            performance_eval_start = time.time()
-
             try:
 
                 df_req_info = _run_performance_evaluation()
-                performance_eval_end = time.time()
-                process_duration = performance_eval_end - performance_eval_start
-                print(
-                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
-                )
 
                 st.subheader("Performance metrics plots")
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
@@ -206,6 +196,7 @@ def main():
                 st.error(
                     f"Error: {e}. For more error details, please look at the terminal."
                 )
+
 
 if __name__ == "__main__":
     main()
