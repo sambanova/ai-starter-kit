@@ -26,11 +26,12 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Setup paths and variables
+# Setup paths and global variables
 current_dir = os.getcwd()
-print(current_dir)
 kit_dir = current_dir
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+logger.info(f'kit_dir: {kit_dir}')
+logger.info(f'repo_dir: {repo_dir}')
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
@@ -64,9 +65,6 @@ class PCATestCase(unittest.TestCase):
         cls.conversation = cls.loadConversation()
         cls.conversation_chunks = cls.getChunks()
         cls.result=cls.callAnalysisParallel()
-
-        logger.info("Conversation analysis completed.")
-        logger.info("Classification analysis completed.")
     
     @classmethod
     def convertToDialogueStructure(cls):
@@ -97,31 +95,48 @@ class PCATestCase(unittest.TestCase):
         self.assertTrue(len(self.conversation_chunks) > 0, "There should be at least one conversation chunk")
 
     def test_conversation_summary(self):
+        logger.info("\nConversation summary:")
+        logger.info(self.result["summary"])
         self.assertTrue(self.result["summary"], "Summary is empty")
 
     def test_classification(self):
+        logger.info("\nClassification:")
+        logger.info(self.result["classification"][0])
         self.assertIn(self.result["classification"][0], classes, "Invalid classification value")
     
     def test_sentiment_analysis(self):
+        logger.info("\nSentiment analysis:")
+        logger.info(self.result["sentiment"])
         self.assertIn(self.result["sentiment"], sentiments, "Invalid sentiment value")
 
     def test_NPS_prediction(self):
+        logger.info("\nNPS prediction:")
+        logger.info(self.result["nps_analysis"])
+        logger.info("Predicted NPS: %d"%(self.result['nps_score']))
         self.assertTrue(self.result["nps_analysis"], "NPS analysis is empty")
         self.assertIsInstance(self.result["nps_score"], int,"NPS score is not an integer")
     
     def test_factual_accuracy_analysis(self):
+        logger.info("\nFactual accuracy analysis:")
+        logger.info("correct: %s"%(self.result["factual_analysis"]['correct']))
+        logger.info("errors: %s"%(self.result["factual_analysis"]['errors']))
         self.assertIsInstance(self.result["factual_analysis"]["correct"], bool, "Factual analysis 'correct' is not a boolean")
     
     def test_procedures_analysis(self):
+        logger.info("\nProcedures analysis")
+        logger.info("correct: %s"%(self.result["procedural_analysis"]['correct']))
+        logger.info("errors: %s"%(self.result["procedural_analysis"]['errors']))
         self.assertIsInstance(self.result["procedural_analysis"]["correct"], bool, "Procedural analysis 'correct' is not a boolean")
 
     def test_NER(self):
-        #entities_items = self.result["entities"].items()
-        #print(entities_items)
+        entities_items = self.result["entities"].items()
+        logger.info(entities_items)
         for key in self.result["entities"].keys():
             self.assertIn(key, entities, f"Invalid entity key: {key}")
 
     def test_call_quality_assessment(self):
+        logger.info("\nCall quality assessment:")
+        logger.info(self.result["quality_score"])
         self.assertIsInstance(self.result["quality_score"], float, "Call quality score is not a float")
 
     @classmethod
