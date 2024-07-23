@@ -608,4 +608,4 @@ class SnsdkWrapper:
     # define if is this needed
     
     """list tenants"""
-        #TODO add later as uti if dont known tenant by user before instantiation 
+        #TODO add later as util if dont known tenant by user before instantiation 

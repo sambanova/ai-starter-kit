@@ -4,7 +4,7 @@ sambastudio:
   snapi_path: ""
 
 dataset:
-  dataset_name: "smol_sql_dataset"
+  dataset_name: "smol_sql_pretraining_mm" #"smol_sql_dataset"
   dataset_description: "test_dataset for sql finetuning"
   dataset_path: "../../fine_tuning_sql/data/output/smol_sql_dataset"
   dataset_apps_availability: 
@@ -24,7 +24,7 @@ dataset:
   dataset_url: ""
 
 project: 
-  project_name: "sql_finetuning" #"SNSDK-E2E-Finetuning_Embeddings-Project"
+  project_name: "example project" #"sql_finetuning" 
   project_description: "this project will be used to test the Finetuning Embeddings e2e pipeline implementation"
 
 job:
