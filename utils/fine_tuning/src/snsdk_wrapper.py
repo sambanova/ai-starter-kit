@@ -1,9 +1,16 @@
 import os
+import sys
 import json
 import yaml
 from snsdk import SnSdk
 import logging
 from typing import Optional
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+utils_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
+sys.path.append(utils_dir)
+sys.path.append(repo_dir)
 
 SNAPI_PATH = '~/.snapi'
 
@@ -12,7 +19,6 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()],
 )
-
 
 class SnsdkWrapper:
     """ "Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio"""
@@ -136,6 +142,12 @@ class SnsdkWrapper:
 
         return host_name, tenant_id, access_key
 
+    def _raise_error_if_config_is_none(self) -> None:
+        if self.config is None:
+            error_message = "No config found. Please provide parameter values."
+            logging.error(error_message)
+            raise Exception(f"Error message: {error_message}")
+
     """Project"""
 
     def search_project(self, project_name: Optional[str] = None) -> Optional[str]:
@@ -150,6 +162,7 @@ class SnsdkWrapper:
         Optional[str]: The ID of the project if found, otherwise None.
         """
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         search_project_response = self.snsdk_client.search_project(project_name=project_name)
         if search_project_response['status_code'] == 200:
@@ -175,10 +188,14 @@ class SnsdkWrapper:
         Raises:
         Exception: If the project creation fails.
         """
+        
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         if project_description is None:
+            self._raise_error_if_config_is_none()
             project_description = self.config['project']['project_description']
+            
         project_id = self.search_project(project_name)
         if project_id is None:
             create_project_response = self.snsdk_client.create_project(
@@ -243,10 +260,14 @@ class SnsdkWrapper:
         Exception: If the project is not found or if there is an error in deleting the project.
         """
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
+         
+        # Check if the project exists    
         project_id = self.search_project(project_name=project_name)
         if project_id is None:
             raise Exception(f"Project with name '{project_name}' not found")
+        
         delete_project_response = self.snsdk_client.delete_project(project=project_id)
         if delete_project_response['status_code'] == 200:
             logging.info(f"Project with name '{project_name}' deleted")
@@ -303,7 +324,9 @@ class SnsdkWrapper:
         str or None: The ID of the model if found, otherwise None.
         """
         if model_name is None:
+            self._raise_error_if_config_is_none()
             model_name = self.config['job']['model']
+            
         search_model_response = self.snsdk_client.search_model(model_name=model_name)
         if search_model_response['status_code'] == 200:
             model_id = search_model_response['data']['model_id']
@@ -325,7 +348,9 @@ class SnsdkWrapper:
         str or None: The ID of the model if found and is trainable and deployable, otherwise None.
         """
         if model_name is None:
+            self._raise_error_if_config_is_none()
             model_name = self.config['job']['model']
+            
         models = self.list_models(filter=['train', 'deploy'])
         model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
         if len(model_id) > 0:
@@ -410,6 +435,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -417,6 +443,7 @@ class SnsdkWrapper:
 
         # check if model selected is found and is trainable
         if model is None:
+            self._raise_error_if_config_is_none()
             model = self.config['job']['model']
         model_id = self.search_trainable_model(model)
         if model_id is None:
@@ -424,35 +451,63 @@ class SnsdkWrapper:
 
         # check if dataset exist
         if dataset_name is None:
+            self._raise_error_if_config_is_none()
             dataset_name = self.config['dataset']['dataset_name']
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
 
+        #check extra params passed or in config file
+        if job_name is None:    
+            self._raise_error_if_config_is_none()
+            job_name = self.config['job']['job_name']
+        if job_description is None:
+            self._raise_error_if_config_is_none()
+            job_description = self.config['job']['job_description']
+        if job_type is None:
+            self._raise_error_if_config_is_none()
+            job_type = self.config['job']['job_type']
+        if parallel_instances is None:
+            self._raise_error_if_config_is_none()
+            parallel_instances = self.config['job']['parallel_instances']
+        if load_state is None:
+            self._raise_error_if_config_is_none()
+            load_state = self.config['job']['load_state']
+        if sub_path is None:
+            self._raise_error_if_config_is_none()
+            sub_path = self.config['job']['sub_path']
+        if rdu_arch is None:
+            self._raise_error_if_config_is_none()
+            rdu_arch = self.config['sambastudio']['rdu_arch']
+        if hyperparams is None:
+            self._raise_error_if_config_is_none()
+            hyperparams = self.config['job']['hyperparams']
+        
+        
         # create job
         create_job_response = self.snsdk_client.create_job(
             project=project_id,
-            job_name=job_name or self.config.get('job', {}).get('job_name'),
-            description=job_description or self.config.get('job', {}).get('job_description'),
-            job_type=job_type or self.config.get('job', {}).get('job_type'),
+            job_name=job_name,
+            description=job_description,
+            job_type=job_type,
             model_checkpoint=model_id,
             dataset=dataset_id,
-            parallel_instances=parallel_instances or self.config.get('job', {}).get('parallel_instances'),
-            load_state=load_state or self.config.get('job', {}).get('load_state'),
-            sub_path=sub_path or self.config.get('job', {}).get('sub_path'),
-            rdu_arch=rdu_arch or self.config.get('sambastudio', {}).get('rdu_arch'),
-            hyperparams=json.dumps(hyperparams or self.config.get('job', {}).get('hyperparams')),
+            parallel_instances=parallel_instances,
+            load_state=load_state,
+            sub_path=sub_path,
+            rdu_arch=rdu_arch,
+            hyperparams=json.dumps(hyperparams),
         )
 
         if create_job_response['status_code'] == 200:
             job_id = create_job_response['job_id']
             logging.info(
-                f"Job with name '{job_name or self.config.get('job',{}).get('job_name')}' created: '{create_job_response}'"
+                f"Job with name '{job_name}' created: '{create_job_response}'"
             )
             return job_id
         else:
             logging.error(
-                f"Failed to create job with name '{job_name or self.config.get('job',{}).get('job_name')}'. Details: {create_job_response}"
+                f"Failed to create job with name '{job_name}'. Details: {create_job_response}"
             )
             raise Exception(f'Error message: {create_job_response}')
 
@@ -473,10 +528,12 @@ class SnsdkWrapper:
         Exception: If the project does not exist.
         """
         if job_name is None:
+            self._raise_error_if_config_is_none()
             job_name = self.config['job']['job_name']
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -511,6 +568,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -518,6 +576,7 @@ class SnsdkWrapper:
 
         # check if job selected exists
         if job_name is None:
+            self._raise_error_if_config_is_none()
             job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
@@ -554,7 +613,9 @@ class SnsdkWrapper:
         Exception: If there is an error in listing the jobs.
         """
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
+            
         project_id = self.search_project(project_name)
         if project_id is None:
             logging.info(f"Project '{project_name}' not found listing all user jobs")
@@ -598,6 +659,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -605,6 +667,7 @@ class SnsdkWrapper:
 
         # check if job selected exists
         if job_name is None:
+            self._raise_error_if_config_is_none()
             job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
@@ -648,6 +711,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -655,6 +719,7 @@ class SnsdkWrapper:
 
         # check if job selected exists
         if job_name is None:
+            self._raise_error_if_config_is_none()
             job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
@@ -713,6 +778,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -721,25 +787,38 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             job_name = self.config['job']['job_name']
+            self._raise_error_if_config_is_none()
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
             raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
         if checkpoint_id is None:
+            self._raise_error_if_config_is_none()
             checkpoint_id = self.config['model_checkpoint']['model_checkpoint_id']
             if not checkpoint_id:
                 raise Exception('No model checkpoint_id provided')
             # TODO: check if checkpoint in list checkpoints list blocked because authorization error in lists checkpoints method
             # if checkpoint_id not in self.list_checkpoints(project_name=project_name, job_name=job_name):
             #     raise Exception(f"Checkpoint id '{checkpoint_id}' not found in job '{job_name}'")
+            
+        #check extra params passer or config file passed
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['model_checkpoint']['model_name']
+        if model_description is None:
+            self._raise_error_if_config_is_none()
+            model_description = self.config['model_checkpoint']['model_description']
+        if model_type is None:
+            self._raise_error_if_config_is_none()
+            model_type = self.config['model_checkpoint']['model_type']
 
         add_model_response = self.snsdk_client.add_model(
-            project=project_name or self.config.get('project', {}).get('project_name'),
-            job=job_name or self.config.get('job', {}).get('job_name'),
+            project=project_name,
+            job=job_name,
             model_checkpoint=checkpoint_id,
-            model_checkpoint_name=model_name or self.config.get('model_checkpoint', {}).get('model_name'),
-            description=model_description or self.config.get('model_checkpoint', {}).get('model_description'),
-            checkpoint_type=model_type or self.config.get('model_checkpoint', {}).get('model_type'),
+            model_checkpoint_name=model_name,
+            description=model_description,
+            checkpoint_type=model_type,
         )
 
         if add_model_response['status_code'] == 200:
@@ -768,6 +847,7 @@ class SnsdkWrapper:
 
         # check if checkpoint is provided
         if checkpoint is None:
+            self._raise_error_if_config_is_none()
             checkpoint = self.config['model_checkpoint']['model_checkpoint_id']
             if not checkpoint:
                 raise Exception('No model checkpoint_id provided')
@@ -802,6 +882,7 @@ class SnsdkWrapper:
 
         # check if project exist
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -815,15 +896,11 @@ class SnsdkWrapper:
                     endpoints.append({k: v for k, v in endpoint.items()})
                 else:
                     endpoints.append(
-                        {
-                            k: v
-                            for k, v in endpoint.items()
-                            if k
-                            in [
-                                'name',
-                                'id',
-                                'project_id',
-                                'status',
+                        {k: v for k, v in endpoint.items() if k in [
+                            'name',
+                            'id',
+                            'project_id',
+                            'status',
                             ]
                         }
                     )
@@ -843,7 +920,7 @@ class SnsdkWrapper:
         hyperparams: Optional[str] = None,
     ) -> Optional[str]:
         """
-        Creates a new endpoint in a specified Smabastudio project using a specified model.
+        Creates a new endpoint in a specified Sambastudio project using a specified model.
 
         Parameters:
         - project_name (str, optional): The name of the project. 
@@ -863,7 +940,7 @@ class SnsdkWrapper:
 
         Raises:
         Exception: If the project does not exist
-        Exeption: If the model does not exist
+        Exception: If the model does not exist
         Exception: If there is an error in creating the endpoint.
 
         Returns:
@@ -873,6 +950,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -880,6 +958,7 @@ class SnsdkWrapper:
 
         # check if model selected exists
         if model_name is None:
+            self._raise_error_if_config_is_none()
             model_name = self.config['model_checkpoint']['model_name']
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
@@ -887,20 +966,36 @@ class SnsdkWrapper:
 
         # check if endpoint selected exists
         if endpoint_name is None:
+            self._raise_error_if_config_is_none()
             endpoint_name = self.config['endpoint']['endpoint_name']
         endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
         if endpoint_id is not None:
             logging.info(f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}")
             return endpoint_id
 
+        # check extra params passed or config file passed
+        if endpoint_description is None:
+            self._raise_error_if_config_is_none()
+            endpoint_description = self.config['endpoint']['endpoint_description']
+        if instances is None:
+            self._raise_error_if_config_is_none()
+            instances = self.config['endpoint']['endpoint_instances']
+        if rdu_arch is None:
+            self._raise_error_if_config_is_none()
+            rdu_arch = self.config['sambastudio']['rdu_arch']
+        if hyperparams is None:
+            self._raise_error_if_config_is_none()
+            hyperparams = self.config['endpoint']['hyperparams']
+        
+        # create endpoint
         create_endpoint_response = self.snsdk_client.create_endpoint(
             project=project_id,
             endpoint_name=endpoint_name,
-            description=endpoint_description or self.config.get('endpoint', {}).get('endpoint_description'),
+            description=endpoint_description,
             model_checkpoint=model_id,
-            instances=instances or self.config.get('endpoint', {}).get('endpoint_instances'),
-            rdu_arch=rdu_arch or self.config['sambastudio']['rdu_arch'],
-            hyperparams=json.dumps(hyperparams or self.config.get('endpoint', {}).get('hyperparams')),
+            instances=instances,
+            rdu_arch=rdu_arch,
+            hyperparams=json.dumps(hyperparams),
         )
 
         if create_endpoint_response['status_code'] == 200:
@@ -929,8 +1024,10 @@ class SnsdkWrapper:
         - str: The ID of the endpoint if found. If not found or an error occurs, None is returned.
         """
         if project is None:
+            self._raise_error_if_config_is_none()
             project = self.config['project']['project_name']
         if endpoint_name is None:
+            self._raise_error_if_config_is_none()
             endpoint_name = self.config['endpoint']['endpoint_name']
         endpoint_info_response = self.snsdk_client.endpoint_info(project=project, endpoint=endpoint_name)
 
@@ -964,12 +1061,14 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         if endpoint_name is None:
+            self._raise_error_if_config_is_none()
             endpoint_name = self.config['endpoint']['endpoint_name']
 
         endpoint_info_response = self.snsdk_client.endpoint_info(project=project_id, endpoint=endpoint_name)
@@ -1014,6 +1113,7 @@ class SnsdkWrapper:
 
         # check if project selected exists
         if project_name is None:
+            self._raise_error_if_config_is_none()
             project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
@@ -1021,6 +1121,7 @@ class SnsdkWrapper:
 
         # check if endpoint selected exists
         if endpoint_name is None:
+            self._raise_error_if_config_is_none()
             endpoint_name = self.config['endpoint']['endpoint_name']
         endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
         if endpoint_id is None:
@@ -1051,7 +1152,9 @@ class SnsdkWrapper:
         - str: The ID of the dataset if found. If not found, None is returned.
         """
         if dataset_name is None:
+            self._raise_error_if_config_is_none()
             dataset_name = self.config['dataset']['dataset_name']
+            
         search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name)
         if search_dataset_response['status_code'] == 200:
             dataset_id = search_dataset_response['data']['dataset_id']
@@ -1072,6 +1175,3 @@ class SnsdkWrapper:
 
     """search app"""
     # define if is this needed
-
-    """list tenants"""
-    # TODO add later as util if dont known tenant by user before instantiation
