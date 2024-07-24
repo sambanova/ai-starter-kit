@@ -46,6 +46,7 @@ def _run_custom_performance_evaluation():
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
+        save_response_texts=st.session_state.save_llm_responses
     )
 
     custom_performance_evaluator.run_benchmark(
@@ -106,6 +107,13 @@ def main():
         )
 
         st.slider("Timeout", min_value=60, max_value=1800, value=600, key="timeout")
+
+        st.toggle(
+            "Save LLM Responses", 
+            value=False, 
+            key="save_llm_responses", 
+            help="Toggle on if you want to save the llm responses to an output JSONL file"
+            )
 
         #####################
         # Tuning Parameters #

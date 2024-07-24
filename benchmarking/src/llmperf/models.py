@@ -23,3 +23,17 @@ class RequestConfig(BaseModel):
     mode: Optional[str] = None
     num_concurrent_workers: int = None
     metadata: Optional[Dict[str, Any]] = None
+
+
+class LLMResponse(BaseModel):
+    """The response object created from a response from one of the SambaStudio LLM APIs
+    
+    Args:
+        metrics: Dictionary containing the throughput metrics from the endpoint
+        response_text: The generated text from the LLM
+        request_config: The associated request config
+    """
+    
+    metrics: Dict
+    response_text: str
+    request_config: RequestConfig

@@ -104,6 +104,14 @@ def main():
             help="The absolute path to the dataset to be used for running the custom performance evaluation."
         )
 
+        parser.add_argument(
+            '--save-llm-responses',
+            type=bool,
+            required=False,
+            default=False,
+            help="Whether to save the llm responses to an output JSONL file. (default: %(default)s)"
+        )
+
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         evaluator = CustomPerformanceEvaluator(
@@ -112,7 +120,8 @@ def main():
             num_workers=args.num_workers,
             timeout=args.timeout,
             user_metadata=user_metadata,
-            input_file_path=args.input_file_path
+            input_file_path=args.input_file_path,
+            save_response_texts=args.save_llm_responses
         )
 
         # Run performance evaluation
