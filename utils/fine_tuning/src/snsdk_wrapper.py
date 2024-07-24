@@ -2,17 +2,19 @@ import os
 import sys
 import json
 import yaml
-from snsdk import SnSdk
+import re
 import logging
-from typing import Optional
+import subprocess
+from snsdk import SnSdk
+from typing import Optional, List
+from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-utils_dir = os.path.abspath(os.path.join(current_dir, ".."))
+utils_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
-
-SNAPI_PATH = '~/.snapi'
+load_dotenv(os.path.join(repo_dir,".env"), override=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,10 +22,23 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
+SNAPI_PATH = '~/.snapi'
+
+# Job types: can not combine train/evaluation with batch_predict
+JOB_TYPES = [
+    "train",
+    "evaluation",
+    "batch_predict",
+]
+
+# TODO: future support for other types
+SOURCE_TYPES = ["localMachine"]
+SOURCE_FILE_PATH = os.path.join(utils_dir,"fine_tuning","src","tmp_source_file.json")
+
 class SnsdkWrapper:
     """ "Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio"""
 
-    """init and get configs"""
+    """init"""
 
     def __init__(self, config_path: Optional[str] = None) -> None:
         """Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio
@@ -31,41 +46,92 @@ class SnsdkWrapper:
             config_path (str , optional): path to config path. Defaults to None.
             see a config file example in ./config.yaml
         """
-        self.config = {}
+        self.config = None
         self.tenant_name = None
         self.snapi_path = SNAPI_PATH
 
+        # If config is provided, load it and validate Snapi directory path
         if config_path is not None:
             self.config = self._load_config(config_path)
-            config_snapi_path = self.config['sambastudio']['snapi_path']
+            config_snapi_path = self.config["sambastudio"]["snapi_path"]
             if config_snapi_path is not None and len(config_snapi_path) > 0:
-                self.snapi_path = self.config['sambastudio']['snapi_path']
+                self.snapi_path = self.config["sambastudio"]["snapi_path"]
 
+        # Get sambastudio variables to set up Snsdk
         host_url, tenant_id, access_key = self._get_sambastudio_variables()
-
+        
         self.snsdk_client = SnSdk(
             host_url=host_url,
             access_key=access_key,
             tenant_id=tenant_id,
         )
 
-    def _load_config(self, file_path: str) -> dict:
-        """Loads a YAML configuration file.
-
+    """Internal methods"""
+    def _set_snapi_using_env_variables(
+        self,
+        host_name: str,
+        access_key: str,
+        current_snapi_config: dict,
+        snapi_config_path: str,
+        snapi_secret_path: str,
+        tenant_name: str = "default",
+    ) -> tuple:
+        """Sets Snapi using env variables. It also validates if tenant can be set in Snapi config file.
         Args:
-            file_path (str): Path to the YAML configuration file.
+            host_name (str): host name coming from env variables
+            access_key (str): access key coming from env variables
+            tenant_name (str): tenant name coming from env variables
+            current_snapi_config (dict): current snapi config dictionary
+            snapi_config_path (str): snapi config path
+            snapi_secret_path (str): snapi secret path
+
+        Raises:
+            Exception: fails to set the specified tenant using Snapi CLI
 
         Returns:
-            dict: The configuration data loaded from the YAML file.
+            tuple: host name, access key and tenant id
         """
-        try:
-            with open(file_path, 'r') as file:
-                config = yaml.safe_load(file)
-        except FileNotFoundError:
-            raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
-        except yaml.scanner.ScannerError:
-            raise ValueError(f'Error: The file {file_path} contains invalid yaml.')
-        return config
+        # Updates snapi config file using requested Sambastudio env
+        tmp_snapi_config = {}
+        tmp_snapi_config["HOST_NAME"] = host_name
+        tmp_snapi_config["CONFIG_DIR"] = current_snapi_config["CONFIG_DIR"]
+        tmp_snapi_config["DISABLE_SSL_WARNINGS"] = current_snapi_config[
+            "DISABLE_SSL_WARNINGS"
+        ]
+        with open(snapi_config_path, "w") as file:
+            json.dump(tmp_snapi_config, file)
+        with open(snapi_secret_path, "w") as file:
+            file.write(access_key)
+
+        # Sets default requested tenant
+        snapi_config_response = subprocess.run(
+            ["snapi", "config", "set", "--tenant", f"{tenant_name}"],
+            capture_output=True,
+            text=True,
+        )
+
+        # If there's an error in Snapi subprocess, show it and stop process
+        if (
+            ("status_code" in snapi_config_response.stdout.lower())
+            and ("error occured" in snapi_config_response.stdout.lower())
+            or (len(snapi_config_response.stderr) > 0)
+        ):
+            if len(snapi_config_response.stderr) > 0:
+                error_message = snapi_config_response.stderr
+            else:
+                error_message = re.search(
+                    r"message:\s*(.*)", snapi_config_response.stdout
+                )[0]
+            logging.error(
+                f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}"
+            )
+            raise Exception(f"Error message: {error_message}")
+
+        # Read updated Snapi config file
+        with open(snapi_config_path, "r") as file:
+            new_snapi_config = json.load(file)
+
+        return host_name, new_snapi_config["TENANT_ID"], access_key
 
     def _get_sambastudio_variables(self) -> tuple:
         """Gets Sambastudio host name, tenant id and access key from Snapi folder location
@@ -77,76 +143,141 @@ class SnsdkWrapper:
         Returns:
             tuple: host name, tenant id and access key from snapi setup
         """
-        snapi_config = ''
-        snapi_secret = ''
+        snapi_config = ""
+        snapi_secret = ""
 
         try:
+
             # reads snapi config json
-            snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
-            with open(snapi_config_path, 'r') as file:
+            snapi_config_path = os.path.expanduser(self.snapi_path) + "/config.json"
+            with open(snapi_config_path, "r") as file:
                 snapi_config = json.load(file)
 
             # reads snapi secret txt file
-            snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
-            with open(snapi_secret_path, 'r') as file:
+            snapi_secret_path = os.path.expanduser(self.snapi_path) + "/secret.txt"
+            with open(snapi_secret_path, "r") as file:
                 snapi_secret = file.read()
 
         except FileNotFoundError:
-            raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
+            raise FileNotFoundError(
+                f"Error: The file {snapi_config_path} does not exist."
+            )
         except ValueError:
-            raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
-
-        host_name = os.getenv('HOST_NAME')
-        access_key = os.getenv('ACCESS_KEY')
-        tenant_name = os.getenv('TENANT_NAME')
-
-        if (host_name is not None) and (access_key is not None) and (tenant_name is not None):
-            new_snapi_config = {}
-            new_snapi_config['HOST_NAME'] = host_name
-            new_snapi_config['CONFIG_DIR'] = snapi_config['CONFIG_DIR']
-            new_snapi_config['DISABLE_SSL_WARNINGS'] = snapi_config['DISABLE_SSL_WARNINGS']
-            with open(snapi_config_path, 'w') as file:
-                json.dump(new_snapi_config, file)
-            with open(snapi_secret_path, 'w') as file:
-                file.write(access_key)
-
-            snapi_config_response = subprocess.run(
-                ['snapi', 'config', 'set', '--tenant', 'default'],
-                capture_output=True,
-                text=True,
+            raise ValueError(
+                f"Error: The file {snapi_config_path} contains invalid JSON."
             )
 
-            with open(snapi_config_path, 'r') as file:
-                new_snapi_config = json.load(file)
-            new_new_snapi_config = new_snapi_config
+        host_name = os.getenv("SAMBASTUDIO_HOST_NAME")
+        access_key = os.getenv("SAMBASTUDIO_ACCESS_KEY")
+        tenant_name = os.getenv("SAMBASTUDIO_TENANT_NAME")
 
-            tmp_snsdk_client = SnSdk(
-                host_url=host_name,
-                access_key=access_key,
-                tenant_id=new_snapi_config['TENANT_ID'],
+        if (
+            (host_name is not None)
+            and (access_key is not None)
+            and (tenant_name is not None)
+        ):
+            logging.info(f"Using env variables to set up Snsdk.")
+            host_name, tenant_id, access_key = self._set_snapi_using_env_variables(
+                host_name,
+                access_key,
+                snapi_config,
+                snapi_config_path,
+                snapi_secret_path,
+                tenant_name,
             )
-
-            tenant_info_response = tmp_snsdk_client.tenant_info(tenant=new_snapi_config['TENANT_ID'])
-            tenant_id = tenant_info_response['data']['tenant_id']
-            new_new_snapi_config['TENANT_ID'] = tenant_id
-
-            with open(snapi_config_path, 'w') as file:
-                json.dump(new_new_snapi_config, file)
-
-            return host_name, tenant_id, access_key
 
         else:
-            host_name = snapi_config['HOST_NAME']
-            tenant_id = snapi_config['TENANT_ID']
-            access_key = snapi_secret.strip()
+            logging.info(f"Using variables from Snapi config to set up Snsdk.")
+            host_name = snapi_config["HOST_NAME"]
+            tenant_id = snapi_config["TENANT_ID"]
+            access_key = snapi_secret
 
-        return host_name, tenant_id, access_key
+        return host_name, tenant_id, access_key.strip()
+
+    def _load_config(self, file_path: str) -> dict:
+        """Loads a YAML configuration file.
+
+        Args:
+            file_path (str): Path to the YAML configuration file.
+
+        Returns:
+            dict: The configuration data loaded from the YAML file.
+        """
+        try:
+            with open(file_path, "r") as file:
+                config = yaml.safe_load(file)
+            logging.info(f"Using config file located in {file_path}")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Error: The file {file_path} does not exist.")
+        except yaml.scanner.ScannerError:
+            raise ValueError(f"Error: The file {file_path} contains invalid yaml.")
+        return config
 
     def _raise_error_if_config_is_none(self) -> None:
+        """Raise an error if the configuration file is not provided"""
         if self.config is None:
             error_message = "No config found. Please provide parameter values."
             logging.error(error_message)
             raise Exception(f"Error message: {error_message}")
+
+    def _create_source_file(self, dataset_path: str) -> None:
+        """
+        Create a source file for snapi dataset upload
+        
+        Args:
+            dataset_path string: path to dataset
+        """
+        json_content = {"source_path": dataset_path}
+        with open(SOURCE_FILE_PATH, "w") as file:
+            json.dump(json_content, file)
+
+    """tenants"""
+    
+    def list_tenants(self, verbose: bool = False) -> Optional[str]:
+        """Lists all tenants
+
+        Returns:
+            list | None: list of existing tenants. If there's an error, None is returned.
+        """
+        list_tenant_response = self.snsdk_client.list_tenants()
+        if list_tenant_response["status_code"] == 200:
+            tenants = []
+            if verbose:
+                return list_tenant_response["data"]
+            else:
+                for tenant in list_tenant_response["data"]:
+                    tenants.append(
+                        {
+                            "tenant_id": tenant.get("tenant_id"),
+                            "tenant_name": tenant.get("tenant_name"),
+                        }
+                    )
+                return tenants
+        else:
+            logging.error(
+                f"Failed to list projects. Details: {list_tenant_response['detail']}"
+            )
+            raise Exception(f"Error message: {list_tenant_response['detail']}")
+
+
+    def search_tenant(self, tenant_name: Optional[str]) -> Optional[str]:
+        """Searches tenant
+
+        Args:
+            tenant_name (str): tenant name to search
+
+        Returns:
+            str | None: searched tenant information. If there's an error, None is returned.
+        """
+
+        tenant_info_response = self.snsdk_client.tenant_info(tenant=tenant_name)
+        if tenant_info_response["status_code"] == 200:
+            tenant_id = tenant_info_response["data"]["tenant_id"]
+            logging.info(f"Tenant with name '{tenant_name}' found with id {tenant_id}")
+            return tenant_id
+        else:
+            logging.info(f"Tenant with name '{tenant_name}' not found")
+            return None
 
     """Project"""
 
@@ -277,14 +408,326 @@ class SnsdkWrapper:
             )
             raise Exception(f'Error message: {delete_project_response}')
 
+    """Dataset"""
+
+    def list_datasets(self, verbose: bool = False) -> Optional[list]:
+        """Lists all datasets
+
+        Returns:
+            list | None: list of existing datasets. If there's an error, None is returned.
+        """
+        list_datasets_response = self.snsdk_client.list_datasets()
+        if list_datasets_response["status_code"] == 200:
+            datasets = []
+            if verbose:
+                return list_datasets_response["datasets"]
+            else:
+                for dataset in list_datasets_response["datasets"]:
+                    datasets.append(
+                        {
+                            "id": dataset.get("id"),
+                            "dataset_name": dataset.get("dataset_name"),
+                        }
+                    )
+                return datasets
+        else:
+            logging.error(
+                f"Failed to list models. Details: {list_datasets_response['detail']}"
+            )
+            raise Exception(f"Error message: {list_datasets_response['detail']}")
+
+    def search_dataset(self, dataset_name: Optional[str] = None) -> Optional[str]:
+        """Searches a dataset
+
+        Args:
+            dataset_name (str): dataset name to search
+
+        Returns:
+            str | None: searched dataset information. If there's an error, None is returned.
+        """
+        # Decide whether using method parameters or config
+        if dataset_name is None:
+            self._raise_error_if_config_is_none()
+            dataset_name = self.config["dataset"]["dataset_name"]
+
+        # Search dataset
+        search_dataset_response = self.snsdk_client.search_dataset(
+            dataset_name=dataset_name
+        )
+        if search_dataset_response["status_code"] == 200:
+            dataset_id = search_dataset_response["data"]["dataset_id"]
+            logging.info(
+                f"Dataset with name '{dataset_name}' found with id {dataset_id}"
+            )
+            return dataset_id
+        else:
+            logging.info(f"Dataset with name '{dataset_name}' not found")
+            return None
+
+    def delete_dataset(self, dataset_name: Optional[str] = None) -> None:
+        # Decide whether using method parameters or config
+        if dataset_name is None:
+            self._raise_error_if_config_is_none()
+            dataset_name = self.config["dataset"]["dataset_name"]
+
+        # Search dataset if exists
+        dataset_id = self.search_dataset(dataset_name=dataset_name)
+        if dataset_id is None:
+            raise Exception(f"Dataset with name '{dataset_name}' not found")
+
+        # Delete dataset
+        delete_dataset_response = self.snsdk_client.delete_dataset(dataset=dataset_name)
+        if delete_dataset_response["status_code"] == 200:
+            logging.info(f"Dataset with name '{dataset_name}' deleted")
+        else:
+            logging.error(
+                f"Failed to delete dataset with name '{dataset_name}'. Details: {delete_dataset_response}"
+            )
+            raise Exception(f"Error message: {delete_dataset_response}")
+
+    def _build_snapi_dataset_add_command(
+        self,
+        dataset_name: str,
+        dataset_apps_availability: list,
+        dataset_job_types: list,
+        dataset_source_type: str,
+        dataset_description: str,
+        dataset_filetype: str,
+        dataset_url: str,
+        dataset_language: str,
+    ) -> str:
+        """Builds snapi command to add a dataset to SambaStudio.
+        Addresses apps and job types, since they're lists
+        Args:
+            dataset_name (str): dataset name
+            dataset_apps_availability (list): list of apps
+            dataset_job_types (list): list of job types
+            dataset_source_type (str): source type
+            dataset_description (str): dataset description
+            dataset_filetype (str): file type
+            dataset_url (str): url
+            dataset_language (str): language
+
+        Returns:
+            str: snapi command ready to execute
+        """
+        # Get multiple job type parameters
+        job_type_command_parameters = []
+        for job_type in dataset_job_types:
+            job_type_command_parameters.append("--job_type")
+            job_type_command_parameters.append(job_type)
+
+        # Get multiple apps parameters
+        apps_command_parameters = []
+        for app in dataset_apps_availability:
+            apps_command_parameters.append("--apps")
+            apps_command_parameters.append(app)
+
+        command = [
+            "snapi",
+            "dataset",
+            "add",
+            "--dataset-name",
+            dataset_name,
+            "--description",
+            dataset_description,
+            "--source_type",
+            dataset_source_type,
+            "--language",
+            dataset_language,
+            "--source_file",
+            SOURCE_FILE_PATH,
+            "--file_type",
+            dataset_filetype,
+            "--url",
+            dataset_url,
+        ]
+        command.extend(job_type_command_parameters)
+        command.extend(apps_command_parameters)
+
+        return command
+
+    def create_dataset(
+        self,
+        dataset_name: Optional[str] = None,
+        dataset_apps_availability: Optional[List[str]] = None,
+        dataset_job_types: Optional[List[str]] = None,
+        dataset_source_type: Optional[str] = None,
+        dataset_path: Optional[str] = None,  # add note in readme it must be absolute
+        dataset_description: Optional[str] = None,
+        dataset_filetype: Optional[str] = None,
+        dataset_url: Optional[str] = None,
+        dataset_language: Optional[str] = None,
+        dataset_metadata: Optional[dict] = None,
+    ) -> str:
+        """ """
+        # Decide whether using method parameters or config
+        if dataset_name is None:
+            self._raise_error_if_config_is_none()
+            dataset_name = self.config["dataset"]["dataset_name"]
+
+        # Validate if apps exist
+        if dataset_apps_availability is None:
+            self._raise_error_if_config_is_none()
+            dataset_apps_availability = self.config["dataset"][
+                "dataset_apps_availability"
+            ]
+        for app_name in dataset_apps_availability:
+            app_id = self.search_app(app_name)
+            if app_id is None:
+                raise Exception(f"App '{app_name}' not found")
+
+        # Validate job types
+        if dataset_job_types is None:
+            self._raise_error_if_config_is_none()
+            dataset_job_types = self.config["dataset"]["dataset_job_types"]
+        for job_type in dataset_job_types:
+            if job_type not in JOB_TYPES:
+                raise Exception(f"Job type '{job_type}' not valid")
+
+        # Validate source type
+        if dataset_source_type is None:
+            self._raise_error_if_config_is_none()
+            dataset_source_type = self.config["dataset"]["dataset_source_type"]
+        if dataset_source_type not in SOURCE_TYPES:
+            raise Exception(f"Source type '{dataset_source_type}' not valid")
+
+        # Decide whether using method parameters or config
+        if dataset_path is None:
+            self._raise_error_if_config_is_none()
+            dataset_path = self.config["dataset"]["dataset_path"]
+
+        # Create source file based on dataset path
+        self._create_source_file(dataset_path)
+
+        # Decide whether using method parameters or config
+        if dataset_description is None:
+            self._raise_error_if_config_is_none()
+            dataset_description = self.config["dataset"]["dataset_description"]
+
+        if dataset_filetype is None:
+            self._raise_error_if_config_is_none()
+            dataset_filetype = self.config["dataset"]["dataset_filetype"]
+
+        if dataset_url is None:
+            self._raise_error_if_config_is_none()
+            dataset_url = self.config["dataset"]["dataset_url"]
+
+        if dataset_language is None:
+            self._raise_error_if_config_is_none()
+            dataset_language = self.config["dataset"]["dataset_language"]
+
+        # TODO: Metadata WIP - waiting for channel's confirmation
+        if dataset_metadata is None:
+            self._raise_error_if_config_is_none()
+            dataset_metadata = self.config["dataset"]["dataset_metadata"]
+        # for job_type in dataset_job_types:
+        #     if job_type == "batch_predict":
+        #         raise Exception(
+        #             f"Metadata is not valid for dataset with job type {job_type}"
+        #         )
+
+        # Validate if dataset already exists
+        dataset_id = self.search_dataset(dataset_name)
+
+        # Create dataset if dataset is not found
+        if dataset_id is None:
+            command = self._build_snapi_dataset_add_command(
+                dataset_name,
+                dataset_apps_availability,
+                dataset_job_types,
+                dataset_source_type,
+                dataset_description,
+                dataset_filetype,
+                dataset_url,
+                dataset_language,
+            )
+            echo_response = subprocess.run(
+                ["echo", "yes"], capture_output=True, text=True
+            )
+            snapi_response = subprocess.run(
+                command, input=echo_response.stdout, capture_output=True, text=True
+            )
+
+            errors_response = (
+                ("status_code" in snapi_response.stdout.lower())
+                and ("error occured" in snapi_response.stdout.lower())
+            ) or (len(snapi_response.stderr) > 0)
+            # if errors coming in response
+            if errors_response:
+                if len(snapi_response.stderr) > 0:
+                    error_message = snapi_response.stderr
+                else:
+                    error_message = re.search(
+                        r"message:\s*(.*)", snapi_response.stdout
+                    )[0]
+                logging.error(
+                    f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}"
+                )
+                raise Exception(f"Error message: {error_message}")
+            # if there are no errors in reponse
+            else:
+                dataset_id = self.search_dataset(dataset_name=dataset_name)
+                logging.info(
+                    f"Dataset with name '{dataset_name}' created: '{snapi_response.stdout}'"
+                )
+                return dataset_id
+        # Dataset found, so return dataset id
+        else:
+            logging.info(
+                f"Dataset with name '{dataset_name}' already exists with id '{dataset_id}', using it"
+            )
+        return dataset_id
+
+    """app"""
+    
+    def list_apps(self, verbose: bool = False) -> list | None:
+        """Lists all apps
+
+        Returns:
+            list | None: list of existing apps. If there's an error, None is returned.
+        """
+        list_apps_response = self.snsdk_client.list_apps()
+        if list_apps_response["status_code"] == 200:
+            apps = []
+            if verbose:
+                apps = list_apps_response["apps"]
+            else:
+                for app in list_apps_response["apps"]:
+                    apps.append({"id": app.get("id"), "name": app.get("name")})
+            return apps
+        else:
+            logging.error(
+                f"Failed to list models. Details: {list_apps_response['detail']}"
+            )
+            raise Exception(f"Error message: {list_apps_response['detail']}")
+
+    def search_app(self, app_name: str) -> str | None:
+        """Searches an App
+
+        Args:
+            app_name (str): app name to search
+
+        Returns:
+            str | None: searched app information. If there's an error, None is returned.
+        """
+        app_info_response = self.snsdk_client.app_info(app=app_name)
+        if app_info_response["status_code"] == 200:
+            app_id = app_info_response["apps"]["id"]
+            logging.info(f"App with name '{app_name}' found with id {app_id}")
+            return app_id
+        else:
+            logging.info(f"App with name '{app_name}' not found")
+            return None
+
     """models"""
 
-    def list_models(self, filter: Optional[list[str]] = [], verbose: Optional[bool] = False) -> list[dict]:
+    def list_models(self, filter_job_types: Optional[list[str]] = [], verbose: Optional[bool] = False) -> list[dict]:
         """
         List models in sambastudio based on the provided filter.
 
         Parameters:
-        filter (list[str], optional): A list of job types to filter the models. Defaults to [].
+        filter_job_types (list[str], optional): A list of job types to filter the models. Defaults to [].
             Should include the job types supported by the models to filter 
             example: ['train', 'batch_predict', 'deploy']
         verbose (bool, optional): If True, return detailed information about each model. Defaults to False.
@@ -302,7 +745,7 @@ class SnsdkWrapper:
         if list_models_response['status_code'] == 200:
             models = []
             for model in list_models_response['models']:
-                if set(filter).issubset(model.get('jobTypes')):
+                if set(filter_job_types).issubset(model.get('jobTypes')):
                     if verbose:
                         models.append({k: v for k, v in model.items()})
                     else:
@@ -351,7 +794,7 @@ class SnsdkWrapper:
             self._raise_error_if_config_is_none()
             model_name = self.config['job']['model']
             
-        models = self.list_models(filter=['train', 'deploy'])
+        models = self.list_models(filter_job_types=['train', 'deploy'])
         model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
         if len(model_id) > 0:
             logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
@@ -1137,41 +1580,4 @@ class SnsdkWrapper:
                 f"Failed to delete endpoint '{endpoint_name}' in project '{project_name}'. Details: {delete_endpoint_response}"
             )
             raise Exception(f'Error message: {delete_endpoint_response}')
-
-    """datasets"""
-
-    def search_dataset(self, dataset_name: Optional[str] = True) -> Optional[str]:
-        """
-        Searches for a dataset in SambaStudio by its name.
-
-        Parameters:
-        - dataset_name (str, optional): The name of the dataset to search for. 
-            If not provided, the dataset name from the configs file is used.
-
-        Returns:
-        - str: The ID of the dataset if found. If not found, None is returned.
-        """
-        if dataset_name is None:
-            self._raise_error_if_config_is_none()
-            dataset_name = self.config['dataset']['dataset_name']
-            
-        search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name)
-        if search_dataset_response['status_code'] == 200:
-            dataset_id = search_dataset_response['data']['dataset_id']
-            logging.info(f"Dataset with name '{dataset_name}' found with id {dataset_id}")
-            return dataset_id
-        else:
-            logging.info(f"Dataset with name '{dataset_name}' not found")
-            return None
-
-    """list datasets"""
-    # {dataset.get("dataset_name"):dataset.get("id") for dataset in sambastudio.list_datasets().get("datasets")}
-
-    """create dataset"""
-    # snapi
-
-    """list apps"""
-    # available_apps = {app.get("name"): app.get("id") for app in sambastudio.list_apps().get("apps")}
-
-    """search app"""
-    # define if is this needed
+   

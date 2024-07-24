@@ -4,9 +4,9 @@ sambastudio:
   snapi_path: "~/.snapi"
 
 dataset:
-  dataset_name: "smol_sql_pretraining_mm" #"smol_sql_dataset"
+  dataset_name: "smol_sql_dataset"
   dataset_description: "test_dataset for sql finetuning"
-  dataset_path: "../../fine_tuning_sql/data/output/smol_sql_dataset"
+  dataset_path: "/Users/jorgep/Documents/ask_public_own/ai-starter-kit/fine_tuning_sql/data/output/pretrain-squad-smol-sql"
   dataset_apps_availability: 
     - 'Mistral'
     - 'Llama 3'
@@ -22,6 +22,11 @@ dataset:
   dataset_language: "english"
   dataset_filetype: "hdf5"
   dataset_url: ""
+  dataset_metadata:
+    labels_file: "./dummy_labels_path"
+    train_filepath: "./dummy_train_path"
+    validation_filepath: "./dummy_val_path"
+    test_filepath: "./dummy_test_path"
 
 project: 
   project_name: "example project" #"sql_finetuning" 

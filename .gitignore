@@ -245,3 +245,7 @@ wandb/
 utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
+
+=======
+# finetunning
+utils/fine_tuning/src/tmp_source_file.json
