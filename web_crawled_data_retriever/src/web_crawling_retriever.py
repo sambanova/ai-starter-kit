@@ -232,7 +232,7 @@ class WebCrawlingRetrieval:
                     'do_sample': True,
                     'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
                     'temperature': self.llm_info['temperature'],
-                    'select_expert': self.llm_info['sambaverse_select_expert'],
+                    'select_expert': self.llm_info['select_expert'],
                     'process_prompt': False
                 },
             )
