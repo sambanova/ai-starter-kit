@@ -995,6 +995,12 @@ class SambaStudioFastCoE(LLM):
 
     model: str = 'llama3-8b'
     """LLM model expert to use"""
+    
+    stream_api: bool = True
+    """use stream api"""
+    
+    stream_options: dict =  {"include_usage": True}
+    """stream options"""
 
     class Config:
         """Configuration for this pydantic object."""
@@ -1049,7 +1055,7 @@ class SambaStudioFastCoE(LLM):
         http_session = requests.Session()
         if not stop:
             stop = self.stop_tokens
-        data = {'inputs': formatted_prompt, 'max_tokens': self.max_tokens, 'stop': stop, 'model': self.model}
+        data = {'messages': formatted_prompt, 'max_tokens': self.max_tokens, 'stop': stop, 'model': self.model, 'stream': self.stream_api, 'stream_options': self.stream_options}
         # Streaming output
         response = http_session.post(
             self.fast_coe_url,
@@ -1070,21 +1076,18 @@ class SambaStudioFastCoE(LLM):
             }
 
             if chunk['status_code'] == 200 and chunk.get('error'):
-                chunk['result'] = {'responses': [{'stream_token': ''}]}
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                )
+                
             if chunk['status_code'] != 200:
-                error = chunk.get('is_error')
-                optional_details = chunk.get('completion')
-                if error:
-                    optional_details = error.get('details')
-                    raise ValueError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{chunk['status_code']}.\n"
-                        f"Details: {optional_details}\n"
-                    )
-                else:
-                    raise RuntimeError(
-                        f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
-                    )
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                )
+                 
+            print(chunk)    
+            #TODO: get response form new structure WIP 
+                    
             text = json.loads(chunk['data'])['stream_token']
             generated_chunk = GenerationChunk(text=text)
             yield generated_chunk
