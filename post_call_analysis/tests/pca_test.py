@@ -21,6 +21,7 @@ import logging
 from typing import List, Dict, Any
 import glob
 import pandas as pd
+import yaml
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,16 +39,19 @@ sys.path.append(repo_dir)
 
 from post_call_analysis.src import analysis, plot, asr
 
-audio_save_location=(os.path.join(kit_dir,"data/conversations/audio"))
-transcript_save_location=(os.path.join(kit_dir,"data/conversations/transcription"))
-transcription_path = os.path.join(transcript_save_location,'911_call.csv')
+def load_test_config(config_path):
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
+
+test_config = load_test_config(kit_dir+'/tests/test_config.yaml')
+transcription_path = os.path.join(kit_dir, test_config['paths']['transcription_path'])
 transcription=pd.read_csv(transcription_path)
-facts_path = os.path.join(kit_dir, 'data/documents/facts')
-procedures_path =  os.path.join(kit_dir, 'data/documents/example_procedures.txt')
+facts_path = os.path.join(kit_dir, test_config['paths']['facts_path'])
+procedures_path =  os.path.join(kit_dir, test_config['paths']['procedures_path'])
 facts_urls = []
-classes = ["undefined", "emergency", "general information", "sales", "complains"]
-entities = ["name", "address", "city", "phone number"]
-sentiments = ["positive", "neutral" ,"negative"] 
+classes = test_config["classes"]
+entities = test_config["entities"]
+sentiments = test_config["sentiments"]
 
 def convert_to_dialogue_structure(transcription):
     dialogue = ''  
