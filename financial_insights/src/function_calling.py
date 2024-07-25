@@ -1,9 +1,11 @@
+import functools
 import json
+import operator
 import os
 import re
 import sys
 from pprint import pprint
-from typing import List, Optional, Type, Union, Tuple
+from typing import Any, List, Optional, Sequence, Tuple, Type, TypedDict, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -16,10 +18,6 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
-
-import functools
-import operator
-from typing import Sequence, TypedDict, Any
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -65,7 +63,11 @@ You must always select one or more of the above tools and answer with only a lis
 }}]
 ```
 
+If one tool is called after another, the subsequent tool must follow the previous tool in the list.
+Please call all the relevant tool.
+
 Your answer should be in the same language as the initial query.
+
 
 """  # noqa E501
 
@@ -78,7 +80,7 @@ class ConversationalResponse(BaseModel):
     )
 
     response: str = Field(
-        ..., description='Conversational response to the user. must be in the same language as the user query'
+        ..., description='Conversational response to the user. Must be in the same language as the user query.'
     )
 
 
@@ -222,7 +224,7 @@ class FunctionCallingLlm:
             tools_map = {tool.name: tool for tool in self.tools}
         else:
             tools_map = {}
-        tool_msg = "Tool '{name}'response: {response}"
+        tool_msg = "Tool '{name}'. Response: {response}"
         tools_msgs = []
 
         if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':
@@ -288,7 +290,7 @@ class FunctionCallingLlm:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
 
-    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> Tuple[str, Any]:
+    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> Tuple[List[str], Any]:
         """
         invocation method for function calling workflow
 
@@ -305,12 +307,11 @@ class FunctionCallingLlm:
 
         prompt = self.msgs_to_llama3_str(history)
         llm_response = self.llm.invoke(prompt)
-        print(llm_response)
-        parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
-        history.append(AIMessage(llm_response))
-        tools_msgs, response = self.execute(parsed_tools_llm_response)
 
-        final_message = tools_msgs[0]
+        parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
+
+        tools_messages, response = self.execute(parsed_tools_llm_response)
+
         if debug:
             pprint(history)
-        return final_message, response
+        return tools_messages, response
