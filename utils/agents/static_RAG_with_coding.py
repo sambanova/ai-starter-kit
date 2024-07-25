@@ -230,7 +230,9 @@ class CodeRAG(RAGComponents, CodeGenComponents):
         """
 
         response = {}
-        output = app.invoke(input = {"question": question}, config=config)
+        # type ignore is used because the invoke expects a runnable, 
+        # but using a runnable in this way will not work.
+        output = app.invoke(input = {"question": question}, config=config) # type: ignore
         response['answer'] = output['generation']
         sources = [o for o in output['documents']]
         response['source_documents'] = sources
