@@ -1000,7 +1000,7 @@ class SambaStudioFastCoE(LLM):
     """use stream api"""
     
     stream_options: dict =  {"include_usage": True}
-    """stream options"""
+    """stream options, include usage to get generation metrics"""
 
     class Config:
         """Configuration for this pydantic object."""
@@ -1074,27 +1074,31 @@ class SambaStudioFastCoE(LLM):
                 'data': event.data,
                 'status_code': response.status_code,
             }
-
-            if chunk['status_code'] == 200 and chunk.get('error'):
-                raise RuntimeError(
-                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
-                )
                 
             if chunk['status_code'] != 200:
                 raise RuntimeError(
                     f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                 )
                 
-            # check if the response is a final '[DONE]' response
-            if chunk['data']!="[DONE]" :
-                data = json.loads(chunk['data'])    
-                # check if the response is a final response with usage stats (not includes content) 
-                if data.get("usage") is None:
-                    # check is not "end of text" response
-                    if data['choices'][0]["finish_reason"] is None:
-                        text = data['choices'][0]["delta"]["content"]
-                        generated_chunk = GenerationChunk(text=text)
-                        yield generated_chunk
+            else:
+                if chunk.get('error'):
+                    raise RuntimeError(
+                        f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                    )
+                
+            try:    
+                # check if the response is a final event in that case event data response is '[DONE]' 
+                if chunk['data']!="[DONE]" :
+                    data = json.loads(chunk['data'])    
+                    # check if the response is a final response with usage stats (not includes content) 
+                    if data.get("usage") is None:
+                        # check is not "end of text" response
+                        if data['choices'][0]["finish_reason"] is None:
+                            text = data['choices'][0]["delta"]["content"]
+                            generated_chunk = GenerationChunk(text=text)
+                            yield generated_chunk
+            except Exception as e:
+                raise Exception(f"Error getting content chunk raw streamed response: {chunk}") 
                 
 
     def _stream(
