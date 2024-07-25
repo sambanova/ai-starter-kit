@@ -56,7 +56,6 @@ class BatchASRProcessor():
         self.dataset_language = self.config['asr']['datasets']['dataset_language']
         
         self.asr_with_diarization_app_id = self.config['asr']['apps']['asr_with_diarization_app_id']
-        self.application_field = self.config['asr']['apps']['application_field']
         
         self.base_url = self.config['asr']['urls']['base_url']
         self.datasets_url = self.config['asr']['urls']['datasets_url'] 
@@ -265,7 +264,6 @@ class BatchASRProcessor():
             --apps {self.asr_with_diarization_app_id} \
             --source_type {self.dataset_source_type} \
             --source_file {self.dataset_source_file} \
-            --application_field {self.application_field} \
             --language {self.dataset_language} \
             --description "{self.dataset_description}"'
         
