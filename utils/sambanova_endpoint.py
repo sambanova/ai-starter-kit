@@ -1084,18 +1084,18 @@ class SambaStudioFastCoE(LLM):
                 raise RuntimeError(
                     f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                 )
-            try:    
-                print(json.loads(chunk['data'])['choices'][0]["delta"].get("content",""))   
-            except Exception as e:
-                print(chunk)
-        
-            #TODO: get response form new structure WIP 
-            
-            #if usage or if data is done yield nothing
-                    
-            text = json.loads(chunk['data'])['choices'][0]["delta"].get("content","")
-            generated_chunk = GenerationChunk(text=text)
-            yield generated_chunk
+                
+            # check if the response is a final '[DONE]' response
+            if chunk['data']!="[DONE]" :
+                data = json.loads(chunk['data'])    
+                # check if the response is a final response with usage stats (not includes content) 
+                if data.get("usage") is None:
+                    # check is not "end of text" response
+                    if data['choices'][0]["finish_reason"] is None:
+                        text = data['choices'][0]["delta"]["content"]
+                        generated_chunk = GenerationChunk(text=text)
+                        yield generated_chunk
+                
 
     def _stream(
         self,
