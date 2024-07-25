@@ -51,7 +51,7 @@ class RAGComponents(BaseComponents):
 
         self.vectorstore = vectorstore
         self.embeddings = embeddings
-        self.examples: Optional[Dict] = examples
+        self.examples: Optional[Dict[str, str]] = examples
 
         self.configs: dict = self.load_config(configs)
         self.prompts_paths: dict = self.configs['prompts']
