@@ -34,9 +34,9 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm  # type: ignore
-from function_calling.src.tools import calculator, get_time, python_repl # type: ignore
+from function_calling.src.tools import calculator, get_time, python_repl, query_db # type: ignore
 
-tools = [get_time, calculator, python_repl]
+tools = [get_time, calculator, python_repl, query_db]
 
 class FCTestCase(unittest.TestCase):
     @classmethod
@@ -66,9 +66,30 @@ class FCTestCase(unittest.TestCase):
         logger.info(result)
         self.assertTrue(result,"python_repl result shouldn't be empty")
 
+    def test_query_db_tool(self):
+        result = query_db.invoke({'query': 'How many genres of music are in the chinook db'})
+        logger.info("\nInvoking query_db:")
+        logger.info(result)
+        self.assertTrue(result,"query_db result shouldn't be empty")
+
     def test_fc_pipeline(self):
         response = self.fc.function_call_llm('what time is it?', max_it=5, debug=False)
-        logger.info("\nFunction calling pipeline:")
+        logger.info("\nFunction calling pipeline with get_time:")
+        logger.info(response)
+        self.assertTrue(response,"LLM response result shouldn't be empty")
+
+        response = self.fc.function_call_llm('it is time to go to sleep, how many hours last to 10pm?', max_it=5, debug=False)
+        logger.info("\nFunction calling pipeline with get_time and calculator:")
+        logger.info(response)
+        self.assertTrue(response,"LLM response result shouldn't be empty")
+
+        response = self.fc.function_call_llm("sort this list of elements alphabetically ['screwdriver', 'pliers', 'hammer']", max_it=5, debug=False)
+        logger.info("\nFunction calling pipeline with python_repl:")
+        logger.info(response)
+        self.assertTrue(response,"LLM response result shouldn't be empty")
+
+        response = self.fc.function_call_llm('whats the price in colombian pesos of the track "Snowballed" in the db if one usd is equal to 3800 cop?', max_it=5, debug=False)
+        logger.info("\nFunction calling pipeline with query_db and calculator:")
         logger.info(response)
         self.assertTrue(response,"LLM response result shouldn't be empty")
 
@@ -77,14 +98,6 @@ class FCTestCase(unittest.TestCase):
         time_end = time.time()
         total_time = time_end - cls.time_start
         logger.info(f"Total execution time: {total_time:.2f} seconds")
-
-#response = fc.function_call_llm('it is time to go to sleep, how many hours last to 10pm?', max_it=5, debug=False)
-#logger.info(response)
-
-#response = fc.function_call_llm(
-#    "sort this list of elements alphabetically ['screwdriver', 'pliers', 'hammer']", max_it=5, debug=False
-#)
-#logger.info(response)
 
 class CustomTextTestResult(unittest.TextTestResult):
     def __init__(self, *args, **kwargs):
