@@ -327,7 +327,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the custom benchmark run.
         """
-        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
+        output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
+        return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
         self,
@@ -341,11 +342,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             individual_responses
         )
 
-        # Get outfile prefix
-        outfile_prefix = self.sanitize_file_prefix(filename)
-        
         # Create response texts file name
-        response_texts_file_name = f"{outfile_prefix}_response_texts"
+        response_texts_file_name = f"{filename}_response_texts"
         results_dir = Path(self.results_dir)
 
         logger.info(f"NEW RESULTS DIR: {results_dir}")
