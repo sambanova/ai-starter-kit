@@ -57,6 +57,20 @@ class BasePerformanceEvaluator(abc.ABC):
 
     def get_token_length(self, input_text):
         return len(self.tokenizer.encode(input_text))
+    
+    @staticmethod
+    def sanitize_file_prefix(prefix: str):
+        """Utility for sanitizing the output file prefix.
+
+        Args:
+            prefix (str): Output file prefix
+
+        Returns:
+            Sanitized outfile prefix        
+        """
+        outfile_prefix = re.sub(r"[^\w\d-]+", "-", prefix)
+        outfile_prefix = re.sub(r"-{2,}", "-", outfile_prefix)
+        return outfile_prefix
 
     @abc.abstractmethod
     def create_output_filename(self, *args, **kwargs):
@@ -241,8 +255,6 @@ class BasePerformanceEvaluator(abc.ABC):
         Raises:
             ValueError: If the results directory does not exist or is not a directory.
         """
-        filename = re.sub(r"[^\w\d-]+", "-", filename)
-        filename = re.sub(r"-{2,}", "-", filename)
         summary_filename = f"{filename}_summary"
         individual_responses_filename = f"{filename}_individual_responses"
 
@@ -262,7 +274,9 @@ class BasePerformanceEvaluator(abc.ABC):
             with open(self.summary_file_path, "w") as f:
                 json.dump(results.to_dict(), f, indent=4, default=str)
         except Exception as e:
-            logger.error(results.to_dict())
+            # logger.error(results.to_dict())
+            logger.info(f"RESULTS DIR: {results_dir}")
+            logger.info(f"FILE NAME: {summary_filename}")
             raise e
 
         # Save individual response results
@@ -270,8 +284,10 @@ class BasePerformanceEvaluator(abc.ABC):
             self.individual_responses_file_path = (
                 f"{results_dir}/{individual_responses_filename}.json"
             )
+
+            response_metrics = [response.metrics for response in individual_responses]
             with open(self.individual_responses_file_path, "w") as f:
-                json.dump(individual_responses, f, indent=4)
+                json.dump(response_metrics, f, indent=4)
         except Exception as e:
             logger.error(individual_responses)
             raise e
@@ -304,26 +320,35 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         with open(input_file_path, "r") as file:
             data = [json.loads(line) for line in file]
         return data
-
-    def create_output_filename(self):
+    
+    def create_output_filename(self) -> str:
         """Utility for creating a unique filename for a custom benchmarking experiment with a dataset.
 
         Returns:
             str: Filename for the custom benchmark run.
         """
         return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
-    
+
     def save_results(
-        self, 
-        filename: str, 
+        self,
+        filename: str,
         summary: Dict[str, Any], 
         individual_responses: List[LLMResponse]
     ):
-        super().save_results(filename, summary, individual_responses)
+        super().save_results(
+            filename, 
+            summary, 
+            individual_responses
+        )
+
+        # Get outfile prefix
+        outfile_prefix = self.sanitize_file_prefix(filename)
         
         # Create response texts file name
-        response_texts_file_name = f"{filename}_response_texts"
+        response_texts_file_name = f"{outfile_prefix}_response_texts"
         results_dir = Path(self.results_dir)
+
+        logger.info(f"NEW RESULTS DIR: {results_dir}")
 
         # If specified, save the llm responses to output file
         if self.save_response_texts:
@@ -332,7 +357,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 self.response_texts_file_path = f"{results_dir}/{response_texts_file_name}.jsonl"
                 with open(self.response_texts_file_path, "w") as f:
                     for response in individual_responses:
-                        output_json = {"prompt": response.request_config.prompt_tuple[0], "completion": response.response_text}
+                        output_json = {"prompt": response.request_config.prompt_tuple[0], "completion": str(response.response_text)}
                         f.write(json.dumps(output_json))
                         f.write("\n")
             except Exception as e:
@@ -356,6 +381,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Save benchmarking results to the specified results directory, it it exists
         if self.results_dir:
             filename = self.create_output_filename()
+            logger.info(f"RUN BENCHMARK FILE NAME: {filename}")
             self.save_results(
                 filename, 
                 summary, 
