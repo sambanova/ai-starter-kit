@@ -274,9 +274,7 @@ class BasePerformanceEvaluator(abc.ABC):
             with open(self.summary_file_path, "w") as f:
                 json.dump(results.to_dict(), f, indent=4, default=str)
         except Exception as e:
-            # logger.error(results.to_dict())
-            logger.info(f"RESULTS DIR: {results_dir}")
-            logger.info(f"FILE NAME: {summary_filename}")
+            logger.error(results.to_dict())
             raise e
 
         # Save individual response results
@@ -342,14 +340,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             individual_responses
         )
 
-        # Create response texts file name
-        response_texts_file_name = f"{filename}_response_texts"
-        results_dir = Path(self.results_dir)
-
-        logger.info(f"NEW RESULTS DIR: {results_dir}")
-
         # If specified, save the llm responses to output file
         if self.save_response_texts:
+
+            # Create response texts file name
+            response_texts_file_name = f"{filename}_response_texts"
+            results_dir = Path(self.results_dir)
+
             # Save response texts
             try:
                 self.response_texts_file_path = f"{results_dir}/{response_texts_file_name}.jsonl"
@@ -570,7 +567,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the synthetic benchmark run.
         """
-        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
+        output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
+        return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
         self,
