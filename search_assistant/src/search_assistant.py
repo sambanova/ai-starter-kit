@@ -26,6 +26,11 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from vectordb.vector_db import VectorDb
+import logging
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 set_debug(False)
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -216,28 +221,44 @@ class SearchAssistant:
         payload = json.dumps({'q': query, 'num': limit})
         headers = {'X-API-KEY': os.environ.get('SERPER_API_KEY'), 'Content-Type': 'application/json'}
 
-        response = requests.post(url, headers=headers, data=payload).json()
-        results = response['organic']
-        links = [r['link'] for r in results]
+        try:
+            response = requests.post(url, headers=headers, data=payload)
+            if response.status_code == 200:
+                results = response.json()['organic']
+                if results:
+                    links = [r['link'] for r in results]
+                    context = []
+                    for i, result in enumerate(results):
+                        context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                    context = '\n\n'.join(context)
+                    logging.info(f'Context found: {context}')
+                    if include_site_links:
+                        sitelinks = []
+                        for r in [r.get('sitelinks', []) for r in results]:
+                            sitelinks.extend([site.get('link', None) for site in r])
+                        links.extend(sitelinks)
+                    links = list(filter(lambda x: x is not None, links))
+                else:
+                    context = "Answer not found"
+                    links = []
+                    logging.info(f'No answer found for query: {query}')
+            else:
+                context = "Answer not found"
+                links = []
+                logging.error(f'Request failed with status code: {response.status_code}')
+                logging.error(f'Error message: {response.text}')
+        except Exception as e:
+            context = "Answer not found"
+            links = []
+            logging.error(f'Error message: {e}')
 
-        context = []
-        for i, result in enumerate(results):
-            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
-        context = '\n\n'.join(context)
-
-        if include_site_links:
-            sitelinks = []
-            for r in [r.get('sitelinks', []) for r in results]:
-                sitelinks.extend([site.get('link', None) for site in r])
-            links.extend(sitelinks)
-        links = list(filter(lambda x: x is not None, links))
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
-            formatted_prompt = prompt.format(question=query, context=json.dumps(results))
+            formatted_prompt = prompt.format(question=query, context=json.dumps(context))
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
-            return response, links
+            return context, links
 
     def queryOpenSerp(
         self,
@@ -265,13 +286,30 @@ class SearchAssistant:
         url = f'http://127.0.0.1:7000/{engine}/search'
         params = {'lang': 'EN', 'limit': limit, 'text': query}
 
-        results = requests.get(url, params=params).json()
-        links = [r['url'] for r in results]
-
-        context = []
-        for i, result in enumerate(results):
-            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}')
-        context = '\n\n'.join(context)
+        try:
+            response = requests.get(url, params=params)
+            if response.status_code == 200:
+                results = response.json()
+                if results:
+                    links = [r['url'] for r in results]
+                    context = []
+                    for i, result in enumerate(results):
+                        context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}')
+                    context = '\n\n'.join(context)
+                    logging.info(f'Context found: {context}')
+                else:
+                    context = "Answer not found"
+                    links = []
+                    logging.info(f'No answer found for query: {query}')
+            else:
+                context = "Answer not found"
+                links = []
+                logging.error(f'Request failed with status code: {response.status_code}')
+                logging.error(f'Error message: {response.text}')
+        except Exception as e:
+            context = "Answer not found"
+            links = []
+            logging.error(f'Error message: {e}')
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
@@ -279,7 +317,7 @@ class SearchAssistant:
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
-            return results, links
+            return context, links
 
     def querySerpapi(
         self,
@@ -304,19 +342,29 @@ class SearchAssistant:
             raise ValueError('engine must be either google or bing')
         params = {'q': query, 'num': limit, 'engine': engine, 'api_key': os.environ.get('SERPAPI_API_KEY')}
 
-        search = GoogleSearch(params)
-        response = search.get_dict()
+        try:
+            search = GoogleSearch(params)
+            response = search.get_dict()
 
-        knowledge_graph = response.get('knowledge_graph', None)
-        results = response.get('organic_results', None)
+            knowledge_graph = response.get('knowledge_graph', None)
+            results = response.get('organic_results', None)
 
-        links = []
-        links = [r['link'] for r in results]
-
-        context = []
-        for i, result in enumerate(results):
-            context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
-        context = '\n\n'.join(context)
+            links = []
+            if results:
+                links = [r['link'] for r in results]
+                context = []
+                for i, result in enumerate(results):
+                    context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                context = '\n\n'.join(context)
+                logging.info(f'Context found: {context}')
+            else:
+                context = "Answer not found"
+                links = []
+                logging.info(f'No answer found for query: {query}. Raw response: {response}')
+        except Exception as e:
+            context = "Answer not found"
+            links = []
+            logging.error(f'Error message: {e}')
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
@@ -326,7 +374,7 @@ class SearchAssistant:
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
-            return response, links
+            return context, links
 
     def load_remote_pdf(self, url):
         """
