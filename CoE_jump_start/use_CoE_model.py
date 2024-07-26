@@ -38,32 +38,6 @@ retrieval_info = config["retrieval"]
 # Load environment variables from .env file
 load_dotenv(os.path.join(current_dir, ".env"))
 
-env_vars_to_check = [
-    "SAMBASTUDIO_BASE_URL",
-    "SAMBASTUDIO_BASE_URI",
-    "SAMBASTUDIO_PROJECT_ID",
-    "SAMBASTUDIO_ENDPOINT_ID",
-    "SAMBASTUDIO_API_KEY",
-    "SAMBAVERSE_API_KEY" , # Include this if you're using Sambaverse
-    "SAMBASTUDIO_EMBEDDINGS_BASE_URL",
-    "SAMBASTUDIO_EMBEDDINGS_PROJECT_ID",
-    "SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID",
-    "SAMBASTUDIO_EMBEDDINGS_API_KEY"
-    
-    ]
-
-# Print the values of the environment variables
-print("Environment Variables:")
-for var in env_vars_to_check:
-    value = os.getenv(var)
-    if value:
-        # Print only the first few characters of the API keys for security
-        if "API_KEY" in var:
-            print(f"{var}: {value[:5]}...{value[-5:]}")
-        else:
-            print(f"{var}: {value}")
-    else:
-        print(f"{var}: Not set")
 
 def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     """
@@ -101,7 +75,7 @@ def get_expert(
     temperature: float = 0.7,
     top_k: int = 50,
     top_p: float = 1.0,
-    select_expert: str = "llama-2-7b-chat-hf",
+    select_expert: str = "Meta-Llama-3-70B-Instruct",
     use_requests: bool = False,
     use_wrapper: bool = False,
 ) -> Dict[str, Any]:
@@ -123,6 +97,7 @@ def get_expert(
     Returns:
         Dict[str, Any]: The response from the model.
     """
+    select_expert = config["coe_name_map"]["Generalist"]
     prompt = config["expert_prompt"].format(input=input_text)
 
     inputs = json.dumps(
@@ -132,6 +107,7 @@ def get_expert(
             "prompt": prompt,
         }
     )
+
 
     tuning_params = {
         "do_sample": {"type": "bool", "value": str(do_sample).lower()},
@@ -146,6 +122,7 @@ def get_expert(
 
     if use_wrapper:
         llm = SambaStudio(
+            streaming=True,
             model_kwargs={
                 "do_sample": do_sample,
                 "temperature": temperature,
@@ -163,9 +140,6 @@ def get_expert(
             "instances": [inputs],
             "params": tuning_params,
         }
-
-        print(data)
-        print(url.format(os.getenv("SAMBASTUDIO_BASE_URL"), os.getenv("SAMBASTUDIO_PROJECT_ID"), os.getenv("SAMBASTUDIO_ENDPOINT_ID")))
 
         response = requests.post(
             url.format(os.getenv("SAMBASTUDIO_BASE_URL"), os.getenv("SAMBASTUDIO_PROJECT_ID"), os.getenv("SAMBASTUDIO_ENDPOINT_ID")),
@@ -234,6 +208,7 @@ def main() -> None:
         )
     elif api_info == "sambastudio":
         llm = SambaStudio(
+            streaming=True,
             model_kwargs={
                 "do_sample": True,
                 "temperature": llm_info["temperature"],
@@ -259,6 +234,7 @@ def main() -> None:
         logger.info(f"Named expert: {named_expert}")
 
         llm = SambaStudio(
+            streaming=True,
             model_kwargs={
                 "do_sample": True,
                 "temperature": llm_info["temperature"],
