@@ -254,7 +254,7 @@ class SearchAssistant:
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
-            formatted_prompt = prompt.format(question=query, context=json.dumps(context))
+            formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
         else:
