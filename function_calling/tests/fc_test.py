@@ -76,22 +76,22 @@ class FCTestCase(unittest.TestCase):
         response = self.fc.function_call_llm('what time is it?', max_it=5, debug=False)
         logger.info("\nFunction calling pipeline with get_time:")
         logger.info(response)
-        self.assertTrue(response,"LLM response result shouldn't be empty")
+        self.assertTrue(response,"LLM final response shouldn't be empty")
 
         response = self.fc.function_call_llm('it is time to go to sleep, how many hours last to 10pm?', max_it=5, debug=False)
         logger.info("\nFunction calling pipeline with get_time and calculator:")
         logger.info(response)
-        self.assertTrue(response,"LLM response result shouldn't be empty")
+        self.assertTrue(response,"LLM final response shouldn't be empty")
 
         response = self.fc.function_call_llm("sort this list of elements alphabetically ['screwdriver', 'pliers', 'hammer']", max_it=5, debug=False)
         logger.info("\nFunction calling pipeline with python_repl:")
         logger.info(response)
-        self.assertTrue(response,"LLM response result shouldn't be empty")
+        self.assertTrue(response,"LLM final response shouldn't be empty")
 
         response = self.fc.function_call_llm('whats the price in colombian pesos of the track "Snowballed" in the db if one usd is equal to 3800 cop?', max_it=5, debug=False)
         logger.info("\nFunction calling pipeline with query_db and calculator:")
         logger.info(response)
-        self.assertTrue(response,"LLM response result shouldn't be empty")
+        self.assertTrue(response,"LLM final response shouldn't be empty")
 
     @classmethod
     def tearDownClass(cls):
