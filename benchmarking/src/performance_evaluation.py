@@ -376,7 +376,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Save benchmarking results to the specified results directory, it it exists
         if self.results_dir:
             filename = self.create_output_filename()
-            logger.info(f"RUN BENCHMARK FILE NAME: {filename}")
             self.save_results(
                 filename, 
                 summary, 

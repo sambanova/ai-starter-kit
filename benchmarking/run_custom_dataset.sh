@@ -7,7 +7,8 @@ python src/evaluator.py \
 --results-dir "./data/results/llmperf" \
 --num-workers 1 \
 --timeout 600 \
---input-file-path "<CUSTOM DATASET PATH HERE>"
+--input-file-path "<CUSTOM DATASET PATH HERE>" \
+--save-llm-responses False
 
 # Notes:
 # 1. Replace <CUSTOM DATASET PATH HERE> with the path to your custom dataset.
