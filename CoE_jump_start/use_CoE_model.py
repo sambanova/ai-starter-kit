@@ -9,7 +9,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
@@ -38,23 +38,58 @@ retrieval_info = config["retrieval"]
 # Load environment variables from .env file
 load_dotenv(os.path.join(current_dir, ".env"))
 
-def get_expert_val(res: Dict[str, Any]) -> str:
+env_vars_to_check = [
+    "SAMBASTUDIO_BASE_URL",
+    "SAMBASTUDIO_BASE_URI",
+    "SAMBASTUDIO_PROJECT_ID",
+    "SAMBASTUDIO_ENDPOINT_ID",
+    "SAMBASTUDIO_API_KEY",
+    "SAMBAVERSE_API_KEY" , # Include this if you're using Sambaverse
+    "SAMBASTUDIO_EMBEDDINGS_BASE_URL",
+    "SAMBASTUDIO_EMBEDDINGS_PROJECT_ID",
+    "SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID",
+    "SAMBASTUDIO_EMBEDDINGS_API_KEY"
+    
+    ]
+
+# Print the values of the environment variables
+print("Environment Variables:")
+for var in env_vars_to_check:
+    value = os.getenv(var)
+    if value:
+        # Print only the first few characters of the API keys for security
+        if "API_KEY" in var:
+            print(f"{var}: {value[:5]}...{value[-5:]}")
+        else:
+            print(f"{var}: {value}")
+    else:
+        print(f"{var}: Not set")
+
+def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     """
     Extract the expert value from the API response.
 
     Args:
-        res (Dict[str, Any]): The API response dictionary.
+        res (Union[Dict[str, Any], str]): The API response, either as a dictionary or a string.
 
     Returns:
         str: The expert value or "Generalist" if not found.
     """
-    if not res or not res.get("data") or not res["data"]:
+    supported_experts_map = config["supported_experts_map"]
+    supported_experts = list(supported_experts_map.keys())
+
+    if isinstance(res, str):
+        # If res is a string, treat it as the data directly
+        data = res.strip().lower()
+    elif isinstance(res, dict):
+        # If res is a dictionary, extract data as before
+        if not res or not res.get("data") or not res["data"]:
+            return "Generalist"
+        data = (res["data"][0].get("completion", "") or "").strip().lower()
+    else:
+        # If res is neither a string nor a dictionary, return "Generalist"
         return "Generalist"
 
-    supported_experts_map = config["supported_experts_map"]
-
-    data = (res["data"][0].get("completion", "") or "").strip().lower()
-    supported_experts = list(supported_experts_map.keys())
     expert = next((x for x in supported_experts if x in data), "Generalist")
     return supported_experts_map.get(expert, "Generalist")
 
@@ -122,12 +157,16 @@ def get_expert(
         chat_prompt = ChatPromptTemplate.from_template(config["expert_prompt"])
         return llm.invoke(chat_prompt.format_prompt(input=input_text).to_string())
     elif use_requests:
-        url = "{}/api/predict/nlp/{}/{}"
+        url = "{}/api/predict/generic/{}/{}"
         headers = {"Content-Type": "application/json", "key": os.getenv("SAMBASTUDIO_API_KEY")}
         data = {
-            "inputs": [inputs],
+            "instances": [inputs],
             "params": tuning_params,
         }
+
+        print(data)
+        print(url.format(os.getenv("SAMBASTUDIO_BASE_URL"), os.getenv("SAMBASTUDIO_PROJECT_ID"), os.getenv("SAMBASTUDIO_ENDPOINT_ID")))
+
         response = requests.post(
             url.format(os.getenv("SAMBASTUDIO_BASE_URL"), os.getenv("SAMBASTUDIO_PROJECT_ID"), os.getenv("SAMBASTUDIO_ENDPOINT_ID")),
             headers=headers,
