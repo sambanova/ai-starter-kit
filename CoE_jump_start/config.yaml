@@ -2,8 +2,8 @@ api: sambastudio
 llm:
   temperature: 0.1
   max_tokens_to_generate: 1024
-  sambaverse_model_name: "Mistral/Mistral-7B-Instruct-v0.2"
-  samabaverse_select_expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
+  sambaverse_model_name: "Meta-Llama-3-70B-Instruct"
+  samabaverse_select_expert: "Meta-Llama-3-70B-Instruct"
   coe_routing: true
 
 retrieval:
@@ -31,7 +31,7 @@ supported_experts_map:
   sociology: "Social Science expert"
 
 expert_prompt: |
-  <s>[INST]
+  <|begin_of_text|><|start_header_id|>system<|end_header_id|>
   A message can be classified as only one of the following categories: 'finance', 'economics', 'maths', 'code generation', 'legal', 'medical', 'history', 'turkish language', 'japanese language', 'literature', 'physics', 'chemistry', 'biology', 'psychology', 'sociology' or 'None of the above'.
 
   Examples for these categories are given below:
@@ -64,18 +64,18 @@ expert_prompt: |
   - For 'turkish language' and 'japanese language' categories, the input may be in Turkish or Japanese respectively. Classify based on the language used, not just the content.
   - Always begin your response by putting the classified category of the given statement after '<<detected category>>:'
   - Explain your answer
-  [/INST]
+  <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 coe_name_map:
-  Finance expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Math expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Code expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Medical expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Legal expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  History expert: "nn-ssy-0.1-mistral-7b-instruct-v0.2-coe"
-  Turkish expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Japanese expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Literature expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Science expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Social Science expert: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
-  Generalist: "nm-shi-0.1-Meta-Llama-3-70B-Instruct-coe"
+  Finance expert: "finance-chat"
+  Math expert: "deepseek-llm-67b-chat"
+  Code expert: "deepseek-llm-67b-chat"
+  Medical expert: "medicine-chat"
+  Legal expert: "law-chat"
+  History expert: "Meta-Llama-3-70B-Instruct"
+  Turkish expert: "Mistral-7B-Instruct-v0.2"
+  Japanese expert: "Mistral-7B-Instruct-v0.2"
+  Literature expert: "MMeta-Llama-3-8B-Instruct"
+  Science expert: "Mistral-7B-Instruct-v0.2"
+  Social Science expert: "Mistral-7B-Instruct-v0.2"
+  Generalist: "Meta-Llama-3-70B-Instruct"

@@ -8,10 +8,11 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+import argparse
 import logging
 from typing import Dict, Any, Optional, Union
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
@@ -27,6 +28,13 @@ from langchain_community.vectorstores import Chroma
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 CONFIG_PATH = os.path.join(current_dir, "config.yaml")
 
 with open(CONFIG_PATH, "r") as yaml_file:
@@ -37,7 +45,6 @@ retrieval_info = config["retrieval"]
 
 # Load environment variables from .env file
 load_dotenv(os.path.join(current_dir, ".env"))
-
 
 def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     """
@@ -53,15 +60,12 @@ def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     supported_experts = list(supported_experts_map.keys())
 
     if isinstance(res, str):
-        # If res is a string, treat it as the data directly
         data = res.strip().lower()
     elif isinstance(res, dict):
-        # If res is a dictionary, extract data as before
         if not res or not res.get("data") or not res["data"]:
             return "Generalist"
         data = (res["data"][0].get("completion", "") or "").strip().lower()
     else:
-        # If res is neither a string nor a dictionary, return "Generalist"
         return "Generalist"
 
     expert = next((x for x in supported_experts if x in data), "Generalist")
@@ -90,14 +94,14 @@ def get_expert(
         temperature (float): The temperature for sampling. Default is 0.7.
         top_k (int): The number of top most likely tokens to consider. Default is 50.
         top_p (float): The cumulative probability threshold for top-p sampling. Default is 1.0.
-        select_expert (str): The name of the expert model to use. Default is "llama-2-7b-chat-hf".
+        select_expert (str): The name of the expert model to use. Default is "Meta-Llama-3-70B-Instruct".
         use_requests (bool): Whether to use the requests library instead of SNSDK. Default is False.
         use_wrapper (bool): Whether to use the SambaStudio wrapper with langchain. Default is False.
 
     Returns:
         Dict[str, Any]: The response from the model.
     """
-    select_expert = config["coe_name_map"]["Generalist"]
+    select_expert = config["llm"]["samabaverse_select_expert"]
     prompt = config["expert_prompt"].format(input=input_text)
 
     inputs = json.dumps(
@@ -105,6 +109,7 @@ def get_expert(
             "conversation_id": "sambaverse-conversation-id",
             "messages": [{"message_id": 0, "role": "user", "content": input_text}],
             "prompt": prompt,
+            "streaming": True
         }
     )
 
@@ -160,27 +165,22 @@ def get_expert(
             json.dumps(tuning_params),
         )
 
-def main() -> None:
-    """Main function to run the script."""
-    # Create a SambaStudioEmbeddings object
+def run_e2e_vector_database(user_query: str):
+    """Run the end-to-end vector database example."""
     snsdk_model = SambaStudioEmbeddings()
     embeddings = snsdk_model
 
-    # Load documents from the specified URL
     loader = WebBaseLoader("https://docs.smith.langchain.com")
     docs = loader.load()
 
-    # Split the documents into chunks
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=retrieval_info["chunk_size"],
         chunk_overlap=retrieval_info["chunk_overlap"],
     )
     documents = text_splitter.split_documents(docs)
 
-    # Create a vector database using Chroma
     vector = Chroma.from_documents(documents, embeddings)
 
-    # Define the prompt template
     prompt = ChatPromptTemplate.from_template(
         """Answer the following question based only on the provided context:
 
@@ -191,11 +191,41 @@ def main() -> None:
         Question: {input}"""
     )
 
-    # Set up the language model based on the API configuration
-    llm: Optional[SambaStudio] = None
+    llm = get_llm()
 
+    document_chain = create_stuff_documents_chain(llm, prompt)
+    retriever = vector.as_retriever()
+    retrieval_chain = create_retrieval_chain(retriever, document_chain)
+
+    response = retrieval_chain.invoke({"input": user_query})
+    logger.info(f"Response: {response['answer']}")
+
+def run_simple_llm_invoke(user_query: str):
+    """Run a simple LLM invoke with routing."""
+    expert_response = get_expert(user_query, use_wrapper=True)
+    logger.info(f"Expert response: {expert_response}")
+
+    expert = get_expert_val(expert_response)
+    logger.info(f"Expert: {expert}")
+
+    named_expert = config["coe_name_map"][expert]
+    logger.info(f"Named expert: {named_expert}")
+
+    llm = get_llm(named_expert)
+
+    response = llm.invoke(user_query)
+    logger.info(f"Response: {response}")
+
+def get_expert_only(user_query: str):
+    """Get only the expert name for the given query."""
+    expert_response = get_expert(user_query, use_wrapper=True)
+    expert = get_expert_val(expert_response)
+    logger.info(f"Expert for query '{user_query}': {expert}")
+
+def get_llm(expert: Optional[str] = None) -> Union[Sambaverse, SambaStudio]:
+    """Get the appropriate LLM based on the API configuration and expert."""
     if api_info == "sambaverse":
-        llm = Sambaverse(
+        return Sambaverse(
             sambaverse_model_name=llm_info["sambaverse_model_name"],
             sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
             model_kwargs={
@@ -203,58 +233,38 @@ def main() -> None:
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
                 "temperature": llm_info["temperature"],
                 "process_prompt": True,
-                "select_expert": llm_info["samabaverse_select_expert"],
+                "select_expert": expert or llm_info["samabaverse_select_expert"],
             },
         )
     elif api_info == "sambastudio":
-        llm = SambaStudio(
+        return SambaStudio(
             streaming=True,
             model_kwargs={
                 "do_sample": True,
                 "temperature": llm_info["temperature"],
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "select_expert": llm_info["samabaverse_select_expert"],
+                "select_expert": expert or llm_info["samabaverse_select_expert"],
                 "process_prompt": False,
             }
         )
-
-    user_query = "What is langsmith"
-
-    if llm_info["coe_routing"]:
-        # Get the expert by calling SambaStudio with a custom prompt workflow
-        expert_response = get_expert(user_query, use_requests=True)
-        logger.info(f"Expert response: {expert_response}")
-
-        # Extract the expert name from the response
-        expert = get_expert_val(expert_response)
-        logger.info(f"Expert: {expert}")
-
-        # Look up the model name based on the expert
-        named_expert = config["coe_name_map"][expert]
-        logger.info(f"Named expert: {named_expert}")
-
-        llm = SambaStudio(
-            streaming=True,
-            model_kwargs={
-                "do_sample": True,
-                "temperature": llm_info["temperature"],
-                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "select_expert": named_expert,
-                "process_prompt": False,
-            }
-        )
-
-    if llm is None:
+    else:
         raise ValueError("Invalid API configuration")
 
-    # Create the document chain and retrieval chain
-    document_chain = create_stuff_documents_chain(llm, prompt)
-    retriever = vector.as_retriever()
-    retrieval_chain = create_retrieval_chain(retriever, document_chain)
+def main():
+    parser = argparse.ArgumentParser(description="Run SambaStudio script in different modes.")
+    parser.add_argument("mode", choices=["e2e", "simple", "expert"], default="expert",
+                        help="Mode to run the script in (default: expert)")
+    parser.add_argument("--query", type=str, default="What are the interest rates?",
+                        help="User query to process (default: 'How are you?')")
 
-    # Invoke the retrieval chain with the user query
-    response = retrieval_chain.invoke({"input": user_query})
-    logger.info(f"Response: {response['answer']}")
+    args = parser.parse_args()
+
+    if args.mode == "e2e":
+        run_e2e_vector_database(args.query)
+    elif args.mode == "simple":
+        run_simple_llm_invoke(args.query)
+    elif args.mode == "expert":
+        get_expert_only(args.query)
 
 if __name__ == "__main__":
     main()
