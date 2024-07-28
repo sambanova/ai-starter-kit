@@ -28,7 +28,6 @@ This repository provides a Python script, a Jupyter Notebook, and a Streamlit ap
 
 <!-- /TOC -->
 
-https://github.com/sambanova/ai-starter-kit/assets/150964187/9841b787-5222-4c41-8ad5-34bd9b4fe2c5
 
 ## Features
 
@@ -148,11 +147,9 @@ SAMBASTUDIO_EMBED_API_KEY="your-samba-studio-embedding_model-apikey"
 ```
 
 
-## Installation
+## Starter kit usage
 
-
-Starter kit usage
-Using the Python script
+### Using the Python script
 
 Update the config.yaml file with your desired configuration.
 Run the use_coe_model.py script with the desired mode:
@@ -175,7 +172,7 @@ For example:
 python use_coe_model.py simple --query "What is the current inflation rate?"
 ```
 
-Using the Jupyter Notebook
+### Using the Jupyter Notebook
 
 Open the Coe_LLM_Router.ipynb notebook in Jupyter.
 Follow the instructions in the notebook to run each example:
@@ -190,7 +187,8 @@ Follow the instructions in the notebook to run each example:
 Update the config.yaml file as needed for each example.
 Run the notebook cells to execute the code and observe the results.
 
-Using the Streamlit app
+
+### Using the Streamlit app
 
 Run the Streamlit app:
 
@@ -211,14 +209,16 @@ Bulk Evaluation: Evaluate the router on a large dataset
 
 Follow the instructions on each page to interact with the CoE LLM Router.
 
-Modes of Operation
+## Modes of Operation
 
 - Expert Mode: This mode only returns the expert category for a given query without invoking the expert model.
 - Simple Mode: This mode routes the query to the appropriate expert model and returns both the expert category and the model's response.
 - E2E Mode with Vector Database: This mode uses a vector database for more complex queries that may require context from multiple documents. It determines the appropriate expert and provides a response based on the document context.
 - Bulk Evaluation Mode: This mode is used for evaluating the router's performance on a large dataset of queries. It provides accuracy metrics and a confusion matrix for analysis.
 
-Supported Models
+
+## Supported Models
+
 The script, notebook, and Streamlit app support various models for CoE as per SambaStudio support, including:
 
 Mistral-7B-Instruct-v0.2
@@ -228,13 +228,16 @@ medicine-chat
 law-chat
 
 For a full list of supported CoE models, see the Supported Models documentation.
-Contributing
+
+
+## Contributing
+
 Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
 License
 This project is licensed under the Apache 2.0 license. See the LICENSE.md file in the parent folder (AI-STARTER-KIT) for more details.
 
 
-Acknowledgements
+## Acknowledgements
 
 Langchain for the powerful framework for building applications with LLMs.
 Sentence Transformers for the state-of-the-art models for generating embeddings.
