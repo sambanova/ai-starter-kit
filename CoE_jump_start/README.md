@@ -200,11 +200,11 @@ streamlit run app.py
 Open your web browser and navigate to the URL provided by Streamlit (usually http://localhost:8501).
 Use the sidebar to select different modes:
 
-Config: Customize the configuration settings
-Expert: Get the expert category for a query
-Simple: Run a simple query with routing
-E2E With Vector DB: Upload a document and run queries against it
-Bulk Evaluation: Evaluate the router on a large dataset
+- Config: Customize the configuration settings
+- Expert: Get the expert category for a query
+- Simple: Run a simple query with routing
+- E2E With Vector DB: Upload a document and run queries against it
+- Bulk Evaluation: Evaluate the router on a large dataset
 
 
 Follow the instructions on each page to interact with the CoE LLM Router.
