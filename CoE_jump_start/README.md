@@ -7,9 +7,9 @@
 
 SambaNova AI Starter Kits
 ====================
-## Using Composition of Experts (CoE) Models with Langchain
+## Using Composition of Experts (CoE) LLM Router Kit
 
-This repository provides a Python script and a Jupyter Notebook that demonstrate how to call SambaNova CoE models using the Langchain framework. The script offers different approaches for calling CoE models, including using Sambaverse, using SambaStudio with a named expert, and using SambaStudio with routing.
+This repository provides a Python script, a Jupyter Notebook, and a Streamlit app that demonstrate how to route user queries to a specific SambaNova CoE model using a LLM as a router. The implementation offers different approaches for using doing this, including expert mode, simple mode, end-to-end mode with vector database, and bulk evaluation mode.
 
 <!-- TOC -->
 - [Features](#features)
@@ -17,8 +17,10 @@ This repository provides a Python script and a Jupyter Notebook that demonstrate
 - [Key dependencies](#key-dependencies)
 - [Installation](#installation)
 - [Starter kit usage](#starter-kit-usage)
-  - [Calling CoE models with the Python script](#calling-coe-models-with-the-python-script)
+  - [Using the Python script](#using-the-python-script)
   - [Using the Jupyter Notebook](#using-the-jupyter-notebook)
+  - [Using the Streamlit app](#using-the-streamlit-app)
+- [Modes of Operation](#modes-of-operation)
 - [Supported models](#supported-models)
 - [Contributing](#contributing)
 - [License](#license)
@@ -32,12 +34,12 @@ https://github.com/sambanova/ai-starter-kit/assets/150964187/9841b787-5222-4c41-
 
 This AI starter kit supports the following features:
 
-- Call CoE models using Sambaverse, providing the expert name and API key.
-- Call CoE models using SambaStudio with a named expert.
-- Call CoE models using SambaStudio with routing, automatically determining the appropriate expert based on the user query.
-- Integrate with Langchain for document loading, splitting, and retrieval.
-- Use Chroma as the vector database for efficient storage and retrieval.
-- Supports various configuration options through the `config.yaml` file.
+- Multiple modes of operation: Expert, Simple, E2E with Vector DB, and Bulk Evaluation
+- Customizable expert categories and mappings
+- Integration with Langchain for document loading, splitting, and retrieval
+- Use of Chroma as the vector database for efficient storage and retrieval
+- Streamlit app for easy interaction and visualization
+- Supports various configuration options through the `config.yaml` file
 
 ## Prerequisites
 
@@ -54,6 +56,9 @@ _(Installed below)_
 - Sentence Transformers
 - YAML
 - Requests
+- Streamlit
+- Matplotlib
+- Seaborn
 
 ## Installation
 _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
@@ -65,59 +70,62 @@ _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you wi
   cd CoE_jump_start
   ```
 
-2a. Create a venv:  
-
+2. (Recommended) Create a virtual environment and activate it:
+  
   ```bash
-  python<version> -m venv <virtual-environment-name>
-  ```
-
-2b. - Install the requirements via pip: 
-
-  ```bash
-  - With pip: `pip install -r requirements.txt` 
-  - With poetry: `poetry install --no-root`
-  ```
-
-
-
-
-
-3. Set up the config.yaml file with your API credentials and preferences. For example:
-=======
-2. (Recommended) Create a virtual environment and activate it: 
-  ```bash
-  python<version> -m venv <virtual-environment-name>
-  source <virtual-environment-name>/bin/activate
+    python<version> -m venv <virtual-environment-name>
+    source <virtual-environment-name>/bin/activate
   ```
 
 3. Install the required dependencies:
+
   ```bash
-  pip install -r requirements.txt # With pip
-  poetry install --no-root # With poetry
+    pip install -r requirements.txt # With pip
   ```
 
-4. Set up the `config.yaml` file with your API credentials and preferences. For example:
+4. Set up the config.yaml file with your routing, retrieval and supported experts and mapping preferences. For example:
+  
+    ```yaml
+    api: sambastudio
+    llm:
+      temperature: 0.1
+      max_tokens_to_generate: 1024
+      sambaverse_model_name: "Mistral/Mistral-7B-Instruct-v0.2"
+      samabaverse_select_expert: "Mistral-7B-Instruct-v0.2"
+      coe_routing: true
 
-  ```yaml
-  api: sambastudio
+    retrieval:
+      chunk_size: 1000
+      chunk_overlap: 200
+      db_type: "faiss"
 
-  llm:
-   temperature: 0.1
-   max_tokens_to_generate: 1024
-   sambaverse_model_name: "Mistral/Mistral-7B-Instruct-v0.2"
-   samabaverse_select_expert: "Mistral-7B-Instruct-v0.2"
-   coe_routing: true
+    supported_experts_map:
+      finance: "Finance expert"
+      economics: "Finance expert"
+      maths: "Math expert"
+      mathematics: "Math expert"
+      code generation: "Code expert"
+      computer science: "Code expert"
+      legal: "Legal expert"
+      medical: "Medical expert"
+      history: "History expert"
+      turkish language: "Turkish expert"
+      japanese language: "Japanese expert"
+      literature: "Literature expert"
+      physics: "Science expert"
+      chemistry: "Science expert"
+      biology: "Science expert"
+      psychology: "Social Science expert"
+      sociology: "Social Science expert"
+      ```
 
-   retrieval:
-   chunk_size: 1000
-   chunk_overlap: 200
-   db_type: "faiss"
-  ```
 
-4. In the CoE starter kit root directory (that is, in the parent folder to where this `README` is saved), create a `.env` file and add the necessary API keys based on your chosen entry point:
 
-```env
-# NEEDED FOR SAMBAVERSE
+
+5. In the root directory of the ai-starter-kit, create a .env file and add the necessary API keys:
+
+```bash
+ # NEEDED FOR SAMBAVERSE
 SAMBAVERSE_API_KEY="133-adb-you-key-here" # Found in your profile (upper right corner of Sambaverse)
 SAMBAVERSE_URL="https://sambaverse.sambanova.ai/" # Adjust as needed
 
@@ -126,71 +134,110 @@ SAMBAVERSE_URL="https://sambaverse.sambanova.ai/" # Adjust as needed
 # Both the endpoint URL and the endpoint API key can be found by clicking into an endpoint's details page
 
 # NEEDED FOR SAMBASTUDIO COE MODEL
-BASE_URL="https://yoursambstudio.url"
-PROJECT_ID="your-samba-studio_coe_model-projectid"
-ENDPOINT_ID="your-samba-studio-coe_model-endpointid"
-API_KEY="your-samba-studio-coe_model-apikey"
+SAMBASTUDIO_BASE_URL="https://yoursambstudio.url"
+SAMBASTUDIO_PROJECT_ID="your-samba-studio_coe_model-projectid"
+SAMBASTUDIO_ENDPOINT_ID="your-samba-studio-coe_model-endpointid"
+SAMBASTUDIO_API_KEY="your-samba-studio-coe_model-apikey"
 VECTOR_DB_URL=http://localhost:6333
 
 # NEEDED FOR SAMBASTUDIO EMBEDDINGS MODEL
-EMBED_BASE_URL="https://yoursambstudio.url"
-EMBED_PROJECT_ID="your-samba-studio_embedding_model-projectid"
-EMBED_ENDPOINT_ID="your-samba-studio-embedding_model-endpointid"
-EMBED_API_KEY="your-samba-studio-embedding_model-apikey"
+SAMBASTUDIO_EMBED_BASE_URL="https://yoursambstudio.url"
+SAMBASTUDIO_EMBED_PROJECT_ID="your-samba-studio_embedding_model-projectid"
+SAMBASTUDIO_EMBED_ENDPOINT_ID="your-samba-studio-embedding_model-endpointid"
+SAMBASTUDIO_EMBED_API_KEY="your-samba-studio-embedding_model-apikey"
 ```
 
-The script supports both Sambaverse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the `.env` file. If you want to use the `SNSDK` instead of `requests`, make sure you have it installed and configured with your credentials.
 
-## Starter kit usage
+## Installation
 
-### Calling CoE models with the python script
 
-1. Update the `config.yaml` file with your desired configuration.
+Starter kit usage
+Using the Python script
 
-2. Run the `use_coe_model.py` script:
+Update the config.yaml file with your desired configuration.
+Run the use_coe_model.py script with the desired mode:
 
-  ```bash
-  python use_coe_model.py
-  ``` 
 
-  The script will load documents, create a vector database, set up the language model based on the configuration, and invoke the retrieval chain with a user query.
+```bash
+python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
+```
 
-### Using the Jupyter Notebook
+Available modes:
 
-1. Open the `calling_coe_models.ipynb` notebook in Jupyter.
+- expert: Get only the expert category for a given query
+- simple: Run a simple LLM invoke with routing
+- e2e: Run the end-to-end vector database example
+- bulk: Run bulk routing evaluation on a dataset
 
-2. Follow the instructions in the notebook to run each example:
+For example:
 
-- Example 1: Using Sambaverse to call CoE Model
-- Example 2: Using SambaStudio to call CoE with Named Expert
-- Example 3: Using SambaStudio to call CoE with Routing
+```bash
+python use_coe_model.py simple --query "What is the current inflation rate?"
+```
 
-3. Update the `config.yaml` file as needed for each example.
+Using the Jupyter Notebook
 
-4. Run the notebook cells to execute the code and observe the results.
+Open the Coe_LLM_Router.ipynb notebook in Jupyter.
+Follow the instructions in the notebook to run each example:
 
-## Supported Models
 
-The script and notebook support various models for calling CoE, including:
+- Expert Mode: Get only the expert category for a given query
+- Simple Mode: Run a simple LLM invoke with routing
+- E2E Mode with Vector Database: Use vector database for complex queries
+- Bulk Evaluation Mode: Evaluate the router's performance on a large dataset
 
-* Mistral-7B-Instruct-v0.2
-* finance-chat
-* deepseek-llm-67b-chat
-* medicine-chat
-* law-chat
 
-For a full list of supported CoE models, see the [Supported Models](https://docs.sambanova.ai/sambastudio/latest/samba-1.html#_samba_1_expert_models) documentation.
+Update the config.yaml file as needed for each example.
+Run the notebook cells to execute the code and observe the results.
 
-## Contributing
+Using the Streamlit app
 
+Run the Streamlit app:
+
+```bash
+cd streamlit
+streamlit run app.py
+```
+
+Open your web browser and navigate to the URL provided by Streamlit (usually http://localhost:8501).
+Use the sidebar to select different modes:
+
+Config: Customize the configuration settings
+Expert: Get the expert category for a query
+Simple: Run a simple query with routing
+E2E With Vector DB: Upload a document and run queries against it
+Bulk Evaluation: Evaluate the router on a large dataset
+
+
+Follow the instructions on each page to interact with the CoE LLM Router.
+
+Modes of Operation
+
+- Expert Mode: This mode only returns the expert category for a given query without invoking the expert model.
+- Simple Mode: This mode routes the query to the appropriate expert model and returns both the expert category and the model's response.
+- E2E Mode with Vector Database: This mode uses a vector database for more complex queries that may require context from multiple documents. It determines the appropriate expert and provides a response based on the document context.
+- Bulk Evaluation Mode: This mode is used for evaluating the router's performance on a large dataset of queries. It provides accuracy metrics and a confusion matrix for analysis.
+
+Supported Models
+The script, notebook, and Streamlit app support various models for CoE as per SambaStudio support, including:
+
+Mistral-7B-Instruct-v0.2
+finance-chat
+deepseek-llm-67b-chat
+medicine-chat
+law-chat
+
+For a full list of supported CoE models, see the Supported Models documentation.
+Contributing
 Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
+License
+This project is licensed under the Apache 2.0 license. See the LICENSE.md file in the parent folder (AI-STARTER-KIT) for more details.
 
-## License
 
-This project is licensed under the Apache 2.0 license. See the `LICENSE.md` file in the parent folder (`AI-STARTER-KIT`) for more details.
+Acknowledgements
 
-## Acknowledgements
-
-- [Langchain](https://github.com/hwchase17/langchain) for the powerful framework for building applications with LLMs.
-- [Sentence Transformers](https://github.com/UKPLab/sentence-transformers) for the state-of-the-art models for generating embeddings.
-- [Chroma](https://github.com/chroma-core/chroma) for the efficient vector database.
+Langchain for the powerful framework for building applications with LLMs.
+Sentence Transformers for the state-of-the-art models for generating embeddings.
+Chroma for the efficient vector database.
+Streamlit for the easy-to-use framework for creating data apps.
+Matplotlib and Seaborn for data visualization.

@@ -110,13 +110,10 @@ def main():
                 query = st.text_input("Enter your query:")
                 if st.button("Run E2E"):
                     with st.spinner("Processing query..."):
-                        expert_response = get_expert(query, use_wrapper=True)
-                        expert = get_expert_val(expert_response)
-                        st.markdown(f"**Expert:** {expert}")
-
-                        response = run_e2e_vector_database(query, docs)
+                        expert, response = run_e2e_vector_database(query, docs)
                     
                     st.subheader("Chatbot Response")
+                    st.markdown(f"**Expert:** {expert}")
                     st.write("User: " + query)
                     st.text_area("AI:", value=response, height=200)
             

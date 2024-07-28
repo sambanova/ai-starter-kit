@@ -186,14 +186,26 @@ def run_e2e_vector_database(user_query: str, documents):
         Question: {input}"""
     )
 
-    llm = get_llm()
+    # Get expert
+    expert_response = get_expert(user_query, use_wrapper=True)
+    logger.info(f"Expert response: {expert_response}")
+
+    expert = get_expert_val(expert_response)
+    logger.info(f"Expert: {expert}")
+
+    named_expert = config["coe_name_map"][expert]
+    logger.info(f"Named expert: {named_expert}")
+
+    llm = get_llm(named_expert)
 
     document_chain = create_stuff_documents_chain(llm, prompt)
     retriever = vector.as_retriever()
     retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
     response = retrieval_chain.invoke({"input": user_query})
-    return response['answer']
+    logger.info(f"Response: {response['answer']}")
+
+    return expert, response['answer']
 
 def run_simple_llm_invoke(user_query: str):
     """Run a simple LLM invoke with routing."""
