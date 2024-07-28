@@ -128,7 +128,7 @@ def main():
         
         # Use a form to prevent automatic rerun on every input change
         with st.form("bulk_evaluation_form"):
-            dataset_path = st.text_input("Enter the path to your dataset CSV:", key="dataset_path_input")
+            dataset_path = st.text_input("Enter the path to your dataset jsonl:", key="dataset_path_input")
             num_examples = st.number_input("Number of examples to evaluate (leave blank for all):", min_value=1, value=None, key="num_examples_input")
             
             submit_button = st.form_submit_button("Run Bulk Evaluation")
