@@ -10,6 +10,7 @@ sys.path.append(repo_dir)
 
 import argparse
 import logging
+from datetime import datetime
 from typing import Dict, Any, Optional, Union
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
@@ -21,6 +22,9 @@ from utils.sambanova_endpoint import SambaStudio, SambaStudioEmbeddings, Sambave
 import yaml
 import json
 import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 # Use embeddings As Part of Langchain
 from langchain_community.vectorstores import Chroma
@@ -28,14 +32,7 @@ from langchain_community.vectorstores import Chroma
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-CONFIG_PATH = os.path.join(current_dir, "config.yaml")
+CONFIG_PATH = os.path.join(kit_dir, "config.yaml")
 
 with open(CONFIG_PATH, "r") as yaml_file:
     config = yaml.safe_load(yaml_file)
@@ -44,7 +41,7 @@ llm_info = config["llm"]
 retrieval_info = config["retrieval"]
 
 # Load environment variables from .env file
-load_dotenv(os.path.join(current_dir, ".env"))
+load_dotenv(os.path.join(repo_dir, ".env"))
 
 def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     """
@@ -164,21 +161,18 @@ def get_expert(
             json.dumps(tuning_params),
         )
 
-def run_e2e_vector_database(user_query: str):
+def run_e2e_vector_database(user_query: str, documents):
     """Run the end-to-end vector database example."""
     snsdk_model = SambaStudioEmbeddings()
     embeddings = snsdk_model
-
-    loader = WebBaseLoader("https://docs.smith.langchain.com")
-    docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=retrieval_info["chunk_size"],
         chunk_overlap=retrieval_info["chunk_overlap"],
     )
-    documents = text_splitter.split_documents(docs)
+    split_documents = text_splitter.split_documents(documents)
 
-    vector = Chroma.from_documents(documents, embeddings)
+    vector = Chroma.from_documents(split_documents, embeddings)
 
     prompt = ChatPromptTemplate.from_template(
         """Answer the following question based only on the provided context:
@@ -197,7 +191,7 @@ def run_e2e_vector_database(user_query: str):
     retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
     response = retrieval_chain.invoke({"input": user_query})
-    logger.info(f"Response: {response['answer']}")
+    return response['answer']
 
 def run_simple_llm_invoke(user_query: str):
     """Run a simple LLM invoke with routing."""
@@ -208,12 +202,14 @@ def run_simple_llm_invoke(user_query: str):
     logger.info(f"Expert: {expert}")
 
     named_expert = config["coe_name_map"][expert]
-    logger.info(f"Named expert: {named_expert}")
+    logger.info(f"Named expert: {named_expert}") 
 
     llm = get_llm(named_expert)
 
     response = llm.invoke(user_query)
     logger.info(f"Response: {response}")
+
+    return expert, response
 
 def get_expert_only(user_query: str):
     """Get only the expert name for the given query."""
@@ -248,13 +244,70 @@ def get_llm(expert: Optional[str] = None) -> Union[Sambaverse, SambaStudio]:
         )
     else:
         raise ValueError("Invalid API configuration")
+    
+
+def run_bulk_routing_eval(dataset_path: str, num_examples: int = None):
+    """Run bulk routing evaluation on the given dataset."""
+    df = pd.read_csv(dataset_path)
+    categories = list(config["supported_experts_map"].keys())
+
+    # Sample the data if num_examples is specified and less than the total dataset size
+    if num_examples and num_examples < len(df):
+        sampled_df = df.groupby('category', group_keys=False).apply(lambda x: x.sample(min(len(x), num_examples // len(categories))))
+        if len(sampled_df) < num_examples:
+            additional_samples = df[~df.index.isin(sampled_df.index)].sample(num_examples - len(sampled_df))
+            sampled_df = pd.concat([sampled_df, additional_samples])
+    else:
+        sampled_df = df
+
+    results = []
+    confusion_matrix = pd.DataFrame(0, index=categories, columns=categories)
+    correct_count = 0
+
+    logging.info(f"Starting evaluation of {len(sampled_df)} samples...")
+
+    for _, row in tqdm(sampled_df.iterrows(), total=len(sampled_df), desc="Processing samples"):
+        query = row['prompt']
+        true_category = row['category']
+        
+        expert_response = get_expert(query, use_wrapper=True)
+        predicted_category = get_expert_val(expert_response)
+        
+        # Map the true category to the key in supported_experts_map
+        true_expert_key = next((k for k, v in config["supported_experts_map"].items() if v == predicted_category), "None of the above")
+        
+        is_correct = true_expert_key == true_category
+        if is_correct:
+            correct_count += 1
+        
+        results.append({
+            'query': query,
+            'true_category': true_category,
+            'predicted_category': predicted_category,
+            'is_correct': int(is_correct)
+        })
+
+        confusion_matrix.loc[true_category, true_expert_key] += 1
+
+        current_accuracy = correct_count / (len(results))
+        logging.info(f"Current accuracy: {current_accuracy:.2f}")
+
+    results_df = pd.DataFrame(results)
+    
+    accuracies = results_df.groupby('true_category')['is_correct'].mean().to_dict()
+    logging.info(f"Final accuracies: {accuracies}")
+
+    logging.info("Evaluation complete.")
+    return results_df, accuracies, confusion_matrix
 
 def main():
     parser = argparse.ArgumentParser(description="Run SambaStudio script in different modes.")
-    parser.add_argument("mode", choices=["e2e", "simple", "expert"], default="expert",
+    parser.add_argument("mode", choices=["e2e", "simple", "expert", "bulk"], default="expert",
                         help="Mode to run the script in (default: expert)")
     parser.add_argument("--query", type=str, default="What are the interest rates?",
-                        help="User query to process (default: 'How are you?')")
+                        help="User query to process (default: 'What are the interest rates?')")
+    parser.add_argument("--dataset", type=str, help="Path to the dataset CSV file for bulk evaluation")
+    parser.add_argument("--num_examples", type=int, default=None, help="Number of examples to run in bulk mode (default: all)")
 
     args = parser.parse_args()
 
@@ -264,6 +317,11 @@ def main():
         run_simple_llm_invoke(args.query)
     elif args.mode == "expert":
         get_expert_only(args.query)
+    elif args.mode == "bulk":
+        if not args.dataset:
+            parser.error("The bulk mode requires a --dataset argument")
+        num_examples = args.num_examples if args.num_examples is not None else float('inf')
+        run_bulk_routing_eval(args.dataset, num_examples)
 
 if __name__ == "__main__":
     main()
