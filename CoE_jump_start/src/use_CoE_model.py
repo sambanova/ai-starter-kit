@@ -25,6 +25,7 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import seaborn as sns
 
 # Use embeddings As Part of Langchain
 from langchain_community.vectorstores import Chroma
@@ -248,12 +249,15 @@ def get_llm(expert: Optional[str] = None) -> Union[Sambaverse, SambaStudio]:
 
 def run_bulk_routing_eval(dataset_path: str, num_examples: int = None):
     """Run bulk routing evaluation on the given dataset."""
-    df = pd.read_csv(dataset_path)
+    with open(dataset_path, 'r') as f:
+        data = [json.loads(line) for line in f]
+    
+    df = pd.DataFrame(data)
     categories = list(config["supported_experts_map"].keys())
 
     # Sample the data if num_examples is specified and less than the total dataset size
     if num_examples and num_examples < len(df):
-        sampled_df = df.groupby('category', group_keys=False).apply(lambda x: x.sample(min(len(x), num_examples // len(categories))))
+        sampled_df = df.groupby('router_label', group_keys=False).apply(lambda x: x.sample(min(len(x), num_examples // len(categories))))
         if len(sampled_df) < num_examples:
             additional_samples = df[~df.index.isin(sampled_df.index)].sample(num_examples - len(sampled_df))
             sampled_df = pd.concat([sampled_df, additional_samples])
@@ -264,41 +268,88 @@ def run_bulk_routing_eval(dataset_path: str, num_examples: int = None):
     confusion_matrix = pd.DataFrame(0, index=categories, columns=categories)
     correct_count = 0
 
+    # Create results directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_dir = os.path.join(kit_dir, "results", timestamp)
+    os.makedirs(results_dir, exist_ok=True)
+
     logging.info(f"Starting evaluation of {len(sampled_df)} samples...")
 
     for _, row in tqdm(sampled_df.iterrows(), total=len(sampled_df), desc="Processing samples"):
         query = row['prompt']
-        true_category = row['category']
+        true_category = row['router_label']
         
         expert_response = get_expert(query, use_wrapper=True)
         predicted_category = get_expert_val(expert_response)
         
-        # Map the true category to the key in supported_experts_map
-        true_expert_key = next((k for k, v in config["supported_experts_map"].items() if v == predicted_category), "None of the above")
+        # Map the predicted category to the key in supported_experts_map
+        predicted_expert_key = next((k for k, v in config["supported_experts_map"].items() if v == predicted_category), "None of the above")
         
-        is_correct = true_expert_key == true_category
+        is_correct = predicted_expert_key == true_category
         if is_correct:
             correct_count += 1
         
-        results.append({
-            'query': query,
-            'true_category': true_category,
-            'predicted_category': predicted_category,
+        result = {
+            'prompt': query,
+            'router_label': true_category,
+            'predicted_label': predicted_expert_key,
             'is_correct': int(is_correct)
-        })
+        }
+        results.append(result)
 
-        confusion_matrix.loc[true_category, true_expert_key] += 1
+        confusion_matrix.loc[true_category, predicted_expert_key] += 1
+
+        # Log info in the terminal
+        logger.info(f"Predicted: {predicted_expert_key} | True: {true_category} | {'✓' if is_correct else '✗'}")
 
         current_accuracy = correct_count / (len(results))
-        logging.info(f"Current accuracy: {current_accuracy:.2f}")
+        logger.info(f"Current accuracy: {current_accuracy:.2f}")
 
     results_df = pd.DataFrame(results)
     
-    accuracies = results_df.groupby('true_category')['is_correct'].mean().to_dict()
-    logging.info(f"Final accuracies: {accuracies}")
+    accuracies = results_df.groupby('router_label')['is_correct'].mean().to_dict()
+    logger.info(f"Final accuracies: {accuracies}")
 
-    logging.info("Evaluation complete.")
+    # Save results
+    results_jsonl_path = os.path.join(results_dir, "results.jsonl")
+    with open(results_jsonl_path, 'w') as f:
+        for result in results:
+            json.dump(result, f)
+            f.write('\n')
+    logger.info(f"Results saved to {results_jsonl_path}")
+
+   # Generate and save visualizations
+    plt.figure(figsize=(10, 6))
+    plt.bar(accuracies.keys(), accuracies.values())
+    plt.title("Accuracy by Category")
+    plt.xlabel("Category")
+    plt.ylabel("Accuracy")
+    plt.ylim(0, 1)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    accuracy_plot_path = os.path.join(results_dir, "accuracy_plot.png")
+    plt.savefig(accuracy_plot_path)
+    logger.info(f"Accuracy plot saved to {accuracy_plot_path}")
+
+    # Confusion matrix with raw counts
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(confusion_matrix, annot=True, fmt='.0f', cmap='Blues')
+    plt.title("Confusion Matrix (Raw Counts)")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+
+    # Add total counts for each category
+    for i, total in enumerate(confusion_matrix.sum(axis=1)):
+        plt.text(len(categories) + 0.5, i + 0.5, f'Total: {total:.0f}', ha='left', va='center')
+
+    confusion_matrix_path = os.path.join(results_dir, "confusion_matrix.png")
+    plt.tight_layout()
+    plt.savefig(confusion_matrix_path)
+    logger.info(f"Confusion matrix saved to {confusion_matrix_path}")
+
+    logger.info("Evaluation complete.")
     return results_df, accuracies, confusion_matrix
+
 
 def main():
     parser = argparse.ArgumentParser(description="Run SambaStudio script in different modes.")
@@ -306,7 +357,7 @@ def main():
                         help="Mode to run the script in (default: expert)")
     parser.add_argument("--query", type=str, default="What are the interest rates?",
                         help="User query to process (default: 'What are the interest rates?')")
-    parser.add_argument("--dataset", type=str, help="Path to the dataset CSV file for bulk evaluation")
+    parser.add_argument("--dataset", type=str, help="Path to the dataset JSONL file for bulk evaluation")
     parser.add_argument("--num_examples", type=int, default=None, help="Number of examples to run in bulk mode (default: all)")
 
     args = parser.parse_args()
