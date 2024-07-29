@@ -48,10 +48,12 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.7.1
 kiwisolver==1.4.5
-langchain==0.1.5
-langchain-community==0.0.17
-langchain-core==0.1.18
-langsmith==0.0.86
+langchain==0.2.7
+langchain-community==0.2.7
+langchain-core==0.2.17
+langchain-text-splitters==0.2.2
+langsmith==0.1.85
+orjson==3.10.6
 lazy_loader==0.3
 lmdb==1.4.1
 lxml==5.1.0
