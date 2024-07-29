@@ -185,30 +185,30 @@ Update the config.yaml file with your desired configuration, then run the use_co
 
 ### Using the Python script
 Update the config.yaml file with your desired configuration, then run the use_coe_model.py script with the desired mode:
-
+  
   ```bash
-python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
+  python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
   ```
 
   1. Expert Mode: Get only the expert category for a given query
 
   ```bash
   python use_coe_model.py expert --query "What is the capital of France?"
-    ```
+  ```
 
   2. Simple Mode: Run a simple LLM invoke with routing
 
   ```bash
   python use_coe_model.py simple --query "Explain the concept of supply and demand."
-    ```
+  ```
 
   3. Bulk Mode: Run bulk routing evaluation on a dataset
 
   ```bash
   python use_coe_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
-    ```
+  ```
 
-    The dataset file should be in JSONL (JSON Lines) format, where each line is a valid JSON object containing a 'prompt' and a 'router_label'. Here's an example of how your dataset.jsonl file should be formatted:
+  The dataset file should be in JSONL (JSON Lines) format, where each line is a valid JSON object containing a 'prompt' and a 'router_label'. Here's an example of how your dataset.jsonl file should be formatted:
 
 
   ```json
@@ -222,7 +222,7 @@ python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--n
 
   ```bash
   python use_coe_model.py expert --query "What is the capital of France?"
-    ```
+  ```
 
 
 ## Using the Jupyter Notebook
