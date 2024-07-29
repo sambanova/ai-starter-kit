@@ -1,11 +1,8 @@
 import datetime  # type: ignore
 import json
-import operator
 import os
-import re
 import sys
-import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
 import plotly
@@ -14,24 +11,12 @@ import requests  # type: ignore
 import streamlit
 import yaml
 import yfinance
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
-from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
-from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
-from langchain_community.utilities import SQLDatabase
-from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import RunnableLambda
-from langchain_core.tools import StructuredTool, Tool, ToolException, tool
-from langchain_experimental.utilities import PythonREPL
+from langchain_core.tools import tool
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
-from requests.exceptions import HTTPError, ReadTimeout  # type: ignore
-from urllib3.exceptions import ConnectionError
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -39,7 +24,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from vectordb.vector_db import VectorDb  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 

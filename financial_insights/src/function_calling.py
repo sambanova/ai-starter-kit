@@ -1,18 +1,15 @@
-import functools
 import json
-import operator
 import os
 import re
 import sys
 from pprint import pprint
-from typing import Any, List, Optional, Sequence, Tuple, Type, TypedDict, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-import yaml
+import yaml  # type: ignore
 from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
-from langchain_core.messages.ai import AIMessage
+from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
-from langchain_core.messages.tool import ToolMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -29,26 +26,6 @@ sys.path.append(repo_dir)
 load_dotenv(os.path.join(repo_dir, '.env'))
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
-
-# FUNCTION_CALLING_SYSTEM_PROMPT = """You are an helpful assistant and you have access to the following tools:
-
-# {tools}
-
-# You must always select one or more of the above tools and answer with only a list of JSON objects matching the following schema:
-
-# ```json
-# [{{
-#   "tool": <name of the selected tool>,
-#   "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
-# }}]
-# ```
-
-# Think step by step.
-# Do not call a tool if the input depends on another tool output that you do not have yet.
-# Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
-# Your answer should be in the same language as the initial query.
-
-# """  # noqa E501
 
 FUNCTION_CALLING_SYSTEM_PROMPT = """You are an helpful assistant and you have access to the following tools:
 
@@ -115,7 +92,7 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def get_config_info(self, config_path: str) -> tuple[dict]:
+    def get_config_info(self, config_path: str) -> tuple[Dict[str,str]]:
         """
         Loads json config file
         """
@@ -166,9 +143,9 @@ class FunctionCallingLlm:
 
     def get_tools_schemas(
         self,
-        tools: Optional[Union[StructuredTool, Tool, list]] = None,
+        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
         default: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
-    ) -> list:
+    ) -> List[Dict[str, str]]:
         """
         Get the tools schemas.
         Args:
@@ -211,7 +188,7 @@ class FunctionCallingLlm:
 
         return tools_schemas
 
-    def execute(self, invoked_tools: List[dict]) -> tuple[List[str], Any]:
+    def execute(self, invoked_tools: List[Dict[str, Union[str, Dict[str, str]]]]) -> tuple[List[str], Any]:
         """
         Given a list of tool executions the llm return as required
         execute them given the name with the mane in tools_map and the input arguments
@@ -226,12 +203,12 @@ class FunctionCallingLlm:
             tools_map = {}
         tool_msg = "Tool '{name}'. Response: {response}"
         tools_msgs = []
-
-        if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':
-            return [invoked_tools[0]['tool_input']['response']], None
+        assert all(isinstance(tool['tool'], str) for tool in invoked_tools), "The tool name must be a string"
+        if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':  #type: ignore
+            return [invoked_tools[0]['tool_input']['response']], None  #type: ignore
         for tool in invoked_tools:
-            if tool['tool'].lower() != 'conversationalresponse':
-                response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
+            if tool['tool'].lower() != 'conversationalresponse':  # type: ignore
+                response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])  # type: ignore
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         # The last response will be returned
         return tools_msgs, response
@@ -263,7 +240,7 @@ class FunctionCallingLlm:
             json_str = None
         return json_str
 
-    def msgs_to_llama3_str(self, msgs: list) -> str:
+    def msgs_to_llama3_str(self, msgs: List[BaseMessage]) -> str:
         """
         convert a list of langchain messages with roles to expected LLmana 3 input
 
