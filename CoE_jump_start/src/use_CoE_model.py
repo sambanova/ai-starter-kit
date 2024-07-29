@@ -208,10 +208,10 @@ def run_e2e_vector_database(user_query: str, documents):
 
 def run_simple_llm_invoke(user_query: str):
     """Run a simple LLM invoke with routing."""
-    expert_response = get_expert(user_query, use_wrapper=True)
-    logger.info(f"Expert response: {expert_response}")
+    router_response = get_expert(user_query, use_wrapper=True)
+    logger.info(f"Router response: {router_response}")
 
-    expert = get_expert_val(expert_response)
+    expert = get_expert_val(router_response)
     logger.info(f"Expert: {expert}")
 
     named_expert = config["coe_name_map"][expert]
@@ -229,6 +229,7 @@ def get_expert_only(user_query: str):
     expert_response = get_expert(user_query, use_wrapper=True)
     expert = get_expert_val(expert_response)
     logger.info(f"Expert for query '{user_query}': {expert}")
+    return expert_response
 
 def get_llm(expert: Optional[str] = None) -> Union[Sambaverse, SambaStudio]:
     """Get the appropriate LLM based on the API configuration and expert."""
