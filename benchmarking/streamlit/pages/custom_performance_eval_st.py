@@ -98,15 +98,16 @@ def main():
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
 
-        st.slider(
+        st.number_input(
             "Num Concurrent Workers",
             min_value=1,
             max_value=100,
             value=1,
+            step=1,
             key="number_concurrent_workers",
         )
 
-        st.slider("Timeout", min_value=60, max_value=1800, value=600, key="timeout")
+        st.number_input("Timeout", min_value=60, max_value=1800, value=600, step=1, key="timeout")
 
         st.toggle(
             "Save LLM Responses", 
@@ -120,11 +121,12 @@ def main():
         #####################
         st.title("Tuning Parameters")
 
-        st.slider(
+        st.number_input(
             "Max Output Tokens",
             min_value=1,
             max_value=2048,
             value=256,
+            step=1,
             key="max_tokens",
         )
 

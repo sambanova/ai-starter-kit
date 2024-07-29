@@ -184,6 +184,15 @@ SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
+#### FastAPI model
+
+- Enter the FastCoE url and the FastCoE API key (with no spaces), as in the following example:
+
+```
+    FAST_COE_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
+    FAST_COE_API_KEY = "456789abcdef0123456789abcdef0123"
+```
+
 #### Sambaverse model
 
 Enter a Sambaverse API key, for example

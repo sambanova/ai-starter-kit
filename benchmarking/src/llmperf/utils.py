@@ -59,13 +59,17 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
         AutoTokenizer: generic HuggingFace tokenizer
     """
 
-    # Using NousrResearch for calling out model tokenizers without requesting access. Ref: https://huggingface.co/NousResearch
+    
+    # Using NousrResearch for calling out model tokenizers without requesting access. 
+    # Ref: https://huggingface.co/NousResearch
+    # Ref: https://huggingface.co/TheBloke
+    # Ref: https://huggingface.co/unsloth
+    # Ref: https://huggingface.co/deepseek-ai
+    
     if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower():
-        tokenizer = AutoTokenizer.from_pretrained(
-            "NousResearch/Hermes-2-Pro-Mistral-7B"
-        )
+        tokenizer = AutoTokenizer.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-AWQ")
     elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
-        tokenizer = AutoTokenizer.from_pretrained("NousResearch/Meta-Llama-3-8B")
+        tokenizer = AutoTokenizer.from_pretrained("unsloth/llama-3-8b-Instruct")
     elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower():
         if "coder" in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained(
