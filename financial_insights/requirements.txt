@@ -5,8 +5,10 @@ langchain==0.2.6
 langchain-community==0.2.6
 langchain-experimental==0.0.60
 llama-index-readers-sec-filings==0.1.5
+mypy==1.11.0
 pandasai==2.2.10
 plotly == 5.22.0
+pydantic==2.8.2
 python-dotenv==1.0.1
 secedgar==0.5.0
 sentence-transformers==3.0.1

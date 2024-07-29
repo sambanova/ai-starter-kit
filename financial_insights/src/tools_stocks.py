@@ -1,4 +1,4 @@
-import datetime  # type: ignore
+import datetime
 import json
 import os
 import sys
@@ -32,28 +32,6 @@ TEMP_DIR = 'financial_insights/streamlit/cache/'
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-# tool schema
-class ConversationalResponse(BaseModel):
-    """
-    Respond conversationally only if no other tools should be called for a given query,
-    or if you have a final answer. response must be in the same language as the user query.
-    """
-
-    response: str = Field(
-        ..., description='Conversational response to the user. Must be in the same language as the user query.'
-    )
-
-
-@tool(args_schema=ConversationalResponse)
-def get_conversational_response(response: str) -> str:
-    """
-    Respond conversationally only if no other tools should be called for a given query,
-    or if you have a final answer. response must be in the same language as the user query.
-    """
-
-    return response
-
-
 class StockInfoSchema(BaseModel):
     """Return the correct stock info value given the appropriate symbol and key.
     Infer valid ticker symbol and key from the user prompt.
@@ -82,7 +60,6 @@ class StockInfoSchema(BaseModel):
     user_query: str = Field('User query to retrieve stock information.')
     symbol_list: List[str] = Field('List of stock ticker symbols.')
     keys: List[str] = Field('List of keys to be retrieved or inferred from the user prompt.')
-    
 
 
 @tool(args_schema=StockInfoSchema)
@@ -121,7 +98,7 @@ def get_stock_info(user_query: str, symbol_list: List[str] = list(), keys: List[
         except Exception as e:
             yahoo_connector = YahooFinanceConnector(symbol)
 
-            df = SmartDataframe(yahoo_connector, config={"llm": streamlit.session_state.fc.llm})
+            df = SmartDataframe(yahoo_connector, config={'llm': streamlit.session_state.fc.llm})
             stock_key = df.chat(user_query)
 
     return stock_key
@@ -151,7 +128,8 @@ def is_similar_string(sub: Optional[str], string: Optional[str], threshold: int 
     """
     if sub is not None and string is not None and len(string) > 0 and len(sub) > 0:
         ratio = fuzz.partial_ratio(sub.lower(), string.lower())
-        return ratio >= threshold  # type: ignore
+        if isinstance(ratio, (int, float)):
+            return ratio >= threshold
     return False
 
 
@@ -169,7 +147,7 @@ def get_ticker_by_title(json_data: Dict[str, Dict[str, str]], company_title: str
 
 
 @tool(args_schema=RetrievalCompanyNameSchema)
-def retrieve_symbol_list(company_names_list: List[str], user_query: str) -> [List[Optional[str]]]:
+def retrieve_symbol_list(company_names_list: List[str], user_query: str) -> Tuple[List[Optional[str]], str]:
     """Retrieve a list of ticker symbols."""
 
     # URL to the JSON file
@@ -318,7 +296,7 @@ def analyse_stock_data_analysis(symbol_list: List[str], question: str) -> str:
 
     # Convert dictionary to JSON string
     json_string = json.dumps(response_dict, indent=4)
-    return json_string  # type: ignore
+    return json_string
 
 
 # tool schema
@@ -408,44 +386,3 @@ def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figu
 
     # Return plot
     return fig
-
-
-## Get configs for tools
-def get_config_info(config_path: str) -> Any:
-    """
-    Loads json config file
-    """
-    # Read config file
-    with open(config_path, 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
-    tools_info = config['tools']
-
-    return tools_info
-
-
-##Get time tool
-# tool schema
-class GetTimeSchema(BaseModel):
-    """Returns current date, current time or both."""
-
-    kind: Optional[str] = Field(description='kind of information to retrieve "date", "time" or "both"')
-
-
-# definition using @tool decorator
-@tool(args_schema=GetTimeSchema)
-def get_time(kind: str = 'both') -> str:
-    """Returns current date, current time or both.
-
-    Args:
-        kind: date, time or both
-    """
-    if kind == 'date':
-        date = datetime.now().strftime('%d/%m/%Y')  #type: ignore
-        return f'Current date: {date}'
-    elif kind == 'time':
-        time = datetime.now().strftime('%H:%M:%S')  #type: ignore
-        return f'Current time: {time}'
-    else:
-        date = datetime.now().strftime('%d/%m/%Y')  #type: ignore
-        time = datetime.now().strftime('%H:%M:%S')  #type: ignore
-        return f'Current date: {date}, Current time: {time}'

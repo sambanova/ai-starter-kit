@@ -7,7 +7,7 @@ from typing import Dict, List
 import pandas
 import plotly
 import streamlit
-import yaml  # type: ignore
+import yaml
 
 logging.basicConfig(level=logging.INFO)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +20,7 @@ sys.path.append(repo_dir)
 TEMP_DIR = 'financial_insights/streamlit/cache/'
 SOURCE_DIR = 'financial_insights/streamlit/cache/sources/'
 CONFIG_PATH = 'financial_insights/config.yaml'
+
 
 def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     """
@@ -53,9 +54,7 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
 
 
 # Save dataframe and figure callback for streamlit button
-def save_dataframe_figure_callback(
-    ticker_list: str, data: pandas.DataFrame, fig: plotly.graph_objs.Figure
-) -> None:
+def save_dataframe_figure_callback(ticker_list: str, data: pandas.DataFrame, fig: plotly.graph_objs.Figure) -> None:
     # Create temporary cache for storing historical price data
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
@@ -99,11 +98,7 @@ def list_files_in_directory(directory: str) -> List[str]:
     # Create temporary cache for storing historical price data
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
-    return [
-        f
-        for f in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, f))
-    ]
+    return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
 def clear_directory(directory: str) -> None:
@@ -116,4 +111,111 @@ def clear_directory(directory: str) -> None:
         except Exception as e:
             streamlit.error(f'Error deleting file {file_path}: {e}')
 
+def set_css_styles() -> None:
+    streamlit.markdown(
+        """
+    <style>
+    /* General body styling */
 
+    html, body {
+        font-size: 1,
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #e0e0e0;
+        background-color: #1e1e1e;
+    }
+
+    /* Header styling */
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff;
+        margin-bottom: 1em;
+    }
+
+    /* Paragraph and text styling */
+    p, label {
+        font-size: 1;
+        line-height: 1.6;
+        margin-bottom: 0.5em;
+        color: #e0e0e0;
+    }
+
+    /* Button styling */
+    .stButton > button {
+        background-color: green;
+        color: white;
+        padding: 0.75em 1.5em;
+        font-size: 1;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #45a049;
+    }
+
+    /* Radio button styling */
+    .stRadio > label {
+        font-size: 1;
+    }
+    .stRadio > div > div > label {
+        font-size: 1;
+        padding: 0.25em 0.75em;
+        cursor: pointer;
+        color: #e0e0e0;
+    }
+    .stRadio > div > div {
+        margin-bottom: 0.5em;
+    }
+
+    /* Input field styling */
+    input[type="text"], input[type="date"], select {
+        width: 100%;
+        padding: 0.75em;
+        margin: 0.5em 0 1em 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 1.1em;
+        background-color: #2c2c2c;
+        color: #e0e0e0;
+    }
+
+    /* Checkbox styling */
+    .stCheckbox > label {
+        font-size: 1.1em;
+    }
+
+    /* Container styling */
+    .main {
+        padding: 2em;
+        background: #2c2c2c;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 2em;
+    }
+
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: #1e1e1e;
+    }
+    .css-1d391kg .css-1v3fvcr, .css-1d391kg .css-1l5dyp6 {
+        color: #e0e0e0;
+    }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
+
+def get_custom_button_style() -> str:
+    return """
+        button {
+            background-color: blue;
+            color: black;
+            padding: 0.75em 1.5em;
+            font-size: 1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }"""

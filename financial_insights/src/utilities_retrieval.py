@@ -31,20 +31,14 @@ def get_qa_response(
     user_request: str,
 ) -> Any:
     # Set up the embedding model and vector store
-    embedding_model = SentenceTransformerEmbeddings(
-        model_name='paraphrase-mpnet-base-v2'
-    )
+    embedding_model = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
     vectorstore = Chroma.from_documents(documents, embedding_model)
 
     # Load config
     config = _get_config_info(CONFIG_PATH)
 
     # Load retrieval prompt
-    prompt = load_prompt(
-        os.path.join(
-            kit_dir, 'prompts/llama30b-web_crawling_data_retriever.yaml'
-        )
-    )
+    prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama30b-web_crawling_data_retriever.yaml'))
     retriever = vectorstore.as_retriever(
         search_type='similarity_score_threshold',
         search_kwargs={

@@ -21,8 +21,8 @@ from financial_insights.streamlit.utilities_methods import (handle_userinput,
                                                             set_fc_llm)
 
 
-def get_stock_data_analysis() -> None:
-    streamlit.markdown('<h2> Stock Data Analysis </h2>', unsafe_allow_html=True)
+def get_stock_database() -> None:
+    streamlit.markdown('<h2> Query Stock Database </h2>', unsafe_allow_html=True)
     streamlit.markdown(
         '<a href="https://pypi.org/project/yfinance/" target="_blank" '
         'style="color:cornflowerblue;text-decoration:underline;"><h3>via Yahoo! Finance API</h3></a>',
@@ -61,7 +61,7 @@ def get_stock_data_analysis() -> None:
                 pass
 
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
-    streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
+    streamlit.markdown('<h3> Stock data analysis </h3>', unsafe_allow_html=True)
     output = streamlit.empty()
     ticker_list = streamlit.text_input(
         'Enter the quantities that you want to plot for given companies\n'

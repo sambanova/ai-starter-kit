@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-import yaml  # type: ignore
+import yaml
 from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.messages.base import BaseMessage
@@ -92,7 +92,7 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def get_config_info(self, config_path: str) -> tuple[Dict[str,str]]:
+    def get_config_info(self, config_path: str) -> tuple[Dict[str, str]]:
         """
         Loads json config file
         """
@@ -203,9 +203,9 @@ class FunctionCallingLlm:
             tools_map = {}
         tool_msg = "Tool '{name}'. Response: {response}"
         tools_msgs = []
-        assert all(isinstance(tool['tool'], str) for tool in invoked_tools), "The tool name must be a string"
-        if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':  #type: ignore
-            return [invoked_tools[0]['tool_input']['response']], None  #type: ignore
+        assert all(isinstance(tool['tool'], str) for tool in invoked_tools), 'The tool name must be a string'
+        if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':  # type: ignore
+            return [invoked_tools[0]['tool_input']['response']], None  # type: ignore
         for tool in invoked_tools:
             if tool['tool'].lower() != 'conversationalresponse':  # type: ignore
                 response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])  # type: ignore

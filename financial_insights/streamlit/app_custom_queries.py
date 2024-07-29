@@ -4,68 +4,51 @@ import sys
 import streamlit
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 
-
 def get_custom_queries() -> None:
-    streamlit.markdown("<h2> Custom Queries </h2>", unsafe_allow_html=True)
+    streamlit.markdown('<h2> Custom Queries </h2>', unsafe_allow_html=True)
     # Container for the entire section
     with streamlit.container():
-        streamlit.header("Data Source Selection")
-        data_source = streamlit.radio(
-            "Select Data Source:", ["yfinance", "SEC EDGAR"]
-        )
+        streamlit.header('Data Source Selection')
+        data_source = streamlit.radio('Select Data Source:', ['yfinance', 'SEC EDGAR'])
 
     # Container for optional sections
     with streamlit.container():
-        streamlit.header("Optional Additions")
+        streamlit.header('Optional Additions')
 
         # Add a PDF document for RAG (optional)
-        pdf_file = streamlit.file_uploader(
-            "Upload a PDF document for RAG (optional):", type="pdf"
-        )
+        pdf_file = streamlit.file_uploader('Upload a PDF document for RAG (optional):', type='pdf')
 
         # Select another website for web scraping (optional)
-        webscrape_url = streamlit.text_input(
-            "Enter another website URL for web scraping (optional):"
-        )
+        webscrape_url = streamlit.text_input('Enter another website URL for web scraping (optional):')
 
         # Add another custom database as a CSV file (optional)
-        csv_file = streamlit.file_uploader(
-            "Upload a CSV file for additional database (optional):", type="csv"
-        )
+        csv_file = streamlit.file_uploader('Upload a CSV file for additional database (optional):', type='csv')
 
     # Query input section
-    streamlit.header("Query Input")
+    streamlit.header('Query Input')
 
-    streamlit.markdown(
-        "**Set the maximum number of iterations your want the model to run**"
-    )
-    streamlit.session_state.max_iterations = streamlit.number_input(
-        "Max iterations", value=5, max_value=20
-    )
-    streamlit.markdown(
-        "**Note:** The response cannot completed if the max number of iterations is too low"
-    )
+    streamlit.markdown('**Set the maximum number of iterations your want the model to run**')
+    streamlit.session_state.max_iterations = streamlit.number_input('Max iterations', value=5, max_value=20)
+    streamlit.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
 
-    query = streamlit.text_area(
-        "Enter your query related to a company's financials:"
-    )
+    query = streamlit.text_area("Enter your query related to a company's financials:")
 
-    with streamlit.expander("**Execution scratchpad**", expanded=True):
-        output = streamlit.empty()  # type: ignore
+    with streamlit.expander('**Execution scratchpad**', expanded=True):
+        output = streamlit.empty()
 
-        if streamlit.button("Submit Query"):
+        if streamlit.button('Submit Query'):
             pass
             # documents = []
 
             # Handle data source selection
-            if data_source == "yfinance":
+            if data_source == 'yfinance':
                 pass
                 # Example function to retrieve data from yfinance
 
