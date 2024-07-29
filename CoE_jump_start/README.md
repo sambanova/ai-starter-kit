@@ -208,6 +208,16 @@ python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--n
   python use_coe_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
     ```
 
+    The dataset file should be in JSONL (JSON Lines) format, where each line is a valid JSON object containing a 'prompt' and a 'router_label'. Here's an example of how your dataset.jsonl file should be formatted:
+
+
+  ```json
+  {"prompt": "What is the current inflation rate in the United States?", "router_label": "economics"}
+  {"prompt": "Solve the quadratic equation x^2 + 5x + 6 = 0", "router_label": "maths"}
+  {"prompt": "Write a Python function to find the maximum element in a list", "router_label": "code generation"}
+  ```
+  Ensure that the 'router_label' values match the categories defined in your config.yaml file.
+
   4. Expert Mode: Get only the expert category for a given query
 
   ```bash
