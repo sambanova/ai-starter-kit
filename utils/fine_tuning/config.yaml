@@ -1,33 +1,26 @@
 sambastudio:
-  tenant: "default"
-  rdu_arch: "sn20"
-  snapi_path: "~/.snapi"
+  snapi_path: ""
+  rdu_arch: "sn10"
 
 dataset:
-  dataset_name: "smol_sql_dataset"
-  dataset_description: "test_dataset for sql finetuning"
-  dataset_path: "/Users/jorgep/Documents/ask_public_own/ai-starter-kit/fine_tuning_sql/data/output/pretrain-squad-smol-sql"
+  dataset_name: "mitre dataset test_10"
   dataset_apps_availability: 
-    - 'Mistral'
-    - 'Llama 3'
-    - 'Llama 2 with dynamic batching'
-    - 'Llama 2 7B'
-    - 'Llama 2 70B with dynamic batching'
-    - 'Llama 2 70B'
-    - 'Llama 2 13B'
+  - "E5 Mistral Embedding"
+  - "Text Embedding" 
   dataset_job_types:
-    - "evaluation"
-    - "train"
+    - "batch_predict"
   dataset_source_type: "localMachine"
-  dataset_language: "english"
+  dataset_path: /Users/rodrigom/Desktop/aisk/finetuning/mitre
+  dataset_description: "mitre dataset test"
   dataset_filetype: "hdf5"
   dataset_url: ""
+  dataset_language: "english"
   dataset_metadata:
     labels_file: "./dummy_labels_path"
     train_filepath: "./dummy_train_path"
     validation_filepath: "./dummy_val_path"
     test_filepath: "./dummy_test_path"
-
+  
 project: 
   project_name: "example project" #"sql_finetuning" 
   project_description: "this project will be used to test the Finetuning Embeddings e2e pipeline implementation"

@@ -14,15 +14,15 @@ utils_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
-load_dotenv(os.path.join(repo_dir,".env"), override=True)
+load_dotenv(os.path.join(repo_dir, ".env"), override=True)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
+    format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler()],
 )
 
-SNAPI_PATH = '~/.snapi'
+SNAPI_PATH = "~/.snapi"
 
 # Job types: can not combine train/evaluation with batch_predict
 JOB_TYPES = [
@@ -33,7 +33,8 @@ JOB_TYPES = [
 
 # TODO: future support for other types
 SOURCE_TYPES = ["localMachine"]
-SOURCE_FILE_PATH = os.path.join(utils_dir,"fine_tuning","src","tmp_source_file.json")
+SOURCE_FILE_PATH = os.path.join(utils_dir, "fine_tuning", "src", "tmp_source_file.json")
+
 
 class SnsdkWrapper:
     """ "Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio"""
@@ -59,7 +60,7 @@ class SnsdkWrapper:
 
         # Get sambastudio variables to set up Snsdk
         host_url, tenant_id, access_key = self._get_sambastudio_variables()
-        
+
         self.snsdk_client = SnSdk(
             host_url=host_url,
             access_key=access_key,
@@ -67,6 +68,7 @@ class SnsdkWrapper:
         )
 
     """Internal methods"""
+
     def _set_snapi_using_env_variables(
         self,
         host_name: str,
@@ -223,7 +225,7 @@ class SnsdkWrapper:
     def _create_source_file(self, dataset_path: str) -> None:
         """
         Create a source file for snapi dataset upload
-        
+
         Args:
             dataset_path string: path to dataset
         """
@@ -232,7 +234,7 @@ class SnsdkWrapper:
             json.dump(json_content, file)
 
     """tenants"""
-    
+
     def list_tenants(self, verbose: bool = False) -> Optional[str]:
         """Lists all tenants
 
@@ -258,7 +260,6 @@ class SnsdkWrapper:
                 f"Failed to list projects. Details: {list_tenant_response['detail']}"
             )
             raise Exception(f"Error message: {list_tenant_response['detail']}")
-
 
     def search_tenant(self, tenant_name: Optional[str]) -> Optional[str]:
         """Searches tenant
@@ -286,7 +287,7 @@ class SnsdkWrapper:
         Search for a project by its name in sambastudio environment.
 
         Parameters:
-        project_name (str, optional): The name of the project to search for. 
+        project_name (str, optional): The name of the project to search for.
             If not provided, the name from the configuration is used.
 
         Returns:
@@ -294,23 +295,31 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
-        search_project_response = self.snsdk_client.search_project(project_name=project_name)
-        if search_project_response['status_code'] == 200:
-            project_id = search_project_response['data']['project_id']
-            logging.info(f"Project with name '{project_name}' found with id {project_id}")
+            project_name = self.config["project"]["project_name"]
+        search_project_response = self.snsdk_client.search_project(
+            project_name=project_name
+        )
+        if search_project_response["status_code"] == 200:
+            project_id = search_project_response["data"]["project_id"]
+            logging.info(
+                f"Project with name '{project_name}' found with id {project_id}"
+            )
             return project_id
         else:
             logging.info(f"Project with name '{project_name}' not found")
             return None
 
-    def create_project(self, project_name: Optional[str] = None, project_description: Optional[str] = None) -> str:
+    def create_project(
+        self,
+        project_name: Optional[str] = None,
+        project_description: Optional[str] = None,
+    ) -> str:
         """
         Creates a new project in SambaStudio.
 
         Parameters:
         project_name (str, optional): The name of the project. If not provided, the name from the configs file is used.
-        project_description (str, optional): The description of the project. 
+        project_description (str, optional): The description of the project.
             If not provided, the description from the configs file is used.
 
         Returns:
@@ -319,29 +328,33 @@ class SnsdkWrapper:
         Raises:
         Exception: If the project creation fails.
         """
-        
+
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         if project_description is None:
             self._raise_error_if_config_is_none()
-            project_description = self.config['project']['project_description']
-            
+            project_description = self.config["project"]["project_description"]
+
         project_id = self.search_project(project_name)
         if project_id is None:
             create_project_response = self.snsdk_client.create_project(
                 project_name=project_name, description=project_description
             )
-            if create_project_response['status_code'] == 200:
-                project_id = create_project_response['data']['project_id']
-                logging.info(f'Project with name {project_name} created with id {project_id}')
+            if create_project_response["status_code"] == 200:
+                project_id = create_project_response["data"]["project_id"]
+                logging.info(
+                    f"Project with name {project_name} created with id {project_id}"
+                )
             else:
                 logging.error(
                     f"Failed to create project with name '{project_name}'. Details: {create_project_response['detail']}"
                 )
                 raise Exception(f"Error message: {create_project_response['detail']}")
         else:
-            logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
+            logging.info(
+                f"Project with name '{project_name}' already exists with id '{project_id}', using it"
+            )
         return project_id
 
     def list_projects(self, verbose: Optional[bool] = False) -> list[dict]:
@@ -349,30 +362,36 @@ class SnsdkWrapper:
         List all projects.
 
         Parameters:
-        verbose (bool, optional): If True, detailed information about each project is returned. 
+        verbose (bool, optional): If True, detailed information about each project is returned.
             If False, only basic information is returned. Defaults to False.
 
         Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents a project. 
-            If verbose is True, each dictionary contains detailed information about the project. 
+        list[dict]: A list of dictionaries, where each dictionary represents a project.
+            If verbose is True, each dictionary contains detailed information about the project.
             If verbose is False, each dictionary contains basic information about the project.
 
         Raises:
         Exception: If there is an error in listing the projects.
         """
         list_projects_response = self.snsdk_client.list_projects()
-        if list_projects_response['status_code'] == 200:
+        if list_projects_response["status_code"] == 200:
             projects = []
-            for project in list_projects_response['data'].get('projects'):
+            for project in list_projects_response["data"].get("projects"):
                 if verbose:
                     projects.append({k: v for k, v in project.items()})
                 else:
                     projects.append(
-                        {k: v for k, v in project.items() if k in ['project_name', 'project_id', 'status', 'user_id']}
+                        {
+                            k: v
+                            for k, v in project.items()
+                            if k in ["project_name", "project_id", "status", "user_id"]
+                        }
                     )
             return projects
         else:
-            logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
+            logging.error(
+                f"Failed to list projects. Details: {list_projects_response['detail']}"
+            )
             raise Exception(f"Error message: {list_projects_response['detail']}")
 
     def delete_project(self, project_name: Optional[str] = None) -> None:
@@ -381,7 +400,7 @@ class SnsdkWrapper:
         Use with caution it will delete project, and its associated jobs, checkpoints, and endpoints
 
         Parameters:
-        project_name (str, optional): The name of the project to be deleted. 
+        project_name (str, optional): The name of the project to be deleted.
             If not provided, the name from the configs file will be used.
 
         Returns:
@@ -392,21 +411,21 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
-         
-        # Check if the project exists    
+            project_name = self.config["project"]["project_name"]
+
+        # Check if the project exists
         project_id = self.search_project(project_name=project_name)
         if project_id is None:
             raise Exception(f"Project with name '{project_name}' not found")
-        
+
         delete_project_response = self.snsdk_client.delete_project(project=project_id)
-        if delete_project_response['status_code'] == 200:
+        if delete_project_response["status_code"] == 200:
             logging.info(f"Project with name '{project_name}' deleted")
         else:
             logging.error(
                 f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}"
             )
-            raise Exception(f'Error message: {delete_project_response}')
+            raise Exception(f"Error message: {delete_project_response}")
 
     """Dataset"""
 
@@ -680,7 +699,7 @@ class SnsdkWrapper:
         return dataset_id
 
     """app"""
-    
+
     def list_apps(self, verbose: bool = False) -> list | None:
         """Lists all apps
 
@@ -722,19 +741,59 @@ class SnsdkWrapper:
 
     """models"""
 
-    def list_models(self, filter_job_types: Optional[list[str]] = [], verbose: Optional[bool] = False) -> list[dict]:
+    def model_info(
+        self, model_name: Optional[str] = None, job_type: Optional[str] = None
+    ) -> dict:
+        """Gets model info based on the job type specified.
+        Several fields are pulled that describe different aspects of model.
+
+        Args:
+            model_name (Optional[str], optional): model name. Defaults to None.
+            job_type (Optional[str], optional): job type. Defaults to None.
+
+        Raises:
+            Exception: If there is an error in getting model info.
+
+        Returns:
+            dict: dictionary containing model info.
+        """
+        # Decide whether using method parameters or config
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config["job"]["model"]
+        if job_type is None:
+            self._raise_error_if_config_is_none()
+            job_type = self.config["job"]["job_type"]
+
+        # Get model's info
+        model_info_response = self.snsdk_client.model_info(
+            model=model_name, job_type=job_type
+        )
+        if model_info_response["status_code"] == 200:
+            return model_info_response
+        else:
+            logging.error(
+                f"Failed to get model's info. Details: {model_info_response['message']}"
+            )
+            raise Exception(f"Error message: {model_info_response['message']}")
+
+    def list_models(
+        self,
+        filter_job_types: Optional[list[str]] = [],
+        verbose: Optional[bool] = False,
+    ) -> list[dict]:
         """
         List models in sambastudio based on the provided filter.
 
         Parameters:
         filter_job_types (list[str], optional): A list of job types to filter the models. Defaults to [].
-            Should include the job types supported by the models to filter 
+            Should include the job types supported by the models to filter
             example: ['train', 'batch_predict', 'deploy']
         verbose (bool, optional): If True, return detailed information about each model. Defaults to False.
 
         Returns:
-        list[dict]: A list of dictionaries, each representing a model. 
-            If verbose is True, each dictionary contains all model information. 
+        list[dict]: A list of dictionaries, each representing a model.
+            If verbose is True, each dictionary contains all model information.
             Otherwise, each dictionary contains only the model's checkpoint name and ID.
 
         Raises:
@@ -742,17 +801,25 @@ class SnsdkWrapper:
         """
 
         list_models_response = self.snsdk_client.list_models()
-        if list_models_response['status_code'] == 200:
+        if list_models_response["status_code"] == 200:
             models = []
-            for model in list_models_response['models']:
-                if set(filter_job_types).issubset(model.get('jobTypes')):
+            for model in list_models_response["models"]:
+                if set(filter_job_types).issubset(model.get("jobTypes")):
                     if verbose:
                         models.append({k: v for k, v in model.items()})
                     else:
-                        models.append({k: v for k, v in model.items() if k in ['model_checkpoint_name', 'model_id']})
+                        models.append(
+                            {
+                                k: v
+                                for k, v in model.items()
+                                if k in ["model_checkpoint_name", "model_id"]
+                            }
+                        )
             return models
         else:
-            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
+            logging.error(
+                f"Failed to list models. Details: {list_models_response['detail']}"
+            )
             raise Exception(f"Error message: {list_models_response['detail']}")
 
     def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
@@ -760,7 +827,7 @@ class SnsdkWrapper:
         Search for a model in the SambaStudio by its name.
 
         Parameters:
-        model_name (str, optional): The name of the model to search for. 
+        model_name (str, optional): The name of the model to search for.
             If not provided, the name from the configs file is used.
 
         Returns:
@@ -768,11 +835,11 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['job']['model']
-            
+            model_name = self.config["job"]["model"]
+
         search_model_response = self.snsdk_client.search_model(model_name=model_name)
-        if search_model_response['status_code'] == 200:
-            model_id = search_model_response['data']['model_id']
+        if search_model_response["status_code"] == 200:
+            model_id = search_model_response["data"]["model_id"]
             logging.info(f"Model with name '{model_name}' found with id {model_id}")
             return model_id
         else:
@@ -784,7 +851,7 @@ class SnsdkWrapper:
         Search for a trainable and deployable  model in the SambaStudio by its name.
 
         Parameters:
-        model_name (str, optional): The name of the model to search for. 
+        model_name (str, optional): The name of the model to search for.
             If not provided, the name from the configs file is used.
 
         Returns:
@@ -792,15 +859,23 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['job']['model']
-            
-        models = self.list_models(filter_job_types=['train', 'deploy'])
-        model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
+            model_name = self.config["job"]["model"]
+
+        models = self.list_models(filter_job_types=["train", "deploy"])
+        model_id = [
+            model["model_id"]
+            for model in models
+            if model["model_checkpoint_name"] == model_name
+        ]
         if len(model_id) > 0:
-            logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
+            logging.info(
+                f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found"
+            )
             return model_id[0]
         else:
-            logging.info(f"Model '{model_name}' available for training and deployment not found")
+            logging.info(
+                f"Model '{model_name}' available for training and deployment not found"
+            )
             return None
 
     """Job"""
@@ -823,27 +898,27 @@ class SnsdkWrapper:
         Creates a new job in an specific SambaStudio project with the given parameters.
 
         Args:
-            project_name (str, optional). The name of the project to run the job in . 
+            project_name (str, optional). The name of the project to run the job in .
                 If not provided, the project name from the configs file will be used.
-            job_name (str, optional).  The name of the job. 
+            job_name (str, optional).  The name of the job.
                 If not provided, the job name from the configs file will be used.
-            job_description (str, optional).  the description for the job. 
+            job_description (str, optional).  the description for the job.
                 If not provided, the description from the configs file will be used.
-            job_type (str, optional).  the type of job to run can be "train" or "batch_inference". 
+            job_type (str, optional).  the type of job to run can be "train" or "batch_inference".
                 If not provided, the type from the configs file will be used.
-            model (str, optional).  the name of the model to fine tune. 
+            model (str, optional).  the name of the model to fine tune.
                 If not provided, the model name from the configs file will be used.
-            dataset_name (str, optional).  the name of the dataset to finetune with. 
+            dataset_name (str, optional).  the name of the dataset to finetune with.
                 If not provided, the dataset name from the configs file will be used.
-            parallel_instances (int, optional). the number of instances to use for the Job. 
+            parallel_instances (int, optional). the number of instances to use for the Job.
                 If not provided, the number of instances from the configs file will be used.
-            load_state (bool, optional). Only load weights from the model checkpoint, if True. 
+            load_state (bool, optional). Only load weights from the model checkpoint, if True.
                 If not provided, the param from the configs file will be used.
-            sub_path (str, optional). Folder/file path inside dataset. 
+            sub_path (str, optional). Folder/file path inside dataset.
                 If not provided, the sub path from the configs file will be used.
-            rdu_arch (str, optional). RDU Architecture to train with. 
+            rdu_arch (str, optional). RDU Architecture to train with.
                 If not provided, the rdu arch from the configs file will be used.
-            hyperparams (dict, optional). hyperparameters for executing the job. 
+            hyperparams (dict, optional). hyperparameters for executing the job.
                 If not provided, the hyperparameters from the configs file will be used.
                 hyperparams example={
                     "batch_size": 256,
@@ -879,7 +954,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -887,7 +962,7 @@ class SnsdkWrapper:
         # check if model selected is found and is trainable
         if model is None:
             self._raise_error_if_config_is_none()
-            model = self.config['job']['model']
+            model = self.config["job"]["model"]
         model_id = self.search_trainable_model(model)
         if model_id is None:
             raise Exception(f"model with name '{model}' not found")
@@ -895,38 +970,37 @@ class SnsdkWrapper:
         # check if dataset exist
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config['dataset']['dataset_name']
+            dataset_name = self.config["dataset"]["dataset_name"]
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
 
-        #check extra params passed or in config file
-        if job_name is None:    
+        # check extra params passed or in config file
+        if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
         if job_description is None:
             self._raise_error_if_config_is_none()
-            job_description = self.config['job']['job_description']
+            job_description = self.config["job"]["job_description"]
         if job_type is None:
             self._raise_error_if_config_is_none()
-            job_type = self.config['job']['job_type']
+            job_type = self.config["job"]["job_type"]
         if parallel_instances is None:
             self._raise_error_if_config_is_none()
-            parallel_instances = self.config['job']['parallel_instances']
+            parallel_instances = self.config["job"]["parallel_instances"]
         if load_state is None:
             self._raise_error_if_config_is_none()
-            load_state = self.config['job']['load_state']
+            load_state = self.config["job"]["load_state"]
         if sub_path is None:
             self._raise_error_if_config_is_none()
-            sub_path = self.config['job']['sub_path']
+            sub_path = self.config["job"]["sub_path"]
         if rdu_arch is None:
             self._raise_error_if_config_is_none()
-            rdu_arch = self.config['sambastudio']['rdu_arch']
+            rdu_arch = self.config["sambastudio"]["rdu_arch"]
         if hyperparams is None:
             self._raise_error_if_config_is_none()
-            hyperparams = self.config['job']['hyperparams']
-        
-        
+            hyperparams = self.config["job"]["hyperparams"]
+
         # create job
         create_job_response = self.snsdk_client.create_job(
             project=project_id,
@@ -942,26 +1016,26 @@ class SnsdkWrapper:
             hyperparams=json.dumps(hyperparams),
         )
 
-        if create_job_response['status_code'] == 200:
-            job_id = create_job_response['job_id']
-            logging.info(
-                f"Job with name '{job_name}' created: '{create_job_response}'"
-            )
+        if create_job_response["status_code"] == 200:
+            job_id = create_job_response["job_id"]
+            logging.info(f"Job with name '{job_name}' created: '{create_job_response}'")
             return job_id
         else:
             logging.error(
                 f"Failed to create job with name '{job_name}'. Details: {create_job_response}"
             )
-            raise Exception(f'Error message: {create_job_response}')
+            raise Exception(f"Error message: {create_job_response}")
 
-    def search_job(self, job_name: Optional[str] = None, project_name: Optional[str] = None) -> Optional[str]:
+    def search_job(
+        self, job_name: Optional[str] = None, project_name: Optional[str] = None
+    ) -> Optional[str]:
         """
         Search for a job in a specific SambaStudio project.
 
         Parameters:
-        job_name (str, optional): The name of the job to search for. 
+        job_name (str, optional): The name of the job to search for.
             If not provided, the job name from the configs file is used.
-        project_name (str, optional): The name of the project to search in. 
+        project_name (str, optional): The name of the project to search in.
             If not provided, the project name from the configs file is used.
 
         Returns:
@@ -972,34 +1046,42 @@ class SnsdkWrapper:
         """
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
 
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         # search for job
-        search_job_response = self.snsdk_client.search_job(project=project_id, job_name=job_name)
-        if search_job_response['status_code'] == 200:
-            job_id = search_job_response['data']['job_id']
-            logging.info(f"Job with name '{job_name}' in project '{project_name}' found with id '{job_id}'")
+        search_job_response = self.snsdk_client.search_job(
+            project=project_id, job_name=job_name
+        )
+        if search_job_response["status_code"] == 200:
+            job_id = search_job_response["data"]["job_id"]
+            logging.info(
+                f"Job with name '{job_name}' in project '{project_name}' found with id '{job_id}'"
+            )
             return job_id
         else:
-            logging.info(f"Job with name '{job_name}' in project '{project_name}' not found")
+            logging.info(
+                f"Job with name '{job_name}' in project '{project_name}' not found"
+            )
             return None
 
-    def check_job_progress(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> dict:
+    def check_job_progress(
+        self, project_name: Optional[str] = None, job_name: Optional[str] = None
+    ) -> dict:
         """
         Check the progress of a job in a specific SambaStudio project.
 
         Parameters:
-        project_name (str, optional): The name of the project. 
+        project_name (str, optional): The name of the project.
             If not provided, the project name from the configs file is used.
-        job_name (str, optional): The name of the job. 
+        job_name (str, optional): The name of the job.
             If not provided, the job name from the configs file is used.
 
         Returns:
@@ -1012,7 +1094,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1020,36 +1102,44 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+            raise Exception(
+                f"Job with name '{job_name}' in project '{project_name}' not found"
+            )
 
         # check job progress
-        check_job_progress_response = self.snsdk_client.job_info(project=project_id, job=job_id)
-        if check_job_progress_response['status_code'] == 200:
+        check_job_progress_response = self.snsdk_client.job_info(
+            project=project_id, job=job_id
+        )
+        if check_job_progress_response["status_code"] == 200:
             # TODO implement logic to filter out response, blocked by authorization error
             # job_progress = {}
             # logging.info(f"Job '{job_name}' with progress status: {job_progress}")
             return job_progress
         else:
-            logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
-            raise Exception(f'Error message: {check_job_progress_response}')
+            logging.error(
+                f"Failed to check job progress. Details: {check_job_progress_response}"
+            )
+            raise Exception(f"Error message: {check_job_progress_response}")
 
-    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> list[dict]:
+    def list_jobs(
+        self, project_name: Optional[str] = None, verbose: Optional[bool] = False
+    ) -> list[dict]:
         """
         List all jobs in a specific SambaStudio project.
 
         Parameters:
-        project_name (str, optional): The name of the project. 
-            If not provided, the project name from the configs file is used.  
+        project_name (str, optional): The name of the project.
+            If not provided, the project name from the configs file is used.
             If the project does not exist all user jobs are returned
-        verbose (bool, optional): If True, detailed information about each job is returned. 
+        verbose (bool, optional): If True, detailed information about each job is returned.
             If False, only basic information is returned.
 
         Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents a job. 
-            If verbose is True, each dictionary contains detailed information about the job. 
+        list[dict]: A list of dictionaries, where each dictionary represents a job.
+            If verbose is True, each dictionary contains detailed information about the job.
             If verbose is False, each dictionary contains basic information about the job.
 
         Raises:
@@ -1057,15 +1147,15 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
-            
+            project_name = self.config["project"]["project_name"]
+
         project_id = self.search_project(project_name)
         if project_id is None:
             logging.info(f"Project '{project_name}' not found listing all user jobs")
         list_jobs_response = self.snsdk_client.list_jobs(project_id=project_id)
-        if list_jobs_response['status_code'] == 200:
+        if list_jobs_response["status_code"] == 200:
             jobs = []
-            for job in list_jobs_response['jobs']:
+            for job in list_jobs_response["jobs"]:
                 if verbose:
                     jobs.append({k: v for k, v in job.items()})
                 else:
@@ -1073,23 +1163,34 @@ class SnsdkWrapper:
                         {
                             k: v
                             for k, v in job.items()
-                            if k in ['job_name', 'job_id', 'job_type', 'project_id', 'status']
+                            if k
+                            in [
+                                "job_name",
+                                "job_id",
+                                "job_type",
+                                "project_id",
+                                "status",
+                            ]
                         }
                     )
             return jobs
         else:
-            logging.error(f"Failed to list jobs. Details: {list_jobs_response['detail']}")
+            logging.error(
+                f"Failed to list jobs. Details: {list_jobs_response['detail']}"
+            )
             raise Exception(f"Error message: {list_jobs_response['detail']}")
 
-    def delete_job(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> None:
+    def delete_job(
+        self, project_name: Optional[str] = None, job_name: Optional[str] = None
+    ) -> None:
         """
         Deletes a job from a specified SambaStudio project.
         Use with caution it deletes the job and all its associated checkpoints
 
         Parameters:
-        project_name (str, optional): The name of the project. 
+        project_name (str, optional): The name of the project.
             If not provided, the project name from the configuration file is used.
-        job_name (str, optional): The name of the job. 
+        job_name (str, optional): The name of the job.
             If not provided, the job name from the configuration file is used.
 
         Returns:
@@ -1103,7 +1204,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1111,40 +1212,49 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+            raise Exception(
+                f"Job with name '{job_name}' in project '{project_name}' not found"
+            )
 
         # delete job
-        delete_job_response = self.snsdk_client.delete_job(project=project_id, job=job_id)
-        if delete_job_response['status_code'] == 200:
-            logging.info(f"Job with name '{job_name}' in project '{project_name}' deleted")
+        delete_job_response = self.snsdk_client.delete_job(
+            project=project_id, job=job_id
+        )
+        if delete_job_response["status_code"] == 200:
+            logging.info(
+                f"Job with name '{job_name}' in project '{project_name}' deleted"
+            )
             # TODO check if working, blocked by authorization error
         else:
             logging.error(
                 f"Failed to delete job with name '{job_name}' in project '{project_name}'. Details: {delete_job_response}"
             )
-            raise Exception(f'Error message: {delete_job_response}')
+            raise Exception(f"Error message: {delete_job_response}")
 
     """checkpoints"""
 
     def list_checkpoints(
-        self, project_name: Optional[str] = None, job_name: Optional[str] = None, verbose: Optional[bool] = False
+        self,
+        project_name: Optional[str] = None,
+        job_name: Optional[str] = None,
+        verbose: Optional[bool] = False,
     ) -> list[dict]:
         """
         List all checkpoints in a specific job within a SambaStudio project.
 
         Parameters:
-        project_name (str, optional): The name of the project. 
+        project_name (str, optional): The name of the project.
             If not provided, the project name from the configs file is used.
         job_name (str, optional): The name of the job. If not provided, the job name from the configs file is used.
-        verbose (bool, optional): If True, detailed information about each checkpoint is returned. 
+        verbose (bool, optional): If True, detailed information about each checkpoint is returned.
             If False, only basic information is returned.
 
         Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents a checkpoint. 
-            If verbose is True, each dictionary contains detailed information about the checkpoint. 
+        list[dict]: A list of dictionaries, where each dictionary represents a checkpoint.
+            If verbose is True, each dictionary contains detailed information about the checkpoint.
             If verbose is False, each dictionary contains basic information about the checkpoint.
 
         Raises:
@@ -1155,7 +1265,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1163,13 +1273,17 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+            raise Exception(
+                f"Job with name '{job_name}' in project '{project_name}' not found"
+            )
 
-        list_checkpoints_response = self.snsdk_client.list_checkpoints(project=project_id, job=job_id)
-        if list_checkpoints_response['status_code'] == 200:
+        list_checkpoints_response = self.snsdk_client.list_checkpoints(
+            project=project_id, job=job_id
+        )
+        if list_checkpoints_response["status_code"] == 200:
             checkpoints = []
             # TODO implement logic to filter out response, blocked by authorization error
             # for checkpoint in list_checkpoints_response:
@@ -1181,8 +1295,10 @@ class SnsdkWrapper:
             #        )
             return checkpoints
         else:
-            logging.error(f'Failed to list checkpoints. Details: {list_checkpoints_response}')
-            raise Exception(f'Error message: {list_checkpoints_response}')
+            logging.error(
+                f"Failed to list checkpoints. Details: {list_checkpoints_response}"
+            )
+            raise Exception(f"Error message: {list_checkpoints_response}")
 
     def promote_checkpoint(
         self,
@@ -1197,17 +1313,17 @@ class SnsdkWrapper:
         Promotes a model checkpoint from a specific training job to a model in SambaStudio model hub.
 
         Parameters:
-        - checkpoint_id (str, optional): The ID of the model checkpoint to be promoted. 
+        - checkpoint_id (str, optional): The ID of the model checkpoint to be promoted.
             If not provided, the checkpoint id from the configs file is used.
-        - project_name (str, optional): The name of the project where the model checkpoint will be promoted. 
+        - project_name (str, optional): The name of the project where the model checkpoint will be promoted.
             If not provided, the project name from the configs file is used.
-        - job_name (str, optional): The name of the job where the model checkpoint will be promoted. 
+        - job_name (str, optional): The name of the job where the model checkpoint will be promoted.
             If not provided, the job name from the configs file is used.
-        - model_name (str, optional): The name of the model to which the model checkpoint will be promoted. 
+        - model_name (str, optional): The name of the model to which the model checkpoint will be promoted.
             If not provided, the model name from the configs file is used.
-        - model_description (str, optional): The description of the model to which the checkpoint will be promoted. 
+        - model_description (str, optional): The description of the model to which the checkpoint will be promoted.
             If not provided, the model description from the configs file is used.
-        - model_type (str, optional): The type of the model to which the model checkpoint will be promoted 
+        - model_type (str, optional): The type of the model to which the model checkpoint will be promoted
             either "finetuned" or "pretrained". If not provided, the model type from the configs file is used.
 
         Returns:
@@ -1222,38 +1338,40 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         # check if job selected exists
         if job_name is None:
-            job_name = self.config['job']['job_name']
+            job_name = self.config["job"]["job_name"]
             self._raise_error_if_config_is_none()
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
+            raise Exception(
+                f"Job with name '{job_name}' in project '{project_name}' not found"
+            )
 
         if checkpoint_id is None:
             self._raise_error_if_config_is_none()
-            checkpoint_id = self.config['model_checkpoint']['model_checkpoint_id']
+            checkpoint_id = self.config["model_checkpoint"]["model_checkpoint_id"]
             if not checkpoint_id:
-                raise Exception('No model checkpoint_id provided')
+                raise Exception("No model checkpoint_id provided")
             # TODO: check if checkpoint in list checkpoints list blocked because authorization error in lists checkpoints method
             # if checkpoint_id not in self.list_checkpoints(project_name=project_name, job_name=job_name):
             #     raise Exception(f"Checkpoint id '{checkpoint_id}' not found in job '{job_name}'")
-            
-        #check extra params passer or config file passed
+
+        # check extra params passer or config file passed
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['model_checkpoint']['model_name']
+            model_name = self.config["model_checkpoint"]["model_name"]
         if model_description is None:
             self._raise_error_if_config_is_none()
-            model_description = self.config['model_checkpoint']['model_description']
+            model_description = self.config["model_checkpoint"]["model_description"]
         if model_type is None:
             self._raise_error_if_config_is_none()
-            model_type = self.config['model_checkpoint']['model_type']
+            model_type = self.config["model_checkpoint"]["model_type"]
 
         add_model_response = self.snsdk_client.add_model(
             project=project_name,
@@ -1264,20 +1382,24 @@ class SnsdkWrapper:
             checkpoint_type=model_type,
         )
 
-        if add_model_response['status_code'] == 200:
-            logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
+        if add_model_response["status_code"] == 200:
+            logging.info(
+                f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'"
+            )
             # TODO test blocked because of authorization error
             # return model_id
         else:
-            logging.error(f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}")
-            raise Exception(f'Error message: {add_model_response}')
+            logging.error(
+                f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}"
+            )
+            raise Exception(f"Error message: {add_model_response}")
 
     def delete_checkpoint(self, checkpoint: str = None) -> None:
         """
         Deletes a model checkpoint from the SambaStudio model hub.
 
         Parameters:
-        - checkpoint (str, optional): The name/id of the checkpoint or promoted model to be deleted. 
+        - checkpoint (str, optional): The name/id of the checkpoint or promoted model to be deleted.
             If not provided, the checkpoint id from the configs file is used.
 
         Returns:
@@ -1291,32 +1413,38 @@ class SnsdkWrapper:
         # check if checkpoint is provided
         if checkpoint is None:
             self._raise_error_if_config_is_none()
-            checkpoint = self.config['model_checkpoint']['model_checkpoint_id']
+            checkpoint = self.config["model_checkpoint"]["model_checkpoint_id"]
             if not checkpoint:
-                raise Exception('No model checkpoint_id provided')
+                raise Exception("No model checkpoint_id provided")
 
-        delete_checkpoint_response = self.snsdk_client.delete_checkpoint(checkpoint=checkpoint)
-        if delete_checkpoint_response['status_code'] == 200:
+        delete_checkpoint_response = self.snsdk_client.delete_checkpoint(
+            checkpoint=checkpoint
+        )
+        if delete_checkpoint_response["status_code"] == 200:
             logging.info(f"Model checkpoint '{checkpoint}' deleted")
         else:
-            logging.error(f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}")
-            raise Exception(f'Error message: {delete_checkpoint_response}')
+            logging.error(
+                f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}"
+            )
+            raise Exception(f"Error message: {delete_checkpoint_response}")
 
     """endpoint"""
 
-    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> list[dict]:
+    def list_endpoints(
+        self, project_name: Optional[str] = None, verbose: Optional[bool] = None
+    ) -> list[dict]:
         """
         List all endpoints in a specific project.
 
         Parameters:
-        project_name (str, optional): The name of the project. 
+        project_name (str, optional): The name of the project.
             If not provided, the project name from the configs file is used.
-        verbose (bool, optional): If True, detailed information about each endpoint is returned. 
+        verbose (bool, optional): If True, detailed information about each endpoint is returned.
             If False, only basic information is returned.
 
         Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents an endpoint. 
-            If verbose is True, each dictionary contains detailed information about the endpoint. 
+        list[dict]: A list of dictionaries, where each dictionary represents an endpoint.
+            If verbose is True, each dictionary contains detailed information about the endpoint.
             If verbose is False, each dictionary contains basic information about the endpoint.
 
         Raises:
@@ -1326,30 +1454,38 @@ class SnsdkWrapper:
         # check if project exist
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
-            logging.info(f"Project '{project_name}' not found listing all user endpoints")
+            logging.info(
+                f"Project '{project_name}' not found listing all user endpoints"
+            )
 
         list_endpoints_response = self.snsdk_client.list_endpoints(project=project_id)
-        if list_endpoints_response['status_code'] == 200:
+        if list_endpoints_response["status_code"] == 200:
             endpoints = []
-            for endpoint in list_endpoints_response['endpoints']:
+            for endpoint in list_endpoints_response["endpoints"]:
                 if verbose:
                     endpoints.append({k: v for k, v in endpoint.items()})
                 else:
                     endpoints.append(
-                        {k: v for k, v in endpoint.items() if k in [
-                            'name',
-                            'id',
-                            'project_id',
-                            'status',
+                        {
+                            k: v
+                            for k, v in endpoint.items()
+                            if k
+                            in [
+                                "name",
+                                "id",
+                                "project_id",
+                                "status",
                             ]
                         }
                     )
             return endpoints
         else:
-            logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
+            logging.error(
+                f"Failed to list endpoints. Details: {list_endpoints_response['detail']}"
+            )
             raise Exception(f"Error message: {list_endpoints_response['detail']}")
 
     def create_endpoint(
@@ -1366,19 +1502,19 @@ class SnsdkWrapper:
         Creates a new endpoint in a specified Sambastudio project using a specified model.
 
         Parameters:
-        - project_name (str, optional): The name of the project. 
+        - project_name (str, optional): The name of the project.
             If not provided, the project name from the configuration is used.
-        - endpoint_name (str, optional): The name of the endpoint. 
+        - endpoint_name (str, optional): The name of the endpoint.
             If not provided, the endpoint name from the configuration is used.
-        - endpoint_description (str, optional): The description of the endpoint. 
+        - endpoint_description (str, optional): The description of the endpoint.
             If not provided, the endpoint description from the configuration is used.
-        - model_name (str, optional): The name of the model. 
+        - model_name (str, optional): The name of the model.
             If not provided, the model name from the configuration is used.
-        - instances (str, optional): The number of instances for the endpoint. 
+        - instances (str, optional): The number of instances for the endpoint.
             If not provided, the endpoint instances from the configuration is used.
-        - rdu_arch (str, optional): The RDU architecture for the endpoint. 
+        - rdu_arch (str, optional): The RDU architecture for the endpoint.
             If not provided, the RDU architecture from the configuration is used.
-        - hyperparams (str, optional): The hyperparameters for the endpoint. 
+        - hyperparams (str, optional): The hyperparameters for the endpoint.
             If not provided, the hyperparameters from the configuration is used.
 
         Raises:
@@ -1387,14 +1523,14 @@ class SnsdkWrapper:
         Exception: If there is an error in creating the endpoint.
 
         Returns:
-        - str: The ID of the created endpoint if successful or the endpoint already exists. 
+        - str: The ID of the created endpoint if successful or the endpoint already exists.
             If unsuccessful, None is returned.
         """
 
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1402,7 +1538,7 @@ class SnsdkWrapper:
         # check if model selected exists
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['model_checkpoint']['model_name']
+            model_name = self.config["model_checkpoint"]["model_name"]
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
             raise Exception(f"Model with name '{model_name}' not found")
@@ -1410,26 +1546,30 @@ class SnsdkWrapper:
         # check if endpoint selected exists
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config['endpoint']['endpoint_name']
-        endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_id = self.search_endpoint(
+            project=project_id, endpoint_name=endpoint_name
+        )
         if endpoint_id is not None:
-            logging.info(f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}")
+            logging.info(
+                f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}"
+            )
             return endpoint_id
 
         # check extra params passed or config file passed
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
-            endpoint_description = self.config['endpoint']['endpoint_description']
+            endpoint_description = self.config["endpoint"]["endpoint_description"]
         if instances is None:
             self._raise_error_if_config_is_none()
-            instances = self.config['endpoint']['endpoint_instances']
+            instances = self.config["endpoint"]["endpoint_instances"]
         if rdu_arch is None:
             self._raise_error_if_config_is_none()
-            rdu_arch = self.config['sambastudio']['rdu_arch']
+            rdu_arch = self.config["sambastudio"]["rdu_arch"]
         if hyperparams is None:
             self._raise_error_if_config_is_none()
-            hyperparams = self.config['endpoint']['hyperparams']
-        
+            hyperparams = self.config["endpoint"]["hyperparams"]
+
         # create endpoint
         create_endpoint_response = self.snsdk_client.create_endpoint(
             project=project_id,
@@ -1441,21 +1581,25 @@ class SnsdkWrapper:
             hyperparams=json.dumps(hyperparams),
         )
 
-        if create_endpoint_response['status_code'] == 200:
+        if create_endpoint_response["status_code"] == 200:
             logging.info(f"Endpoint '{endpoint_name}' created")
-            endpoint_id = create_endpoint_response['id']
+            endpoint_id = create_endpoint_response["id"]
             return endpoint_id
 
         else:
-            logging.error(f'Failed to create endpoint {endpoint_name}. Details: {create_endpoint_response}')
-            raise Exception(f'Error message: {create_endpoint_response}')
+            logging.error(
+                f"Failed to create endpoint {endpoint_name}. Details: {create_endpoint_response}"
+            )
+            raise Exception(f"Error message: {create_endpoint_response}")
 
-    def search_endpoint(self, project: Optional[str] = None, endpoint_name: Optional[str] = None) -> Optional[str]:
+    def search_endpoint(
+        self, project: Optional[str] = None, endpoint_name: Optional[str] = None
+    ) -> Optional[str]:
         """
         Search for an endpoint in a specified project by its name.
 
         Parameters:
-        - project (str, optional): The name of the project. 
+        - project (str, optional): The name of the project.
             If not provided, the project name from the configuration is used.
         - endpoint_name (str, optional): The name of the endpoint.
             If not provided, the endpoint name from the configuration is used.
@@ -1468,30 +1612,38 @@ class SnsdkWrapper:
         """
         if project is None:
             self._raise_error_if_config_is_none()
-            project = self.config['project']['project_name']
+            project = self.config["project"]["project_name"]
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config['endpoint']['endpoint_name']
-        endpoint_info_response = self.snsdk_client.endpoint_info(project=project, endpoint=endpoint_name)
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_info_response = self.snsdk_client.endpoint_info(
+            project=project, endpoint=endpoint_name
+        )
 
-        if endpoint_info_response['status_code'] == 200:
-            endpoint_id = endpoint_info_response['id']
+        if endpoint_info_response["status_code"] == 200:
+            endpoint_id = endpoint_info_response["id"]
             return endpoint_id
-        elif endpoint_info_response['status_code'] == 404:
-            logging.info(f"Endpoint with name '{endpoint_name}' not found in project '{project}'")
+        elif endpoint_info_response["status_code"] == 404:
+            logging.info(
+                f"Endpoint with name '{endpoint_name}' not found in project '{project}'"
+            )
             return None
         else:
-            logging.error(f'Failed to retrieve information for endpoint Details: {endpoint_info_response}')
-            raise Exception(f'Error message: {endpoint_info_response}')
+            logging.error(
+                f"Failed to retrieve information for endpoint Details: {endpoint_info_response}"
+            )
+            raise Exception(f"Error message: {endpoint_info_response}")
 
-    def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> dict:
+    def get_endpoint_details(
+        self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None
+    ) -> dict:
         """
         Retrieves the details of a specified endpoint in a given SambaStudio project.
 
         Parameters:
-        - project_name (str, optional): The name of the project. 
+        - project_name (str, optional): The name of the project.
             If not provided, the project name from the configs file is used.
-        - endpoint_name (str, optional): The name of the endpoint. 
+        - endpoint_name (str, optional): The name of the endpoint.
             If not provided, the endpoint name from the configs file is used.
 
         Raises:
@@ -1505,28 +1657,30 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config['endpoint']['endpoint_name']
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
 
-        endpoint_info_response = self.snsdk_client.endpoint_info(project=project_id, endpoint=endpoint_name)
+        endpoint_info_response = self.snsdk_client.endpoint_info(
+            project=project_id, endpoint=endpoint_name
+        )
 
-        if endpoint_info_response['status_code'] == 200:
-            endpoint_url = endpoint_info_response['url']
+        if endpoint_info_response["status_code"] == 200:
+            endpoint_url = endpoint_info_response["url"]
             endpoint_details = {
-                'status': endpoint_info_response['status'],
-                'url': endpoint_url,
-                'langchain wrapper env': {
-                    'SAMBASTUDIO_BASE_URL': self.snsdk_client.host_url,
-                    'SAMBASTUDIO_BASE_URI': '/'.join(endpoint_url.split('/')[1:4]),
-                    'SAMBASTUDIO_PROJECT_ID': endpoint_url.split('/')[-2],
-                    'SAMBASTUDIO_ENDPOINT_ID': endpoint_url.split('/')[-1],
-                    'SAMBASTUDIO_API_KEY': endpoint_info_response['api_key'],
+                "status": endpoint_info_response["status"],
+                "url": endpoint_url,
+                "langchain wrapper env": {
+                    "SAMBASTUDIO_BASE_URL": self.snsdk_client.host_url,
+                    "SAMBASTUDIO_BASE_URI": "/".join(endpoint_url.split("/")[1:4]),
+                    "SAMBASTUDIO_PROJECT_ID": endpoint_url.split("/")[-2],
+                    "SAMBASTUDIO_ENDPOINT_ID": endpoint_url.split("/")[-1],
+                    "SAMBASTUDIO_API_KEY": endpoint_info_response["api_key"],
                 },
             }
             return endpoint_details
@@ -1534,16 +1688,18 @@ class SnsdkWrapper:
             logging.error(
                 f"Failed to get details for endpoint '{endpoint_name}' in project '{project_name}'. Details: {endpoint_info_response}"
             )
-            raise Exception(f'Error message: {endpoint_info_response}')
+            raise Exception(f"Error message: {endpoint_info_response}")
 
-    def delete_endpoint(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> None:
+    def delete_endpoint(
+        self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None
+    ) -> None:
         """
         Deletes a specified endpoint in a given SambaStudio project.
 
         Parameters:
-        - project_name (str, optional): The name of the project. 
+        - project_name (str, optional): The name of the project.
             If not provided, the project name from the configs file is used.
-        - endpoint_name (str, optional): The name of the endpoint. 
+        - endpoint_name (str, optional): The name of the endpoint.
             If not provided, the endpoint name from the configs file is used.
 
         Raises:
@@ -1557,7 +1713,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config['project']['project_name']
+            project_name = self.config["project"]["project_name"]
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1565,19 +1721,26 @@ class SnsdkWrapper:
         # check if endpoint selected exists
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config['endpoint']['endpoint_name']
-        endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
+            endpoint_name = self.config["endpoint"]["endpoint_name"]
+        endpoint_id = self.search_endpoint(
+            project=project_id, endpoint_name=endpoint_name
+        )
         if endpoint_id is None:
-            raise Exception(f"Endpoint with name '{endpoint_name}' not found in project '{project_name}'")
+            raise Exception(
+                f"Endpoint with name '{endpoint_name}' not found in project '{project_name}'"
+            )
 
-        delete_endpoint_response = self.snsdk_client.delete_endpoint(project=project_id, endpoint=endpoint_id)
+        delete_endpoint_response = self.snsdk_client.delete_endpoint(
+            project=project_id, endpoint=endpoint_id
+        )
 
-        if delete_endpoint_response['status_code'] == 200:
-            logging.info(f"Endpoint '{endpoint_name}' deleted in project '{project_name}'")
+        if delete_endpoint_response["status_code"] == 200:
+            logging.info(
+                f"Endpoint '{endpoint_name}' deleted in project '{project_name}'"
+            )
 
         else:
             logging.error(
                 f"Failed to delete endpoint '{endpoint_name}' in project '{project_name}'. Details: {delete_endpoint_response}"
             )
-            raise Exception(f'Error message: {delete_endpoint_response}')
-   
+            raise Exception(f"Error message: {delete_endpoint_response}")
