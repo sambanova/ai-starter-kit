@@ -3,27 +3,33 @@ sambastudio:
   rdu_arch: "sn10"
 
 dataset:
-  dataset_name: "mitre dataset test_10"
+  dataset_name: "smol_sql_dataset"
+  dataset_description: "test_dataset for sql fine-tuning"
+  dataset_path: "/Users/jorgep/Documents/ask_public_own/ai-starter-kit/utils/fine_tuning/sambastudio_fine_tuning_dataset"
   dataset_apps_availability: 
-  - "E5 Mistral Embedding"
-  - "Text Embedding" 
+    - 'Mistral'
+    - 'Llama 3'
+    - 'Llama 2 with dynamic batching'
+    - 'Llama 2 7B'
+    - 'Llama 2 70B with dynamic batching'
+    - 'Llama 2 70B'
+    - 'Llama 2 13B'
   dataset_job_types:
-    - "batch_predict"
+    - "evaluation"
+    - "train"
   dataset_source_type: "localMachine"
-  dataset_path: /Users/rodrigom/Desktop/aisk/finetuning/mitre
-  dataset_description: "mitre dataset test"
+  dataset_language: "english"
   dataset_filetype: "hdf5"
   dataset_url: ""
-  dataset_language: "english"
   dataset_metadata:
-    labels_file: "./dummy_labels_path"
-    train_filepath: "./dummy_train_path"
-    validation_filepath: "./dummy_val_path"
-    test_filepath: "./dummy_test_path"
+    labels_file: ""
+    train_filepath: ""
+    validation_filepath: ""
+    test_filepath: ""
   
 project: 
-  project_name: "example project" #"sql_finetuning" 
-  project_description: "this project will be used to test the Finetuning Embeddings e2e pipeline implementation"
+  project_name: "example project"
+  project_description: "this project will be used to test e2e fine-tuning pipeline implementation"
 
 job:
   job_name: "snsdk_test_job"
