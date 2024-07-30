@@ -14,15 +14,26 @@ Optional arguments:
 - --chunk_overlap: Overlap between chunks (default: None).
 """
 
+import os
+import sys
 import argparse
 import logging
-import os
 
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.embeddings import SambaStudioEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
+
+vectordb_dir = os.path.dirname(os.path.abspath(__file__))
+utils_dir = os.path.abspath(os.path.join(vectordb_dir, ".."))
+repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
+
+sys.path.append(repo_dir)
+sys.path.append(utils_dir)
+
+from utils.model_wrappers.models_gateway import ModelsGateway
+
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 NORMALIZE_EMBEDDINGS = True
@@ -57,7 +68,6 @@ class VectorDb():
         load_files: Load files from an input directory as langchain documents
         get_text_chunks: Get text chunks from a list of documents
         get_token_chunks: Get token chunks from a list of documents
-        load_embedding_model: Load a sambastudio or a huggingface embedding model
         create_vector_store: Create a vector store from chunks and an embedding model
         load_vdb: load a previous stored vector database 
         update_vdb: Update an existing vector store with new chunks
@@ -148,44 +158,6 @@ class VectorDb():
         logger.info(f"Total {len(chunks)} chunks created")
 
         return chunks
-
-    def load_embedding_model(self, type = "cpu", batch_size = None ,coe = False, select_expert = None):
-        """Loads embedding model
-        Args:
-            type (str): wether to use sambastudio embedding model or in local cpu model
-        Returns:
-            langchain embedding model
-        """
-        
-        if type == "sambastudio":
-            if coe:
-                if batch_size is None:
-                    batch_size = 1
-                embeddings = SambaStudioEmbeddings(
-                    batch_size=batch_size,
-                    model_kwargs = {
-                        "select_expert":select_expert
-                        }
-                    )
-            else:
-                if batch_size is None:
-                    batch_size = 32
-                embeddings = SambaStudioEmbeddings(
-                    batch_size=batch_size
-                )
-        elif type == "cpu":
-            encode_kwargs = {"normalize_embeddings": NORMALIZE_EMBEDDINGS}
-            embedding_model = EMBEDDING_MODEL
-            embeddings = HuggingFaceInstructEmbeddings(
-                model_name=embedding_model,
-                embed_instruction="",  # no instruction is needed for candidate passages
-                query_instruction="Represent this sentence for searching relevant passages: ",
-                encode_kwargs=encode_kwargs,
-            )
-        else:
-            raise ValueError(f"{type} is not a valid embedding model type")
-
-        return embeddings
 
     def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str,
                             output_db: str = None):
@@ -285,7 +257,7 @@ class VectorDb():
         else:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
-        embeddings = self.load_embedding_model(type=embedding_type)
+        embeddings = ModelsGateway.load_embedding_model(type=embedding_type)
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
 
