@@ -32,7 +32,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 sys.path.append(repo_dir)
 sys.path.append(utils_dir)
 
-from utils.model_wrappers.models_gateway import ModelsGateway
+from utils.model_wrappers.models_gateway import APIGateway
 
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
@@ -257,7 +257,7 @@ class VectorDb():
         else:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
-        embeddings = ModelsGateway.load_embedding_model(type=embedding_type)
+        embeddings = APIGateway.load_embedding_model(type=embedding_type)
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
 
