@@ -75,7 +75,7 @@ coe_name_map:
   History expert: "Meta-Llama-3-70B-Instruct"
   Turkish expert: "Mistral-7B-Instruct-v0.2"
   Japanese expert: "Mistral-7B-Instruct-v0.2"
-  Literature expert: "MMeta-Llama-3-8B-Instruct"
+  Literature expert: "Meta-Llama-3-8B-Instruct"
   Science expert: "Mistral-7B-Instruct-v0.2"
   Social Science expert: "Mistral-7B-Instruct-v0.2"
   Generalist: "Meta-Llama-3-70B-Instruct"
