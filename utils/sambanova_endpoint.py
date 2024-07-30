@@ -995,6 +995,12 @@ class SambaStudioFastCoE(LLM):
 
     model: str = 'llama3-8b'
     """LLM model expert to use"""
+    
+    stream_api: bool = True
+    """use stream api"""
+    
+    stream_options: dict =  {"include_usage": True}
+    """stream options, include usage to get generation metrics"""
 
     class Config:
         """Configuration for this pydantic object."""
@@ -1049,7 +1055,7 @@ class SambaStudioFastCoE(LLM):
         http_session = requests.Session()
         if not stop:
             stop = self.stop_tokens
-        data = {'inputs': formatted_prompt, 'max_tokens': self.max_tokens, 'stop': stop, 'model': self.model}
+        data = {'messages': formatted_prompt, 'max_tokens': self.max_tokens, 'stop': stop, 'model': self.model, 'stream': self.stream_api, 'stream_options': self.stream_options}
         # Streaming output
         response = http_session.post(
             self.fast_coe_url,
@@ -1068,26 +1074,32 @@ class SambaStudioFastCoE(LLM):
                 'data': event.data,
                 'status_code': response.status_code,
             }
-
-            if chunk['status_code'] == 200 and chunk.get('error'):
-                chunk['result'] = {'responses': [{'stream_token': ''}]}
+                
             if chunk['status_code'] != 200:
-                error = chunk.get('is_error')
-                optional_details = chunk.get('completion')
-                if error:
-                    optional_details = error.get('details')
-                    raise ValueError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{chunk['status_code']}.\n"
-                        f"Details: {optional_details}\n"
-                    )
-                else:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                )
+                
+            else:
+                if chunk.get('error'):
                     raise RuntimeError(
                         f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                     )
-            text = json.loads(chunk['data'])['stream_token']
-            generated_chunk = GenerationChunk(text=text)
-            yield generated_chunk
+                
+            try:    
+                # check if the response is a final event in that case event data response is '[DONE]' 
+                if chunk['data']!="[DONE]" :
+                    data = json.loads(chunk['data'])    
+                    # check if the response is a final response with usage stats (not includes content) 
+                    if data.get("usage") is None:
+                        # check is not "end of text" response
+                        if data['choices'][0]["finish_reason"] is None:
+                            text = data['choices'][0]["delta"]["content"]
+                            generated_chunk = GenerationChunk(text=text)
+                            yield generated_chunk
+            except Exception as e:
+                raise Exception(f"Error getting content chunk raw streamed response: {chunk}") 
+                
 
     def _stream(
         self,

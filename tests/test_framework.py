@@ -47,6 +47,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     'post_call_analysis': 'python tests/pca_test.py',
     'function_calling': 'python tests/fc_test.py',
+    # 'function_calling': 'python cli_test.py --function example_function',
     # 'search_assistant': 'python cli_test.py --query "test query"',
     'benchmarking': './run_synthetic_dataset.sh' #This runs the benchmarking suite. 
 }
