@@ -12,6 +12,7 @@ MODEL_TYPE_IDENTIFIER = {
     "deepseek": "deepseek",
     "solar": "solar",
     "eeve": "eeve",
+    "llama2": "llama-2",
 }
 
 
