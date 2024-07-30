@@ -6,8 +6,10 @@ import re
 import threading
 import time
 import yaml
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+from pathlib import Path
+file_location = Path(__file__).parent.resolve()
 
 import pandas as pd
 from tqdm import tqdm
@@ -21,7 +23,6 @@ import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
 import logging
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -30,8 +31,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
 
-SYSTEM_PROMPT_PATH = "./prompts/system-prompt_template.yaml"
-USER_PROMPT_PATH = "./prompts/user-prompt_template.yaml"
+SYSTEM_PROMPT_PATH = os.path.join(file_location, "../prompts/system-prompt_template.yaml")
+USER_PROMPT_PATH = os.path.join(file_location, "../prompts/user-prompt_template.yaml")
 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
@@ -569,15 +570,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
 
-        # Specific prompt templating for Deepseek models
-        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
-            system_prompt = f"{sys_prompt_template}"
-            prompt = system_prompt + raw_prompt
-
-        # Prompt templating for Llama-2 and all other models
-        else:
+        # Specific prompt templating for Llama-2 models
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower():
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
+
+        # Prompt templating for other models (Deepseek, Solar, Eeve)
+        else:
+            system_prompt = f"{sys_prompt_template}"
+            prompt = system_prompt + raw_prompt
 
         return (prompt, self.get_token_length(prompt))
 
@@ -604,7 +605,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_output_tokens: int,
         num_requests: int,
         sampling_params: Dict[str, Any],
-    ):
+    ) -> tuple:
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:
@@ -617,7 +618,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             ValueError: If the number of input tokens is less than 40.
 
         Returns:
-            None
+            summary (dict): structure with performance metrics and stats for the run
+            individual_responses (tuple): list of performance metrics per request
         """
         if num_input_tokens < 40:
             raise ValueError(
@@ -636,6 +638,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         if self.results_dir:
             filename = self.create_output_filename(num_input_tokens, num_output_tokens)
             self.save_results(filename, summary, individual_responses)
+            
+        return summary, individual_responses
 
     def get_token_throughput_latencies(
         self,
