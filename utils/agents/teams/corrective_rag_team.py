@@ -19,6 +19,18 @@ from utils.agents.supervisor import SupervisorComponents  # type: ignore
 
 
 class SuperState(TypedDict):
+    """
+    A dictionary representing the current state of the supervisor.
+
+    Args:
+        question: The user question being asked.
+        query_history: A list of previous queries made by the user.
+        answer_history: A list of previous answers given by the team.
+        teams: A list of team names.
+        state: A dictionary containing the current state..
+        next: The next action to take.
+    """
+
     question: str
     query_history: Annotated[List[str], operator.add]
     answer_history: Annotated[List[str], operator.add]
@@ -26,13 +38,11 @@ class SuperState(TypedDict):
     state: dict
     next: str
 
+
 class CRAGSupervisor(SupervisorComponents):
-    def create_supervisor(self) -> object:
+    def create_supervisor(self) -> CompiledGraph:
         """
         Creates a compiled supervisor graph/app for the corrective RAG team.
-
-        Args:
-            None
 
         Returns:
             The compiled supervisor graph/app.
@@ -51,12 +61,6 @@ class CRAGSupervisor(SupervisorComponents):
     def initialize(self) -> None:
         """
         Initializes all the components of the supervisor app.
-
-        Args:
-            None
-
-        Returns:
-            None
         """
 
         self.init_llm()
@@ -64,6 +68,18 @@ class CRAGSupervisor(SupervisorComponents):
 
 
 class TeamRAGGraphState(TypedDict):
+    """
+    Represents the state of a team's RAG graph.
+
+    Args:
+        question: The user question being asked.
+        generation: The most recent generation of the team.
+        documents: A list of documents retrieved from the vectorstore.
+        answers: A list of answers provided by the team.
+        original_question: The original question being asked, in case of subquery generation, query reformulation, etc.
+        next: The next step in the pipeline.
+    """
+
     question: str
     generation: str
     documents: List[str]
@@ -93,9 +109,6 @@ class TeamCRAG(BaseComponents):
             rag_app: The RAG application.
             search_app: The search application.
             return_app: The return message application.
-
-        Returns:
-            None
         """
 
         self.team_app = StateGraph(TeamRAGGraphState)
@@ -107,9 +120,6 @@ class TeamCRAG(BaseComponents):
     def create_team_graph(self) -> None:
         """
         Creates the nodes for the TeamCRAG graph state.
-
-        Args:
-            None
 
         Returns:
             The StateGraph object containing the nodes for the TeamCRAG graph state.
@@ -169,11 +179,11 @@ class TeamCRAG(BaseComponents):
         """
 
         response = {}
-        # type ignore is used because the invoke expects a runnable, 
+        # type ignore is used because the invoke expects a runnable,
         # but using a runnable in this way will not work.
-        output = app.invoke({'question': question}, config=config) # type: ignore
+        output = app.invoke({'question': question}, config=config)  # type: ignore
         response['answer'] = output['generation']
-        sources = [o for o in output['documents']]
+        sources = output['documents']
         response['source_documents'] = sources
 
         return response, output

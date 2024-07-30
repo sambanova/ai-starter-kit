@@ -30,18 +30,16 @@ class SupervisorComponents(BaseComponents):
     """
 
     def __init__(
-        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, 
-        examples: Optional[Dict[str, str]] = None
+        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, examples: Optional[Dict[str, str]] = None
     ) -> None:
         """
         Initializes the RAG components.
+
         Args:
             configs: The configuration file path.
             embeddings: The embeddings model.
             vectorstore: The vector store object.
             examples: The examples dictionary. Defaults to None.
-        Returns:
-            None
         """
 
         self.vectorstore = vectorstore
@@ -57,33 +55,28 @@ class SupervisorComponents(BaseComponents):
         This method loads the supervisor router prompt from the
         repository and combines it with the language model and a
         JSON output parser.
-        Args:
-            None
-        Returns:
-            None
         """
 
         supervisor_router_prompt: Any = load_prompt(repo_dir + '/' + self.prompts_paths['supervisor_prompt'])
         self.supervisor = supervisor_router_prompt | self.llm | JsonOutputParser()
 
-
     def supervisor_router(self, state: dict) -> dict:
         """
         This method is the supervisor router, which handles the state of the conversation.
         Args:
-        state: A dictionary containing the current state
-        of the conversation, including the question, question history,
-        answer history, and teams.
+            state: A dictionary containing the current state
+            of the conversation, including the question, question history,
+            answer history, and teams.
         Returns:
-        The state dictionary with the updated next step in the conversation,
-        as determined by the supervisor.
+            The state dictionary with the updated next step in the conversation,
+            as determined by the supervisor.
         """
 
         question: str = state['question']
         question_history: List[str] = state['query_history']
         answer_history: List[str] = state['answer_history']
 
-        print("---SUPERVISOR ROUTER INPUTS---")
+        print('---SUPERVISOR ROUTER INPUTS---')
         print(question)
         print(question_history)
         print(answer_history)
@@ -97,7 +90,7 @@ class SupervisorComponents(BaseComponents):
             }
         )
 
-        print("---NEXT ACTION---")
+        print('---NEXT ACTION---')
         print(response['next'])
 
         return {'next': response['next']}

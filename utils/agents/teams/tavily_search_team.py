@@ -19,6 +19,17 @@ from utils.search.search_components import SearchComponents  # type: ignore
 
 
 class SearchGraphState(TypedDict):
+    """
+    Represents the state of a search graph.
+
+    Args:
+        question: The original question being asked by the user.
+        generation: The current generation from a LLM agent in the pipeline.
+        documents: A list of documents after retrieving from the vectorstore.
+        answers: A list of answers that have been accumulated from the app.
+        original_question: The original question being searched, which may need to bre retrieved/used after 
+        query reformulation or subquery decomposition..
+    """
     question: str
     generation: str
     documents: List[str]
@@ -34,9 +45,6 @@ class TavilySearchTeam(RAGComponents, CodeGenComponents, SearchComponents):
     def create_search_nodes(self) -> StateGraph:
         """
         Creates the nodes for the TavilySearchTeam graph state.
-
-        Args:
-            None
 
         Returns:
             The StateGraph object containing the nodes for the TavilySearchTeam graph state.
@@ -93,12 +101,6 @@ class TavilySearchTeam(RAGComponents, CodeGenComponents, SearchComponents):
     def initialize(self) -> None:
         """
         Initializes all the components of the static TavilySearchTeam app.
-
-        Args:
-            None
-
-        Returns:
-            None
         """
 
         self.init_llm()

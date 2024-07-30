@@ -1,7 +1,6 @@
 import os
 import sys
 from typing import TypedDict
-from langchain_core.prompts import load_prompt
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint import MemorySaver
 from langgraph.graph.graph import CompiledGraph
@@ -18,6 +17,15 @@ from utils.agents.return_message import ReturnComponents  # type: ignore
 
 
 class ReturnTeamState(TypedDict):
+    """
+    A typed dictionary representing the state of a team in a conversation.
+
+    Args:
+        question: The question being asked by the user.
+        generation: The most recent generation from the team.
+        next: The next action to take.
+    """
+
     question: str
     generation: str
     next: str
@@ -28,11 +36,8 @@ class ReturnTeam(ReturnComponents):
         """
         Creates the nodes for the ReturnTeam graph state.
 
-        Args:
-            None
-
         Returns:
-            The StateGraph object containing the nodes for the TeamCRAG graph state.
+            The StateGraph object containing the nodes for the ReturnTeam graph state.
         """
 
         checkpointer = MemorySaver()
@@ -45,15 +50,9 @@ class ReturnTeam(ReturnComponents):
 
         return return_graph_compiled
 
-    def initialize(self):
+    def initialize(self) -> None:
         """
         Initializes all the components of the ReturnTeam app.
-
-        Args:
-            None
-
-        Returns:
-            None
         """
 
         self.init_llm()

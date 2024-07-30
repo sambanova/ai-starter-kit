@@ -41,9 +41,6 @@ class ReturnComponents(BaseComponents):
             embeddings: The embeddings model.
             vectorstore: The vector store object.
             examples: The examples dictionary. Defaults to None.
-
-        Returns:
-            None
         """
 
         self.vectorstore = vectorstore
@@ -58,16 +55,10 @@ class ReturnComponents(BaseComponents):
         Initializes the return message by loading the prompt
         and combining it with the LLM and a string
         output parser.
-
-        Args:
-            None
-
-        Returns:
-            None
         """
 
         return_message_prompt: Any = load_prompt(repo_dir + '/' + self.prompts_paths['return_message_prompt'])
-        self.return_message = return_message_prompt | self.llm | StrOutputParser()
+        self.return_message_chain = return_message_prompt | self.llm | StrOutputParser()
 
     def return_message_to_user(self, state: dict) -> dict:
         """
@@ -84,7 +75,7 @@ class ReturnComponents(BaseComponents):
         answer: str = state['generation']
         next: str = state['next']
 
-        response: str = self.return_message.invoke({'question': question, 'answer': answer, 'next': next})
+        response: str = self.return_message_chain.invoke({'question': question, 'answer': answer, 'next': next})
         print('---RESPONSE---')
         print(response)
 

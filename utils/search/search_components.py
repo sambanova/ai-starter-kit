@@ -27,11 +27,12 @@ class SearchComponents(BaseComponents):
     - prompts_paths (Dict): The paths to the prompts in the configuration dictionary.
     """
 
-    def __init__(self, 
-                configs: str, 
-                embeddings: object, 
-                vectorstore: Chroma, 
-                examples: dict=None) -> None:
+    def __init__(
+        self, 
+        configs: str, 
+        embeddings: object, 
+        vectorstore: Chroma, 
+        examples: dict=None) -> None:
         """
         Initializes the RAG components.
 
@@ -40,9 +41,6 @@ class SearchComponents(BaseComponents):
             embeddings: The embeddings model.
             vectorstore: The vector store object.
             examples: The examples dictionary. Defaults to None.
-
-        Returns:
-            None
         """
         
         self.qa_chain = None
