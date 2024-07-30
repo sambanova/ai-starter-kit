@@ -78,8 +78,8 @@ class FCTestCase(unittest.TestCase):
         logger.info(response)
         self.assertTrue(response,"LLM final response shouldn't be empty")
 
-        response = self.fc.function_call_llm('it is time to go to sleep, how many hours last to 10pm?', max_it=5, debug=False)
-        logger.info("\nFunction calling pipeline with get_time and calculator:")
+        response = self.fc.function_call_llm('calculate 5*10-3', max_it=5, debug=False)
+        logger.info("\nFunction calling pipeline with calculator:")
         logger.info(response)
         self.assertTrue(response,"LLM final response shouldn't be empty")
 
