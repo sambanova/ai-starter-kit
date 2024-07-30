@@ -224,8 +224,8 @@ class SearchAssistant:
         try:
             response = requests.post(url, headers=headers, data=payload)
             if response.status_code == 200:
-                results = response.json()['organic']
-                if results:
+                results = response.json().get('organic', [])
+                if len(results) > 0:
                     links = [r['link'] for r in results]
                     context = []
                     for i, result in enumerate(results):
@@ -290,7 +290,7 @@ class SearchAssistant:
             response = requests.get(url, params=params)
             if response.status_code == 200:
                 results = response.json()
-                if results:
+                if len(results) > 0:
                     links = [r['url'] for r in results]
                     context = []
                     for i, result in enumerate(results):
@@ -668,10 +668,13 @@ class SearchAssistant:
             _, links = self.querySerper(query=query, limit=max_results, do_analysis=False)
         elif search_method == 'openserp':
             _, links = self.queryOpenSerp(query=query, limit=max_results, engine=search_engine, do_analysis=False)
-        self.web_crawl(urls=links)
-        # self.create_load_vector_store()
-        self.create_and_save_local()
-        self.set_retrieval_qa_chain(conversational=True)
+        if len(links) > 0:
+            self.web_crawl(urls=links)
+            # self.create_load_vector_store()
+            self.create_and_save_local()
+            self.set_retrieval_qa_chain(conversational=True)
+        else:
+            return {"message": f"No links found for '{query}'. Try again"}
 
     def get_relevant_queries(self, query):
         """
