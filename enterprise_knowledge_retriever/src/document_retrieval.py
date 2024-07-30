@@ -21,7 +21,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.models_gateway import ModelsGateway 
+from utils.model_wrappers.models_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
@@ -137,7 +137,7 @@ class DocumentRetrieval():
     
 
     def set_llm(self):
-        llm = ModelsGateway.load_llm(
+        llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
             coe=self.llm_info["coe"],
@@ -194,7 +194,7 @@ class DocumentRetrieval():
 
 
     def load_embedding_model(self):
-        embeddings = ModelsGateway.load_embedding_model(
+        embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info["type"],
             batch_size=self.embedding_model_info["batch_size"],
             coe=self.embedding_model_info["coe"],
