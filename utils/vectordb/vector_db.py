@@ -247,7 +247,23 @@ class VectorDb():
 
         return vector_store
 
-    def create_vdb(self, input_path, chunk_size, chunk_overlap, db_type, output_db=None, recursive=False, tokenizer=None, load_txt=True, load_pdf=False, urls=None, embedding_type="cpu"):
+    def create_vdb(
+        self,
+        input_path,
+        chunk_size,
+        chunk_overlap,
+        db_type,
+        output_db=None,
+        recursive=False,
+        tokenizer=None,
+        load_txt=True,
+        load_pdf=False,
+        urls=None,
+        embedding_type="cpu",
+        batch_size= None,
+        coe = None,
+        select_expert = None
+    ):
 
         docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
 
@@ -256,7 +272,12 @@ class VectorDb():
         else:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
-        embeddings = APIGateway.load_embedding_model(type=embedding_type)
+        embeddings = APIGateway.load_embedding_model(
+            type=embedding_type,
+            batch_size=batch_size,
+            coe=coe,
+            select_expert=select_expert
+        )
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
 
