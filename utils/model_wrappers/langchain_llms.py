@@ -934,8 +934,8 @@ class SambaStudioFastCoE(LLM):
     SambaStudio large language models.
 
     To use, you should have the environment variables
-    ``FAST_COE_URL`` set with your SambaStudio environment URL.
-    ``FAST_COE_API_KEY``  set with your SambaStudio endpoint API key.
+    ``FASTAPI_URL`` set with your SambaStudio environment URL.
+    ``FASTAPI_API_KEY``  set with your SambaStudio endpoint API key.
 
     https://sambanova.ai/products/enterprise-ai-platform-sambanova-suite
 
@@ -946,19 +946,19 @@ class SambaStudioFastCoE(LLM):
 
         from langchain_community.llms.sambanova  import Sambaverse
         SambaStudio(
-            fast_coe_url="your fast CoE endpoint URL",
-            api_token= set with your fast CoE endpoint API key.,
+            fastapi_url=your fastApi CoE endpoint URL,
+            fastapi_api_key= set with your fastAPI CoE endpoint API key,
             max_tokens = mas number of tokens to generate
             stop_tokens = list of stop tokens
             model = model name
         )
     """
 
-    fast_coe_url: str = ''
+    fastapi_url: str = ''
     """Url to use"""
 
-    fast_coe_api_key: str = ''
-    """fastCoE api key"""
+    fastapi_api_key: str = ''
+    """fastAPI CoE api key"""
 
     max_tokens: int = 1024
     """max tokens to generate"""
@@ -997,8 +997,8 @@ class SambaStudioFastCoE(LLM):
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values['fast_coe_url'] = get_from_dict_or_env(values, 'fast_coe_url', 'FAST_COE_URL')
-        values['fast_coe_api_key'] = get_from_dict_or_env(values, 'fast_coe_api_key', 'FAST_COE_API_KEY')
+        values['fastapi_url'] = get_from_dict_or_env(values, 'fastapi_url', 'FASTAPI_URL')
+        values['fastapi_api_key'] = get_from_dict_or_env(values, 'fastapi_api_key', 'FASTAPI_API_KEY')
         return values
 
     def _handle_nlp_predict_stream(
@@ -1031,8 +1031,8 @@ class SambaStudioFastCoE(LLM):
         data = {'messages': formatted_prompt, 'max_tokens': self.max_tokens, 'stop': stop, 'model': self.model, 'stream': self.stream_api, 'stream_options': self.stream_options}
         # Streaming output
         response = http_session.post(
-            self.fast_coe_url,
-            headers={'Authorization': f'Basic {self.fast_coe_api_key}', 'Content-Type': 'application/json'},
+            self.fastapi_url,
+            headers={'Authorization': f'Basic {self.fastapi_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
