@@ -21,7 +21,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.models_gateway import APIGateway 
+from utils.model_wrappers.api_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')

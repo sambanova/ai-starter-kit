@@ -21,7 +21,6 @@ import logging
 
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-from langchain_community.embeddings import SambaStudioEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
 

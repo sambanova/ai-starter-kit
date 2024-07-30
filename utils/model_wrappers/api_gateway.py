@@ -185,6 +185,7 @@ class APIGateway():
                 
                 llm = Sambaverse(
                     **envs,
+                    streaming=streaming,
                     model_kwargs=model_kwargs,
                 )
             elif type == "sambastudio":

@@ -935,7 +935,7 @@ class SambaNovaFastAPI(LLM):
 
     To use, you should have the environment variables
     ``FASTAPI_URL`` set with your SambaNova FastAPI URL.
-    ``FASTAPI_API_KEY``  set with your SambaNova FastAPI API key.
+    ``FASTAPI_API_KEY`` set with your SambaNova FastAPI API key.
     
     https://sambanova.ai/fast-api
 
