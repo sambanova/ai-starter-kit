@@ -118,14 +118,14 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 ### Setup for FasCoE users 
 
-- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastCoE url and the FastCoE API key (with no spaces), as in the following example:
+- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
 
     ``` bash
-        FAST_COE_URL = "https://abcd.snova.ai/api/v1/chat/completion"
-        FAST_COE_API_KEY = "456789abcdef0123456789abcdef0123"
+        FASTAPI_URL = "https://abcd.snova.ai/api/v1/chat/completion"
+        FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
     ```
 
-- In the [config file](./config.yaml), set the variable `api` to `"fastcoe"`, and set the `select_expert` config.
+- In the [config file](./config.yaml), set the variable `api` to `"fastapi"`, and set the `select_expert` config.
 
 ###  Install dependencies
 
