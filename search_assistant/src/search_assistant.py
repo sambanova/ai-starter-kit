@@ -347,10 +347,10 @@ class SearchAssistant:
             response = search.get_dict()
 
             knowledge_graph = response.get('knowledge_graph', None)
-            results = response.get('organic_results', None)
+            results = response.get('organic_results', [])
 
             links = []
-            if results:
+            if len(results) > 0:
                 links = [r['link'] for r in results]
                 context = []
                 for i, result in enumerate(results):
