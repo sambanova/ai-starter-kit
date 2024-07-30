@@ -13,7 +13,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaStudioFastCoE
+from utils.model_wrappers.langchain_llms import SambaStudioFastCoE
 
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
@@ -59,15 +59,20 @@ class ModelsGateway():
             """
     
             if type == "sambastudio":
+                envs = {
+                    "sambastudio_embeddings_base_url": sambastudio_embeddings_base_url,
+                    "sambastudio_embeddings_base_uri": sambastudio_embeddings_base_uri,
+                    "sambastudio_embeddings_project_id": sambastudio_embeddings_project_id,
+                    "sambastudio_embeddings_endpoint_id": sambastudio_embeddings_endpoint_id,
+                    "sambastudio_embeddings_api_key": sambastudio_embeddings_api_key,
+                }
+                envs = {k: v for k, v in envs.items() if v is not None}
+                    
                 if coe:
                     if batch_size is None:
                         batch_size = 1
                     embeddings = SambaStudioEmbeddings(
-                        sambastudio_embeddings_base_url=sambastudio_embeddings_base_url,
-                        sambastudio_embeddings_base_uri=sambastudio_embeddings_base_uri,
-                        sambastudio_embeddings_project_id=sambastudio_embeddings_project_id,
-                        sambastudio_embeddings_endpoint_id=sambastudio_embeddings_endpoint_id,
-                        sambastudio_embeddings_api_key=sambastudio_embeddings_api_key,
+                        **envs,
                         batch_size=batch_size,
                         model_kwargs = {
                             "select_expert":select_expert
@@ -77,11 +82,7 @@ class ModelsGateway():
                     if batch_size is None:
                         batch_size = 32
                     embeddings = SambaStudioEmbeddings(
-                        sambastudio_embeddings_base_url=sambastudio_embeddings_base_url,
-                        sambastudio_embeddings_base_uri=sambastudio_embeddings_base_uri,
-                        sambastudio_embeddings_project_id=sambastudio_embeddings_project_id,
-                        sambastudio_embeddings_endpoint_id=sambastudio_embeddings_endpoint_id,
-                        sambastudio_embeddings_api_key=sambastudio_embeddings_api_key,
+                        **envs,
                         batch_size=batch_size
                     )
             elif type == "cpu":
@@ -122,7 +123,7 @@ class ModelsGateway():
         sambastudio_base_uri: Optional[str] = None,
         sambastudio_project_id: Optional[str] = None,
         sambastudio_endpoint_id: Optional[str] = None,
-        sambastudio_api_token: Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None,
         
         fastapi_url: Optional[str] = None,
         fastapi_api_key: Optional[str] = None,        
@@ -161,6 +162,14 @@ class ModelsGateway():
             """
 
             if type == "sambaverse":
+                
+                envs = {
+                    "sambaverse_url": sambaverse_url,
+                    "sambaverse_api_key": sambaverse_api_key,
+                    "sambaverse_model_name":sambaverse_model_name,
+                }
+                envs = {k: v for k, v in envs.items() if v is not None}
+                
                 model_kwargs = {
                     "do_sample": do_sample,
                     "max_tokens_to_generate": max_tokens_to_generate,
@@ -175,12 +184,18 @@ class ModelsGateway():
                 model_kwargs = {k: v for k, v in model_kwargs.items() if v is not None}
                 
                 llm = Sambaverse(
-                    sambaverse_url= sambaverse_url,
-                    sambaverse_api_key= sambaverse_api_key,
-                    sambaverse_model_name=sambaverse_model_name,
+                    **envs,
                     model_kwargs=model_kwargs,
                 )
             elif type == "sambastudio":
+                envs = {
+                    "sambastudio_base_url": sambastudio_base_url,
+                    "sambastudio_base_uri": sambastudio_base_uri,
+                    "sambastudio_project_id": sambastudio_project_id,
+                    "sambastudio_endpoint_id": sambastudio_endpoint_id,
+                    "sambastudio_api_key": sambastudio_api_key,
+                }
+                envs = {k: v for k, v in envs.items() if v is not None}
                 if coe:
                     model_kwargs = {
                         "do_sample": do_sample,
@@ -196,11 +211,7 @@ class ModelsGateway():
                     model_kwargs = {k: v for k, v in model_kwargs.items() if v is not None}
                     
                     llm = SambaStudio(
-                        sambastudio_base_url=sambastudio_base_url,
-                        sambastudio_base_uri=sambastudio_base_uri,
-                        sambastudio_project_id=sambastudio_project_id,
-                        sambastudio_endpoint_id=sambastudio_endpoint_id,
-                        sambastudio_api_token=sambastudio_api_token,
+                        **envs,
                         streaming=streaming,
                         model_kwargs=model_kwargs,
                     )
@@ -216,19 +227,19 @@ class ModelsGateway():
                     }
                     model_kwargs = {k: v for k, v in model_kwargs.items() if v is not None}
                     llm = SambaStudio(
-                        sambastudio_base_url=sambastudio_base_url,
-                        sambastudio_base_uri=sambastudio_base_uri,
-                        sambastudio_project_id=sambastudio_project_id,
-                        sambastudio_endpoint_id=sambastudio_endpoint_id,
-                        sambastudio_api_token=sambastudio_api_token,
+                        **envs,
                         streaming=streaming,
                         model_kwargs=model_kwargs,
                     )
         
             elif type == "fastapi":
+                envs = {
+                    "fastapi_url":fastapi_url,
+                    "fastapi_api_key": fastapi_api_key,
+                }
+                envs = {k: v for k, v in envs.items() if v is not None}
                 llm = SambaStudioFastCoE(
-                    fastapi_url = fastapi_url,
-                    fastapi_api_key = fastapi_api_key,
+                    ** envs,
                     max_tokens=max_tokens_to_generate,
                     model=select_expert,
                 )
