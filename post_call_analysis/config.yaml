@@ -39,7 +39,7 @@ llm:
     "max_tokens_to_generate": 500
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
     #fastApi CoE expert name -> "llama3-8b"
 
 embedding_model: 
