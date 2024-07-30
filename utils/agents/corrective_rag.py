@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, TypedDict, Annotated
+import operator
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint import MemorySaver
 from langgraph.graph.state import CompiledStateGraph
@@ -11,11 +12,13 @@ from utils.code_gen.codegen_components import CodeGenComponents #type: ignore
 
 class RAGGraphState(TypedDict):
 
-    question : str
-    generation : str
-    documents : List[str]
+    question: str
+    generation: str
+    documents: List[str]
     answers: List[str]
     original_question: str
+    # query_history: Annotated[List[str], operator.add]
+    # answer_history: Annotated[List[str], operator.add]
 
     """
     Represents the state of a RAG (Retreival Augmented Generation) graph.

@@ -808,6 +808,9 @@ class RAGComponents(BaseComponents):
         answers: List[str] = state['answers']
         if isinstance(answers, list):
             answers_str: str = '\n\n'.join(a for a in answers)
+        else:
+            answers_str = answers
+            
         original_question: str = state['original_question']
 
         print('---ANSWERING---')

@@ -20,7 +20,6 @@ sys.path.append(repo_dir)
 class SupervisorComponents(BaseComponents):
     """
     This class represents the components of the Supervisor for RAG.
-
     Attributes:
     - qa_chain: The QA chain component of the RAG model.
     - vectorstore: The vector store component of the RAG model.
@@ -31,17 +30,16 @@ class SupervisorComponents(BaseComponents):
     """
 
     def __init__(
-        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, examples: Optional[Dict[str, str]] = None
+        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, 
+        examples: Optional[Dict[str, str]] = None
     ) -> None:
         """
         Initializes the RAG components.
-
         Args:
             configs: The configuration file path.
             embeddings: The embeddings model.
             vectorstore: The vector store object.
             examples: The examples dictionary. Defaults to None.
-
         Returns:
             None
         """
@@ -56,14 +54,11 @@ class SupervisorComponents(BaseComponents):
     def init_supervisor_router(self) -> None:
         """
         Initializes the supervisor router.
-
         This method loads the supervisor router prompt from the
         repository and combines it with the language model and a
         JSON output parser.
-
         Args:
             None
-
         Returns:
             None
         """
@@ -71,36 +66,14 @@ class SupervisorComponents(BaseComponents):
         supervisor_router_prompt: Any = load_prompt(repo_dir + '/' + self.prompts_paths['supervisor_prompt'])
         self.supervisor = supervisor_router_prompt | self.llm | JsonOutputParser()
 
-    # TODO: Decide to remove
-    # def initialize_super_graph(self, state: dict) -> dict:
-    #     """
-    #     Initializes the supervisor state with defaults.
-
-    #     Args:
-    #         state: A dictionary containing the state of the supervisor, including the question.
-
-    #     Returns:
-    #         None
-    #     """
-
-    #     message: str = "Begin to plan, please.  Do not begin by setting 'next' to END"
-    #     teams: List[str] = ["rag", "search", "END"]
-    #     question: str = state["query"]
-    #     state = {"message": message, "question": question, "teams": teams}
-
-    #     print(f"Initialized: {state}")
-
-    #     return({"message": message, "question": question, "teams": teams, "state": state})
 
     def supervisor_router(self, state: dict) -> dict:
         """
         This method is the supervisor router, which handles the state of the conversation.
-
         Args:
         state: A dictionary containing the current state
         of the conversation, including the question, question history,
         answer history, and teams.
-
         Returns:
         The state dictionary with the updated next step in the conversation,
         as determined by the supervisor.
@@ -109,16 +82,22 @@ class SupervisorComponents(BaseComponents):
         question: str = state['question']
         question_history: List[str] = state['query_history']
         answer_history: List[str] = state['answer_history']
-        teams: List[str] = state['teams']
+
+        print("---SUPERVISOR ROUTER INPUTS---")
+        print(question)
+        print(question_history)
+        print(answer_history)
 
         response: Dict[str, str] = self.supervisor.invoke(
             {
                 'question_history': question_history,
                 'answer_history': answer_history,
                 'question': question,
-                'teams': teams,
                 'state': state,
             }
         )
+
+        print("---NEXT ACTION---")
+        print(response['next'])
 
         return {'next': response['next']}
