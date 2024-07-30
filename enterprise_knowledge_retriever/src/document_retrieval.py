@@ -11,7 +11,6 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.language_models import BaseLanguageModel
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain.docstore.document import Document
 import shutil
 from typing import List, Dict, Optional
@@ -22,8 +21,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaStudioFastCoE
-from vectordb.vector_db import VectorDb
+from utils.model_wrappers.models_gateway import ModelsGateway 
+from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
@@ -32,7 +31,6 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 
 from utils.parsing.sambaparse import SambaParse, parse_doc_universal
-
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
@@ -139,51 +137,17 @@ class DocumentRetrieval():
     
 
     def set_llm(self):
-        if self.api_info == "sambaverse":
-            llm = Sambaverse(
-                sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-                model_kwargs={
-                    "do_sample": False, 
-                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    "temperature": self.llm_info["temperature"],
-                    "select_expert": self.llm_info["select_expert"],
-                    "process_prompt": False
-                }
-            )
-        elif self.api_info == "sambastudio":
-            if self.llm_info["coe"]:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        "do_sample": False,
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "select_expert": self.llm_info["select_expert"],
-                        "process_prompt": False
-                    }
-                )
-            else:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        "do_sample": False,
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    }
-                )
-    
-        elif self.api_info == "fastcoe":
-            llm = SambaStudioFastCoE(
-                max_tokens=self.llm_info['max_tokens_to_generate'],
-                model=self.llm_info['select_expert'],
-            )
-        
-        else:
-            raise ValueError(
-                f"Invalid LLM API: {self.api_info}, only 'fastcoe' 'sambastudio' and 'sambaverse' are supported."
-            )
-            
+        llm = ModelsGateway.load_llm(
+            type=self.api_info,
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+        )
         return llm
             
 
@@ -230,7 +194,7 @@ class DocumentRetrieval():
 
 
     def load_embedding_model(self):
-        embeddings = self.vectordb.load_embedding_model(
+        embeddings = ModelsGateway.load_embedding_model(
             type=self.embedding_model_info["type"],
             batch_size=self.embedding_model_info["batch_size"],
             coe=self.embedding_model_info["coe"],
