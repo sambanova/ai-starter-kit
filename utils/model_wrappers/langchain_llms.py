@@ -929,23 +929,20 @@ class SambaStudio(LLM):
             raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
 
-class SambaStudioFastCoE(LLM):
+class SambaNovaFastAPI(LLM):
     """
-    SambaStudio large language models.
+    SambaNova FastAPI large language models.
 
     To use, you should have the environment variables
-    ``FASTAPI_URL`` set with your SambaStudio environment URL.
-    ``FASTAPI_API_KEY``  set with your SambaStudio endpoint API key.
-
-    https://sambanova.ai/products/enterprise-ai-platform-sambanova-suite
-
-    read extra documentation in https://docs.sambanova.ai/sambastudio/latest/index.html
+    ``FASTAPI_URL`` set with your SambaNova FastAPI URL.
+    ``FASTAPI_API_KEY``  set with your SambaNova FastAPI API key.
+    
+    https://sambanova.ai/fast-api
 
     Example:
     .. code-block:: python
 
-        from langchain_community.llms.sambanova  import Sambaverse
-        SambaStudio(
+        SambaNovaFastAPI(
             fastapi_url=your fastApi CoE endpoint URL,
             fastapi_api_key= set with your fastAPI CoE endpoint API key,
             max_tokens = mas number of tokens to generate
@@ -1039,6 +1036,12 @@ class SambaStudioFastCoE(LLM):
 
         client = sseclient.SSEClient(response)
         close_conn = False
+        
+        if response.status_code != 200:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code " f"{response.status_code}." f"{response.text}."
+                )
+        
         for event in client.events():
             if event.event == 'error_event':
                 close_conn = True
@@ -1047,17 +1050,11 @@ class SambaStudioFastCoE(LLM):
                 'data': event.data,
                 'status_code': response.status_code,
             }
-                
-            if chunk['status_code'] != 200:
+    
+            if chunk.get('error'):
                 raise RuntimeError(
                     f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                 )
-                
-            else:
-                if chunk.get('error'):
-                    raise RuntimeError(
-                        f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
-                    )
                 
             try:    
                 # check if the response is a final event in that case event data response is '[DONE]' 

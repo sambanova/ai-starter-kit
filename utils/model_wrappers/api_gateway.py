@@ -13,7 +13,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.langchain_llms import SambaStudioFastCoE
+from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
@@ -29,7 +29,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class ModelsGateway():
+class APIGateway():
     @staticmethod
     def load_embedding_model(
         type: str= "cpu",
@@ -238,7 +238,7 @@ class ModelsGateway():
                     "fastapi_api_key": fastapi_api_key,
                 }
                 envs = {k: v for k, v in envs.items() if v is not None}
-                llm = SambaStudioFastCoE(
+                llm = SambaNovaFastAPI(
                     ** envs,
                     max_tokens=max_tokens_to_generate,
                     model=select_expert,
