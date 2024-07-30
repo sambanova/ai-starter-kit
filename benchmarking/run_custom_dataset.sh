@@ -7,6 +7,7 @@ python src/evaluator.py \
 --results-dir "./data/results/llmperf" \
 --num-workers 1 \
 --timeout 600 \
+--sampling-params "{'max_tokens_to_generate': 256}" \
 --input-file-path "<CUSTOM DATASET PATH HERE>" \
 --save-llm-responses False
 
