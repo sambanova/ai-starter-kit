@@ -1,5 +1,6 @@
 llm: 
   "api": "sambastudio"  # set either sambastudio, sambaverse or fastapi
+  "do_sample": False
   "temperature": 0.01
   "max_tokens_to_generate": 2048
   "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
@@ -11,6 +12,7 @@ tools:
     query_db:
       llm: 
         "api": "sambastudio"  # set either sambastudio, sambaverse or fastapi
+        "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
         "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
@@ -23,6 +25,7 @@ tools:
     translate:
       llm: 
         "api": "sambastudio"  # set either sambastudio, sambaverse or fastapi
+        "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
         "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
@@ -33,6 +36,7 @@ tools:
     rag:
       llm:
         "api": "sambastudio"  # set either sambastudio, sambaverse or fastapi
+        "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
         "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
