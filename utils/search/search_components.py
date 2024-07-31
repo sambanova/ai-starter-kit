@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.schema import Document
 from langchain.vectorstores import Chroma
+from langchain_core.embeddings import Embeddings
 
 current_dir = os.getcwd()
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -30,7 +31,7 @@ class SearchComponents(BaseComponents):
     def __init__(
         self, 
         configs: str, 
-        embeddings: object, 
+        embeddings: Embeddings, 
         vectorstore: Chroma, 
         examples: dict=None) -> None:
         """

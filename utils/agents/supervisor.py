@@ -63,6 +63,7 @@ class SupervisorComponents(BaseComponents):
     def supervisor_router(self, state: dict) -> dict:
         """
         This method is the supervisor router, which handles the state of the conversation.
+        
         Args:
             state: A dictionary containing the current state
             of the conversation, including the question, question history,

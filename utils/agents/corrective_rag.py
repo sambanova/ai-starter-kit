@@ -104,7 +104,7 @@ class CorrectiveRAG(RAGComponents, CodeGenComponents):
 
     def call_rag(
         self, app: CompiledStateGraph, question: str, kwargs: Dict[str, int] = {'recursion_limit': 50}
-    ) -> tuple[dict[str, Any], dict[str, Any] | Any]:
+    ) -> tuple[dict[str, Any], Dict[str, Any] | Any]:
         """
         Calls the RAG (Reasoning and Generation) app to generate an answer to a given question.
 
@@ -112,7 +112,7 @@ class CorrectiveRAG(RAGComponents, CodeGenComponents):
             app: The RAG app object.
             question: The question to be answered.
             kwargs: Keyword arguments to be passed to the app.
-            Defaults to {"recursion_limit": 50}
+            Defaults to {"recursion_limit": 50}.
             Recursion limit controls how many runnables to invoke without
             reaching a terminal node.
 
