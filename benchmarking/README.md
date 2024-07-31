@@ -144,7 +144,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 1. Enter a model name
 
-**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models use a generic prompt format.
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
@@ -205,7 +205,7 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 3. Enter a model name
 
-**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models use a generic prompt format.
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
@@ -287,7 +287,7 @@ This method can be ran from a terminal session. Users have this option if they w
 
 ### Custom Dataset
 
-**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models use a generic prompt format.
 
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
@@ -330,7 +330,7 @@ sh run_custom_dataset.sh
 
 ### Synthetic Dataset
 
-**__Note__**: Currently we have specific prompting support for Llama2, Llama3 and Mistral. Other instruction models use a generic prompt format.
+**__Note__**: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models use a generic prompt format.
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
@@ -374,7 +374,7 @@ sh run_synthetic_dataset.sh
 
 ![summary_output_image](./imgs/perf_eval_summary_output.png)
 
-
+- There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A COE endpoint is meant to be used for this analysis. 
 
 # Batching vs non-batching benchmarking
 

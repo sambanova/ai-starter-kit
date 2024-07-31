@@ -502,15 +502,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
 
-        # Specific prompt templating for Deepseek models
-        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
-            system_prompt = f"{sys_prompt_template}"
-            prompt = system_prompt + raw_prompt
-
-        # Prompt templating for Llama-2 and all other models
-        else:
+        # Specific prompt templating for Llama-2 models
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower():
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
+
+        # Prompt templating for other models (Deepseek, Solar, Eeve)
+        else:
+            system_prompt = f"{sys_prompt_template}"
+            prompt = system_prompt + raw_prompt
 
         return (prompt, self.get_token_length(prompt))
 

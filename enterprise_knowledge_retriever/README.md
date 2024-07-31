@@ -9,7 +9,7 @@
 Enterprise Knowledge Retrieval
 ======================
 
-Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us</a> on Discord <a href="https://discord.gg/XF5Sf2sa" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
+Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
 
 Table of Contents:
@@ -116,7 +116,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
 
-### Setup for FasCoE users 
+### Setup for FastCoE users 
 
 - In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastCoE url and the FastCoE API key (with no spaces), as in the following example:
 
