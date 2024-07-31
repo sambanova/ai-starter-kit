@@ -19,9 +19,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-API_BASE_PATH = "/api"
-
-
 def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tuple:
     """Makes a single completion request to a LLM API
 
@@ -36,6 +33,7 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
     """
 
     base_url = os.environ.get("SAMBASTUDIO_BASE_URL")
+    base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
     project_id = os.environ.get("SAMBASTUDIO_PROJECT_ID")
     endpoint_id = os.environ.get("SAMBASTUDIO_ENDPOINT_ID")
     api_key = os.environ.get("SAMBASTUDIO_API_KEY")
@@ -47,7 +45,7 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
 
     try:
         # Define the URL for the request
-        url = _get_url(request_config, base_url, project_id, endpoint_id)
+        url = _get_url(base_url, base_uri, project_id, endpoint_id)
 
         # Define the headers
         headers = {"key": api_key}
@@ -73,33 +71,27 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
 
 
 def _get_url(
-    request_config: RequestConfig,
     base_url: str,
+    base_uri: str,
     project_id: str,
     endpoint_id: str,
 ) -> str:
     """Builds url for API
 
     Args:
-        request_config (RequestConfig): config options with LLM mode
         base_url (str): base url for API
+        base_uri (str): base uri for API
         project_id (str): project ID
         endpoint_id (str): endpoint ID
 
     Returns:
         str: url needed for API
     """
-
-    if request_config.mode == "stream":
-        path = f"/predict/generic/stream/{project_id}/{endpoint_id}"
-    else:
-        path = f"/predict/generic/{project_id}/{endpoint_id}"
-
-    url = f"{base_url}{API_BASE_PATH}{path}"
+    url = f"{base_url}/{base_uri}/{project_id}/{endpoint_id}"
     return url
 
 
-def _get_data(request_config: RequestConfig) -> dict:
+def _get_data(request_config: RequestConfig, url: str) -> dict:
     """Gets data structure needed for API based on request_config
 
     Args:
@@ -117,16 +109,22 @@ def _get_data(request_config: RequestConfig) -> dict:
         sampling_params["select_expert"] = request_config.model.split("/")[-1]
         sampling_params["process_prompt"] = False
     
-    tuning_params_dict = {
+    # generic api v2
+    if "/api/v2" in url.lower().strip():  
+        tuning_params = json.loads(json.dumps(sampling_params))
+        data = {"items": [{"id":"item1", "value": prompt}], "params": tuning_params}
+    # support to generic api v1 
+    else:   
+        tuning_params_dict = {
         k: {"type": type(v).__name__, "value": str(v)}
         for k, v in (sampling_params.items())
-    }
-    tuning_params = json.dumps(tuning_params_dict)
-    
-    if request_config.mode == "stream":
-        data = {"instance": prompt, "params": json.loads(tuning_params)}
-    else:
-        data = {"instances": [prompt], "params": json.loads(tuning_params)}
+        }
+        tuning_params = json.dumps(tuning_params_dict)
+        
+        if request_config.mode == "stream":
+            data = {"instance": prompt, "params": json.loads(tuning_params)}
+        else:
+            data = {"instances": [prompt], "params": json.loads(tuning_params)}
         
     return data
 
@@ -153,7 +151,7 @@ def _compute_client_metrics(
     """
 
     # Get data
-    input_data = _get_data(request_config)
+    input_data = _get_data(request_config, url)
     prompt_len = request_config.prompt_tuple[1]
 
     metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
@@ -170,24 +168,43 @@ def _compute_client_metrics(
     ) as response:
         if response.status_code != 200:
             response.raise_for_status()
-        for chunk_orig in response.iter_lines(chunk_size=None):
-            chunk = chunk_orig.strip()
-            data = json.loads(chunk)
+        else:
+            if "/api/v2" in url.lower().strip():
+                for chunk_orig in response.iter_lines(chunk_size=None):
+                    chunk = chunk_orig.strip()
+                    data = json.loads(chunk)
+                
+                    completion = data["result"]["items"][0]["value"]["is_last_response"]
+                    chunks_timings.append(time.monotonic() - chunk_start_time)
+                    chunk_start_time = time.monotonic()
+                    if completion is False:
+                        chunks_received.append(data["result"]["items"][0]["value"]["stream_token"])
+                        continue
+                    else:
+                        generated_text = data["result"]["items"][0]["value"]["completion"]
+                        response_dict = data["result"]["items"][0]["value"]
+                    break
+            else: 
+                for chunk_orig in response.iter_lines(chunk_size=None):
+                    chunk = chunk_orig.strip()
+                    data = json.loads(chunk)
 
-            ##TODO: Non-streaming case
-            if stream is False:
-                generated_text = data["predictions"][0]["completion"]
-                break
+                    ##TODO: Non-streaming case
+                    if stream is False:
+                        generated_text = data["predictions"][0]["completion"]
+                        break
 
-            completion = data["result"]["responses"][0]["is_last_response"]
-            chunks_timings.append(time.monotonic() - chunk_start_time)
-            chunk_start_time = time.monotonic()
-            if completion is False:
-                chunks_received.append(data["result"]["responses"][0]["stream_token"])
-                continue
-            else:
-                generated_text = data["result"]["responses"][0]["completion"]
-                break
+                    completion = data["result"]["responses"][0]["is_last_response"]
+                    chunks_timings.append(time.monotonic() - chunk_start_time)
+                    chunk_start_time = time.monotonic()
+                    if completion is False:
+                        chunks_received.append(data["result"]["responses"][0]["stream_token"])
+                        continue
+                    else:
+                        generated_text = data["result"]["responses"][0]["completion"]
+                        response_dict = data["result"]["responses"][0]
+                    break
+                
     total_request_time = time.monotonic() - start_time
     metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S")
 
@@ -209,7 +226,7 @@ def _compute_client_metrics(
 
     # Populate server and client metrics
     num_output_tokens = _get_token_length(generated_text, tokenizer)
-    metrics = _populate_server_metrics(data, metrics)
+    metrics = _populate_server_metrics(response_dict, metrics)
     metrics = _populate_client_metrics(
         metrics,
         prompt_len,
@@ -290,7 +307,7 @@ def _get_token_length(input_text: str, tokenizer: AutoTokenizer) -> int:
     return len(tokenizer.encode(input_text))
 
 
-def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
+def _populate_server_metrics(response_dict: dict, metrics: dict) -> dict:
     """Parse output data to metrics dictionary structure
 
     Args:
@@ -300,8 +317,6 @@ def _populate_server_metrics(output_data: dict, metrics: dict) -> dict:
     Returns:
         dict: updated metrics dictionary
     """
-
-    response_dict = output_data["result"]["responses"][0]
 
     metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get(
         "prompt_tokens_count"
