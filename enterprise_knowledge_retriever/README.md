@@ -116,7 +116,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
 
-### Setup for FasCoE users 
+### Setup for FastCoE users 
 
 - In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
 
