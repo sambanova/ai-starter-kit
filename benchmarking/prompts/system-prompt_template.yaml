@@ -1,0 +1,12 @@
+_type: prompt
+input_types: {}
+input_variables: []
+metadata: null
+name: null
+optional_variables: []
+output_parser: null
+partial_variables: {}
+tags: null
+template: 'You are a helpful assistant that generates movie scripts. '
+template_format: f-string
+validate_template: false

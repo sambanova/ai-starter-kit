@@ -9,7 +9,7 @@
 Enterprise Knowledge Retrieval
 ======================
 
-Questions? Just <a href="https://discord.gg/XF5Sf2sa" target="_blank">message us</a> on Discord <a href="https://discord.gg/XF5Sf2sa" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
+Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
 
 Table of Contents:
@@ -79,7 +79,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
+The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio, FastCoE or you want to use the publicly available Sambaverse. 
 
 ### Setup for Sambaverse users 
 
@@ -115,6 +115,20 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
     ```
 
 4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file
+
+### Setup for FastCoE users 
+
+- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastCoE url and the FastCoE API key (with no spaces), as in the following example:
+
+    ``` bash
+        FAST_COE_URL = "https://abcd.snova.ai/api/v1/chat/completion"
+        FAST_COE_API_KEY = "456789abcdef0123456789abcdef0123"
+    ```
+
+- In the [config file](./config.yaml), set the variable `api` to `"fastcoe"`, and set the `select_expert` config.
+
+###  Install dependencies
+
 
 ### Update the Embedding API information
 

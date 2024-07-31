@@ -2,6 +2,7 @@ processor:
   verbose: True
   output_dir: './output'
   num_processes: 2
+  reprocess: False
 
 sources:
   local:
@@ -19,7 +20,6 @@ sources:
     drive_id: 'your_drive_id'
 
 partitioning:
-  pdf_infer_table_structure: True
   skip_infer_table_types: []
   strategy: 'auto'
   hi_res_model_name: 'yolox'
@@ -31,13 +31,14 @@ partitioning:
   metadata_include: []
   partition_endpoint: 'http://localhost'
   unstructured_port: 8005
-  partition_by_api: False # set as true if using API server
+  partition_by_api: True # set as true if using API server
 
 chunking:
   enabled: True
-  strategy: 'basic'
-  chunk_max_characters: 1200
+  strategy: 'by_title'
+  chunk_max_characters: 1500
   chunk_overlap: 300
+  combine_under_n_chars: 1500
 
 embedding:
   enabled: False

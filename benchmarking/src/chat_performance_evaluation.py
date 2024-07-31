@@ -1,6 +1,6 @@
 import os
 
-from llmperf.clients.sambanova_client import llm_request
+from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 import llmperf.utils as utils
 
@@ -36,7 +36,7 @@ class SambaStudioCOEHandler:
         tokenizer = utils.get_tokenizer(self.model)
 
         request_config = RequestConfig(
-            prompt=(prompt_template, 10),
+            prompt_tuple=(prompt_template, 10),
             model=self.model,
             sampling_params=self.params,
             mode="stream",
@@ -54,7 +54,7 @@ class SambaStudioCOEHandler:
 if __name__ == "__main__":
 
     # load env variables
-    load_dotenv("../../.env", override=True)
+    load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
     model_name = "COE/Meta-Llama-3-8B-Instruct"

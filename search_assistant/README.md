@@ -149,7 +149,7 @@ If you want to use virtualenv or conda environment
 1. Install and update pip.
 
     ``` bash
-    cd ai-starter-kit/web_crawled_data_retriever
+    cd ai-starter-kit/search_assistant
     python3 -m venv search_assistant_env
     source search_assistant_env/bin/activate
     pip install -r requirements.txt

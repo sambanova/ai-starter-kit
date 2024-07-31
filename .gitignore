@@ -119,6 +119,7 @@ env.bak/
 venv.bak/
 server/ask-venv/*
 secret.txt
+.test_suite_venv
 
 # Spyder project settings
 .spyderproject
@@ -197,6 +198,9 @@ fine_tuning_embeddings/finetuned_model
 
 #CoE JumpStart
 CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
+CoE_jump_start/data
+CoE_jump_start/results
+CoE_jump_start/expert_results
 
 #Local Test Files
 
@@ -211,6 +215,7 @@ edgar_qna/data
 
 utils/parsing/output
 utils/parsing/confluence-ingest-output
+utils/parsing/unstructured-api/parsing_service.pid
 =======
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
@@ -234,8 +239,12 @@ benchmarking/debug
 eval_jumpstart/data
 eval_jumpstart/notebooks/wandb
 utils/eval/res.csv
-utils/eval/tepsys_eng_tran.csv
+utils/eval/data
 
 =======
 #wandb
 wandb/
+
+utils/eval/.deepeval-cache.json
+utils/eval/results
+utils/eval/weave

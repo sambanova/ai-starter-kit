@@ -1,0 +1,51 @@
+llm: 
+  "api": "sambastudio"  # set either sambastudio, sambaverse or fastcoe
+  "temperature": 0.01
+  "max_tokens_to_generate": 2048
+  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
+  "coe": True #set as true if using Sambastudio CoE endpoint
+  "select_expert": "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+  #fascoe expert name -> "llama3-70b"
+
+tools:
+    query_db:
+      llm: 
+        "api": "sambastudio"  # set either sambastudio, sambaverse or fastcoe
+        "temperature": 0.01 
+        "max_tokens_to_generate": 1024
+        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+        "coe": True #set as true if using Sambastudio CoE endpoint
+        "select_expert": "Meta-Llama-3-70B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+        #fascoe expert name -> "llama3-70b"
+      db:
+        "path": "data/chinook.db" 
+
+    translate:
+      llm: 
+        "api": "sambastudio"  # set either sambastudio, sambaverse or fastcoe
+        "temperature": 0.01 
+        "max_tokens_to_generate": 1024
+        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+        "coe": True #set as true if using Sambastudio CoE endpoint
+        "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+        #fascoe expert name -> "llama3-8b"
+
+    rag:
+      llm:
+        "api": "sambastudio"  # set either sambastudio, sambaverse or fastcoe
+        "temperature": 0.01 
+        "max_tokens_to_generate": 1024
+        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+        "coe": True #set as true if using Sambastudio CoE endpoint
+        "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+        #fascoe expert name -> "llama3-8b"
+      embedding_model: 
+        "type": "sambastudio" # set either sambastudio or cpu
+        "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+        "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+        "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
+      vector_db:
+        "path": "data/my-vector-db" # path to your previously created chroma vdb
+      retrieval:
+        "k_retrieved_documents": 3
+        "score_treshold": 0.3

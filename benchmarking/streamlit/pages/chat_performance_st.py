@@ -3,6 +3,7 @@ import streamlit as st
 
 sys.path.append("../")
 
+from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.chat_performance_evaluation import SambaStudioCOEHandler
 
 import warnings
@@ -37,12 +38,13 @@ def _parse_llm_response(llm: SambaStudioCOEHandler, prompt: str) -> dict:
     Returns:
         dict: dictionary with performance metrics and completion text
     """
+    
     llm_output = llm.generate(prompt=prompt)
     response = {
         "completion": llm_output[1],
-        "time_to_first_token": llm_output[0]["ttft_s"],
-        "latency": llm_output[0]["end_to_end_latency_s"],
-        "throughput": llm_output[0]["request_output_throughput_token_per_s"],
+        "time_to_first_token": llm_output[0][common_metrics.TTFT],
+        "latency": llm_output[0][common_metrics.E2E_LAT],
+        "throughput": llm_output[0][common_metrics.REQ_OUTPUT_THROUGHPUT],
     }
     return response
 
@@ -82,7 +84,7 @@ def main():
 
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Performance evaluation")
+    st.title(":orange[SambaNova] Chat Performance Evaluation")
     st.markdown(
         "With this option, users have a way to know performance metrics per response. Set your LLM first on the left side bar and then have a nice conversation, also know more about our performance metrics per each response."
     )
@@ -93,14 +95,14 @@ def main():
 
         # Show LLM parameters
         llm_model = st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         llm_selected = f"{llm_model}"
         # st.session_state.do_sample = st.toggle("Do Sample")
-        st.session_state.max_tokens_to_generate = st.slider(
-            "Max tokens to generate", min_value=50, max_value=2048, value=250
+        st.session_state.max_tokens_to_generate = st.number_input(
+            "Max tokens to generate", min_value=50, max_value=2048, value=250, step=1
         )
         # st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0, step=0.01, value=1.0, format="%.2f")
         # st.session_state.temperature = st.slider('Temperature', min_value=0.01, max_value=1.00, value=0.1, step=0.01, format="%.2f")
@@ -130,7 +132,7 @@ def main():
 
         if sidebar_run_option:
             params = _get_params()
-            st.session_state.llm = SambaStudioCOEHandler(
+            st.session_state.selected_llm = SambaStudioCOEHandler(
                 model_name=llm_selected, params=params
             )
             st.toast("LLM setup ready! 🙌 Start asking!")
@@ -146,7 +148,7 @@ def main():
             with st.spinner("Processing"):
 
                 # Display llm response
-                llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
+                llm_response = _parse_llm_response(st.session_state.selected_llm, user_prompt)
 
                 # Add user message to chat history
                 st.session_state.chat_history.append(

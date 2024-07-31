@@ -9,27 +9,25 @@
 Function Calling kit
 ======================
 
+This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
+
 <!-- TOC -->
 
 - [Function Calling kit](#function-calling-kit)
-- [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+        - [Setup for FasCoE users](#setup-for-fascoe-users)
         - [Install dependencies](#install-dependencies)
-- [Use the Function Calling kit](#use-the-funtion-calling-kit)
+- [Use the Function Calling kit](#use-the-function-calling-kit)
     - [Quick start](#quick-start)
     - [Streamlit App](#streamlit-app)
-    - [Customizing the Function Calling module](#customizing-the-funtion-calling-module)
+    - [Customizing the Function Calling module](#customizing-the-function-calling-module)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
-
-# Overview
-
-This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 
 # Before you begin
 
@@ -44,7 +42,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file for the LLM 
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
+The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio, FastCoE endpoint or you want to use the publicly available Sambaverse.
 
 ### Setup for SambaStudio users
 
@@ -67,6 +65,8 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
     SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
+4. Open the [config file](./config.yaml), in `llm` section set the variable `api` to `"sambastudio"`, and set the `sambaverse_model_name`, `coe` and `select_expert` configs and save the file.
+
 ### Setup for Sambaverse users 
 
 1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
@@ -77,9 +77,22 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
         SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
 
+4. In the [config file](./config.yaml), in `llm` section set the `api` variable to `"sambaverse"`, and set the `sambaverse_model_name`  and `select_expert` configs.
+
+### Setup for FasCoE users 
+
+- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastCoE url and the FastCoE API key (with no spaces), as in the following example:
+
+    ``` bash
+        FAST_COE_URL = "https://abcd.snova.ai/api/v1/chat/completion"
+        FAST_COE_API_KEY = "456789abcdef0123456789abcdef0123"
+    ```
+
+- In the [config file](./config.yaml), in `llm` section set the `api` variable to `"fastcoe"`, and set the `select_expert` config.
+
 ###  Install dependencies
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment.
 
 NOTE: python 3.10 or higher is required to use this kit.
 
@@ -112,10 +125,10 @@ We provide a simple module for using the Function Calling LLM, for this you will
         from function_calling.src.function_calling  import FunctionCallingLlm
         
         ### Define your tools
-        from function_calling.src.tools import get_time, calculator, python_repl
-        tools = [get_time, calculator, python_repl]
+        from function_calling.src.tools import get_time, calculator, python_repl, query_db
+        tools = [get_time, calculator, python_repl, query_db]
 
-        fc = FunctionCallingLlm("sambaverse", tools)
+        fc = FunctionCallingLlm(tools)
 
         fc.function_call_llm("<user query>", max_it=5, debug=True)
     ```
