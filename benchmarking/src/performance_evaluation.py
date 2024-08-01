@@ -752,11 +752,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         # Load from prompt files
-        sys_prompt_template = yaml.safe_load(PromptTemplate.from_file(SYSTEM_PROMPT_PATH).template)['template']
         prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
 
         #  Adjust prompt according to desired input tokens
-        prompt_template = sys_prompt_template + prompt_template
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-        
+                
         return (full_input_prompt, self.get_token_length(full_input_prompt))
