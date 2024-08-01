@@ -1,4 +1,4 @@
-api: "sambaverse" # set either sambastudio or sambaverse
+api: "sambaverse" # set either sambastudio or sambaverse or fastapi
 
 embedding_model: 
     "type": "sambastudio" # set either sambastudio or cpu
