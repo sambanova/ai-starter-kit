@@ -37,10 +37,11 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables ([view your endpoint information](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_view_endpoint_information)), Here's an example:
 
     ``` bash
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+    SAMBASTUDIO_BASE_URI="api/predict/generic"
+    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
 ### Setup for Sambaverse users 
@@ -102,7 +103,7 @@ You can enable or disable some guardrails modifying the enabled key of each guar
 
 You can also customize the Prompt template used to call the LlamaGuard model in the [prompt.yaml](./prompt.yaml) file.
 
-Or you can pass your oun prompt template in yaml format in the instantiation of the Guard object 
+Or you can pass your oun prompt template in yaml format in the instantiation of the Guard object
 
 ``` python
     my_guardrails = Guard(
