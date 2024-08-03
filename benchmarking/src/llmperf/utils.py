@@ -8,11 +8,11 @@ from transformers import AutoTokenizer
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 MODEL_TYPE_IDENTIFIER = {
     "mistral": "mistral",
-    "llama3": "llama-3",
+    "llama3": "llama3",
     "deepseek": "deepseek",
     "solar": "solar",
     "eeve": "eeve",
-    "llama2": "llama-2",
+    "llama2": "llama2",
 }
 
 
@@ -69,11 +69,11 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     # Ref: https://huggingface.co/upstage
     # Ref: https://huggingface.co/yanolja
     
-    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower():
+    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower().replace("-",""):
         tokenizer = AutoTokenizer.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-AWQ")
-    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower():
+    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower().replace("-",""):
         tokenizer = AutoTokenizer.from_pretrained("unsloth/llama-3-8b-Instruct")
-    elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower():
+    elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower().replace("-",""):
         if "coder" in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained(
                 "deepseek-ai/deepseek-coder-1.3b-base"
@@ -82,9 +82,9 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
             tokenizer = AutoTokenizer.from_pretrained(
                 "deepseek-ai/deepseek-llm-7b-base"
             )
-    elif MODEL_TYPE_IDENTIFIER["solar"] in model_name.lower():
+    elif MODEL_TYPE_IDENTIFIER["solar"] in model_name.lower().replace("-",""):
         tokenizer = AutoTokenizer.from_pretrained("upstage/SOLAR-10.7B-Instruct-v1.0")
-    elif MODEL_TYPE_IDENTIFIER["eeve"] in model_name.lower():
+    elif MODEL_TYPE_IDENTIFIER["eeve"] in model_name.lower().replace("-",""):
         tokenizer = AutoTokenizer.from_pretrained("yanolja/EEVE-Korean-10.8B-v1.0")
     else:
         tokenizer = AutoTokenizer.from_pretrained("NousResearch/Llama-2-7b-chat-hf")
