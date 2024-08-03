@@ -58,7 +58,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.summary_file_path = None
         self.individual_responses_file_path = None
 
-    def get_token_length(self, input_text):
+    def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
 
     @abc.abstractmethod
@@ -122,12 +122,10 @@ class BasePerformanceEvaluator(abc.ABC):
         """Sends multiple requests to LLM and collects results
 
         Args:
-            request_configs_for_thread (list): list of request configs for LLM calls
-            tokenizer (AutoTokenizer): HuggingFace tokenizer
+            request_config_batch (list): list of request configs for LLM calls
             completed_requests (list): list of completed outputs from requests
-            pbar (tqdm): progress bar
+            progress_bar (tqdm): progress bar
             start_time (float): start time of the process
-            timeout_s (int): time out in seconds
         """
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
@@ -244,7 +242,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
         return metrics_summary
 
-    def save_results(self, filename, summary, individual_responses):
+    def save_results(self, filename: str, summary: dict, individual_responses: list[dict]) -> None:
         """Save the performance evaluation results to a file.
 
         Args:
@@ -300,7 +298,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.prompt_key = list(self.dataset[0].keys())[0]
 
     @staticmethod
-    def read_dataset(input_file_path: str):
+    def read_dataset(input_file_path: str) -> List[Dict]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
 
         Args:
@@ -313,7 +311,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             data = [json.loads(line) for line in file]
         return data
 
-    def create_output_filename(self):
+    def create_output_filename(self) -> str:
         """Utility for creating a unique filename for a custom benchmarking experiment with a dataset.
 
         Returns:
@@ -325,11 +323,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     
         return f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
 
-    def run_benchmark(self, sampling_params: Dict[str, Any]):
+    def run_benchmark(self, sampling_params: Dict[str, Any]) -> None:
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
-            sampling_params (str): The sampling parameters in JSON format.
+            sampling_params (Dict[str, Any]): The sampling parameters in JSON format.
 
         Returns:
             None
@@ -581,8 +579,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self,
         num_input_tokens: int,
         num_output_tokens: int,
-        num_requests,
-        sampling_params,
+        num_requests: int,
+        sampling_params: dict,
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
