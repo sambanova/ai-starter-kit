@@ -42,7 +42,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_workers: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = "sambastudio",
-        generation_mode: str = "stream",
+        is_stream_mode: bool = True,
         timeout: int = 600,
     ):
         self.model_name = model_name
@@ -50,7 +50,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.num_workers = num_workers
         self.user_metadata = user_metadata
         self.llm_api = llm_api
-        self.generation_mode = generation_mode
+        self.is_stream_mode = is_stream_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
 
@@ -132,7 +132,7 @@ class BasePerformanceEvaluator(abc.ABC):
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
                 break
-            req_metrics = llm_request(request_config, self.tokenizer)
+            req_metrics = llm_request(request_config, self.tokenizer, self.llm_api)
             completed_requests.extend([req_metrics[0]])
             progress_bar.update(1)
 
@@ -319,7 +319,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the custom benchmark run.
         """
-        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode = "stream"
+    
+        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
 
     def run_benchmark(self, sampling_params: Dict[str, Any]):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
@@ -458,7 +462,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 
@@ -525,7 +529,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the synthetic benchmark run.
         """
-        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode  = "stream"
+        
+        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
 
     def run_benchmark(
         self,
@@ -712,9 +720,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            updated_sampling_params = {
-                "max_tokens_to_generate": output_token_count,
-            }
+            if self.llm_api == "fastapi":
+                updated_sampling_params = {
+                    "max_tokens": output_token_count,
+                }
+            else:
+                updated_sampling_params = {
+                    "max_tokens_to_generate": output_token_count,
+                }
             updated_sampling_params.update(sampling_params)
 
             # Create request config object
@@ -723,7 +736,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 
@@ -758,5 +771,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         #  Adjust prompt according to desired input tokens
         prompt_template = sys_prompt_template + prompt_template
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
+        full_input_prompt_token_length = self.get_token_length(full_input_prompt)
         
-        return (full_input_prompt, self.get_token_length(full_input_prompt))
+        return (full_input_prompt, full_input_prompt_token_length)
