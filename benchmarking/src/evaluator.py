@@ -52,7 +52,7 @@ def main():
     )
     
     parser.add_argument(
-        '--llm_api', 
+        '--llm-api', 
         type=str, 
         required=True, 
         default="sambastudio",
