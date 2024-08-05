@@ -549,7 +549,6 @@ if __name__ == "__main__":
             # "process_prompt": "False",
         },
         mode="stream",
-        llm_api="sambastudio",
         num_concurrent_workers=1,
     )
 
