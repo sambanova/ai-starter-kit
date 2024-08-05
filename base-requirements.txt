@@ -1,15 +1,15 @@
 # Updated base-requirements.txt
 
 # Core dependencies
-langchain==0.2.6
+langchain==0.2.11
 langchain-core>=0.2.6,<0.3.0
-langchain-community==0.2.6
+langchain-community==0.2.10
 langchain-experimental==0.0.60
 pydantic==2.7.0
 pydantic_core==2.18.1
 python-dotenv==1.0.1
-streamlit==1.35.0
-st-pages==0.4.5
+streamlit==1.37.0
+st-pages==0.5.0
 streamlit-extras==0.3.6
 sseclient-py==1.8.0
 torch==2.2.2
