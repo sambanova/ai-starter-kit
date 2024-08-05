@@ -2,14 +2,13 @@ import datetime
 import json
 import os
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas
 import plotly
 import plotly.graph_objects as go
 import requests  # type: ignore
 import streamlit
-import yaml
 import yfinance
 from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
@@ -59,47 +58,18 @@ class StockInfoSchema(BaseModel):
 
     user_query: str = Field('User query to retrieve stock information.')
     symbol_list: List[str] = Field('List of stock ticker symbols.')
-    keys: List[str] = Field('List of keys to be retrieved or inferred from the user prompt.')
 
 
 @tool(args_schema=StockInfoSchema)
-def get_stock_info(user_query: str, symbol_list: List[str] = list(), keys: List[str] = list()) -> Dict[str, str]:
-    """Return the correct stock info value given the appropriate symbol and key.
-    Infer valid ticker symbol and key from the user prompt.
-    The key must be one of the following:
-    address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
-    sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
-    shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
-    previousClose, open, dayLow, dayHigh, regularMarketPreviousClose, regularMarketOpen, regularMarketDayLow,
-    regularMarketDayHigh, dividendRate, dividendYield, exDividendDate, beta, trailingPE, forwardPE, volume,
-    regularMarketVolume, averageVolume, averageVolume10days, averageDailyVolume10Day, bid, ask, bidSize, askSize,
-    marketCap, fiftyTwoWeekLow, fiftyTwoWeekHigh, priceToSalesTrailing12Months, fiftyDayAverage, twoHundredDayAverage,
-    currency, enterpriseValue, profitMargins, floatShares, sharesOutstanding, sharesShort, sharesShortPriorMonth,
-    sharesShortPreviousMonthDate, dateShortInterest, sharesPercentSharesOut, heldPercentInsiders,
-    heldPercentInstitutions,shortRatio, shortPercentOfFloat, impliedSharesOutstanding, bookValue, priceToBook,
-    lastFiscalYearEnd, nextFiscalYearEnd, mostRecentQuarter, earningsQuarterlyGrowth, netIncomeToCommon, trailingEps,
-    forwardEps, pegRatio, enterpriseToRevenue, enterpriseToEbitda, 52WeekChange, SandP52WeekChange, lastDividendValue,
-    lastDividendDate, exchange, quoteType, symbol, underlyingSymbol, shortName, longName, firstTradeDateEpochUtc,
-    timeZoneFullName, timeZoneShortName, uuid, messageBoardId, gmtOffSetMilliseconds, currentPrice, targetHighPrice,
-    targetLowPrice, targetMeanPrice, targetMedianPrice, recommendationMean, recommendationKey, numberOfAnalystOpinions,
-    totalCash, totalCashPerShare, ebitda, totalDebt, quickRatio, currentRatio, totalRevenue, debtToEquity,
-    revenuePerShare, returnOnAssets, returnOnEquity, freeCashflow, operatingCashflow, earningsGrowth, revenueGrowth,
-    grossMargins, ebitdaMargins, operatingMargins, financialCurrency, trailingPegRatio.
-    If asked generically for 'stock price', use currentPrice.
-    """
+def get_stock_info(user_query: str, symbol_list: List[str] = list()) -> Dict[str, str]:
+    """Return the correct stock info value given the appropriate ticker symbol and key."""
     stock_key: Dict[str, str] = dict()
 
     for symbol in symbol_list:
-        try:
-            for key in keys:
-                data = yfinance.Ticker(symbol)
-                stock_info = data.info
-                stock_key[symbol] = stock_key[symbol] + key + ': ' + str(stock_info[key]) + '. '
-        except Exception as e:
-            yahoo_connector = YahooFinanceConnector(symbol)
+        yahoo_connector = YahooFinanceConnector(symbol)
 
-            df = SmartDataframe(yahoo_connector, config={'llm': streamlit.session_state.fc.llm})
-            stock_key = df.chat(user_query)
+        df = SmartDataframe(yahoo_connector, config={'llm': streamlit.session_state.fc.llm})
+        stock_key[symbol] = df.chat(user_query)
 
     return stock_key
 
@@ -210,41 +180,6 @@ def retrieve_symbol_quantity_list(symbol_list: List[str], quantity: str) -> Tupl
 class RetrievalSymbolSchema(BaseModel):
     """
     Get the finanical summary for a given list of ticker symbols.
-    The balance sheet has the following fields:
-    'Ordinary Shares Number', 'Share Issued', 'Net Debt', 'Total Debt',
-    'Tangible Book Value', 'Invested Capital', 'Working Capital',
-    'Net Tangible Assets', 'Capital Lease Obligations',
-    'Common Stock Equity', 'Total Capitalization',
-    'Total Equity Gross Minority Interest', 'Stockholders Equity',
-    'Gains Losses Not Affecting Retained Earnings',
-    'Other Equity Adjustments', 'Retained Earnings', 'Capital Stock',
-    'Common Stock', 'Total Liabilities Net Minority Interest',
-    'Total Non Current Liabilities Net Minority Interest',
-    'Other Non Current Liabilities', 'Tradeand Other Payables Non Current',
-    'Non Current Deferred Liabilities', 'Non Current Deferred Revenue',
-    'Non Current Deferred Taxes Liabilities',
-    'Long Term Debt And Capital Lease Obligation',
-    'Long Term Capital Lease Obligation', 'Long Term Debt',
-    'Current Liabilities', 'Other Current Liabilities',
-    'Current Deferred Liabilities', 'Current Deferred Revenue',
-    'Current Debt And Capital Lease Obligation', 'Current Debt',
-    'Pensionand Other Post Retirement Benefit Plans Current',
-    'Payables And Accrued Expenses', 'Payables', 'Total Tax Payable',
-    'Income Tax Payable', 'Accounts Payable', 'Total Assets',
-    'Total Non Current Assets', 'Other Non Current Assets',
-    'Investments And Advances', 'Long Term Equity Investment',
-    'Goodwill And Other Intangible Assets', 'Other Intangible Assets',
-    'Goodwill', 'Net PPE', 'Accumulated Depreciation', 'Gross PPE',
-    'Leases', 'Other Properties', 'Machinery Furniture Equipment',
-    'Buildings And Improvements', 'Land And Improvements', 'Properties',
-    'Current Assets', 'Other Current Assets', 'Hedging Assets Current',
-    'Inventory', 'Finished Goods', 'Work In Process', 'Raw Materials',
-    'Receivables', 'Accounts Receivable',
-    'Allowance For Doubtful Accounts Receivable',
-    'Gross Accounts Receivable',
-    'Cash Cash Equivalents And Short Term Investments',
-    'Other Short Term Investments', 'Cash And Cash Equivalents',
-    'Cash Equivalents', 'Cash Financial'.
     """
 
     symbol_list: List[str] = Field(
@@ -259,28 +194,28 @@ class RetrievalSymbolSchema(BaseModel):
 
 
 @tool(args_schema=RetrievalSymbolSchema)
-def get_financial_summary(symbol_list: List[str], user_query: str) -> Any:
+def get_financial_summary(symbol_list: List[str], user_query: str) -> Dict[str, str]:
     """Get the finanical summary for a given stock."""
-
+    # Select the releavant tables
     question = 'You are an expert in the stock market.\n' f'{user_query}\n'
+    response_dict: Dict[str, str] = dict()
+    for symbol in symbol_list:
+        company = yfinance.Ticker(ticker=symbol)
 
-    company = yfinance.Tickers(tickers=symbol_list)
+        balance_sheet = company.balance_sheet.T
 
-    balance_sheet = company.balance_sheet.T
+        df = SmartDataframe(
+            balance_sheet,
+            config={
+                'llm': streamlit.session_state.fc.llm,
+                'open_charts': False,
+                'save_charts': True,
+                'save_charts_path': TEMP_DIR + '/stock_query/',
+            },
+        )
+        response_dict[symbol] = df.chat(question)
 
-    df = SmartDataframe(
-        balance_sheet,
-        config={
-            'llm': streamlit.session_state.fc.llm,
-            'save_charts': True,
-            'open_charts': False,
-            'save_charts_path': TEMP_DIR,
-            'enable_cache': False,
-        },
-    )
-    response = df.chat(question)
-
-    return response
+    return response_dict
 
 
 @tool(args_schema=RetrievalSymbolSchema)

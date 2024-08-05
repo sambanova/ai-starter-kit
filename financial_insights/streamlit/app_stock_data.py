@@ -14,11 +14,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from financial_insights.streamlit.utilities_app import (
-    save_dataframe_figure_callback, save_dict_answer_callback,
-    save_string_answer_callback)
-from financial_insights.streamlit.utilities_methods import (handle_userinput,
-                                                            set_fc_llm)
+from financial_insights.streamlit.utilities_app import save_dataframe_figure_callback, save_output_callback
+from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 
 def get_stock_data_analysis() -> None:
@@ -33,7 +30,7 @@ def get_stock_data_analysis() -> None:
     output = streamlit.empty()
 
     user_request = streamlit.text_input(
-        'Enter the info that you want to retrieve for given companies',
+        'Enter the info that you want to retrieve for given companies.',
         key='ticker_symbol',
     )
     if streamlit.button('Retrieve stock info'):
@@ -44,7 +41,7 @@ def get_stock_data_analysis() -> None:
             content = user_request + '\n\n' + response_string + '\n\n\n'
             if streamlit.button(
                 'Save Answer',
-                on_click=save_string_answer_callback,
+                on_click=save_output_callback,
                 args=(content, save_path),
             ):
                 pass
@@ -52,10 +49,10 @@ def get_stock_data_analysis() -> None:
     if streamlit.button(label='Get financial summary'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_financial_summary(user_request)
-            save_path = 'summary_' + '_'.join(list(response_dict.keys()))
+            save_path = 'stock_info.txt'
             if streamlit.button(
                 'Save Analysis',
-                on_click=save_dict_answer_callback,
+                on_click=save_output_callback,
                 args=(response_dict, save_path),
             ):
                 pass
@@ -103,6 +100,7 @@ def handle_stock_info(user_question: Optional[str]) -> Any:
     user_request = (
         'Please answer the following query for the following companies '
         '(expressed via their ticker symbols):\n' + user_question + '\n'
+        'Retrieve the company info.\n'
         'Reformulate the final answer in the form of a conversational response to the user.\n'
         'Take your time and reason step by step.\n'
     )
@@ -126,7 +124,10 @@ def handle_financial_summary(user_question: str) -> Any:
 
     user_request = (
         'Please answer the following query for the following companies '
-        '(expressed via their ticker symbols):\n' + user_question
+        '(expressed via their ticker symbols):\n' + user_question + '\n'
+        'Retrieve the financial summary.\n'
+        'Reformulate the final answer in the form of a conversational response to the user.\n'
+        'Take your time and reason step by step.\n'
     )
     return handle_userinput(user_question, user_request)
 
@@ -157,7 +158,7 @@ def handle_stock_data_analysis(
             '(expressed via their ticker symbols) '
             'and within the following dates.\n' + user_question
         )
-        user_request += f'\n. The requested dates are from {start_date} to {end_date}'
+        user_request += f'\nThe requested dates are from {start_date} to {end_date}'
 
     response = handle_userinput(user_question, user_request)
 

@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import sys
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import pandas
 import plotly
@@ -67,7 +67,7 @@ def save_dataframe_figure_callback(ticker_list: str, data: pandas.DataFrame, fig
     fig.write_image(TEMP_DIR + f'stock_data_{ticker_list}.png')
 
 
-def save_dict_answer_callback(response_dict: str, save_path: str) -> None:
+def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_path: str) -> None:
     # Create temporary cache for storing historical price data
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
@@ -75,22 +75,23 @@ def save_dict_answer_callback(response_dict: str, save_path: str) -> None:
     # Specify the filename
     filename = TEMP_DIR + save_path
 
-    # Writing the dictionary to a JSON file
-    with open(filename, 'a') as json_file:
-        json.dump(response_dict, json_file)
+    if isinstance(response, str):
+        # Writing the string to a txt file
+        with open(filename, 'a') as text_file:
+            text_file.write(response + '\n')
 
+    elif isinstance(response, dict):
+        # Writing the dictionary to a JSON file
+        with open(filename, 'a') as json_file:
+            json.dump(response, json_file)
 
-def save_string_answer_callback(response: str, save_path: str) -> None:
-    # Create temporary cache for storing historical price data
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    elif isinstance(response, list):
+        # Writing the list to a JSON file
+        with open(filename, 'a') as json_file:
+            json.dump(response, json_file)
 
-    # Specify the filename
-    filename = TEMP_DIR + save_path
-
-    # Writing the string to a txt file
-    with open(filename, 'a') as text_file:
-        text_file.write(response + '\n')
+    else:
+        raise ValueError('Invalid response type')
 
 
 def list_files_in_directory(directory: str) -> List[str]:
@@ -110,6 +111,7 @@ def clear_directory(directory: str) -> None:
                 os.unlink(file_path)
         except Exception as e:
             streamlit.error(f'Error deleting file {file_path}: {e}')
+
 
 def set_css_styles() -> None:
     streamlit.markdown(
@@ -206,6 +208,7 @@ def set_css_styles() -> None:
     """,
         unsafe_allow_html=True,
     )
+
 
 def get_custom_button_style() -> str:
     return """

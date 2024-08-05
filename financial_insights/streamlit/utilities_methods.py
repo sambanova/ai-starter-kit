@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
@@ -16,6 +17,8 @@ from PIL import Image
 from financial_insights.src.function_calling import (ConversationalResponse,
                                                      FunctionCallingLlm)
 from financial_insights.src.tools import get_conversational_response
+from financial_insights.src.tools_database import (create_stock_database,
+                                                   query_stock_database)
 from financial_insights.src.tools_filings import retrieve_filings
 from financial_insights.src.tools_stocks import (get_financial_summary,
                                                  get_historical_price,
@@ -42,34 +45,13 @@ TOOLS = {
     'get_financial_summary': get_financial_summary,
     'get_conversational_response': get_conversational_response,
     'retrieve_filings': retrieve_filings,
+    'create_stock_database': create_stock_database,
+    'query_stock_database': query_stock_database,
 }
 
 TEMP_DIR = 'financial_insights/streamlit/cache/'
 SOURCE_DIR = 'financial_insights/streamlit/cache/sources/'
 CONFIG_PATH = 'financial_insights/config.yaml'
-
-
-# @contextmanager
-# def st_capture(output_func: Callable[[Any], None]) -> None:
-#     """
-#     context manager to catch stdout and send it to an output streamlit element
-
-#     Args:
-#         output_func (function to write terminal output in
-
-#     Yields:
-#         Generator:
-#     """
-#     with StringIO() as stdout, redirect_stdout(stdout):
-#         old_write = stdout.write
-
-#         def new_write(string: str) -> int:
-#             ret = old_write(string)
-#             output_func(stdout.getvalue())
-#             return ret
-
-#         stdout.write = new_write
-#         yield
 
 
 @contextmanager
@@ -157,7 +139,7 @@ def stream_response_object(response: Any) -> Any:
         # If JSON decoding fails, return the original string
         pass
 
-    if isinstance(response, str):
+    if isinstance(response, (str, float, int)):
         stream_single_response(response)
 
     elif isinstance(response, list):
@@ -166,7 +148,11 @@ def stream_response_object(response: Any) -> Any:
 
     elif isinstance(response, dict):
         for key, value in response.items():
-            stream_single_response(value)
+            if isinstance(value, str):
+                stream_single_response(key + ': ' + value)
+            elif isinstance(value, list):
+                # If all values are strings
+                stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
 
     elif isinstance(response, tuple):
         for element in response:
@@ -185,19 +171,28 @@ def stream_response_object(response: Any) -> Any:
 def stream_single_response(response: Any) -> None:
     """Streamlit chatbot response."""
     # If response is a string
-    if isinstance(response, str):
+    if isinstance(response, (str, float, int)):
         with streamlit.chat_message(
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
-            if not response.endswith('.png'):
-                streamlit.write(response)
-            else:
-                # Load the image
-                image = Image.open(response)
+            png_paths = extract_png_paths(response)
+            if isinstance(response, str):
+                if not response.endswith('.png'):
+                    streamlit.write(response)
+                else:
+                    # Load the image
+                    image = Image.open(response)
 
-                # Display the image
-                streamlit.image(image, use_column_width=True)
+                    # Display the image
+                    streamlit.image(image, use_column_width=True)
+            for path in png_paths:
+                if path != response:
+                    # Load the image
+                    image = Image.open(path)
+                    # Display the image
+                    streamlit.image(image, use_column_width=True)
+
     # If response is a figure
     elif isinstance(response, plotly.graph_objs.Figure):
         # Display the image
@@ -206,3 +201,10 @@ def stream_single_response(response: Any) -> None:
     # If response is a dataframe, display its head
     elif isinstance(response, pandas.DataFrame):
         streamlit.write(response.head())
+
+
+def extract_png_paths(sentence: str) -> List[str]:
+    png_pattern = r'\b\S+\.png\b'
+    png_paths = []
+    matches = re.findall(png_pattern, sentence)
+    return matches

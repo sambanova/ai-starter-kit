@@ -10,6 +10,7 @@ pandasai==2.2.10
 plotly == 5.22.0
 pydantic==2.8.2
 python-dotenv==1.0.1
+python-Levenshtein==0.25.1
 secedgar==0.5.0
 sentence-transformers==3.0.1
 sec-downloader==0.11.1
@@ -17,4 +18,4 @@ sseclient-py==1.8.0
 streamlit==1.36.0
 streamlit_extras==0.4.3
 types-PyYAML==6.0.12.20240311
-yfinance==0.2.40
+yfinance==0.2.41

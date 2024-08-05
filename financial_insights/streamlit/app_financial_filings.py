@@ -11,7 +11,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from financial_insights.streamlit.utilities_app import save_string_answer_callback
+from financial_insights.streamlit.utilities_app import save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 
@@ -52,7 +52,7 @@ def get_financial_filings() -> None:
             content = user_request + '\n\n' + answer + '\n\n\n'
             if streamlit.button(
                 'Save Answer',
-                on_click=save_string_answer_callback,
+                on_click=save_output_callback,
                 args=(content, filename + '.txt'),
             ):
                 pass

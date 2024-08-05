@@ -11,23 +11,17 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-from financial_insights.src.tools_filings import retrieve_filings
-from financial_insights.src.tools_stocks import (get_financial_summary,
-                                                 get_historical_price,
-                                                 get_stock_info,
-                                                 retrieve_symbol_list,
-                                                 retrieve_symbol_quantity_list)
-from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
-from financial_insights.streamlit.app_custom_queries import get_custom_queries
-from financial_insights.streamlit.app_financial_filings import \
-    get_financial_filings
+from financial_insights.streamlit.app_financial_filings import get_financial_filings
 from financial_insights.streamlit.app_pdf_report import get_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
 from financial_insights.streamlit.app_stock_database import get_stock_database
 from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
 from financial_insights.streamlit.utilities_app import (
-    clear_directory, get_custom_button_style, list_files_in_directory,
-    set_css_styles)
+    clear_directory,
+    get_custom_button_style,
+    list_files_in_directory,
+    set_css_styles,
+)
 from financial_insights.streamlit.utilities_methods import stream_chat_history
 
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +30,7 @@ TEMP_DIR = 'financial_insights/streamlit/cache/'
 
 
 def main() -> None:
-    clear_directory(TEMP_DIR + 'sources')
+    # clear_directory(TEMP_DIR + 'sources')
     global output
 
     # Streamlit app setup
@@ -47,7 +41,6 @@ def main() -> None:
     )
 
     set_css_styles()
-    
 
     with streamlit.sidebar:
         # Navigation menu
@@ -57,7 +50,7 @@ def main() -> None:
             [
                 'Home',
                 'Stock Data Analysis',
-                'Query Stock Database',
+                'Stock Database',
                 'Financial News Scraping',
                 'Financial Filings Analysis',
                 'Custom Queries',
@@ -126,7 +119,7 @@ def main() -> None:
             Use the navigation menu to explore various features including:
             
             - Stock Data Analysis
-            - Query Stock Database
+            - Stock Database
             - Financial News Scraping
             - Financial Filings Analysis
             - Custom Queries
@@ -139,7 +132,7 @@ def main() -> None:
     elif menu == 'Stock Data Analysis':
         get_stock_data_analysis()
 
-    elif menu == 'Query Stock Database':
+    elif menu == 'Stock Database':
         get_stock_database()
 
     # Financial News Scraping page
@@ -149,10 +142,6 @@ def main() -> None:
     # Financial Filings Analysis page
     elif menu == 'Financial Filings Analysis':
         get_financial_filings()
-
-    # Custom Queries page
-    elif menu == 'Custom Queries':
-        get_custom_queries()
 
     # Generate PDF Report page
     elif menu == 'Generate PDF Report':

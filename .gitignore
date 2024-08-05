@@ -240,3 +240,6 @@ utils/eval/tepsys_eng_tran.csv
 =======
 #wandb
 wandb/
+
+# VSCode
+.vscode/*
