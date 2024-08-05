@@ -46,10 +46,13 @@ def _run_custom_performance_evaluation():
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
+        save_response_texts=st.session_state.save_llm_responses
     )
 
     custom_performance_evaluator.run_benchmark(
-        sampling_params={},
+        sampling_params={
+            "max_tokens_to_generate": st.session_state.max_tokens,
+        },
     )
 
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
@@ -106,7 +109,21 @@ def main():
             key="number_concurrent_workers",
         )
 
-        st.number_input("Timeout", min_value=60, max_value=1800, value=600, step=1, key="timeout")
+        st.number_input(
+            "Timeout", 
+            min_value=60, 
+            max_value=1800, 
+            value=600, 
+            step=1, 
+            key="timeout"
+        )
+
+        st.toggle(
+            "Save LLM Responses", 
+            value=False, 
+            key="save_llm_responses", 
+            help="Toggle on if you want to save the llm responses to an output JSONL file"
+            )
 
         #####################
         # Tuning Parameters #
