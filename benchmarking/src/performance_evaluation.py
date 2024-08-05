@@ -130,7 +130,7 @@ class BasePerformanceEvaluator(abc.ABC):
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
                 break
-            req_metrics = llm_request(request_config, self.tokenizer, self.llm_api)
+            req_metrics = llm_request(request_config, self.tokenizer)
             completed_requests.extend([req_metrics[0]])
             progress_bar.update(1)
 
