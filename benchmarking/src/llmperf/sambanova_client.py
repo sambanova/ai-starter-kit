@@ -475,7 +475,7 @@ class FastAPI(BaseAPIEndpoint):
 
         return metrics, generated_text   
 
-def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer, llm_api: str) -> tuple:
+def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tuple:
     """Makes a single completion request to a LLM API
 
     Args:
@@ -495,16 +495,16 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer, llm_api
     
     try:
         
-        if llm_api == "fastapi":
+        if request_config.llm_api == "fastapi":
             fastapi_client = FastAPI(request_config, tokenizer)
             metrics, generated_text = fastapi_client.compute_metrics(metrics)
         
-        elif llm_api == "sambastudio":
+        elif request_config.llm_api == "sambastudio":
             sambastudio_client = SambaStudioAPI(request_config, tokenizer)
             metrics, generated_text = sambastudio_client.compute_metrics(metrics)
         
         else:
-            raise ValueError(f"llm_api parameter with value {llm_api} is not valid.")
+            raise ValueError(f"llm_api parameter with value {request_config.llm_api} is not valid.")
         
         return metrics, generated_text, request_config
 
@@ -533,12 +533,14 @@ if __name__ == "__main__":
     # model = "COE/Mistral-7B-Instruct-v0.2"
     # model = "COE/Meta-Llama-3-8B-Instruct"
     model = "COE/Meta-Llama-3-8B-Instruct"
+    llm_api = "sambastudio"
     tokenizer = get_tokenizer(model)
 
     prompt = "This is a test example, so tell me about anything"
     request_config = RequestConfig(
         prompt_tuple=(prompt, 10),
         model=model,
+        llm_api=llm_api,
         sampling_params={
             # "do_sample": False,
             "max_tokens_to_generate": 250,
