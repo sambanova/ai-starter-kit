@@ -336,7 +336,7 @@ class SecFiling:
         elif self.conversational_chain is not None:
             response = self.conversational_chain.invoke(question)
         elif self.comparative_process is not None:
-            response = self.comparative_process.invoke(question)
+            response = self.comparative_process(question)
         
         return response
 
