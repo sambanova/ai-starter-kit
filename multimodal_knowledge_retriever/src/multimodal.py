@@ -25,9 +25,7 @@ from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain_core.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import Chroma
-from langchain_community.llms.sambanova import Sambaverse, SambaStudio
-from langchain_community.embeddings import SambaStudioEmbeddings, HuggingFaceInstructEmbeddings
-from utils.sambanova_endpoint import SambaNovaEmbeddingModel
+from utils.model_wrappers.api_gateway import APIGateway
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
@@ -138,37 +136,17 @@ class MultimodalRetrieval():
         Returns:
         LLM: The Sambaverse or Sambastudio Langchain LLM.
         """
-        if self.api_info == "sambaverse":
-            llm = Sambaverse(
-                    sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                    model_kwargs={
-                        "do_sample": False, 
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "temperature": self.llm_info["temperature"],
-                        "select_expert": self.llm_info["select_expert"],
-                        "process_prompt": False
-                    }
-                )
-        elif self.api_info == "sambastudio":
-            if self.llm_info["coe"]:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        "do_sample": False,
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "select_expert": self.llm_info["select_expert"],
-                        "process_prompt": False
-                    }
-                )
-            else:
-                llm = SambaStudio(
-                    model_kwargs={
-                        "do_sample": False,
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
-                    }
-                )
+        llm = APIGateway.load_llm(
+            type=self.api_info,
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info['sambaverse_model_name']
+        )
         return llm
     
     def extract_pdf(self, file_path):
@@ -293,34 +271,12 @@ class MultimodalRetrieval():
         Returns:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
-        if self.embedding_model_info["type"] == "sambastudio":
-            batch_size = self.embedding_model_info["batch_size"]
-            if self.embedding_model_info["coe"]:
-                if batch_size is None:
-                    batch_size = 1
-                self.embeddings = SambaStudioEmbeddings(
-                    batch_size=batch_size,
-                    model_kwargs = {
-                        "select_expert":self.embedding_model_info["select_expert"]
-                        }
-                    )
-            else:
-                if batch_size is None:
-                    batch_size = 32
-                embeddings = SambaStudioEmbeddings(
-                    batch_size=batch_size
-                )
-        elif self.embedding_model_info["type"] == "cpu":
-            encode_kwargs = {"normalize_embeddings": True}
-            embedding_model = "intfloat/e5-large-v2"
-            self.embeddings = HuggingFaceInstructEmbeddings(
-                model_name=embedding_model,
-                embed_instruction="",  # no instruction is needed for candidate passages
-                query_instruction="Represent this sentence for searching relevant passages: ",
-                encode_kwargs=encode_kwargs,
-            )
-        else:
-            raise ValueError(f"{self.embedding_model_info} is not a valid embedding model type")
+        self.embeddings = APIGateway.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
         
         vectorstore = Chroma(
             collection_name="summaries", 

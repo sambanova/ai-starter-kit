@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(repo_dir,'.env'))
 
-from yoda.utils import qa_processing, data_reader
+from yoda.tools import qa_processing, data_reader
 from yoda.prompts.prompts import QA_GEN_TEMPLATE
 
 
@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
         argparse.Namespace: Parsed command line arguments.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config_file", type=str, default="configs/sn_expert_conf.yaml",
+    parser.add_argument("--config_file", type=str, default="sn_expert_conf.yaml",
                         help="path to the config file")
     parser.add_argument("--purpose", type=str, default="pretrain",
                         choices=["pretrain", "finetune", "both"],

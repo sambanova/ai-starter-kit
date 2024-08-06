@@ -10,7 +10,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(os.path.join(repo_dir,"utils"))
 
 from .data_reader import read_txt_data, format_text
-from sambanova_endpoint import SambaNovaEndpoint
+from utils.model_wrappers.api_gateway import APIGateway
 
 def process_response_data(response_data):
     valid_count = 0
@@ -109,16 +109,15 @@ def generate_qa_pairs(sample, template, base_url, project_id, endpoint_id, api_k
         # too few tokens left for generation, skip this article
         return "", prompt_length
 
-    llm = SambaNovaEndpoint(
-        base_url=base_url,
-        project_id=project_id,
-        endpoint_id=endpoint_id,
-        api_key=api_key,
-        model_kwargs={
-                'do_sample': False,
-                "temperature": 0.0,
-                'max_tokens_to_generate': max_output_token
-            },
-            )
+    llm = APIGateway.load_llm(
+            type="sambastudio",
+            streaming=True,
+            coe=True,
+            do_sample=False,
+            max_tokens_to_generate=500,
+            temperature=0.0,
+            select_expert="Meta-Llama-3-8B-Instruct",
+            process_prompt=False
+        )
     response_text = llm(prompt = prompt)
     return response_text, prompt_length
