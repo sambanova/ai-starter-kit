@@ -49,7 +49,7 @@ This sample is ready-to-use. We provide:
    
 # Before you begin
 
-To perform this setup, you must be a SambaNova customer with a SambaStudio account or a FastCOE API key. You also have to set up your environment before you can run or customize the starter kit. 
+To perform this setup, you must be a SambaNova customer with a SambaStudio account or a FastAPI API key. You also have to set up your environment before you can run or customize the starter kit. 
 
 _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
