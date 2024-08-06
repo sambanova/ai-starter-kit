@@ -15,7 +15,7 @@ from langchain.prompts import load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from utils.model_wrappers.api_gateway import APIGateway
 from serpapi import GoogleSearch
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +25,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from vectordb.vector_db import VectorDb
+from utils.vectordb.vector_db import VectorDb
 import logging
 
 
@@ -118,40 +118,17 @@ class SearchAssistant:
         Returns:
         llm (SambaStudio or Sambaverse): Langchain LLM to use
         """
-        if self.api_info == 'sambaverse':
-            llm = Sambaverse(
-                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                model_kwargs={
-                    'do_sample': self.llm_info['do_sample'],
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'temperature': self.llm_info['temperature'],
-                    'top_p': self.llm_info['top_p'],
-                    'select_expert': self.llm_info['select_expert'],
-                    'process_prompt': False
-                },
-            )
-        elif self.api_info == 'sambastudio':
-            if self.llm_info['coe'] == True:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs = {
-                    'do_sample': self.llm_info['do_sample'],
-                    'top_p': self.llm_info['top_p'],
-                    'temperature': self.llm_info['temperature'],
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'select_expert': self.llm_info['select_expert'],
-                    'process_prompt': False
-                    } 
-                )
-            else:
-                llm = SambaStudio(
-                    model_kwargs={
-                        'do_sample': self.llm_info['do_sample'],
-                        'top_p': self.llm_info['top_p'],
-                        'temperature': self.llm_info['temperature'],
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    }
-                )
+        llm = APIGateway.load_llm(
+            type=self.api_info,
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info['sambaverse_model_name']
+        )
         return llm
 
     def reformulate_query_with_history(self, query):
@@ -508,7 +485,7 @@ class SearchAssistant:
 
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
-        embeddings = self.vectordb.load_embedding_model(
+        embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info["type"],
             batch_size=self.embedding_model_info["batch_size"],
             coe=self.embedding_model_info["coe"],
@@ -552,7 +529,7 @@ class SearchAssistant:
         chunks = self.get_text_chunks_with_references(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        embeddings = self.vectordb.load_embedding_model(
+        embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info["type"],
             batch_size=self.embedding_model_info["batch_size"],
             coe=self.embedding_model_info["coe"],
