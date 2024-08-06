@@ -2,11 +2,11 @@
 <a href="https://sambanova.ai/">
 <picture>
  <source media="(prefers-color-scheme: dark)" srcset="../../../images/SambaNova-light-logo-1.png" height="60">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="./../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
 </a>
 
-Complex Retrieval Augmented Generation Use Case
+Agents with LangGraph
 ======================
 
 <!-- TOC -->
@@ -31,15 +31,22 @@ Complex Retrieval Augmented Generation Use Case
 
 # Overview
 
-This AI Starter Kit is primarily intended to show off the speed of Llama 3 8B in Samba-1 Turbo for low latency agentic workflows. The Kit includes:
+This AI Starter Kit is primarily intended to demonstrate agentic workflows.  For improved user experience, try the fast Llama 3 models in Samba-1 Turbo. The default is Llama 3 70B for a good compromise between model capability and throughput, however, the other variations could be tried as well.  Llama 3 8B for lower latency or 405B for maximum capability.  The kit includes:
  -   A configurable SambaStudio connector. The connector generates answers from a deployed model.
  -   A configurable integration with a third-party vector database.
- -   An implementation of a semantic search workflow using numerous chains via LangGraph.
+ -   An implementation and guide of a complex semantic search workflow using numerous chains via LangGraph.
+ -   An implementation and guide of a hierarchical team of agents with human in the loop supervision.
+
+The original motivation and implementation examples come from [LangGraph](https://blog.langchain.dev/langgraph/).  The chat format has been simplified for clarity and ease of use with SambaNova Systems' models.  Many examples can be found [here](https://github.com/langchain-ai/langgraph/tree/main/examples).  
+
+The implementations provided as part of this starterkit build on a number of provided components for retrieval augmented generation (RAG), code generation, and [Tavily](https://tavily.com/) internet search.  These components have been used to build agentic pipelines and teams.  One large pipeline will be code generation augmented corrective RAG.  There are many different steps for handling query ambiguity, compound queries, mathematical reasoning through code generation and execution, etc.  The other example uses the aforementioned [components](./../utils/) to build teams of agents.  These teams have specific workflows customized for sub tasks.  A supervisor manages the teams, given query and response history and the state of the system, including what the next step should be.  After each round of execution, the user is able to review the results and make adjustments and/or provide input as needed.  
+
+A GUI frontend built with Streamlit is also provided for a user-friendly interface.  This frontend provides a simple means for human in the loop interactions for the hierarchical teams of agents application.  The application is quite simple: it assumes corrective RAG is the preferred method of generation unless internet or web search is explicitly mentioned.  If no documents are found from the vectorstore based on the query, the user will be prompted asking if they would like the supervisor to have the Tavily search team search the internet for answers.  If an affirmative is provided to the supervisor from the user, then routing to the Tavily team will be carried out and found contexts will be passed in for corrective RAG, instead of contexts from the vectorstore.  If a negative response is provided from the user, the system will simply route to END.  Although simple in nature, this example should demonstrate how to build complex, human in the loop applications if and when needed.
 
 This sample is ready-to-use. We provide: 
 
 * Instructions for setup with SambaStudio or Sambaverse. 
-* Instructions for running the model as is. 
+* Instructions for running the agent pipelines as is. 
 
 # Before you begin
 
@@ -54,9 +61,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the account and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
-
-## *For this workshop we will be focusing on SambaStudio, since it will host the Llama 3 8B model that resides within our Samba-1 Turbo Composition of Experts.   Skip the Sambaverse setup unless you would like to test our models on your own via our hosted service.  The performance will not be optimized when using Sambaverse*
+The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer with access to SambaStudio, you'll want to follow those instructions. If you are not yet a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is very rate limited and will not have fast RDU optimized inference speeds.
 
 ### Setup for Sambaverse users 
 
@@ -129,26 +134,18 @@ If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
-* Mac
 ```
 cd ai_starter_kit/
-python3 -m venv complex_rag_env
-source complex_rag_env/bin/activate
+python3 -m venv agent_env
+source agent_env
 pip install --upgrade pip
-pip  install  -r  complex_rag/requirements.txt
-```
-* Windows
-```
-cd ai_starter_kit/
-python3 -m venv complex_rag_env
-complex_rag>complex_rag_env\Scripts\activate
-pip install --upgrade pip
-pip  install  -r  complex_rag\requirements.txt
+pip  install  -r  agent_workflows/requirements.txt
 ```
 
 2. Run the following command:
 ```
-streamlit run workshops/genai_summit/complex_rag/streamlit/app.py --browser.gatherUsageStats false 
+cd agent_workflows/streamlit/
+streamlit run app.py --browser.gatherUsageStats false 
 ```
 
 # Use the starter kit 
@@ -179,40 +176,40 @@ This workflow, included with this starter kit, is an example of parsing and inde
 
 ## Retrieval workflow
 
-This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A off your data. The steps are:
+This workflow is an example of leveraging data stored in a vector database along with two different styles of agentic frameworks to enable advanced retrieval-based Q&A off your data.
 
- 1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embeddng model in the ingestion workflow.
- 
- 2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
+For detailed decriptions of each setup, please consult the following notebooks:
 
-*More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
- 
-*Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
+* [Code RAG](./notebooks/code_rag.ipynb)
 
-## Q&A workflow
+* [Corrective RAG Team](./notebooks/corrective_rag_team.ipynb)
 
-After the relevant information is retrieved, the content is sent to the LangGraph app that includes numerous Llama 3 8B calls.   Calls at conditional nodes reliably output JSON formatted strings and are parsed by Langchain's JSON output parser.  The value obtained decides the branch to follow in the graph.
+
+## Q&A workflow and scaling
+
+Developers and users should iterate on the workflow they feel is most desirable.  Users can be brought into the loop via a shared state between the streamlit app, supervisor, and teams.  System prompts to the supervisor and team members can be used to guide the conversation and general behavior of the application and user experience.  Complexity should be added with user exposure and input, as they may adapt to the method of working and both parties can find a balance between user experience and development and maintenance costs that will likely grow.
 
 # Third-party tools and data sources
 
 
-- streamlit (version 1.25.0)
-- langchain (version 0.2.1)
-- langchain-community (version 0.2.1)
-- langgraph (version 0.5.5)
+- streamlit (version 1.37.0)
+- langchain (version 0.2.11)
+- langchain-community (version 0.2.10)
+- langgraph (version 0.1.6)
 - pyppeteer (version 2.0.0)
-- datasets (version 2.19.1)
 - sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- chromadb (version 0.4.24)
+- InstructorEmbedding (version 1.0.1)
+- chromadb (version 0.5.5)
 - PyPDF2 (version 3.0.1)
 - unstructured_inference (version 0.7.27)
 - unstructured[pdf] (version 0.13.3)
 - PyMuPDF (version 1.23.4)
-- python-dotenv (version 1.0.0)
+- python-dotenv (version 1.0.1)
 
 # Acknowledgements and References
 
-The following work aims to show the power of SambaNova Systems RDU acceleration, using Samba-1 Turbo.  The work herein has been leveraged and adapted from the great folks at LangGraph.  Some of the adaptations of the original works also demonstrate how to modularize different components of the LangGraph setup and implement in Streamlit for rapid, early development.  The original tutorial can be found here:
+The following work aims to demonstrate complex agentic chains, which should have a better user experience when using Samba-1 Turbo.  The work herein has been leveraged and adapted from the great folks at LangGraph.  Some of the adaptations of the original works also demonstrate how to modularize different components of the LangGraph setup and implement in Streamlit for rapid, early development.  The original tutorial can be found here:
 
-https://github.com/langchain-ai/langgraph/blob/main/examples/rag/langgraph_rag_agent_llama3_local.ipynb
+[langgraph agent tutorial](https://github.com/langchain-ai/langgraph/blob/main/examples/rag/langgraph_rag_agent_llama3_local.ipynb)
+
+We also used Uber and Lyft documents from Llama Index's tutorials.
