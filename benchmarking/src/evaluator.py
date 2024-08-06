@@ -50,6 +50,14 @@ def main():
         required=True,
         help="The output directory to save the results to."
     )
+    
+    parser.add_argument(
+        '--llm-api', 
+        type=str, 
+        required=True, 
+        default="sambastudio",
+        help="The LLM API type. It could be either sambastudio or fastapi. Default value: sambastudio"
+    )
 
     # Optional Common Arguments
     parser.add_argument(
@@ -112,7 +120,8 @@ def main():
             num_workers=args.num_workers,
             timeout=args.timeout,
             user_metadata=user_metadata,
-            input_file_path=args.input_file_path
+            input_file_path=args.input_file_path,
+            llm_api=args.llm_api
         )
 
         # Run performance evaluation
@@ -153,7 +162,8 @@ def main():
             results_dir=args.results_dir,
             num_workers=args.num_workers,
             timeout=args.timeout,
-            user_metadata=user_metadata
+            user_metadata=user_metadata,
+            llm_api=args.llm_api
         )
 
         # Run performance evaluation

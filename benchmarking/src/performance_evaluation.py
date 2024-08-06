@@ -42,7 +42,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_workers: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = "sambastudio",
-        generation_mode: str = "stream",
+        is_stream_mode: bool = True,
         timeout: int = 600,
     ):
         self.model_name = model_name
@@ -50,7 +50,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.num_workers = num_workers
         self.user_metadata = user_metadata
         self.llm_api = llm_api
-        self.generation_mode = generation_mode
+        self.is_stream_mode = is_stream_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
 
@@ -58,7 +58,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.summary_file_path = None
         self.individual_responses_file_path = None
 
-    def get_token_length(self, input_text):
+    def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
 
     @abc.abstractmethod
@@ -122,12 +122,10 @@ class BasePerformanceEvaluator(abc.ABC):
         """Sends multiple requests to LLM and collects results
 
         Args:
-            request_configs_for_thread (list): list of request configs for LLM calls
-            tokenizer (AutoTokenizer): HuggingFace tokenizer
+            request_config_batch (list): list of request configs for LLM calls
             completed_requests (list): list of completed outputs from requests
-            pbar (tqdm): progress bar
+            progress_bar (tqdm): progress bar
             start_time (float): start time of the process
-            timeout_s (int): time out in seconds
         """
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
@@ -244,7 +242,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
         return metrics_summary
 
-    def save_results(self, filename, summary, individual_responses):
+    def save_results(self, filename: str, summary: dict, individual_responses: list[dict]) -> None:
         """Save the performance evaluation results to a file.
 
         Args:
@@ -300,7 +298,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.prompt_key = list(self.dataset[0].keys())[0]
 
     @staticmethod
-    def read_dataset(input_file_path: str):
+    def read_dataset(input_file_path: str) -> List[Dict]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
 
         Args:
@@ -313,19 +311,23 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             data = [json.loads(line) for line in file]
         return data
 
-    def create_output_filename(self):
+    def create_output_filename(self) -> str:
         """Utility for creating a unique filename for a custom benchmarking experiment with a dataset.
 
         Returns:
             str: Filename for the custom benchmark run.
         """
-        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode = "stream"
+    
+        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
 
-    def run_benchmark(self, sampling_params: Dict[str, Any]):
+    def run_benchmark(self, sampling_params: Dict[str, Any]) -> None:
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
-            sampling_params (str): The sampling parameters in JSON format.
+            sampling_params (Dict[str, Any]): The sampling parameters in JSON format.
 
         Returns:
             None
@@ -458,7 +460,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 
@@ -525,7 +527,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the synthetic benchmark run.
         """
-        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode  = "stream"
+        
+        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
 
     def run_benchmark(
         self,
@@ -573,8 +579,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self,
         num_input_tokens: int,
         num_output_tokens: int,
-        num_requests,
-        sampling_params,
+        num_requests: int,
+        sampling_params: dict,
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
@@ -712,9 +718,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            updated_sampling_params = {
-                "max_tokens_to_generate": output_token_count,
-            }
+            if self.llm_api == "fastapi":
+                updated_sampling_params = {
+                    "max_tokens": output_token_count,
+                }
+            else:
+                updated_sampling_params = {
+                    "max_tokens_to_generate": output_token_count,
+                }
             updated_sampling_params.update(sampling_params)
 
             # Create request config object
@@ -723,7 +734,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 

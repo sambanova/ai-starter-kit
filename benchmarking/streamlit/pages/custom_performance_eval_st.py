@@ -4,6 +4,7 @@ from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summa
 import matplotlib.pyplot as plt
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
+from benchmarking.streamlit.app import LLM_API_OPTIONS
 
 import warnings
 
@@ -18,6 +19,8 @@ def _initialize_sesion_variables():
         st.session_state.perf_metrics_history = []
     if "llm" not in st.session_state:
         st.session_state.llm = None
+    if "llm_api" not in st.session_state:
+        st.session_state.llm_api = None
     if "chat_disabled" not in st.session_state:
         st.session_state.chat_disabled = True
 
@@ -36,7 +39,12 @@ def _initialize_sesion_variables():
         st.session_state.top_p = None
 
 
-def _run_custom_performance_evaluation():
+def _run_custom_performance_evaluation() -> pd.DataFrame:
+    """Runs custom performance evaluation
+
+    Returns:
+        pd.DataFrame: valid dataframe containing benchmark results
+    """
 
     results_path = "./data/results/llmperf"
 
@@ -46,6 +54,7 @@ def _run_custom_performance_evaluation():
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
+        llm_api=st.session_state.llm_api
     )
 
     custom_performance_evaluator.run_benchmark(
@@ -95,6 +104,10 @@ def main():
             value="COE/Meta-Llama-3-8B-Instruct",
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
+        )
+        
+        st.session_state.llm_api = st.selectbox(
+            "API type", options=LLM_API_OPTIONS
         )
 
         st.number_input(
