@@ -1,14 +1,14 @@
 # Yoda Data Configuration
-src_folder: "./data/txts"
+src_folder: "./data"
 src_subfolders:
   - sambanova_resources_blogs
-  - sambanova_industries_solutions
-  - sambaflow
-  - sambaruntime
+  # - sambanova_industries_solutions
+  # - sambaflow
+  # - sambaruntime
   - sambastudio
-  - sambatune
-  - converted_pdfs
-  - converted_papers
+  # - sambatune
+  # - converted_pdfs
+  # - converted_papers
 dest_folder: "./data/output"
 tokenizer: "meta-llama/Llama-2-70b-hf"
 

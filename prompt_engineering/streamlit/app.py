@@ -17,7 +17,7 @@ from typing import Tuple                                    # for type hint
 from langchain.prompts import PromptTemplate, load_prompt   # for creating and loading prompting yaml files
 from dotenv import load_dotenv                              # for loading env variables
 
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint   # for calling Sambanova LLM endpoint
+from utils.model_wrappers.api_gateway import APIGateway
 
 # load env variables 
 load_dotenv(os.path.join(repo_dir,'.env'))
@@ -39,20 +39,14 @@ def call_sambanova_llama2_70b_api(prompt: str) -> str:
         str: completion of the input prompt
     """
     #SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.
-    llm = SambaNovaEndpoint(
-        base_url=os.getenv('BASE_URL'),
-        project_id=os.getenv('PROJECT_ID'),
-        endpoint_id=os.getenv('ENDPOINT_ID'),
-        api_key=os.getenv('API_KEY'),
-        model_kwargs={
-            "do_sample": False, 
-            "temperature": 0.0,
-            "max_tokens_to_generate": 500,
-            # "repetition_penalty": {"type": "float", "value": "1"},
-            # "top_k": {"type": "int", "value": "50"},
-            # "top_logprobs": {"type": "int", "value": "0"},
-            # "top_p": {"type": "float", "value": "1"}
-        },
+    llm = APIGateway.load_llm(
+        type="sambastudio",
+        streaming=False,
+        coe=True,
+        do_sample=False,
+        max_tokens_to_generate=500,
+        temperature=0.0,
+        select_expert="Meta-Llama-3-8B-Instruct",
     )
     # Get completion from llm
     completion_text = llm.invoke(prompt)
@@ -70,23 +64,18 @@ def call_sambaverse_llama2_70b_api(prompt: str) -> str:
         str: completion of the input prompt
     """
     #SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.    
-    llm = SambaverseEndpoint(
-        sambaverse_model_name="Meta/llama-2-70b-chat-hf",
-        sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-        model_kwargs={
-            "do_sample": False, 
-            "max_tokens_to_generate": 500,
-            "temperature": 0.0,
-            "process_prompt": True,
-            "select_expert": "llama-2-70b-chat-hf"
-            #"stop_sequences": { "type":"str", "value":""},
-            # "repetition_penalty": {"type": "float", "value": "1"},
-            # "top_k": {"type": "int", "value": "50"},
-            # "top_p": {"type": "float", "value": "1"}
-        }
+    llm = APIGateway.load_llm(
+        type="sambaverse",
+        streaming=False,
+        coe=True,
+        do_sample=False,
+        max_tokens_to_generate=500,
+        temperature=0.0,
+        select_expert="llama-2-70b-chat-hf",
+        sambaverse_model_name="Meta/llama-2-70b-chat-hf"
     )
     # Get completion from llm
-    completion_text = llm.invoke(prompt)
+    completion_text = llm.invoke("How can I write better prompts for large language models? ")
     return completion_text
 
 def get_config_info() -> Tuple[str, dict, list]:

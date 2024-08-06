@@ -13,8 +13,8 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.prompts import PromptTemplate, load_prompt
 from langchain.docstore.document import Document
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from vectordb.vector_db import VectorDb
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from utils.vectordb.vector_db import VectorDb
+from utils.model_wrappers.api_gateway import APIGateway
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -75,37 +75,17 @@ class SecFiling:
     def init_llm_model(self) -> None:
         """Initializes the LLM endpoint
         """
-        if self.api_info=="sambaverse":
-            self.llm = Sambaverse(
-                sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-                model_kwargs={
-                    "do_sample": True, 
-                    "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                    "temperature": self.llm_info["temperature"],
-                    "select_expert": self.llm_info["select_expert"],
-                    "process_prompt": False,
-                }
-            )
-        elif self.api_info=="sambastudio":
-            if self.llm_info["coe"]:
-                self.llm = SambaStudio(
-                    model_kwargs={
-                        "do_sample": True, 
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"],
-                        "select_expert": self.llm_info["select_expert"],
-                        "process_prompt": False
-                    }
-                )
-            else:
-                self.llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        "do_sample": False,
-                        "temperature": self.llm_info["temperature"],
-                        "max_tokens_to_generate": self.llm_info["max_tokens_to_generate"]
-                    }
-                )
+        self.llm = APIGateway.load_llm(
+            type=self.api_info,
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info['sambaverse_model_name']
+        )
         
     def download_sec_data(self, ticker: str) -> list:
         """Downloads SEC data based on ticker name
@@ -176,7 +156,7 @@ class SecFiling:
         force_reload = self.config.get("force_reload", None)
         
         vectordb = VectorDb()
-        embeddings = vectordb.load_embedding_model(
+        embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info["type"],
             batch_size=self.embedding_model_info["batch_size"],
             coe=self.embedding_model_info["coe"],

@@ -14,7 +14,7 @@ WORKDIR /app/data_extraction
 # Copy the AI Starterkit into the container at /app
 COPY . /app
 RUN pip install -r requirements.txt
-RUN python -c 'from langchain.embeddings.huggingface import HuggingFaceInstructEmbeddings; HuggingFaceInstructEmbeddings()'
+RUN python -c 'from langchain_community.embeddings import HuggingFaceEmbeddings; HuggingFaceEmbeddings();'
 RUN python -m nltk.downloader punkt
 RUN python -m nltk.downloader averaged_perceptron_tagger
 RUN pip install notebook

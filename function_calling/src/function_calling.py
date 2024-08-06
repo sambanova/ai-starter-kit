@@ -23,8 +23,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaStudioFastCoE
-
+from utils.model_wrappers.api_gateway import APIGateway 
+from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -107,47 +107,22 @@ class FunctionCallingLlm:
 
         return (llm_info,)
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse]:
+    def set_llm(self) -> Union[SambaStudio, Sambaverse, SambaNovaFastAPI]:
         """
         Set the LLM to use.
-        sambaverse, sambastudio and  CoE endpoints implemented.
+        sambaverse, sambastudio and fastapi endpoints implemented.
         """
-
-        if self.llm_info['api'] == 'sambastudio':
-            if self.llm_info['coe']:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'select_expert': self.llm_info['select_expert'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-            else:
-                llm = SambaStudio(
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-        elif self.llm_info['api'] == 'sambaverse':
-            llm = Sambaverse(  # type:ignore
-                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                model_kwargs={
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'select_expert': self.llm_info['select_expert'],
-                    'temperature': self.llm_info['temperature'],
-                },
-            )
-        elif self.llm_info['api'] == 'fastcoe':
-            llm = SambaStudioFastCoE(
-                max_tokens=self.llm_info['max_tokens_to_generate'],
-                model=self.llm_info['select_expert'],
-            )
-        else:
-            raise ValueError(
-                f"Invalid LLM API: {self.llm_info['api']}, only 'fastcoe' 'sambastudio' and 'sambaverse' are supported."
-            )
+        llm = APIGateway.load_llm(
+            type=self.llm_info['api'],
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+        )           
         return llm
 
     def get_tools_schemas(
@@ -280,7 +255,7 @@ class FunctionCallingLlm:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
     
-    def msgs_to_fast_coe(self, msgs: list) -> list:
+    def msgs_to_fast_api(self, msgs: list) -> list:
         """
         convert a list of langchain messages with roles to expected FastCoE input
 
@@ -318,8 +293,8 @@ class FunctionCallingLlm:
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            if self.llm_info['api'] == 'fastcoe':
-                prompt = self.msgs_to_fast_coe(history)
+            if self.llm_info['api'] == 'fastapi':
+                prompt = self.msgs_to_fast_api(history)
             else:
                 prompt = self.msgs_to_llama3_str(history)
             print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   
