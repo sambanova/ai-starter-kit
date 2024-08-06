@@ -342,7 +342,7 @@ class SnsdkWrapper:
                 project_name=project_name, description=project_description
             )
             if create_project_response["status_code"] == 200:
-                project_id = create_project_response["data"]["project_id"]
+                project_id = create_project_response["id"]
                 logging.info(
                     f"Project with name {project_name} created with id {project_id}"
                 )
@@ -375,20 +375,24 @@ class SnsdkWrapper:
         """
         list_projects_response = self.snsdk_client.list_projects()
         if list_projects_response["status_code"] == 200:
+            print(list_projects_response)
             projects = []
-            for project in list_projects_response["data"].get("projects"):
+            for project in list_projects_response.get("projects"):
                 if verbose:
                     projects.append({k: v for k, v in project.items()})
                 else:
-                    projects.append(
-                        {
-                            k: v
-                            for k, v in project.items()
-                            if k in ["project_name", "project_id", "status", "user_id"]
-                        }
-                    )
+                    project_info = {
+                        k: v
+                        for k, v in project.items()
+                        if k in ["name", "id", "status"]
+                    }
+                    project_info["owner"] = project["metadata"]["owner"]
+                    projects.append(project_info)
             return projects
         else:
+            logging.error(
+                f"Failed to list projects. Details: {list_projects_response['detail']}"
+            )
             logging.error(
                 f"Failed to list projects. Details: {list_projects_response['detail']}"
             )
@@ -887,6 +891,7 @@ class SnsdkWrapper:
         job_description: Optional[str] = None,
         job_type: Optional[str] = None,
         model: Optional[str] = None,
+        model_version: Optional[int] = None,
         dataset_name: Optional[str] = None,
         parallel_instances: Optional[int] = None,
         load_state: Optional[bool] = None,
@@ -908,6 +913,8 @@ class SnsdkWrapper:
                 If not provided, the type from the configs file will be used.
             model (str, optional).  the name of the model to fine tune.
                 If not provided, the model name from the configs file will be used.
+            model_version (int, optional).  the version of the model to fine tune.
+                If not provided, the model version from the configs file will be used.
             dataset_name (str, optional).  the name of the dataset to finetune with.
                 If not provided, the dataset name from the configs file will be used.
             parallel_instances (int, optional). the number of instances to use for the Job.
@@ -979,6 +986,9 @@ class SnsdkWrapper:
         if job_name is None:
             self._raise_error_if_config_is_none()
             job_name = self.config["job"]["job_name"]
+        if model_version is None:
+            self._raise_error_if_config_is_none()
+            job_name = self.config["job"]["model_version"]
         if job_description is None:
             self._raise_error_if_config_is_none()
             job_description = self.config["job"]["job_description"]
@@ -1008,6 +1018,7 @@ class SnsdkWrapper:
             description=job_description,
             job_type=job_type,
             model_checkpoint=model_id,
+            model_version=model_version,
             dataset=dataset_id,
             parallel_instances=parallel_instances,
             load_state=load_state,
