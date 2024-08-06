@@ -7,7 +7,7 @@ from langchain_core.prompts import load_prompt
 from langchain_experimental.utilities import PythonREPL
 import re
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 

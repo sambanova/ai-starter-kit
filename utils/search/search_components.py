@@ -6,7 +6,7 @@ from langchain.schema import Document
 from langchain.vectorstores import Chroma
 from langchain_core.embeddings import Embeddings
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
