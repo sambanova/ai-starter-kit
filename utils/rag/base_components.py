@@ -22,6 +22,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.logging_utils import log_method # type: ignore
+
 
 class BaseComponents:
     def __init__(self, configs: dict) -> None:
@@ -220,6 +222,7 @@ class BaseComponents:
 
         return docs_sorted
 
+    @log_method
     def llm_generation(self, state: dict) -> dict:
         """
         Generates a response from the selected LLM (without any external knowledge or context).

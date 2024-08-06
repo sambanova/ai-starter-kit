@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.schema import Document
 from langchain.vectorstores import Chroma
@@ -13,7 +13,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.rag.base_components import BaseComponents
+from utils.rag.base_components import BaseComponents # type: ignore
+from utils.logging_utils import log_method # type: ignore
 
 class SearchComponents(BaseComponents):
     """
@@ -33,7 +34,7 @@ class SearchComponents(BaseComponents):
         configs: str, 
         embeddings: Embeddings, 
         vectorstore: Chroma, 
-        examples: dict=None) -> None:
+        examples: Optional[Dict[Any, Any]] = None) -> None:
         """
         Initializes the RAG components.
 
@@ -51,7 +52,8 @@ class SearchComponents(BaseComponents):
         
         self.configs: Dict = self.load_config(configs)
         self.prompts_paths: Dict = self.configs["prompts"]
-
+    
+    @log_method
     def tavily_web_search(self, state: dict) -> dict:
         """
         Web search using Tavily based based on the question
@@ -82,17 +84,17 @@ class SearchComponents(BaseComponents):
         try:
             web_results: str = "\n".join([d["content"] for d in docs])
         except: 
-            web_results: str = docs
+            web_results = docs
         try:
             sources: list = [d["url"] for d in docs]
         except: 
-            sources: list = [""]
+            sources = [""]
             
-        web_results: List[Document] = Document(page_content=web_results, metadata={"filename": sources})
+        doc_web_results: Document = Document(page_content=web_results, metadata={"filename": sources})
         if documents is not None:
-            documents.append(web_results)
+            documents.append(doc_web_results)
         else:
-            documents: List[Document] = [web_results]
+            documents = [web_results]
 
         print(documents)
         return {"documents": documents, "question": question}
