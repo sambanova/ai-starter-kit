@@ -21,6 +21,7 @@ from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig
 import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
+from dotenv import load_dotenv
 
 import logging
 logging.basicConfig(
@@ -30,6 +31,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
+load_dotenv("../.env", override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, "../prompts/system-prompt_template.yaml")
 USER_PROMPT_PATH = os.path.join(file_location, "../prompts/user-prompt_template.yaml")
@@ -45,6 +47,8 @@ class BasePerformanceEvaluator(abc.ABC):
         is_stream_mode: bool = True,
         timeout: int = 600,
     ):
+        base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
+        
         self.model_name = model_name
         self.results_dir = results_dir
         self.num_workers = num_workers

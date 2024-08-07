@@ -68,7 +68,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example:
     - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+        "https://api-stage.sambanova.net/api/predict/generic/stream/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 
     - You can enter the following in the env file (with no spaces):
 
@@ -79,6 +79,8 @@ git clone https://github.com/sambanova/ai-starter-kit.git
         SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
         SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
+__Note: only streaming endpoint responses are supported for now__
+__Note: API v1 and API v2 are supported__
 
 ## Set up for FastAPI CoE users
 

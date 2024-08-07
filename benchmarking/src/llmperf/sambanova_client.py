@@ -21,8 +21,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-API_BASE_PATH = "/api"
-
 class BaseAPIEndpoint(abc.ABC):
     def __init__(
         self,
@@ -224,6 +222,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
         self.base_url = os.environ.get("SAMBASTUDIO_BASE_URL")
+        self.base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
         self.project_id = os.environ.get("SAMBASTUDIO_PROJECT_ID")
         self.endpoint_id = os.environ.get("SAMBASTUDIO_ENDPOINT_ID")
         self.api_key = os.environ.get("SAMBASTUDIO_API_KEY")
@@ -237,11 +236,11 @@ class SambaStudioAPI(BaseAPIEndpoint):
         """
 
         if self.request_config.is_stream_mode:
-            path = f"/predict/generic/stream/{self.project_id}/{self.endpoint_id}"
+            path = f"{self.base_uri}/stream/{self.project_id}/{self.endpoint_id}"
         else:
-            path = f"/predict/generic/{self.project_id}/{self.endpoint_id}"
+            path = f"{self.base_uri}/{self.project_id}/{self.endpoint_id}"
         
-        url = f"{self.base_url}{API_BASE_PATH}{path}"
+        url = f"{self.base_url}/{path}"
         
         return url
     
@@ -249,9 +248,12 @@ class SambaStudioAPI(BaseAPIEndpoint):
         """ Gets headers for API call """
         return {"key": self.api_key}
     
-    def _get_json_data(self) -> dict:
+    def _get_json_data(self, url: str) -> dict:
         """Gets json body for API call
 
+        Args:
+            url: URL being used for the API call
+            
         Returns:
             dict: API call body according to COE and streaming conditions
         """
@@ -263,17 +265,23 @@ class SambaStudioAPI(BaseAPIEndpoint):
             sampling_params["select_expert"] = self.request_config.model.split("/")[-1]
             sampling_params["process_prompt"] = False
     
-        extended_sampling_params = {
-            k: {"type": type(v).__name__, "value": str(v)}
-            for k, v in (sampling_params.items())
-        }
-        extended_sampling_params = json.dumps(extended_sampling_params)
-        
-        # Change request body whether API call is streaming or not
-        if self.request_config.is_stream_mode:
-            data = {"instance": prompt, "params": json.loads(extended_sampling_params)}
-        else:
-            data = {"instances": [prompt], "params": json.loads(extended_sampling_params)}
+        # build payload for api v2
+        if "/api/v2" in url.lower().strip():  
+            tuning_params = json.loads(json.dumps(sampling_params))
+            data = {"items": [{"id":"item1", "value": prompt}], "params": tuning_params}
+        # support to build payload for api v1 
+        else: 
+            extended_sampling_params = {
+                k: {"type": type(v).__name__, "value": str(v)}
+                for k, v in (sampling_params.items())
+            }
+            extended_sampling_params = json.dumps(extended_sampling_params)
+            
+            # Change request body whether API call is streaming or not
+            if self.request_config.is_stream_mode:
+                data = {"instance": prompt, "params": json.loads(extended_sampling_params)}
+            else:
+                data = {"instances": [prompt], "params": json.loads(extended_sampling_params)}
             
         return data
     
@@ -294,7 +302,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         # Get API request components
         url = self._get_url()
         headers = self._get_headers()
-        json_data = self._get_json_data()
+        json_data = self._get_json_data(url)
         
         # Set variables
         generated_text = ""
@@ -312,21 +320,41 @@ class SambaStudioAPI(BaseAPIEndpoint):
             ) as response:
                 if response.status_code != 200:
                     response.raise_for_status()
-                
-                for chunk_orig in response.iter_lines(chunk_size=None):
-                    chunk = chunk_orig.strip()
-                    data = json.loads(chunk)
-
-                    completion = data["result"]["responses"][0]["is_last_response"]
-                    chunks_timings.append(time.monotonic() - chunk_start_time)
-                    chunk_start_time = time.monotonic()
-                    if completion is False:
-                        chunks_received.append(data["result"]["responses"][0]["stream_token"])
-                        continue
-                    else:
-                        generated_text = data["result"]["responses"][0]["completion"]
-                        response_dict = data["result"]["responses"][0]
+                    
+                # fetch generated text and metrics for api v2
+                if "/api/v2" in url.lower().strip():
+                    
+                    for chunk_orig in response.iter_lines(chunk_size=None):
+                        chunk = chunk_orig.strip()
+                        data = json.loads(chunk)
+                    
+                        completion = data["result"]["items"][0]["value"]["is_last_response"]
+                        chunks_timings.append(time.monotonic() - chunk_start_time)
+                        chunk_start_time = time.monotonic()
+                        if completion is False:
+                            chunks_received.append(data["result"]["items"][0]["value"]["stream_token"])
+                            continue
+                        else:
+                            generated_text = data["result"]["items"][0]["value"]["completion"]
+                            response_dict = data["result"]["items"][0]["value"]
                         break
+                # support to fetch generated text and metrics for api v1
+                else:
+                
+                    for chunk_orig in response.iter_lines(chunk_size=None):
+                        chunk = chunk_orig.strip()
+                        data = json.loads(chunk)
+
+                        completion = data["result"]["responses"][0]["is_last_response"]
+                        chunks_timings.append(time.monotonic() - chunk_start_time)
+                        chunk_start_time = time.monotonic()
+                        if completion is False:
+                            chunks_received.append(data["result"]["responses"][0]["stream_token"])
+                            continue
+                        else:
+                            generated_text = data["result"]["responses"][0]["completion"]
+                            response_dict = data["result"]["responses"][0]
+                            break
         else:
             # TODO: support non-streaming mode
             raise ValueError("Streaming mode required")
