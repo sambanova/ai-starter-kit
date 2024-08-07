@@ -17,8 +17,8 @@ Multimodal Knowledge Retrieval
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the LVLM](#set-up-the-lvlm)
-        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
+    - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+    - [Update the Embeddings API information](#update-the-embeddings-api-information)
     - [Install system dependencies](#install-system-dependencies)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
@@ -83,7 +83,7 @@ PDF Documents: The model performs well in analyzing PDF documents that include b
 
 This overview should help users understand the strengths and limitations of the image analysis capabilities in your AI Starter Kit, enabling them to make better use of the system.
  
-> In future model checkpoints, which will be available in SmabaStudio, you will have access to better-performing models with fewer limitations in image understanding, providing more accurate and detailed analysis capabilities.
+> In future model checkpoints, which will be available in SambaStudio, you will have access to better-performing models with fewer limitations in image understanding, providing more accurate and detailed analysis capabilities.
 
 # Before you begin
 
@@ -114,20 +114,20 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 
-### Set up the inference endpoint, configs and environment variables
+## Set up the inference endpoint, configs and environment variables
 
 The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-models-option-2) for geting your api key and setting up your environment variables.
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-### Update the Embedding API information
+## Update the Embeddings API information
 
 You have these options to specify the embedding API info: 
 

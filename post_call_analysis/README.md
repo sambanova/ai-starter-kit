@@ -16,7 +16,7 @@ Post Call Analysis
     - [Clone this repository](#clone-this-repository)
     - [Set up the models and config file](#set-up-the-models-and-config-file)
         - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
+        - [Update the Embeddings API information](#update-the-embeddings-api-information)
 - [Run the starter kit](#run-the-starter-kit)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
@@ -82,7 +82,7 @@ You must perform SambaStudio setup and can optionally perform Sambaverse setup.
 - The ASR pipeline requires that you perform the SambaStudio setup steps.
 - For the text analysis, you can use either SambaStudio, FastAPI or Sambaverse.
 
-- For **SambaStudio** setup please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
+- For **SambaStudio** setup please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
     >NOTE: You must have at least 3 RDUs available in your SambaStudio environment for the ASR pipeline batch inference jobs.
@@ -93,13 +93,13 @@ You must perform SambaStudio setup and can optionally perform Sambaverse setup.
         SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-models-option-2) for geting your api key and setting up your environment variables.
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-### Update the Embedding API information
+### Update the Embeddings API information
 
 You have these options to specify the embedding API info: 
 
