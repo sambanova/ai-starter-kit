@@ -163,7 +163,7 @@ The complete tools generation, methods, prompting and parsing for implementing f
 All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
 
 * python-dotenv (version 1.0.1)
-* langchain (version 0.2.3)
-* langchain-community (version 0.2.4)
+* langchain (version 0.2.11)
+* langchain-community (version 0.2.11)
 * langchain-experimental (version 0.0.6)
 * sseclient-py (version 1.8.0)
