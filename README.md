@@ -154,7 +154,7 @@ Integrate SambaNova Fast API LLMs with this AI starter kit updating API informat
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
-- Enter the FastAPI URL and API key in the `.env` file, as follows:
+- Enter the FastAPI URL and API key in the `.env` file, for example:
 
 ```bash
 FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
@@ -174,7 +174,7 @@ Integrate Sambaverse LLM with this AI starter kit updating API information for t
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
-- Enter a Sambaverse API key, for example "456789ab-cdef-0123-4567-89abcdef0123", in the .env file (with no spaces) as:
+- Enter the Sambaverse API key in the `.env` file, for example:
 
 ```bash
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
