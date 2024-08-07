@@ -148,14 +148,13 @@ If you're a current SambaNova customer, you can deploy your models with SambaStu
 
 ### Use SambaNova Fast API (Option 1)
 
-SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api)
+SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api).
 
-Integrate SambaNova Fast API LLMs with this AI starter kit updating API information.  
-These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
+Integrate SambaNova Fast API LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Enter the FastAPI URL and API key in the `.env` file, for example:
-
+  
 ```bash
 FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
 FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
@@ -163,15 +162,13 @@ FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
 
 ### Use Sambaverse (Option 2)
 
-Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
+Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [Sambaverse playground](https://sambaverse.sambanova.ai/playground).
 
 Please note that Sambaverse's free offering is performance-limited. Companies that are ready to evaluate the production tokens-per-second performance, volume throughput, and 10x lower total cost of ownership (TCO) of SambaNova should [contact us](https://sambaverse.sambanova.ai/contact-us) for a non-limited evaluation instance.
 
 Begin by creating a [Sambaverse](https://sambaverse.sambanova.net) account, then [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the username button. Use the available models.
 
-Integrate Sambaverse LLM with this AI starter kit updating API information for the SambaNova LLM
-
-These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
+Integrate Sambaverse LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Enter the Sambaverse API key in the `.env` file, for example:
@@ -184,9 +181,7 @@ SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 
 Begin by deploying your LLM of choice (e.g. Llama 3 8B, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-Integrate your LLM deployed on SambaStudio with this AI starter kit updating API information for the SambaNova LLM
-
-These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
+Integrate your LLM deployed on SambaStudio with this AI starter kit by updating the API information for the SambaNova LLM. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Set your SambaStudio variables, For example, enter an endpoint with the URL 
