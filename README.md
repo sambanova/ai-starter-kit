@@ -200,15 +200,15 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
-> _be sure to set batch size model parameter to 32_
+Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**. 
 
-Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**. For example, an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+For example, an endpoint with the URL
+`"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
 would be entered in the env file (with no spaces) as:
 
-```
+``` bash
 SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
-SAMBASTUDIO_EMBEDDINGS_BASE_URI="api/predict/nlp"
+SAMBASTUDIO_EMBEDDINGS_BASE_URI="api/predict/generic"
 SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
