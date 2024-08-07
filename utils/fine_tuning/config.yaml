@@ -1,23 +1,26 @@
 sambastudio:
   snapi_path: ""
-  rdu_arch: "sn10"
+  rdu_arch: "sn20"
 
 dataset:
-  dataset_name: "mitre dataset test_10"
   dataset_name: "smol_sql_dataset"
   dataset_description: "test_dataset for sql fine-tuning"
   dataset_path: "/Users/jorgep/Documents/ask_public_own/ai-starter-kit/utils/fine_tuning/sambastudio_fine_tuning_dataset"
   dataset_apps_availability: 
-  - "E5 Mistral Embedding"
-  - "Text Embedding" 
+    - 'Mistral'
+    - 'Llama 3'
+    - 'Llama 2 with dynamic batching'
+    - 'Llama 2 7B'
+    - 'Llama 2 70B with dynamic batching'
+    - 'Llama 2 70B'
+    - 'Llama 2 13B'
   dataset_job_types:
-    - "batch_predict"
+    - "evaluation"
+    - "train"
   dataset_source_type: "localMachine"
-  dataset_path: /Users/rodrigom/Desktop/aisk/finetuning/mitre
-  dataset_description: "mitre dataset test"
+  dataset_language: "english"
   dataset_filetype: "hdf5"
   dataset_url: ""
-  dataset_language: "english"
   dataset_metadata:
     labels_file: ""
     train_filepath: ""
@@ -33,6 +36,7 @@ job:
   job_description: "snsdk test training project"
   job_type: "train"
   model: "Llama-2-7b-chat-hf"
+  model_version: "1"
   parallel_instances: 1
   load_state: false
   sub_path: ""
@@ -60,6 +64,7 @@ job:
 model_checkpoint:
   model_checkpoint_id: "" #set after listing the generated checkpoints after training #a876668b-fc48-49b9-af23-6b078c40ef84-d
   model_name: "llama2_7b_fine_tuned_nstext2sql"
+  model_version: "1"
   model_description: "finetuned llama2_7b model for nstext2sql"
   model_type: "finetuned"
 

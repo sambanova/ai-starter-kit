@@ -816,7 +816,7 @@ class SnsdkWrapper:
                             {
                                 k: v
                                 for k, v in model.items()
-                                if k in ["model_checkpoint_name", "model_id"]
+                                if k in ["model_checkpoint_name", "model_id", "version"]
                             }
                         )
             return models
@@ -988,7 +988,7 @@ class SnsdkWrapper:
             job_name = self.config["job"]["job_name"]
         if model_version is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["model_version"]
+            model_version = self.config["job"]["model_version"]
         if job_description is None:
             self._raise_error_if_config_is_none()
             job_description = self.config["job"]["job_description"]
@@ -1505,6 +1505,7 @@ class SnsdkWrapper:
         endpoint_name: Optional[str] = None,
         endpoint_description: Optional[str] = None,
         model_name: Optional[str] = None,
+        model_version: Optional[str] = None,
         instances: Optional[str] = None,
         rdu_arch: Optional[str] = None,
         hyperparams: Optional[str] = None,
@@ -1521,6 +1522,7 @@ class SnsdkWrapper:
             If not provided, the endpoint description from the configuration is used.
         - model_name (str, optional): The name of the model.
             If not provided, the model name from the configuration is used.
+        - model_version (str, optional): The version of the model.
         - instances (str, optional): The number of instances for the endpoint.
             If not provided, the endpoint instances from the configuration is used.
         - rdu_arch (str, optional): The RDU architecture for the endpoint.
@@ -1568,6 +1570,9 @@ class SnsdkWrapper:
             return endpoint_id
 
         # check extra params passed or config file passed
+        if model_version is None:
+            self._raise_error_if_config_is_none()
+            model_version  = self.config["model_checkpoint"]["model_version"]
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
             endpoint_description = self.config["endpoint"]["endpoint_description"]
@@ -1587,6 +1592,7 @@ class SnsdkWrapper:
             endpoint_name=endpoint_name,
             description=endpoint_description,
             model_checkpoint=model_id,
+            model_version=model_version,
             instances=instances,
             rdu_arch=rdu_arch,
             hyperparams=json.dumps(hyperparams),
