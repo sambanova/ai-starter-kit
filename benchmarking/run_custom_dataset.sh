@@ -7,11 +7,12 @@ python src/evaluator.py \
 --results-dir "./data/results/llmperf" \
 --num-workers 1 \
 --timeout 600 \
---input-file-path "<CUSTOM DATASET PATH HERE>"
+--input-file-path "<CUSTOM DATASET PATH HERE>" \
+--llm-api "sambastudio"
 
 # Notes:
 # 1. Replace <CUSTOM DATASET PATH HERE> with the path to your custom dataset.
-
+#
 # 2. For CoE Models, make sure to include the prefix "COE/" before the expert name.
 #   For example:
 #      --model-name "COE/llama-2-7b-chat-hf"
@@ -31,3 +32,7 @@ python src/evaluator.py \
 #      --model-name "Mistral-7B-Instruct-v0.2"
 #          OR
 #      --model-name "Meta-Llama-3-8B-Instruct"
+#
+# 4. For FastAPI endpoints, change the llm-api parameter to "fastapi" and use the model name directly.
+#   For example:
+#      --model-name "llama3-8b"
