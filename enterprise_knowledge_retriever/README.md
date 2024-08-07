@@ -19,12 +19,11 @@ Table of Contents:
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Set up the inference endpoint, cofigs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Install dependencies](#install-dependencies)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
         - [Update the Embedding API information](#update-the-embedding-api-information)
-        - [Install system dependencies](#install-system-dependencies)
-        - [Deploy the AI starter kit Parser util](#deploy-the-ai-starter-kit-parser-util)
+    - [Install system dependencies](#install-system-dependencies)
+    - [Deploy the AI starter kit Parser util](#deploy-the-ai-starter-kit-parser-util)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
@@ -108,9 +107,9 @@ To increase inference speed, you can use SambaStudio E5 embedding model endpoint
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
 
-### Install system dependencies
+## Install system dependencies
 
 - Ubuntu installation:
 
@@ -129,7 +128,7 @@ To increase inference speed, you can use SambaStudio E5 embedding model endpoint
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
-### Deploy the AI starter kit Parser util 
+## Deploy the AI starter kit Parser util 
 
 This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
 
