@@ -144,6 +144,8 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 ## Getting a SambaNova API key and setting your models
 
+ If you're a current SambaNova customer with access to SambaStudio or FastAPI, you'll want to follow those instructions. If you are not yet a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is very rate limited and will not have fast RDU optimized inference speeds.
+
 ### Use SambaNova Fast API (Option 1)
 
 Fast API inference endpoint allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
