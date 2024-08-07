@@ -51,21 +51,21 @@ print(web_crawling_params)
 # Scrap sites
 filtered_sites = ["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "telagram.me", "reddit.com", "whatsapp.com", "wa.me"]
 base_urls_list=["https://www.espn.com", "https://lilianweng.github.io/posts/2023-06-23-agent/", "https://sambanova.ai/"]
-
 crawler = WebCrawlingRetrieval()
 docs, sources = crawler.web_crawl(base_urls_list, depth=1)
-print(sources) # urls
+print(sources) # list[str] (urls)
+#print(docs) # list[Document], each Document has page_content and metadata
 
-# Chunk the text and create a vectorstore
+# Initialize the LLM and embedding, chunk the text, create a vectorstore, and initialize the retrieval chain
 db_path = None
 config = config ={"force_reload":True}
-conversation = set_retrieval_qa_chain(docs, config=config)
+conversation = set_retrieval_qa_chain(docs, config=config) # WebCrawlingRetrieval
 
-# Initialize the LLM and retrieval chain, and ask a question
+# Ask a question
 user_question = "which kinds of memory can an agent have?"
 response = conversation.qa_chain.invoke({"question": user_question})
 print(f'Response ={response["answer"]}')
-
+assert response["answer"], "LLM answer shouldn't be empty"
 
 
 
