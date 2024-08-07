@@ -179,14 +179,12 @@ SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 
 ### Use SambaStudio (Option 3)
 
-Begin by deploying your LLM of choice (e.g. Llama 3 8B, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin by deploying your LLM of choice (e.g. Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 Integrate your LLM deployed on SambaStudio with this AI starter kit by updating the API information for the SambaNova LLM. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
-- Set your SambaStudio variables, For example, enter an endpoint with the URL 
-`"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
-in the .env file (with no spaces) as:
+- Set your SambaStudio variables in the `.env` file, for example:
 
 ``` bash
 SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
