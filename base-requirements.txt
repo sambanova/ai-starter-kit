@@ -32,6 +32,10 @@ faiss-cpu==1.7.4
 chromadb==0.4.24
 PyMuPDF==1.23.4
 PyMuPDFb==1.23.3
+pypandoc==1.13
+pypandoc_binary==1.13
+python-docx==1.1.2
+xlrd==2.0.1
 
 # Web and API
 requests>=2.32.2
