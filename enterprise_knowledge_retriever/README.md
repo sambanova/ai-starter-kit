@@ -20,7 +20,7 @@ Table of Contents:
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Set up the inference endpoint and environment variables](#set-up-the-inference-endpoint-and-environment-variables)
+        - [Set up the inference endpoint, cofigs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
         - [Install dependencies](#install-dependencies)
         - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
@@ -81,9 +81,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
- The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer with access to SambaStudio or FastAPI, you'll want to follow those instructions. If you are not yet a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is very rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
--  If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
 - If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.

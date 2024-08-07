@@ -15,7 +15,7 @@ Benchmarking
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
   - [Clone this repository](#clone-this-repository)
-  - [Set up the account and config file](#set-up-the-account-and-config-file)
+  - [Set up the inference endpoint, and environment variables](#set-up-the-inference-endpoint-and-environment-variables)
   - [Create the (virtual) environment](#create-the-virtual-environment)
 - [Use the starter kit](#use-the-starter-kit)
   - [GUI Option](#gui-option)
@@ -60,36 +60,15 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up for SambaStudio users
+## Set up the inference endpoint, and environment variables
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup. 
+The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API.
 
-2. Select the LLM you want to use (e.g. COE/Meta-Llama-3-8B-Instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html) for a general reference, and the [Dynamic batching documentation](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html#_create_a_dynamic_batching_coe_endpoint) for more information on how to deploy a dynamic batching endpoint. 
+- If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-3. Update the `ai-starter-kit/.env` config file in the root repo directory. Here's an example:
-    - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/generic/stream/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-
-    - You can enter the following in the env file (with no spaces):
-
-    ``` bash
-        SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-        SAMBASTUDIO_BASE_URI="api/predict/generic"
-        SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-        SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-        SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
-__Note: only streaming endpoint responses are supported for now__
-__Note: API v1 and API v2 are supported__
-
-## Set up for FastAPI CoE users
-
-In the repo root directory, create an env file in `ai-starter-kit/.env` and specify the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
-
-``` bash
-        FASTAPI_URL = "https://abcd.snova.ai/api/v1/chat/completion"
-        FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
-```
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
@@ -110,9 +89,6 @@ When using the benchmarking starter kit, you have two options for running the pr
 
 - [*GUI Option*](#gui-option): This option contains plots and configurations from a web browser.
 - [*CLI Option*](#cli-option): This option allows you to run the program from the command line.
-
-
-
 
 ## GUI Option
 

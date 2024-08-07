@@ -8,26 +8,25 @@
 Fine-Tuning Embedding Starter Kit
 ====================
 
-
 <!-- TOC -->
 
+- [Fine-Tuning Embedding Starter Kit](#fine-tuning-embedding-starter-kit)
 - [Key features](#key-features)
 - [Before you begin](#before-you-begin)
-   - [Clone the repo and install dependencies](#clone-the-repo-and-install-dependencies)
-   - [Ensure your environment meets prerequisites](#ensure-your-environment-meets-prerequisites)
-   - [Set up the account and config file](#set-up-the-account-and-config-file)
-      - [Setup for SambaStudio](#setup-for-sambastudio)
-      - [Setup for Sambaverse](#setup-for-sambaverse)
+    - [Clone the repo and install dependencies](#clone-the-repo-and-install-dependencies)
+    - [Ensure your environment meets prerequisites](#ensure-your-environment-meets-prerequisites)
+    - [Set up the account and config file](#set-up-the-account-and-config-file)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
 - [Using the model](#using-the-model)
-   - [Prepare data and run the script](#prepare-data-and-run-the-script)
-      - [Additional arguments](#additional-arguments)
-   - [Perform fine tuning using pregenerated data](#perform-finetuning-using-pre-generated-data)
-   - [Evaluating a finetuned model](#evaluating-a-finetuned-model)
-   - [Using SambaNova systems (SNS) embeddings](#using-sambanova-systems-sns-embeddings)
-- [Using pre-generated data for finetuning](#using-pre-generated-data-for-finetuning)
+    - [Prepare data and run the script](#prepare-data-and-run-the-script)
+        - [Additional arguments](#additional-arguments)
+    - [Perform finetuning using pre-generated data](#perform-finetuning-using-pre-generated-data)
+    - [Evaluating a finetuned model](#evaluating-a-finetuned-model)
+    - [Using SambaNova systems SNS embeddings](#using-sambanova-systems-sns-embeddings)
 - [Contributing](#contributing)
 - [License](#license)
-- [Acknowledgements](#acknowledgments)
+- [Acknowledgments](#acknowledgments)
 
 <!-- /TOC -->
 
@@ -73,44 +72,22 @@ Clone the start kit repo.
 
 You can use the model with SambaStudio or Sambaverse. 
 
-### Setup for SambaStudio
+## Set up the models and config file
 
-To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudio account. 
+### Set up the inference endpoint, configs and environment variables
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+### Set up the inference endpoint, configs and environment variables
 
-```yaml
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-VECTOR_DB_URL=http://localhost:6333
-```
-4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
+The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-### Setup for Sambaverse
+- If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-```yaml
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-    SAMBAVERSE_URL="https://yoururl"
-```
-
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
-
-
-The script supports both SambaVerse and SambaStudio APIs. Depending on which API you want to use, provide the corresponding API keys and URLs in the .env file. If you choose to use the SNSDK instead of requests, make sure you have it installed and configured with your credentials.
-
-
-
-
-
-
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-models-option-2) for geting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 # Using the model
 
