@@ -142,9 +142,23 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 # Get started with SambaNova AI starter kit
 
-## Setting your model
+## Setting your models
 
-### Use Sambaverse models (Option 1)
+### Use SambaNova Fast API inference endpoint (Option 1)
+
+Fast API inference endpoints allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
+
+Integrate SambaNova Fast API LLMs with this AI starter kit updating API information.  
+These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
+
+- Enter the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
+
+```
+    FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
+    FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
+```
+
+### Use Sambaverse models (Option 2)
 
 Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
 
@@ -152,58 +166,37 @@ Please note that Sambaverse's free offering is performance-limited. Companies th
 
 Begin by creating a [Sambaverse](https://sambaverse.sambanova.net) account, then [get your API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) from the username button. Use the available models.
 
-### Deploy your model in SambaStudio (Option 2)
-
-Begin by deploying your LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-
-## Integrate your model in the starter kit
-
-Integrate your LLM deployed on SambaStudio with this AI starter kit in two simple steps:
-
-### 1. Clone this repo
-
-```
-  git clone https://github.com/sambanova/ai-starter-kit.git
-```
-
-### 2. Update API information for the SambaNova LLM
+Integrate Sambaverse LLM with this AI starter kit updating API information for the SambaNova LLM
 
 These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
 
-#### SambaStudio deployed model
-
-For example, enter an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-in the env file (with no spaces) as:
-
-```
-SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-SAMBASTUDIO_BASE_URI="api/predict/nlp"
-SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-
-#### FastAPI CoE model
-
-- Enter the FastAPI CoE url and the FastAPI CoE key (with no spaces), as in the following example:
-
-```
-    FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
-    FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
-```
-
-#### Sambaverse model
-
-Enter a Sambaverse API key, for example
-"456789ab-cdef-0123-4567-89abcdef0123",
-in the env file (with no spaces) as:
+Enter a Sambaverse API key, for example "456789ab-cdef-0123-4567-89abcdef0123", in the env file (with no spaces) as:
 
 ```
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
-### 3. Update API information for SambaNova Embeddings model (optional).
+### Deploy your model in SambaStudio (Option 3)
+
+Begin by deploying your LLM of choice (e.g. Llama 3 8B, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+
+Integrate your LLM deployed on SambaStudio with this AI starter kit updating API information for the SambaNova LLM
+
+These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
+
+For example, enter an endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+in the env file (with no spaces) as:
+
+```
+SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
+SAMBASTUDIO_BASE_URI="api/predict/generic"
+SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
+SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+```
+
+## Update API information for SambaNova Embeddings model (optional).
 
 You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
@@ -221,7 +214,7 @@ SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
-### 4. Run the desired starter kit
+## Run the desired starter kit
 
 Go to the `README.md` of the starter kit you want to use and follow the instructions. See [Available AI Starter Kits](#available-ai-starter-kits).
 
