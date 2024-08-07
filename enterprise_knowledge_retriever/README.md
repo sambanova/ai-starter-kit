@@ -79,9 +79,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the models and config file
 
-### Set up the inference endpoint and environment variables
+### Set up the inference endpoint, configs and environment variables
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio, Fast-API or you want to use the publicly available Sambaverse.
+ The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer with access to SambaStudio or FastAPI, you'll want to follow those instructions. If you are not yet a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is very rate limited and will not have fast RDU optimized inference speeds.
 
 -  If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
@@ -91,9 +91,6 @@ The next step sets you up to use one of the models available from SambaNova. It 
 
 - If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-models-option-2) for geting your api key and setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
-
-###  Install dependencies
-
 
 ### Update the Embedding API information
 
