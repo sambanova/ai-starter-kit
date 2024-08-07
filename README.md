@@ -161,7 +161,7 @@ FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
 FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
-### Use Sambaverse models (Option 2)
+### Use Sambaverse (Option 2)
 
 Sambaverse allows you to interact with multiple open-source models. You can view the list of available models and interact with them in the [playground](https://sambaverse.sambanova.ai/playground).
 
@@ -180,7 +180,7 @@ These are represented as configurable variables in the environment variables fil
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
-### Deploy your model in SambaStudio (Option 3)
+### Use SambaStudio (Option 3)
 
 Begin by deploying your LLM of choice (e.g. Llama 3 8B, etc) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
