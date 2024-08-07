@@ -148,7 +148,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 ### Use SambaNova Fast API (Option 1)
 
-Fast API inference endpoint allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
+SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api)
 
 Integrate SambaNova Fast API LLMs with this AI starter kit updating API information.  
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
