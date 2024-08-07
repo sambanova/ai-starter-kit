@@ -203,7 +203,7 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 ## Update API information for SambaNova Embeddings model (optional).
 
-You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+You can use SambaStudio embedding models endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
 Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**.
 
@@ -232,7 +232,7 @@ Set your environment as shown in [integrate your model](#integrate-your-model-in
 
 #### Using Sambaverse LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **Sambaverse** LLM:
+1. Import the **samabaverse** langchain community wrapper in your project and define your **Sambaverse** LLM:
 
 ```python
 from langchain_community.llms.sambanova import Sambaverse
@@ -259,16 +259,16 @@ llm.invoke("your prompt")
 
 #### Using Sambastudio LLMs
 
-1. Import the **samabanova_endpoint** langchain wrapper in your project and define your **SambaStudio* LLM:
+1. Import the **SambaStudio** langchain community wrapper in your project and define your **SambaStudio* LLM:
 
-- If using a CoE endpont
+- If using a CoE endpoint:
 
 ```python
 from langchain_community.llms.sambanova import SambaStudio
 
 load_dotenv('.env')
 
-llm = SambaNovaEndpoint(
+llm = SambaStudio(
     model_kwargs={
       "do_sample": False,
       "max_tokens_to_generate": 512,
@@ -279,14 +279,14 @@ llm = SambaNovaEndpoint(
 )
 ```
 
-- If using a single model endpont
+- If using a single model endpoint
 
 ```python
 from langchain_community.llms.sambanova import SambaStudio
 
 load_dotenv('.env')
 
-llm = SambaNovaEndpoint(
+llm = SambaStudio(
     model_kwargs={
       "do_sample": False,
       "max_tokens_to_generate": 512,
@@ -304,11 +304,32 @@ llm.invoke("your prompt")
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
+### Using SambaNova Fast-API LLMs
+
+1. Import our **SambaNovaFastAPI** langchain internal wrapper in your project and define your **SambaNovaFastAPI** LLM:
+
+
+```python
+from util..model_wrappers.llms.langchain_llms import SambaNovaFastAPI
+
+load_dotenv('.env')
+
+llm = SambaNovaFastAPI(model='llama3-70b')
+```
+
+2. Use the model
+
+```python
+llm.invoke("your prompt")
+```
+
+See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
+
 ### Embedding Wrapper
 
-1. Import the **sambastudio_endpoint** langchain wrapper in your project and define your **SambaStudioEmbeddings** embedding:
+1. Import the **SambaStudioEmbedding** langchain community wrapper in your project and define your **SambaStudioEmbeddings** embedding:
 
-- If using a CoE endpont
+- If using a CoE endpoint
 
 ```python
 from langchain_community.embeddings import SambaStudioEmbeddings
@@ -323,7 +344,7 @@ embedding = SambaStudioEmbeddings(
               )
 ```
 
-- If using a single embedding model endpont
+- If using a single embedding model endpoint
 
 ```python
 from langchain_community.embeddings import SambaStudioEmbeddings
