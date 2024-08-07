@@ -17,6 +17,7 @@ Search Assistant
     - [Set up the account and config file](#set-up-the-account-and-config-file)
         - [Setup for SambaStudio](#setup-for-sambastudio)
         - [Setup for Sambaverse](#setup-for-sambaverse)
+        - [Setup for FastAPI users](#setup-for-fastapi-users)
         - [Update the Embedding API information](#update-the-embedding-api-information)
 - [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
@@ -101,6 +102,17 @@ To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudi
     ```bash
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
     ```
+
+### Setup for FastAPI users 
+
+- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
+
+    ``` bash
+        FASTAPI_URL = "https://abcd.snova.ai/api/v1/chat/completion"
+        FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
+    ```
+
+- In the [config file](./config.yaml), set the variable `api` in  `llm` to `"fastapi"`, and set the `select_expert` config.
 
 4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
 
@@ -419,8 +431,8 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (Version 1.32.2)
 - streamlit-extras (Version 0.3.6)
-- langchain (Version 0.2.1)
-- langchain_community (Version 0.2.1)
+- langchain (Version 0.2.11)
+- langchain_community (Version 0.2.11)
 - sentence_transformers (Version 2.2.2)
 - instructorembedding (Version 1.0.1)
 - faiss-cpu (Version 1.7.4)

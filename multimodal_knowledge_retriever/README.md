@@ -19,6 +19,7 @@ Multimodal Knowledge Retrieval
     - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
         - [Setup for Sambaverse users](#setup-for-sambaverse-users)
+        - [Setup for FastAPI users](#setup-for-fastapi-users)
         - [Update the Embedding API information](#update-the-embedding-api-information)
         - [Install system dependencies](#install-system-dependencies)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
@@ -134,7 +135,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
    ```
 
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
+4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and set the `select_expert` and `CoE` in `llm` config if you are using a CoE endpoint.
 
 ### Setup for Sambaverse users 
 
@@ -145,6 +146,19 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 ```yaml
     SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
+
+4. Open the [config file](./config.yaml), set the variable `api` to `"sambaverse"`, and set the `select_expert` in `llm` config.
+
+### Setup for FastAPI users 
+
+- In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
+
+    ``` bash
+        FASTAPI_URL = "https://abcd.snova.ai/api/v1/chat/completion"
+        FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
+    ```
+
+- In the [config file](./config.yaml), set the variable `api` to `"fastapi"`, and set the `select_expert` in `llm` config.
 
 ### Update the Embedding API information
 
@@ -416,7 +430,8 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - pydantic (version 2.7.0)
 - pydantic_core (version 2.18.1)
 - python-dotenv (version 1.0.1)
-- langchain (version 0.1.17)
+- langchain (version 0.2.11)
+- langchain_community (version 0.2.11)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
 - streamlit-extras
