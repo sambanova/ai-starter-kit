@@ -432,7 +432,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - streamlit (Version 1.32.2)
 - streamlit-extras (Version 0.3.6)
 - langchain (Version 0.2.11)
-- langchain_community (Version 0.2.11)
+- langchain_community (Version 0.2.10)
 - sentence_transformers (Version 2.2.2)
 - instructorembedding (Version 1.0.1)
 - faiss-cpu (Version 1.7.4)

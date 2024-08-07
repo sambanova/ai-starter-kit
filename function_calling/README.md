@@ -164,6 +164,6 @@ All the packages/tools are listed in the `requirements.txt` file in the project 
 
 * python-dotenv (version 1.0.1)
 * langchain (version 0.2.11)
-* langchain-community (version 0.2.11)
+* langchain-community (version 0.2.10)
 * langchain-experimental (version 0.0.6)
 * sseclient-py (version 1.8.0)

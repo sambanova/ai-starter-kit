@@ -429,7 +429,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - streamlit (version 1.25.0)
 - pydantic (version 2.7.0)
 - pydantic_core (version 2.18.1)
-- langchain-community (version 0.2.11)
+- langchain-community (version 0.2.10)
 - langchain-core (version 0.2.25)
 - langchain (version 0.2.11)
 - sentence_transformers (version 2.2.2)

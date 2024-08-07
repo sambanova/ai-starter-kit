@@ -431,7 +431,7 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - pydantic_core (version 2.18.1)
 - python-dotenv (version 1.0.1)
 - langchain (version 0.2.11)
-- langchain_community (version 0.2.11)
+- langchain_community (version 0.2.10)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)
 - streamlit-extras
