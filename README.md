@@ -148,17 +148,17 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 ### Use SambaNova Fast API (Option 1)
 
-Fast API inference endpoint allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
+SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api)
 
 Integrate SambaNova Fast API LLMs with this AI starter kit updating API information.  
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-- Create the .env file `ai-starter-kit/.env` if not exist.
-- Enter the FastAPI CoE url and the FastAPI CoE API key in the env file (with no spaces), as in the following example:
+- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
+- Enter the FastAPI URL and API key in the `.env` file, as follows:
 
 ```bash
-    FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
-    FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
+FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
+FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
 ### Use Sambaverse models (Option 2)
@@ -173,7 +173,7 @@ Integrate Sambaverse LLM with this AI starter kit updating API information for t
 
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-- Create the .env file `ai-starter-kit/.env` if not exist.
+- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Enter a Sambaverse API key, for example "456789ab-cdef-0123-4567-89abcdef0123", in the .env file (with no spaces) as:
 
 ```bash
@@ -188,7 +188,7 @@ Integrate your LLM deployed on SambaStudio with this AI starter kit updating API
 
 These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-- Create the .env file `ai-starter-kit/.env` if not exist.
+- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Set your SambaStudio variables, For example, enter an endpoint with the URL 
 `"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
 in the .env file (with no spaces) as:
