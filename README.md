@@ -142,18 +142,19 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 # Get started with SambaNova AI starter kit
 
-## Setting your models
+## Getting a SambaNova API key and setting your models
 
-### Use SambaNova Fast API inference endpoint (Option 1)
+### Use SambaNova Fast API (Option 1)
 
-Fast API inference endpoints allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
+Fast API inference endpoint allow you to interact with multiple open-source models. You can fin more information in [Smabanova Fast API webpage](https://sambanova.ai/fast-api)
 
 Integrate SambaNova Fast API LLMs with this AI starter kit updating API information.  
-These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
+These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-- Enter the FastAPI CoE url and the FastAPI CoE API key (with no spaces), as in the following example:
+- Create the .env file `ai-starter-kit/.env` if not exist.
+- Enter the FastAPI CoE url and the FastAPI CoE API key in the env file (with no spaces), as in the following example:
 
-```
+```bash
     FASTAPI_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
     FASTAPI_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
@@ -168,11 +169,12 @@ Begin by creating a [Sambaverse](https://sambaverse.sambanova.net) account, then
 
 Integrate Sambaverse LLM with this AI starter kit updating API information for the SambaNova LLM
 
-These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
+These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-Enter a Sambaverse API key, for example "456789ab-cdef-0123-4567-89abcdef0123", in the env file (with no spaces) as:
+- Create the .env file `ai-starter-kit/.env` if not exist.
+- Enter a Sambaverse API key, for example "456789ab-cdef-0123-4567-89abcdef0123", in the .env file (with no spaces) as:
 
-```
+```bash
 SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
@@ -182,13 +184,14 @@ Begin by deploying your LLM of choice (e.g. Llama 3 8B, etc) to an endpoint for 
 
 Integrate your LLM deployed on SambaStudio with this AI starter kit updating API information for the SambaNova LLM
 
-These are represented as configurable variables in the environment variables file in `sn-ai-starter-kit/.env`.
+These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`.
 
-For example, enter an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-in the env file (with no spaces) as:
+- Create the .env file `ai-starter-kit/.env` if not exist.
+- Set your SambaStudio variables, For example, enter an endpoint with the URL 
+`"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
+in the .env file (with no spaces) as:
 
-```
+``` bash
 SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
 SAMBASTUDIO_BASE_URI="api/predict/generic"
 SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
@@ -200,9 +203,10 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 You can use SambaStudio E5 embedding model endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
 
-Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**. 
+Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**.
 
-For example, an endpoint with the URL
+- Create the .env file `ai-starter-kit/.env` if not exist.
+- Set your SambaStudio variables. For example, an endpoint with the URL
 `"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
 would be entered in the env file (with no spaces) as:
 

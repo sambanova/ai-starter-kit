@@ -86,7 +86,7 @@ The next step sets you up to use one of the models available from SambaNova. It 
 -  If using **SambaStudio** Please follow the instructions [here](../README.md#deploy-your-model-in-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-- If using **SambaNova Fast-API inference endpoint** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-inference-endpoint-option-1) for setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
 - If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-models-option-2) for geting your api key and setting up your environment variables.
