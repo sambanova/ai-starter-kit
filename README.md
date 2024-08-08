@@ -148,7 +148,7 @@ Currently, there are three ways to obtain an API key from SambaNova. If you're a
 
 ### Use SambaNova Fast API (Option 1)
 
-SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api).
+SambaNova Fast API allows you to interact with multiple open-source models. You can find more information and get your API key on the [SambaNova Fast API webpage](https://sambanova.ai/fast-api).
 
 Integrate SambaNova Fast API LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
