@@ -6,10 +6,10 @@ input_variables:
 name: null
 output_parser: null
 partial_variables: {}
-template: "<s>[INST] <<SYS>>\nYou're an assitant\n<</SYS>>\n        Given the following\
+template: "\nYou're an assitant\n        Given the following\
   \ chat history and follow up question, rephrase the follow up question using the\
   \ chat history. Only output the rephrased question.\n\n        Chat history:\n \
   \       {chat_history}\n\n        Follow up question: {question}\n\n        Rephrased\
-  \ question: [/INST]"
+  \ question: "
 template_format: f-string
 validate_template: false

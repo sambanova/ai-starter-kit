@@ -21,3 +21,4 @@ python-dotenv==1.0.0
 chromadb==0.4.24
 streamlit==1.25.0
 sseclient-py==1.8.0
+pypdf==4.3.1

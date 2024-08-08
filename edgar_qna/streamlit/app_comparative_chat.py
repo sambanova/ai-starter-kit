@@ -53,7 +53,7 @@ def handle_userinput(user_question: str):
 
         with st.chat_message(
             "ai",
-            avatar="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+            avatar="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
         ):
             st.write(f"{answer}")
                     
@@ -71,7 +71,7 @@ def get_ticker_options() -> dict:
 
 st.set_page_config(
     page_title="AI Starter Kit",
-    page_icon="https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg",
+    page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
 )
 
 if "conversation" not in st.session_state:
