@@ -186,6 +186,7 @@ class SecFiling:
             input_key="question",
             output_key="answer",
             return_source_documents=True,
+            verbose=True
         )
 
         custom_prompt = load_prompt(os.path.join(kit_dir,"prompts/edgar_qna.yaml"))
