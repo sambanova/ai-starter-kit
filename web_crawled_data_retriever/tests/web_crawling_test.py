@@ -23,9 +23,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Setup paths and global variables
-current_dir = os.getcwd()
-kit_dir = current_dir
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+file_dir = os.path.dirname(os.path.abspath(__file__)) 
+kit_dir = os.path.abspath(os.path.join(file_dir, "..")) # absolute path to kit directory
+repo_dir = os.path.abspath(os.path.join(kit_dir, "..")) # absolute path to ai-starter-kit directory
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
