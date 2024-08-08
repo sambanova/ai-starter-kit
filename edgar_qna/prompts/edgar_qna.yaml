@@ -6,11 +6,13 @@ input_variables:
 name: null
 output_parser: null
 partial_variables: {}
-template: "\n        You're a helpful assistant in filing reports.\n\
-          Given the following context and the following question in the next sections.\n\
-  \        Context:\n        {context}\n        \n        Question:  \n        {question}\n\
-  \        \n        Answer the question using only the information from the context. However, \
-  \ if you don't know the answer, then say that you do not have\
-  \ information about it.\n        Helpful Answer: "
+template: "\n        You're a helpful assistant in filing reports.\
+  \ Follow the following rules:\n        1. If you don't know the answer, respond\
+  \ kindly that you don't have information about it. \n        2. Do not try to make\
+  \ up an answer.\n        3. Start the conversation expressing general assitance\
+  \ in anything the user would like to ask.\n        Given the following\
+  \ context and follow up question, provide a helpful answer.\n\n        Context:\n\
+  \        {context}\n\n        Follow up question: {question}\n\n        Helpful\
+  \ answer: "
 template_format: f-string
 validate_template: false
