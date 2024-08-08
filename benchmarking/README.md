@@ -401,9 +401,10 @@ This kit also supports [SambaNova Studio models with Dynamic Batch Size](https:/
 
 In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that to test different batch sizes. 
 
-Here's an example with parameters for using an endpoint with and without dynamic batching size.
+Here are some examples with parameters for using an endpoint with and without dynamic batching size.
 
-Non-batching setup
+**Non-batching setup:**
+
 If the user wants to send 32 requests to be processed sequentially, here are the parameter values that can work as an example:
 - Parameters:
   - Number of requests: 32
@@ -413,7 +414,8 @@ We can see in the following Gantt chart how the 32 requests are being executed o
 
 ![sequential_requests](./imgs/gantt_chart_sequential_calls.png)
 
-Batching setup
+**Batching setup:**
+
 If the user wants to send 60 requests to be processed in batch, it's important to consider the number of workers chosen.
 
 For example:
