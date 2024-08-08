@@ -401,18 +401,42 @@ This kit also supports [SambaNova Studio models with Dynamic Batch Size](https:/
 
 In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that to test different batch sizes. 
 
-Here's an example with parameters for using an endpoint with and without dynamic batching size.
+Here are some examples with parameters for using an endpoint with and without dynamic batching size.
 
-Non-batching setup
+**Non-batching setup:**
+
+If the user wants to send 32 requests to be processed sequentially, here are the parameter values that can work as an example:
 - Parameters:
   - Number of requests: 32
   - Number of concurrent workers: 1
 
-Batching setup
-- Parameters:
-  - Number of requests: 32
-  - Number of concurrent workers: 32
+We can see in the following Gantt chart how the 32 requests are being executed one after the other. (FastAPI with LLama3-8b was used for this example)
 
+![sequential_requests](./imgs/gantt_chart_sequential_calls.png)
+
+**Batching setup:**
+
+If the user wants to send 60 requests to be processed in batch, it's important to consider the number of workers chosen.
+
+For example:
+
+For the following parameter values:
+- Parameters:
+  - Number of requests: 60
+  - Number of concurrent workers: 21
+
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-4 requests, because there are 21 workers sending requests in parallel. This setup took ~ 4 mins 30 secs.
+
+![sequential_requests](./imgs/gantt_chart_batched_calls_21_workers.png)
+
+Another example is the following:
+- Parameters:
+  - Number of requests: 60
+  - Number of concurrent workers: 60
+
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-16-16-8-1-1-1 requests, because there are 60 workers sending all requests in parallel. This setup took ~ 3 mins.
+
+![sequential_requests](./imgs/gantt_chart_batched_calls_60_workers.png)
 
 
 # Third-party tools and data sources 
