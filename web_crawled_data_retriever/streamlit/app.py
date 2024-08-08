@@ -206,14 +206,14 @@ def main():
                     with st.spinner("Processing"):
                         # create conversation chain
                         st.session_state.db_path = None
-                        config = config ={"force_reload":True}
+                        config = {"force_reload":True}
                         st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
                                 # storing vector database in disk  
                 st.markdown("[Optional] Save database for reuse")
                 save_location = st.text_input("Save location", "./data/my-vector-db").strip()
                 if st.button("Process and Save database"):
                     with st.spinner("Processing"):
-                        config = config ={
+                        config = {
                                         "persist_directory": save_location,
                                         }
                         st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config, save=True)
@@ -225,7 +225,7 @@ def main():
                 st.markdown("Create database")
                 if st.button("Process"):
                     with st.spinner("Processing"):
-                        config = config ={
+                        config = {
                                         "persist_directory": st.session_state.db_path,
                                         "update":True
                                         }
@@ -234,7 +234,7 @@ def main():
                 save_location = st.text_input("Save location", "./data/my-vector-db").strip()
                 if st.button("Process and Save database"):
                     with st.spinner("Processing"):
-                        config = config ={
+                        config = {
                                             "input_directory":st.session_state.db_path,
                                             "persist_directory": save_location,
                                             "update":True
