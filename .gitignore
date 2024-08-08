@@ -235,6 +235,12 @@ benchmarking/data
 benchmarking/debug
 
 =======
+# agent workflow
+agent_workflows/output
+
+logs/
+
+=======
 #evals
 eval_jumpstart/data
 eval_jumpstart/notebooks/wandb
