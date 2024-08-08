@@ -94,7 +94,7 @@ class SearchComponents(BaseComponents):
         if documents is not None:
             documents.append(doc_web_results)
         else:
-            documents = [web_results]
+            documents = [doc_web_results]
 
         print(documents)
         return {"documents": documents, "question": question}
