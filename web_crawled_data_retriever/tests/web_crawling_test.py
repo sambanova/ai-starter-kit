@@ -2,7 +2,7 @@
 """
 Web Crawling Test Script
 
-This script tests the functionality of the Web Crawling Data Retriever using unittest.
+This script tests the functionality of the Web Crawling Data Retriever kit using unittest.
 
 Usage:
     python tests/web_crawling_test.py
@@ -34,18 +34,6 @@ from src.web_crawling_retriever import WebCrawlingRetrieval
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(repo_dir,'.env'))
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-
-def get_config_info():
-        """
-        Loads json config file
-        """
-        # Read config file
-        with open(CONFIG_PATH, 'r') as yaml_file:
-            config = yaml.safe_load(yaml_file)
-        web_crawling_params = config["web_crawling"]
-        
-        return  web_crawling_params
 
 def set_retrieval_qa_chain(documents=None, config=None, save=False):
     if config is None:
@@ -61,11 +49,7 @@ def set_retrieval_qa_chain(documents=None, config=None, save=False):
     web_crawling_retrieval.retrieval_qa_chain()
     return web_crawling_retrieval
 
-# Read config
-web_crawling_params = get_config_info()
-
 # Scrap sites
-filtered_sites = ["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "telagram.me", "reddit.com", "whatsapp.com", "wa.me"]
 base_urls_list=["https://www.espn.com", "https://lilianweng.github.io/posts/2023-06-23-agent/", "https://sambanova.ai/"]
 
 class WebCrawlingTestCase(unittest.TestCase):
@@ -76,19 +60,25 @@ class WebCrawlingTestCase(unittest.TestCase):
         # Scrap sites
         cls.crawler = WebCrawlingRetrieval()
         cls.docs, cls.sources = cls.crawler.web_crawl(base_urls_list, depth=1)
-        print(cls.sources) # list[str] (urls)
-        #print(docs) # list[Document], each Document has page_content and metadata
 
-        # Initialize the LLM and embedding, chunk the text, create a vectorstore, and initialize the retrieval chain
-        db_path = None
-        config = config ={"force_reload":True}
+        # Initialize the LLM and embedding, chunk the text, create a vectorstore, and initialize the retrieval qa chain
+        config ={"force_reload":True}
         cls.conversation = set_retrieval_qa_chain(cls.docs, config=config) # WebCrawlingRetrieval
 
     # Add assertions
+    def test_web_parsing(self):
+        logger.info(self.sources)
+        self.assertTrue(self.docs, "Parsed docs shouldn't be empty") # list[str]
+        self.assertTrue(self.sources, "URL sources shouldn't be empty") # list[Document]
+    
+    def test_conversation_chain_creation(self):
+        self.assertIsNotNone(self.conversation.qa_chain, "Conversation chain shouldn't be empty")
+
     def test_question_answering(self):
         user_question = "which kinds of memory can an agent have?"
         response = self.conversation.qa_chain.invoke({"question": user_question})
-        print(response["answer"])
+        logger.info(user_question)
+        logger.info(response["answer"])
 
         self.assertIn('answer', response, "Response should have an 'answer' key")
         self.assertTrue(response['answer'], "The answer should not be empty")
@@ -138,9 +128,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
-
-
-
-
