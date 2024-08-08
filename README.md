@@ -144,7 +144,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 ## Getting a SambaNova API key and setting your models
 
-If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+Currently, there are three ways to obtain an API key from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
 ### Use SambaNova Fast API (Option 1)
 
