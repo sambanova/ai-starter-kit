@@ -425,7 +425,7 @@ For the following parameter values:
   - Number of requests: 60
   - Number of concurrent workers: 21
 
-We can see from the Gantt chart that the way they're batched and processed is 1-16-4 requests, because there are 21 workers sending requests in parallel. This setup took ~ 4 mins 30 secs.
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-4 requests, because there are 21 workers sending requests in parallel. This setup took ~ 4 mins 30 secs.
 
 ![sequential_requests](./imgs/gantt_chart_batched_calls_21_workers.png)
 
@@ -434,7 +434,7 @@ Another example is the following:
   - Number of requests: 60
   - Number of concurrent workers: 60
 
-We can see from the Gantt chart that the way they're batched and processed is 1-16-16-16-8-1-1-1 requests, because there are 60 workers sending all requests in parallel. This setup took ~ 3 mins.
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-16-16-8-1-1-1 requests, because there are 60 workers sending all requests in parallel. This setup took ~ 3 mins.
 
 ![sequential_requests](./imgs/gantt_chart_batched_calls_60_workers.png)
 
