@@ -78,10 +78,10 @@ def main():
         st.session_state.sources_history = []
     if "vectorstore" not in st.session_state:
         st.session_state.vectorstore = None
+    if 'input_disabled' not in st.session_state:
+        st.session_state.input_disabled = True
 
     st.title(":orange[SambaNova] Analyst Assistant")
-    user_question = st.chat_input("Ask questions about your data")
-    handle_userinput(user_question)
 
     with st.sidebar:
         st.title("Setup")
@@ -112,6 +112,7 @@ def main():
                     documentRetrieval.init_retriever(vectorstore)
                     st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
+                st.session_state.input_disabled = False
             st.markdown("[Optional] Save database for reuse")
             save_location = st.text_input("Save location", "./data/my-vector-db").strip()
             if st.button("Process and Save database"):
@@ -128,6 +129,7 @@ def main():
                     documentRetrieval.init_retriever(vectorstore)
                     st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
+                st.session_state.input_disabled = False
 
         else:
             db_path = st.text_input(
@@ -155,6 +157,7 @@ def main():
                             # create conversation chain
                             documentRetrieval.init_retriever(vectorstore)
                             st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain()
+                            st.session_state.input_disabled = False
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
 
@@ -181,6 +184,8 @@ def main():
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"
                 )
+    user_question = st.chat_input("Ask questions about your data", disabled=st.session_state.input_disabled)
+    handle_userinput(user_question)
 
 
 if __name__ == "__main__":
