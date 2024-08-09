@@ -93,6 +93,7 @@ def call_sambanova_api(prompt: str, selected_model: str,  api_info: str) -> str:
         str: completion of the input prompt
     """
     model_expert = _get_expert(selected_model, api_info)
+    
     #SambaNova endpoint requires these env variables. You can add more kwargs or change the value of the ones already set.
     llm = APIGateway.load_llm(
         type="sambastudio",
