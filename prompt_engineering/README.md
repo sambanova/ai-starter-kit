@@ -116,7 +116,7 @@ You will be prompted to go to the link (http://localhost:8501/) in your browser 
 
 To use the starter kit, follow these steps:
 
-1. Choose the LLM to use from the options available under **Model Selection** (Currently, only Llama2 70B is available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
+1. Choose the LLM to use from the options available under **Model Selection** (Currently, only Llama2 70B and Llama3 8B are available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
 
 2. In **Use Case for Sample Prompt**, select a template. You have the following choices:
 
@@ -149,7 +149,7 @@ If you're using a SambaStudio endpoint, follow these steps:
 1. Create a SambaStudio endpoint for inference. 
 2. In the `config.json` file, include the model description in the model section 
 3. Populate key variables from your env file in `streamlit/app.py`
-4. Define the method for calling the model. See `call_sambanova_llama2_70b_api` in `streamlit/app.py` for an example.
+4. Define the method for calling the model. See `call_sambanova_api` in `streamlit/app.py` for an example.
 5. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.
 
 ### Include models using Sambaverse
@@ -158,7 +158,7 @@ If you're using a Sambaverse endpoint, follow these steps:
 
 1. In the playground, find the model you're interested in. 
 2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
-3. Define the method for calling the model. In `streamlit/app.py`, set the values of  `sambaverse_model_name` and `select_expert`. See `call_sambaverse_llama2_70b_api` for an example. 
+3. Define the method for calling the model. In `streamlit/app.py`, set the values of  `sambaverse_model_name` and `select_expert`. See `call_sambaverse_api` for an example. 
 4. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.`
 
 
