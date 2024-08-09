@@ -65,7 +65,7 @@ The next step is to set up your environment to use one of the models available f
 
 ### Setup for Sambaverse users 
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
+1. Create a Sambaverse account at [Sambaverse](https://sambaverse.sambanova.net) and select your model. 
 2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
 3. In the repo root directory find the config file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example: 
 
