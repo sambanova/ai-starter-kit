@@ -117,10 +117,10 @@ def main():
         st.session_state.db_path = None
     if "show_sources" not in st.session_state:
         st.session_state.show_sources = True
+    if 'input_disabled' not in st.session_state:
+        st.session_state.input_disabled = True
 
     st.title(":orange[SambaNova] Web Crawling Assistant")
-    user_question = st.chat_input("Ask questions about data in provided sites")
-    handle_userinput(user_question)
 
     #setup of the application
     with st.sidebar:
@@ -208,7 +208,8 @@ def main():
                         st.session_state.db_path = None
                         config = {"force_reload":True}
                         st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
-                                # storing vector database in disk  
+                                # storing vector database in disk
+                    st.session_state.input_disabled = False  
                 st.markdown("[Optional] Save database for reuse")
                 save_location = st.text_input("Save location", "./data/my-vector-db").strip()
                 if st.button("Process and Save database"):
@@ -218,6 +219,7 @@ def main():
                                         }
                         st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config, save=True)
                         st.toast("Database with new sites saved in " + save_location)
+                    st.session_state.input_disabled = False
 
             elif "Add new" in datasource:
                 st.markdown("<hr>", unsafe_allow_html=True)
@@ -229,7 +231,8 @@ def main():
                                         "persist_directory": st.session_state.db_path,
                                         "update":True
                                         }
-                        st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)  
+                        st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
+                    st.session_state.input_disabled = False
                 st.markdown("[Optional] Save database with new scraped sites for reuse")
                 save_location = st.text_input("Save location", "./data/my-vector-db").strip()
                 if st.button("Process and Save database"):
@@ -241,6 +244,7 @@ def main():
                                             }
                         st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config, save=True)
                         st.toast("Database with new sites saved in " + save_location)
+                    st.session_state.input_disabled = False
 
         # if vector database folder selected as datasource     
         elif "Use existing" in datasource:
@@ -262,6 +266,7 @@ def main():
                             config={"persist_directory": st.session_state.db_path}
                             # create conversation chain
                             st.session_state.conversation = set_retrieval_qa_chain(config=config)
+                            st.session_state.input_disabled = False
                         else:
                             st.error("database not present at " + st.session_state.db_path, icon="🚨")
                     st.toast("Database loaded successfully")
@@ -292,6 +297,8 @@ def main():
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"
                 )
+    user_question = st.chat_input("Ask questions about data in provided sites", disabled=st.session_state.input_disabled)
+    handle_userinput(user_question)
             
 if __name__ == "__main__":
     main()
