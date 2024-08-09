@@ -147,10 +147,10 @@ You can include more models with the kit. They will then show up in the **Model 
 If you're using a SambaStudio endpoint, follow these steps:
 
 1. Create a SambaStudio endpoint for inference. 
-2. In the `config.json` file, include the model description in the model section 
-3. Populate key variables from your env file in `streamlit/app.py`
-4. Define the method for calling the model. See `call_sambanova_api` in `streamlit/app.py` for an example.
-5. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.
+2. In the `config.json` file, include the model description in the model section, like the ones already there.
+3. Populate key variables on your env file
+4. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambanova_api` in `streamlit/app.py` for an example.
+5. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
 
 ### Include models using Sambaverse
 
@@ -158,9 +158,12 @@ If you're using a Sambaverse endpoint, follow these steps:
 
 1. In the playground, find the model you're interested in. 
 2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
-3. Define the method for calling the model. In `streamlit/app.py`, set the values of  `sambaverse_model_name` and `select_expert`. See `call_sambaverse_api` for an example. 
-4. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.`
+3. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambaverse_api` in `streamlit/app.py` for an example.
+4. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
 
+### Include models using FastAPI
+
+For now we're only supporting `llama3-8b`. We'll support more models in near future.
 
 ## Edit a prompt template
 
@@ -175,7 +178,6 @@ To add a prompt template:
 
 1. Follow the instructions in [Edit a template](#edit-a-prompt-template).
 2. Include the template use case in the `use_cases` list of `config.yaml` file.
-
 
 # Examples, third-party tools, and data sources
 
