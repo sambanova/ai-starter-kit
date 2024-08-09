@@ -163,12 +163,14 @@ def main():
                     if not st.session_state.query:
                         st.error('Please enter a query')
                     else:
-                        st.session_state.search_assistant.search_and_scrape(
+                        scraper_state = st.session_state.search_assistant.search_and_scrape(
                             query=st.session_state.query,
                             search_method=st.session_state.tool[0],
                             max_results=st.session_state.max_results,
                             search_engine=st.session_state.search_engine,
                         )
+                        if scraper_state is not None:
+                            st.error(scraper_state.get("message"))
                         st.session_state.input_disabled = False
                         st.toast('Search done and knowledge base updated you can chat now')
                 elif method == 'Search and answer':

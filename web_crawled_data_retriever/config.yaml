@@ -1,4 +1,4 @@
-api: "sambaverse" # set either sambastudio or sambaverse
+api: "sambaverse" # set either sambastudio or sambaverse or fastapi
 
 embedding_model: 
     "type": "sambastudio" # set either sambastudio or cpu
@@ -8,6 +8,7 @@ embedding_model:
 
 llm: 
     "temperature": 0.1
+    "do_sample": False
     "max_tokens_to_generate": 500
     "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
     "coe": True #set as true if using Sambastudio CoE endpoint

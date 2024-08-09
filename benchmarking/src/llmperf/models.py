@@ -20,7 +20,7 @@ class RequestConfig(BaseModel):
     prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
-    mode: Optional[str] = None
+    is_stream_mode: Optional[bool] = None
     num_concurrent_workers: int = None
     metadata: Optional[Dict[str, Any]] = None
 

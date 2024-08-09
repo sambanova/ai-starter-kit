@@ -6,8 +6,10 @@ import re
 import threading
 import time
 import yaml
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+from pathlib import Path
+file_location = Path(__file__).parent.resolve()
 
 import pandas as pd
 from tqdm import tqdm
@@ -19,9 +21,9 @@ from llmperf.sambanova_client import llm_request
 from llmperf.models import RequestConfig, LLMResponse
 import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
+from dotenv import load_dotenv
 
 import logging
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -29,9 +31,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
+load_dotenv("../.env", override=True)
 
-SYSTEM_PROMPT_PATH = "./prompts/system-prompt_template.yaml"
-USER_PROMPT_PATH = "./prompts/user-prompt_template.yaml"
+SYSTEM_PROMPT_PATH = os.path.join(file_location, "../prompts/system-prompt_template.yaml")
+USER_PROMPT_PATH = os.path.join(file_location, "../prompts/user-prompt_template.yaml")
 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
@@ -41,15 +44,17 @@ class BasePerformanceEvaluator(abc.ABC):
         num_workers: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = "sambastudio",
-        generation_mode: str = "stream",
+        is_stream_mode: bool = True,
         timeout: int = 600,
     ):
+        base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
+        
         self.model_name = model_name
         self.results_dir = results_dir
         self.num_workers = num_workers
         self.user_metadata = user_metadata
         self.llm_api = llm_api
-        self.generation_mode = generation_mode
+        self.is_stream_mode = is_stream_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
 
@@ -57,7 +62,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.summary_file_path = None
         self.individual_responses_file_path = None
 
-    def get_token_length(self, input_text):
+    def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
     
     @staticmethod
@@ -135,12 +140,10 @@ class BasePerformanceEvaluator(abc.ABC):
         """Sends multiple requests to LLM and collects results
 
         Args:
-            request_configs_for_thread (list): list of request configs for LLM calls
-            tokenizer (AutoTokenizer): HuggingFace tokenizer
+            request_config_batch (list): list of request configs for LLM calls
             completed_requests (list): list of completed outputs from requests
-            pbar (tqdm): progress bar
+            progress_bar (tqdm): progress bar
             start_time (float): start time of the process
-            timeout_s (int): time out in seconds
         """
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
@@ -335,7 +338,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.save_response_texts = save_response_texts
 
     @staticmethod
-    def read_dataset(input_file_path: str):
+    def read_dataset(input_file_path: str) -> List[Dict]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
 
         Args:
@@ -354,6 +357,10 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the custom benchmark run.
         """
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode = "stream"
+        
         output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
         return self.sanitize_file_prefix(output_file_name)
 
@@ -392,7 +399,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
-            sampling_params (str): The sampling parameters in JSON format.
+            sampling_params (Dict[str, Any]): The sampling parameters in JSON format.
 
         Returns:
             None
@@ -528,7 +535,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 
@@ -569,15 +576,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
 
-        # Specific prompt templating for Deepseek models
-        elif utils.MODEL_TYPE_IDENTIFIER["deepseek"] in self.model_name.lower():
-            system_prompt = f"{sys_prompt_template}"
-            prompt = system_prompt + raw_prompt
-
-        # Prompt templating for Llama-2 and all other models
-        else:
+        # Specific prompt templating for Llama-2 models
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower():
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
+
+        # Prompt templating for other models (Deepseek, Solar, Eeve)
+        else:
+            system_prompt = f"{sys_prompt_template}"
+            prompt = system_prompt + raw_prompt
 
         return (prompt, self.get_token_length(prompt))
 
@@ -595,7 +602,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the synthetic benchmark run.
         """
-        output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{self.generation_mode}"
+        generation_mode = ""
+        if self.is_stream_mode:
+            generation_mode  = "stream"
+        
+        output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
         return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
@@ -604,7 +615,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_output_tokens: int,
         num_requests: int,
         sampling_params: Dict[str, Any],
-    ):
+    ) -> tuple:
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:
@@ -617,7 +628,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             ValueError: If the number of input tokens is less than 40.
 
         Returns:
-            None
+            summary (dict): structure with performance metrics and stats for the run
+            individual_responses (tuple): list of performance metrics per request
         """
         if num_input_tokens < 40:
             raise ValueError(
@@ -636,13 +648,15 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         if self.results_dir:
             filename = self.create_output_filename(num_input_tokens, num_output_tokens)
             self.save_results(filename, summary, individual_responses)
+            
+        return summary, individual_responses
 
     def get_token_throughput_latencies(
         self,
         num_input_tokens: int,
         num_output_tokens: int,
-        num_requests,
-        sampling_params,
+        num_requests: int,
+        sampling_params: dict,
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
@@ -780,9 +794,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            updated_sampling_params = {
-                "max_tokens_to_generate": output_token_count,
-            }
+            if self.llm_api == "fastapi":
+                updated_sampling_params = {
+                    "max_tokens": output_token_count,
+                }
+            else:
+                updated_sampling_params = {
+                    "max_tokens_to_generate": output_token_count,
+                }
             updated_sampling_params.update(sampling_params)
 
             # Create request config object
@@ -791,7 +810,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
-                mode=self.generation_mode,
+                is_stream_mode=self.is_stream_mode,
                 num_concurrent_workers=self.num_workers,
             )
 
@@ -820,11 +839,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         # Load from prompt files
-        sys_prompt_template = yaml.safe_load(PromptTemplate.from_file(SYSTEM_PROMPT_PATH).template)['template']
         prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
 
         #  Adjust prompt according to desired input tokens
-        prompt_template = sys_prompt_template + prompt_template
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-        
+                
         return (full_input_prompt, self.get_token_length(full_input_prompt))

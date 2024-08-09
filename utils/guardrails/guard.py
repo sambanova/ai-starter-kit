@@ -12,7 +12,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
 
 load_dotenv(os.path.join(repo_dir, ".env"))
 
-
+from utils.model_wrappers.api_gateway import APIGateway
 class Guard:
     """
     Guard class for running guardrails check with Sambanova's models.
@@ -23,12 +23,16 @@ class Guard:
         api: str = "sambaverse",
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
-        sambaverse_base_url: Optional[str] = None,
+        coe: Optional[bool] = True,
+        sambaverse_url: Optional[str] = None,
         sambaverse_api_key: Optional[str] = None,
         sambastudio_base_url: Optional[str] = None,
+        sambastudio_base_uri: Optional[str] = None,
         sambastudio_project_id: Optional[str] = None,
         sambastudio_endpoint_id: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
+        fastapi_url: Optional[str] = None,
+        fastapi_api_key: Optional[str] = None
     ):
         """
         Initialize Guard class with specified LLM and guardrails.
@@ -37,12 +41,16 @@ class Guard:
         - api (str): The LLM API to use, either 'sambaverse' or 'sambastudio'. Default is 'sambaverse'.
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is 'utils/guardrails/guardrails.yaml'.
-        - sambaverse_base_url (str, optional): Base URL for Sambaverse API.
+        - coe (bool, optional): Whether the llama-guard model is in a SambaStudio CoE endpoint
+        - sambaverse_url (str, optional): Base URL for Sambaverse API.
         - sambaverse_api_key (str, optional): API key for Sambaverse API.
         - sambastudio_base_url (str, optional): Base URL for SambaStudio API.
+        - sambastudio_base_uri (str, optional): Base URI for SambaStudio API.
         - sambastudio_project_id (str, optional): Project ID for SambaStudio API.
         - sambastudio_endpoint_id (str, optional): Endpoint ID for SambaStudio API.
         - sambastudio_api_key (str, optional): API key for SambaStudio API.
+        - fastapi_url (str, optional): URL of fastAPI endpoint.
+        - fastapi_api_key (str, optional): API key for fastAPI endpoint.
 
         """
         if prompt_path is None:
@@ -52,29 +60,28 @@ class Guard:
             guardrails_path = os.path.join(guardrails_dir, "guardrails.yaml")
         self.guardrails, self.parsed_guardrails = self.load_guardrails(guardrails_path)
 
-        # pass the parameters from Guar to the model integration to use
-        params = {}
-        if api == "sambastudio":
-            if sambastudio_base_url is not None:
-                params["sambastudio_base_url"] = sambastudio_base_url
-            if sambastudio_project_id is not None:
-                params["sambastudio_project_id"] = sambastudio_project_id
-            if sambastudio_endpoint_id is not None:
-                params["sambastudio_endpoint_id"] = sambastudio_endpoint_id
-            if sambastudio_api_key is not None:
-                params["sambastudio_api_key"] = sambastudio_api_key
-            self.llm = self.set_llm("sambastudio", params)
-        elif api == "sambaverse":
-            params = {}
-            if sambaverse_base_url is not None:
-                params["sambaverse_base_url"] = sambaverse_base_url
-            if sambaverse_api_key is not None:
-                params["sambaverse_api_key"] = sambaverse_api_key
-            self.llm = self.set_llm("sambaverse", params)
-        else:
-            raise ValueError(
-                f"The only supported `api` are `sambastudio` and `sambaverse`. Got {api}."
-            )
+        # pass the parameters from Guard to the model gateway to instance de guardrails models
+        self.llm = APIGateway.load_llm(
+            type = api,
+            streaming=False,
+            do_sample=False,
+            max_tokens_to_generate=1024,
+            temperature=0.1,
+            coe=coe,
+            select_expert="Meta-Llama-Guard-2-8B",
+            process_prompt=False,
+            sambaverse_url=sambaverse_url,
+            sambaverse_model_name="Meta/Meta-Llama-Guard-2-8B",
+            sambaverse_api_key=sambaverse_api_key,
+            sambastudio_base_url=sambastudio_base_url,
+            sambastudio_base_uri=sambastudio_base_uri,
+            sambastudio_project_id=sambastudio_project_id,
+            sambastudio_endpoint_id=sambastudio_endpoint_id,
+            sambastudio_api_key=sambastudio_api_key,
+            fastapi_url=fastapi_url,
+            fastapi_api_key=fastapi_api_key,
+        )  
+        
 
     def load_guardrails(self, path: str):
         """
@@ -98,50 +105,7 @@ class Guard:
         ]
         guardrails_str = "\n".join(guardrails_list)
         return guardrails, guardrails_str
-
-    def set_llm(self, api: str, params: Optional[Dict]):
-        """
-        Set the LLM based on the provided API and parameters.
-
-        Parameters:
-        - api (str): The LLM API to use, either 'sambaverse' or 'sambastudio'.
-        - params (Dict, optional): Additional parameters for the LLM.
-
-        Returns:
-        - LLM: An instance of the specified LLM.
-
-        Raises:
-        - ValueError: If an invalid API is provided.
-        """
-        if api == "sambastudio":
-            llm = SambaStudio(
-                **params,
-                model_kwargs={
-                    "select_expert": "Meta-Llama-Guard-2-8B",
-                    "process_prompt": False,
-                    "do_sample": False,
-                    "max_tokens_to_generate": 1024,
-                    "temperature": 0.1,
-                },
-            )
-        elif api == "sambaverse":
-            llm = Sambaverse(
-                **params,
-                sambaverse_model_name="Meta/Meta-Llama-Guard-2-8B",
-                model_kwargs={
-                    "select_expert": "Meta-Llama-Guard-2-8B",
-                    "process_prompt": True,
-                    "do_sample": False,
-                    "max_tokens_to_generate": 1024,
-                    "temperature": 0.1,
-                },
-            )
-        else:
-            raise ValueError(
-                f"Invalid LLM API: {api}, only'sambastudio' and'sambaverse' are supported."
-            )
-        return llm
-
+    
     def evaluate(
         self,
         input_query: Union[List[Dict], str],

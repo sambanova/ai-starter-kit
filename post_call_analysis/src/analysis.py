@@ -23,10 +23,10 @@ from langchain.output_parsers import CommaSeparatedListOutputParser, ResponseSch
 from langchain.prompts import load_prompt
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.output_parsers import StrOutputParser
 
-from vectordb.vector_db import VectorDb
+from utils.vectordb.vector_db import VectorDb
+from utils.model_wrappers.api_gateway import APIGateway
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -35,44 +35,17 @@ with open(CONFIG_PATH, 'r') as yaml_file:
 llm_info = config['llm']
 retrieval_info = config['retrieval']
 embedding_model_info = config['embedding_model']
-
-if llm_info['api'] == 'sambaverse':
-    model = Sambaverse(
-        sambaverse_model_name=llm_info['sambaverse_model_name'],
-        sambaverse_api_key=os.getenv('SAMBAVERSE_API_KEY'),
-        model_kwargs={
-            'do_sample': False,
-            'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
-            'temperature': llm_info['temperature'],
-            'select_expert': llm_info['select_expert'],
-            'process_prompt': False
-        },
-    )
-
-elif llm_info['api'] == 'sambastudio':
-    if llm_info['coe']:
-        model = SambaStudio(
-            streaming=True,
-            model_kwargs={
-                'do_sample': False,
-                'temperature': llm_info['temperature'],
-                'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
-                'select_expert': llm_info['select_expert'],
-                'process_prompt': False
-            },
-        )
-    else:
-        model = SambaStudio(
-            model_kwargs={
-                'do_sample': False,
-                'temperature': llm_info['temperature'],
-                'max_tokens_to_generate': llm_info['max_tokens_to_generate'],
-            }
-        )
-
-else:
-    raise ValueError('Invalid LLM API specified in config.yaml')
-
+model = APIGateway.load_llm(
+    type=llm_info["api"],
+    streaming=True,
+    coe=llm_info["coe"],
+    do_sample=llm_info["do_sample"],
+    max_tokens_to_generate=llm_info["max_tokens_to_generate"],
+    temperature=llm_info["temperature"],
+    select_expert=llm_info["select_expert"],
+    process_prompt=False,
+    sambaverse_model_name=llm_info['sambaverse_model_name']
+)
 
 def load_conversation(transcription, transcription_path):
     """Load a conversation as langchain Document
@@ -290,12 +263,6 @@ def set_retriever(documents_path, urls):
     """
     print('setting retriever')
     vectordb = VectorDb()
-    embeddings = vectordb.load_embedding_model(
-        type=embedding_model_info['type'],
-        batch_size=embedding_model_info['batch_size'],
-        coe=embedding_model_info['coe'],
-        select_expert=embedding_model_info['select_expert'],
-    )
 
     retriever = vectordb.create_vdb(
         documents_path,
@@ -306,6 +273,10 @@ def set_retriever(documents_path, urls):
         load_txt=True,
         load_pdf=True,
         urls=urls,
+        embedding_type=embedding_model_info['type'],
+        batch_size=embedding_model_info['batch_size'],
+        coe=embedding_model_info['coe'],
+        select_expert=embedding_model_info['select_expert'],
     ).as_retriever()
 
     print('retriever set')
