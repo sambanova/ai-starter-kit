@@ -46,9 +46,7 @@ class BasePerformanceEvaluator(abc.ABC):
         llm_api: str = "sambastudio",
         is_stream_mode: bool = True,
         timeout: int = 600,
-    ):
-        base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
-        
+    ):    
         self.model_name = model_name
         self.results_dir = results_dir
         self.num_workers = num_workers
@@ -361,7 +359,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = "stream"
         
-        output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{self.generation_mode}"
+        output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
