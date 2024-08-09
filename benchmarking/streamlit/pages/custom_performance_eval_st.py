@@ -54,7 +54,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
-        save_response_texts=st.session_state.save_llm_responses
+        save_response_texts=st.session_state.save_llm_responses,
         llm_api=st.session_state.llm_api
     )
 
