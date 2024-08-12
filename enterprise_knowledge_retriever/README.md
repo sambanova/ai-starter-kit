@@ -130,6 +130,7 @@ To increase inference speed, you can use SambaStudio E5 embedding model endpoint
 
 ## Deploy the parsing service 
 
+This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the parsing service.
 Follow the instructions to deploy the parsing service locally [here](../README.md#parsing-service-management)
 
 ## Parsing service issues
