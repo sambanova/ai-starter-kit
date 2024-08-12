@@ -128,13 +128,15 @@ To increase inference speed, you can use SambaStudio E5 embedding model endpoint
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
-## Deploy the AI starter kit Parser util 
+## Deploy the parsing service 
 
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the Unstructured API
+Follow the instructions to deploy the parsing service locally [here](../README.md#parsing-service-management)
 
-Go to  the [parser util readme](../utils/parsing/README.md), and follow the instructions to deploy the parser util
-
-> Alternatively you can omit this step setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents
+## Parsing service issues
+If you are having problems with the local parsing service [here](../README.md#parsing-service-issues). Also, remember to stop the parsing service as part of the clean up process by running:
+```bash
+make stop-parsing-service
+```
 
 # Deploy the starter kit GUI
 
