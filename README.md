@@ -250,7 +250,10 @@ SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 Go to the `README.md` of the starter kit you want to use and follow the instructions. See [Available AI Starter Kits](#available-ai-starter-kits).
 
-## Use Sambanova's LLMs and **Langchain** wrappers
+## Additional information
+
+<details>
+<summary>Use Sambanova's LLMs and Langchain wrappers</summary>
 
 ### LLM Wrappers
 
@@ -388,7 +391,10 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ---
 
-## Setting Up Your Environment
+</details>
+
+<details>
+<summary>Setting Up Your Environment</summary>
 
 There are two approaches to setting up your environment for the AI Starter Kits:
 
@@ -508,9 +514,10 @@ To clean up all virtual environments created by the makefile and stop parsing se
 make clean
 ```
 This command removes all virtual environments created with the makefile, stops the parsing service, and cleans up any temporary files.
+</details>
 
-
-## Troubleshooting
+<details>
+<summary>Troubleshooting</summary>
 
 If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
 
@@ -604,6 +611,6 @@ If you continue to experience issues, please [open an issue](https://github.com/
 - If you encounter any issues during setup, check the error messages and ensure your system meets all prerequisites.
 - Always activate the base environment before navigating to and running a specific starter kit.
 - Some kits may require additional setup steps. Always refer to the specific README of the kit you're using.
-
+</details>
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
