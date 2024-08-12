@@ -1,4 +1,8 @@
-api: "sambaverse"
+api: "sambastudio" #  set either sambastudio, sambaverse or fastapi
+
+llm:
+  max_tokens_to_generate: 500
+  temperature: 0.0
 
 use_cases:
   - General Assistant
