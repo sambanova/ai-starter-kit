@@ -55,7 +55,7 @@ def _get_expert(selected_model: str, api_info: str) -> str:
 
 
 @st.cache_data
-def call_fastapi_api(prompt: str, selected_model: str, api_info: str, llm_info: dict) -> str:
+def call_fastapi_api(prompt: str, selected_model: str, llm_info: dict) -> str:
     """Calls a LLama3-8B Sambanova endpoint (Currently the only model supported by FastAPI endpoint). Uses an input prompt and returns a completion of it.
 
     Args:
@@ -69,14 +69,14 @@ def call_fastapi_api(prompt: str, selected_model: str, api_info: str, llm_info: 
     model_expert = "llama3-8b"
     
     # Setting llm
-    llm = set_llm(api_info, llm_info, coe_flag=False, model_expert=model_expert)
+    llm = set_llm(llm_info, coe_flag=False, model_expert=model_expert)
     
     # Get completion from llm
     completion_text = llm.invoke(prompt)
     return completion_text
 
 @st.cache_data
-def call_sambanova_api(prompt: str, selected_model: str,  api_info: str, llm_info: dict) -> str:
+def call_sambanova_api(prompt: str, selected_model: str,  llm_info: dict) -> str:
     """Calls a Llama Sambanova endpoint. Uses an input prompt and returns a completion of it.
 
     Args:
@@ -87,17 +87,17 @@ def call_sambanova_api(prompt: str, selected_model: str,  api_info: str, llm_inf
     Returns:
         str: completion of the input prompt
     """
-    model_expert = _get_expert(selected_model, api_info)
+    model_expert = _get_expert(selected_model, llm_info["api"])
     
     # Setting llm
-    llm = set_llm(api_info, llm_info, coe_flag=True, model_expert=model_expert)
+    llm = set_llm(llm_info, coe_flag=True, model_expert=model_expert)
     
     # Get completion from llm
     completion_text = llm.invoke(prompt)
     return completion_text
 
 @st.cache_data
-def call_sambaverse_api(prompt: str, selected_model: str,  api_info: str, llm_info: dict) -> str:
+def call_sambaverse_api(prompt: str, selected_model: str, llm_info: dict) -> str:
     """Calls a LLama2-70B Sambaverse endpoint. Uses an input prompt and returns a completion of it.
 
     Args:
@@ -108,18 +108,18 @@ def call_sambaverse_api(prompt: str, selected_model: str,  api_info: str, llm_in
     Returns:
         str: completion of the input prompt
     """
-    model_expert = _get_expert(selected_model, api_info)
+    model_expert = _get_expert(selected_model, llm_info["api"])
     
     # Setting llm
-    llm = set_llm(api_info, llm_info, coe_flag=True, model_expert=model_expert)
+    llm = set_llm(llm_info, coe_flag=True, model_expert=model_expert)
     
     # Get completion from llm
     completion_text = llm.invoke(prompt)
     return completion_text
 
-def set_llm(api_info, llm_info, coe_flag, model_expert):
+def set_llm(llm_info, coe_flag, model_expert):
     llm = APIGateway.load_llm(
-        type=api_info,
+        type=llm_info["api"],
         streaming=False,
         coe=coe_flag,
         max_tokens_to_generate=llm_info["max_tokens_to_generate"],
@@ -137,11 +137,10 @@ def get_config_info() -> Tuple[str, dict, list]:
     with open(CONFIG_PATH, 'r', encoding='utf-8') as file:
         config = yaml.safe_load(file)
     model_info = config["models"]
-    api_info = config["api"]
     llm_info = config["llm"]
     prompt_use_cases = config["use_cases"]
     
-    return api_info, llm_info, model_info, prompt_use_cases
+    return llm_info, model_info, prompt_use_cases
 
 def get_prompt_template(model: str, prompt_use_case: str) -> str:
     """Reads a prompt template from an specified model and use case
@@ -224,9 +223,9 @@ def main():
         st.title('Prompt Engineering Starter Kit')
 
     # Get model information and prompt use cases from config file
-    api_info, llm_info, model_info, prompt_use_cases = get_config_info()
+    llm_info, model_info, prompt_use_cases = get_config_info()
     model_names = [key for key, _ in model_info.items()]
-    if api_info == "fastapi":
+    if llm_info["api"] == "fastapi":
         model_names.remove("Llama2 70B")
     
     st.session_state["model_info"] = model_info
@@ -273,14 +272,14 @@ def main():
     if st.button('Send'):
         response_content = ""
         # Call endpoint and show the response content
-        if api_info == "sambastudio":
-            response_content = call_sambanova_api(prompt, selected_model, api_info, llm_info)
+        if llm_info["api"] == "sambastudio":
+            response_content = call_sambanova_api(prompt, selected_model, llm_info)
             st.write(response_content)
-        elif api_info == "sambaverse":
-            response_content = call_sambaverse_api(prompt, selected_model, api_info, llm_info)
+        elif llm_info["api"] == "sambaverse":
+            response_content = call_sambaverse_api(prompt, selected_model, llm_info)
             st.write(response_content)
-        elif api_info == "fastapi":
-            response_content = call_fastapi_api(prompt, selected_model, api_info, llm_info)
+        elif llm_info["api"] == "fastapi":
+            response_content = call_fastapi_api(prompt, selected_model, llm_info)
             st.write(response_content)
         else:
             st.error('Please select a valid API in your config file "sambastudio" or "sambaverse" ')
