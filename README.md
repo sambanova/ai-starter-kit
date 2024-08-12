@@ -394,7 +394,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 </details>
 
 <details>
-<summary>Setting Up Your Environment</summary>
+<summary>Setting Up Your Environment</summary><br/>
 
 There are two approaches to setting up your environment for the AI Starter Kits:
 
@@ -517,10 +517,9 @@ This command removes all virtual environments created with the makefile, stops t
 </details>
 
 <details>
-<summary>Troubleshooting</summary>
+<summary>Troubleshooting</summary><br/>
 
 If you encounter issues while setting up or running the AI Starter Kit, here are some common problems and their solutions:
-
 
 ### Python version issues
 
