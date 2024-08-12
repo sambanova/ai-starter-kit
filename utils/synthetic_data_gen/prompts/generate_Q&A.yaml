@@ -1,0 +1,38 @@
+_type: prompt
+input_types: {}
+input_variables:
+- document
+- amount
+name: null
+output_parser: null
+partial_variables: {}
+template: |
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> 
+    You are a JSON generator who generates machine-readable JSON
+    <|eot_id|><|start_header_id|>user<|end_header_id|>
+    Based on the following document, follow the instruction below
+    Document:
+    {document}
+    Instruction:
+    Generate {amount} of unique question, thought, answer, and references from the above document in the following JSON format. 
+    The answers must avoid words that are not specific (e.g., "many", "several", "few", etc.). 
+    The answers must contain specific, verbose, self-contained, grammatically correct sentences that answer the question comprehensively. 
+    The answers must strictly contain content from the document and no content from outside the document. 
+    There may be multiple references that contain verbatim text from the document to support the answers.             
+    JSON format:
+    [
+        {{
+            "question": "<generated question>",            
+            "thought": "<generated thought on what is needed to answer the question. Start with 'To answer the question, I need'>",
+            "answer": "<generated answer>",
+            "references": [
+                "<verbatim text from document that supports the answer>",
+                "<verbatim text from document that supports the answer>"
+            ]
+        }}
+    ]
+    The first character of the response must be '[' and the last character must be ']'. No header text should be included.
+    <|eot_id|><|start_header_id|>JSON list<|end_header_id|>
+
+template_format: f-string
+validate_template: false
