@@ -88,7 +88,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="60%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%">  </td>
+<td width="20%"> N/A </td>
 </tr>
 
 <tr>
@@ -161,7 +161,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="yoda/README.md">YoDA: Your Data Your model</a></td>
 <td width="60%">Sample training recipe to train a Language Model (LLM) using a customer's private data. </td>
-<td width="20%">  </td>
+<td width="20%"> SambaStudio </td>
 </tr>
 
 </tbody>
