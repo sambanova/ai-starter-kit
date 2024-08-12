@@ -124,13 +124,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="image_search/README.md">Image Search</a></td>
 <td width="60%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
-<td width="20%">  </td>
+<td width="20%"> SambaStudio </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="60%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="20%">  </td>
+<td width="20%"> Sambaverse, SambaStudio, FastAPI </td>
 </tr>
 
 <tr>
