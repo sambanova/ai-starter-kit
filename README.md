@@ -62,9 +62,15 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tbody>
 
 <tr>
+<td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
+<td width="60%">  </td>
+<td width="20%">  </td>
+</tr>
+
+<tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="60%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
-<td width="20%">Placeholder</td>
+<td width="20%">  </td>
 </tr>
 
 <tr>
@@ -82,7 +88,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="60%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%">Placeholder</td>
+<td width="20%">  </td>
 </tr>
 
 <tr>
@@ -100,13 +106,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a></td>
 <td width="60%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
-<td width="20%">Placeholder</td>
+<td width="20%">SambaStudio</td>
 </tr>
 
 <tr>
 <td width="20%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a></td>
 <td width="60%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
-<td width="20%">Placeholder</td>
+<td width="20%">SambaStudio</td>
 </tr>
 
 <tr>
@@ -118,13 +124,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="image_search/README.md">Image Search</a></td>
 <td width="60%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
-<td width="20%">Placeholder</td>
+<td width="20%">  </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="60%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="20%">Placeholder</td>
+<td width="20%">  </td>
 </tr>
 
 <tr>
@@ -155,7 +161,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="yoda/README.md">YoDA: Your Data Your model</a></td>
 <td width="60%">Sample training recipe to train a Language Model (LLM) using a customer's private data. </td>
-<td width="20%">Placeholder</td>
+<td width="20%">  </td>
 </tr>
 
 </tbody>
