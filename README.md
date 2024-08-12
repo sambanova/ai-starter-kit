@@ -51,6 +51,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 # Available AI Starter Kits
 
 <table style="width: 100%;">
+<thead>
+<tr>
+<th width="25%">Name</th>
+<th width="75%">Kit Description</th>
+</tr>
+</thead>
+  
 <tbody>
 
 <tr>
@@ -61,11 +68,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="25%"><a href="code_copilot/README.md">Code Copilot</a></td>
 <td width="75%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
-</tr>
-
-<tr>
-<td width="25%"><a href="workshops/genai_summit/complex_rag/README.md">Complex RAG</a></td>
-<td width="75%"> Sample implementation of a complex RAG workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo. </td>
 </tr>
 
 <tr>
