@@ -104,6 +104,12 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </tr>
 
 <tr>
+<td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
+<td width="60%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
+<td width="20%">Sambaverse, SambaStudio</td>  
+</tr>
+
+<tr>
 <td width="20%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a></td>
 <td width="60%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
 <td width="20%">SambaStudio</td>
