@@ -9,6 +9,10 @@
 EDGAR Q&A 
 ======================
 
+Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
+
+Table of Contents:
+
 <!-- TOC -->
 
 - [EDGAR Q&A](#edgar-qa)
@@ -19,9 +23,9 @@ EDGAR Q&A
     - [Answer questions](#answer-questions)
 - [Use the AI starter kit](#use-the-ai-starter-kit)
     - [Clone the repo](#clone-the-repo)
-    - [Integrate a LLM with the starter kit](#integrate-a-llm-with-the-starter-kit)
-        - [Option 1: Sambaverse endpoint](#option-1-sambaverse-endpoint)
-        - [Option 2: SambaStudio endpoint](#option-2-sambastudio-endpoint)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+        - [Update the Embeddings API information](#update-the-embeddings-api-information)
     - [Deploy the starter kit](#deploy-the-starter-kit)
         - [Option 1: Run Streamlit UI from local install](#option-1-run-streamlit-ui-from-local-install)
         - [Option 2: Run a Multiturn-chat Streamlit UI from local install](#option-2-run-a-multiturn-chat-streamlit-ui-from-local-install)
@@ -39,6 +43,7 @@ EDGAR Q&A
     - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
+
 # Overview
 
 This AI starter kit is an example of building semantic search workflow with the SambaNova platform. Edgar Q&A uses data from companies' 10-K annual reports to answer questions. It includes:
@@ -87,78 +92,39 @@ To use this AI starter kit without modifications, follow these steps.
   git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
+## Set up the models and config file
 
-## Integrate a LLM with the starter kit
+### Set up the inference endpoint, configs and environment variables
 
-You can use this starter kit with 
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-Integrate the LLM deployed on SambaStudio with this AI starter kit in two simple steps:
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-### Option 1: Sambaverse endpoint
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-Sambaverse includes a rich set of open source models that have been customized to run efficiently on RDU. You don't need to be a SambaNova customer to use Sambaverse. 
-
-To set up your environment so Edgar can use one of the Sambaverse models, follow these steps:
-
-1. Create a Sambaverse account at ?? 
-2. In the root directory **`sn-ai-starter-kit/.env`**, update the API key. For example, an API key
-"456789ab-cdef-0123-4567-89abcdef0123" would be entered in the env file (with no spaces) as:
-
-```
-SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
-3. In the [config file](./config.yaml) file, set the variable *api* to: "sambaverse".
-
-
-### Option 2: SambaStudio endpoint 
-
-SambaStudio includes a rich set of open source models that have been customized to run efficiently on RDU. To use a SambaStudio model, follow these steps:
-
-1. In SambaStudio, deploy the LLM of choice (e.g. Llama 2 13B chat, etc) to an endpoint for inference in SambaStudio either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html). 
-1. In the root directory **`sn-ai-starter-kit/.env`**, update the API key. For example, an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-would be entered in the env file (with no spaces) as:
-```
-    BASE_URL="https://api-stage.sambanova.net"
-    PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-   ```
-3. In the [config file](./config.yaml) file, set the variable *api* to: "sambastudio".
-
-### Update the Embedding API information
+### Update the Embeddings API information
 
 You have these options to specify the embedding API info: 
 
 * **Option 1: Use a CPU embedding model**
 
-    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
+    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
 * **Option 2: Set a SambaStudio embedding model**
 
-To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-NOTE: Be sure to set batch size model parameter to 32.
+1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
 
-1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
-
-    - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    - You can enter the following in the env file (with no spaces):
-
-        ```bash
-            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
-            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-        ```
-
-2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
-    > 
-    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
+
 
 ## Deploy the starter kit
 
@@ -379,8 +345,8 @@ file: edgar_qna/prompts
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 - streamlit (version 1.25.0)
 - llama-hub (version 0.0.25)
-- langchain (version 0.2.1)
-- langchain_community (version 0.2.1)
+- langchain (version 0.2.11)
+- langchain_community (version 0.2.10)
 - llama-index (version 0.8.20)
 - sentence_transformers (version 2.2.2)
 - instructorembedding (version 1.0.1)

@@ -14,10 +14,9 @@ Search Assistant
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for SambaStudio](#setup-for-sambastudio)
-        - [Setup for Sambaverse](#setup-for-sambaverse)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+        - [Update the Embeddings API information](#update-the-embeddings-api-information)
 - [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
@@ -71,72 +70,38 @@ Clone the start kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the account and config file 
+## Set up the models and config file
 
-You can use the model with SambaStudio or Sambaverse. 
+### Set up the inference endpoint, configs and environment variables
 
-### Setup for SambaStudio
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-To perform SambaStudio setup, you must be a SambaNova customer with a SambaStudio account. 
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-    ```bash
-    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-4. In the [config file](./config.yaml), set the variable `api` to `"sambastudio"`.
-
-### Setup for Sambaverse
-
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
-
-    ```bash
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-    ```
-
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
-
-### Update the Embedding API information
+### Update the Embeddings API information
 
 You have these options to specify the embedding API info: 
 
 * **Option 1: Use a CPU embedding model**
 
-    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"`
+    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
 * **Option 2: Set a SambaStudio embedding model**
 
-To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-NOTE: Be sure to set batch size model parameter to 32.
+1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
 
-1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example:
-
-    - Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    - You can enter the following in the env file (with no spaces):
-
-        ```bash
-            SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
-            SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-            SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-            SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-        ```
-
-2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
+2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
-    > 
-    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
-
 
 # Bring up the starter kit GUI
 
@@ -419,8 +384,8 @@ All the packages/tools are listed in the requirements.txt file in the project di
 
 - streamlit (Version 1.32.2)
 - streamlit-extras (Version 0.3.6)
-- langchain (Version 0.2.1)
-- langchain_community (Version 0.2.1)
+- langchain (Version 0.2.11)
+- langchain_community (Version 0.2.10)
 - sentence_transformers (Version 2.2.2)
 - instructorembedding (Version 1.0.1)
 - faiss-cpu (Version 1.7.4)

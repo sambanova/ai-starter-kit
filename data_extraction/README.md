@@ -10,19 +10,22 @@ SambaNova AI Starter Kits
 
 # Data Extraction Examples
 
+<!-- TOC -->
 - [Data Extraction Examples](#data-extraction-examples)
     - [Deploy the starter kit](#deploy-the-starter-kit)
-      - [Deploy in a virtual environment](#option-1-run-through-local-virtual-environment)
-      - [Deploy in aDocker container](#option-2-run-via-docker)
-    - [File Loaders](#file-loaders)
-      - [CSV Documents](#csv-documents)
-      - [XLS/XLSX Documents](#xlsxlsx-documents)
-      - [DOC/DOCX Documents](#docdocx-documents)
-      - [RTF Documents](#rtf-documents)
-      - [Markdown Documents](#markdown-documents)
-      - [HTML Documents](#html-documents)
-      - [PDF Documents](#pdf-documents)
-    - [Included Files](#included-files)
+        - [Option 1: Run through local virtual environment](#option-1-run-through-local-virtual-environment)
+        - [Option 2: Run via Docker](#option-2-run-via-docker)
+    - [File loaders](#file-loaders)
+        - [CSV Documents](#csv-documents)
+        - [XLS/XLSX Documents](#xlsxlsx-documents)
+        - [DOC/DOCX Documents](#docdocx-documents)
+        - [RTF Documents](#rtf-documents)
+        - [Markdown Documents](#markdown-documents)
+        - [HTML Documents](#html-documents)
+        - [PDF Documents](#pdf-documents)
+    - [Included files](#included-files)
+
+<!-- /TOC -->
 
 This kit include a series of Notebooks that demonstrates various methods for extracting text from documents in different input formats. including Markdown, PDF, CSV, RTF, DOCX, XLS, HTML
 
