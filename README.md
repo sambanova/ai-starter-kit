@@ -102,6 +102,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </tr>
 
 <tr>
+<td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
+<td width="50%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
+<td width="15%">Sambaverse, SambaStudio</td>
+<td width="15%"> Intelligent Information Retrieval </td>  
+</tr>
+
+<tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="50%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
 <td width="15%">Sambaverse, SambaStudio, FastAPI</td>
@@ -148,13 +155,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <td width="50%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
 <td width="15%">Sambaverse, SambaStudio, FastAPI</td>
 <td width="15%"> Advanced AI Capabilities </td>   
-</tr>
-
-<tr>
-<td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
-<td width="50%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
-<td width="15%">Sambaverse, SambaStudio</td>
-<td width="15%"> Advanced AI Capabilities </td>  
 </tr>
 
 </tbody>
