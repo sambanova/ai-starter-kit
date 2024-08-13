@@ -251,7 +251,7 @@ class DocumentRetrieval():
         retrievalQAChain = RetrievalQAChain(
             retriever=self.retriever,
             llm=self.llm,
-            qa_prompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"])),
+            qa_prompt = load_prompt(os.path.join(repo_dir, self.prompts["qa_prompt"])),
             rerank = self.retrieval_info["rerank"],
             final_k_retrieved_documents = self.retrieval_info["final_k_retrieved_documents"]
         )
