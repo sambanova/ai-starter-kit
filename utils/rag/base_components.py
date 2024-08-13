@@ -69,7 +69,7 @@ class BaseComponents:
                     'max_tokens_to_generate': self.configs['llm']['max_tokens_to_generate'],
                     'temperature': self.configs['llm']['temperature'],
                     'process_prompt': True,
-                    'select_expert': self.configs['llm']['sambaverse_select_expert'],
+                    'select_expert': self.configs['llm']['select_expert'],
                 },
             )
 
@@ -80,7 +80,7 @@ class BaseComponents:
                     'do_sample': False,
                     'max_tokens_to_generate': self.configs['llm']['max_tokens_to_generate'],
                     'process_prompt': False,
-                    'select_expert': self.configs['llm']['sambaverse_select_expert'],
+                    'select_expert': self.configs['llm']['select_expert'],
                 },
             )
 
