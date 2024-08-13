@@ -239,7 +239,7 @@ You can use SambaStudio embedding model endpoints instead of the CPU-based Huggi
 
 Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
-- Create the .env file at `ai-starter-kit/.env` if not exist.
+- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
 `"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
 is entered in the `.env` file as:
