@@ -76,8 +76,6 @@ You can use the model with SambaStudio or Sambaverse.
 
 ### Set up the inference endpoint, configs and environment variables
 
-### Set up the inference endpoint, configs and environment variables
-
 The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
