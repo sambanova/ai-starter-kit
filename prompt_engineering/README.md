@@ -18,7 +18,7 @@ Prompt Engineering Starter Kit
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
-- [Use the starter kit GUI](#use-the-starterkit-gui)
+- [Use the starterkit GUI](#use-the-starterkit-gui)
 - [Customize the starter kit](#customize-the-starter-kit)
     - [Include additional models](#include-additional-models)
         - [Include models using SambaStudio](#include-models-using-sambastudio)
@@ -44,7 +44,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
@@ -58,11 +58,11 @@ The next step is to set up your environment to use one of the models available f
 
 # Deploy the starter kit GUI
 
-We recommend that you run  the the starter kit in a virtual environment or use a container. 
+We recommend that you run  the the starter kit in a virtual environment or use a container.
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment 
+If you want to use virtualenv or conda environment
 
 1. Install and update pip.
 

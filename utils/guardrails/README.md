@@ -9,6 +9,21 @@
 Guardrails
 ======================
 
+<!-- TOC -->
+
+- [Guardrails](#guardrails)
+- [Overview](#overview)
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+        - [Install dependencies](#install-dependencies)
+- [Use the guardrais util](#use-the-guardrais-util)
+- [Customizing the guardrails](#customizing-the-guardrails)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
+
 # Overview
 
 This guardrails module is an util that can be used to configure guardrails inside your application workflows.
@@ -24,35 +39,17 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the account and config file for the LLM 
+## Set up the models and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
+### Set up the inference endpoint, configs and environment variables
 
-### Setup for SambaStudio users
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-To perform this setup, you must be a SambaNova customer with a SambaStudio account.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the model you want to use (e.g. CoE containing Meta-Llama-Guard-2-8B) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. In the repo root directory create an env file in  `sn-ai-starter-kit/.env`, and update it with your Sambastudio endpoint variables ([view your endpoint information](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_view_endpoint_information)), Here's an example:
-
-    ``` bash
-    SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
-    SAMBASTUDIO_BASE_URI="api/predict/generic"
-    SAMBASTUDIO_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-    SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
-
-### Setup for Sambaverse users 
-
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory create an env file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example:
-
-    ``` bash
-        SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-    ```
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 ###  Install dependencies
 
@@ -118,7 +115,7 @@ Or you can pass your oun prompt template in yaml format in the instantiation of 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
 * pydantic (version 2.7.0)
-* langchain (version 0.2.1)
-* langchain-community (version 0.2.1)
+* langchain (version 0.2.10)
+* langchain-community (version 0.2.11)
 * sseclient-py (version 1.8.0)
 * python-dotenv (version 1.0.1)
