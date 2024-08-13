@@ -5,6 +5,7 @@ langchain==0.2.11
 langchain-core>=0.2.6,<0.3.0
 langchain-community==0.2.10
 langchain-experimental==0.0.60
+langgraph==0.1.6
 pydantic==2.7.0
 pydantic_core==2.18.1
 python-dotenv==1.0.1

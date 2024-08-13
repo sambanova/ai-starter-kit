@@ -11,7 +11,7 @@ from langchain_core.prompts import load_prompt
 from langchain_core.embeddings import Embeddings
 from langchain_core.vectorstores import VectorStore
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
@@ -843,6 +843,6 @@ class RAGComponents(BaseComponents):
         print('---Final Generation---')
         print(generation)
 
-        final_answer: str = self.final_chain.invoke({'question': original_question, 'generation': generation})
+        final_answer: str = self.final_chain.invoke({'question': original_question, 'answers': generation})
 
         return {'generation': final_answer}

@@ -92,7 +92,7 @@ You will find comprehensive guide of how to upload an train your models in the n
 
 ### Hosting
 
-The final fine-tuned model can then be hosted on SambaStudio. Once hosted, the API information, including environmental variables such as BASE_URL, Base URI, PROJECT_ID, ENDPOINT_ID, and API_KEY, can be utilized to execute inference, se more details on how to host your model [here](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+The final fine-tuned model can then be hosted on SambaStudio. Once hosted, the API information, including environmental variables such as BASE_URL, Base URI, PROJECT_ID, ENDPOINT_ID, and API_KEY, can be utilized to execute inference, se more details on how to host your model [here](../README.md#getting-a-sambanova-api-key-and-setting-your-models).
 
 ### Inference Pipeline
 
@@ -106,8 +106,8 @@ The [Archerfix repository](https://github.com/archerfish-bench/benchmark) can be
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- langchain (version 0.2.6)
-- langchain-community (version 0.2.6)
+- langchain (version 0.2.11)
+- langchain-community (version 0.2.10)
 - transformers (version 4.41.2)
 - datasets (version 2.20.0)
 - jupyter_client (version 8.6.0)
