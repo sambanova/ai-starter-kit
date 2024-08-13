@@ -18,8 +18,8 @@ from financial_insights.streamlit.app_stock_database import get_stock_database
 from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
 from financial_insights.streamlit.utilities_app import (
     clear_directory,
-    get_custom_button_style,
-    list_files_in_directory,
+    display_directory_contents,
+    get_blue_button_style,
     set_css_styles,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
@@ -53,7 +53,6 @@ def main() -> None:
                 'Stock Database',
                 'Financial News Scraping',
                 'Financial Filings Analysis',
-                'Custom Queries',
                 'Generate PDF Report',
                 'Print Chat History',
             ],
@@ -61,12 +60,10 @@ def main() -> None:
 
         streamlit.title('Saved Files')
 
-        files = list_files_in_directory(TEMP_DIR)
-
         # Custom button to clear all files
         with stylable_container(
             key='blue-button',
-            css_styles=get_custom_button_style(),
+            css_styles=get_blue_button_style(),
         ):
             if streamlit.button(
                 label='Clear All Files',
@@ -74,26 +71,27 @@ def main() -> None:
                 help='This will delete all saved files',
             ):
                 clear_directory(TEMP_DIR)
+                clear_directory(TEMP_DIR + 'stock_query_figures/')
+                clear_directory(TEMP_DIR + 'history_figures/')
+                clear_directory(TEMP_DIR + 'db_query_figures/')
+                clear_directory(TEMP_DIR + 'pdf_generation/')
                 streamlit.sidebar.success('All files have been deleted.')
 
-        if files:
-            for file in files:
-                file_path = os.path.join(TEMP_DIR, file)
-                with open(file_path, 'r') as f:
-                    try:
-                        file_content = f.read()
-                        streamlit.sidebar.download_button(
-                            label=f'{file}',
-                            data=file_content,
-                            file_name=file,
-                            mime='text/plain',
-                        )
-                    except Exception as e:
-                        logging.warning('Error reading file', str(e))
-                    except FileNotFoundError as e:
-                        logging.warning('File not found', str(e))
+        # Set the default path (you can change this to any desired default path)
+        default_path = './financial_insights/streamlit/cache'
+        # Use Streamlit's session state to persist the current path
+        if 'current_path' not in streamlit.session_state:
+            streamlit.session_state.current_path = default_path
+
+        # Input to allow user to go back to a parent directory
+        if streamlit.sidebar.button('⬅️ Back', key=f'back') and streamlit.session_state.current_path != default_path:
+            streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
+
+            # Display the current directory contents
+            display_directory_contents(streamlit.session_state.current_path, default_path)
         else:
-            streamlit.write('No files found')
+            # Display the current directory contents
+            display_directory_contents(streamlit.session_state.current_path, default_path)
 
     if 'fc' not in streamlit.session_state:
         streamlit.session_state.fc = None
@@ -122,7 +120,6 @@ def main() -> None:
             - Stock Database
             - Financial News Scraping
             - Financial Filings Analysis
-            - Custom Queries
             - Generate PDF Report
             - Print Chat History
         """
@@ -152,7 +149,7 @@ def main() -> None:
         # Custom button to clear chat history
         with stylable_container(
             key='blue-button',
-            css_styles=get_custom_button_style(),
+            css_styles=get_blue_button_style(),
         ):
             if streamlit.button('Clear Chat History'):
                 streamlit.session_state.chat_history = list()

@@ -48,11 +48,12 @@ def get_stock_database() -> None:
     if streamlit.button(label='Query database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_database_query(user_request, query_method)
+            content = user_request + '\n\n' + response_dict['message']
             save_path = 'db_query.txt'
             if streamlit.button(
                 'Save Query',
                 on_click=save_output_callback,
-                args=(response_dict, save_path),
+                args=(content, save_path),
             ):
                 pass
 

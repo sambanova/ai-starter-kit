@@ -14,17 +14,16 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from PIL import Image
 
-from financial_insights.src.function_calling import (ConversationalResponse,
-                                                     FunctionCallingLlm)
+from financial_insights.src.function_calling import ConversationalResponse, FunctionCallingLlm
 from financial_insights.src.tools import get_conversational_response
-from financial_insights.src.tools_database import (create_stock_database,
-                                                   query_stock_database)
+from financial_insights.src.tools_database import create_stock_database, query_stock_database
 from financial_insights.src.tools_filings import retrieve_filings
-from financial_insights.src.tools_stocks import (get_financial_summary,
-                                                 get_historical_price,
-                                                 get_stock_info,
-                                                 retrieve_symbol_list,
-                                                 retrieve_symbol_quantity_list)
+from financial_insights.src.tools_stocks import (
+    get_historical_price,
+    get_stock_info,
+    retrieve_symbol_list,
+    retrieve_symbol_quantity_list,
+)
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
 
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +41,6 @@ TOOLS = {
     'retrieve_symbol_list': retrieve_symbol_list,
     'retrieve_symbol_quantity_list': retrieve_symbol_quantity_list,
     'scrape_yahoo_finance_news': scrape_yahoo_finance_news,
-    'get_financial_summary': get_financial_summary,
     'get_conversational_response': get_conversational_response,
     'retrieve_filings': retrieve_filings,
     'create_stock_database': create_stock_database,
@@ -74,7 +72,7 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
 
 
 def set_fc_llm(
-    tools: List[str],
+    tools: Optional[List[str]] = None,
     default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
 ) -> None:
     """
@@ -83,7 +81,10 @@ def set_fc_llm(
     Args:
         tools (list): list of tools to be used
     """
-    set_tools = [TOOLS[name] for name in tools]
+    if tools is not None:
+        set_tools = [TOOLS[name] for name in tools]
+    else:
+        set_tools = [ConversationalResponse]
     streamlit.session_state.fc = FunctionCallingLlm(tools=set_tools, default_tool=default_tool)
 
 
@@ -105,28 +106,28 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
             )
 
     streamlit.session_state.chat_history.append(user_question)
-    streamlit.session_state.chat_history.append(response)
+    streamlit.session_state.chat_history.append(save_response_object(response, stream_response=False))
 
     with streamlit.chat_message('user'):
         streamlit.write(f'{user_question}')
 
-    stream_response_object(response)
+    save_response_object(response, stream_response=True)
 
     return response
 
 
 def stream_chat_history() -> None:
-    for ques, ans in zip(
+    for question, answer in zip(
         streamlit.session_state.chat_history[::2],
         streamlit.session_state.chat_history[1::2],
     ):
         with streamlit.chat_message('user'):
-            streamlit.write(ques)
+            streamlit.write(question)
 
-        stream_response_object(ans)
+        save_response_object(answer, stream_response=True)
 
 
-def stream_response_object(response: Any) -> Any:
+def save_response_object(response: Any, stream_response: bool = False) -> Any:
     # Convert JSON string to dictionary
     try:
         # Try to convert the string to a dictionary
@@ -139,33 +140,46 @@ def stream_response_object(response: Any) -> Any:
         # If JSON decoding fails, return the original string
         pass
 
-    if isinstance(response, (str, float, int)):
-        stream_single_response(response)
+    if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
+        if stream_response:
+            stream_single_response(response)
+        return response
 
     elif isinstance(response, list):
-        for item in response:
-            stream_single_response(item)
+        if stream_response:
+            for item in response:
+                stream_single_response(item)
+        return json.dumps(response)
 
     elif isinstance(response, dict):
-        for key, value in response.items():
-            if isinstance(value, str):
-                stream_single_response(key + ': ' + value)
-            elif isinstance(value, list):
-                # If all values are strings
-                stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
+        if stream_response:
+            for key, value in response.items():
+                if isinstance(value, str):
+                    stream_single_response(key + ': ' + value)
+                elif isinstance(value, list):
+                    # If all values are strings
+                    stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
+        return json.dumps(response)
 
     elif isinstance(response, tuple):
-        for element in response:
-            if isinstance(element, str):
-                stream_single_response(element)
-            elif isinstance(element, list):
-                for item in element:
-                    stream_single_response(item)
-            elif isinstance(element, dict):
-                for key, value in element.items():
+        if isinstance(response[0], (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
+            if stream_response:
+                stream_single_response(response[0])
+            return response[0]
+
+        elif isinstance(response, list):
+            if stream_response:
+                for item in response:
+                    stream_single_response(response[0])
+            return json.dumps(response[0])
+
+        elif isinstance(response, dict):
+            if stream_response:
+                for key, value in response[0].items():
                     stream_single_response(value)
+            return json.dumps(response[0])
     else:
-        raise Exception('Invalid response type')
+        return
 
 
 def stream_single_response(response: Any) -> None:
@@ -176,7 +190,6 @@ def stream_single_response(response: Any) -> None:
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
-            png_paths = extract_png_paths(response)
             if isinstance(response, str):
                 if not response.endswith('.png'):
                     streamlit.write(response)
@@ -186,17 +199,21 @@ def stream_single_response(response: Any) -> None:
 
                     # Display the image
                     streamlit.image(image, use_column_width=True)
-            for path in png_paths:
-                if path != response:
-                    # Load the image
-                    image = Image.open(path)
-                    # Display the image
-                    streamlit.image(image, use_column_width=True)
+
+                png_paths = extract_png_paths(response)
+                for path in png_paths:
+                    if path != response:
+                        # Load the image
+                        image = Image.open(path)
+                        # Display the image
+                        streamlit.image(image, use_column_width=True)
 
     # If response is a figure
     elif isinstance(response, plotly.graph_objs.Figure):
         # Display the image
-        streamlit.image(response, use_column_width=True)
+        # streamlit.image(response, use_column_width=True)
+        # Show the figure
+        streamlit.plotly_chart(response, use_container_width=True)
 
     # If response is a dataframe, display its head
     elif isinstance(response, pandas.DataFrame):
@@ -205,6 +222,6 @@ def stream_single_response(response: Any) -> None:
 
 def extract_png_paths(sentence: str) -> List[str]:
     png_pattern = r'\b\S+\.png\b'
-    png_paths = []
+    png_paths: List[str] = []
     matches = re.findall(png_pattern, sentence)
     return matches

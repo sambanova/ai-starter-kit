@@ -1,4 +1,5 @@
 chromadb==0.4.24
+fpdf2==2.7.9
 fuzzywuzzy==0.18.0
 kaleido==0.2.1
 langchain==0.2.6

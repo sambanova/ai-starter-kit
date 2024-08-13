@@ -1,8 +1,9 @@
+import datetime
 import json
 import logging
 import os
 import sys
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas
 import plotly
@@ -54,17 +55,32 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
 
 
 # Save dataframe and figure callback for streamlit button
-def save_dataframe_figure_callback(ticker_list: str, data: pandas.DataFrame, fig: plotly.graph_objs.Figure) -> None:
+def save_historical_price_callback(
+    user_query: str,
+    symbol_list: str,
+    data: pandas.DataFrame,
+    fig: plotly.graph_objs.Figure,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    save_path: Optional[str] = None,
+) -> None:
+    dir_name = TEMP_DIR + 'history_figures/'
     # Create temporary cache for storing historical price data
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    filename = dir_name + f'stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}'
+
     # Write the dataframe to a csv file
-    data.to_csv(TEMP_DIR + f'stock_data_{ticker_list}.csv', index=False)
+    data.to_csv(filename + '.csv', index=True)
     # Save the plots
     fig_bytes = fig.to_image(format='png')
-    with open(TEMP_DIR + f'stock_data_{ticker_list}.png', 'wb') as f:
+    with open(f'{filename}.png', 'wb') as f:
         f.write(fig_bytes)
-    fig.write_image(TEMP_DIR + f'stock_data_{ticker_list}.png')
+
+    # Save the figure path to a file
+    if save_path is not None:
+        save_output_callback(user_query + '\n\n' + f'{filename}.png', save_path)
 
 
 def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_path: str) -> None:
@@ -78,17 +94,19 @@ def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_p
     if isinstance(response, str):
         # Writing the string to a txt file
         with open(filename, 'a') as text_file:
-            text_file.write(response + '\n')
+            text_file.write('\n' + response + '\n')
 
     elif isinstance(response, dict):
         # Writing the dictionary to a JSON file
         with open(filename, 'a') as json_file:
             json.dump(response, json_file)
+            json_file.write('\n')
 
     elif isinstance(response, list):
         # Writing the list to a JSON file
         with open(filename, 'a') as json_file:
             json.dump(response, json_file)
+            json_file.write('\n')
 
     else:
         raise ValueError('Invalid response type')
@@ -102,8 +120,54 @@ def list_files_in_directory(directory: str) -> List[str]:
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
+def list_directory(directory: str) -> Tuple[List[str], List[str]]:
+    """
+    List subdirectories and files in the given directory.
+    """
+    subdirectories = []
+    files = []
+    for name in os.listdir(directory):
+        path = os.path.join(directory, name)
+        if os.path.isdir(path):
+            subdirectories.append(name)
+        else:
+            files.append(name)
+    return subdirectories, files
+
+
+def display_directory_contents(path: str, default_path: str) -> None:
+    """
+    Display subdirectories and files in the current path.
+    """
+    subdirectories, files = list_directory(path)
+
+    streamlit.sidebar.markdown(f'### Directory: {path}')
+
+    if subdirectories:
+        streamlit.sidebar.markdown('#### Subdirectories:')
+        for idx, subdir in enumerate(subdirectories):
+            if streamlit.sidebar.button(f'📁 {subdir}', key=subdir):
+                streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
+
+                files_subdir = list_files_in_directory(os.path.join(path, subdir))
+                for file in files_subdir:
+                    download_file(streamlit.session_state.current_path + '/' + file)
+
+    if files:
+        streamlit.sidebar.markdown('#### Files:')
+        for file in files:
+            download_file(path + '/' + file)
+
+    if len(subdirectories + files) == 0:
+        streamlit.write('No files found')
+
+    return
+
+
 def clear_directory(directory: str) -> None:
     """Delete all files in the given directory."""
+    # List subdirectories and files
+    subdirectories, files = list_directory(directory)
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         try:
@@ -111,6 +175,23 @@ def clear_directory(directory: str) -> None:
                 os.unlink(file_path)
         except Exception as e:
             streamlit.error(f'Error deleting file {file_path}: {e}')
+
+
+def download_file(file: str) -> None:
+    try:
+        # with open(file, 'r') as f:
+        with open(file, encoding='utf8', errors='ignore') as f:
+            file_content = f.read()
+            streamlit.sidebar.download_button(
+                label=f'{file}',
+                data=file_content,
+                file_name=file,
+                mime='text/plain',
+            )
+    except Exception as e:
+        logging.warning('Error reading file', str(e))
+    except FileNotFoundError as e:
+        logging.warning('File not found', str(e))
 
 
 def set_css_styles() -> None:
@@ -210,10 +291,24 @@ def set_css_styles() -> None:
     )
 
 
-def get_custom_button_style() -> str:
+def get_blue_button_style() -> str:
     return """
         button {
             background-color: blue;
+            color: black;
+            padding: 0.75em 1.5em;
+            font-size: 1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }"""
+
+
+def get_orange_button_style() -> str:
+    return """
+        button {
+            background-color: orange;
             color: black;
             padding: 0.75em 1.5em;
             font-size: 1;

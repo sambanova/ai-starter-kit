@@ -243,3 +243,6 @@ wandb/
 
 # VSCode
 .vscode/*
+
+# all .db files
+*.db

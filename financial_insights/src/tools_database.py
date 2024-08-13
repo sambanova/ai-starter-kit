@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Union
 
 import pandas
 import streamlit
-import yfinance
 from dotenv import load_dotenv
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
@@ -20,6 +19,8 @@ from langchain_core.tools import tool
 from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
+
+from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -65,79 +66,6 @@ def create_stock_database(
     return company_tables
 
 
-def extract_yfinance_data(
-    symbol: str, start_date: datetime.date, end_date: datetime.date
-) -> Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]:
-    company = yfinance.Ticker(ticker=symbol)
-
-    company_dict = dict()
-
-    # get all stock info
-    company_dict['info'] = company.info
-
-    # get historical market data
-    company_dict['history'] = hist = company.history(start=start_date, end=end_date)
-
-    # show meta information about the history (requires history() to be called first)
-    company_dict['history_metadata'] = company.history_metadata
-
-    # show actions (dividends, splits, capital gains)
-    company_dict['actions'] = company.actions
-    company_dict['dividends'] = company.dividends
-    company_dict['splits'] = company.splits
-    company_dict['capital_gains'] = company.capital_gains  # only for mutual funds & etfs
-
-    # show share count
-    company_dict['shares'] = company.get_shares_full(start=start_date, end=end_date)
-
-    # show financials:
-    # - income statement
-    company_dict['income_stmt'] = convert_date_index_to_column(company.income_stmt.T)
-    company_dict['quarterly_income_stmt'] = convert_date_index_to_column(company.quarterly_income_stmt.T)
-    # - balance sheet
-    company_dict['balance_sheet'] = convert_date_index_to_column(company.balance_sheet.T)
-    company_dict['quarterly_balance_sheet'] = convert_date_index_to_column(company.quarterly_balance_sheet.T)
-    # - cash flow statement
-    company_dict['cashflow'] = convert_date_index_to_column(company.cashflow.T)
-    company_dict['quarterly_cashflow'] = convert_date_index_to_column(company.quarterly_cashflow.T)
-    # see `Ticker.get_income_stmt()` for more options
-
-    # show holders
-    company_dict['major_holders'] = company.major_holders
-    company_dict['institutional_holders'] = company.institutional_holders
-    company_dict['mutualfund_holders'] = company.mutualfund_holders
-    company_dict['insider_transactions'] = company.insider_transactions
-    company_dict['insider_purchases'] = company.insider_purchases
-    company_dict['insider_roster_holders'] = company.insider_roster_holders
-
-    company_dict['sustainability'] = company.sustainability
-
-    # show recommendations
-    company_dict['recommendations'] = company.recommendations
-    company_dict['recommendations_summary'] = company.recommendations_summary
-    company_dict['upgrades_downgrades'] = company.upgrades_downgrades
-
-    # Show future and historic earnings dates, returns at most next 4 quarters and last 8 quarters by default.
-    # Note: If more are needed use company.get_earnings_dates(limit=XX) with increased limit argument.
-    company_dict['earnings_dates'] = company.earnings_dates
-
-    # show ISIN code - *experimental*
-    # ISIN = International Securities Identification Number
-    company_dict['isin'] = company.isin
-
-    # show options expirations
-    company_dict['options'] = company.options
-
-    # show news
-    company_dict['news'] = company.news
-
-    # # get option chain for specific expiration
-    # company_dict["option_chain"] = company.option_chain()
-    # # data available via: opt.calls, opt.puts
-
-    return company_dict
-
-
 def store_company_dataframes_to_sqlite(
     db_name: str, company_data_dict: Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]
 ) -> Dict[str, list[str]]:
@@ -166,18 +94,7 @@ def store_company_dataframes_to_sqlite(
         for df_name, data in company_data.items():
             # Build a table name using company name and dataframe purpose/type
             table_name = f'{company_base_name}_{df_name}'
-            if isinstance(data, pandas.DataFrame):
-                df = data
-            elif isinstance(data, dict):
-                df = pandas.DataFrame.from_dict(data, orient='index', columns=['Value'])
-            elif isinstance(data, pandas.Series):
-                df = data.to_frame()
-            elif isinstance(data, str):
-                df = pandas.DataFrame({df_name: [data]})
-            elif isinstance(data, (list, tuple)):
-                df = pandas.DataFrame({df_name: data})
-            else:
-                raise ValueError(f'Unsupported data type for {df_name} of {company}: {type(data)}')
+            df = convert_data_to_frame(data, df_name)
 
             # Make sure column names are SQLite-friendly
             for column in df.columns:
@@ -270,7 +187,9 @@ def query_stock_database_sql(user_request: str, symbol_list: List[str]) -> Dict[
         if len(query) > 0:
             results.append(query_executor.invoke(query))
 
-    message = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
+    message = '\n'.join(
+        [f'Query:\n{query}\nexecuted with result:\n{result}' for query, result in zip(queries, results)]
+    )
 
     response_dict: Dict[str, str | List[str]] = dict()
     response_dict['queries'] = queries
@@ -308,7 +227,10 @@ def sql_finder(text: str) -> Any:
 def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> Any:
     """Query a SQL database for a list of stocks/companies."""
 
-    response = dict()
+    user_request += (
+        '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
+    )
+    response: Dict[str, List[str]] = dict()
     for symbol in symbol_list:
         selected_tables = select_database_tables(user_request, [symbol])
 
@@ -328,7 +250,7 @@ def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> 
                     'llm': streamlit.session_state.fc.llm,
                     'open_charts': False,
                     'save_charts': True,
-                    'save_charts_path': TEMP_DIR + '/db_query/',
+                    'save_charts_path': TEMP_DIR + '/db_query_figures/',
                 },
             )
             response[symbol].append(df.chat(user_request))
@@ -336,26 +258,19 @@ def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> 
     return response
 
 
-def convert_date_index_to_column(df: pandas.DataFrame) -> pandas.DataFrame:
-    df_new = df.reset_index()
-    new_column_list = ['Date'] + list(df.columns)
-    df_new.columns = new_column_list
-    return df_new
-
-
-class TableName(BaseModel):
-    table_names: List[str] = Field(description='List of the most relevant table names.')
+class TableNames(BaseModel):
+    table_names: List[str] = Field(description='List of the most relevant table names for the user query.')
 
 
 def select_database_tables(user_request: str, symbol_list: List[str]) -> List[str]:
     summary_text = get_table_summaries_from_symbols(symbol_list)
 
-    parser = PydanticOutputParser(pydantic_object=TableName)
+    parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
     prompt_template = (
         'Consider the following table summaries:\n{summary_text}\n'
-        'Which are the most relevant tables to the following query.\n'
-        '"{user_request}"?\n'
-        '{format_instructions}'
+        'Which are the most relevant tables to the following query?\n'
+        'Query: "{user_request}"\n'
+        'Format instructions: {format_instructions}'
     )
 
     prompt = PromptTemplate(
@@ -368,7 +283,7 @@ def select_database_tables(user_request: str, symbol_list: List[str]) -> List[st
 
     # Get response from llama3
     response = chain.invoke({'user_request': user_request, 'summary_text': summary_text})
-    return response.table_names
+    return response.table_names  # type: ignore
 
 
 def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:

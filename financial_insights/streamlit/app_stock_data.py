@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pandas
 import plotly
@@ -14,7 +14,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from financial_insights.streamlit.utilities_app import save_dataframe_figure_callback, save_output_callback
+from financial_insights.streamlit.utilities_app import save_historical_price_callback, save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 
@@ -33,25 +33,46 @@ def get_stock_data_analysis() -> None:
         'Enter the info that you want to retrieve for given companies.',
         key='ticker_symbol',
     )
+    dataframe_name = streamlit.selectbox(
+        'Select Data Source:',
+        [
+            'info',
+            'history',
+            'history_metadata',
+            'actions',
+            'dividends',
+            'splits',
+            'capital_gains',
+            'shares',
+            'income_stmt',
+            'quarterly_income_stmt',
+            'balance_sheet',
+            'quarterly_balance_sheet',
+            'cashflow',
+            'quarterly_cashflow',
+            'major_holders',
+            'institutional_holders',
+            'mutualfund_holders',
+            'insider_transactions',
+            'insider_purchases',
+            'insider_roster_holders',
+            'sustainability',
+            'recommendations',
+            'recommendations_summary',
+            'upgrades_downgrades',
+            'earnings_dates',
+            'isin',
+            'options',
+            'news',
+        ],
+    )
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_string = handle_stock_info(user_request)
+            response_dict = handle_stock_query(user_request, dataframe_name)
 
-            save_path = 'stock_info.txt'
-            content = user_request + '\n\n' + response_string + '\n\n\n'
+            save_path = 'stock_query.txt'
             if streamlit.button(
                 'Save Answer',
-                on_click=save_output_callback,
-                args=(content, save_path),
-            ):
-                pass
-
-    if streamlit.button(label='Get financial summary'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_dict = handle_financial_summary(user_request)
-            save_path = 'stock_info.txt'
-            if streamlit.button(
-                'Save Analysis',
                 on_click=save_output_callback,
                 args=(response_dict, save_path),
             ):
@@ -60,7 +81,7 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
     output = streamlit.empty()
-    ticker_list = streamlit.text_input(
+    user_request = streamlit.text_input(
         'Enter the quantities that you want to plot for given companies\n'
         'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.'
     )
@@ -70,17 +91,21 @@ def get_stock_data_analysis() -> None:
     # Analyze stock data
     if streamlit.button('Analyze Stock Data'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            data, fig = handle_stock_data_analysis(ticker_list, start_date, end_date)
+            fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
+        save_path = 'stock_query.txt'
         if streamlit.button(
             'Save Analysis',
-            on_click=save_dataframe_figure_callback,
-            args=(ticker_list, data, fig),
+            on_click=save_historical_price_callback,
+            args=(user_request, symbol_list, data, fig, start_date, end_date, save_path),
         ):
             pass
 
 
-def handle_stock_info(user_question: Optional[str]) -> Any:
+def handle_stock_query(
+    user_question: Optional[str],
+    dataframe_name: Optional[str] = None,
+) -> Any:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
 
@@ -89,6 +114,9 @@ def handle_stock_info(user_question: Optional[str]) -> Any:
     """
     if user_question is None:
         return None
+
+    if dataframe_name is None:
+        dataframe_name = 'None'
 
     streamlit.session_state.tools = [
         'retrieve_symbol_list',
@@ -100,41 +128,17 @@ def handle_stock_info(user_question: Optional[str]) -> Any:
     user_request = (
         'Please answer the following query for the following companies '
         '(expressed via their ticker symbols):\n' + user_question + '\n'
-        'Retrieve the company info.\n'
+        f'Retrieve the company info using the dataframe "{dataframe_name}".\n'
         'Reformulate the final answer in the form of a conversational response to the user.\n'
         'Take your time and reason step by step.\n'
     )
 
-    return handle_userinput(user_question, user_request)
-
-
-def handle_financial_summary(user_question: str) -> Any:
-    """
-    Handle user input and generate a response, also update chat UI in streamlit app
-    """
-    streamlit.session_state.tools = [
-        'retrieve_symbol_list',
-        'get_financial_summary',
-        'get_conversational_response',
-    ]
-    set_fc_llm(streamlit.session_state.tools)
-
-    if user_question is None:
-        return None
-
-    user_request = (
-        'Please answer the following query for the following companies '
-        '(expressed via their ticker symbols):\n' + user_question + '\n'
-        'Retrieve the financial summary.\n'
-        'Reformulate the final answer in the form of a conversational response to the user.\n'
-        'Take your time and reason step by step.\n'
-    )
     return handle_userinput(user_question, user_request)
 
 
 def handle_stock_data_analysis(
     user_question: str, start_date: DateWidgetReturn, end_date: DateWidgetReturn
-) -> Tuple[pandas.DataFrame, plotly.graph_objs.Figure]:
+) -> Tuple[pandas.DataFrame, plotly.graph_objs.Figure, List[str]]:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
 
@@ -164,9 +168,11 @@ def handle_stock_data_analysis(
 
     assert (
         isinstance(response, tuple)
-        and len(response) == 2
-        and isinstance(response[0], pandas.DataFrame)
-        and isinstance(response[1], plotly.graph_objs.Figure)
+        and len(response) == 3
+        and isinstance(response[0], plotly.graph_objs.Figure)
+        and isinstance(response[1], pandas.DataFrame)
+        and isinstance(response[2], list)
+        and all([isinstance(i, str) for i in response[2]])
     ), f'Invalid response: {response}'
 
     return response

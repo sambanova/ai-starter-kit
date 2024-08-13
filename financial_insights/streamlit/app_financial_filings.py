@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from typing import Optional, Tuple
@@ -41,7 +42,7 @@ def get_financial_filings() -> None:
         filing_quarter = None
     if streamlit.button('Analyze Filing'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            answer, filename = handle_financial_filings(
+            answer, query_dict = handle_financial_filings(
                 user_request,
                 company_name,
                 filing_type,
@@ -49,11 +50,13 @@ def get_financial_filings() -> None:
                 selected_year,
             )
 
-            content = user_request + '\n\n' + answer + '\n\n\n'
+            query_json = json.dumps(query_dict)
+            save_path = 'filings.txt'
+            content = query_json + '\n\n' + user_request + '\n\n' + answer + '\n\n\n'
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, filename + '.txt'),
+                args=(content, save_path),
             ):
                 pass
 
@@ -80,7 +83,10 @@ def handle_financial_filings(
     response = handle_userinput(user_question, user_request)
 
     assert (
-        isinstance(response, tuple) and len(response) == 2 and all(isinstance(item, str) for item in response)
+        isinstance(response, tuple)
+        and len(response) == 2
+        and isinstance(response[0], str)
+        and isinstance(response[1], dict)
     ), f'Invalid response: {response}'
 
     return response

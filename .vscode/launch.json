@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Python:Streamlit",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "streamlit",
             "args": [
@@ -12,6 +12,7 @@
                 "--server.port",
                 "2000"
             ],
+            "justMyCode": false
         }
     ]
 }

@@ -1,9 +1,8 @@
 import datetime
 import logging
 import os
-import re
 import sys
-from typing import Any, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
 from bs4 import BeautifulSoup
@@ -44,61 +43,61 @@ class YahooFinanceNewsInput(BaseModel):
     )
 
 
-def split_text_into_chunks(text: str, max_chunk_size: int = MAX_CHUNK_SIZE) -> List[str]:
-    # Split text into sentences based on punctuation
-    sentences = re.split(r'(?<=[.!?]) +', text)
+# def split_text_into_chunks(text: str, max_chunk_size: int = MAX_CHUNK_SIZE) -> List[str]:
+#     # Split text into sentences based on punctuation
+#     sentences = re.split(r'(?<=[.!?]) +', text)
 
-    chunks: List[str] = []
-    current_chunk: List[str] = []
-    current_length = 0
+#     chunks: List[str] = []
+#     current_chunk: List[str] = []
+#     current_length = 0
 
-    for sentence in sentences:
-        sentence_length = len(sentence.split())
-        # If adding the sentence exceeds the max_chunk_size, start a new chunk
-        if current_length + sentence_length > max_chunk_size:
-            chunks.append(' '.join(current_chunk))
-            current_chunk = [sentence]
-            current_length = sentence_length
-        else:
-            current_chunk.append(sentence)
-            current_length += sentence_length
+#     for sentence in sentences:
+#         sentence_length = len(sentence.split())
+#         # If adding the sentence exceeds the max_chunk_size, start a new chunk
+#         if current_length + sentence_length > max_chunk_size:
+#             chunks.append(' '.join(current_chunk))
+#             current_chunk = [sentence]
+#             current_length = sentence_length
+#         else:
+#             current_chunk.append(sentence)
+#             current_length += sentence_length
 
-    # Add the last chunk if it has content
-    if current_chunk:
-        chunks.append(' '.join(current_chunk))
+#     # Add the last chunk if it has content
+#     if current_chunk:
+#         chunks.append(' '.join(current_chunk))
 
-    return chunks
-
-
-def filter_texts(texts: Set[str]) -> List[str]:
-    """Filter out texts with fewer than 3 words."""
-    filtered_texts = set()
-    for text in texts:
-        if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
-            filtered_texts.add(text)
-        elif len(text.split()) > MAX_CHUNK_SIZE:
-            # Split the long text into smaller chunks
-            chunks = split_text_into_chunks(text)
-            for chunk in chunks:
-                filtered_texts.add(chunk)
-        else:
-            pass
-    return list(filtered_texts)
+#     return chunks
 
 
-def filter_text(text: str) -> List[str]:
-    """Filter out texts with fewer than 3 words."""
-    filtered_texts: List[str] = list()
-    if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
-        filtered_texts.append(text)
-    elif len(text.split()) > MAX_CHUNK_SIZE:
-        # Split the long text into smaller chunks
-        chunks = split_text_into_chunks(text)
-        for chunk in chunks:
-            filtered_texts.append(chunk)
-    else:
-        pass
-    return filtered_texts
+# def filter_texts(texts: Set[str]) -> List[str]:
+#     """Filter out texts with fewer than 3 words."""
+#     filtered_texts = set()
+#     for text in texts:
+#         if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
+#             filtered_texts.add(text)
+#         elif len(text.split()) > MAX_CHUNK_SIZE:
+#             # Split the long text into smaller chunks
+#             chunks = split_text_into_chunks(text)
+#             for chunk in chunks:
+#                 filtered_texts.add(chunk)
+#         else:
+#             pass
+#     return list(filtered_texts)
+
+
+# def filter_text(text: str) -> List[str]:
+#     """Filter out texts with fewer than 3 words."""
+#     filtered_texts: List[str] = list()
+#     if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
+#         filtered_texts.append(text)
+#     elif len(text.split()) > MAX_CHUNK_SIZE:
+#         # Split the long text into smaller chunks
+#         chunks = split_text_into_chunks(text)
+#         for chunk in chunks:
+#             filtered_texts.append(chunk)
+#     else:
+#         pass
+#     return filtered_texts
 
 
 def clean_text(text: str) -> str:
@@ -125,7 +124,7 @@ def retrieve_filings(
     filing_type: str,
     filing_quarter: int,
     date: int,
-) -> Tuple[Any, str]:
+) -> Tuple[Any, Dict[str, str]]:
     """Retrieve the text of a financial filing from SEC Edgar and then answer the full user request."""
 
     dl = Downloader(os.environ.get('SEC_API_ORGANIZATION'), os.environ.get('SEC_API_EMAIL'))
@@ -184,7 +183,10 @@ def retrieve_filings(
 
                 # Save chunks to csv
                 df = pandas.DataFrame(chunks, columns=['text'])
-                filename = f'{filing_type}_{filing_quarter}_{ticker_symbol}_{report_date}'
+                filename = (
+                    f'filing_id_{filing_type.replace('-', '')}_{filing_quarter}_'
+                    f'{ticker_symbol}_{report_date.date().year}'
+                )
                 df.to_csv(TEMP_DIR + filename + '.csv', index=False)
                 break
 
@@ -211,4 +213,10 @@ def retrieve_filings(
 
     response = get_qa_response(documents, user_question)
 
-    return response['answer'], filename
+    query_dict = {
+        'filing_type': filing_type,
+        'filing_quarter': filing_quarter,
+        'ticker_symbol': ticker_symbol,
+        'report_date': report_date.date().year,
+    }
+    return response['answer'], query_dict

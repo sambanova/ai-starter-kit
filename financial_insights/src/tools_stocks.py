@@ -2,7 +2,8 @@ import datetime
 import json
 import os
 import sys
-from typing import Dict, List, Optional, Tuple
+from datetime import timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
 import plotly
@@ -16,6 +17,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
+
+from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -32,46 +35,65 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 class StockInfoSchema(BaseModel):
-    """Return the correct stock info value given the appropriate symbol and key.
-    Infer valid ticker symbol and key from the user prompt.
-    The key must be one of the following:
-    address1, city, state, zip, country, phone, website, industry, industryKey, industryDisp, sector, sectorKey,
-    sectorDisp, longBusinessSummary, fullTimeEmployees, companyOfficers, auditRisk, boardRisk, compensationRisk,
-    shareHolderRightsRisk, overallRisk, governanceEpochDate, compensationAsOfEpochDate, maxAge, priceHint,
-    previousClose, open, dayLow, dayHigh, regularMarketPreviousClose, regularMarketOpen, regularMarketDayLow,
-    regularMarketDayHigh, dividendRate, dividendYield, exDividendDate, beta, trailingPE, forwardPE, volume,
-    regularMarketVolume, averageVolume, averageVolume10days, averageDailyVolume10Day, bid, ask, bidSize, askSize,
-    marketCap, fiftyTwoWeekLow, fiftyTwoWeekHigh, priceToSalesTrailing12Months, fiftyDayAverage, twoHundredDayAverage,
-    currency, enterpriseValue, profitMargins, floatShares, sharesOutstanding, sharesShort, sharesShortPriorMonth,
-    sharesShortPreviousMonthDate, dateShortInterest, sharesPercentSharesOut, heldPercentInsiders,
-    heldPercentInstitutions,shortRatio, shortPercentOfFloat, impliedSharesOutstanding, bookValue, priceToBook,
-    lastFiscalYearEnd, nextFiscalYearEnd, mostRecentQuarter, earningsQuarterlyGrowth, netIncomeToCommon, trailingEps,
-    forwardEps, pegRatio, enterpriseToRevenue, enterpriseToEbitda, 52WeekChange, SandP52WeekChange, lastDividendValue,
-    lastDividendDate, exchange, quoteType, symbol, underlyingSymbol, shortName, longName, firstTradeDateEpochUtc,
-    timeZoneFullName, timeZoneShortName, uuid, messageBoardId, gmtOffSetMilliseconds, currentPrice, targetHighPrice,
-    targetLowPrice, targetMeanPrice, targetMedianPrice, recommendationMean, recommendationKey, numberOfAnalystOpinions,
-    totalCash, totalCashPerShare, ebitda, totalDebt, quickRatio, currentRatio, totalRevenue, debtToEquity,
-    revenuePerShare, returnOnAssets, returnOnEquity, freeCashflow, operatingCashflow, earningsGrowth, revenueGrowth,
-    grossMargins, ebitdaMargins, operatingMargins, financialCurrency, trailingPegRatio.
-    If asked generically for 'stock price', use currentPrice.
-    """
+    """Return the correct stock info value given the appropriate ticker symbol."""
 
     user_query: str = Field('User query to retrieve stock information.')
     symbol_list: List[str] = Field('List of stock ticker symbols.')
+    dataframe_name: Optional[str] = Field('Name of the dataframe to be used.')
 
 
 @tool(args_schema=StockInfoSchema)
-def get_stock_info(user_query: str, symbol_list: List[str] = list()) -> Dict[str, str]:
-    """Return the correct stock info value given the appropriate ticker symbol and key."""
-    stock_key: Dict[str, str] = dict()
+def get_stock_info(
+    user_query: str, symbol_list: List[str] = list(), dataframe_name: Optional[str] = None
+) -> Dict[str, str]:
+    """Return the correct stock info value given the appropriate ticker symbol."""
+    response_dict: Dict[str, str] = dict()
 
     for symbol in symbol_list:
-        yahoo_connector = YahooFinanceConnector(symbol)
+        if dataframe_name is None:
+            response_dict[symbol] = yahoo_connector_answer(user_query, symbol)
+        else:
+            company_data_dict = extract_yfinance_data(
+                symbol,
+                start_date=datetime.datetime.today().date() - timedelta(days=365),
+                end_date=datetime.datetime.today().date(),
+            )
 
-        df = SmartDataframe(yahoo_connector, config={'llm': streamlit.session_state.fc.llm})
-        stock_key[symbol] = df.chat(user_query)
+            data = company_data_dict[dataframe_name]
+            dataframe = convert_data_to_frame(data, dataframe_name)
 
-    return stock_key
+            try:
+                df = SmartDataframe(
+                    dataframe,
+                    config={
+                        'llm': streamlit.session_state.fc.llm,
+                        'open_charts': False,
+                        'save_charts': True,
+                        'save_charts_path': TEMP_DIR + '/stock_query_figures/',
+                        'enable_cache': False,
+                    },
+                )
+                response_dict[symbol] = df.chat(user_query)
+            except:
+                response_dict[symbol] = yahoo_connector_answer(user_query, symbol)
+
+    return response_dict
+
+
+def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
+    yahoo_connector = YahooFinanceConnector(symbol)
+
+    df = SmartDataframe(
+        yahoo_connector,
+        config={
+            'llm': streamlit.session_state.fc.llm,
+            'open_charts': False,
+            'save_charts': True,
+            'save_charts_path': TEMP_DIR + '/stock_query_figures/',
+            'enable_cache': False,
+        },
+    )
+    return df.chat(user_query)
 
 
 class RetrievalCompanyNameSchema(BaseModel):
@@ -177,63 +199,6 @@ def retrieve_symbol_quantity_list(symbol_list: List[str], quantity: str) -> Tupl
     return symbol_list, quantity
 
 
-class RetrievalSymbolSchema(BaseModel):
-    """
-    Get the finanical summary for a given list of ticker symbols.
-    """
-
-    symbol_list: List[str] = Field(
-        description='A list of ticker symbols.',
-    )
-    user_query: str = Field(
-        description='The extracted user query for given companies. '
-        'If you cannot retrieve any specific query, '
-        'use the default "Plot the key financial indicators over time."',
-        default='Plot the key financial indicators over time.',
-    )
-
-
-@tool(args_schema=RetrievalSymbolSchema)
-def get_financial_summary(symbol_list: List[str], user_query: str) -> Dict[str, str]:
-    """Get the finanical summary for a given stock."""
-    # Select the releavant tables
-    question = 'You are an expert in the stock market.\n' f'{user_query}\n'
-    response_dict: Dict[str, str] = dict()
-    for symbol in symbol_list:
-        company = yfinance.Ticker(ticker=symbol)
-
-        balance_sheet = company.balance_sheet.T
-
-        df = SmartDataframe(
-            balance_sheet,
-            config={
-                'llm': streamlit.session_state.fc.llm,
-                'open_charts': False,
-                'save_charts': True,
-                'save_charts_path': TEMP_DIR + '/stock_query/',
-            },
-        )
-        response_dict[symbol] = df.chat(question)
-
-    return response_dict
-
-
-@tool(args_schema=RetrievalSymbolSchema)
-def analyse_stock_data_analysis(symbol_list: List[str], question: str) -> str:
-    """Get the data analysis for a given stock"""
-
-    response_dict = dict()
-
-    for symbol in symbol_list:
-        yahoo_connector = YahooFinanceConnector(symbol)
-        df = SmartDataframe(yahoo_connector, config={'llm': streamlit.session_state.fc.llm})
-        response_dict[symbol] = df.chat(question)
-
-    # Convert dictionary to JSON string
-    json_string = json.dumps(response_dict, indent=4)
-    return json_string
-
-
 # tool schema
 class HistoricalPriceSchema(BaseModel):
     """Fetches historical stock prices for a given list of ticker symbols from 'start_date' to 'end_date'."""
@@ -268,15 +233,15 @@ def get_historical_price(
     """
 
     # Initialise a pandas DataFrame with symbols as columns and dates as index
-    data_close = pandas.DataFrame(columns=symbol_list)
+    data_price = pandas.DataFrame(columns=symbol_list)
 
     for symbol in symbol_list:
         data = yfinance.Ticker(symbol)
         data_history = data.history(start=start_date, end=end_date)
-        data_close[symbol] = data_history[quantity]
+        data_price[symbol] = data_history[quantity]
 
-    fig = plot_price_over_time(data_close)
-    return data_close, fig
+    fig = plot_price_over_time(data_price)
+    return fig, data_price, symbol_list
 
 
 def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figure:
@@ -315,9 +280,6 @@ def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figu
             bordercolor='black',
         ),
     )
-
-    # Show the figure
-    streamlit.plotly_chart(fig, use_container_width=True)
 
     # Return plot
     return fig
