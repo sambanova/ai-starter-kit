@@ -404,7 +404,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 </details>
 
 <details>
-<summary>Setting Up Your Environment</summary><br/>
+<summary>Setting up your virtual environment</summary><br/>
 
 There are two approaches to setting up your environment for the AI Starter Kits:
 
