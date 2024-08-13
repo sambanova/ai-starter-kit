@@ -88,7 +88,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="60%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%"> N/A </td>
+<td width="20%"> Sambaverse, SambaStudio, FastAPI </td>
 </tr>
 
 <tr>
