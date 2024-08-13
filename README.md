@@ -80,13 +80,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </tr>
 
 <tr>
-<td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
-<td width="50%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
-<td width="15%">Sambaverse, SambaStudio</td>
-<td width="15%"> Advanced AI Capabilities </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a></td>
 <td width="50%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
 <td width="15%">SambaStudio</td>
@@ -134,6 +127,13 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <td width="50%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
 <td width="15%">Sambaverse, SambaStudio, FastAPI</td>
 <td width="15%"> Advanced AI Capabilities </td> 
+</tr>
+
+<tr>
+<td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
+<td width="50%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
+<td width="15%">Sambaverse, SambaStudio</td>
+<td width="15%"> Advanced AI Capabilities </td>  
 </tr>
 
 <tr>
