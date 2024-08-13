@@ -175,7 +175,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 
 # Get started with SambaNova AI starter kit
 
-## Getting a SambaNova API key and setting your models
+## Getting a SambaNova API key and setting your generative models
 
 Currently, there are three ways to obtain an API key from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
@@ -217,7 +217,9 @@ Begin by deploying your LLM of choice (e.g. Llama 3 8B) to an endpoint for infer
 Integrate your LLM deployed on SambaStudio with this AI starter kit by updating the API information for the SambaNova LLM. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
-- Set your SambaStudio variables in the `.env` file, for example:
+- Set your SambaStudio variables. For example, an endpoint with the URL
+"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+is entered in the `.env` file as:
 
 ``` bash
 SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net"
@@ -227,16 +229,20 @@ SAMBASTUDIO_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
-## Update API information for SambaNova Embeddings model (optional).
+## Setting your embedding models
 
-You can use SambaStudio embedding models endpoint instead of using default in cpu HugginFace embeddings to increase inference speed, follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model
+Currently, you can set your embedding models on SambaStudio or CPU. 
 
-Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in the root repo directory **`sn-ai-starter-kit/.env`**.
+### Use SambaStudio (Option 1)
 
-- Create the .env file `ai-starter-kit/.env` if not exist.
+You can use SambaStudio embedding model endpoints instead of the CPU-based HugginFace embeddings to increase inference speed. Please follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.
+
+Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+
+- Create the .env file at `ai-starter-kit/.env` if not exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
 `"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
-would be entered in the env file (with no spaces) as:
+is entered in the `.env` file as:
 
 ``` bash
 SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
@@ -245,6 +251,10 @@ SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
+
+### Use CPU (Option 2)
+
+Alternatively, you can run the Hugging Face embedding models on CPU. In this case, no information is needed in the `.env` file.
 
 ## Run the desired starter kit
 
