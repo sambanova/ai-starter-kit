@@ -58,8 +58,15 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         llm_api=st.session_state.llm_api
     )
 
+    if st.session_state.llm_api == "sambastudio":
+        sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
+    elif st.session_state.llm_api == "fastapi":
+        sampling_params = {"max_tokens": st.session_state.max_tokens}
+    else:
+        sampling_params = {}
+        
     custom_performance_evaluator.run_benchmark(
-        sampling_params={},
+        sampling_params=sampling_params,
     )
 
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
