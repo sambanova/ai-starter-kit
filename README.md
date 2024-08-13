@@ -88,16 +88,16 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </tr>
 
 <tr>
-<td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
-<td width="50%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
-<td width="15%">Sambaverse, SambaStudio, FastAPI</td>
+<td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
+<td width="50%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
+<td width="15%"> Sambaverse, SambaStudio, FastAPI </td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
-<td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
-<td width="50%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="15%"> Sambaverse, SambaStudio, FastAPI </td>
+<td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
+<td width="50%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
+<td width="15%">Sambaverse, SambaStudio, FastAPI</td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
