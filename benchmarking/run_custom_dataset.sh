@@ -9,6 +9,7 @@ python src/evaluator.py \
 --timeout 600 \
 --input-file-path "<CUSTOM DATASET PATH HERE>" \
 --save-llm-responses False \
+--sampling-params '{"max_tokens_to_generate": 256}' \
 --llm-api "sambastudio"
 
 # Notes:
@@ -37,3 +38,8 @@ python src/evaluator.py \
 # 4. For FastAPI endpoints, change the llm-api parameter to "fastapi" and use the model name directly.
 #   For example:
 #      --model-name "llama3-8b"
+#
+# 5. You can modify the number of maximum tokens depending on the LLM endpoint type.
+#   If it's "sambastudio": add or modify in the `--sampling-params` dictionary the `max_tokens_to_generate` key and a value
+#   If it's "fastapi": add or modify in the `--sampling-params` dictionary the `max_tokens` key and a value   
+#
