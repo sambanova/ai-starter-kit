@@ -406,7 +406,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 <details>
 <summary>Setting up your virtual environment</summary><br/>
 
-There are two approaches to setting up your environment for the AI Starter Kits:
+There are two approaches to setting up your virtual environment for the AI Starter Kits:
 
 1. **Individual Kit Setup (Traditional Method)**
 2. **Base Environment Setup (WIP)**
