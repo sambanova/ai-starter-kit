@@ -106,7 +106,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 2. Update the multimodal model API information in the Starter Kit.
 
-    update the environment variables file in the root repo directory `sn-ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
    ```
     LVLM_BASE_URL="https://api-stage.sambanova.net"
     LVLM_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
