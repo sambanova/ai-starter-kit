@@ -126,7 +126,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </td>
 <td width="50%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
 <td width="15%">Sambaverse, SambaStudio, FastAPI</td>
-<td width="15%"> Advanced AI Capabilities </td> 
+<td width="15%"> Model Development & Optimization </td> 
 </tr>
 
 <tr>
