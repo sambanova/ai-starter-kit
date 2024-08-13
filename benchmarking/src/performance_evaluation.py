@@ -348,7 +348,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         with open(input_file_path, "r") as file:
             data = [json.loads(line) for line in file]
         return data
-    
+
     def create_output_filename(self) -> str:
         """Utility for creating a unique filename for a custom benchmarking experiment with a dataset.
 
@@ -367,7 +367,18 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         filename: str,
         summary: Dict[str, Any], 
         individual_responses: List[LLMResponse]
-    ):
+    ) -> None:
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is setup as True 
+
+        Args:
+            filename (str): The base name of the file to save the results to.
+            summary (Dict[str, Any]): A dictionary containing the summary of the performance evaluation.
+            individual_responses (List[LLMResponse]): A list of individual responses from the performance evaluation.
+
+        Raises:
+            e: if an error happens when creating the output file related to prompts and completions, an error will be raised
+        """
+        
         super().save_results(
             filename, 
             summary, 
