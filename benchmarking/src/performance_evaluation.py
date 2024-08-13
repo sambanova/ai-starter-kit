@@ -571,22 +571,22 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
 
         # Specific prompt templating for mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
+        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower().replace("-",""):
             prompt = "[INST]" + raw_prompt + "[/INST]"
 
         # Specific prompt templating for Llama-3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower().replace("-",""):
             system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
 
             prompt = (
                 system_prompt
                 + "<|start_header_id|>user<|end_header_id|>"
                 + raw_prompt
-                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>Answer:"
             )
 
         # Specific prompt templating for Llama-2 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower().replace("-",""):
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
 
