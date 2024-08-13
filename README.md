@@ -38,7 +38,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 </tr>
 
 <tr>
-<td width="20%"><a href="benchmarking/README.md">Performance Benchmarking</a></td>
+<td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="50%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
 <td width="15%"> SambaStudio, FastAPI</td>
 <td width="15%"> Advanced AI Capabilities </td>    
