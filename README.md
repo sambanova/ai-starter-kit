@@ -15,39 +15,6 @@ To run these examples, if you're a current SambaNova customer, you can deploy yo
 
 Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
-
-# AI Starter Kits - Ecosystem
-
-## Data Ingestion & Preparation
-* 🔍 [Data Extraction](./data_extraction)
-* 📊 [Web-crawled Data Retriever](./web_crawled_data_retriever)
-* 🧠 [Synthetic Q&A Pair Creation](./yoda)
-
-## Model Development & Optimization
-* 🚀 [YoDA - Your Data, Your Model Recipe](./yoda)
-* 🎯 [Q&A Fine-tuning](./fine_tuning_embeddings)
-* 💾 [SQL Model Fine-tuning](./fine_tuning_sql)
-* 🔬 [Fine-tuning Embeddings](./fine_tuning_embeddings)
-
-## Intelligent Information Retrieval
-* 📚 [Enterprise Knowledge Retriever](./enterprise_knowledge_retriever)
-* 🔎 [Search Assistant](./search_assistant)
-* 🖼️ [Image Search](./image_search)
-* 🖼️ [Multi-Modal Knowledge Retriever](./multimodal_knowledge_retriever)
-
-## Advanced AI Capabilities
-* 🧭 [CoE Routing](./CoE_jump_start)
-* 💡 [Prompt Engineering](./prompt_engineering)
-* 🔀 [Performance Benchmarking](./benchmarking)
-* 🔧 [Function Calling](./function_calling)
-
-## Deployment & Integration
-* 🖥️ Endpoint Creation
-* 🔗 Samba Apps Integration
-* 🐳 Docker Images
-
-
-# 
 # Available AI Starter Kits
 
 <table style="width: 100%;">
