@@ -18,7 +18,7 @@ from langchain.prompts import PromptTemplate
 
 from llmperf import common_metrics
 from llmperf.sambanova_client import llm_request
-from llmperf.models import RequestConfig
+from llmperf.models import RequestConfig, LLMResponse
 import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 from dotenv import load_dotenv
@@ -46,9 +46,7 @@ class BasePerformanceEvaluator(abc.ABC):
         llm_api: str = "sambastudio",
         is_stream_mode: bool = True,
         timeout: int = 600,
-    ):
-        base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
-        
+    ):    
         self.model_name = model_name
         self.results_dir = results_dir
         self.num_workers = num_workers
@@ -64,6 +62,20 @@ class BasePerformanceEvaluator(abc.ABC):
 
     def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
+    
+    @staticmethod
+    def sanitize_file_prefix(prefix: str):
+        """Utility for sanitizing the output file prefix.
+
+        Args:
+            prefix (str): Output file prefix
+
+        Returns:
+            Sanitized outfile prefix        
+        """
+        outfile_prefix = re.sub(r"[^\w\d-]+", "-", prefix)
+        outfile_prefix = re.sub(r"-{2,}", "-", outfile_prefix)
+        return outfile_prefix
 
     @abc.abstractmethod
     def create_output_filename(self, *args, **kwargs):
@@ -134,8 +146,15 @@ class BasePerformanceEvaluator(abc.ABC):
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
                 break
-            req_metrics = llm_request(request_config, self.tokenizer)
-            completed_requests.extend([req_metrics[0]])
+            req_metrics, response_text, request_config = llm_request(request_config, self.tokenizer)
+            
+            # Create response object containing metrics, generated text, and corresponding request config
+            response_object = LLMResponse(
+                metrics=req_metrics,
+                response_text=response_text,
+                request_config=request_config
+            )
+            completed_requests.extend([response_object])
             progress_bar.update(1)
 
     def build_metrics_summary(
@@ -246,13 +265,19 @@ class BasePerformanceEvaluator(abc.ABC):
 
         return metrics_summary
 
-    def save_results(self, filename: str, summary: dict, individual_responses: list[dict]) -> None:
+    def save_results(
+            self, 
+            filename: str, 
+            summary: Dict[str, Any], 
+            individual_responses: List[LLMResponse],
+        ):
         """Save the performance evaluation results to a file.
 
         Args:
             filename (str): The base name of the file to save the results to.
             summary (dict): A dictionary containing the summary of the performance evaluation.
             individual_responses (list): A list of individual responses from the performance evaluation.
+            save_response_texts (bool): Whether to save the llm output text to an output file.
 
         Returns:
             None
@@ -260,8 +285,6 @@ class BasePerformanceEvaluator(abc.ABC):
         Raises:
             ValueError: If the results directory does not exist or is not a directory.
         """
-        filename = re.sub(r"[^\w\d-]+", "-", filename)
-        filename = re.sub(r"-{2,}", "-", filename)
         summary_filename = f"{filename}_summary"
         individual_responses_filename = f"{filename}_individual_responses"
 
@@ -275,6 +298,7 @@ class BasePerformanceEvaluator(abc.ABC):
         elif not results_dir.is_dir():
             raise ValueError(f"{results_dir} is not a directory")
 
+        # Save summary results
         try:
             self.summary_file_path = f"{results_dir}/{summary_filename}.json"
             with open(self.summary_file_path, "w") as f:
@@ -283,23 +307,33 @@ class BasePerformanceEvaluator(abc.ABC):
             logger.error(results.to_dict())
             raise e
 
+        # Save individual response results
         try:
             self.individual_responses_file_path = (
                 f"{results_dir}/{individual_responses_filename}.json"
             )
+
+            response_metrics = [response.metrics for response in individual_responses]
             with open(self.individual_responses_file_path, "w") as f:
-                json.dump(individual_responses, f, indent=4)
+                json.dump(response_metrics, f, indent=4)
         except Exception as e:
             logger.error(individual_responses)
             raise e
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, input_file_path: str, *args, **kwargs):
+    def __init__(
+            self, 
+            input_file_path: str,
+            save_response_texts: bool = False,
+            *args, 
+            **kwargs
+        ):
         super().__init__(*args, **kwargs)
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
         self.prompt_key = list(self.dataset[0].keys())[0]
+        self.save_response_texts = save_response_texts
 
     @staticmethod
     def read_dataset(input_file_path: str) -> List[Dict]:
@@ -324,10 +358,53 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         generation_mode = ""
         if self.is_stream_mode:
             generation_mode = "stream"
-    
-        return f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
+        
+        output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
+        return self.sanitize_file_prefix(output_file_name)
 
-    def run_benchmark(self, sampling_params: Dict[str, Any]) -> None:
+    def save_results(
+        self,
+        filename: str,
+        summary: Dict[str, Any], 
+        individual_responses: List[LLMResponse]
+    ) -> None:
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is setup as True 
+
+        Args:
+            filename (str): The base name of the file to save the results to.
+            summary (Dict[str, Any]): A dictionary containing the summary of the performance evaluation.
+            individual_responses (List[LLMResponse]): A list of individual responses from the performance evaluation.
+
+        Raises:
+            e: if an error happens when creating the output file related to prompts and completions, an error will be raised
+        """
+        
+        super().save_results(
+            filename, 
+            summary, 
+            individual_responses
+        )
+
+        # If specified, save the llm responses to output file
+        if self.save_response_texts:
+
+            # Create response texts file name
+            response_texts_file_name = f"{filename}_response_texts"
+            results_dir = Path(self.results_dir)
+
+            # Save response texts
+            try:
+                self.response_texts_file_path = f"{results_dir}/{response_texts_file_name}.jsonl"
+                with open(self.response_texts_file_path, "w") as f:
+                    for response in individual_responses:
+                        output_json = {"prompt": response.request_config.prompt_tuple[0], "completion": str(response.response_text)}
+                        f.write(json.dumps(output_json))
+                        f.write("\n")
+            except Exception as e:
+                logger.error("ERROR SAVING LLM OUTPUTS")
+                raise e
+
+    def run_benchmark(self, sampling_params: Dict[str, Any]):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
@@ -344,10 +421,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Save benchmarking results to the specified results directory, it it exists
         if self.results_dir:
             filename = self.create_output_filename()
-            self.save_results(filename, summary, individual_responses)
+            self.save_results(
+                filename, 
+                summary, 
+                individual_responses,
+            )
 
     def get_token_throughput_latencies(
-        self, sampling_params: Dict[str, Any]
+        self, 
+        sampling_params: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function is used to measure the token throughput and latencies.
 
@@ -389,7 +471,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             request_config_batches.append(request_config_batch)
 
         threads = []
-        completed_requests = []
+        llm_responses : List[LLMResponse] = []
         progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         for request_config_batch in request_config_batches:
@@ -397,7 +479,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 target=self.send_requests,
                 args=(
                     request_config_batch,
-                    completed_requests,
+                    llm_responses,
                     progress_bar,
                     start_time,
                 ),
@@ -408,9 +490,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         for thread in threads:
             thread.join()
 
-        if completed_requests[0]["error_code"]:
+        if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
             raise Exception(
-                f"Unexpected error happened when executing requests: {completed_requests[0]['error_code']}. Additional message: {completed_requests[0]['error_msg']}"
+                f"Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}. Additional message: {llm_responses[0].metrics['error_msg']}"
             )
 
         end_time = time.monotonic()
@@ -419,9 +501,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
         )
         results = self.build_metrics_summary(
-            completed_requests,
-            start_time,
-            end_time,
+            metrics=[response.metrics for response in llm_responses],
+            start_time=start_time,
+            end_time=end_time,
         )
 
         metadata = {
@@ -432,9 +514,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             "sampling_params": sampling_params,
         }
 
-        metadata["results"]
-
-        return metadata, completed_requests
+        return metadata, llm_responses
 
     def build_request_configs(
         self, sampling_params: Dict[str, Any]
@@ -491,22 +571,22 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
 
         # Specific prompt templating for mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower():
+        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower().replace("-",""):
             prompt = "[INST]" + raw_prompt + "[/INST]"
 
         # Specific prompt templating for Llama-3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower().replace("-",""):
             system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
 
             prompt = (
                 system_prompt
                 + "<|start_header_id|>user<|end_header_id|>"
                 + raw_prompt
-                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>Answer:"
             )
 
         # Specific prompt templating for Llama-2 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower():
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower().replace("-",""):
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
 
@@ -535,7 +615,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode  = "stream"
         
-        return f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
+        output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
+        return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
         self,
@@ -637,7 +718,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
         # completed requests respectively
         threads = []
-        completed_requests = []
+        llm_responses = []
         progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         # Send request threads and add to the threads array
@@ -646,7 +727,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 target=self.send_requests,
                 args=(
                     request_config_batch,
-                    completed_requests,
+                    llm_responses,
                     progress_bar,
                     start_time,
                 ),
@@ -659,9 +740,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             thread.join()
 
         # Error handling
-        if completed_requests[0]["error_code"]:
+        if llm_responses[0].metrics["error_code"]:
             raise Exception(
-                f"Unexpected error happened when executing requests: {completed_requests[0]['error_code']}. Additional message: {completed_requests[0]['error_msg']}"
+                f"Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}. Additional message: {llm_responses[0].metrics['error_msg']}"
             )
 
         # Capture end time and notify user
@@ -673,9 +754,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
-            completed_requests,
-            start_time,
-            end_time,
+            metrics=[response.metrics for response in llm_responses],
+            start_time=start_time,
+            end_time=end_time,
         )
 
         # Construct metadata payload to be returned
@@ -688,7 +769,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             "additional_sampling_params": sampling_params,
         }
 
-        return metadata, completed_requests
+        return metadata, llm_responses
 
     def build_request_configs(
         self,
