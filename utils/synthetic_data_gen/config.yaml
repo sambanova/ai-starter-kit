@@ -6,7 +6,7 @@ llm:
   "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
   "coe": True #set as true if using Sambastudio CoE endpoint
   "select_expert": "llama3-8b" # "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
-  #fastapi expert name -> "llama3-70b"
+  #fastapi expert name -> "llama3-405b"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -27,5 +27,4 @@ generation:
   include_context: true
   include_thoughts: true
   include_references: true
-  model_family: "llama3"
   system_prompt: "You are a helpful assistant for question-answering tasks.\n"

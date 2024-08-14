@@ -139,6 +139,7 @@ class SyntheticDataGen:
         Returns:
         List[Document]: A list of Document objects representing the splitted documents.
         """
+        # TODO add recursive character splitting first
         if isinstance(documents, str):
             documents = [documents]
         text_splitter = SemanticChunker(
@@ -214,8 +215,8 @@ class SyntheticDataGen:
                 lines = self.qa_pairs_to_prompt_completion(qa_pairs)
                 self.update_jsonl(out_file, lines)
                 logging.info(f'Added {amount} qa pairs to {out_file}')
-            except:
-                logging.warning(f'Failed to generate qa pairs for document: "{document}", skipping')
+            except Exception as e:
+                logging.warning(f'Failed to generate qa pairs, error: \n {e} \n for document: "{document}", \nskipping')
 
         self.remove_repeated_lines_in_place(out_file)
 
