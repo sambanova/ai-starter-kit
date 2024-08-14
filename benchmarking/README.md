@@ -147,6 +147,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 - **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 - **Number of concurrent workers**: The number of concurrent workers. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
+- **Save LLM Responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix. 
 
 3. Run the performance evaluation
 
@@ -288,6 +289,8 @@ This method can be ran from a terminal session. Users have this option if they w
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-workers**: Number of concurrent workers. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
+  - **input-file-path**: The location of the custom dataset that you want to evaluate with
+  - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
 
   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use. 
 
