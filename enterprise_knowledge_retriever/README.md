@@ -133,6 +133,20 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the parsing service.
 Follow the instructions to deploy the parsing service locally [here](../README.md#parsing-service-management)
 
+- Also, make sure you add the following variables to the `.env` file in the ai-starter-kit root directory:
+
+     ```bash
+     UNSTRUCTURED_API_KEY=your_api_key_here
+     UNSTRUCTURED_API_KEY="http://localhost:8005/general/v0/general"
+     ```
+- Or if you are using docker to run this kit:
+
+     ```bash
+     UNSTRUCTURED_API_KEY=your_api_key_here
+     UNSTRUCTURED_API_KEY="http://host.docker.internal:8005/general/v0/general"
+     ```
+
+
 ## Parsing service issues
 If you are having problems with the local parsing service [here](../README.md#parsing-service-issues). Also, remember to stop the parsing service as part of the clean up process by running:
 ```bash
