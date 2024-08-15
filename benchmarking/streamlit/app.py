@@ -179,7 +179,7 @@ def main():
                     df_req_info,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Boxplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )
