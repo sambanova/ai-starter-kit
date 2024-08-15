@@ -1,21 +1,15 @@
 import logging
 import os
-import sys
 
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
 from financial_insights.streamlit.app_financial_filings import get_financial_filings
 from financial_insights.streamlit.app_pdf_report import get_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
 from financial_insights.streamlit.app_stock_database import get_stock_database
 from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import (
     clear_directory,
     display_directory_contents,
@@ -26,11 +20,9 @@ from financial_insights.streamlit.utilities_methods import stream_chat_history
 
 logging.basicConfig(level=logging.INFO)
 
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-
 
 def main() -> None:
-    # clear_directory(TEMP_DIR + 'sources')
+    # clear_directory(CACHE_DIR + 'sources')
     global output
 
     # Streamlit app setup
@@ -70,11 +62,11 @@ def main() -> None:
                 key='clear-button',
                 help='This will delete all saved files',
             ):
-                clear_directory(TEMP_DIR)
-                clear_directory(TEMP_DIR + 'stock_query_figures/')
-                clear_directory(TEMP_DIR + 'history_figures/')
-                clear_directory(TEMP_DIR + 'db_query_figures/')
-                clear_directory(TEMP_DIR + 'pdf_generation/')
+                clear_directory(CACHE_DIR)
+                clear_directory(CACHE_DIR + 'stock_query_figures/')
+                clear_directory(CACHE_DIR + 'history_figures/')
+                clear_directory(CACHE_DIR + 'db_query_figures/')
+                clear_directory(CACHE_DIR + 'pdf_generation/')
                 streamlit.sidebar.success('All files have been deleted.')
 
         # Set the default path (you can change this to any desired default path)
@@ -116,12 +108,13 @@ def main() -> None:
             
             Use the navigation menu to explore various features including:
             
-            - Stock Data Analysis
-            - Stock Database
-            - Financial News Scraping
-            - Financial Filings Analysis
-            - Generate PDF Report
-            - Print Chat History
+            - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
+            - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
+            - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
+            - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
+            - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
+               or on the whole chat history.
+            - **Print Chat History**: Print the whole chat history.
         """
         )
 

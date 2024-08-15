@@ -1,7 +1,6 @@
 import datetime
 import json
 import os
-import sys
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -11,7 +10,6 @@ import plotly.graph_objects as go
 import requests  # type: ignore
 import streamlit
 import yfinance
-from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
@@ -19,19 +17,7 @@ from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
 from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-
-load_dotenv(os.path.join(repo_dir, '.env'))
+from financial_insights.streamlit.constants import *
 
 
 class StockInfoSchema(BaseModel):
@@ -69,7 +55,7 @@ def get_stock_info(
                         'llm': streamlit.session_state.fc.llm,
                         'open_charts': False,
                         'save_charts': True,
-                        'save_charts_path': TEMP_DIR + '/stock_query_figures/',
+                        'save_charts_path': CACHE_DIR + '/stock_query_figures/',
                         'enable_cache': False,
                     },
                 )
@@ -89,7 +75,7 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
             'llm': streamlit.session_state.fc.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': TEMP_DIR + '/stock_query_figures/',
+            'save_charts_path': CACHE_DIR + '/stock_query_figures/',
             'enable_cache': False,
         },
     )

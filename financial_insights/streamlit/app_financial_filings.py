@@ -1,17 +1,9 @@
 import json
-import os
-import sys
 from typing import Optional, Tuple
 
 import streamlit
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
@@ -51,12 +43,14 @@ def get_financial_filings() -> None:
             )
 
             query_json = json.dumps(query_dict)
-            save_path = 'filings.txt'
             content = query_json + '\n\n' + user_request + '\n\n' + answer + '\n\n\n'
+
+            save_output_callback(content, HISTORY_PATH)
+
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, save_path),
+                args=(content, FILINGS_PATH),
             ):
                 pass
 

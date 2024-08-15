@@ -1,6 +1,4 @@
-import logging
 import os
-import sys
 from typing import Any, List
 
 import streamlit
@@ -10,20 +8,8 @@ from langchain.schema import Document
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_community.vectorstores import Chroma
 
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import _get_config_info
-
-logging.basicConfig(level=logging.INFO)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-SOURCE_DIR = 'financial_insights/streamlit/cache/sources/'
-CONFIG_PATH = 'financial_insights/config.yaml'
 
 
 def get_qa_response(

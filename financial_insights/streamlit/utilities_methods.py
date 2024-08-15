@@ -1,8 +1,5 @@
 import json
-import logging
-import os
 import re
-import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from typing import Any, Callable, Generator, List, Optional, Type, Union
@@ -25,14 +22,7 @@ from financial_insights.src.tools_stocks import (
     retrieve_symbol_quantity_list,
 )
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
-
-logging.basicConfig(level=logging.INFO)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
+from financial_insights.streamlit.constants import *
 
 # tool mapping of available tools
 TOOLS = {
@@ -46,10 +36,6 @@ TOOLS = {
     'create_stock_database': create_stock_database,
     'query_stock_database': query_stock_database,
 }
-
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-SOURCE_DIR = 'financial_insights/streamlit/cache/sources/'
-CONFIG_PATH = 'financial_insights/config.yaml'
 
 
 @contextmanager
@@ -141,15 +127,34 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
         pass
 
     if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
+        stream_complex_response(response, stream_response)
+        return response
+
+    elif isinstance(response, list):
+        stream_complex_response(response, stream_response)
+        return json.dumps(response)
+
+    elif isinstance(response, dict):
+        stream_complex_response(response, stream_response)
+        return json.dumps(response)
+
+    elif isinstance(response, tuple):
+        for item in response:
+            stream_complex_response(item, stream_response)
+        return json.dumps(response)
+    else:
+        return
+
+
+def stream_complex_response(response: Any, stream_response: bool = False) -> None:
+    if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
         if stream_response:
             stream_single_response(response)
-        return response
 
     elif isinstance(response, list):
         if stream_response:
             for item in response:
                 stream_single_response(item)
-        return json.dumps(response)
 
     elif isinstance(response, dict):
         if stream_response:
@@ -159,27 +164,7 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
                 elif isinstance(value, list):
                     # If all values are strings
                     stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
-        return json.dumps(response)
-
-    elif isinstance(response, tuple):
-        if isinstance(response[0], (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
-            if stream_response:
-                stream_single_response(response[0])
-            return response[0]
-
-        elif isinstance(response, list):
-            if stream_response:
-                for item in response:
-                    stream_single_response(response[0])
-            return json.dumps(response[0])
-
-        elif isinstance(response, dict):
-            if stream_response:
-                for key, value in response[0].items():
-                    stream_single_response(value)
-            return json.dumps(response[0])
-    else:
-        return
+    return
 
 
 def stream_single_response(response: Any) -> None:

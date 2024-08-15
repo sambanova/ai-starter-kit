@@ -1,28 +1,14 @@
 import datetime
 import json
-import os
-import sys
 from typing import Any, Dict, Union
 
 import pandas
 import streamlit
 import yfinance
-from dotenv import load_dotenv
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-
-load_dotenv(os.path.join(repo_dir, '.env'))
+from financial_insights.streamlit.constants import *
 
 
 # tool schema

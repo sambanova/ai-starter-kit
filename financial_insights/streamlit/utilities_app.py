@@ -1,8 +1,6 @@
-import datetime
 import json
 import logging
 import os
-import sys
 from typing import Dict, List, Optional, Tuple, Union
 
 import pandas
@@ -11,16 +9,9 @@ import streamlit
 import yaml
 
 logging.basicConfig(level=logging.INFO)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-TEMP_DIR = 'financial_insights/streamlit/cache/'
-SOURCE_DIR = 'financial_insights/streamlit/cache/sources/'
-CONFIG_PATH = 'financial_insights/config.yaml'
+from financial_insights.streamlit.constants import *
 
 
 def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
@@ -57,14 +48,14 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
 # Save dataframe and figure callback for streamlit button
 def save_historical_price_callback(
     user_query: str,
-    symbol_list: str,
+    symbol_list: List[str],
     data: pandas.DataFrame,
     fig: plotly.graph_objs.Figure,
-    start_date: datetime.date,
-    end_date: datetime.date,
+    start_date: DateWidgetReturn,
+    end_date: DateWidgetReturn,
     save_path: Optional[str] = None,
 ) -> None:
-    dir_name = TEMP_DIR + 'history_figures/'
+    dir_name = CACHE_DIR + 'history_figures/'
     # Create temporary cache for storing historical price data
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -78,36 +69,47 @@ def save_historical_price_callback(
     with open(f'{filename}.png', 'wb') as f:
         f.write(fig_bytes)
 
+    content = '\n\n' + user_query + '\n\n' + f'{filename}.png' + '\n\n'
     # Save the figure path to a file
+    save_output_callback(content, HISTORY_PATH)
+
     if save_path is not None:
-        save_output_callback(user_query + '\n\n' + f'{filename}.png', save_path)
+        save_output_callback(content, save_path)
 
 
 def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_path: str) -> None:
     # Create temporary cache for storing historical price data
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
 
     # Specify the filename
-    filename = TEMP_DIR + save_path
+    filename = save_path
 
     if isinstance(response, str):
         # Writing the string to a txt file
         with open(filename, 'a') as text_file:
-            text_file.write('\n' + response + '\n')
+            text_file.write('\n\n' + response + '\n\n')
 
     elif isinstance(response, dict):
         # Writing the dictionary to a JSON file
         with open(filename, 'a') as json_file:
+            json_file.write('\n\n')
             json.dump(response, json_file)
-            json_file.write('\n')
+            json_file.write('\n\n')
 
     elif isinstance(response, list):
         # Writing the list to a JSON file
         with open(filename, 'a') as json_file:
+            json_file.write('\n\n')
             json.dump(response, json_file)
-            json_file.write('\n')
+            json_file.write('\n\n')
 
+    elif isinstance(response, tuple):
+        # Writing the tuple to a JSON file
+        with open(filename, 'a') as json_file:
+            json_file.write('\n\n')
+            json.dump(response, json_file)
+            json_file.write('\n\n')
     else:
         raise ValueError('Invalid response type')
 
@@ -115,8 +117,8 @@ def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_p
 def list_files_in_directory(directory: str) -> List[str]:
     """List all files in the given directory."""
     # Create temporary cache for storing historical price data
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 

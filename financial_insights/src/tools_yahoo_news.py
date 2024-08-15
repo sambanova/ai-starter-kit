@@ -1,35 +1,21 @@
 import logging
 import os
 import re
-import sys
 from typing import List, Set, Tuple
 
 import pandas
 import requests
 import yfinance
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 from langchain.schema import Document
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
 from financial_insights.src.utilities_retrieval import get_qa_response
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
+from financial_insights.streamlit.constants import *
 
 logging.basicConfig(level=logging.INFO)
-
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-
-load_dotenv(os.path.join(repo_dir, '.env'))
-
-TEMP_DIR = 'financial_insights/streamlit/cache/sources/'
 
 MAX_CHUNK_SIZE = 128
 RETRIEVE_HEADLINES = False
@@ -206,12 +192,12 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tupl
     df.drop_duplicates().reset_index(drop=True, inplace=True)
 
     # Save the DataFrame to a CSV file
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
-    df.to_csv(TEMP_DIR + 'yahoo_finance_news.csv', index=False)
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+    df.to_csv(CACHE_DIR + 'yahoo_finance_news.csv', index=False)
 
     # Save the data to a text file in the specified order
-    with open(TEMP_DIR + 'yahoo_finance_news.txt', 'w') as file:
+    with open(CACHE_DIR + 'yahoo_finance_news.txt', 'w') as file:
         if RETRIEVE_HEADLINES:
             file.write('=== Headlines ===\n')
             for item in headlines_list:
@@ -233,13 +219,13 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tupl
     # Convert the list to a DataFrame
     df_text_url = pandas.DataFrame(data)
     # Save the DataFrame to a CSV file
-    df_text_url.to_csv(TEMP_DIR + 'scraped_data_with_urls.csv', index=False)
+    df_text_url.to_csv(CACHE_DIR + 'scraped_data_with_urls.csv', index=False)
 
     logging.info('News from Yahoo Finance successfully extracted and saved.')
 
     # Load the dataframe from the text file
     try:
-        df = pandas.read_csv(TEMP_DIR + 'scraped_data_with_urls.csv')
+        df = pandas.read_csv(CACHE_DIR + 'scraped_data_with_urls.csv')
     except FileNotFoundError:
         logging.error('No scraped data found.')
 

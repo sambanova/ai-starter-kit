@@ -1,16 +1,8 @@
-import os
-import sys
 from typing import List, Tuple
 
 import streamlit
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
@@ -39,10 +31,13 @@ def get_yfinance_news() -> None:
 
         if answer is not None:
             content = user_request + '\n\n' + answer + '\n\n' + '\n'.join(url_list) + '\n\n\n'
+
+            save_output_callback(content, HISTORY_PATH)
+
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, 'yfinance_news.txt'),
+                args=(content, YFINANCE_NEWS_PATH),
             ):
                 pass
 

@@ -1,17 +1,9 @@
-import os
-import sys
 from typing import Any, Optional
 
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
@@ -48,12 +40,19 @@ def get_stock_database() -> None:
     if streamlit.button(label='Query database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_database_query(user_request, query_method)
-            content = user_request + '\n\n' + response_dict['message']
-            save_path = 'db_query.txt'
+            if query_method == 'text-to-SQL':
+                content = user_request + '\n\n' + response_dict['message']
+            elif query_method == 'PandasAI-SqliteConnector':
+                content = user_request
+                for symbol in list(response_dict):
+                    content += '\n\n' + '\n\n'.join(response_dict[symbol])
+
+            save_output_callback(content, HISTORY_PATH)
+
             if streamlit.button(
                 'Save Query',
                 on_click=save_output_callback,
-                args=(content, save_path),
+                args=(content, DB_QUERY_PATH),
             ):
                 pass
 

@@ -1,12 +1,9 @@
 import json
-import os
 import re
-import sys
 from pprint import pprint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import yaml
-from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
@@ -16,16 +13,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
-
-load_dotenv(os.path.join(repo_dir, '.env'))
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-
+from financial_insights.streamlit.constants import *
 
 FUNCTION_CALLING_SYSTEM_PROMPT = """You are an helpful assistant and you have access to the following tools:
 

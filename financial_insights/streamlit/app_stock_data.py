@@ -1,5 +1,3 @@
-import os
-import sys
 from typing import Any, List, Optional, Tuple
 
 import pandas
@@ -7,13 +5,7 @@ import plotly
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
+from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_historical_price_callback, save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
@@ -68,13 +60,15 @@ def get_stock_data_analysis() -> None:
     )
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_dict = handle_stock_query(user_request, dataframe_name)
+            response = handle_stock_query(user_request, dataframe_name)
 
-            save_path = 'stock_query.txt'
+            response = user_request + '\n' + response
+            save_output_callback(response, HISTORY_PATH)
+
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(response_dict, save_path),
+                args=(response, STOCK_QUERY_PATH),
             ):
                 pass
 
@@ -93,11 +87,12 @@ def get_stock_data_analysis() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
-        save_path = 'stock_query.txt'
+        save_historical_price_callback(user_request, symbol_list, data, fig, start_date, end_date, HISTORY_PATH)
+
         if streamlit.button(
             'Save Analysis',
             on_click=save_historical_price_callback,
-            args=(user_request, symbol_list, data, fig, start_date, end_date, save_path),
+            args=(user_request, symbol_list, data, fig, start_date, end_date, STOCK_QUERY_PATH),
         ):
             pass
 
