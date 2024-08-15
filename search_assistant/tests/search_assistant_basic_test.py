@@ -65,7 +65,6 @@ class SearchAssistantBasicTestCase(unittest.TestCase):
         logger.info(response["answer"]) # str
 
         self.assertIn('sources', response, "Response should have a 'sources' key")
-
         self.assertIn('answer', response, "Response should have an 'answer' key")
 
     @classmethod

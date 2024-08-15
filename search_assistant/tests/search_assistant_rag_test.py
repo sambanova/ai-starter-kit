@@ -55,18 +55,21 @@ class SearchAssistantRAGTestCase(unittest.TestCase):
     def test_search_assistant_class_creation(self):
         self.assertIsNotNone(self.search_assistant, "SearchAssistant class shouldn't be empty")
     
+    def test_search_and_scrape(self):
+        self.assertIsNotNone(self.search_assistant.vector_store, "Vector store shouldn't be empty")
+
     def test_retrieval_call(self):
         user_question = 'who is Albert Einsten?'
         response = self.search_assistant.retrieval_call(user_question)
 
-        
         logger.info(user_question)
         logger.info(response["source_documents"]) # list[Document]
         logger.info(response["answer"]) # str
 
         self.assertIn('source_documents', response, "Response should have a 'source_documents' key")
-
+        self.assertGreaterEqual(len(response["source_documents"]), 1, "There should be at least one source documents")
         self.assertIn('answer', response, "Response should have an 'answer' key")
+        self.assertIsNotNone(response["answer"], "LLM answer shouldn't be empty")
 
     @classmethod
     def tearDownClass(cls):
