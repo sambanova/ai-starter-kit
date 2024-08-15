@@ -9,7 +9,7 @@ template: '[INST] <<SYS>> You are a helpful, respectful, positive, and honest as
   don''t understand the question or don''t know the answer, please don''t share false
   information. <</SYS>>
 
-
+  
   How can I write better prompts for large language models? [/INST]'
 template_format: f-string
 validate_template: false

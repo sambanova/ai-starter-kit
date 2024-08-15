@@ -15,8 +15,7 @@ class RAGGraphState(TypedDict):
 class RAG(RAGComponents):
     
     def __init__(self, config_path, embeddings, vectorstore):
-        config = self.load_config(config_path)
-        super().__init__(configs=config, embeddings=embeddings, vectorstore=vectorstore)
+        super().__init__(configs=config_path, embeddings=embeddings, vectorstore=vectorstore)
         self.app = None 
 
     def create_rag_nodes(self):
@@ -27,7 +26,7 @@ class RAG(RAGComponents):
         workflow.add_node("initialize", self.initialize_rag)
         workflow.add_node("retrieve", self.retrieve)
         workflow.add_node("generate", self.rag_generate)
-        workflow.add_node("return_final_answer", self.return_final_answer)
+        workflow.add_node("return_final_answer", self.final_answer)
 
         return workflow
 

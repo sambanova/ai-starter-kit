@@ -7,18 +7,18 @@
 
 Prompt Engineering Starter Kit
 ======================
+
 <!-- TOC -->
 
-
+- [Prompt Engineering Starter Kit](#prompt-engineering-starter-kit)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
-        - [Setup for SambaStudio users](#setup-for-sambastudio-users)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
-- [Use the starter kit GUI](#use-the-starterkit-gui)
+- [Use the starterkit GUI](#use-the-starterkit-gui)
 - [Customize the starter kit](#customize-the-starter-kit)
     - [Include additional models](#include-additional-models)
         - [Include models using SambaStudio](#include-models-using-sambastudio)
@@ -28,6 +28,7 @@ Prompt Engineering Starter Kit
 - [Examples, third-party tools, and data sources](#examples-third-party-tools-and-data-sources)
 
 <!-- /TOC -->
+
 # Before you begin
 
 You have to set up your environment before you can run the starter kit. 
@@ -39,47 +40,29 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the account and config file
+## Set up the models and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or want to use the publicly available Sambaverse. 
+### Set up the inference endpoint, configs and environment variables
 
-### Setup for Sambaverse users 
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find the config file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-```yaml
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-
-### Setup for SambaStudio users
-
-To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
-
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
-
-```
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-
-4. Open the [config file](./config.yaml) and set  the variable `api` to `"sambastudio"`.
 
 # Deploy the starter kit GUI
 
-We recommend that you run  the the starter kit in a virtual environment or use a container. 
+We recommend that you run  the the starter kit in a virtual environment or use a container.
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment 
+If you want to use virtualenv or conda environment
 
 1. Install and update pip.
 
@@ -116,7 +99,7 @@ You will be prompted to go to the link (http://localhost:8501/) in your browser 
 
 To use the starter kit, follow these steps:
 
-1. Choose the LLM to use from the options available under **Model Selection** (Currently, only Llama2 70B is available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
+1. Choose the LLM to use from the options available under **Model Selection** (Currently, only Llama2 70B and Llama3 8B are available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
 
 2. In **Use Case for Sample Prompt**, select a template. You have the following choices:
 
@@ -147,10 +130,10 @@ You can include more models with the kit. They will then show up in the **Model 
 If you're using a SambaStudio endpoint, follow these steps:
 
 1. Create a SambaStudio endpoint for inference. 
-2. In the `config.json` file, include the model description in the model section 
-3. Populate key variables from your env file in `streamlit/app.py`
-4. Define the method for calling the model. See `call_sambanova_llama2_70b_api` in `streamlit/app.py` for an example.
-5. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.
+2. In the `config.json` file, include the model description in the model section, like the ones already there.
+3. Populate key variables on your env file
+4. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambanova_api` in `streamlit/app.py` for an example.
+5. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
 
 ### Include models using Sambaverse
 
@@ -158,9 +141,12 @@ If you're using a Sambaverse endpoint, follow these steps:
 
 1. In the playground, find the model you're interested in. 
 2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
-3. Define the method for calling the model. In `streamlit/app.py`, set the values of  `sambaverse_model_name` and `select_expert`. See `call_sambaverse_llama2_70b_api` for an example. 
-4. Include the new method in the `st.button(send)` section in the `streamlit/app.py`.`
+3. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambaverse_api` in `streamlit/app.py` for an example.
+4. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
 
+### Include models using FastAPI
+
+For now we're only supporting `llama3-8b`. We'll support more models in near future.
 
 ## Edit a prompt template
 
@@ -175,7 +161,6 @@ To add a prompt template:
 
 1. Follow the instructions in [Edit a template](#edit-a-prompt-template).
 2. Include the template use case in the `use_cases` list of `config.yaml` file.
-
 
 # Examples, third-party tools, and data sources
 

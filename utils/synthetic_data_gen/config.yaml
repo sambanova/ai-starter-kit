@@ -1,0 +1,30 @@
+llm: 
+  "api": "fastapi"  # set either sambastudio, sambaverse or fastapi
+  "do_sample": False
+  "temperature": 0.01
+  "max_tokens_to_generate": 2048
+  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
+  "coe": True #set as true if using Sambastudio CoE endpoint
+  "select_expert": "llama3-8b" # "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+  #fastapi expert name -> "llama3-405b"
+
+embedding_model: 
+    "type": "cpu" # set either sambastudio or cpu
+    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
+
+prompts: 
+    "generate_qa_prompt": "prompts/generate_Q&A.yaml"
+
+splitting: 
+  breakpoint_threshold_amount: 80
+  min_doc_length: 80
+
+generation:
+  output_path: "./output/synthetic_data.jsonl"
+  amount_per_document: 5
+  include_context: true
+  include_thoughts: true
+  include_references: true
+  system_prompt: "You are a helpful assistant for question-answering tasks.\n"

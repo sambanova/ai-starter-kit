@@ -8,10 +8,9 @@ from typing import Any, List
 from langchain_core.output_parsers import StrOutputParser
 from transformers import AutoModelForSequenceClassification, AutoTokenizer  # type: ignore
 from IPython.display import display, HTML
-from langchain_community.embeddings.sambanova import SambaStudioEmbeddings
 from langchain_core.prompts import load_prompt
 from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+
 from langchain_core.documents.base import Document
 from langgraph.graph.state import CompiledStateGraph
 
@@ -21,6 +20,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
+
+from utils.model_wrappers.api_gateway import APIGateway
 
 
 class BaseComponents:
@@ -58,31 +59,17 @@ class BaseComponents:
             None
         """
 
-        if self.configs['api'] == 'sambaverse':
-            sambaverse_api_key = os.getenv('SAMBAVERSE_API_KEY')
-            assert sambaverse_api_key is not None, ''
-            self.llm = Sambaverse(  # type: ignore
-                sambaverse_model_name=self.configs['llm']['sambaverse_model_name'],
-                sambaverse_api_key=sambaverse_api_key,
-                model_kwargs={
-                    'do_sample': False,
-                    'max_tokens_to_generate': self.configs['llm']['max_tokens_to_generate'],
-                    'temperature': self.configs['llm']['temperature'],
-                    'process_prompt': True,
-                    'select_expert': self.configs['llm']['sambaverse_select_expert'],
-                },
-            )
-
-        elif self.configs['api'] == 'sambastudio':
-            self.llm = SambaStudio(  # type: ignore
-                streaming=True,
-                model_kwargs={
-                    'do_sample': False,
-                    'max_tokens_to_generate': self.configs['llm']['max_tokens_to_generate'],
-                    'process_prompt': False,
-                    'select_expert': self.configs['llm']['sambaverse_select_expert'],
-                },
-            )
+        self.llm = APIGateway.load_llm(
+            type=self.configs["api"],
+            streaming=True,
+            coe=self.configs['llm']["coe"],
+            do_sample=self.configs['llm']["do_sample"],
+            max_tokens_to_generate=self.configs['llm']["max_tokens_to_generate"],
+            temperature=self.configs['llm']["temperature"],
+            select_expert=self.configs['llm']["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.configs['llm']["sambaverse_model_name"],
+        )
 
     def _format_docs(self, docs: List[Document]) -> str:
         """
@@ -101,7 +88,7 @@ class BaseComponents:
         """
         Initializes the embeddings for the model.
 
-        This method creates an instance of SambaStudioEmbeddings or E5 Large from HuggingFaceInstructEmbeddings
+        This method creates an instance of SambaStudio Embeddings or E5 Large from HuggingFaceInstructEmbeddings
         to be run on cpu and assigns it to the self.embeddings attribute.
 
         Args:
@@ -111,7 +98,12 @@ class BaseComponents:
             None
         """
 
-        self.embeddings = SambaStudioEmbeddings()
+        self.embeddings = APIGateway.load_embedding_model(
+            type=self.configs['embedding_model']["type"],
+            batch_size=self.configs['embedding_model']["batch_size"],
+            coe=self.configs['embedding_model']["coe"],
+            select_expert=self.configs['embedding_model']["select_expert"]
+            ) 
 
     def _display_image(self, image_bytes: bytes, width: int = 512) -> None:
         """
