@@ -16,6 +16,7 @@ import sys
 import unittest
 import logging
 import time
+import yaml
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -31,12 +32,15 @@ sys.path.append(repo_dir)
 
 from search_assistant.src.search_assistant import SearchAssistant
 
-method = 'rag_query'
-input_disabled = False
-tool = ['serpapi'] # serpapi, serper, openserp
-search_engine = 'google' # google, bing, baidu
-max_results = 5
-query = 'Albert Einstein'
+def load_test_config(config_path):
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
+
+test_config = load_test_config(kit_dir+'/tests/test_config.yaml')
+tool = test_config['tool'] 
+search_engine = test_config['search_engine'] 
+max_results = test_config['max_results']
+query=test_config['query']
 
 class SearchAssistantRAGTestCase(unittest.TestCase):
     @classmethod
