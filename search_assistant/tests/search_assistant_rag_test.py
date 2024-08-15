@@ -1,0 +1,36 @@
+import os
+import sys
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(file_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
+print(kit_dir)
+print(repo_dir)
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+from search_assistant.src.search_assistant import SearchAssistant
+
+method = 'rag_query'
+input_disabled = False
+tool = ['serpapi'] # serpapi, serper, openserp
+search_engine = 'google' # google, bing, baidu
+max_results = 5
+query = 'Albert Einstein'
+
+search_assistant = SearchAssistant()
+
+scraper_state = search_assistant.search_and_scrape(
+                            query=query,
+                            search_method=tool[0],
+                            max_results=max_results,
+                            search_engine=search_engine,
+                        )
+
+user_question = 'who is Albert Einsten?'
+response = search_assistant.retrieval_call(user_question)
+print(response["source_documents"]) # list[Document]
+print(response["answer"]) # str
+
