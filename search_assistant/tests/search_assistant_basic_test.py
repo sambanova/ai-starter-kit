@@ -13,7 +13,15 @@ Returns:
 
 import os
 import sys
+import unittest
+import logging
+import time
 
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Setup paths and global variables
 file_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(file_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
