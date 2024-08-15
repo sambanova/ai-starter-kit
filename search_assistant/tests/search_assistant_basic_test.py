@@ -37,19 +37,79 @@ tool = ['serpapi'] # serpapi, serper, openserp
 search_engine = 'google' # google, bing, baidu
 max_results = 5
 
-search_assistant = SearchAssistant()
+class SearchAssistantBasicTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.time_start = time.time()
 
-user_question = 'who is the president of America'
-reformulated_query = search_assistant.reformulate_query_with_history(user_question)
+        cls.search_assistant = SearchAssistant()
+    
+    # Add assertions
+    def test_search_assistant_class_creation(self):
+        self.assertIsNotNone(self.search_assistant, "SearchAssistant class shouldn't be empty")
+    
+    def test_basic_call(self):
+        user_question = 'who is the president of America'
+        reformulated_query = self.search_assistant.reformulate_query_with_history(user_question)
+        response = self.search_assistant.basic_call(
+                            query=user_question,
+                            reformulated_query=reformulated_query,
+                            search_method=tool[0],
+                            max_results=max_results,
+                            search_engine=search_engine,
+                            conversational=True,
+                        )
+        
+        logger.info(user_question)
+        logger.info(response["sources"]) # list[str]
+        logger.info(response["answer"]) # str
 
-response = search_assistant.basic_call(
-                    query=user_question,
-                    reformulated_query=reformulated_query,
-                    search_method=tool[0],
-                    max_results=max_results,
-                    search_engine=search_engine,
-                    conversational=True,
-                )
+        self.assertIn('sources', response, "Response should have a 'sources' key")
 
-print(response["sources"]) # list[str]
-print(response["answer"]) # str
+        self.assertIn('answer', response, "Response should have an 'answer' key")
+
+    @classmethod
+    def tearDownClass(cls):
+        time_end = time.time()
+        total_time = time_end - cls.time_start
+        logger.info(f"Total execution time: {total_time:.2f} seconds")   
+
+class CustomTextTestResult(unittest.TextTestResult):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.test_results: List[Dict[str, Any]] = []
+
+    def addSuccess(self, test):
+        super().addSuccess(test)
+        self.test_results.append({"name": test._testMethodName, "status": "PASSED"})
+
+    def addFailure(self, test, err):
+        super().addFailure(test, err)
+        self.test_results.append({"name": test._testMethodName, "status": "FAILED", "message": str(err[1])})
+
+    def addError(self, test, err):
+        super().addError(test, err)
+        self.test_results.append({"name": test._testMethodName, "status": "ERROR", "message": str(err[1])})
+
+def main():
+    suite = unittest.TestLoader().loadTestsFromTestCase(SearchAssistantBasicTestCase)
+    test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
+
+    logger.info("\nTest Results:")
+    for result in test_result.test_results:
+        logger.info(f"{result['name']}: {result['status']}")
+        if 'message' in result:
+            logger.info(f"  Message: {result['message']}")
+
+    failed_tests = len(test_result.failures) + len(test_result.errors)
+    logger.info(f"\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}")
+
+    if failed_tests:
+        logger.error(f"Number of failed tests: {failed_tests}")
+        return failed_tests
+    else:
+        logger.info("All tests passed successfully!")
+        return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
