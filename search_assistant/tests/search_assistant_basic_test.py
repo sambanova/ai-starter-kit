@@ -46,7 +46,7 @@ class SearchAssistantBasicTestCase(unittest.TestCase):
     
     # Add assertions
     def test_search_assistant_class_creation(self):
-        self.assertIsNotNone(self.search_assistant, "SearchAssistant class shouldn't be empty")
+        self.assertIsNotNone(self.search_assistant, "SearchAssistant class could not be created")
     
     def test_basic_call(self):
         user_question = 'who is the president of America'
@@ -65,7 +65,9 @@ class SearchAssistantBasicTestCase(unittest.TestCase):
         logger.info(response["answer"]) # str
 
         self.assertIn('sources', response, "Response should have a 'sources' key")
+        self.assertGreaterEqual(len(response["sources"]), 1, "There should be at least one source link")
         self.assertIn('answer', response, "Response should have an 'answer' key")
+        self.assertTrue(response["answer"], "LLM answer shouldn't be empty")
 
     @classmethod
     def tearDownClass(cls):
