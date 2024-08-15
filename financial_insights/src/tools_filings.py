@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas
 from bs4 import BeautifulSoup
@@ -20,79 +20,8 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-
-MAX_CHUNK_SIZE = 128
+MAX_CHUNK_SIZE = 256
 RETRIEVE_HEADLINES = False
-
-
-class YahooFinanceNewsInput(BaseModel):
-    """Input for the YahooFinanceNews tool."""
-
-    ticker_list: List[str] = Field(
-        description='A list of ticker symbols to search.',
-    )
-
-
-# def split_text_into_chunks(text: str, max_chunk_size: int = MAX_CHUNK_SIZE) -> List[str]:
-#     # Split text into sentences based on punctuation
-#     sentences = re.split(r'(?<=[.!?]) +', text)
-
-#     chunks: List[str] = []
-#     current_chunk: List[str] = []
-#     current_length = 0
-
-#     for sentence in sentences:
-#         sentence_length = len(sentence.split())
-#         # If adding the sentence exceeds the max_chunk_size, start a new chunk
-#         if current_length + sentence_length > max_chunk_size:
-#             chunks.append(' '.join(current_chunk))
-#             current_chunk = [sentence]
-#             current_length = sentence_length
-#         else:
-#             current_chunk.append(sentence)
-#             current_length += sentence_length
-
-#     # Add the last chunk if it has content
-#     if current_chunk:
-#         chunks.append(' '.join(current_chunk))
-
-#     return chunks
-
-
-# def filter_texts(texts: Set[str]) -> List[str]:
-#     """Filter out texts with fewer than 3 words."""
-#     filtered_texts = set()
-#     for text in texts:
-#         if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
-#             filtered_texts.add(text)
-#         elif len(text.split()) > MAX_CHUNK_SIZE:
-#             # Split the long text into smaller chunks
-#             chunks = split_text_into_chunks(text)
-#             for chunk in chunks:
-#                 filtered_texts.add(chunk)
-#         else:
-#             pass
-#     return list(filtered_texts)
-
-
-# def filter_text(text: str) -> List[str]:
-#     """Filter out texts with fewer than 3 words."""
-#     filtered_texts: List[str] = list()
-#     if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
-#         filtered_texts.append(text)
-#     elif len(text.split()) > MAX_CHUNK_SIZE:
-#         # Split the long text into smaller chunks
-#         chunks = split_text_into_chunks(text)
-#         for chunk in chunks:
-#             filtered_texts.append(chunk)
-#     else:
-#         pass
-#     return filtered_texts
-
-
-def clean_text(text: str) -> str:
-    """Clean the text by removing extra spaces, newlines, and special characters."""
-    return ' '.join(text.split())
 
 
 class SecEdgarFilingsInput(BaseModel):
@@ -161,10 +90,10 @@ def retrieve_filings(
                 # Convert html to text
                 soup = BeautifulSoup(html_text, 'html.parser')
                 # Extract text from the parsed HTML
-                text = soup.get_text(separator=' ')
+                text = soup.get_text(separator=' ', strip=True)
 
                 splitter = CharacterTextSplitter(
-                    chunk_size=512,
+                    chunk_size=MAX_CHUNK_SIZE,
                     chunk_overlap=64,
                     separator=r'[.!?]',
                     is_separator_regex=True,

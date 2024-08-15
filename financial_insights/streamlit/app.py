@@ -22,12 +22,11 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:
-    # clear_directory(CACHE_DIR + 'sources')
     global output
 
     # Streamlit app setup
     streamlit.set_page_config(
-        page_title='AI Starter Kit',
+        page_title='SambaNova Finance App',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         layout='wide',
     )
@@ -63,10 +62,11 @@ def main() -> None:
                 help='This will delete all saved files',
             ):
                 clear_directory(CACHE_DIR)
-                clear_directory(CACHE_DIR + 'stock_query_figures/')
-                clear_directory(CACHE_DIR + 'history_figures/')
-                clear_directory(CACHE_DIR + 'db_query_figures/')
-                clear_directory(CACHE_DIR + 'pdf_generation/')
+                clear_directory(SOURCE_DIR)
+                clear_directory(STOCK_QUERY_FIGURES_DIR)
+                clear_directory(HISTORY_FIGURES_DIR)
+                clear_directory(DB_QUERY_FIGURES_DIR)
+                clear_directory(PDF_GENERATION_DIRECTORY)
                 streamlit.sidebar.success('All files have been deleted.')
 
         # Set the default path (you can change this to any desired default path)

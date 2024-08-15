@@ -1,20 +1,25 @@
 import logging
 import os
 import shutil
-from typing import Dict
+from typing import Any, Dict, Union
 
 import streamlit
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from financial_insights.src.function_calling import FunctionCallingLlm
-from financial_insights.src.utilities_pdf_generation import (generate_pdf,
-                                                             parse_documents,
-                                                             read_txt_files)
+from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
+from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
+from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 logging.basicConfig(level=logging.INFO)
 
 
 def get_pdf_report() -> None:
+    # Clean the directory
+    if os.path.exists(PDF_GENERATION_DIRECTORY):
+        clear_directory(PDF_GENERATION_DIRECTORY)
+
     streamlit.markdown('<h2> Generate PDF Report </h2>', unsafe_allow_html=True)
     # Initialize session state for checkboxes if not already done
     if 'checkbox_include_stock' not in streamlit.session_state:
@@ -86,12 +91,14 @@ def get_pdf_report() -> None:
     # Add title name (optional)
     title_name = streamlit.text_input('Title Name', 'Financial Report')
 
+    # Include summary for each section
     include_summary = streamlit.checkbox(
         'Include summary from each section', key='checkbox_summary', value=False, help='This will take longer!'
     )
     if include_summary:
         streamlit.write(':red[Warning: This will take longer!]')
 
+    # Generate the report
     if streamlit.button('Generate Report'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             report_name = title_name.lower().replace(' ', '_') + '.pdf'
@@ -108,6 +115,48 @@ def get_pdf_report() -> None:
                     mime='text/plain',
                 )
         streamlit.write('PDF report generated successfully.')
+
+    # Initialize session state for checkboxes if not already done
+    if 'checkbox_use_generated_pdf' not in streamlit.session_state:
+        streamlit.session_state['checkbox_use_generated_pdf'] = False
+    if 'checkbox_upload_your_pdf' not in streamlit.session_state:
+        streamlit.session_state['checkbox_upload_your_pdf'] = False
+
+    use_generated_pdf = streamlit.checkbox(
+        'Use generated PDF',
+        key='checkbox_use_generated_pdf',
+        value=False,
+        on_change=check_use_generated_pdf,
+    )
+
+    upload_your_pdf = streamlit.checkbox(
+        'Upload your PDF',
+        key='checkbox_upload_your_pdf',
+        value=False,
+        on_change=check_upload_your_pdf,
+    )
+
+    if streamlit.button('Use report for RAG'):
+        user_request = streamlit.text_input(
+            'Enter the info that you want to retrieve for given companies.',
+            key='pdf-rag',
+        )
+
+        if use_generated_pdf or upload_your_pdf:
+            if use_generated_pdf and not upload_your_pdf:
+                answer = handle_pdf_rag(user_request, report_name)
+            elif upload_your_pdf and not use_generated_pdf:
+                # Add a PDF document for RAG (optional)
+                your_pdf_file = streamlit.file_uploader('Upload a PDF document for RAG (optional):', type='pdf')
+                if your_pdf_file is not None:
+                    answer = handle_pdf_rag(user_request, your_pdf_file)
+
+            if streamlit.button(
+                'Save Answer',
+                on_click=save_output_callback,
+                args=(answer, PDF_RAG_PATH),
+            ):
+                pass
 
 
 def handle_pdf_generation(
@@ -162,3 +211,23 @@ def check_inclusions() -> None:
         or streamlit.session_state['checkbox_include_filings']
     ):
         streamlit.session_state['checkbox_generate_from_history'] = False
+    return
+
+
+def check_use_generated_pdf() -> None:
+    if streamlit.session_state['checkbox_use_generated_pdf']:
+        streamlit.session_state['checkbox_upload_your_pdf'] = False
+
+
+def check_upload_your_pdf() -> None:
+    if streamlit.session_state['checkbox_upload_your_pdf']:
+        streamlit.session_state['checkbox_use_generated_pdf'] = False
+
+
+def handle_pdf_rag(user_question: str, report_name: Union[str, UploadedFile]) -> Any:
+    streamlit.session_state.tools = ['pdf_rag']
+    set_fc_llm(streamlit.session_state.tools)
+
+    user_request = 'Please use RAG from the provided PDF file to answer the following question: ' + user_question
+    response = handle_userinput(user_question, user_request)
+    return response

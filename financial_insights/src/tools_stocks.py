@@ -55,7 +55,7 @@ def get_stock_info(
                         'llm': streamlit.session_state.fc.llm,
                         'open_charts': False,
                         'save_charts': True,
-                        'save_charts_path': CACHE_DIR + '/stock_query_figures/',
+                        'save_charts_path': STOCK_QUERY_FIGURES_DIR,
                         'enable_cache': False,
                     },
                 )
@@ -75,7 +75,7 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
             'llm': streamlit.session_state.fc.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': CACHE_DIR + '/stock_query_figures/',
+            'save_charts_path': STOCK_QUERY_FIGURES_DIR,
             'enable_cache': False,
         },
     )

@@ -60,9 +60,7 @@ def store_company_dataframes_to_sqlite(
         and the value is another dictionary containing
         dataframes with their corresponding purpose/type.
     """
-    # # Connect to the SQLite database
-    # conn = sqlite3.connect(db_name)
-
+    # Connect to the SQLite database
     engine = create_engine(f'sqlite:///{DB_PATH}')
 
     # Create a dictionary with company names as keys and SQL tables as values
@@ -210,12 +208,13 @@ def sql_finder(text: str) -> Any:
 def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> Any:
     """Query a SQL database for a list of stocks/companies."""
 
-    user_request += (
-        '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
-    )
     response: Dict[str, List[str]] = dict()
     for symbol in symbol_list:
         selected_tables = select_database_tables(user_request, [symbol])
+
+        user_request += (
+            '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
+        )
 
         response[symbol] = list()
         for table in selected_tables:
@@ -233,7 +232,7 @@ def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> 
                     'llm': streamlit.session_state.fc.llm,
                     'open_charts': False,
                     'save_charts': True,
-                    'save_charts_path': CACHE_DIR + '/db_query_figures/',
+                    'save_charts_path': DB_QUERY_FIGURES_DIR,
                 },
             )
             response[symbol].append(df.chat(user_request))
@@ -250,10 +249,10 @@ def select_database_tables(user_request: str, symbol_list: List[str]) -> List[st
 
     parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
     prompt_template = (
-        'Consider the following table summaries:\n{summary_text}\n'
+        'Consider the following table summaries with table names and table columns:\n{summary_text}\n'
         'Which are the most relevant tables to the following query?\n'
-        'Query: "{user_request}"\n'
-        'Format instructions: {format_instructions}'
+        '{user_request}\n'
+        '{format_instructions}'
     )
 
     prompt = PromptTemplate(
@@ -273,6 +272,8 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
     """Get a list of available SQL tables."""
     inspector = Inspector.from_engine(create_engine('sqlite:///' + DB_PATH))
     tables_names = inspector.get_table_names()
+
+    assert len(tables_names), 'No SQL tables found.'
 
     table_summaries = {}
     for table in tables_names:

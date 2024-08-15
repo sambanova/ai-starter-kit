@@ -3,7 +3,7 @@ fpdf2==2.7.9
 fuzzywuzzy==0.18.0
 kaleido==0.2.1
 langchain==0.2.13
-langchain-community==0.2.6
+langchain-community==0.2.12
 langchain-experimental==0.0.60
 llama-index-readers-sec-filings==0.1.5
 mypy==1.11.0

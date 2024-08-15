@@ -23,7 +23,7 @@ def get_stock_data_analysis() -> None:
 
     user_request = streamlit.text_input(
         'Enter the info that you want to retrieve for given companies.',
-        key='ticker_symbol',
+        key='stock-query',
     )
     dataframe_name = streamlit.selectbox(
         'Select Data Source:',

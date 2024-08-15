@@ -55,7 +55,7 @@ def save_historical_price_callback(
     end_date: DateWidgetReturn,
     save_path: Optional[str] = None,
 ) -> None:
-    dir_name = CACHE_DIR + 'history_figures/'
+    dir_name = HISTORY_FIGURES_DIR
     # Create temporary cache for storing historical price data
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)

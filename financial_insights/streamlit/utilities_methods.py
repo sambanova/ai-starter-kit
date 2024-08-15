@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
@@ -15,6 +16,7 @@ from financial_insights.src.function_calling import ConversationalResponse, Func
 from financial_insights.src.tools import get_conversational_response
 from financial_insights.src.tools_database import create_stock_database, query_stock_database
 from financial_insights.src.tools_filings import retrieve_filings
+from financial_insights.src.tools_pdf_generation import pdf_rag
 from financial_insights.src.tools_stocks import (
     get_historical_price,
     get_stock_info,
@@ -35,6 +37,7 @@ TOOLS = {
     'retrieve_filings': retrieve_filings,
     'create_stock_database': create_stock_database,
     'query_stock_database': query_stock_database,
+    'pdf_rag': pdf_rag,
 }
 
 
@@ -127,16 +130,10 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
         pass
 
     if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
-        stream_complex_response(response, stream_response)
-        return response
+        return stream_complex_response(response, stream_response)
 
-    elif isinstance(response, list):
-        stream_complex_response(response, stream_response)
-        return json.dumps(response)
-
-    elif isinstance(response, dict):
-        stream_complex_response(response, stream_response)
-        return json.dumps(response)
+    elif isinstance(response, list) or isinstance(response, dict):
+        return stream_complex_response(response, stream_response)
 
     elif isinstance(response, tuple):
         for item in response:
@@ -146,15 +143,17 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
         return
 
 
-def stream_complex_response(response: Any, stream_response: bool = False) -> None:
+def stream_complex_response(response: Any, stream_response: bool = False) -> Any:
     if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
         if stream_response:
             stream_single_response(response)
+        return response
 
     elif isinstance(response, list):
         if stream_response:
             for item in response:
                 stream_single_response(item)
+        return json.dumps(response)
 
     elif isinstance(response, dict):
         if stream_response:
@@ -164,7 +163,7 @@ def stream_complex_response(response: Any, stream_response: bool = False) -> Non
                 elif isinstance(value, list):
                     # If all values are strings
                     stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
-    return
+    return json.dumps(response)
 
 
 def stream_single_response(response: Any) -> None:
@@ -188,8 +187,11 @@ def stream_single_response(response: Any) -> None:
                 png_paths = extract_png_paths(response)
                 for path in png_paths:
                     if path != response:
+                        # Extract the last part of path
+                        relative_path = extract_path_after('ai-starter-kit', path)
+                        assert isinstance(relative_path, str), 'Path should be a string'
                         # Load the image
-                        image = Image.open(path)
+                        image = Image.open(relative_path)
                         # Display the image
                         streamlit.image(image, use_column_width=True)
 
@@ -210,3 +212,25 @@ def extract_png_paths(sentence: str) -> List[str]:
     png_paths: List[str] = []
     matches = re.findall(png_pattern, sentence)
     return matches
+
+
+def extract_path_after(directory: str, path: str) -> Optional[str]:
+    # Normalize paths to avoid issues with different path representations
+    norm_directory = os.path.normpath(directory)
+    norm_path = os.path.normpath(path)
+
+    # Find the directory in the path
+    try:
+        index = norm_path.index(norm_directory)
+    except ValueError:
+        return None  # The directory is not in the path
+
+    # Extracting the part after the directory
+    start_pos = index + len(norm_directory)
+
+    # Ensure that the directory is found in the path at the end of a segment
+    if start_pos >= len(norm_path) or norm_path[start_pos] != os.sep:
+        return None  # The directory is not in the path
+
+    # Return the substring from the character after the directory onwards
+    return norm_path[start_pos + 1 :]
