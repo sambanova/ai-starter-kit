@@ -136,14 +136,14 @@ Follow the instructions to deploy the parsing service locally [here](../README.m
 - Also, make sure you add the following variables to the `.env` file in the ai-starter-kit root directory:
 
      ```bash
-     UNSTRUCTURED_API_KEY=your_api_key_here
-     UNSTRUCTURED_API_KEY="http://localhost:8005/general/v0/general"
+     UNSTRUCTURED_API_KEY="your_API_key_here"
+     UNSTRUCTURED_URL="http://localhost:8005/general/v0/general"
      ```
 - Or if you are using docker to run this kit:
 
      ```bash
-     UNSTRUCTURED_API_KEY=your_api_key_here
-     UNSTRUCTURED_API_KEY="http://host.docker.internal:8005/general/v0/general"
+     UNSTRUCTURED_API_KEY="your_API_key_here"
+     UNSTRUCTURED_URL="http://host.docker.internal:8005/general/v0/general"
      ```
 
 
