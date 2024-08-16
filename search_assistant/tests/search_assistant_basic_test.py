@@ -2,7 +2,7 @@
 """
 Search Assistant (Basic Query) Test Script
 
-This script tests the functionality of the Search Assistant kit (search and answer) using unittest.
+This script tests the 'search and answer' functionality of the Search Assistant kit using unittest.
 
 Usage:
     python tests/search_assistant_basic_test.py

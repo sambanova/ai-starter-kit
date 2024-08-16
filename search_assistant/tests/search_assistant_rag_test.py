@@ -2,7 +2,7 @@
 """
 Search Assistant (RAG Query) Test Script
 
-This script tests the functionality of the Search Assistant kit (search and scrape sites) using unittest.
+This script tests the 'search and scrape sites' functionality of the Search Assistant kit using unittest.
 
 Usage:
     python tests/search_assistant_rag_test.py
