@@ -7,13 +7,10 @@ import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from financial_insights.src.function_calling import FunctionCalling
-from financial_insights.src.tools_pdf_generation import (generate_pdf,
-                                                         parse_documents,
-                                                         read_txt_files)
+from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import (handle_userinput,
-                                                            set_fc_llm)
+from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 logging.basicConfig(level=logging.INFO)
 

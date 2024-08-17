@@ -17,8 +17,7 @@ from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
-from financial_insights.src.tools import (convert_data_to_frame,
-                                          extract_yfinance_data)
+from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
 from financial_insights.streamlit.constants import *
 
 
@@ -38,7 +37,7 @@ def create_stock_database(
 ) -> Dict[str, List[str]]:
     """
     Create a SQL database for a list of stocks/companies.
-    
+
     Args:
         symbol_list: List of stock ticker symbols.
         start_date: Start date for the historical data.
@@ -125,7 +124,7 @@ def query_stock_database(
 ) -> Union[Any, Dict[str, str | List[str]]]:
     """
     Query a SQL database for a list of stocks/companies.
-    
+
     Args:
         user_query: Query to be performed on the database.
         symbol_list: List of stock ticker symbols.

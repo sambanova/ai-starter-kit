@@ -12,17 +12,17 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from PIL import Image
 
-from financial_insights.src.function_calling import (ConversationalResponse,
-                                                     FunctionCalling)
+from financial_insights.src.function_calling import ConversationalResponse, FunctionCalling
 from financial_insights.src.tools import get_conversational_response
-from financial_insights.src.tools_database import (create_stock_database,
-                                                   query_stock_database)
+from financial_insights.src.tools_database import create_stock_database, query_stock_database
 from financial_insights.src.tools_filings import retrieve_filings
 from financial_insights.src.tools_pdf_generation import pdf_rag
-from financial_insights.src.tools_stocks import (get_historical_price,
-                                                 get_stock_info,
-                                                 retrieve_symbol_list,
-                                                 retrieve_symbol_quantity_list)
+from financial_insights.src.tools_stocks import (
+    get_historical_price,
+    get_stock_info,
+    retrieve_symbol_list,
+    retrieve_symbol_quantity_list,
+)
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_insights.streamlit.constants import *
 

@@ -77,7 +77,9 @@ class FunctionCalling:
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
-        assert isinstance(tools, list) and all(isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools)
+        assert isinstance(tools, list) and all(
+            isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools
+        )
         self.tools = tools
 
         # Set the system prompt
