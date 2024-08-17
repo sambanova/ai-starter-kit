@@ -26,7 +26,7 @@ def main() -> None:
 
     # Streamlit app setup
     streamlit.set_page_config(
-        page_title='SambaNova Finance App',
+        page_title='Finance App',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         layout='wide',
     )

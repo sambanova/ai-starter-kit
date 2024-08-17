@@ -14,6 +14,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import CharacterTextSplitter
 
+from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
 BACKGROUND_COLOUR = (255, 229, 180)
@@ -199,7 +200,7 @@ def generate_pdf(
             pdf.chapter_title('Query ' + str(idx))
             if item['text'] is not None:
                 pdf.chapter_body(item['text'])
-            if item['figure_path'] is not None:
+            if item['figure_path'] is not None and len((item['figure_path'])) > 0:
                 pdf.add_figure(item['figure_path'])
 
     pdf.output(output_file)
@@ -285,11 +286,21 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
 class PDFRAGInput(BaseModel):
     """Use the provided PDF file to answer the user query using RAG."""
 
-    pdf_file: str = Field('The path to the PDF file for RAG.')
+    user_query: str = Field('The user query.')
+    pdf_files_names: List[str] = Field('The path to the PDF file for RAG.')
 
 
 @tool(args_schema=PDFRAGInput)
-def pdf_rag(pdf_file: str) -> str:
-    loader = PyPDFLoader(pdf_file)
+def pdf_rag(user_query: str, pdf_files_names: List[str]) -> Any:
+    documents = []
+    for file in pdf_files_names:
+        pdf_path = os.path.join(PDF_GENERATION_DIRECTORY, file)
+        loader = PyPDFLoader(pdf_path)
+        documents.extend(loader.load())
 
-    return ''
+    text_splitter = CharacterTextSplitter(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+    chunked_documents = text_splitter.split_documents(documents)
+
+    response = get_qa_response(documents, user_query)['answer']
+
+    return response

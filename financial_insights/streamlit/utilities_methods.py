@@ -12,17 +12,17 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from PIL import Image
 
-from financial_insights.src.function_calling import ConversationalResponse, FunctionCallingLlm
+from financial_insights.src.function_calling import (ConversationalResponse,
+                                                     FunctionCalling)
 from financial_insights.src.tools import get_conversational_response
-from financial_insights.src.tools_database import create_stock_database, query_stock_database
+from financial_insights.src.tools_database import (create_stock_database,
+                                                   query_stock_database)
 from financial_insights.src.tools_filings import retrieve_filings
 from financial_insights.src.tools_pdf_generation import pdf_rag
-from financial_insights.src.tools_stocks import (
-    get_historical_price,
-    get_stock_info,
-    retrieve_symbol_list,
-    retrieve_symbol_quantity_list,
-)
+from financial_insights.src.tools_stocks import (get_historical_price,
+                                                 get_stock_info,
+                                                 retrieve_symbol_list,
+                                                 retrieve_symbol_quantity_list)
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_insights.streamlit.constants import *
 
@@ -65,7 +65,7 @@ def set_fc_llm(
     default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
 ) -> None:
     """
-    Set the FunctionCallingLlm object with the selected tools
+    Set the FunctionCalling object with the selected tools
 
     Args:
         tools (list): list of tools to be used
@@ -74,7 +74,7 @@ def set_fc_llm(
         set_tools = [TOOLS[name] for name in tools]
     else:
         set_tools = [ConversationalResponse]
-    streamlit.session_state.fc = FunctionCallingLlm(tools=set_tools, default_tool=default_tool)
+    streamlit.session_state.fc = FunctionCalling(tools=set_tools, default_tool=default_tool)
 
 
 def handle_userinput(user_question: Optional[str], user_query: Optional[str]) -> Optional[Any]:

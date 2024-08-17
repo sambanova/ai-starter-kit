@@ -17,7 +17,8 @@ from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
-from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools import (convert_data_to_frame,
+                                          extract_yfinance_data)
 from financial_insights.streamlit.constants import *
 
 
@@ -35,15 +36,26 @@ def create_stock_database(
     start_date: datetime.date = datetime.datetime.today().date() - datetime.timedelta(days=365),
     end_date: datetime.date = datetime.datetime.today().date(),
 ) -> Dict[str, List[str]]:
-    """Create a SQL database for a list of stocks/companies."""
+    """
+    Create a SQL database for a list of stocks/companies.
+    
+    Args:
+        symbol_list: List of stock ticker symbols.
+        start_date: Start date for the historical data.
+        end_date: End date for the historical data.
+    Returns:
+        A dictionary with company symbols as keys and a list of SQL table names as values.
+    """
     # Check dates
     if start_date > end_date or (end_date - datetime.timedelta(days=365)) < start_date:
         raise ValueError('Start date must be before the end date.')
 
+    # Extract yfinance data
     company_data_dict = dict()
     for symbol in symbol_list:
         company_data_dict[symbol] = extract_yfinance_data(symbol, start_date, end_date)
 
+    # Create SQL database
     company_tables = store_company_dataframes_to_sqlite(db_name=DB_PATH, company_data_dict=company_data_dict)
 
     return company_tables
@@ -53,12 +65,15 @@ def store_company_dataframes_to_sqlite(
     db_name: str, company_data_dict: Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]
 ) -> Dict[str, list[str]]:
     """
-    Stores multiple dataframes for each company into an SQLite database.
+    Store multiple dataframes for each company into an SQLite database.
 
-    :param db_name: The name of the SQLite database file.
-    :param company_data_dict: Dictionary where the key is the company name,
-        and the value is another dictionary containing
-        dataframes with their corresponding purpose/type.
+    Args:
+        db_name: The name of the SQLite database file.
+        company_data_dict: Dictionary where the key is the company name,
+            and the value is another dictionary or a `pandas.DataFrame` containing
+            dataframes with their corresponding purpose/type.
+    Returns:
+        A dictionary with company symbols as keys and a list of SQL table names as values.
     """
     # Connect to the SQLite database
     engine = create_engine(f'sqlite:///{DB_PATH}')
@@ -68,23 +83,25 @@ def store_company_dataframes_to_sqlite(
 
     # Process each company
     for company, company_data in company_data_dict.items():
-        # Make sure company name is SQLite-friendly
+        # Ensure that the company name is SQLite-friendly
         company_base_name = company.replace(' ', '_').lower()
+
+        # Initialize a list of SQL table names
         company_tables[company] = list()
 
         for df_name, data in company_data.items():
-            # Build a table name using company name and dataframe purpose/type
+            # Build a table name using the company symbol and the dataframe purpose/type
             table_name = f'{company_base_name}_{df_name}'
             df = convert_data_to_frame(data, df_name)
 
-            # Make sure column names are SQLite-friendly
+            # Make sure the column names are SQLite-friendly
             for column in df.columns:
                 df = df.rename({column: f'{column}'.replace(' ', '_')}, axis='columns')
 
             # Convert list-type and dict-type entries to JSON strings
             df = df.applymap(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
 
-            # df.to_sql(table_name, conn, if_exists="replace", index=False)
+            # Store the dataframe in an SQLite database table
             df.to_sql(table_name, engine, if_exists='replace', index=False)
             logging.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
 
@@ -97,17 +114,25 @@ def store_company_dataframes_to_sqlite(
 class QueryDatabaseSchema(BaseModel):
     """Query a SQL database for a list of stocks/companies."""
 
-    user_request: str = Field('Query to be performed on the database')
+    user_query: str = Field('Query to be performed on the database')
     symbol_list: List[str] = Field('List of stock ticker symbols.')
     method: str = Field('Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector"')
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
-    user_request: str, symbol_list: List[str], method: str
+    user_query: str, symbol_list: List[str], method: str
 ) -> Union[Any, Dict[str, str | List[str]]]:
-    """Query a SQL database for a list of stocks/companies."""
-
+    """
+    Query a SQL database for a list of stocks/companies.
+    
+    Args:
+        user_query: Query to be performed on the database.
+        symbol_list: List of stock ticker symbols.
+        method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
+    Returns:
+        xxx
+    """
     assert method in [
         'text-to-SQL',
         'PandasAI-SqliteConnector',
@@ -116,14 +141,24 @@ def query_stock_database(
     assert len(symbol_list) > 0, 'Symbol List must contain at least one symbol: please specify the company to query.'
 
     if method == 'text-to-SQL':
-        return query_stock_database_sql(user_request, symbol_list)
+        return query_stock_database_sql(user_query, symbol_list)
     elif method == 'PandasAI-SqliteConnector':
-        return query_stock_database_pandasai(user_request, symbol_list)
+        return query_stock_database_pandasai(user_query, symbol_list)
     else:
         raise Exception('Invalid method')
 
 
-def query_stock_database_sql(user_request: str, symbol_list: List[str]) -> Dict[str, str | List[str]]:
+def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[str, str | List[str]]:
+    """
+    Query a SQL database for a list of stocks/companies.
+
+    Args:
+        user_query: Query to be performed on the database.
+        symbol_list: List of stock ticker symbols.
+    Returns:
+        xxx
+    """
+    # Prompt template for the SQL queries
     prompt = PromptTemplate.from_template(
         """<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
         
@@ -132,7 +167,7 @@ def query_stock_database_sql(user_request: str, symbol_list: List[str]) -> Dict[
         Generate a query using valid SQLite to answer the following questions 
         for the summarized tables schemas provided above.
         Do not assume the values on the database tables before generating the SQL query, 
-        always generate a SQL that query what is asked. 
+        always generate a SQL code that queries what is asked. 
         The query must be in the format: ```sql\nquery\n```
         
         Example:
@@ -147,21 +182,28 @@ def query_stock_database_sql(user_request: str, symbol_list: List[str]) -> Dict[
         <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
     )
 
-    # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
-    # and finally execute the sql finder method, retrieving only the filtered SQL query
+    # Chain that receives the natural language input and the table schemas, invoke the LLM,
+    # and finally execute the SQL finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
 
-    selected_tables = select_database_tables(user_request, symbol_list)
+    # Extract the names of the SQL tables that are relevant to the user query
+    selected_tables = select_database_tables(user_query, symbol_list)
     selected_schemas = get_table_summaries_from_names(selected_tables)
 
-    query: str = query_generation_chain.invoke({'selected_schemas': selected_schemas, 'input': user_request})
+    # Generate the SQL query
+    query: str = query_generation_chain.invoke({'selected_schemas': selected_schemas, 'input': user_query})
 
+    # Split the SQL query into multiple queries
     queries = query.split(';')
     queries = [query for query in queries if len(query) > 0]
 
+    # Create a SQL database engine and connect to it using the selected tables
     engine = create_engine(f'sqlite:///{DB_PATH}')
     db = SQLDatabase(engine=engine, include_tables=selected_tables)
+
+    # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
+    logging.warning('')
 
     results = []
     for query in queries:

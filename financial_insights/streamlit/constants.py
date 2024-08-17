@@ -16,7 +16,7 @@ STOCK_QUERY_PATH = os.path.join(CACHE_DIR, 'stock_query.txt')
 DB_QUERY_PATH = os.path.join(CACHE_DIR, 'db_query.txt')
 YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.txt')
 FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
-PDF_RAG_PATH = os.path.join(PDF_GENERATION_DIRECTORY, 'pdf_rag.txt')
+PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
 
 SOURCE_DIR = os.path.join(CACHE_DIR, 'sources/')
 DB_PATH = os.path.join(SOURCE_DIR, 'stock_database.db')
@@ -28,3 +28,4 @@ HISTORY_FIGURES_DIR = os.path.join(CACHE_DIR, 'history_figures/')
 DB_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'db_query_figures/')
 
 MAX_CHUNK_SIZE = 256
+CHUNK_OVERLAP = 64
