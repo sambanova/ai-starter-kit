@@ -44,6 +44,7 @@ class RAGEvalConfig:
             "sambastudio_project_id": os.getenv(f"{llm_name.upper()}_PROJECT_ID"),
             "sambastudio_endpoint_id": os.getenv(f"{llm_name.upper()}_ENDPOINT_ID"),
             "sambastudio_api_key": os.getenv(f"{llm_name.upper()}_API_KEY"),
+            "streaming": True,
             "model_kwargs": config_dict.get("model_kwargs", {}),
         }
         return llm_name, full_config_dict
@@ -295,9 +296,9 @@ class RAGEvaluator:
                         llm=eval_llm,
                         embeddings=self.eval_embeddings,
                     )
-                    results[
-                        f"{gen_llm_name}_{eval_llm_name}"
-                    ] = result.to_pandas()  # Use result.to_pandas()
+                    results[f"{gen_llm_name}_{eval_llm_name}"] = (
+                        result.to_pandas()
+                    )  # Use result.to_pandas()
         else:
             for eval_llm_name, eval_llm in self.eval_llms:
                 ragas_dataset = self.create_ragas_dataset(

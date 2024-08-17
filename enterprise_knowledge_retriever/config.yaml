@@ -1,17 +1,19 @@
-api: "sambastudio" # set either sambastudio or sambaverse
+api: "sambastudio" #  set either sambastudio, sambaverse or fastapi
 
 embedding_model: 
-    "type": "sambastudio" # set either sambastudio or cpu
+    "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
-    "coe": False #set true if using Sambastudio embeddings in a CoE endpoint 
+    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
 
 llm: 
     "temperature": 0.0
+    "do_sample": False
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    #fastApi CoE expert name -> "llama3-8b"
 
 retrieval:
     "k_retrieved_documents": 15 #set if rerank enabled 
@@ -21,5 +23,5 @@ retrieval:
     "final_k_retrieved_documents": 5
 
 prompts: 
-    "qa_prompt": "prompts/qa_prompt.yaml"
-    "final_chain_prompt": "prompts/final_chain_prompt.yaml"
+    "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
+    "final_chain_prompt": "enterprise_knowledge_retriever/prompts/final_chain_prompt.yaml"

@@ -113,9 +113,10 @@ def main() -> None:
         st.session_state.tools = ['get_time', 'python_repl', 'query_db']
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
+    if 'input_disabled' not in st.session_state:
+        st.session_state.input_disabled = True
 
     st.title(':orange[SambaNova] Function Calling Assistant')
-    user_question = st.chat_input('Ask something')
 
     with st.sidebar:
         st.title('Setup')
@@ -132,6 +133,7 @@ def main() -> None:
             with st.spinner('Processing'):
                 set_fc_llm(st.session_state.tools)
                 st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
+            st.session_state.input_disabled = False
 
         st.markdown('**3. Ask questions about your data!**')
 
@@ -148,6 +150,7 @@ def main() -> None:
                 st.session_state.sources_history = []
                 st.toast('Interactions reset. The next response will clear the history on the screen')
 
+    user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled)
     handle_userinput(user_question)
 
 

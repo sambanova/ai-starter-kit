@@ -18,7 +18,7 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 st.set_page_config(
     page_title="Q&A Bot for Edgar SEC filings",
-    page_icon="⚡",
+    page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
     layout="wide",
     initial_sidebar_state="auto",
 )

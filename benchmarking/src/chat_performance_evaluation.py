@@ -6,14 +6,12 @@ import llmperf.utils as utils
 
 from dotenv import load_dotenv
 
-DEFAULT_SYSTEM_PROMPT = "You are a helpful, respectful and honest assistant. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\n If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don'''t know the answer to a question, please don'''t share false information. Don'''t show any HTML tag in your answer."
-
-
-class SambaStudioCOEHandler:
+class ChatPerformanceEvaluator:
     """Samba Studio COE handler that wraps SamabaNova LLM client to parse output"""
 
-    def __init__(self, model_name, params):
+    def __init__(self, model_name, llm_api, params):
         self.model = model_name
+        self.llm_api = llm_api
         self.params = params
 
     def generate(self, prompt: str) -> tuple:
@@ -25,9 +23,8 @@ class SambaStudioCOEHandler:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        if utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model.lower():
+        if utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model.lower().replace("-",""):
             prompt_template = (
-                f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{DEFAULT_SYSTEM_PROMPT}<|eot_id|>"
                 f"<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
             )
         else:
@@ -36,10 +33,11 @@ class SambaStudioCOEHandler:
         tokenizer = utils.get_tokenizer(self.model)
 
         request_config = RequestConfig(
-            prompt=(prompt_template, 10),
+            prompt_tuple=(prompt_template, 10),
             model=self.model,
+            llm_api=self.llm_api,
             sampling_params=self.params,
-            mode="stream",
+            is_stream_mode=True,
             num_concurrent_requests=1,
         )
         output = llm_request(request_config, tokenizer)
@@ -54,10 +52,11 @@ class SambaStudioCOEHandler:
 if __name__ == "__main__":
 
     # load env variables
-    load_dotenv("../../.env", override=True)
+    load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
     model_name = "COE/Meta-Llama-3-8B-Instruct"
+    llm_api = "sambastudio"
 
     params = {
         # "do_sample": False,
@@ -68,6 +67,6 @@ if __name__ == "__main__":
         # "top_p":0.95,
     }
 
-    handler = SambaStudioCOEHandler(model_name, params)
+    handler = ChatPerformanceEvaluator(model_name, llm_api, params)
     response = handler.generate(prompt="Tell me about SambaNova in one sentence")
     print(response)

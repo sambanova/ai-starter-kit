@@ -83,6 +83,8 @@ def main():
         st.session_state.embeddings = None
     if "vectorstore" not in st.session_state:
         st.session_state.vectorstore = None
+    if 'input_disabled' not in st.session_state:
+        st.session_state.input_disabled = True
 
     with st.sidebar:
         st.title("Setup")
@@ -136,6 +138,7 @@ def main():
                     # create conversation chain
                     st.session_state.conversation = rag 
                     st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
+                st.session_state.input_disabled = False
             st.markdown("[Optional] Save database for reuse")
             save_location = st.text_input("Save location", "./data/my-vector-db").strip()
             if st.button("Process and Save database"):
@@ -176,6 +179,7 @@ def main():
                     # create RAG chain
                     st.session_state.conversation = rag 
                     st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
+                st.session_state.input_disabled = False
 
         else:
             db_path = st.text_input(
@@ -220,6 +224,7 @@ def main():
                             rag.build_rag_graph(workflow)
 
                             st.session_state.conversation = st.session_state.conversation = rag 
+                            st.session_state.input_disabled = False
                         else:
                             st.error("database not present at " + db_path, icon="🚨")
 
@@ -259,7 +264,7 @@ def main():
 
 
     st.title(":orange[SambaNova] Analyst Assistant")
-    user_question = st.chat_input("Ask questions about your data")
+    user_question = st.chat_input("Ask questions about your data", disabled=st.session_state.input_disabled)
     handle_userinput(user_question)
 
 if __name__ == "__main__":

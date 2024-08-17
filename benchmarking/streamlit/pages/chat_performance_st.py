@@ -4,7 +4,8 @@ import streamlit as st
 sys.path.append("../")
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.chat_performance_evaluation import SambaStudioCOEHandler
+from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
+from benchmarking.streamlit.app import LLM_API_OPTIONS
 
 import warnings
 
@@ -28,11 +29,11 @@ def _get_params() -> dict:
     return params
 
 
-def _parse_llm_response(llm: SambaStudioCOEHandler, prompt: str) -> dict:
+def _parse_llm_response(llm: ChatPerformanceEvaluator, prompt: str) -> dict:
     """Parses LLM output to a dictionary with necessary performance metrics and completion
 
     Args:
-        llm (SambaStudioCOEHandler): SambaNova COE LLM
+        llm (ChatPerformanceEvaluator): Chat performance evaluation object
         prompt (str): user's prompt text
 
     Returns:
@@ -57,6 +58,8 @@ def _initialize_sesion_variables():
         st.session_state.perf_metrics_history = []
     if "llm" not in st.session_state:
         st.session_state.llm = None
+    if "llm_api" not in st.session_state:
+        st.session_state.llm_api = None
     if "chat_disabled" not in st.session_state:
         st.session_state.chat_disabled = True
 
@@ -84,7 +87,7 @@ def main():
 
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Performance evaluation")
+    st.title(":orange[SambaNova] Chat Performance Evaluation")
     st.markdown(
         "With this option, users have a way to know performance metrics per response. Set your LLM first on the left side bar and then have a nice conversation, also know more about our performance metrics per each response."
     )
@@ -95,14 +98,17 @@ def main():
 
         # Show LLM parameters
         llm_model = st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         llm_selected = f"{llm_model}"
+        llm_api_selected = st.session_state.llm_api = st.selectbox(
+            "API type", options=LLM_API_OPTIONS
+        )
         # st.session_state.do_sample = st.toggle("Do Sample")
-        st.session_state.max_tokens_to_generate = st.slider(
-            "Max tokens to generate", min_value=50, max_value=2048, value=250
+        st.session_state.max_tokens_to_generate = st.number_input(
+            "Max tokens to generate", min_value=50, max_value=2048, value=250, step=1
         )
         # st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0, step=0.01, value=1.0, format="%.2f")
         # st.session_state.temperature = st.slider('Temperature', min_value=0.01, max_value=1.00, value=0.1, step=0.01, format="%.2f")
@@ -132,8 +138,10 @@ def main():
 
         if sidebar_run_option:
             params = _get_params()
-            st.session_state.llm = SambaStudioCOEHandler(
-                model_name=llm_selected, params=params
+            st.session_state.selected_llm = ChatPerformanceEvaluator(
+                model_name=llm_selected,
+                llm_api=llm_api_selected,
+                params=params
             )
             st.toast("LLM setup ready! 🙌 Start asking!")
             st.session_state.chat_disabled = False
@@ -148,7 +156,7 @@ def main():
             with st.spinner("Processing"):
 
                 # Display llm response
-                llm_response = _parse_llm_response(st.session_state.llm, user_prompt)
+                llm_response = _parse_llm_response(st.session_state.selected_llm, user_prompt)
 
                 # Add user message to chat history
                 st.session_state.chat_history.append(

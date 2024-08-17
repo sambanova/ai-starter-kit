@@ -23,6 +23,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.model_wrappers.api_gateway import APIGateway 
+from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -105,42 +107,22 @@ class FunctionCallingLlm:
 
         return (llm_info,)
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse]:
+    def set_llm(self) -> Union[SambaStudio, Sambaverse, SambaNovaFastAPI]:
         """
         Set the LLM to use.
-        sambaverse, sambastudio and  CoE endpoints implemented.
+        sambaverse, sambastudio and fastapi endpoints implemented.
         """
-
-        if self.llm_info['api'] == 'sambastudio':
-            if self.llm_info['coe']:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'select_expert': self.llm_info['select_expert'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-            else:
-                llm = SambaStudio(
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-        elif self.llm_info['api'] == 'sambaverse':
-            llm = Sambaverse(  # type:ignore
-                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                model_kwargs={
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'select_expert': self.llm_info['select_expert'],
-                    'temperature': self.llm_info['temperature'],
-                },
-            )
-        else:
-            raise ValueError(
-                f"Invalid LLM API: {self.llm_info['api']}, only 'sambastudio' and 'sambaverse' are supported."
-            )
+        llm = APIGateway.load_llm(
+            type=self.llm_info['api'],
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+        )           
         return llm
 
     def get_tools_schemas(
@@ -213,7 +195,9 @@ class FunctionCallingLlm:
         for tool in invoked_tools:
             final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
+                print(f"\n\n---\nTool {tool['tool'].lower()} invoked with input {tool['tool_input']}\n")
                 response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
+                print(f'Tool response: {str(response)}\n---\n\n')
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
@@ -270,6 +254,27 @@ class FunctionCallingLlm:
             else:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
+    
+    def msgs_to_fast_api(self, msgs: list) -> list:
+        """
+        convert a list of langchain messages with roles to expected FastCoE input
+
+        Args:
+            msgs (list): The list of langchain messages.
+        """
+        formatted_msgs = []
+        for msg in msgs:
+            if msg.type == 'system':
+                formatted_msgs.append({'role': 'system', 'content': msg.content})
+            elif msg.type == 'human':
+                formatted_msgs.append({'role': 'user', 'content': msg.content})
+            elif msg.type == 'ai':
+                formatted_msgs.append({'role': 'assistant', 'content': msg.content})
+            elif msg.type == 'tool':
+                formatted_msgs.append({'role': 'tools', 'content': msg.content})
+            else:
+                raise ValueError(f'Invalid message type: {msg.type}')
+        return json.dumps(formatted_msgs)
 
     def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
         """
@@ -288,15 +293,21 @@ class FunctionCallingLlm:
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            prompt = self.msgs_to_llama3_str(history)
+            if self.llm_info['api'] == 'fastapi':
+                prompt = self.msgs_to_fast_api(history)
+            else:
+                prompt = self.msgs_to_llama3_str(history)
+            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   
             llm_response = self.llm.invoke(prompt)
+            print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
             history.append(AIMessage(llm_response))
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
                 final_response = tools_msgs[0]
                 if debug:
-                    pprint(history)
+                    print('\n\n---\nFinal function calling LLM history: \n')
+                    pprint(f'{history}')
                 return final_response
             else:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))

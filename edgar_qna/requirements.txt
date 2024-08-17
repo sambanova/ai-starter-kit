@@ -1,9 +1,9 @@
 llama-hub==0.0.25
 pydantic==2.7.0
 pydantic_core==2.18.1
-langchain-community==0.2.1
-langchain-core==0.2.1
-langchain==0.2.1
+langchain-community==0.2.10
+langchain-core==0.2.25
+langchain==0.2.11
 llama-index==0.9.39
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
@@ -21,3 +21,4 @@ python-dotenv==1.0.0
 chromadb==0.4.24
 streamlit==1.25.0
 sseclient-py==1.8.0
+pypdf==4.3.1

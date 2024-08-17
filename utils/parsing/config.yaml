@@ -20,7 +20,6 @@ sources:
     drive_id: 'your_drive_id'
 
 partitioning:
-  pdf_infer_table_structure: True
   skip_infer_table_types: []
   strategy: 'auto'
   hi_res_model_name: 'yolox'
@@ -40,7 +39,6 @@ chunking:
   chunk_max_characters: 1500
   chunk_overlap: 300
   combine_under_n_chars: 1500
-  chunk_elements: True
 
 embedding:
   enabled: False

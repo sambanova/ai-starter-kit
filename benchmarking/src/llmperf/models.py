@@ -7,7 +7,7 @@ class RequestConfig(BaseModel):
 
     Args:
         model: The model to use.
-        prompt: The prompt to provide to the LLM API.
+        prompt_tuple: A tuple containing the prompt to provide to the LLM API along with the tokenized prompt length.
         sampling_params: Additional sampling parameters to send with the request.
             For more information see the Router app's documentation for the completions
         llm_api: The name of the LLM API to send the request to.
@@ -17,9 +17,23 @@ class RequestConfig(BaseModel):
     """
 
     model: str
-    prompt: Tuple[str, int]
+    prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
-    mode: Optional[str] = None
+    is_stream_mode: Optional[bool] = None
     num_concurrent_workers: int = None
     metadata: Optional[Dict[str, Any]] = None
+
+
+class LLMResponse(BaseModel):
+    """The response object created from a response from one of the SambaStudio LLM APIs
+    
+    Args:
+        metrics: Dictionary containing the throughput metrics from the endpoint
+        response_text: The generated text from the LLM
+        request_config: The associated request config
+    """
+    
+    metrics: Dict
+    response_text: str
+    request_config: RequestConfig

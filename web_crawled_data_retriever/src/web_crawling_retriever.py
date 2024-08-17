@@ -11,7 +11,7 @@ from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
 from langchain.prompts import load_prompt
 from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from utils.model_wrappers.api_gateway import APIGateway
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -20,7 +20,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from vectordb.vector_db import VectorDb
+from utils.vectordb.vector_db import VectorDb
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 nest_asyncio.apply()
@@ -225,27 +225,17 @@ class WebCrawlingRetrieval:
         """
         Initializes the LLM endpoint
         """
-        if self.api_info == 'sambaverse':
-            self.llm = Sambaverse(
-                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                model_kwargs={
-                    'do_sample': True,
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'temperature': self.llm_info['temperature'],
-                    'process_prompt': True,
-                    'select_expert': self.llm_info['sambaverse_select_expert'],
-                },
-            )
-
-        #TODO Implement COE Routing Here as done in search assistant - else failing for COE Endpoints
-        elif self.api_info == 'sambastudio':
-            self.llm = SambaStudio(
-                model_kwargs={
-                    'do_sample': True,
-                    'temperature': self.llm_info['temperature'],
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                }
-            )
+        self.llm = llm = APIGateway.load_llm(
+            type=self.api_info,
+            streaming=True,
+            coe=self.llm_info["coe"],
+            do_sample=self.llm_info["do_sample"],
+            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
+            temperature=self.llm_info["temperature"],
+            select_expert=self.llm_info["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.llm_info['sambaverse_model_name']
+        )
 
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
         """
@@ -256,7 +246,12 @@ class WebCrawlingRetrieval:
         """
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
-        self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
+        self.embeddings = APIGateway.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
 
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(
@@ -293,7 +288,12 @@ class WebCrawlingRetrieval:
         self.chunks = self.vectordb.get_text_chunks(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        self.embeddings = self.vectordb.load_embedding_model(type=self.embedding_model_info)
+        self.embeddings = APIGateway.load_embedding_model(
+            type=self.embedding_model_info["type"],
+            batch_size=self.embedding_model_info["batch_size"],
+            coe=self.embedding_model_info["coe"],
+            select_expert=self.embedding_model_info["select_expert"]
+            ) 
         if update:
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(

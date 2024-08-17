@@ -4,24 +4,21 @@ sys.path.append("../")
 sys.path.append("./src")
 sys.path.append("./streamlit")
 
-import re
-import time
-
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+from typing import List
 import streamlit as st
 from st_pages import Page, show_pages
-from typing import List
-from matplotlib.axes._axes import Axes
+import matplotlib.pyplot as plt
 
-
-from benchmarking.src.token_benchmark import run_token_benchmark
+from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 from dotenv import load_dotenv
 import warnings
 
 warnings.filterwarnings("ignore")
+
+LLM_API_OPTIONS = ["sambastudio", "fastapi"]
 
 
 @st.cache_data
@@ -38,75 +35,33 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-    num_concurrent_workers = st.session_state.number_concurrent_workers
 
-    # Call benchmarking process. Static param values are intentional and still WIP.
-    mode = "stream"
-    llm_api = "sambastudio"
+    # Call benchmarking process
+    performance_evaluator = SyntheticPerformanceEvaluator(
+        model_name=st.session_state.llm,
+        results_dir=results_path,
+        num_workers=st.session_state.number_concurrent_workers,
+        timeout=st.session_state.timeout,
+        llm_api=st.session_state.llm_api 
+    )
 
-    run_token_benchmark(
-        model=st.session_state.llm,
+    performance_evaluator.run_benchmark(
         num_input_tokens=st.session_state.input_tokens,
         num_output_tokens=st.session_state.output_tokens,
-        timeout_s=st.session_state.timeout,
-        max_num_completed_requests=st.session_state.number_requests,
-        num_concurrent_workers=num_concurrent_workers,
-        additional_sampling_params="{}",
-        results_dir=results_path,
-        user_metadata="",
-        llm_api=llm_api,
-        mode=mode,
+        num_requests=st.session_state.number_requests,
+        sampling_params={},
     )
 
-    # read generated json and output formatted results
-    model = re.sub("\/|\.", "-", st.session_state.llm)
-    df_user = pd.read_json(
-        f"{results_path}/{model}_{st.session_state.input_tokens}_{st.session_state.output_tokens}_{num_concurrent_workers}_{mode}_individual_responses.json"
-    )
-    df_user["concurrent_user"] = num_concurrent_workers
-    df_user = df_user[(df_user["error_code"] != "")]
-    # for non-batching endpoints, batch_size_used will be 1
-    if df_user["batch_size_used"].isnull().all():
-        df_user["batch_size_used"] = 1
+    # Read generated json and output formatted results
+    df_user = pd.read_json(performance_evaluator.individual_responses_file_path)
+    df_user["concurrent_user"] = st.session_state.number_concurrent_workers
+    valid_df = df_user[(df_user["error_code"] != "")]
 
-    return df_user
+    # For non-batching endpoints, batch_size_used will be 1
+    if valid_df["batch_size_used"].isnull().all():
+        valid_df["batch_size_used"] = 1
 
-
-def plot_client_vs_server_barplots(
-    df_user: pd.DataFrame,
-    x_col: str,
-    y_cols: List[str],
-    title: str,
-    ylabel: str,
-    ax: Axes,
-) -> None:
-    """
-    Plots bar plots for client vs server metrics from a DataFrame.
-
-    Args:
-        df_user (pd.DataFrame): The DataFrame containing the data to plot.
-        x_col (str): The column name to be used as the x-axis.
-        y_cols (List[str]): A list of column names to be used as the y-axis.
-        title (str): The title of the plot.
-        ylabel (str): The label for the y-axis.
-
-    Returns:
-        None
-    """
-    # Melt the DataFrame to have a long-form DataFrame suitable for Seaborn
-    df_melted = df_user.melt(
-        id_vars=[x_col], value_vars=y_cols, var_name="Metric", value_name="Value"
-    )
-
-    # Create the plot
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax).set(
-        xlabel="Batch Size Used",
-        ylabel=ylabel,
-        title=title,
-    )
-    ax.legend(title="Metric")
+    return valid_df
 
 
 def _initialize_sesion_variables():
@@ -125,6 +80,8 @@ def _initialize_sesion_variables():
         st.session_state.number_concurrent_workers = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
+    if "llm_api" not in st.session_state:
+        st.session_state.llm_api = None
 
 
 def main():
@@ -136,15 +93,19 @@ def main():
 
     show_pages(
         [
-            Page("streamlit/app.py", "Performance evaluation"),
-            Page("streamlit/pages/chat_performance_st.py", "Performance on chat"),
+            Page("streamlit/app.py", "Synthetic Performance Evaluation"),
+            Page(
+                "streamlit/pages/custom_performance_eval_st.py",
+                "Custom Performance Evaluation",
+            ),
+            Page("streamlit/pages/chat_performance_st.py", "Performance on Chat"),
         ]
     )
 
     _init()
     _initialize_sesion_variables()
 
-    st.title(":orange[SambaNova]Performance evaluation")
+    st.title(":orange[SambaNova] Synthetic Performance Evaluation")
     st.markdown(
         "This performance evaluation assesses the following LLM's performance metrics using concurrent processes. _client represent the metrics computed from the client-side and _server represents the metrics computed from the server-side."
     )
@@ -166,32 +127,36 @@ def main():
         st.markdown("**Modify the following parameters before running the process**")
 
         llm_model = st.text_input(
-            "Introduce a valid LLM model name",
+            "Model Name",
             value="COE/Meta-Llama-3-8B-Instruct",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         st.session_state.llm = f"{llm_model}"
 
-        st.session_state.input_tokens = st.slider(
-            "Number of input tokens", min_value=50, max_value=2000, value=1000
+        st.session_state.llm_api = st.selectbox(
+            "API type", options=LLM_API_OPTIONS
         )
 
-        st.session_state.output_tokens = st.slider(
-            "Number of output tokens", min_value=50, max_value=2000, value=1000
+        st.session_state.input_tokens = st.number_input(
+            "Number of input tokens", min_value=50, max_value=2000, value=1000, step=1
         )
 
-        st.session_state.number_requests = st.slider(
-            "Number of total requests", min_value=10, max_value=100, value=32
+        st.session_state.output_tokens = st.number_input(
+            "Number of output tokens", min_value=50, max_value=2000, value=1000, step=1
         )
 
-        st.session_state.number_concurrent_workers = st.slider(
-            "Number of concurrent workers", min_value=1, max_value=100, value=1
+        st.session_state.number_requests = st.number_input(
+            "Number of total requests", min_value=10, max_value=100, value=32, step=1
         )
 
-        st.session_state.timeout = st.slider(
-            "Timeout", min_value=60, max_value=1800, value=600
+        st.session_state.number_concurrent_workers = st.number_input(
+            "Number of concurrent workers", min_value=1, max_value=100, value=1, step=1
         )
 
+        st.session_state.timeout = st.number_input(
+            "Timeout", min_value=60, max_value=1800, value=600, step=1
+        )
+        
         sidebar_option = st.sidebar.button("Run!")
 
     if sidebar_option:
@@ -199,24 +164,22 @@ def main():
         st.toast("Performance evaluation processing now. It should take few minutes.")
         with st.spinner("Processing"):
 
-            performance_eval_start = time.time()
-
             try:
 
                 df_req_info = _run_performance_evaluation()
-                performance_eval_end = time.time()
-                process_duration = performance_eval_end - performance_eval_start
-                print(
-                    f'Performance evaluation process took {time.strftime("%H:%M:%S", time.gmtime(process_duration))}'
-                )
 
                 st.subheader("Performance metrics plots")
+                expected_output_tokens = st.session_state.output_tokens
+                generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
+                if not pd.isnull(generated_output_tokens):
+                    st.markdown(f"Difference between expected output tokens {expected_output_tokens} and generated output tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)} token(s)")
+                
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
                 plot_client_vs_server_barplots(
                     df_req_info,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Boxplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )
@@ -247,49 +210,6 @@ def main():
                 st.error(
                     f"Error: {e}. For more error details, please look at the terminal."
                 )
-
-
-def plot_dataframe_summary(df_req_info, ax):
-    df_req_summary = (
-        df_req_info.groupby("batch_size_used")[
-            [
-                "server_output_token_per_s_per_request",
-                "client_output_token_per_s_per_request",
-            ]
-        ]
-        .mean()
-        .reset_index()
-    ).rename(
-        columns={
-            "server_output_token_per_s_per_request": "server_output_token_per_s_mean",
-            "client_output_token_per_s_per_request": "client_output_token_per_s_mean",
-        }
-    )
-    df_req_summary["server_throughput_token_per_s"] = (
-        df_req_summary["server_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
-    )
-    df_req_summary["client_throughput_token_per_s"] = (
-        df_req_summary["client_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
-    )
-    df_melted = pd.melt(
-        df_req_summary,
-        id_vars="batch_size_used",
-        value_vars=[
-            "server_throughput_token_per_s",
-            "client_throughput_token_per_s",
-        ],
-        var_name="Value Type",
-        value_name="Value",
-    )
-    sns.barplot(
-        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax
-    ).set(
-        xlabel="Batch Size Used",
-        ylabel="tokens/s",
-        title="Total throughput per batch",
-    )
 
 
 if __name__ == "__main__":

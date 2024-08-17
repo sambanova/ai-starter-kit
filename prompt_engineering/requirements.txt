@@ -1,6 +1,8 @@
 pydantic==2.7.0
 pydantic_core==2.18.1
-langchain==0.1.16
+langchain-community==0.2.10
+langchain-core==0.2.25
+langchain==0.2.11
 python-dotenv==1.0.0
 Requests==2.31.0
 sseclient-py==1.8.0

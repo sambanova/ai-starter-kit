@@ -10,19 +10,22 @@ SambaNova AI Starter Kits
 
 # Data Extraction Examples
 
+<!-- TOC -->
 - [Data Extraction Examples](#data-extraction-examples)
     - [Deploy the starter kit](#deploy-the-starter-kit)
-      - [Deploy in a virtual environment](#option-1-run-through-local-virtual-environment)
-      - [Deploy in aDocker container](#option-2-run-via-docker)
-    - [File Loaders](#file-loaders)
-      - [CSV Documents](#csv-documents)
-      - [XLS/XLSX Documents](#xlsxlsx-documents)
-      - [DOC/DOCX Documents](#docdocx-documents)
-      - [RTF Documents](#rtf-documents)
-      - [Markdown Documents](#markdown-documents)
-      - [HTML Documents](#html-documents)
-      - [PDF Documents](#pdf-documents)
-    - [Included Files](#included-files)
+        - [Option 1: Run through local virtual environment](#option-1-run-through-local-virtual-environment)
+        - [Option 2: Run via Docker](#option-2-run-via-docker)
+    - [File loaders](#file-loaders)
+        - [CSV Documents](#csv-documents)
+        - [XLS/XLSX Documents](#xlsxlsx-documents)
+        - [DOC/DOCX Documents](#docdocx-documents)
+        - [RTF Documents](#rtf-documents)
+        - [Markdown Documents](#markdown-documents)
+        - [HTML Documents](#html-documents)
+        - [PDF Documents](#pdf-documents)
+    - [Included files](#included-files)
+
+<!-- /TOC -->
 
 This kit include a series of Notebooks that demonstrates various methods for extracting text from documents in different input formats. including Markdown, PDF, CSV, RTF, DOCX, XLS, HTML
 
@@ -48,7 +51,7 @@ cd data_extraction
 pip install -r requirements.txt
 ```
 3. Install files required for the paddle utility: We recommend that you use virtualenv or conda environment for installation.
->Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb) you should use the requirementsPaddle file instead.
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](notebooks/pdf_extraction.ipynb) you should use the requirementsPaddle file instead.
 ```
 cd ai-starter-kit
 python3 -m venv data_extract_env
@@ -59,6 +62,13 @@ pip install -r requirementsPaddle.txt
 4. Some text extraction examples use the `Unstructured` library. Register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API key and create an enviroment file to store the API key and URL:
 ```
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
+```
+- Or start the parsing service, add parsing service url and API key (can be any value): 
+```
+make start-parsing-service
+```
+```
+echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="http://localhost:8005/general/v0/general"' > .env
 ```
 
 ### Option 2: Run via Docker
@@ -75,6 +85,13 @@ git clone https://github.sambanovasystems.com/SambaNova/ai-starter-kit.git
 ```
 echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="your_API_url_here"' > .env
 ```
+- Or start the parsing service, add parsing service url and API key (can be any value): 
+```
+make start-parsing-service
+```
+```
+echo 'UNSTRUCTURED_API_KEY="your_API_key_here"\nUNSTRUCTURED_API_KEY="http://host.docker.internal:8005/general/v0/general"' > .env
+```
 
 4. Run the data extraction Docker container:
 ```
@@ -82,13 +99,7 @@ sudo docker-compose up data_extraction_service
 ```
 
 5. Run data extraction docker container for Paddle utility.
-6. Run data extraction docker container.
-```
-sudo docker-compose up data_extraction_service 
-```
-
-7. Run data extraction docker container for Paddle utility.
->Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](pdf_extraction_ocr_tables.ipynb), use the `startPaddle` script instead
+>Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](notebooks/pdf_extraction.ipynb), use the `startPaddle` script instead
 
 ```
 sudo docker-compose up data_extraction_paddle_service  

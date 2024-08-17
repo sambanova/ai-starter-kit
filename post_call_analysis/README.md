@@ -7,43 +7,45 @@
 
 Post Call Analysis
 ======================
+
 <!-- TOC -->
 
+- [Post Call Analysis](#post-call-analysis)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the account and config file](#set-up-the-account-and-config-file)
-        - [Setup for SambaStudio](#setup-for-sambastudio)
-        - [Setup for Sambaverse](#setup-for-sambaverse)
+    - [Set up the models and config file](#set-up-the-models-and-config-file)
+        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+        - [Update the Embeddings API information](#update-the-embeddings-api-information)
 - [Run the starter kit](#run-the-starter-kit)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
-- [Use post-call analysis with your own data](#use-post-call-analysis-with-your-own-data)	
+- [Use post-call analysis with your own data](#use-post-call-analysis-with-your-own-data)
 - [How the starter kit works](#how-the-starter-kit-works)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Customize the model](#customize-the-model)
         - [Sambaverse](#sambaverse)
         - [SambaStudio](#sambastudio)
-    - [Improve results with prompt engineering](#improve-results-with-prompt-engineering)
-    - [Customize the factual accuracy analysis](#customize-the-factual-accuracy-analysis)
-    - [Customize call quality assessment](#customize-call-quality-assessment)
-    - [Customize batch inference](#customize-batch-inference)
+        - [Improve results with prompt engineering](#improve-results-with-prompt-engineering)
+        - [Customize the factual accuracy analysis](#customize-the-factual-accuracy-analysis)
+        - [Customize call quality assessment](#customize-call-quality-assessment)
+        - [Customize batch inference](#customize-batch-inference)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
 # Overview
 
+This AI starter kit illustrates a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform.
 
-This AI starter kit illustrates a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. 
-
-NOTE: You must use SambaStudio for the Automatic Speech Recognition (ASR) workflow. You can use Sambaverse or SambaStudio to perform text analysis. 
+NOTE: You must use SambaStudio for the Automatic Speech Recognition (ASR) workflow. You can use Sambaverse or SambaStudio to perform text analysis.
 
 This starter kit provides:
 
-* A customizable SambaStudio connector that facilitates LLM inference from deployed models.
-* A configurable SambaStudio connector that enables ASR inference workflow from deployed models.
-* Implementation of a RAG workflow that includes prompt construction strategies which are tailored for call analysis, including:
+- A customizable SambaStudio connector that facilitates LLM inference from deployed models.
+- A configurable SambaStudio connector that enables ASR inference workflow from deployed models.
+- Implementation of a RAG workflow that includes prompt construction strategies which are tailored for call analysis, including:
+    
     - Call summarization
     - Classification
     - Named entity recognition
@@ -51,73 +53,77 @@ This starter kit provides:
     - Factual accuracy analysis
     - Call quality assessment
 
-This example is ready to use. We provide: 
-* Instructions for setup. 
-* Instructions for running the model as is. 
-* Instructions for customization. 
+This example is ready to use. We provide:
+
+- Instructions for setup.
+- Instructions for running the model as is.
+- Instructions for customization.
 
 # Before you begin
 
-This starter kit automatically uses the SambaNova `snapi` CLI to create an ASR project and run batch inference jobs for doing speech recognition steps. You only have to set up your environment first. 
+This starter kit automatically uses the SambaNova `snapi` CLI to create an ASR project and run batch inference jobs for doing speech recognition steps. You only have to set up your environment first.
 
 ## Clone this repository
 
 Clone the start kit repo.
 
-```
+``` bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the account and config file 
+## Set up the models and config file
 
-You must perform SambaStudio setup and can optionally perform Sambaverse setup. 
+### Set up the inference endpoint, configs and environment variables
 
-* The ASR pipeline requires that you perform the SambaStudio setup steps. 
-* For the text analysis, you can use either SambaStudio or Sambaverse. 
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
 
-### Setup for SambaStudio
+You must perform SambaStudio setup and can optionally perform Sambaverse setup.
 
-To perform this setup, you must be a SambaNova customer with a SambaStudio account. 
+- The ASR pipeline requires that you perform the SambaStudio setup steps.
+- For the text analysis, you can use either SambaStudio, FastAPI or Sambaverse.
 
-NOTE: You must have at least 3 RDUs available in your SambaStudio environment for the ASR pipeline batch inference jobs. 
+- For **SambaStudio** setup please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
+    >NOTE: You must have at least 3 RDUs available in your SambaStudio environment for the ASR pipeline batch inference jobs.
 
-```yaml
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
-```
-4. Update the [config file](./config.yaml): 
-* Set the variable `api` to `"sambastudio"`.
-* Run `snapi app list`, search for the `ASR With Diarization` section in the output, and set `asr_with_diarization_app_id` in the `apps` section of the config file to the app ID.
+    Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key). then include the generated key in the env file (with no spaces):
 
-5. Follow the instructions in this [guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) for installing SambaStudio SNSDK and SNAPI, (you can omit the *Create a virtual environment* step if you plan to create a `post_call_analysis_env` environment in the next step.)
+    ``` bash
+        SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
+    ```
 
-### Setup for Sambaverse
+- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find the config file `sn-ai-starter-kit/.env` and specify the Sambaverse API key, as in the following example: 
+- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
-```yaml
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+### Update the Embeddings API information
 
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+You have these options to specify the embedding API info: 
 
+* **Option 1: Use a CPU embedding model**
+
+    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
+
+* **Option 2: Set a SambaStudio embedding model**
+
+To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
+
+1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+
+2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
+
+    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
 
 # Run the starter kit
 
-We recommend that you run  the the starter kit in a virtual environment or use a container. 
+We recommend that you run  the the starter kit in a virtual environment or use a container.
 
 ## Option 1: Use a virtual environment
 
-If you want to use virtualenv or conda environment 
+If you want to use virtualenv or conda environment
 
 1. Install and update pip.
 
@@ -127,11 +133,13 @@ If you want to use virtualenv or conda environment
     source post_call_analysis_env/bin/activate
     pip install -r requirements.txt
 ```
+
 2. Run the following command:
 
-```
+```bash
 streamlit run streamlit/app.py --browser.gatherUsageStats false  
 ```
+
 You will see the following Streamlit user interface
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_base.png)
@@ -147,9 +155,8 @@ If you want to use Docker:
     ```bash
     docker-compose up --build
     ```
+
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
-
-
 
 #  Use post-call analysis with your own data
 
@@ -160,7 +167,6 @@ NOTE: For this task, you must have at least 3 RDUs available in your SambaStudio
 2. In the GUI, select either **Audio input** or **Text transcript input** and upload the file. If the input is an audio file, the processing step could take a couple of minutes to initialize the bash inference job in SambaStudio. Then the GUI is updated to show information like the following: 
 
 ![capture of post_call_analysis_demo](./docs/post_call_analysis_audio.png)
-
 
 3. In the GUI, select **Analysis Settings** and set the analysis parameters. You can define a list of classes for classification or specify entities for extraction.
 
@@ -174,7 +180,7 @@ NOTE: For this task, you must have at least 3 RDUs available in your SambaStudio
 
 # How the starter kit works
 
-This section discusses how the start kit works and which tasks it performs with each step. 
+This section discusses how the start kit works and which tasks it performs with each step.
 
 * **Audio processing:** Audio processing is performed by the batch inference pipeline for ASR and Diarization and is composed of these steps:
 
@@ -209,38 +215,38 @@ This section discusses how the start kit works and which tasks it performs with 
 
 # Customizing the starter kit
 
-You can customize this starter kit in many ways. 
+You can customize this starter kit in many ways.
 
 ## Customize the model 
 
-The precise process for customizing the model depends on whether you're using Sambaverse or SambaStudio. 
+The precise process for customizing the model depends on whether you're using Sambaverse or SambaStudio.
 
 ### Sambaverse
 
-With Sambaverse, you can test and compare the performance of several models. 
+With Sambaverse, you can test and compare the performance of several models.
 
-To change the model that this starter kit is using: 
+To change the model that this starter kit is using:
 
-1. Log in to Sambaverse. 
+1. Log in to Sambaverse.
 2. Find the model you want to use in the playground, select the three dots, click **Show code**, and find the values of `modelName` and `select_expert`.
-3. To modify the parameters for calling the model, open `config.yaml` and set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify `temperature` and `maximum generation token` to experiment with that. 
+3. To modify the parameters for calling the model, open `config.yaml` and set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify `temperature` and `maximum generation token` to experiment with that.
 
 ### SambaStudio
 
-For the ASR steps, only one pipeline is available. You can see the components in the Jupyter notebook. 
+For the ASR steps, only one pipeline is available. You can see the components in the Jupyter notebook.
 
-For text analysis, we recommend that you use one of the most capable models like Llama2 7B. You can fine tune that model to improve response quality. 
+For text analysis, we recommend that you use one of the most capable models like Llama2 7B. You can fine tune that model to improve response quality.
 
 The SambaStudio documentation helps you learn how to [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html).
 
-
-NOTE: You set things like list of categories to classify the conversation in or the entities to extract from the conversation in the **Settings** section in the SambaStudio GUI. In the `config.yaml` file, you customize model-specific settings like the temperature. 
+NOTE: You set things like list of categories to classify the conversation in or the entities to extract from the conversation in the **Settings** section in the SambaStudio GUI. In the `config.yaml` file, you customize model-specific settings like the temperature.
 
 ### Improve results with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. A series of prompts used for each text analysis ste are in the `prompts` folder of this starter kit. 
+Prompting has a significant effect on the quality of LLM responses. A series of prompts used for each text analysis ste are in the `prompts` folder of this starter kit.
 
 All prompts used in [Analysis section](#analysis) can be further customized to improve the overall quality of the responses from the LLMs. For example, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` are the documents retrieved.
+
 ```yaml
 template: |
           <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
@@ -278,10 +284,9 @@ You can customize batch inference by modifying methods in the [analysis](./noteb
 
 All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
 
-- langchain (version 0.1.2)
+- langchain (version 0.2.6)
 - python-dotenv (version 1.0.1)
 - requests (2.31.0)
-- pydantic (1.10.14)
 - unstructured (0.12.4)
 - sentence_transformers (2.2.2)
 - instructorembedding (1.0.1)
