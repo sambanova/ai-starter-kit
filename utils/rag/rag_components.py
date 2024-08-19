@@ -738,7 +738,6 @@ class RAGComponents(BaseComponents):
         """
 
         subquestions: List[str] = state['subquestions']
-        # print(len(subquestions))
 
         if len(subquestions) == 0:
             print('---FINISHED---')

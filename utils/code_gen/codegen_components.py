@@ -132,7 +132,7 @@ class CodeGenComponents(BaseComponents):
 
         return {'code_counter': 0, 'rag_counter': 0}
 
-    log_method
+    @log_method
     def route_question_to_code(self, state: dict) -> str:
         """
         Route question to llm chain or code chain.
