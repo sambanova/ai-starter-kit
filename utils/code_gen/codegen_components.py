@@ -7,13 +7,14 @@ from langchain_core.prompts import load_prompt
 from langchain_experimental.utilities import PythonREPL
 import re
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.logging_utils import log_method # type: ignore
 
 class CodeGenComponents(BaseComponents):
     def python_parser(self, text: str) -> str:
@@ -115,6 +116,7 @@ class CodeGenComponents(BaseComponents):
         failure_prompt: Any = load_prompt(repo_dir + '/' + self.prompts_paths['failure_prompt'])
         self.failure_chain = failure_prompt | self.llm | StrOutputParser()
 
+    @log_method
     def initialize_codegen(self, state: dict) -> dict:
         """
         Initializes the code generation state and the required counters.
@@ -130,6 +132,7 @@ class CodeGenComponents(BaseComponents):
 
         return {'code_counter': 0, 'rag_counter': 0}
 
+    @log_method
     def route_question_to_code(self, state: dict) -> str:
         """
         Route question to llm chain or code chain.
@@ -157,6 +160,7 @@ class CodeGenComponents(BaseComponents):
 
         return routing
 
+    @log_method
     def pass_to_codegen(self, state: dict) -> dict:
         """
         Get a new query based on the given state.
@@ -172,6 +176,7 @@ class CodeGenComponents(BaseComponents):
 
         return {'original_question': question}
 
+    @log_method
     def code_generation(self, state: dict) -> dict:
         """
         Generates code based on the given question.
@@ -199,6 +204,7 @@ class CodeGenComponents(BaseComponents):
 
         return {'original_question': question, 'code': code}
 
+    @log_method
     def determine_runnable_code(self, state: dict) -> dict:
         """
         This function runs the given code and checks if it's runnable.
@@ -242,6 +248,7 @@ class CodeGenComponents(BaseComponents):
 
         return {'runnable': is_runnable, 'generation': result, 'code': code}
 
+    @log_method
     def decide_to_refactor(self, state: dict) -> str:
         """
         Determine whether to refactor based on the given state.
@@ -274,6 +281,7 @@ class CodeGenComponents(BaseComponents):
 
         return routing
 
+    @log_method
     def refactor_code(self, state: dict) -> dict:
         """
         Refactor the given code.
@@ -313,6 +321,7 @@ class CodeGenComponents(BaseComponents):
             result = str(e)
             return {'code': refactor, 'error': result, 'code_counter': counter}
 
+    @log_method
     def code_error_msg(self, state: dict) -> dict:
         """
         Generate an error message for code generation.

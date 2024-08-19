@@ -15,8 +15,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
+
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
+
+from utils.logging_utils import log_method # type: ignore
 
 
 class RAGComponents(BaseComponents):
@@ -255,6 +258,7 @@ class RAGComponents(BaseComponents):
 
         return embeddings
 
+    @log_method
     def initialize_rag(self, state: dict) -> dict:
         """
         Initializes the state of the RAG components for LangGraph.
@@ -276,6 +280,7 @@ class RAGComponents(BaseComponents):
 
         return {'answers': [], 'original_question': question}
 
+    @log_method
     def initialize_complex_rag(self, state: dict) -> dict:
         """
         Initializes the complex RAG with the given state.
@@ -299,6 +304,7 @@ class RAGComponents(BaseComponents):
             'original_question': question,
         }
 
+    @log_method
     def route_question(self, state: dict) -> str:
         """
         Routes a question to the appropriate component based on the answer type.
@@ -327,6 +333,7 @@ class RAGComponents(BaseComponents):
 
         return routing
 
+    @log_method
     def use_examples(self, state: dict) -> str:
         """
         Determine whether to use answer generation or example
@@ -359,6 +366,7 @@ class RAGComponents(BaseComponents):
 
         return routing
 
+    @log_method
     def get_example_selector(
         self,
         embeddings: Embeddings,
@@ -391,6 +399,7 @@ class RAGComponents(BaseComponents):
 
         return example_selector
 
+    @log_method
     def get_examples(self, example_selector: SemanticSimilarityExampleSelector, query: str) -> List[str]:
         """
         Retrieves a list of examples based on the given query and example selector.
@@ -411,6 +420,7 @@ class RAGComponents(BaseComponents):
 
         return sel_examples
 
+    @log_method
     def reformulate_query(self, state: dict) -> dict:
         """
         Reformulates a question based on the given state.
@@ -450,6 +460,7 @@ class RAGComponents(BaseComponents):
 
         return {'question': new_question, 'examples': examples}
 
+    @log_method
     def retrieve(self, state: dict) -> dict:
         """
         Retrieves relevant documents based on a given question.
@@ -488,6 +499,7 @@ class RAGComponents(BaseComponents):
 
         return {'documents': documents, 'question': question}
 
+    @log_method
     def retrieve_w_filtering(self, state: dict) -> dict:
         """
         Retrieves documents from the vector store with filtering based on the entity.
@@ -560,6 +572,7 @@ class RAGComponents(BaseComponents):
             'original_question': original_question,
         }
 
+    @log_method
     def rag_generate(self, state: dict) -> dict:
         """
         Generates an answer to a question using a question answering chain.
@@ -599,6 +612,7 @@ class RAGComponents(BaseComponents):
 
         return {'generation': generation, 'answers': answers}
 
+    @log_method
     def grade_documents(self, state: dict) -> dict:
         """
         Grades a list of documents based on their relevance to a given question.
@@ -636,6 +650,7 @@ class RAGComponents(BaseComponents):
 
         return {'documents': filtered_docs, 'question': question}
 
+    @log_method
     def pass_state(self, state: dict) -> dict:
         """
         Get a new query based on the given state.
@@ -649,6 +664,7 @@ class RAGComponents(BaseComponents):
 
         return state
 
+    @log_method
     def generate_subquestions(self, state: dict) -> dict:
         """
         Generates subquestions based on the given question.
@@ -669,6 +685,7 @@ class RAGComponents(BaseComponents):
 
         return {'subquestions': subquestions_list}
 
+    @log_method
     def detect_entities(self, state: dict) -> dict:
         """
         Detects entities in a given question or subquestion.
@@ -708,6 +725,7 @@ class RAGComponents(BaseComponents):
 
         return {'entities': entities}
 
+    @log_method
     def determine_cont(self, state: dict) -> str:
         """
         Determine whether to continue or iterate based on the state of the RAG chain.
@@ -720,7 +738,6 @@ class RAGComponents(BaseComponents):
         """
 
         subquestions: List[str] = state['subquestions']
-        print(len(subquestions))
 
         if len(subquestions) == 0:
             print('---FINISHED---')
@@ -729,6 +746,7 @@ class RAGComponents(BaseComponents):
             print('---ITERATING ON RAG CHAIN---')
             return 'iterate'
 
+    @log_method
     def check_hallucinations(self, state: dict) -> str:
         """
         Checks if the generated text is grounded in the provided documents and addresses the question.
@@ -774,6 +792,7 @@ class RAGComponents(BaseComponents):
 
         return routing
 
+    @log_method
     def failure_msg(self, state: dict) -> dict:
         """
         This method generates a failure message based on the given state.
@@ -791,6 +810,7 @@ class RAGComponents(BaseComponents):
 
         return {'answers': failure_msg}
 
+    @log_method
     def aggregate_answers(self, state: dict) -> dict:
         """
         Returns the final answer based on the intermediate answers and original question.
@@ -825,6 +845,7 @@ class RAGComponents(BaseComponents):
 
         return {'generation': final_answer}
 
+    @log_method
     def final_answer(self, state: dict) -> dict:
         """
         This method is used to generate the final answer based on the original question and the generated text.

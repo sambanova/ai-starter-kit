@@ -18,7 +18,7 @@ from utils.agents.teams.return_message_team import ReturnTeam
 from utils.agents.teams.corrective_rag_team import CRAGSupervisor
 from utils.agents.teams.corrective_rag_team import TeamCRAG
 
- 
+
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
 
