@@ -90,7 +90,6 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
         with st_capture(output.code):
             tool_messages, response = streamlit.session_state.fc.function_call_llm(
                 query=user_query,
-                max_it=streamlit.session_state.max_iterations,
                 debug=True,
             )
 
@@ -136,9 +135,10 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
         return stream_complex_response(response, stream_response)
 
     elif isinstance(response, tuple):
+        json_response = list()
         for item in response:
-            stream_complex_response(item, stream_response)
-        return json.dumps(response)
+            json_response.append(stream_complex_response(item, stream_response))
+        return json.dumps(json_response)
     else:
         return
 
@@ -147,13 +147,11 @@ def stream_complex_response(response: Any, stream_response: bool = False) -> Any
     if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
         if stream_response:
             stream_single_response(response)
-        return response
 
     elif isinstance(response, list):
         if stream_response:
             for item in response:
                 stream_single_response(item)
-        return json.dumps(response)
 
     elif isinstance(response, dict):
         if stream_response:
@@ -163,7 +161,11 @@ def stream_complex_response(response: Any, stream_response: bool = False) -> Any
                 elif isinstance(value, list):
                     # If all values are strings
                     stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
-    return json.dumps(response)
+
+    try:
+        return json.dumps(response)
+    except:
+        return ''
 
 
 def stream_single_response(response: Any) -> None:

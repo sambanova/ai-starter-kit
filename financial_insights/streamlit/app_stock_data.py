@@ -83,7 +83,7 @@ def get_stock_data_analysis() -> None:
     end_date = streamlit.date_input('End Date')
 
     # Analyze stock data
-    if streamlit.button('Analyze Stock Data'):
+    if streamlit.button('Analyze Historical Stock Data'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 

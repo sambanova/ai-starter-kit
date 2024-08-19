@@ -58,7 +58,7 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         default_tool=None,
     )
     user_request = (
-        'You are an expert in the stock market. Please answer the following question.\n'
+        'You are an expert in the stock market. Please answer the following question using the provided context from webscraping Yahoo Finance.\n'
         + user_question
         + 'Company names should be expressed via their ticker symbols.'
     )

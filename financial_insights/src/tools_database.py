@@ -42,8 +42,12 @@ def create_stock_database(
         symbol_list: List of stock ticker symbols.
         start_date: Start date for the historical data.
         end_date: End date for the historical data.
+
     Returns:
         A dictionary with company symbols as keys and a list of SQL table names as values.
+
+    Raises:
+        ValueError: If `start_date` is greater than or equal to `end_date`.
     """
     # Check dates
     if start_date > end_date or (end_date - datetime.timedelta(days=365)) < start_date:
@@ -71,6 +75,7 @@ def store_company_dataframes_to_sqlite(
         company_data_dict: Dictionary where the key is the company name,
             and the value is another dictionary or a `pandas.DataFrame` containing
             dataframes with their corresponding purpose/type.
+
     Returns:
         A dictionary with company symbols as keys and a list of SQL table names as values.
     """
@@ -129,22 +134,31 @@ def query_stock_database(
         user_query: Query to be performed on the database.
         symbol_list: List of stock ticker symbols.
         method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
+
     Returns:
-        xxx
+        The result of the query.
+
+    Raises:
+        TypeError: If `user_query`, `symbol_list` and `method` are not strings.
+        ValueError: If `method` is not one of `text-to-SQL` or `PandasAI-SqliteConnector`.
+        Exception: If `symbol_list` is an empty string.
     """
+    # Checks the inputs
+    assert isinstance(user_query, str), TypeError(f'symbol_list must be of type str. Got {(type(user_query))}')
+    assert isinstance(symbol_list, list), TypeError('Symbol List must be a list of strings.')
+    assert len(symbol_list) > 0, 'Symbol List must contain at least one symbol: please specify the company to query.'
+    assert isinstance(method, str), TypeError(f'method must be of type str. Got {type(method)}')
     assert method in [
         'text-to-SQL',
         'PandasAI-SqliteConnector',
-    ], f'Invalid method {method}'
-    assert isinstance(symbol_list, list), 'Symbol List must be a list of strings.'
-    assert len(symbol_list) > 0, 'Symbol List must contain at least one symbol: please specify the company to query.'
+    ], ValueError(f'Invalid method {method}')
 
     if method == 'text-to-SQL':
         return query_stock_database_sql(user_query, symbol_list)
     elif method == 'PandasAI-SqliteConnector':
         return query_stock_database_pandasai(user_query, symbol_list)
     else:
-        raise Exception('Invalid method')
+        raise Exception(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}')
 
 
 def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[str, str | List[str]]:
@@ -154,8 +168,9 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
     Args:
         user_query: Query to be performed on the database.
         symbol_list: List of stock ticker symbols.
+
     Returns:
-        xxx
+        The result of the query.
     """
     # Prompt template for the SQL queries
     prompt = PromptTemplate.from_template(
@@ -202,8 +217,15 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
 
     # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
-    logging.warning('')
+    logging.warning(
+        'Executing model-generated SQL queries. There are inherent risks in doing this. '
+        + 'Make sure that your database connection permissions are always scoped '
+        + 'as narrowly as possible for your chain. '
+        + 'This will mitigate though not eliminate the risks of building a model-driven system. '
+        + 'For more on general security best practices, see [here]{https://python.langchain.com/v0.1/docs/security/}.'
+    )
 
+    # Invoke the SQL executor on each query
     results = []
     for query in queries:
         if len(query) > 0:
@@ -221,7 +243,18 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
 
 
 def sql_finder(text: str) -> Any:
-    """Search in a string for a SQL query or code with format"""
+    """
+    This function will search for a SQL query or code in the text and return the SQL query/code as a string.
+
+    Args:
+        text: the text to search for SQL queries/codes.
+
+    Returns:
+        The SQL query/code as a string.
+
+    Raises:
+        Exception: If no SQL query was found in the input text.
+    """
 
     # regex for finding sql_code_pattern with format:
     # ```sql
@@ -246,20 +279,30 @@ def sql_finder(text: str) -> Any:
             raise Exception('No SQL code found in LLM generation')
 
 
-def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> Any:
-    """Query a SQL database for a list of stocks/companies."""
+def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> Any:
+    """
+    Query a SQL database for a list of stocks/companies using 'pandasai.connectors.SqliteConnector'.
 
+    Args:
+        user_query: The user query.
+        symbol_list: The list of stocks/companies.
+
+    Returns:
+        The answer to the user query.
+    """
     response: Dict[str, List[str]] = dict()
     for symbol in symbol_list:
-        selected_tables = select_database_tables(user_request, [symbol])
+        # Extract the SQL tables that are relevant to the user query.
+        selected_tables = select_database_tables(user_query, [symbol])
 
-        user_request += (
+        # Add instructions on how to deal with the plots
+        user_query += (
             '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
         )
 
         response[symbol] = list()
         for table in selected_tables:
-            # selecteed_tables = select_database_tables(user_request, symbol_list)
+            # Instantiate the connector to the SQL database
             connector = SqliteConnector(
                 config={
                     'database': DB_PATH,
@@ -267,6 +310,7 @@ def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> 
                 }
             )
 
+            # Instantiate the `pandasai.SmartDataframe` dataframe
             df = SmartDataframe(
                 connector,
                 config={
@@ -276,19 +320,36 @@ def query_stock_database_pandasai(user_request: str, symbol_list: List[str]) -> 
                     'save_charts_path': DB_QUERY_FIGURES_DIR,
                 },
             )
-            response[symbol].append(df.chat(user_request))
+            # Append the response for the given company symbol
+            response[symbol].append(df.chat(user_query))
 
     return response
 
 
 class TableNames(BaseModel):
+    """Output object for the relevant table names."""
+
     table_names: List[str] = Field(description='List of the most relevant table names for the user query.')
 
 
-def select_database_tables(user_request: str, symbol_list: List[str]) -> List[str]:
+def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]:
+    """
+    Selects the SQL tables that are relevant for the user query.
+
+    Args:
+        user_query: The user query.
+        symbol_list: List of company symbols.
+
+    Returns:
+        List of SQL tables that are relevant for the user query.
+    """
+    # Get a text symmary of the SQL tables that are relevant for each company symbol
     summary_text = get_table_summaries_from_symbols(symbol_list)
 
+    # The output parser
     parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
+
+    # The prompt template
     prompt_template = (
         'Consider the following table summaries with table names and table columns:\n{summary_text}\n'
         'Which are the most relevant tables to the following query?\n'
@@ -296,25 +357,45 @@ def select_database_tables(user_request: str, symbol_list: List[str]) -> List[st
         '{format_instructions}'
     )
 
+    # The prompt
     prompt = PromptTemplate(
         template=prompt_template,
         input_variables=['user_request', 'summary_text'],
         partial_variables={'format_instructions': parser.get_format_instructions()},
     )
 
+    # The chain
     chain = prompt | streamlit.session_state.fc.llm | parser
 
-    # Get response from llama3
-    response = chain.invoke({'user_request': user_request, 'summary_text': summary_text})
+    # Invoke the chain with the user query and the table summaries
+    response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
+
     return response.table_names  # type: ignore
 
 
 def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
-    """Get a list of available SQL tables."""
+    """
+    Get a text symmary of the SQL tables that are relevant for each company symbol.
+
+    The summary is a JSON string that maps SQL table names to their column names.
+
+    Args:
+        symbol_list: The list of company symbols.
+
+    Returns:
+        The text summary of all the SQL table, by company symbol.
+
+    Raises:
+        Exception: If there is no SQL table in the database.
+    """
+    # Instantiate the inspector for the database
     inspector = Inspector.from_engine(create_engine('sqlite:///' + DB_PATH))
+
+    # Get the list of SQL tables in the database
     tables_names = inspector.get_table_names()
 
-    assert len(tables_names), 'No SQL tables found.'
+    # Check that there are SQL tables
+    assert len(tables_names) > 0, 'No SQL tables found.'
 
     table_summaries = {}
     for table in tables_names:
@@ -325,18 +406,31 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
         if table_symbol not in [symbol.lower() for symbol in symbol_list]:
             continue
 
+        # Get the columns of each SQL table
         columns = inspector.get_columns(table)
+        # Get the column names
         column_names = [col['name'] for col in columns]
 
         # Summarize the content of the table based on its column names
         table_summaries[table] = ', '.join(column_names)
 
+    # Compose the text summary in a JSON string
     summary_text = json.dumps(table_summaries)
     return summary_text
 
 
 def get_table_summaries_from_names(table_names: List[str]) -> str:
-    """Get a list of available SQL tables."""
+    """
+    Get a text summary of SQL tables by their names.
+
+    The summary is a JSON string that maps SQL table names to their column names.
+
+    Args:
+        table_names: List of SQL table names to be summarized.
+
+    Returns:
+        A text summary of SQL tables by their names.
+    """
     inspector = Inspector.from_engine(create_engine('sqlite:///' + DB_PATH))
     inspected_tables_names = inspector.get_table_names()
     inspected_tables_names_symbols = [

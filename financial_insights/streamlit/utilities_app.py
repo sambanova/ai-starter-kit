@@ -70,9 +70,8 @@ def save_historical_price_callback(
         f.write(fig_bytes)
 
     content = '\n\n' + user_query + '\n\n' + f'{filename}.png' + '\n\n'
-    # Save the figure path to a file
-    save_output_callback(content, HISTORY_PATH)
 
+    # Save the figure path to a file
     if save_path is not None:
         save_output_callback(content, save_path)
 
@@ -297,20 +296,6 @@ def get_blue_button_style() -> str:
     return """
         button {
             background-color: blue;
-            color: black;
-            padding: 0.75em 1.5em;
-            font-size: 1;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }"""
-
-
-def get_orange_button_style() -> str:
-    return """
-        button {
-            background-color: orange;
             color: black;
             padding: 0.75em 1.5em;
             font-size: 1;

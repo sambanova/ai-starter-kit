@@ -31,8 +31,8 @@ class SecEdgarFilingsInput(BaseModel):
     user_request: str = Field('The retrieval request.')
     ticker_symbol: str = Field('The company ticker symbol.')
     filing_type: str = Field('The type of filing (either "10-K" or "10-Q").')
-    filing_quarter: Optional[int] = Field('The quarter of the filing (among 1, 2, 3, 4). Defaults to 0')
-    date: int = Field('The year of the filing.')
+    filing_quarter: Optional[int] = Field('The quarter of the filing (among 1, 2, 3, 4). Defaults to 0 for no quarter.')
+    year: int = Field('The year of the filing.')
 
 
 @tool(args_schema=SecEdgarFilingsInput)
@@ -42,49 +42,91 @@ def retrieve_filings(
     ticker_symbol: str,
     filing_type: str,
     filing_quarter: int,
-    date: int,
+    year: int,
 ) -> Tuple[Any, Dict[str, str]]:
-    """Retrieve the text of a financial filing from SEC Edgar and then answer the full user request."""
+    """
+    Retrieve the text of a financial filing from SEC Edgar and then answer the original user question.
 
+    Args:
+        user_question: The user question.
+        user_request: The retrieval request.
+        ticker_symbol: The company ticker symbol.
+        filing_type: The type of filing (either `10-K` or `10-Q`).
+        filing_quarter: The quarter of the filing (among 1, 2, 3, 4). Defaults to 0 for no quarter.
+        year: The year of the filing.
+
+    Returns:
+        A tuple of the following elements:
+            - The answer to the user question.
+            - A dictionary of metadata about the retrieval, with the following keys:
+                `filing_type`, `filing_quarter`, `ticker_symbol`, and `report_date`.
+
+    Raises:
+        TypeErrror: If `user_request`, `user_question`, `ticker_symbol`, or `filing_type` are not strings.
+        TypeError: If `filing_quarter` is not an integer for a `filing_type` of `10-Q`.
+        ValueError: If `filing_quarter` is not in [1, 2, 3, 4] for a `filing_type` of `10-Q`.
+        ValueError: If `filing_type` is not one of `10-K` or `10-Q`
+        ValueError: If `filing_quarter` is not provided for `10-Q` filing.
+        Exception: If a matching document for the given `filing_type`, `ticker_symbol`, and `year` is not available.
+        Exception: If a matching document for the given `filing_type`, `ticker_symbol`, `filing_quarter`, and `year`
+            is not available.
+    """
+    # Checks the inputs
+    assert isinstance(user_question, str), TypeError(f'User question must be a string. Got {type(user_question)}.')
+    assert isinstance(user_request, str), TypeError(f'User question must be a string. Got {type(user_request)}.')
+    assert isinstance(ticker_symbol, str), TypeError(f'Filing type must be a string. Got {type(ticker_symbol)}.')
+    assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
+
+    # Retrieve the filing text from SEC Edgar
     dl = Downloader(os.environ.get('SEC_API_ORGANIZATION'), os.environ.get('SEC_API_EMAIL'))
 
     # Extract today's year
     current_year = datetime.datetime.now().date().year
 
-    limit = current_year - date
+    # Extract the delta time, i.e. the number of years between the current year and the year of the filing
+    delta = current_year - year
 
+    # Quarterly filing retrieval
     if filing_type == '10-Q':
         if filing_quarter is not None:
-            assert isinstance(filing_quarter, int), 'The quarter must be an integer.'
+            assert isinstance(filing_quarter, int), TypeError('The quarter must be an integer.')
             assert filing_quarter in [
                 1,
                 2,
                 3,
                 4,
             ], 'The quarter must be between 1 and 4.'
-            limit = (current_year - date + 1) * 3
+            delta = (current_year - year + 1) * 3
         else:
             raise ValueError('The quarter must be provided for 10-Q filing.')
+
+    # Yearly filings
     elif filing_type == '10-K':
-        limit = current_year - date + 1
+        delta = current_year - year + 1
     else:
         raise ValueError('The filing type must be either "10-K" or "10-Q".')
 
+    # Extract the metadata of the filings
     metadatas = dl.get_filing_metadatas(
-        RequestedFilings(ticker_or_cik=ticker_symbol, form_type=filing_type, limit=limit)
+        RequestedFilings(ticker_or_cik=ticker_symbol, form_type=filing_type, limit=delta)
     )
 
+    # Extract the filing text
     filename = None
     for metadata in metadatas:
+        # Extract the filing date
         report_date = metadata.report_date
 
         # Convert string to datetime
         report_date = datetime.datetime.strptime(report_date, '%Y-%m-%d')
 
-        if report_date.year == date:
+        # Check the matching year in the time delta
+        if report_date.year == year:
+            # Check the matching quarter
             if filing_quarter == 0 or (filing_quarter is not None and (report_date.month - filing_quarter * 3) <= 1):
                 # Logging
                 logging.info(f'Found filing: {metadata}')
+                # Download the matching filing
                 html_text = dl.download_filing(url=metadata.primary_doc_url)
 
                 # Convert html to text
@@ -92,12 +134,14 @@ def retrieve_filings(
                 # Extract text from the parsed HTML
                 text = soup.get_text(separator=' ', strip=True)
 
+                # Instantiate the text splitter
                 splitter = CharacterTextSplitter(
                     chunk_size=MAX_CHUNK_SIZE,
                     chunk_overlap=64,
                     separator=r'[.!?]',
                     is_separator_regex=True,
                 )
+                # Split the text into chunks
                 chunks = splitter.split_text(text)
 
                 # Save chunks to csv
@@ -109,9 +153,10 @@ def retrieve_filings(
                 df.to_csv(CACHE_DIR + filename + '.csv', index=False)
                 break
 
+    # If neither the year nor the quarter match, raise an error
     if filename is None or filename == '':
         if filing_type == '10-K':
-            raise Exception(f'Filing document {filing_type} for {ticker_symbol} for the year {date} is not available')
+            raise Exception(f'Filing document {filing_type} for {ticker_symbol} for the year {year} is not available')
         else:
             raise Exception(
                 f'Filing document {filing_type} for {ticker_symbol} for the quarter {filing_quarter} '
@@ -130,8 +175,10 @@ def retrieve_filings(
         document = Document(page_content=row['text'])
         documents.append(document)
 
-    response = get_qa_response(documents, user_question)
+    # Return the QA response
+    response = get_qa_response(user_question, documents)
 
+    # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
     query_dict = {
         'filing_type': filing_type,
         'filing_quarter': filing_quarter,

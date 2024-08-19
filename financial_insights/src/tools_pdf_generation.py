@@ -23,11 +23,14 @@ T_MARGIN = 20
 LOGO_WIDTH = 25
 
 
-FONT_SIZE = 'helvetica'
+FONT = 'helvetica'
 
 
 class PDFReport(FPDF):  # type: ignore
+    """Class for generating PDF reports."""
+
     def header(self, title_name: str = 'Financial Report') -> None:
+        """Overrides the FPDF header method."""
         self.set_text_color(SAMBANOVA_ORANGE)
 
         # Rendering logo:
@@ -38,12 +41,12 @@ class PDFReport(FPDF):  # type: ignore
             LOGO_WIDTH,
         )
 
-        # Setting font: helvetica bold 15
-        self.set_font(FONT_SIZE, 'B', 16)
-        # Printing title:
+        # Setting font
+        self.set_font(FONT, 'B', 16)
+        # Printing title
         self.cell(0, 10, title_name, align=Align.C)
         self.ln(20)
-        self.set_font(FONT_SIZE, '', 10)
+        self.set_font(FONT, '', 10)
         self.cell(
             0,
             0,
@@ -54,17 +57,19 @@ class PDFReport(FPDF):  # type: ignore
         self.ln(5)
 
     def footer(self) -> None:
+        """Overrides the FPDF footer method."""
         # Position cursor at 1.5 cm from bottom:
         self.set_y(-15)
         self.set_text_color(128)
-        # Setting font: helvetica italic 8
-        self.set_font(FONT_SIZE, 'I', 8)
+        # Setting font
+        self.set_font(FONT, 'I', 8)
         # Printing page number:
         self.cell(0, 5, f'Page {self.page_no()}/{{nb}}', align='C')
 
     def chapter_title(self, title: str) -> None:
+        """Writes the chapter title."""
         self.set_text_color(SAMBANOVA_ORANGE)
-        self.set_font(FONT_SIZE, 'B', 12)
+        self.set_font(FONT, 'B', 12)
         self.cell(0, 10, title, 0, 1, 'L')
         self.ln(5)
 
@@ -72,8 +77,9 @@ class PDFReport(FPDF):  # type: ignore
         self,
         body: str,
     ) -> None:
+        """Writes the chapter summary."""
         self.set_text_color((0, 0, 0))
-        self.set_font(FONT_SIZE, 'I', 11)
+        self.set_font(FONT, 'I', 11)
         self.multi_cell(0, 5, body)
         self.ln(5)
 
@@ -81,12 +87,14 @@ class PDFReport(FPDF):  # type: ignore
         self,
         body: str,
     ) -> None:
+        """Writes the chapter body."""
         self.set_text_color((0, 0, 0))
-        self.set_font(FONT_SIZE, '', 11)
+        self.set_font(FONT, '', 11)
         self.multi_cell(0, 5, body)
         self.ln(5)
 
     def add_figure(self, figure_path: str) -> None:
+        """Adds a figure to the PDF."""
         # Calculate the desired width of the figure (90% of the page width)
         page_width = self.w - 2 * self.l_margin
         figure_width = page_width * 0.9
@@ -97,6 +105,7 @@ class PDFReport(FPDF):  # type: ignore
 
 
 def read_txt_files(directory: str) -> List[str]:
+    """Reads all the text files from a directory."""
     texts = []
     for filename in os.listdir(directory):
         if filename.endswith('.txt'):
@@ -105,9 +114,21 @@ def read_txt_files(directory: str) -> List[str]:
     return texts
 
 
-def parse_documents(documents: List[str]) -> list[tuple[str, Any]]:
+def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
+    """
+    Parse the documents into a format that is easier to work with.
+
+    Args:
+        documents: A list of text files.
+    Returns:
+        A list of tuples, each containing the following elements:
+            - The text.
+            - The paths of any `png` figures.
+    """
     report_content = []
     figure_regex = re.compile(r'financial_insights/*[^\s]+\.png')
+    directory_regex = re.compile(rf'{repo_dir}/')
+    endline_regex = re.compile(r'\n\n')
 
     for doc in documents:
         parts = doc.split('\n\n\n\n')
@@ -115,6 +136,8 @@ def parse_documents(documents: List[str]) -> list[tuple[str, Any]]:
             # Search for figure paths
             figure_matches = figure_regex.findall(part)
             cleaned_part = figure_regex.sub('', part)  # remove figure paths from text
+            cleaned_part = directory_regex.sub('', cleaned_part)
+            cleaned_part = endline_regex.sub('', cleaned_part)
 
             if figure_matches:
                 for figure_path in figure_matches:
@@ -127,11 +150,15 @@ def parse_documents(documents: List[str]) -> list[tuple[str, Any]]:
 
 # Define your desired data structure.
 class SectionTitleSummary(BaseModel):
+    """The title and summary of a section."""
+
     title: str = Field(description='Title of the section.')
     summary: str = Field(description='Summary of the section.')
 
 
 class SectionTitle(BaseModel):
+    """The title of a section"""
+
     title: str = Field(description='Title of the section.')
 
 
@@ -141,8 +168,18 @@ def generate_pdf(
     title_name: str,
     include_summary: bool = False,
 ) -> None:
+    """
+    Generate a PDF report from the given parsed content.
+
+    Args:
+        report_content: The parsed content as a list of tuples with text and figure paths.
+        output_file: The path to the output file.
+        title_name: The name of the PDF report.
+        include_summary: Whether or not to include a summary at the end of each section
+            and general abstract and summary at the beginning of the report.
+    """
     pdf = PDFReport()
-    pdf.set_font('Helvetica')
+    pdf.set_font(FONT)
     pdf.set_page_background(BACKGROUND_COLOUR)
     pdf.set_margins(L_MARGIN, T_MARGIN)
 
@@ -160,9 +197,10 @@ def generate_pdf(
         if (text is None and figure_path is None) or (text is not None and len(text) == 0 and figure_path is None):
             continue
 
+        # Clean the text to conform to unicode standards
         content_list.append(
             {
-                'text': text,
+                'text': clean_unicode_text(text),
                 'figure_path': figure_path if figure_path is not None else '',
             }
         )
@@ -174,7 +212,7 @@ def generate_pdf(
 
     # Add a summary at the beginning
     if include_summary:
-        progress_text = f'Summarising {len(content_list)} queries...'
+        progress_text = f'Summarizing {len(content_list)} queries...'
         summary_bar = streamlit.progress(0, text=progress_text)
 
         intermediate_summaries, intermediate_titles, final_summary, abstract = summarize_text(split_docs)
@@ -207,37 +245,59 @@ def generate_pdf(
 
 
 class Summary(BaseModel):
+    """Title and summary of a document"""
+
     title: str = Field(description='Title of the document')
     summary: str = Field(description='Extracted summary of the document')
 
 
 class SummariesList(BaseModel):
-    items: List[Summary] = Field(description='List of titles and summaries')
+    """List of title and summaries of a document."""
+
+    items: List[Summary] = Field(description='List of titles and summaries of a document')
 
 
 class ReduceSummary(BaseModel):
+    """Final concise summary of the documents."""
+
     summary: str = Field(description='Final concise summary of the documents')
 
 
 def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], str, str]:
+    """
+    Summarize the text using the LLM.
+
+    Args:
+        split_docs: List of documents to summarize.
+    Returns:
+        A tuple containing the following elements:
+            - Intermediate summaries of each section.
+            - Intermediate= titles of each section.
+            - Final summary of the document.
+            - Abstract of the document.
+    """
     # Extract the LLM
     llm = streamlit.session_state.fc.llm
 
-    # Map
-    map_template = """The following is a set of documents
-        {docs}
-        Based on this list of docs, please identify the main themesx§\n.'
-        '{format_instructions}'
-        """
-
+    # Map parser
     map_parser = PydanticOutputParser(pydantic_object=SummariesList)  # type: ignore
 
+    # Map template
+    map_template = """The following is a set of documents
+        {docs}
+        Based on this list of docs, please identify the main themes by document.\n.
+        The list of them must match the list of documents\n.
+        {format_instructions}
+        """
+
+    # Map prompt
     map_prompt = PromptTemplate(
         template=map_template,
         input_variables=['docs'],
         partial_variables={'format_instructions': map_parser.get_format_instructions()},
     )
 
+    # Map chain
     map_chain = map_prompt | llm | map_parser
 
     # Extract intermediate titles and summaries for each document in the split docs
@@ -245,36 +305,46 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     intermediate_summaries = [item.summary for item in intermediate_results]
     intermediate_titles = [item.title for item in intermediate_results]
 
-    # Reduce
+    # Reduce parser
+    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+
+    # Reduce template
     reduce_template = """The following is set of summaries:
         {intermediate_summaries}
         Take these and distill it into a final, consolidated summary of the main themes.\n'
         '{format_instructions}'
         """
-    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+
+    # Reduce prompt
     reduce_prompt = PromptTemplate(
         template=reduce_template,
         input_variables=['intermediate_summaries'],
         partial_variables={'format_instructions': reduce_parser.get_format_instructions()},
     )
 
+    # Reduce chain
     reduce_chain = reduce_prompt | llm | reduce_parser
 
     # Run chain
     final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
 
-    # Abstract
+    # Abstract parser
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+
+    # Abstract template
     abstract_template = """Write a concise summary of the following:
         {final_summary}.\n
         {format_instructions}
         """
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
 
+    # Abstract prompt
     abstact_prompt = PromptTemplate(
         template=abstract_template,
         input_variables=['final_summary'],
         partial_variables={'format_instructions': abstract_parser.get_format_instructions()},
     )
+
+    # Abstract chain
     abstract_chain = abstact_prompt | llm | abstract_parser
 
     # Run chain
@@ -287,20 +357,40 @@ class PDFRAGInput(BaseModel):
     """Use the provided PDF file to answer the user query using RAG."""
 
     user_query: str = Field('The user query.')
-    pdf_files_names: List[str] = Field('The path to the PDF file for RAG.')
+    pdf_files_names: List[str] = Field('The path to the PDF file to be used for RAG.')
 
 
 @tool(args_schema=PDFRAGInput)
 def pdf_rag(user_query: str, pdf_files_names: List[str]) -> Any:
+    """
+    Elaborate the answer using RAG.
+
+    Args:
+        user_query: The user query.
+        pdf_files: The path to the PDF file to be used for RAG.
+    """
+    # Load PDF files
     documents = []
     for file in pdf_files_names:
         pdf_path = os.path.join(PDF_GENERATION_DIRECTORY, file)
         loader = PyPDFLoader(pdf_path)
         documents.extend(loader.load())
 
+    # Instantiate the text splitter
     text_splitter = CharacterTextSplitter(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+    # Split documents into chunks
     chunked_documents = text_splitter.split_documents(documents)
 
-    response = get_qa_response(documents, user_query)['answer']
+    # Retrieve the QA response
+    response = get_qa_response(user_query, chunked_documents)['answer']
 
     return response
+
+
+def clean_unicode_text(text: str) -> str:
+    """Clean the text by excluding non unicode characters."""
+
+    # This pattern matches any character that is a Unicode letter, digit, punctuation, or space
+    pattern = re.compile(r'[^\w\s.,!?\'¿¡"@#$%^&*()_+={}|[\]\\;\-:"<>?/`~]')
+
+    return re.sub(pattern, '', text)

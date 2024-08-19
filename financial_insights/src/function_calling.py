@@ -14,6 +14,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
 
+import pydantic
+
 from financial_insights.streamlit.constants import *
 
 # Prompt template for function calling
@@ -54,7 +56,7 @@ class FunctionCalling:
     def __init__(
         self,
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
-        default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
+        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = ConversationalResponse,
         system_prompt: Optional[str] = FUNCTION_CALLING_SYSTEM_PROMPT,
         config_path: str = CONFIG_PATH,
     ) -> None:
@@ -64,6 +66,12 @@ class FunctionCalling:
             default_tool: The optional default tool to use. Defaults to `ConversationalResponse`.
             system_prompt: The optional system prompt to use. Defaults to `FUNCTION_CALLING_SYSTEM_PROMPT`.
             config_path: The path to the config file. Defaults to `CONFIG_PATH`.
+
+        Raises:
+            TypeError: If `tools` is not a list of
+                `langchain_core.tools.StructuredTool` or `langchain_core.tools.Tool` objects.
+            TypeError: If `default_tool` is not a `langchain_core.tools.StructuredTool` object.
+            TypeError: If `system_prompt` is not a string.
         """
         # Load the configs from the config file
         configs = self.get_config_info(config_path)
@@ -77,24 +85,34 @@ class FunctionCalling:
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
-        assert isinstance(tools, list) and all(
+        assert (isinstance(tools, list) and all(
             isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools
-        )
+        )) or tools is None, TypeError('tools must be a list of StructuredTool or Tool objects.')
         self.tools = tools
 
-        # Set the system prompt
-        assert isinstance(system_prompt, str), 'System prompt must be a string.'
-        self.system_prompt = system_prompt
-
         # Set the tools schemas
+        assert isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))) or default_tool is None, TypeError('Default tool must be a StructuredTool.')
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
+
+        # Set the system prompt
+        assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
+        self.system_prompt = system_prompt
 
     def get_config_info(self, config_path: str) -> Tuple[Dict[str, str]]:
         """
         Loads the json config file.
+
+        Args:
+            config_path: Path to the config json file.
+
+        Returns:
+            A tuple of dictionaries containing the llm information as a single element.
+
+        Raises:
+            TypeError: If `config_path` not found or `config_path` is not a string.
         """
-        assert isinstance(config_path, str), 'Config path must be a string.'
+        assert isinstance(config_path, str), TypeError('Config path must be a string.')
 
         # Read config file
         with open(config_path, 'r') as yaml_file:
@@ -110,6 +128,12 @@ class FunctionCalling:
         Set the LLM to use
 
         SambaVerse, SambaStudio and CoE endpoints implemented.
+
+        Returns:
+            The LLM to use.
+
+        Raises:
+            ValueError: If the LLM API is not one of `sambastudio` or `sambaverse`.
         """
         # SambaStudio LLM
         if self.llm_info['api'] == 'sambastudio':
@@ -164,6 +188,9 @@ class FunctionCalling:
                 - `description`: The tool description.
                 - `properties`: The tool properties.
                 - `required`: The tool required properties.
+
+        Raises:
+            TypeError: If `tools` is not a `langchain_core.tools.Tool` or a list of `langchain_core.tools.Tools`.
         """
         if tools is None or isinstance(tools, list):
             pass
@@ -216,6 +243,9 @@ class FunctionCalling:
             A tuple of the following elements:
                 - A list of tool messages. Each message contains the tool name and the response of the tool.
                 - The final response of the tool chain, i.e the response of the last tool.
+
+        Raises:
+            TypeError: If any of the tool names (`invoked_tools`) is not a string.
         """
         # Create a map of tools with their name
         if self.tools is not None:
@@ -227,7 +257,7 @@ class FunctionCalling:
         tool_msg = "Tool '{name}'. Response: {response}"
         tools_msgs = []
 
-        assert all(isinstance(tool['tool'], str) for tool in invoked_tools), 'The tool name must be a string'
+        assert all(isinstance(tool['tool'], str) for tool in invoked_tools), TypeError('The tool name must be a string')
 
         # If the only tool is the conversational response, return the response only
         if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':  # type: ignore
@@ -279,34 +309,39 @@ class FunctionCalling:
             logging.warning('No tool json structure found for function calling.')
         return json_str
 
-    def msgs_to_llama3_str(self, msgs: List[BaseMessage]) -> str:
+    def msgs_to_llama3_str(self, messages: List[BaseMessage]) -> str:
         """
         Convert a list of langchain messages with roles to expected LLmana 3 input.
 
         Args:
-            msgs: The list of langchain messages.
+            messages: The list of langchain messages.
+
         Returns:
-            The LLmana3 input string.
+            The LLM input string.
+
+        Raises:
+            ValueError: If the input `messages` is not a list of langchain messages with supported roles (types).
+                The only supported message types are `system`, `human`, `ai`, `tool`.
         """
-        formatted_msgs = []
-        for msg in msgs:
-            if msg.type == 'system':
+        formatted_messages = []
+        for message in messages:
+            if message.type == 'system':
                 sys_placeholder = (
                     '<|begin_of_text|><|start_header_id|>system<|end_header_id|>system<|end_header_id|> {msg}'
                 )
-                formatted_msgs.append(sys_placeholder.format(msg=msg.content))
-            elif msg.type == 'human':
+                formatted_messages.append(sys_placeholder.format(msg=message.content))
+            elif message.type == 'human':
                 human_placeholder = '<|eot_id|><|start_header_id|>user<|end_header_id|>\nUser: {msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
-                formatted_msgs.append(human_placeholder.format(msg=msg.content))
-            elif msg.type == 'ai':
+                formatted_messages.append(human_placeholder.format(msg=message.content))
+            elif message.type == 'ai':
                 assistant_placeholder = '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant: {msg}'
-                formatted_msgs.append(assistant_placeholder.format(msg=msg.content))
-            elif msg.type == 'tool':
+                formatted_messages.append(assistant_placeholder.format(msg=message.content))
+            elif message.type == 'tool':
                 tool_placeholder = '<|eot_id|><|start_header_id|>tools<|end_header_id|>\n{msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
-                formatted_msgs.append(tool_placeholder.format(msg=msg.content))
+                formatted_messages.append(tool_placeholder.format(msg=message.content))
             else:
-                raise ValueError(f'Invalid message type: {msg.type}')
-        return '\n'.join(formatted_msgs)
+                raise ValueError(f'Invalid message type: {message.type}')
+        return '\n'.join(formatted_messages)
 
     def function_call_llm(self, query: str, debug: bool = False) -> Tuple[List[str], Any]:
         """
@@ -315,13 +350,18 @@ class FunctionCalling:
         Args:
             query: The query to execute.
             debug: Whether to print debug information. Defaults to False.
+
         Returns:
             A tuple containing the following elements:
                 - The generated tool messages.
                 - The final LLM response, i.e. the response of the last invocated tool.
+
+        Raises:
+            TypeError: If `query` is not of type str or `debug` is not of type bool.
         """
-        assert isinstance(query, str), 'Query must be a string.'
-        assert isinstance(debug, bool), 'Debug must be a boolean.'
+        # Checks the inputs
+        assert isinstance(query, str), TypeError(f'Query must be a string. Got {type(query)}.')
+        assert isinstance(debug, bool), TypeError(f'Debug must be a boolean. Got {type(debug)}.')
 
         # Prompt template for function calling
         function_calling_template = ChatPromptTemplate.from_messages([('system', self.system_prompt)])

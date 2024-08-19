@@ -13,11 +13,32 @@ from financial_insights.streamlit.utilities_app import _get_config_info
 
 
 def get_qa_response(
-    documents: List[Document],
     user_request: str,
+    documents: List[Document],
 ) -> Any:
-    # Set up the embedding model and vector store
+    """
+    Elaborate an answer to user request using RetrievalQA chain.
+
+    Args:
+        user_request: User request to answer.
+        documents: List of documents to use for retrieval.
+
+    Returns:
+        Answer to the user request.
+
+    Raises:
+        TypeError: If user request is not string or documents are not list of strings.
+    """
+    assert isinstance(user_request, str), TypeError('user_request must be a string.')
+    assert isinstance(documents, list), TypeError(f'documents must be a list of strings. Got {type(documents)}.')
+    assert all(isinstance(doc, Document) for doc in documents), TypeError(
+        f'All documents must be of type `langchain.schema.Document`.'
+    )
+
+    # Instantiate the embedding model
     embedding_model = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
+
+    # Instantiate the vectorstore
     vectorstore = Chroma.from_documents(documents, embedding_model)
 
     # Load config
@@ -25,6 +46,8 @@ def get_qa_response(
 
     # Load retrieval prompt
     prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama30b-web_crawling_data_retriever.yaml'))
+
+    # Instantiate the retriever
     retriever = vectorstore.as_retriever(
         search_type='similarity_score_threshold',
         search_kwargs={
@@ -44,7 +67,7 @@ def get_qa_response(
         prompt=prompt,
     )
 
-    # Function to answer questions based on the news data
+    # Function to answer questions based on the input documents
     response = qa_chain.invoke({'question': user_request})
 
     return response

@@ -17,7 +17,6 @@ from financial_insights.streamlit.constants import *
 
 logging.basicConfig(level=logging.INFO)
 
-MAX_CHUNK_SIZE = 128
 RETRIEVE_HEADLINES = False
 
 
@@ -27,11 +26,26 @@ class YahooFinanceNewsInput(BaseModel):
     ticker_list: List[str] = Field(
         description='A list of ticker symbols to search.',
     )
-    user_request: str = Field(description='The user request to search.')
+    user_query: str = Field(description='The user query to search.')
 
 
 def filter_texts_set(texts: Set[str]) -> List[str]:
-    """Filter out texts with fewer than 3 words."""
+    """
+    Filter a set of texts and combine them into a list of chunks.
+
+    Args:
+        texts: A set of texts to filter.
+
+    Returns:
+        A list of chunks.
+
+    Raises:
+        TypeError: If the input `texts` is not a set or a string.
+    """
+    # Check inputs
+    assert isinstance(texts, set), TypeError(f'Input must be of type set. Got {type(texts)}.')
+    assert all(isinstance(text, str) for text in texts), TypeError(f'Input must be of type str.')
+
     filtered_texts = set()
     for text in texts:
         chunks = filter_text(text)
@@ -41,20 +55,41 @@ def filter_texts_set(texts: Set[str]) -> List[str]:
 
 
 def filter_text(text: str) -> List[str]:
-    """Filter out texts with fewer than 3 words."""
+    """
+    Split a text into chunks of MAX_CHUNK_SIZE.
+
+    Args:
+        The text to split into chunks.
+
+    Returns:
+        A list of chunks.
+
+    Raises:
+        TypeError: If the input `text` is not a string.
+    """
+    # Check inputs
+    assert isinstance(text, str), TypeError(f'Input must be of type str. Got {type(text)}.')
+
     filtered_texts: List[str] = list()
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove special characters
-    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra whitespace
-    if len(text.split()) >= 4 and len(text.split()) <= MAX_CHUNK_SIZE:
+
+    # Remove special characters
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    if len(text.split()) >= MIN_CHUNK_SIZE and len(text.split()) <= MAX_CHUNK_SIZE:
         filtered_texts.append(text)
     elif len(text.split()) > MAX_CHUNK_SIZE:
-        # Split the long text into smaller chunks
+        # Instantiate the text splitter
         splitter = CharacterTextSplitter(
             chunk_size=MAX_CHUNK_SIZE,
-            chunk_overlap=64,
+            chunk_overlap=CHUNK_OVERLAP,
             separator=r'[.!?]',
             is_separator_regex=True,
         )
+
+        # Split the long text into smaller chunks
         chunks = splitter.split_text(text)
         for chunk in chunks:
             filtered_texts.append(chunk)
@@ -65,24 +100,50 @@ def filter_text(text: str) -> List[str]:
 
 def clean_text(text: str) -> str:
     """Clean the text by removing extra spaces, newlines, and special characters."""
+
+    # Check inputs
+    assert isinstance(text, str), TypeError(f'Input must be of type str. Got {type(text)}.')
+
+    # Remove special characters
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+
     return ' '.join(text.split())
 
 
 @tool(args_schema=YahooFinanceNewsInput)
-def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tuple[str, List[str]]:
+def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[str, List[str]]:
     """
-    Tool that searches financial news on Yahoo Finance.
-    Useful for when you need to find financial news
-    about a public company.
-    Input should be a company ticker.
-    For example, AAPL for Apple, MSFT for Microsoft.
+    Tool that searches financial news on Yahoo Finance ny webscraping.
+
+    Useful for when you need to find financial news about a public company.
+
+    Args:
+        ticker_list: List of tickers about which to search for financial news.
+            For example, AAPL for Apple, MSFT for Microsoft.
+        user_query: The search query to be used in the search bar on Yahoo Finance.
+
+    Returns:
+
+    Raises:
+        TypeError: If `ticker_list` is not a list of strings or `user_query` is not a string.
     """
+    # Check inputs
+    assert isinstance(ticker_list, list), TypeError(f'Input must be of type list. Got {type(ticker_list)}.')
+    assert all(isinstance(ticker, str) for ticker in ticker_list), TypeError(
+        'All elements in `ticker_list` must be of type str.'
+    )
+    assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
+
     # Define the URL of the Yahoo Finance news page
     main_url = 'https://finance.yahoo.com/news'
 
     general_urls = []
     singular_urls = []
 
+    # For each symbol determine the list of URLs to scrape
     if ticker_list is not None and len(ticker_list) > 0:
         for symbol in ticker_list:
             try:
@@ -102,6 +163,7 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tupl
 
     link_urls = list()
 
+    # Webscraping by url
     for url in general_urls + singular_urls:
         # Send a GET request to the URL
         response = requests.get(url)
@@ -113,6 +175,7 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tupl
 
             # Find all links on the page
             if url in general_urls:
+                # Find all the links mentioned in the webpage
                 links = soup.find_all('a')
                 link_urls.extend([link['href'] for link in links])
             else:
@@ -238,9 +301,13 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_request: str) -> Tupl
         )
         documents.append(document)
 
-    response = get_qa_response(documents, user_request)
+    # Get the QA response
+    response = get_qa_response(user_query, documents)
 
+    # Extract the answer from  the QA response
     answer = response['answer']
+
+    # Extract the urls from the QA response
     url_list = list({doc.metadata['url'] for doc in response['source_documents']})
 
     return answer, url_list

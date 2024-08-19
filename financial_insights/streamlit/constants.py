@@ -27,5 +27,6 @@ STOCK_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'stock_query_figures/')
 HISTORY_FIGURES_DIR = os.path.join(CACHE_DIR, 'history_figures/')
 DB_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'db_query_figures/')
 
+MIN_CHUNK_SIZE = 4
 MAX_CHUNK_SIZE = 256
 CHUNK_OVERLAP = 64

@@ -9,7 +9,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 from financial_insights.src.function_calling import FunctionCalling
 from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_output_callback
+from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
 from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
 
 logging.basicConfig(level=logging.INFO)
@@ -257,6 +257,9 @@ def handle_pdf_generation(
     data_paths: Dict[str, str] = dict(),
     include_summary: bool = False,
 ) -> None:
+    # Clear the PDF_GENERATION directory
+    clear_directory(PDF_GENERATION_DIRECTORY)
+
     streamlit.session_state.fc = FunctionCalling()
 
     output_file = PDF_GENERATION_DIRECTORY + report_name
