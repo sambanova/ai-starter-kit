@@ -181,6 +181,7 @@ next-env.d.ts
 # Fine tuning Data
 fine_tuning_sql/data/
 yoda/data/
+utils/synthetic_data_gen/output/
 
 # search assistant Data
 search_assistant/data/
@@ -233,6 +234,12 @@ web_crawled_data_retriever/data/
 # benchmarking data
 benchmarking/data
 benchmarking/debug
+
+=======
+# agent workflow
+agent_workflows/output
+
+logs/
 
 =======
 #evals

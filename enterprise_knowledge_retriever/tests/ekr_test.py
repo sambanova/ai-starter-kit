@@ -70,26 +70,26 @@ class EKRTestCase(unittest.TestCase):
     def create_conversation_chain(cls):
         cls.document_retrieval.init_retriever(cls.vectorstore)
         return cls.document_retrieval.get_qa_retrieval_chain()
-
+    
+    # Add assertions
     def test_document_parsing(self):
-        self.assertTrue(len(self.text_chunks) > 0, f"Parsed {len(self.text_chunks)} chunks")
+        self.assertGreaterEqual(len(self.text_chunks), 1, "There should be at least one parsed chunk")
 
     def test_vector_store_creation(self):
-        self.assertIsNotNone(self.vectorstore, "Vector store created successfully")
+        self.assertIsNotNone(self.vectorstore, "Vector store could not be created")
 
     def test_conversation_chain_creation(self):
-        self.assertIsNotNone(self.conversation, "Conversation chain created successfully")
+        self.assertIsNotNone(self.conversation, "Conversation chain could not be created")
 
     def test_question_answering(self):
         user_question = "What is a composition of experts?"
         response = self.conversation.invoke({"question": user_question})
 
         self.assertIn('source_documents', response, "Response should have a 'source_documents' key")
-        self.assertGreaterEqual(len(response['source_documents']), 1, "There should be at least one source chunk")
+        self.assertGreaterEqual(len(response['source_documents']), 1, "There should be at least one source document")
         self.assertIn('answer', response, "Response should have an 'answer' key")
         self.assertTrue(response['answer'], "The response should not be empty")
 
-        
     @classmethod
     def tearDownClass(cls):
         time_end = time.time()

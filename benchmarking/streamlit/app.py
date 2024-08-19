@@ -18,6 +18,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+LLM_API_OPTIONS = ["sambastudio", "fastapi"]
+
 
 @st.cache_data
 def _init():
@@ -40,6 +42,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
+        llm_api=st.session_state.llm_api 
     )
 
     performance_evaluator.run_benchmark(
@@ -77,6 +80,8 @@ def _initialize_sesion_variables():
         st.session_state.number_concurrent_workers = None
     if "timeout" not in st.session_state:
         st.session_state.timeout = None
+    if "llm_api" not in st.session_state:
+        st.session_state.llm_api = None
 
 
 def main():
@@ -128,6 +133,10 @@ def main():
         )
         st.session_state.llm = f"{llm_model}"
 
+        st.session_state.llm_api = st.selectbox(
+            "API type", options=LLM_API_OPTIONS
+        )
+
         st.session_state.input_tokens = st.number_input(
             "Number of input tokens", min_value=50, max_value=2000, value=1000, step=1
         )
@@ -147,7 +156,7 @@ def main():
         st.session_state.timeout = st.number_input(
             "Timeout", min_value=60, max_value=1800, value=600, step=1
         )
-
+        
         sidebar_option = st.sidebar.button("Run!")
 
     if sidebar_option:
@@ -170,7 +179,7 @@ def main():
                     df_req_info,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Boxplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )

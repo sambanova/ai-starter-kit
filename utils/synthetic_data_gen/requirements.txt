@@ -1,0 +1,12 @@
+ipykernel == 6.29.5
+ipython == 8.26.0
+jupyter_client == 8.6.0
+jupyter_core == 5.7.1
+langchain  == 0.2.12
+langchain-community == 0.2.11
+langchain-core == 0.2.29
+langchain-experimental == 0.0.64
+langchain-text-splitters == 0.2.2
+python-dotenv == 1.0.1
+sentence_transformers==2.2.2
+instructorembedding==1.0.1

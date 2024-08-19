@@ -864,6 +864,6 @@ class RAGComponents(BaseComponents):
         print('---Final Generation---')
         print(generation)
 
-        final_answer: str = self.final_chain.invoke({'question': original_question, 'generation': generation})
+        final_answer: str = self.final_chain.invoke({'question': original_question, 'answers': generation})
 
         return {'generation': final_answer}

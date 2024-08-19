@@ -23,5 +23,5 @@ retrieval:
     "final_k_retrieved_documents": 5
 
 prompts: 
-    "qa_prompt": "prompts/qa_prompt.yaml"
-    "final_chain_prompt": "prompts/final_chain_prompt.yaml"
+    "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
+    "final_chain_prompt": "enterprise_knowledge_retriever/prompts/final_chain_prompt.yaml"

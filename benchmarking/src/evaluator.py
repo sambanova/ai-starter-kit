@@ -9,6 +9,26 @@ from performance_evaluation import (
     SyntheticPerformanceEvaluator
 )
 
+def str2bool(value: str) -> bool:
+    """Transform str to bool
+
+    Args:
+        value (str): input value
+
+    Raises:
+        argparse.ArgumentTypeError: raises when value is another type than boolean
+
+    Returns:
+        bool: boolean value
+    """
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif value.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def main():
     parser = argparse.ArgumentParser(
@@ -49,6 +69,14 @@ def main():
         type=str, 
         required=True,
         help="The output directory to save the results to."
+    )
+    
+    parser.add_argument(
+        '--llm-api', 
+        type=str, 
+        required=True, 
+        default="sambastudio",
+        help="The LLM API type. It could be either sambastudio or fastapi. Default value: sambastudio"
     )
 
     # Optional Common Arguments
@@ -104,6 +132,14 @@ def main():
             help="The absolute path to the dataset to be used for running the custom performance evaluation."
         )
 
+        parser.add_argument(
+            '--save-llm-responses',
+            type=str2bool,
+            required=False,
+            default=False,
+            help="Whether to save the llm responses to an output JSONL file. (default: %(default)s)"
+        )
+
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         evaluator = CustomPerformanceEvaluator(
@@ -112,7 +148,9 @@ def main():
             num_workers=args.num_workers,
             timeout=args.timeout,
             user_metadata=user_metadata,
-            input_file_path=args.input_file_path
+            input_file_path=args.input_file_path,
+            save_response_texts=args.save_llm_responses,
+            llm_api=args.llm_api
         )
 
         # Run performance evaluation
@@ -153,7 +191,8 @@ def main():
             results_dir=args.results_dir,
             num_workers=args.num_workers,
             timeout=args.timeout,
-            user_metadata=user_metadata
+            user_metadata=user_metadata,
+            llm_api=args.llm_api
         )
 
         # Run performance evaluation

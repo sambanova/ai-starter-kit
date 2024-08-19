@@ -5,6 +5,7 @@ langchain==0.2.11
 langchain-core>=0.2.6,<0.3.0
 langchain-community==0.2.10
 langchain-experimental==0.0.60
+langgraph==0.1.6
 pydantic==2.7.0
 pydantic_core==2.18.1
 python-dotenv==1.0.1
@@ -32,6 +33,10 @@ faiss-cpu==1.7.4
 chromadb==0.4.24
 PyMuPDF==1.23.4
 PyMuPDFb==1.23.3
+pypandoc==1.13
+pypandoc_binary==1.13
+python-docx==1.1.2
+xlrd==2.0.1
 
 # Web and API
 requests>=2.32.2
