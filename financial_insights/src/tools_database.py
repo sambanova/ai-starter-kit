@@ -158,7 +158,7 @@ def query_stock_database(
     elif method == 'PandasAI-SqliteConnector':
         return query_stock_database_pandasai(user_query, symbol_list)
     else:
-        raise Exception(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}')
+        raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}')
 
 
 def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[str, str | List[str]]:
