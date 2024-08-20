@@ -4,7 +4,7 @@ import streamlit
 
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
+from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_yfinance_news() -> None:
@@ -53,12 +53,13 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         'retrieve_symbol_list',
         'scrape_yahoo_finance_news',
     ]
-    set_fc_llm(
+    attach_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
     )
     user_request = (
-        'You are an expert in the stock market. Please answer the following question using the provided context from webscraping Yahoo Finance.\n'
+        'You are an expert in the stock market. '
+        + 'Please answer the following question using the provided context from webscraping Yahoo Finance.\n'
         + user_question
         + 'Company names should be expressed via their ticker symbols.'
     )

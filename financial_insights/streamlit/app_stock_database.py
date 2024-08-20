@@ -5,7 +5,7 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
+from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_stock_database() -> None:
@@ -72,7 +72,7 @@ def handle_database_creation(
         return None
 
     streamlit.session_state.tools = ['retrieve_symbol_list', 'create_stock_database']
-    set_fc_llm(streamlit.session_state.tools)
+    attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please create a SQL database for the following companies '
@@ -100,7 +100,7 @@ def handle_database_query(
     assert query_method in ['text-to-SQL', 'PandasAI-SqliteConnector'], f'Invalid query method {query_method}'
 
     streamlit.session_state.tools = ['retrieve_symbol_list', 'query_stock_database']
-    set_fc_llm(streamlit.session_state.tools)
+    attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please query the SQL database for the following companies '

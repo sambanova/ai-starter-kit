@@ -139,9 +139,7 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
 class RetrievalCompanyNameSchema(BaseModel):
     """Retrieve a list of company names."""
 
-    company_names_list: List[str] = Field(
-        'List of company names to retrieve from the query.', example=['Apple', 'Microsoft']
-    )
+    company_names_list: List[str] = Field('List of company names to retrieve from the query.')
     user_query: str = Field(
         'User query or quantities to search for company names. If you cannot retrieve it, return an empty string.',
     )

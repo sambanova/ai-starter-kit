@@ -10,12 +10,11 @@ from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
 
-import pydantic
-
+from financial_insights.src.tools import ConversationalResponse
 from financial_insights.streamlit.constants import *
 
 # Prompt template for function calling
@@ -39,15 +38,6 @@ Please call all the relevant tools.
 
 Your answer should be in the same language as the initial query.
 """
-
-
-# Tool schema for the conversational response tool
-class ConversationalResponse(BaseModel):
-    """Respond conversationally if you have a final answer. Response must be in the same language as the user query"""
-
-    response: str = Field(
-        ..., description='Conversational response to the user. Must be in the same language as the user query.'
-    )
 
 
 class FunctionCalling:
@@ -85,13 +75,16 @@ class FunctionCalling:
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
-        assert (isinstance(tools, list) and all(
-            isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools
-        )) or tools is None, TypeError('tools must be a list of StructuredTool or Tool objects.')
+        assert (
+            isinstance(tools, list)
+            and all(isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools)
+        ) or tools is None, TypeError('tools must be a list of StructuredTool or Tool objects.')
         self.tools = tools
 
         # Set the tools schemas
-        assert isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))) or default_tool is None, TypeError('Default tool must be a StructuredTool.')
+        assert isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))) or default_tool is None, TypeError(
+            'Default tool must be a StructuredTool.'
+        )
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 

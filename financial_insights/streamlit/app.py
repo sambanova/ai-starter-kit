@@ -4,8 +4,8 @@ import os
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
-from financial_insights.streamlit.app_financial_filings import get_financial_filings
-from financial_insights.streamlit.app_pdf_report import get_pdf_report
+from financial_insights.streamlit.app_financial_filings import include_financial_filings
+from financial_insights.streamlit.app_pdf_report import include_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
 from financial_insights.streamlit.app_stock_database import get_stock_database
 from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
@@ -131,11 +131,11 @@ def main() -> None:
 
     # Financial Filings Analysis page
     elif menu == 'Financial Filings Analysis':
-        get_financial_filings()
+        include_financial_filings()
 
     # Generate PDF Report page
     elif menu == 'Generate PDF Report':
-        get_pdf_report()
+        include_pdf_report()
 
     # Print Chat History page
     elif menu == 'Print Chat History':

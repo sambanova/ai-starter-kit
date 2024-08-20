@@ -12,8 +12,8 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from PIL import Image
 
-from financial_insights.src.function_calling import ConversationalResponse, FunctionCalling
-from financial_insights.src.tools import get_conversational_response
+from financial_insights.src.function_calling import FunctionCalling
+from financial_insights.src.tools import ConversationalResponse, get_conversational_response
 from financial_insights.src.tools_database import create_stock_database, query_stock_database
 from financial_insights.src.tools_filings import retrieve_filings
 from financial_insights.src.tools_pdf_generation import pdf_rag
@@ -60,12 +60,12 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
             output_func(stdout.getvalue())
 
 
-def set_fc_llm(
+def attach_tools(
     tools: Optional[List[str]] = None,
     default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
 ) -> None:
     """
-    Set the FunctionCalling object with the selected tools
+    Attach the tools to the streamit session for the LLM to use.
 
     Args:
         tools (list): list of tools to be used
@@ -79,7 +79,7 @@ def set_fc_llm(
 
 def handle_userinput(user_question: Optional[str], user_query: Optional[str]) -> Optional[Any]:
     """
-    Handle user input and generate a response, also update chat UI in streamlit app
+    Handle user input and generate a response, also update chat UI in streamlit app.
 
     Args:
         user_question (str): The user's question or input.

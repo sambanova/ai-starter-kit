@@ -7,7 +7,7 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import save_historical_price_callback, save_output_callback
-from financial_insights.streamlit.utilities_methods import handle_userinput, set_fc_llm
+from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_stock_data_analysis() -> None:
@@ -116,9 +116,9 @@ def handle_stock_query(
     streamlit.session_state.tools = [
         'retrieve_symbol_list',
         'get_stock_info',
-        'get_conversational_response',
+        # 'get_conversational_response',
     ]
-    set_fc_llm(streamlit.session_state.tools)
+    attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please answer the following query for the following companies '
@@ -147,7 +147,7 @@ def handle_stock_data_analysis(
         'retrieve_symbol_quantity_list',
         'get_historical_price',
     ]
-    set_fc_llm(
+    attach_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
     )
