@@ -14,7 +14,7 @@ from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod
 from langchain_core.documents.base import Document
 from langgraph.graph.state import CompiledStateGraph
 
-current_dir = os.getcwd()
+current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
@@ -212,6 +212,7 @@ class BaseComponents:
 
         return docs_sorted
 
+    @log_method
     def llm_generation(self, state: dict) -> dict:
         """
         Generates a response from the selected LLM (without any external knowledge or context).
