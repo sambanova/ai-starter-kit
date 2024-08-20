@@ -130,7 +130,7 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 
 ## Windows requirements
 
-- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Versions 2015, 2017, 2019 and 2022)
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
 ## Deploy the parsing service 
 
