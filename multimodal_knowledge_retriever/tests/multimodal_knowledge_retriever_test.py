@@ -68,16 +68,17 @@ class MKRTestCase(unittest.TestCase):
     def create_retrieval_chain(cls):
         return cls.multimodal_retriever.get_retrieval_chain(cls.vectorstore, image_retrieval_type="summary")
 
+    # Add assertions
     def test_document_parsing(self):
         self.assertTrue(len(self.text_docs) > 0, f"Parsed {len(self.text_docs)} chunks of text")
         self.assertTrue(len(self.table_docs) > 0, f"Parsed {len(self.table_docs)} chunks of table text")
         self.assertTrue(len(self.image_paths) > 0, f"Parsed {len(self.image_paths)} images")
 
     def test_vector_store_creation(self):
-        self.assertIsNotNone(self.vectorstore, "Vector store created successfully")
+        self.assertIsNotNone(self.vectorstore, "Vector store could not be created")
 
     def test_conversation_chain_creation(self):
-        self.assertIsNotNone(self.chain, "Conversation chain created successfully")
+        self.assertIsNotNone(self.chain, "Conversation chain could not be created")
 
     def test_question_answering(self):
         user_question = "How many apples they bought?"
