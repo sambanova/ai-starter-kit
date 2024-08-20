@@ -1,10 +1,10 @@
-api: "sambastudio"
+api: "fastapi"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
     "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
-    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
+    "select_expert": "e5-mistral-7b-instruct-8192" #set if using SambaStudio CoE embedding expert
 
 loaders: 
     pdf: "unstructured"
@@ -16,8 +16,8 @@ llm:
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/llama-3-70b-chat-hf"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3-70B-Instruct-4096" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
-    #fastApi CoE expert name -> "llama3-8b"
+    "select_expert": "llama3-405b" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    #fastApi CoE expert name -> "llama3-405b"
 
 retrieval:
     "chunk_size": 1024
