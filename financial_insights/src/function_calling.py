@@ -5,7 +5,6 @@ from pprint import pprint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import yaml
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
@@ -17,7 +16,6 @@ from langchain_core.language_models.llms import LLM
 from financial_insights.src.tools import ConversationalResponse
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 # Prompt template for function calling
 FUNCTION_CALLING_SYSTEM_PROMPT = """
@@ -131,15 +129,20 @@ class FunctionCalling:
             ValueError: If the LLM API is not one of `sambastudio`, `sambaverse`, or `fastapi`.
         """
         if self.llm_info['api'] in ['sambastudio', 'sambaverse', 'fastapi']:
-            
             # Check config parameters
-            assert isinstance(self.llm_info['api'], str), ValueError('LLM API must be one of `sambastudio`, `sambaverse`, or `fastapi`.')
+            assert isinstance(self.llm_info['api'], str), ValueError(
+                'LLM API must be one of `sambastudio`, `sambaverse`, or `fastapi`.'
+            )
             assert isinstance(self.llm_info['coe'], bool), TypeError('Sambaverse `coe` must be a boolean.')
             assert isinstance(self.llm_info['do_sample'], bool), TypeError('`do_sample` must be a boolean.')
-            assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError('`max_tokens_to_generate` must be an integer.')
+            assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError(
+                '`max_tokens_to_generate` must be an integer.'
+            )
             assert isinstance(self.llm_info['select_expert'], str), TypeError('`select_expert` must be a string.')
-            assert isinstance(self.llm_info['sambaverse_model_name'], str | None), TypeError('Sambaverse `model_name` must be a string.')
-            
+            assert isinstance(self.llm_info['sambaverse_model_name'], str | None), TypeError(
+                'Sambaverse `model_name` must be a string.'
+            )
+
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
                 streaming=True,

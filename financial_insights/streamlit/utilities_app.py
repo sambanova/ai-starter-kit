@@ -81,7 +81,6 @@ def save_output_callback(
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
-
     assert isinstance(response, (str, list, dict)), TypeError(
         'Response must be a string, or a list of strings, or a dictionary.'
     )
