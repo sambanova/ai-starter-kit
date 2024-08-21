@@ -60,15 +60,14 @@ def get_stock_data_analysis() -> None:
     )
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response = handle_stock_query(user_request, dataframe_name)
+            response_dict = handle_stock_query(user_request, dataframe_name)
 
-            response = user_request + '\n' + response
-            save_output_callback(response, HISTORY_PATH)
+            save_output_callback(response_dict, HISTORY_PATH, user_request)
 
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(response, STOCK_QUERY_PATH),
+                args=(response_dict, STOCK_QUERY_PATH, user_request),
             ):
                 pass
 
@@ -121,8 +120,8 @@ def handle_stock_query(
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
-        'Please answer the following query for the following companies '
-        '(expressed via their ticker symbols):\n' + user_question + '\n'
+        'Please answer the following query for a given list of companies. ' + user_question + '\n'
+        'Each company of the list should be replaced by its corresponding ticker symbol.\n'
         f'Retrieve the company info using the dataframe "{dataframe_name}".\n'
         'Reformulate the final answer in the form of a conversational response to the user.\n'
         'Take your time and reason step by step.\n'

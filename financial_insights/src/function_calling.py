@@ -13,9 +13,11 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
-
+from langchain_core.language_models.llms import LLM
 from financial_insights.src.tools import ConversationalResponse
 from financial_insights.streamlit.constants import *
+from utils.model_wrappers.api_gateway import APIGateway
+from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 # Prompt template for function calling
 FUNCTION_CALLING_SYSTEM_PROMPT = """
@@ -24,7 +26,7 @@ You are a helpful assistant and you have access to the following tools:
 {tools}
 
 You must always select one or more of the above tools and answer 
-with only a list of JSON objects matching the following schema:
+with only a JSON list of objects matching the following schema:
 
 ```json
 [{{
@@ -33,8 +35,8 @@ with only a list of JSON objects matching the following schema:
 }}]
 ```
 
-If one tool is called after another, the subsequent tool must follow the previous tool in the list.
-Please call all the relevant tools.
+If one tool is called after another, the former tool must follow the latter tool in the list.
+Please list all the relevant tools until the last tool.
 
 Your answer should be in the same language as the initial query.
 """
@@ -92,7 +94,7 @@ class FunctionCalling:
         assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
-    def get_config_info(self, config_path: str) -> Tuple[Dict[str, str]]:
+    def get_config_info(self, config_path: str) -> Tuple[Dict[str, Union[Optional[str], Optional[float]]]]:
         """
         Loads the json config file.
 
@@ -116,46 +118,29 @@ class FunctionCalling:
 
         return (llm_info,)
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse]:
+    def set_llm(self) -> LLM:
         """
-        Set the LLM to use
+        Set the LLM to use.
 
-        SambaVerse, SambaStudio and CoE endpoints implemented.
+        SambaVerse, SambaStudio, FastAPI endpoints are implemented.
 
         Returns:
             The LLM to use.
 
         Raises:
-            ValueError: If the LLM API is not one of `sambastudio` or `sambaverse`.
+            ValueError: If the LLM API is not one of `sambastudio`, `sambaverse`, or `fastapi`.
         """
-        # SambaStudio LLM
-        if self.llm_info['api'] == 'sambastudio':
-            if self.llm_info['coe']:
-                llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'select_expert': self.llm_info['select_expert'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-            else:
-                llm = SambaStudio(
-                    model_kwargs={
-                        'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                        'temperature': self.llm_info['temperature'],
-                    },
-                )
-
-        # SambaVerse LLM
-        elif self.llm_info['api'] == 'sambaverse':
-            llm = Sambaverse(  # type:ignore
+        if self.llm_info['api'] in ['sambastudio', 'sambaverse', 'fastapi']:
+            llm = APIGateway.load_llm(
+                type=self.llm_info['api'],
+                streaming=True,
+                coe=self.llm_info['coe'],
+                do_sample=self.llm_info['do_sample'],
+                max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+                temperature=self.llm_info['temperature'],
+                select_expert=self.llm_info['select_expert'],
+                process_prompt=False,
                 sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                model_kwargs={
-                    'max_tokens_to_generate': self.llm_info['max_tokens_to_generate'],
-                    'select_expert': self.llm_info['select_expert'],
-                    'temperature': self.llm_info['temperature'],
-                },
             )
         else:
             raise ValueError(

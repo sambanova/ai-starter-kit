@@ -76,7 +76,21 @@ def save_historical_price_callback(
         save_output_callback(content, save_path)
 
 
-def save_output_callback(response: Union[str, List[str], Dict[str, str]], save_path: str) -> None:
+def save_output_callback(
+    response: Union[str, List[str], Dict[str, str]],
+    save_path: str,
+    user_request: Optional[str] = None,
+) -> None:
+    assert isinstance(response, (str, list, dict)), TypeError(
+        'Response must be a string, or a list of strings, or a dictionary.'
+    )
+    assert isinstance(save_path, str), TypeError('Save path must be a string.')
+    assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
+
+    if user_request is not None:
+        with open(filename, 'a') as text_file:
+            text_file.write(user_request)
+
     # Create temporary cache for storing historical price data
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
@@ -127,6 +141,12 @@ def list_directory(directory: str) -> Tuple[List[str], List[str]]:
     """
     subdirectories = []
     files = []
+
+    if os.getcwd() == repo_dir:
+        pass
+    elif os.getcwd() == kit_dir:
+        os.chdir(os.path.realpath(os.path.dirname(os.getcwd())))
+
     for name in os.listdir(directory):
         path = os.path.join(directory, name)
         if os.path.isdir(path):
