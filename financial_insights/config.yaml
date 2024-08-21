@@ -1,13 +1,13 @@
 llm: 
-  # "api": "sambastudio"  # set either sambastudio or sambaverse
+  "api": "sambastudio"  # set either sambastudio or sambaverse
   # "api": "sambaverse"  # set either sambastudio or sambaverse
-  "api": "fastapi"
+  # "api": "fastapi"
   "temperature": 0
-  "max_tokens_to_generate": 2048
+  "max_tokens_to_generate": 1024
   "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
   "coe": True #set as true if using Sambastudio CoE endpoint
-  # "select_expert": "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
-  "select_expert": "llama3-405b"
+  "select_expert": "Meta-Llama-3-70B-Instruct" #set if using Sambaverse or SambaStudio CoE llm expert
+  # "select_expert": "llama3-405b"
   # "select_expert": "llama3-70b"
   "do_sample": False
   "type": "sambastudio" # set either sambastudio or cpu

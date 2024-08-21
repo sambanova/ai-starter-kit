@@ -94,7 +94,7 @@ class FunctionCalling:
         assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
-    def get_config_info(self, config_path: str) -> Tuple[Dict[str, Union[Optional[str], Optional[float]]]]:
+    def get_config_info(self, config_path: str) -> Tuple[Dict[str, str | float | None]]:
         """
         Loads the json config file.
 
@@ -131,6 +131,15 @@ class FunctionCalling:
             ValueError: If the LLM API is not one of `sambastudio`, `sambaverse`, or `fastapi`.
         """
         if self.llm_info['api'] in ['sambastudio', 'sambaverse', 'fastapi']:
+            
+            # Check config parameters
+            assert isinstance(self.llm_info['api'], str), ValueError('LLM API must be one of `sambastudio`, `sambaverse`, or `fastapi`.')
+            assert isinstance(self.llm_info['coe'], bool), TypeError('Sambaverse `coe` must be a boolean.')
+            assert isinstance(self.llm_info['do_sample'], bool), TypeError('`do_sample` must be a boolean.')
+            assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError('`max_tokens_to_generate` must be an integer.')
+            assert isinstance(self.llm_info['select_expert'], str), TypeError('`select_expert` must be a string.')
+            assert isinstance(self.llm_info['sambaverse_model_name'], str | None), TypeError('Sambaverse `model_name` must be a string.')
+            
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
                 streaming=True,

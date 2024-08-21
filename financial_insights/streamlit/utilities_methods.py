@@ -178,10 +178,11 @@ def stream_single_response(response: Any) -> None:
         ):
             if isinstance(response, str):
                 if not response.endswith('.png'):
+                    # Ploat the last path of the png file
                     streamlit.write(response)
                 else:
-                    # Load the image
-                    image = Image.open(response)
+                    # Load the image after extracting the last path of the png file
+                    image = Image.open(response.split(' ')[-1])
 
                     # Display the image
                     streamlit.image(image, use_column_width=True)
