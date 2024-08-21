@@ -81,11 +81,15 @@ def save_output_callback(
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
+
     assert isinstance(response, (str, list, dict)), TypeError(
         'Response must be a string, or a list of strings, or a dictionary.'
     )
     assert isinstance(save_path, str), TypeError('Save path must be a string.')
     assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
+
+    # Specify the filename
+    filename = save_path
 
     if user_request is not None:
         with open(filename, 'a') as text_file:
@@ -94,9 +98,6 @@ def save_output_callback(
     # Create temporary cache for storing historical price data
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
-
-    # Specify the filename
-    filename = save_path
 
     if isinstance(response, str):
         # Writing the string to a txt file
