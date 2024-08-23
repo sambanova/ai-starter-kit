@@ -54,7 +54,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a></td>
 <td width="50%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
-<td width="15%">Sambaverse, SambaStudio, FastAPI</td>
+<td width="15%">SambaStudio</td>
 <td width="15%"> Model Development & Optimization </td>   
 </tr>
 
