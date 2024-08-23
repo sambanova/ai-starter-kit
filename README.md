@@ -125,7 +125,7 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
 <tr>
 <td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
 <td width="50%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen that can answer singular or compound questions, with or without math. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. It uses a Corrective RAG team and a Corrective Web Search team. </td>
-<td width="15%"> SambaStudio </td>
+<td width="15%"> Sambaverse, SambaStudio, FastAPI </td>
 <td width="15%"> Advanced AI Capabilities </td>  
 </tr>
 
