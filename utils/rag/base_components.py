@@ -22,6 +22,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.logging_utils import log_method # type: ignore
 
 
 class BaseComponents:
