@@ -41,13 +41,13 @@ def get_stock_database() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_database_query(user_request, query_method)
             if query_method == 'text-to-SQL':
-                content = user_request + '\n\n' + response_dict['message']
+                content = response_dict['message']
             elif query_method == 'PandasAI-SqliteConnector':
-                content = user_request
+                content = ""  # ruff noqa
                 for symbol in list(response_dict):
-                    content += '\n\n' + '\n\n'.join(response_dict[symbol])
+                    content += '\n\n'.join(response_dict[symbol])
 
-            save_output_callback(content, HISTORY_PATH)
+            save_output_callback(content, HISTORY_PATH, user_request)
 
             if streamlit.button(
                 'Save Query',
@@ -75,8 +75,8 @@ def handle_database_creation(
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
-        'Please create a SQL database for the following companies '
-        '(expressed via their ticker symbols): '
+        'Please create a SQL database for the following companies.\n'
+        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
         'and within the following dates.\n' + requested_companies
     )
     user_request += f'\nThe requested dates are from {start_date} to {end_date}'
@@ -103,12 +103,13 @@ def handle_database_query(
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
-        'Please query the SQL database for the following companies '
-        '(expressed via their ticker symbols): '
-        + user_question
+        'Please answer the following query for a given list of companies. ' + user_question + '\n'
+        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
+        f'Please provide an answer after converting the query from natural language to SQL.".\n'
         + 'Use the method: "'
         + query_method
         + '" to generate the response.'
+        'Take your time and reason step by step about the inputs and outputs of each function.\n'
     )
 
     return handle_userinput(user_question, user_request)

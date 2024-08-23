@@ -57,7 +57,8 @@ def get_conversational_response(user_query: str, response_object: str) -> Any:
     )
 
     # The chain
-    conversational_chain = conversational_prompt | streamlit.session_state.fc.llm | conversational_parser
+    # | conversational_parser. TODO: The parser does not work
+    conversational_chain = conversational_prompt | streamlit.session_state.fc.llm
 
     # Get response from the LLM
     response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})

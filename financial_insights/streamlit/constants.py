@@ -17,9 +17,11 @@ HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')
 PDF_GENERATION_DIRECTORY = os.path.join(CACHE_DIR, 'pdf_generation/')
 STOCK_QUERY_PATH = os.path.join(CACHE_DIR, 'stock_query.txt')
 DB_QUERY_PATH = os.path.join(CACHE_DIR, 'db_query.txt')
-YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.txt')
+YFINANCE_NEWS_TXT_PATH = os.path.join(CACHE_DIR, 'yfinance_news.txt')
+YFINANCE_NEWS_CSV_PATH = os.path.join(CACHE_DIR, 'yfinance_news.csv')
 FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
 PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
+WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
 
 # Main source directories
 SOURCE_DIR = os.path.join(CACHE_DIR, 'sources/')

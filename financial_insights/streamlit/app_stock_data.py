@@ -27,36 +27,38 @@ def get_stock_data_analysis() -> None:
     )
     dataframe_name = streamlit.selectbox(
         'Select Data Source:',
-        [
-            'info',
-            'history',
-            'history_metadata',
-            'actions',
-            'dividends',
-            'splits',
-            'capital_gains',
-            'shares',
-            'income_stmt',
-            'quarterly_income_stmt',
-            'balance_sheet',
-            'quarterly_balance_sheet',
-            'cashflow',
-            'quarterly_cashflow',
-            'major_holders',
-            'institutional_holders',
-            'mutualfund_holders',
-            'insider_transactions',
-            'insider_purchases',
-            'insider_roster_holders',
-            'sustainability',
-            'recommendations',
-            'recommendations_summary',
-            'upgrades_downgrades',
-            'earnings_dates',
-            'isin',
-            'options',
-            'news',
-        ],
+        sorted(
+            [
+                'info',
+                'history',
+                'history_metadata',
+                'actions',
+                'dividends',
+                'splits',
+                'capital_gains',
+                'shares',
+                'income_stmt',
+                'quarterly_income_stmt',
+                'balance_sheet',
+                'quarterly_balance_sheet',
+                'cashflow',
+                'quarterly_cashflow',
+                'major_holders',
+                'institutional_holders',
+                'mutualfund_holders',
+                'insider_transactions',
+                'insider_purchases',
+                'insider_roster_holders',
+                'sustainability',
+                'recommendations',
+                'recommendations_summary',
+                'upgrades_downgrades',
+                'earnings_dates',
+                'isin',
+                'options',
+                'news',
+            ],
+        ),
     )
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
@@ -115,16 +117,14 @@ def handle_stock_query(
     streamlit.session_state.tools = [
         'retrieve_symbol_list',
         'get_stock_info',
-        # 'get_conversational_response',
     ]
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'Each company of the list should be replaced by its corresponding ticker symbol.\n'
-        f'Retrieve the company info using the dataframe "{dataframe_name}".\n'
-        'Reformulate the final answer in the form of a conversational response to the user.\n'
-        'Take your time and reason step by step.\n'
+        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
+        f'Please provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
+        'Take your time and reason step by step about the inputs and outputs of each function.\n'
     )
 
     return handle_userinput(user_question, user_request)

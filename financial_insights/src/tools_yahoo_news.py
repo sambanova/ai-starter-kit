@@ -230,15 +230,13 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[
                     for filtered_text in filtered_texts:
                         data.append({'type': 'h3', 'url': link_url, 'text': filtered_text})
 
-            # Only retrieve paragraphs for singular URLs pertaining to given companies
-            if link_url in singular_urls:
-                # Find and extract all <p> paragraphs
-                for p_tag in soup.find_all('p'):
-                    text = clean_text(p_tag.get_text(strip=True))
-                    paragraphs.add(text)
-                    filtered_texts = filter_text(text)
-                    for filtered_text in filtered_texts:
-                        data.append({'type': 'p', 'url': link_url, 'text': filtered_text})
+            # Find and extract all <p> paragraphs
+            for p_tag in soup.find_all('p'):
+                text = clean_text(p_tag.get_text(strip=True))
+                paragraphs.add(text)
+                filtered_texts = filter_text(text)
+                for filtered_text in filtered_texts:
+                    data.append({'type': 'p', 'url': link_url, 'text': filtered_text})
 
             logging.info('News articles have been successfully scraped')
         else:
@@ -257,10 +255,10 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[
     # Save the DataFrame to a CSV file
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
-    df.to_csv(CACHE_DIR + 'yahoo_finance_news.csv', index=False)
+    df.to_csv(YFINANCE_NEWS_CSV_PATH, index=False)
 
     # Save the data to a text file in the specified order
-    with open(CACHE_DIR + 'yahoo_finance_news.txt', 'w') as file:
+    with open(YFINANCE_NEWS_TXT_PATH, 'w') as file:
         if RETRIEVE_HEADLINES:
             file.write('=== Headlines ===\n')
             for item in headlines_list:
@@ -282,13 +280,13 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[
     # Convert the list to a DataFrame
     df_text_url = pandas.DataFrame(data)
     # Save the DataFrame to a CSV file
-    df_text_url.to_csv(CACHE_DIR + 'scraped_data_with_urls.csv', index=False)
+    df_text_url.to_csv(WEB_SCRAPING_PATH, index=False)
 
     logging.info('News from Yahoo Finance successfully extracted and saved.')
 
     # Load the dataframe from the text file
     try:
-        df = pandas.read_csv(CACHE_DIR + 'scraped_data_with_urls.csv')
+        df = pandas.read_csv(WEB_SCRAPING_PATH)
     except FileNotFoundError:
         logging.error('No scraped data found.')
 

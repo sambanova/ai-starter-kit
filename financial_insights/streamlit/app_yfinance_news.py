@@ -30,14 +30,14 @@ def get_yfinance_news() -> None:
                 raise ValueError('No input provided')
 
         if answer is not None:
-            content = user_request + '\n\n' + answer + '\n\n' + '\n'.join(url_list) + '\n\n\n'
+            content = answer + '\n\n'.join(url_list)
 
-            save_output_callback(content, HISTORY_PATH)
+            save_output_callback(content, HISTORY_PATH, user_request)
 
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, YFINANCE_NEWS_PATH),
+                args=(content, HISTORY_PATH, user_request),
             ):
                 pass
 

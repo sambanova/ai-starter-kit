@@ -60,7 +60,7 @@ def save_historical_price_callback(
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    filename = dir_name + f'stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}'
+    filename = dir_name + f"stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}"  # ruff: noqa
 
     # Write the dataframe to a csv file
     data.to_csv(filename + '.csv', index=True)
@@ -81,8 +81,8 @@ def save_output_callback(
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
-    assert isinstance(response, (str, list, dict)), TypeError(
-        'Response must be a string, or a list of strings, or a dictionary.'
+    assert isinstance(response, (str, list, dict, tuple)), TypeError(
+        'Response must be a string, a list, a dictionary, or a tuple.'
     )
     assert isinstance(save_path, str), TypeError('Save path must be a string.')
     assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
@@ -103,15 +103,15 @@ def save_output_callback(
         with open(filename, 'a') as text_file:
             text_file.write('\n\n' + response + '\n\n')
 
-    elif isinstance(response, dict):
-        # Writing the dictionary to a JSON file
+    elif isinstance(response, list):
+        # Writing the list to a JSON file
         with open(filename, 'a') as json_file:
             json_file.write('\n\n')
             json.dump(response, json_file)
             json_file.write('\n\n')
 
-    elif isinstance(response, list):
-        # Writing the list to a JSON file
+    elif isinstance(response, dict):
+        # Writing the dictionary to a JSON file
         with open(filename, 'a') as json_file:
             json_file.write('\n\n')
             json.dump(response, json_file)

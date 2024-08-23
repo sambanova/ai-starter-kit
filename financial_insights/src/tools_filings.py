@@ -147,8 +147,8 @@ def retrieve_filings(
                 # Save chunks to csv
                 df = pandas.DataFrame(chunks, columns=['text'])
                 filename = (
-                    f'filing_id_{filing_type.replace('-', '')}_{filing_quarter}_'
-                    + f'{ticker_symbol}_{report_date.date().year}'
+                    f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"   # ruff: noqa
+                    + f"{ticker_symbol}_{report_date.date().year}"   # ruff: noqa
                 )
                 df.to_csv(CACHE_DIR + filename + '.csv', index=False)
                 break

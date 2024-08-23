@@ -49,20 +49,20 @@ def include_financial_filings() -> None:
                 selected_year,
             )
 
-            # Extract the query from the dictionary
-            query_json = json.dumps(query_dict)
-
             # Compose the query and answer string
-            content = query_json + '\n\n' + user_request + '\n\n' + answer + '\n\n\n'
+            content = ''
+            for symbol in list(query_dict):
+                content += '\n\n' + query_dict[symbol]
+            content += answer
 
             # Save the query and answer to the history text file
-            save_output_callback(content, HISTORY_PATH)
+            save_output_callback(content, HISTORY_PATH, user_request)
 
             # Save the query and answer to the filing text file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, FILINGS_PATH),
+                args=(content, FILINGS_PATH, user_request),
             ):
                 pass
 
@@ -101,12 +101,14 @@ def handle_financial_filings(
 
     # Compose the user request
     user_request = (
-        'You are an expert in the stock market.\n'
-        + f'In order to provide context for the question, please retrieve the given SEC EDGAR '
-        + f'financial filing type: {filing_type} '
-        + f'and filing quarter: {filing_quarter} '
-        + f'for the company {company_name} for the year {selected_year}.\n'
-        + f'The original user question if the following: {user_question}'
+        'Please answer the following query for a given list of companies. ' + user_question + '\n'
+        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
+        'Please provide an answer after retrieving the provided context using RAG.\n'
+        f'In order to provide context for the question, please retrieve the given SEC EDGAR '
+        f'financial filing type: {filing_type} '
+        f'and filing quarter: {filing_quarter} '
+        f'for the company {company_name} for the year {selected_year}.\n'
+        f'The original user question is the following: {user_question}'
     )
 
     # Call the LLM on the user request with the attached tools

@@ -29,9 +29,7 @@ class StockInfoSchema(BaseModel):
 
 
 @tool(args_schema=StockInfoSchema)
-def get_stock_info(
-    user_query: str, symbol_list: List[str] = list(), dataframe_name: Optional[str] = None
-) -> Dict[str, str]:
+def get_stock_info(user_query: str, symbol_list: List[str], dataframe_name: Optional[str] = None) -> Dict[str, str]:
     """
     Return the correct stock information given the appropriate ticker symbol.
 
@@ -53,7 +51,7 @@ def get_stock_info(
     assert any(isinstance(symbol, str) for symbol in symbol_list), TypeError(
         'All elements in the symbol list must be of type string.'
     )
-    assert isinstance(dataframe_name, str) or dataframe_name is None, TypeError(
+    assert isinstance(dataframe_name, str | None), TypeError(
         f'Dataframe name must be a string. Got {(type(dataframe_name))}.'
     )
 

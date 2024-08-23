@@ -94,7 +94,7 @@ def include_pdf_report() -> None:
         data_paths['stock_database'] = DB_QUERY_PATH
     if inlude_yahoo_news:
         # Add data from Yahoo News Analysis
-        data_paths['yfinance_news'] = YFINANCE_NEWS_PATH
+        data_paths['yfinance_news'] = YFINANCE_NEWS_TXT_PATH
     if include_filings:
         # Add data from Financial Filings Analysis
         data_paths['filings'] = FILINGS_PATH
@@ -183,7 +183,7 @@ def include_pdf_report() -> None:
                         disabled=True if file in streamlit.session_state.selected_files else False,
                     ):
                         pass
-            streamlit.write(f'Selected files: {', '.join(streamlit.session_state.selected_files)}')
+            streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")   # ruff: noqa
 
         elif upload_your_pdf and not use_generated_pdf:
             # Add a PDF document for RAG
@@ -394,7 +394,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     user_request = (
         'Please use RAG from the provided PDF file to answer the following question: '
         + user_question
-        + f'\nReport names: {', '.join(report_names)}.'
+        + f"\nReport names: {', '.join(report_names)}."   # ruff: noqa
     )
 
     # Call the LLM on the user request with the attached tools

@@ -143,6 +143,7 @@ class FunctionCalling:
                 'Sambaverse `model_name` must be a string.'
             )
 
+            # Instantiate the LLM
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
                 streaming=True,
