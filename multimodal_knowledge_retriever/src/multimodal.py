@@ -13,6 +13,7 @@ import yaml
 import json
 import uuid
 import time
+import nltk
 import base64
 import requests
 from dotenv import load_dotenv
@@ -26,6 +27,9 @@ from langchain_core.prompts import load_prompt
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import Chroma
 from utils.model_wrappers.api_gateway import APIGateway
+
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
