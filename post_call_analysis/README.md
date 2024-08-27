@@ -134,7 +134,9 @@ If you want to use virtualenv or conda environment
     pip install -r requirements.txt
 ```
 
-2. Run the following command:
+2. Download and install the SambaStudio CLI. Follow [these instructions](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) to install SambaNova SNSDK and SNAPI, (You can omit the Create a virtual environment step because you created a venv in the previous step.)
+
+3. Run the following command:
 
 ```bash
 streamlit run streamlit/app.py --browser.gatherUsageStats false  
