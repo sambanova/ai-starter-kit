@@ -6,14 +6,14 @@ from io import StringIO
 from typing import Any, Callable, Generator, List, Optional, Type, Union
 
 import pandas
-import plotly
 import streamlit
 from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
+from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_insights.src.function_calling import FunctionCalling
-from financial_insights.src.tools import ConversationalResponse, get_conversational_response
+from financial_insights.src.tools import get_conversational_response
 from financial_insights.src.tools_database import create_stock_database, query_stock_database
 from financial_insights.src.tools_filings import retrieve_filings
 from financial_insights.src.tools_pdf_generation import pdf_rag
@@ -62,7 +62,7 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
 
 def attach_tools(
     tools: Optional[List[str]] = None,
-    default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = ConversationalResponse,
+    default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
 ) -> None:
     """
     Attach the tools to the streamit session for the LLM to use.
@@ -73,7 +73,7 @@ def attach_tools(
     if tools is not None:
         set_tools = [TOOLS[name] for name in tools]
     else:
-        set_tools = [ConversationalResponse]
+        set_tools = [default_tool]
     streamlit.session_state.fc = FunctionCalling(tools=set_tools, default_tool=default_tool)
 
 
@@ -94,12 +94,12 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
             )
 
     streamlit.session_state.chat_history.append(user_question)
-    streamlit.session_state.chat_history.append(save_response_object(response, stream_response=False))
+    streamlit.session_state.chat_history.append(response)
 
     with streamlit.chat_message('user'):
         streamlit.write(f'{user_question}')
 
-    save_response_object(response, stream_response=True)
+    stream_response_object(response, stream_response=True)
 
     return response
 
@@ -112,23 +112,11 @@ def stream_chat_history() -> None:
         with streamlit.chat_message('user'):
             streamlit.write(question)
 
-        save_response_object(answer, stream_response=True)
+        stream_response_object(answer, stream_response=True)
 
 
-def save_response_object(response: Any, stream_response: bool = False) -> Any:
-    # Convert JSON string to dictionary
-    try:
-        # Try to convert the string to a dictionary
-        response_dict = json.loads(response)
-        # Check if the result is a dictionary
-        if isinstance(response_dict, dict):
-            response = response_dict
-
-    except (json.JSONDecodeError, TypeError):
-        # If JSON decoding fails, return the original string
-        pass
-
-    if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
+def stream_response_object(response: Any, stream_response: bool = False) -> Any:
+    if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
         return stream_complex_response(response, stream_response)
 
     elif isinstance(response, list) or isinstance(response, dict):
@@ -144,7 +132,7 @@ def save_response_object(response: Any, stream_response: bool = False) -> Any:
 
 
 def stream_complex_response(response: Any, stream_response: bool = False) -> Any:
-    if isinstance(response, (str, float, int, plotly.graph_objs.Figure, pandas.DataFrame)):
+    if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
         if stream_response:
             stream_single_response(response)
 
@@ -199,11 +187,11 @@ def stream_single_response(response: Any) -> None:
                         streamlit.image(image, use_column_width=True)
 
     # If response is a figure
-    elif isinstance(response, plotly.graph_objs.Figure):
+    elif isinstance(response, Figure):
         # Display the image
         # streamlit.image(response, use_column_width=True)
         # Show the figure
-        streamlit.plotly_chart(response, use_container_width=True)
+        streamlit.pyplot(response)
 
     # If response is a dataframe, display its head
     elif isinstance(response, pandas.DataFrame):

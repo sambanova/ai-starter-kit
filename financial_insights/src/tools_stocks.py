@@ -5,18 +5,22 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
-import plotly
-import plotly.graph_objects as go
 import requests  # type: ignore
 import streamlit
 import yfinance
-from fuzzywuzzy import fuzz
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
+
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
+from matplotlib import dates as mdates
+from matplotlib import pyplot
+from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
-from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
 from financial_insights.streamlit.constants import *
 
 
@@ -24,12 +28,20 @@ class StockInfoSchema(BaseModel):
     """Return the correct stock information given the appropriate ticker symbol."""
 
     user_query: str = Field('User query to retrieve stock information.')
-    symbol_list: List[str] = Field('List of stock ticker symbols.')
+    symbol_list: List[str] | str = Field('List of stock ticker symbols.')
     dataframe_name: Optional[str] = Field('Name of the dataframe to be used.')
 
 
+class TickerSymbol(BaseModel):
+    """The ticker symbol of the company"""
+
+    symbol: str = Field('The ticker symbol of the company')
+
+
 @tool(args_schema=StockInfoSchema)
-def get_stock_info(user_query: str, symbol_list: List[str], dataframe_name: Optional[str] = None) -> Dict[str, str]:
+def get_stock_info(
+    user_query: str, symbol_list: List[str] | str, dataframe_name: Optional[str] = None
+) -> Dict[str, str]:
     """
     Return the correct stock information given the appropriate ticker symbol.
 
@@ -47,8 +59,14 @@ def get_stock_info(user_query: str, symbol_list: List[str], dataframe_name: Opti
     """
     # Checks the inputs
     assert isinstance(user_query, str), TypeError(f'User query must be of type string. Got {(type(user_query))}.')
-    assert isinstance(symbol_list, list), TypeError(f'Symbol list must be of type list. Got {(type(symbol_list))}.')
-    assert any(isinstance(symbol, str) for symbol in symbol_list), TypeError(
+    assert isinstance(symbol_list, (list, str)), TypeError(
+        f'Symbol list must be of type list or string. Got {(type(symbol_list))}.'
+    )
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    symbol_list = coerce_str_to_list(symbol_list)
+
+    assert all(isinstance(symbol, str) for symbol in symbol_list), TypeError(
         'All elements in the symbol list must be of type string.'
     )
     assert isinstance(dataframe_name, str | None), TypeError(
@@ -137,88 +155,37 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
 class RetrievalCompanyNameSchema(BaseModel):
     """Retrieve a list of company names."""
 
-    company_names_list: List[str] = Field('List of company names to retrieve from the query.')
-    user_query: str = Field(
-        'User query or quantities to search for company names. If you cannot retrieve it, return an empty string.',
-    )
-
-
-def is_similar_string(sub_string: Optional[str], string: Optional[str], threshold: int = 80) -> bool:
-    """Checks if two strings are similar.
-
-    Returns the similarity between two strings, of which the first argument is a substring of the second.
-
-    Args:
-        sub_string: Substring to be compared with.
-        string: String to be compared.
-        threshold: Threshold to compare the similarity between two strings.
-
-    Returns:
-        The similarity between two strings: True if the similarity is greater than threshold; False otherwise.
-
-    Raises:
-        TypeError: If the `sub_string` or `string` is not of type string, or if `threshold` is not an integer.
-        ValueError: If the `threshold` is not between 0 and 100.
-    """
-    # Check inputs
-    assert isinstance(sub_string, str), TypeError(f'Sub-string must be a string. Got {type(sub_string)}.')
-    assert isinstance(string, str), TypeError(f'String must be a string. Got {type(string)}.')
-    assert isinstance(threshold, int), TypeError('Threshold must be an integer.')
-    assert threshold > 0 and threshold < 100, ValueError(f'Threshold must be between 1 and 100. Got {threshold}.')
-
-    # Check similarity
-    if sub_string is not None and string is not None and len(string) > 0 and len(sub_string) > 0:
-        ratio = fuzz.partial_ratio(sub_string.lower(), string.lower())
-        if isinstance(ratio, (int, float)):
-            return ratio >= threshold
-    return False
-
-
-def get_ticker_by_title(json_data: Dict[str, Dict[str, str]], company_title: str) -> Optional[str]:
-    """
-    Retrieve a ticker by company title.
-
-    Args:
-        json_data: JSON data to search through.
-        company_title: Company name to search for in the JSON file.
-
-    Returns:
-        Ticker of company if found, else returns none.
-
-    Raises:
-        TypeError: If the `json_data` is not of type dict or if `company_title` is not of type string.
-    """
-    # Check inputs
-    assert isinstance(json_data, dict), TypeError(f'JSON data must be a dictionary. Got {type(json_data)}.')
-    assert isinstance(company_title, str), TypeError(f'Company title must be a string. Got {type(company_title)}.')
-
-    # Extract ticker from JSON data
-    for key, value in json_data.items():
-        if is_similar_string(company_title, value.get('title')) or is_similar_string(value.get('title'), company_title):
-            return value.get('ticker')
-    return None
+    company_names_list: List[str] | str = Field('List of company names to retrieve from the query.')
 
 
 @tool(args_schema=RetrievalCompanyNameSchema)
-def retrieve_symbol_list(company_names_list: List[str], user_query: str) -> Tuple[List[Optional[str]], str]:
+def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> Optional[List[str]]:
     """
     Retrieve a list of ticker symbols.
 
     Args:
         company_names_list: List of company names to search for in the JSON file.
-        user_query: User query to answer.
 
     Returns:
         Tuple of a list of ticker symbols and the user query.
 
     Raises:
-        TypeError: If `company_names_list` is not of type list or if `user_query` is not of type string.
+        TypeError: If `company_names_list` is not of type list or string.
     """
     # Check inputs
-    assert isinstance(company_names_list, list), TypeError(
-        f'Company names must be a list of strings. Got {type(company_names_list)}.'
+    assert isinstance(company_names_list, (list, str)), TypeError(
+        f'company_names_list` names must be a list of strings. Got {type(company_names_list)}.'
     )
-    assert isinstance(user_query, str), TypeError(f'User query must be a string. Got {type(user_query)}.')
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    company_names_list = coerce_str_to_list(company_names_list)
+
+    if len(company_names_list) == 0:
+        return list()
+
+    assert all([isinstance(name, str) for name in company_names_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
+    )
 
     # URL to the JSON file
     url = 'https://www.sec.gov/files/company_tickers.json'
@@ -250,10 +217,29 @@ def retrieve_symbol_list(company_names_list: List[str], user_query: str) -> Tupl
 
     # Iterate over the JSON data to extract ticker symbols
     for company in company_names_list:
-        ticker = get_ticker_by_title(data, company)
-        symbol_list.append(ticker)
+        # The prompt template
+        prompt_template_symbol = (
+            'What is the ticker symbol for {company}?\n' 'Format instructions: {format_instructions}'
+        )
 
-    return symbol_list, user_query
+        # The parser
+        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)
+
+        # The prompt
+        prompt_symbol = PromptTemplate(
+            template=prompt_template_symbol,
+            input_variables=['company'],
+            partial_variables={'format_instructions': parser_symbol.get_format_instructions()},
+        )
+
+        # The chain
+        chain_symbol = prompt_symbol | streamlit.session_state.fc.llm | parser_symbol
+
+        # Invoke the chain to derive the ticker symbol of the company
+        symbol = chain_symbol.invoke(company).symbol
+        symbol_list.append(symbol)
+
+    return list(set(symbol_list))
 
 
 class RetrievalSymbolQuantitySchema(BaseModel):
@@ -266,8 +252,8 @@ class RetrievalSymbolQuantitySchema(BaseModel):
     If you can't retrieve the quantity, use 'Close'.
     """
 
-    symbol_list: List[str] = Field('List of stock ticker symbols', example=['AAPL', 'MSFT'])
-    quantity: str = Field('Quantity to analize', example=['Open', 'Close'])
+    symbol_list: List[str] = Field('List of stock ticker symbols', examples=['AAPL', 'MSFT'])
+    quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
 
 
 @tool(args_schema=RetrievalSymbolQuantitySchema)
@@ -281,7 +267,7 @@ class HistoricalPriceSchema(BaseModel):
     """Fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
 
     symbol_list: List[str] = Field('List of stock ticker symbol.')
-    quantity: str = Field('Quantity to analize', example=['Open', 'Close'])
+    quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
     end_date: datetime.date = Field(
         'Typically today unless a specific end date is provided. End date MUST be greater than start date.'
     )
@@ -329,44 +315,49 @@ def get_historical_price(
     return fig, data_price, symbol_list
 
 
-def plot_price_over_time(data_close: pandas.DataFrame) -> plotly.graph_objs.Figure:
+def plot_price_over_time(data_close: pandas.DataFrame) -> Figure:
     """Plot the historical data over time."""
 
     full_df = pandas.DataFrame(columns=['Date'])
     for column in data_close:
         full_df = full_df.merge(data_close[column], on='Date', how='outer')
 
-    # Create a Plotly figure
-    fig = go.Figure()
+    # Create a matplotlib figure
+    fig, ax = pyplot.subplots(figsize=(12, 6))
 
-    # Dynamically add a trace for each stock symbol in the DataFrame
+    # Dynamically plot each stock symbol in the DataFrame
     for column in full_df.columns[1:]:  # Skip the first column since it's the date
-        fig.add_trace(go.Scatter(x=full_df['Date'], y=full_df[column], mode='lines+markers', name=column))
+        ax.plot(full_df['Date'], full_df[column], label=column, marker='o', markersize=2, linestyle='-', linewidth=1.5)
 
-    # Update the layout to add titles and format axis labels
-    fig.update_layout(
-        title='Stock Price Over Time: ' + ', '.join(full_df.columns.tolist()[1:]),
-        xaxis_title='Date',
-        yaxis_title='Stock Price (USD)',
-        yaxis_tickprefix='$',
-        yaxis_tickformat=',.2f',
-        xaxis=dict(
-            tickangle=-45,
-            nticks=20,
-            tickfont=dict(size=10),
-        ),
-        yaxis=dict(
-            showgrid=True,  # Enable y-axis grid lines
-            gridcolor='lightgrey',  # Set grid line color
-        ),
-        legend_title_text='Stock Symbol',
-        plot_bgcolor='gray',  # Set plot background to white
-        paper_bgcolor='gray',  # Set overall figure background to white
-        legend=dict(
-            bgcolor='gray',  # Optional: Set legend background to white
-            bordercolor='black',
-        ),
-    )
+    # Set title and labels
+    ax.set_title('Stock Price Over Time: ' + ', '.join(full_df.columns.tolist()[1:]))
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Stock Price (USD)')
 
-    # Return plot
+    from matplotlib.ticker import FuncFormatter
+
+    # Format y-axis ticks
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: f'${x:,.2f}'))
+
+    # Format x-axis
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())  # type: ignore
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # type: ignore
+
+    # Rotate and align the tick labels so they look better
+    pyplot.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+
+    # Add grid
+    ax.grid(True, axis='x', linestyle='--', alpha=0.7)
+    ax.grid(True, axis='y', linestyle='--', alpha=0.7)
+
+    # Customize colors
+    ax.set_facecolor('lightgray')
+    fig.patch.set_facecolor('lightgray')
+
+    # Add legend
+    ax.legend(title='Stock Symbol', loc='upper left', bbox_to_anchor=(1, 1))
+
+    # Adjust layout to prevent cutting off labels
+    pyplot.tight_layout()
+
     return fig

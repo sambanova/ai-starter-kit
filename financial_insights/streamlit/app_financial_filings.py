@@ -1,5 +1,4 @@
-import json
-from typing import Optional, Tuple
+from typing import Optional
 
 import streamlit
 
@@ -19,8 +18,8 @@ def include_financial_filings() -> None:
     )
 
     # User request
-    user_request = streamlit.text_input('Enter your query:', key='financial-filings')
-    company_name = streamlit.text_input('Company name (optional if in the query already)')
+    user_request = streamlit.text_input(r'$\textsf{\normalsize Enter your query:}$', key='financial-filings')
+    company_name = streamlit.text_input(r'$\textsf{\normalsize Company name (optional if in the query already)}$')
     # Define the range of years
     start_year = 2020
     end_year = 2024
@@ -41,7 +40,7 @@ def include_financial_filings() -> None:
     if streamlit.button('Analyze Filing'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             # Call the function to analyze the financial filing
-            answer, query_dict = handle_financial_filings(
+            answer = handle_financial_filings(
                 user_request,
                 company_name,
                 filing_type,
@@ -49,20 +48,14 @@ def include_financial_filings() -> None:
                 selected_year,
             )
 
-            # Compose the query and answer string
-            content = ''
-            for symbol in list(query_dict):
-                content += '\n\n' + query_dict[symbol]
-            content += answer
-
             # Save the query and answer to the history text file
-            save_output_callback(content, HISTORY_PATH, user_request)
+            save_output_callback(answer, HISTORY_PATH, user_request)
 
             # Save the query and answer to the filing text file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, FILINGS_PATH, user_request),
+                args=(answer, FILINGS_PATH, user_request),
             ):
                 pass
 
@@ -73,7 +66,7 @@ def handle_financial_filings(
     filing_type: Optional[str] = '10-K',
     filing_quarter: Optional[int] = 0,
     selected_year: Optional[int] = 2023,
-) -> Tuple[str, str]:
+) -> str:
     """
     Handle the user request for financial filing data.
 
@@ -102,8 +95,8 @@ def handle_financial_filings(
     # Compose the user request
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
-        'Please provide an answer after retrieving the provided context using RAG.\n'
+        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
+        'Then provide an answer after retrieving the provided context using RAG.\n'
         f'In order to provide context for the question, please retrieve the given SEC EDGAR '
         f'financial filing type: {filing_type} '
         f'and filing quarter: {filing_quarter} '
@@ -115,11 +108,6 @@ def handle_financial_filings(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert (
-        isinstance(response, tuple)
-        and len(response) == 2
-        and isinstance(response[0], str)
-        and isinstance(response[1], dict)
-    ), f'Invalid response: {response}'
+    assert isinstance(response, str), f'Invalid response: {response}'
 
     return response

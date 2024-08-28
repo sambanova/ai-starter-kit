@@ -9,7 +9,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 from financial_insights.src.function_calling import FunctionCalling
 from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_output_callback
+from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
 from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
 logging.basicConfig(level=logging.INFO)
@@ -46,32 +46,32 @@ def include_pdf_report() -> None:
 
     with cols[0]:
         include_stock = streamlit.checkbox(
-            'Include saved stock queries',
+            r'$\textsf{\normalsize Include saved stock queries}$',
             key='checkbox_include_stock',
             value=False,
             on_change=check_inclusions,
         )
         include_database = streamlit.checkbox(
-            'Include saved stock database queries',
+            r'$\textsf{\normalsize Include saved stock database queries}$',
             key='checkbox_include_database',
             value=False,
             on_change=check_inclusions,
         )
         inlude_yahoo_news = streamlit.checkbox(
-            'Include saved Yahoo News queries',
+            r'$\textsf{\normalsize Include saved Yahoo News queries}$',
             key='checkbox_include_yahoo_news',
             value=False,
             on_change=check_inclusions,
         )
         include_filings = streamlit.checkbox(
-            'Include saved financial filings queries',
+            r'$\textsf{\normalsize Include saved financial filings queries}$',
             key='checkbox_include_filings',
             value=False,
             on_change=check_inclusions,
         )
     with cols[1]:
         include_pdf_rag = streamlit.checkbox(
-            'Include saved PDF report queries',
+            r'$\textsf{\normalsize Include saved PDF report queries}$',
             key='checkbox_include_pdf_rag',
             value=False,
             on_change=check_inclusions,
@@ -79,7 +79,7 @@ def include_pdf_report() -> None:
         # Add a vertical space
         streamlit.text('\n' * 3)
         generate_from_history = streamlit.checkbox(
-            'Generate from the whole chat history',
+            r'$\textsf{\normalsize Generate from the whole chat history}$',
             key='checkbox_generate_from_history',
             value=False,
             on_change=check_generate_from_history,
@@ -94,7 +94,7 @@ def include_pdf_report() -> None:
         data_paths['stock_database'] = DB_QUERY_PATH
     if inlude_yahoo_news:
         # Add data from Yahoo News Analysis
-        data_paths['yfinance_news'] = YFINANCE_NEWS_TXT_PATH
+        data_paths['yfinance_news'] = YFINANCE_NEWS_PATH
     if include_filings:
         # Add data from Financial Filings Analysis
         data_paths['filings'] = FILINGS_PATH
@@ -109,14 +109,17 @@ def include_pdf_report() -> None:
         data_paths['history'] = HISTORY_PATH
 
     # Add title name (optional)
-    title_name = streamlit.text_input('Title Name', 'Financial Report')
+    title_name = streamlit.text_input(r'$\textsf{\normalsize Title Name}$', 'Financial Report')
 
     # Include summary for each section
     include_summary = streamlit.checkbox(
-        'Include summary from each section', key='checkbox_summary', value=False, help='This will take longer!'
+        r'$\textsf{\normalsize Include summary from each section}$',
+        key='checkbox_summary',
+        value=False,
+        help='This will take longer!',
     )
     if include_summary:
-        streamlit.write(':red[Warning: This will take longer!]')
+        streamlit.write(r':red[Warning: This will take longer!]')
 
     # Generate the report
     if streamlit.button('Generate Report'):
@@ -147,7 +150,7 @@ def include_pdf_report() -> None:
 
     # Use the previously generated PDF reports
     use_generated_pdf = streamlit.checkbox(
-        'Use generated PDF',
+        r'$\textsf{\normalsize Use generated PDF}$',
         key='checkbox_use_generated_pdf',
         value=False,
         on_change=check_use_generated_pdf,
@@ -155,7 +158,7 @@ def include_pdf_report() -> None:
 
     # Upload your own PDF reports
     upload_your_pdf = streamlit.checkbox(
-        'Upload your PDF',
+        r'$\textsf{\normalsize Upload your PDF}$',
         key='checkbox_upload_your_pdf',
         value=False,
         on_change=check_upload_your_pdf,
@@ -183,7 +186,7 @@ def include_pdf_report() -> None:
                         disabled=True if file in streamlit.session_state.selected_files else False,
                     ):
                         pass
-            streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")   # ruff: noqa
+            streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")
 
         elif upload_your_pdf and not use_generated_pdf:
             # Add a PDF document for RAG
@@ -297,10 +300,15 @@ def handle_pdf_generation(
     # Initialize the function calling object
     streamlit.session_state.fc = FunctionCalling()
 
+    # Clean the sources directory if it exists
+    if os.path.exists(PDF_SOURCES_DIRECTORY):
+        clear_directory(PDF_SOURCES_DIRECTORY)
+
     # Derive the output file name
     output_file = PDF_GENERATION_DIRECTORY + report_name
 
-    # Ensure the destination directory exists
+    # Ensure the sources and the destination directory exists
+    os.makedirs(PDF_SOURCES_DIRECTORY, exist_ok=True)
     os.makedirs(PDF_GENERATION_DIRECTORY, exist_ok=True)
 
     # Check that at least one data source is available
@@ -311,7 +319,7 @@ def handle_pdf_generation(
 
     for source_file in data_paths.values():
         # Create the full path for the destination file
-        destination_file = os.path.join(PDF_GENERATION_DIRECTORY, os.path.basename(source_file))
+        destination_file = os.path.join(PDF_SOURCES_DIRECTORY, os.path.basename(source_file))
 
         try:
             # Copy selected document to pdf generation directory
@@ -322,7 +330,7 @@ def handle_pdf_generation(
             logging.error('Error while copying file', exc_info=True)
 
     # Extract the documents from the selected files
-    documents = read_txt_files(PDF_GENERATION_DIRECTORY)
+    documents = read_txt_files(PDF_SOURCES_DIRECTORY)
 
     # Parse the documents into a list of tuples of text and figure paths
     report_content = parse_documents(documents)
@@ -394,7 +402,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     user_request = (
         'Please use RAG from the provided PDF file to answer the following question: '
         + user_question
-        + f"\nReport names: {', '.join(report_names)}."   # ruff: noqa
+        + f"\nReport names: {', '.join(report_names)}."
     )
 
     # Call the LLM on the user request with the attached tools

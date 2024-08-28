@@ -1,15 +1,17 @@
 import datetime
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional
 
 import pandas
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain.schema import Document
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.tools import tool
+
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
@@ -20,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-MAX_CHUNK_SIZE = 256
+
 RETRIEVE_HEADLINES = False
 
 
@@ -43,7 +45,7 @@ def retrieve_filings(
     filing_type: str,
     filing_quarter: int,
     year: int,
-) -> Tuple[Any, Dict[str, str]]:
+) -> str:
     """
     Retrieve the text of a financial filing from SEC Edgar and then answer the original user question.
 
@@ -57,8 +59,7 @@ def retrieve_filings(
 
     Returns:
         A tuple of the following elements:
-            - The answer to the user question.
-            - A dictionary of metadata about the retrieval, with the following keys:
+            - The answer to the user question, preceded by the information about the retrieval:
                 `filing_type`, `filing_quarter`, `ticker_symbol`, and `report_date`.
 
     Raises:
@@ -135,20 +136,28 @@ def retrieve_filings(
                 text = soup.get_text(separator=' ', strip=True)
 
                 # Instantiate the text splitter
-                splitter = CharacterTextSplitter(
+                splitter = RecursiveCharacterTextSplitter(
                     chunk_size=MAX_CHUNK_SIZE,
-                    chunk_overlap=64,
-                    separator=r'[.!?]',
+                    chunk_overlap=CHUNK_OVERLAP,
+                    length_function=len,
+                    separators=[
+                        r'\n\n',  # Split on double newlines (paragraphs)
+                        r'(?<=[.!?])\s+(?=[A-Z])',  # Split on sentence boundaries
+                        r'\n',  # Split on single newlines
+                        r'\s+',  # Split on whitespace
+                        r'',  # Split on characters as a last resort
+                    ],
                     is_separator_regex=True,
                 )
+
                 # Split the text into chunks
                 chunks = splitter.split_text(text)
 
                 # Save chunks to csv
                 df = pandas.DataFrame(chunks, columns=['text'])
                 filename = (
-                    f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"   # ruff: noqa
-                    + f"{ticker_symbol}_{report_date.date().year}"   # ruff: noqa
+                    f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"
+                    + f'{ticker_symbol}_{report_date.date().year}'
                 )
                 df.to_csv(CACHE_DIR + filename + '.csv', index=False)
                 break
@@ -185,4 +194,10 @@ def retrieve_filings(
         'ticker_symbol': ticker_symbol,
         'report_date': report_date.date().year,
     }
-    return response['answer'], query_dict
+
+    answer = (
+        'Filing type: {filing_type},\nFiling quarter: {filing_quarter},\n'
+        'Ticker symbol: {ticker_symbol},\nYear of filing: {report_date}'.format(**query_dict)
+    )
+    answer += '\n\n' + response['answer']
+    return answer

@@ -1,8 +1,8 @@
 from typing import Any, List, Optional, Tuple
 
 import pandas
-import plotly
 import streamlit
+from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
 from financial_insights.streamlit.constants import *
@@ -64,8 +64,10 @@ def get_stock_data_analysis() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_stock_query(user_request, dataframe_name)
 
+            # Save the output to the history file
             save_output_callback(response_dict, HISTORY_PATH, user_request)
 
+            # Save the output to the stock query file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
@@ -122,8 +124,8 @@ def handle_stock_query(
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
-        f'Please provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
+        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
+        f'Then provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
         'Take your time and reason step by step about the inputs and outputs of each function.\n'
     )
 
@@ -132,7 +134,7 @@ def handle_stock_query(
 
 def handle_stock_data_analysis(
     user_question: str, start_date: DateWidgetReturn, end_date: DateWidgetReturn
-) -> Tuple[pandas.DataFrame, plotly.graph_objs.Figure, List[str]]:
+) -> Tuple[pandas.DataFrame, Figure, List[str]]:
     """
     Handle user input and generate a response, also update chat UI in streamlit app
 
@@ -152,9 +154,10 @@ def handle_stock_data_analysis(
     )
     if start_date is not None or end_date is not None:
         user_request = (
-            'Please fetch the following market information for the following stocks '
-            '(expressed via their ticker symbols) '
-            'and within the following dates.\n' + user_question
+            'Please fetch the following market information for a given list of companies '
+            'and within the following dates.\n'
+            'First retrieve the list of ticker symbols from the list of company names within the query.\n'
+            + user_question
         )
         user_request += f'\nThe requested dates are from {start_date} to {end_date}'
 
@@ -163,7 +166,7 @@ def handle_stock_data_analysis(
     assert (
         isinstance(response, tuple)
         and len(response) == 3
-        and isinstance(response[0], plotly.graph_objs.Figure)
+        and isinstance(response[0], Figure)
         and isinstance(response[1], pandas.DataFrame)
         and isinstance(response[2], list)
         and all([isinstance(i, str) for i in response[2]])

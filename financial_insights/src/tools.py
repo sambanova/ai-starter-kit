@@ -1,14 +1,18 @@
+import ast
 import datetime
 import json
-from typing import Any, Dict, Optional, Union
+import logging
+from typing import Any, Dict, List, Optional, Union
 
 import pandas
 import streamlit
 import yfinance
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
+
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
 
 from financial_insights.streamlit.constants import *
 
@@ -29,24 +33,21 @@ class FinalConversationalResponse(BaseModel):
 
 
 @tool(args_schema=FinalConversationalResponse)
-def get_conversational_response(user_query: str, response_object: str) -> Any:
+def get_conversational_response(user_query: str, response_object: Any) -> Any:
     """Turn a response in a conversational format of the same language as the user query."""
 
     # The output parser
-    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)  # type: ignore
+    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)
 
     # Convert object to string
     response_string = json.dumps(response_object)
-    # Clear all special characters
-    response_string = response_string.replace('"', '')
-    response_string = response_string.replace('\n', '')
 
     # The prompt template
     conversational_prompt_template = (
         'Here is the user request:\n{user_query}\n'
         + 'Here is the response object:\n{response_string}\n'
         + 'Please rephrase and return the response object in a conversational, but formal style. '
-        'Just return the conversational answer without any preamble.'
+        'Format instructions: {format_instructions}.'
     )
 
     # The prompt
@@ -57,12 +58,11 @@ def get_conversational_response(user_query: str, response_object: str) -> Any:
     )
 
     # The chain
-    # | conversational_parser. TODO: The parser does not work
-    conversational_chain = conversational_prompt | streamlit.session_state.fc.llm
+    conversational_chain = conversational_prompt | streamlit.session_state.fc.llm | conversational_parser
 
     # Get response from the LLM
-    response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
-    response = response.replace(' \n', '')
+    response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
+
     return response
 
 
@@ -89,74 +89,187 @@ def extract_yfinance_data(
     assert isinstance(end_date, datetime.date), TypeError('End date must be of type datetime.date.')
 
     # Extract the data from Yahoo Finance for the given ticker symbol
+
     company = yfinance.Ticker(ticker=symbol)
 
     # Initialize the return dictionary
     company_dict = dict()
 
     # Get all the stock information
-    company_dict['info'] = company.info
+    try:
+        company_dict['info'] = company.info
+    except:
+        logging.warning('Could not retrieve the `info` dataframe.')
 
     # Get historical market data
-    company_dict['history'] = company.history(start=start_date, end=end_date)
+    try:
+        company_dict['history'] = company.history(start=start_date, end=end_date)
+    except:
+        logging.warning('Could not retrieve the `history` dataframe.')
 
     # Get meta information about the history (requires history() to be called first)
     company_dict['history_metadata'] = company.history_metadata
 
-    # Get actions (dividends, splits, capital gains)
-    company_dict['actions'] = company.actions
-    company_dict['dividends'] = company.dividends
-    company_dict['splits'] = company.splits
-    company_dict['capital_gains'] = company.capital_gains  # only for mutual funds & etfs
+    # Get actions
+    try:
+        company_dict['actions'] = company.actions
+    except:
+        logging.warning('Could not retrieve the `actions` dataframe.')
+
+    # Get dividends
+    try:
+        company_dict['dividends'] = company.dividends
+    except:
+        logging.warning('Could not retrieve the `dividends` dataframe.')
+
+    # Get splits
+    try:
+        company_dict['splits'] = company.splits
+    except:
+        logging.warning('Could not retrieve the `splits` dataframe.')
+
+    # Get capital gains
+    try:
+        company_dict['capital_gains'] = company.capital_gains  # only for mutual funds & etfs
+    except:
+        logging.warning('Could not retrieve the `capital gains` dataframe.')
 
     # Get share count
-    company_dict['shares'] = company.get_shares_full(start=start_date, end=end_date)
+    try:
+        company_dict['shares'] = company.get_shares_full(start=start_date, end=end_date)
+    except:
+        logging.warning('Could not retrieve the `shares` dataframe.')
 
-    # Get financials:
-    # Income statement
-    company_dict['income_stmt'] = convert_index_to_column(company.income_stmt.T, 'Date')
-    company_dict['quarterly_income_stmt'] = convert_index_to_column(company.quarterly_income_stmt.T, 'Date')
-    # Balance sheet
-    company_dict['balance_sheet'] = convert_index_to_column(company.balance_sheet.T, 'Date')
-    company_dict['quarterly_balance_sheet'] = convert_index_to_column(company.quarterly_balance_sheet.T, 'Date')
-    # Cash flow statement
-    company_dict['cashflow'] = convert_index_to_column(company.cashflow.T, 'Date')
-    company_dict['quarterly_cashflow'] = convert_index_to_column(company.quarterly_cashflow.T, 'Date')
+    # Get financials
+    # Get income statement
+    try:
+        company_dict['income_stmt'] = convert_index_to_column(company.income_stmt.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `income_stmt` dataframe.')
+
+    # Get quarterly income statement
+    try:
+        company_dict['quarterly_income_stmt'] = convert_index_to_column(company.quarterly_income_stmt.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `quarterly_income_stmt` dataframe.')
+
+    # Get balance sheet
+    try:
+        company_dict['balance_sheet'] = convert_index_to_column(company.balance_sheet.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `balance_sheet` dataframe.')
+
+    # Get quarterly balance sheet
+    try:
+        company_dict['quarterly_balance_sheet'] = convert_index_to_column(company.quarterly_balance_sheet.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `quarterly_balance_sheet` dataframe.')
+
+    # Get cash flow statement
+    try:
+        company_dict['cashflow'] = convert_index_to_column(company.cashflow.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `cashflow` dataframe.')
+
+    # Get quarterly cash flow
+    try:
+        company_dict['quarterly_cashflow'] = convert_index_to_column(company.quarterly_cashflow.T, 'Date')
+    except:
+        logging.warning('Could not retrieve the `quarterly_cashflow` dataframe.')
     # see `Ticker.get_income_stmt()` for more options
 
-    # Show holders
-    company_dict['major_holders'] = company.major_holders
-    company_dict['institutional_holders'] = company.institutional_holders
-    company_dict['mutualfund_holders'] = company.mutualfund_holders
-    company_dict['insider_transactions'] = company.insider_transactions
-    company_dict['insider_purchases'] = company.insider_purchases
-    company_dict['insider_roster_holders'] = company.insider_roster_holders
+    # Get major holders
+    try:
+        company_dict['major_holders'] = company.major_holders
+    except:
+        logging.warning('Could not retrieve the `major_holders` dataframe.')
+
+    # Get institutional holders
+    try:
+        company_dict['institutional_holders'] = company.institutional_holders
+    except:
+        logging.warning('Could not retrieve the `institutional_holders` dataframe.')
+
+    # Get mutual fund holders
+    try:
+        company_dict['mutualfund_holders'] = company.mutualfund_holders
+    except:
+        logging.warning('Could not retrieve the `mutualfund_holders` dataframe.')
+
+    # Get insider transactions
+    try:
+        company_dict['insider_transactions'] = company.insider_transactions
+    except:
+        logging.warning('Could not retrieve the `insider_transactions` dataframe.')
+
+    # Get insider purchases
+    try:
+        company_dict['insider_purchases'] = company.insider_purchases
+    except:
+        logging.warning('Could not retrieve the `insider_purchases` dataframe.')
+
+    # Get insider sales
+    try:
+        company_dict['insider_roster_holders'] = company.insider_roster_holders
+    except:
+        logging.warning('Could not retrieve the `insider_roster_holders` dataframe.')
 
     # Get sustainability
-    company_dict['sustainability'] = company.sustainability
+    try:
+        company_dict['sustainability'] = company.sustainability
+    except:
+        logging.warning('Could not retrieve the `sustainability` dataframe.')
 
     # Get recommendations
-    company_dict['recommendations'] = company.recommendations
-    company_dict['recommendations_summary'] = company.recommendations_summary
-    company_dict['upgrades_downgrades'] = company.upgrades_downgrades
+    try:
+        company_dict['recommendations'] = company.recommendations
+    except:
+        logging.warning('Could not retrieve the `recommendations` dataframe.')
+
+    # Get recommendations summary
+    try:
+        company_dict['recommendations_summary'] = company.recommendations_summary
+    except:
+        logging.warning('Could not retrieve the `recommendations` dataframe.')
+
+    # Get upgrades downgrades
+    try:
+        company_dict['upgrades_downgrades'] = company.upgrades_downgrades
+    except:
+        logging.warning('Could not retrieve the `upgrades_downgrades` dataframe.')
 
     # Get future and historic earnings dates, returns at most next 4 quarters and last 8 quarters by default.
     # Note: If more are needed use company.get_earnings_dates(limit=XX) with increased limit argument.
-    company_dict['earnings_dates'] = company.earnings_dates
+    try:
+        company_dict['earnings_dates'] = company.earnings_dates
+    except:
+        logging.warning('Could not retrieve the `earnings_dates` dataframe.')
 
     # Get ISIN code - *experimental*
     # ISIN = International Securities Identification Number
-    company_dict['isin'] = company.isin
+    try:
+        company_dict['isin'] = company.isin
+    except:
+        logging.warning('Could not retrieve the `isin` dataframe.')
 
     # Get options expirations
-    company_dict['options'] = company.options
+    try:
+        company_dict['options'] = company.options
+    except:
+        logging.warning('Could not retrieve the `options` dataframe.')
 
     # Get news
-    company_dict['news'] = company.news
+    try:
+        company_dict['news'] = company.news
+    except:
+        logging.warning('Could not retrieve the `news` dataframe.')
 
     # # Get option chain for specific expiration
-    # company_dict["option_chain"] = company.option_chain()
-    # # data available via: opt.calls, opt.puts
+    try:
+        company_dict['option_chain'] = company.option_chain()
+    except:
+        logging.warning('Could not retrieve the `option chain` dataframe.')
+    # data available via: opt.calls, opt.puts
 
     return company_dict
 
@@ -185,7 +298,7 @@ def convert_data_to_frame(data: Any, df_name: str) -> pandas.DataFrame:
         for key, value in data.items():
             if is_unhashable(value):
                 data[key] = json.dumps(value)
-        df = pandas.Series(data).to_frame().T
+        df = pandas.Series(data, dtype=object).to_frame().T
         df.reset_index(inplace=True)
 
     elif isinstance(data, (list, tuple)):
@@ -243,3 +356,66 @@ def convert_index_to_column(dataframe: pandas.DataFrame, column_name: Optional[s
     new_column_list = [column_name] + list(dataframe.columns)
     df_new.columns = new_column_list
     return df_new
+
+
+def transform_string_to_list(input_string: str) -> List[str] | str:
+    """
+    Transforms a string representation of a list to an actual list.
+
+    The input string is only changed if the string contains a valid list.
+
+    Args:
+        input_string: The input string to transform.
+
+    Returns:
+        The transformed list if a valid list is detected, otherwise the original string.
+    """
+    # Strip any leading/trailing whitespace
+    input_string = input_string.strip()
+
+    # Check if the string starts with '[' and ends with ']'
+    if input_string.startswith('[') and input_string.endswith(']'):
+        try:
+            # Attempt to parse the string as a Python literal
+            result = ast.literal_eval(input_string)
+
+            # Check if the result is a list
+            if isinstance(result, list):
+                return result
+        except (ValueError, SyntaxError):
+            # If parsing fails, return the original string
+            pass
+
+    # If no valid list is detected, return the original string
+    return input_string
+
+
+def coerce_str_to_list(input_string: Union[str, List[str]]) -> List[str]:
+    """
+    Coerce a string to a list of strings.
+
+    Args:
+        input_string: The string to be coerced.
+
+    Returns:
+        The coerced string as a list of strings.
+
+    Raises:
+        TypeError: If `input_string` is not of type string or list.
+    """
+    if isinstance(input_string, list):
+        return input_string
+
+    elif isinstance(input_string, str):
+        # Remove leading and trailing whitespace
+        s = input_string.strip()
+        # Remove outer brackets if present
+        if s.startswith('[') and s.endswith(']'):
+            s = s[1:-1]
+        # Remove quotes and split by comma
+        output_list = [item.strip().strip('\'"') for item in s.split(',')]
+
+        return output_list
+
+    else:
+        raise TypeError(f'Input must be a string or a list of strings. Got {type(input_string)}.')

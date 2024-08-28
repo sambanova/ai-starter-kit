@@ -30,16 +30,24 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:
-    global output
+    # Create cache
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
 
     # Streamlit app setup
     streamlit.set_page_config(
         page_title='Finance App',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=SAMBANOVA_LOGO,
         layout='wide',
     )
 
     set_css_styles()
+
+    streamlit.logo(
+        image=SAMBANOVA_LOGO,
+        link=SAMBANOVA_LOGO,
+        icon_image=SAMBANOVA_LOGO,
+    )
 
     with streamlit.sidebar:
         # Navigation menu
@@ -74,6 +82,7 @@ def main() -> None:
                 clear_directory(STOCK_QUERY_FIGURES_DIR)
                 clear_directory(HISTORY_FIGURES_DIR)
                 clear_directory(DB_QUERY_FIGURES_DIR)
+                clear_directory(PDF_SOURCES_DIRECTORY)
                 clear_directory(PDF_GENERATION_DIRECTORY)
                 streamlit.sidebar.success('All files have been deleted.')
 
@@ -102,11 +111,14 @@ def main() -> None:
     if 'max_iterations' not in streamlit.session_state:
         streamlit.session_state.max_iterations = 5
 
-    streamlit.title(':orange[SambaNova] Financial Insights Assistant')
+    columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
+    columns[0].image(SAMBANOVA_LOGO, width=100)
+    columns[1].title('SambaNova Financial Assistant')
 
     # Home page
     if menu == 'Home':
         streamlit.title('Financial Insights with LLMs')
+
         streamlit.write(
             """
             Welcome to the Financial Insights application.

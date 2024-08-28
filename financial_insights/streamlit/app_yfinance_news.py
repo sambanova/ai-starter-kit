@@ -37,7 +37,7 @@ def get_yfinance_news() -> None:
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, HISTORY_PATH, user_request),
+                args=(content, YFINANCE_NEWS_PATH, user_request),
             ):
                 pass
 
@@ -59,9 +59,11 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
     )
     user_request = (
         'You are an expert in the stock market. '
-        + 'Please answer the following question using the provided context from webscraping Yahoo Finance.\n'
+        + 'Please answer the following question, that could be general or for a given list of companies. \n'
         + user_question
-        + 'Company names should be expressed via their ticker symbols.'
+        + 'First possibly retrieve the list of ticker symbols from the list of company names within the query.\n'
+        + 'Then retrieve the news articles from webscraping Yahoo Finance.\n'
+        + 'Finally, provide the answer to the user.'
     )
 
     response = handle_userinput(user_question, user_request)

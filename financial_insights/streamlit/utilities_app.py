@@ -1,12 +1,13 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Tuple, Union
+import re
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas
-import plotly
 import streamlit
 import yaml
+from matplotlib.figure import Figure
 
 logging.basicConfig(level=logging.INFO)
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
@@ -50,7 +51,7 @@ def save_historical_price_callback(
     user_query: str,
     symbol_list: List[str],
     data: pandas.DataFrame,
-    fig: plotly.graph_objs.Figure,
+    fig: Figure,
     start_date: DateWidgetReturn,
     end_date: DateWidgetReturn,
     save_path: Optional[str] = None,
@@ -60,14 +61,13 @@ def save_historical_price_callback(
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    filename = dir_name + f"stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}"  # ruff: noqa
+    filename = dir_name + f"stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}"
 
     # Write the dataframe to a csv file
     data.to_csv(filename + '.csv', index=True)
+
     # Save the plots
-    fig_bytes = fig.to_image(format='png')
-    with open(f'{filename}.png', 'wb') as f:
-        f.write(fig_bytes)
+    fig.savefig(f'{filename}.png', bbox_inches='tight')
 
     content = '\n\n' + user_query + '\n\n' + f'{filename}.png' + '\n\n'
 
@@ -81,8 +81,8 @@ def save_output_callback(
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
-    assert isinstance(response, (str, list, dict, tuple)), TypeError(
-        'Response must be a string, a list, a dictionary, or a tuple.'
+    assert isinstance(response, (str, list, dict, tuple, pandas.DataFrame)), TypeError(
+        f'Response must be a string, a list, a dictionary, or a tuple. Got type {type(response)}'
     )
     assert isinstance(save_path, str), TypeError('Save path must be a string.')
     assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
@@ -90,41 +90,132 @@ def save_output_callback(
     # Specify the filename
     filename = save_path
 
+    # Opening space
+    with open(filename, 'a') as text_file:
+        text_file.write('\n\n')
+
     if user_request is not None:
         with open(filename, 'a') as text_file:
             text_file.write(user_request)
+            text_file.write('\n\n')
 
     # Create temporary cache for storing historical price data
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
 
-    if isinstance(response, str):
-        # Writing the string to a txt file
-        with open(filename, 'a') as text_file:
-            text_file.write('\n\n' + response + '\n\n')
+    # If the response is a set, convert it to a list
+    if isinstance(response, set):
+        response = list(response)
 
+    # If the reponse is a simple element, save it as is
+    if isinstance(response, (str, float, int, pandas.Series, pandas.DataFrame)):
+        # Write the string to a txt file
+        save_simple_output(response, filename)
+
+    # If the response is a list, try to dump it to a JSON file,
+    # otherwise split it up and write each element individually
     elif isinstance(response, list):
-        # Writing the list to a JSON file
-        with open(filename, 'a') as json_file:
-            json_file.write('\n\n')
-            json.dump(response, json_file)
-            json_file.write('\n\n')
+        try:
+            # Write the list to a JSON file
+            with open(filename, 'a') as json_file:
+                json.dump(response, json_file)
+        except TypeError:
+            # If the elements of the list are not JSON serializable
+            for elem in response:
+                save_simple_output(elem, filename)
 
+    # If the response is a list, try to dump it to a JSON file,
+    # otherwise split it up and write pair of key and value individually
     elif isinstance(response, dict):
-        # Writing the dictionary to a JSON file
-        with open(filename, 'a') as json_file:
-            json_file.write('\n\n')
-            json.dump(response, json_file)
-            json_file.write('\n\n')
+        try:
+            # Write the dictionary to a JSON file
+            with open(filename, 'a') as json_file:
+                json.dump(response, json_file)
+        except TypeError:
+            # If the elements of the dictionary are not JSON serializable
+            for key, value in response.items():
+                save_simple_output(key, filename)
+                with open(filename, 'a') as text_file:
+                    if user_request is not None:
+                        text_file.write(user_request)
+                    text_file.write('\n')
+                save_simple_output(value, filename)
 
+    # If the response is a tuple, try to dump it to a JSON file,
+    # otherwise split it up and write each element individually
     elif isinstance(response, tuple):
-        # Writing the tuple to a JSON file
-        with open(filename, 'a') as json_file:
-            json_file.write('\n\n')
-            json.dump(response, json_file)
-            json_file.write('\n\n')
+        try:
+            # Write the tuple to a JSON file
+            with open(filename, 'a') as json_file:
+                json.dump(response, json_file)
+        except TypeError:
+            for elem in response:
+                # If the elements of the dictionary are not JSON serializable
+                save_simple_output(response, filename)
+
     else:
         raise ValueError('Invalid response type')
+
+    # Closing space
+    with open(filename, 'a') as text_file:
+        text_file.write('\n\n')
+
+
+def save_simple_output(
+    response: Any,
+    filename: str,
+) -> None:
+    """
+    Saves the response to a file in the specified path.
+
+    Args:
+        response: The response to be saved.
+        filename: The path to save the response in.
+    """
+    # If the response is a string or number, write it directly into the text file
+    if isinstance(response, (str, float, int)):
+        with open(filename, 'a') as text_file:
+            text_file.write(str(response))
+
+    # If the response is a Series or DataFrame, convert it to a dictionary and then dump it to a JSON file
+    elif isinstance(response, (pandas.Series, pandas.DataFrame)):
+        # Write the dataframe to a CSV file
+        response_dict = response.to_dict()
+
+        stripped_string = dump_stripped_json(response_dict)
+
+        # Write the stripped string to a txt file
+        with open(filename, 'a') as text_file:
+            text_file.write(stripped_string)
+    else:
+        raise ValueError('Invalid response type')
+
+    # Spaces between elements
+    with open(filename, 'a') as text_file:
+        text_file.write('\n\n')
+
+
+def dump_stripped_json(data: Any, indent: int = 2) -> str:
+    """
+    Dump a JSON-serializable object to a string, stripping parentheses and apostrophes.
+
+    Args:
+        data: The JSON-serializable object (dict or list) to dump.
+        indent: The indentation level for pretty-printing (default is 2).
+
+    Returns:
+        A string representation of the JSON data without parentheses and apostrophes.
+    """
+    # First, dump the data to a JSON string
+    json_string = json.dumps(data, indent=indent)
+
+    # Remove parentheses and apostrophes
+    stripped_string = re.sub(r'["\'{}]', '', json_string)
+
+    # Remove any empty lines that might have been created by stripping
+    stripped_string = '\n'.join(line for line in stripped_string.split('\n') if line.strip())
+
+    return stripped_string
 
 
 def list_files_in_directory(directory: str) -> List[str]:
@@ -222,7 +313,7 @@ def set_css_styles() -> None:
     /* General body styling */
 
     html, body {
-        font-size: 1,
+        font-size: 16px,
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         color: #e0e0e0;
         background-color: #1e1e1e;
@@ -230,13 +321,13 @@ def set_css_styles() -> None:
 
     /* Header styling */
     h1, h2, h3, h4, h5, h6 {
-        color: #ffffff;
+        color: #EE7624;
         margin-bottom: 1em;
     }
 
     /* Paragraph and text styling */
     p, label {
-        font-size: 1;
+        font-size: 16px;
         line-height: 1.6;
         margin-bottom: 0.5em;
         color: #e0e0e0;
@@ -244,12 +335,12 @@ def set_css_styles() -> None:
 
     /* Button styling */
     .stButton > button {
-        background-color: green;
+        background-color: #3A8EBA;
         color: white;
         padding: 0.75em 1.5em;
         font-size: 1;
         border: none;
-        border-radius: 5px;
+        border-radius: 16px;
         cursor: pointer;
         transition: background-color 0.3s ease;
     }
@@ -272,7 +363,7 @@ def set_css_styles() -> None:
     }
 
     /* Input field styling */
-    input[type="text"], input[type="date"], select {
+    input[type="text"], input[type="date"] select {
         width: 100%;
         padding: 0.75em;
         margin: 0.5em 0 1em 0;
@@ -280,18 +371,19 @@ def set_css_styles() -> None:
         border: 1px solid #ccc;
         border-radius: 4px;
         box-sizing: border-box;
-        font-size: 1.1em;
+        font-size: 16px;
         background-color: #2c2c2c;
         color: #e0e0e0;
     }
 
     /* Checkbox styling */
     .stCheckbox > label {
-        font-size: 1.1em;
+        font-size: 16px;
     }
 
     /* Container styling */
     .main {
+        font-size: 16px;
         padding: 2em;
         background: #2c2c2c;
         border-radius: 8px;
@@ -315,8 +407,8 @@ def set_css_styles() -> None:
 def get_blue_button_style() -> str:
     return """
         button {
-            background-color: blue;
-            color: black;
+            background-color: #2C3E50;
+            color: white;
             padding: 0.75em 1.5em;
             font-size: 1;
             border: none;

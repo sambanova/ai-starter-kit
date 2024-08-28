@@ -43,7 +43,7 @@ def get_stock_database() -> None:
             if query_method == 'text-to-SQL':
                 content = response_dict['message']
             elif query_method == 'PandasAI-SqliteConnector':
-                content = ""  # ruff noqa
+                content = ''
                 for symbol in list(response_dict):
                     content += '\n\n'.join(response_dict[symbol])
 
@@ -52,13 +52,13 @@ def get_stock_database() -> None:
             if streamlit.button(
                 'Save Query',
                 on_click=save_output_callback,
-                args=(content, DB_QUERY_PATH),
+                args=(content, DB_QUERY_PATH, user_request),
             ):
                 pass
 
 
 def handle_database_creation(
-    requested_companies: Optional[str],
+    requested_companies: str,
     start_date: DateWidgetReturn,
     end_date: DateWidgetReturn,
 ) -> Any:
@@ -68,18 +68,19 @@ def handle_database_creation(
     Args:
         user_question (str): The user's question or input.
     """
-    if requested_companies is None:
-        return None
+    assert isinstance(
+        requested_companies, str
+    ), f'`requested_companies` should be a string. Got type {type(requested_companies)}.'
+    assert len(requested_companies) > 0, 'No companies selected.'
 
     streamlit.session_state.tools = ['retrieve_symbol_list', 'create_stock_database']
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
-        'Please create a SQL database for the following companies.\n'
-        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
-        'and within the following dates.\n' + requested_companies
+        'Please create a SQL database for the following list of companies.\n' + requested_companies + '\n'
+        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
     )
-    user_request += f'\nThe requested dates are from {start_date} to {end_date}'
+    user_request += f'\nThe requested dates for data retrieval are from {start_date} to {end_date}'
 
     return handle_userinput(requested_companies, user_request)
 
@@ -100,16 +101,16 @@ def handle_database_query(
     assert query_method in ['text-to-SQL', 'PandasAI-SqliteConnector'], f'Invalid query method {query_method}'
 
     streamlit.session_state.tools = ['retrieve_symbol_list', 'query_stock_database']
+
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'Each company of the list should be replaced by its corresponding ticker symbol beforehand.\n'
-        f'Please provide an answer after converting the query from natural language to SQL.".\n'
+        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
+        f'Then provide an answer after converting the query from natural language to SQL.\n'
         + 'Use the method: "'
         + query_method
         + '" to generate the response.'
-        'Take your time and reason step by step about the inputs and outputs of each function.\n'
     )
 
     return handle_userinput(user_question, user_request)

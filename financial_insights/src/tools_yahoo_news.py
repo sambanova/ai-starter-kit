@@ -8,10 +8,13 @@ import requests
 import yfinance
 from bs4 import BeautifulSoup
 from langchain.schema import Document
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.tools import tool
 
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
+
+from financial_insights.src.tools import coerce_str_to_list
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
@@ -23,10 +26,10 @@ RETRIEVE_HEADLINES = False
 class YahooFinanceNewsInput(BaseModel):
     """Input for the YahooFinanceNews tool."""
 
-    ticker_list: List[str] = Field(
+    simbol_list: List[str] | str = Field(
         description='A list of ticker symbols to search.',
     )
-    user_query: str = Field(description='The user query to search.')
+    user_query: str = Field(description='The original user query.')
 
 
 def filter_texts_set(texts: Set[str]) -> List[str]:
@@ -78,24 +81,25 @@ def filter_text(text: str) -> List[str]:
     # Remove extra whitespace
     text = re.sub(r'\s+', ' ', text).strip()
 
-    if len(text.split()) >= MIN_CHUNK_SIZE and len(text.split()) <= MAX_CHUNK_SIZE:
-        filtered_texts.append(text)
-    elif len(text.split()) > MAX_CHUNK_SIZE:
-        # Instantiate the text splitter
-        splitter = CharacterTextSplitter(
-            chunk_size=MAX_CHUNK_SIZE,
-            chunk_overlap=CHUNK_OVERLAP,
-            separator=r'[.!?]',
-            is_separator_regex=True,
-        )
+    # Instantiate the text splitter
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=MAX_CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        length_function=len,
+        separators=[
+            r'\n\n',  # Split on double newlines (paragraphs)
+            r'(?<=[.!?])\s+(?=[A-Z])',  # Split on sentence boundaries
+            r'\n',  # Split on single newlines
+            r'\s+',  # Split on whitespace
+            r'',  # Split on characters as a last resort
+        ],
+        is_separator_regex=True,
+    )
 
-        # Split the long text into smaller chunks
-        chunks = splitter.split_text(text)
-        for chunk in chunks:
-            filtered_texts.append(chunk)
-    else:
-        pass
-    return filtered_texts
+    # Split the long text into smaller chunks
+    chunks = splitter.split_text(text)
+
+    return chunks
 
 
 def clean_text(text: str) -> str:
@@ -114,26 +118,32 @@ def clean_text(text: str) -> str:
 
 
 @tool(args_schema=YahooFinanceNewsInput)
-def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[str, List[str]]:
+def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> Tuple[str, List[str]]:
     """
     Tool that searches financial news on Yahoo Finance ny webscraping.
 
     Useful for when you need to find financial news about a public company.
 
     Args:
-        ticker_list: List of tickers about which to search for financial news.
+        symbol_list: List of tickers about which to search for financial news.
             For example, AAPL for Apple, MSFT for Microsoft.
         user_query: The search query to be used in the search bar on Yahoo Finance.
 
     Returns:
 
     Raises:
-        TypeError: If `ticker_list` is not a list of strings or `user_query` is not a string.
+        TypeError: If `symbol_list` is not a list of strings or `user_query` is not a string.
     """
     # Check inputs
-    assert isinstance(ticker_list, list), TypeError(f'Input must be of type list. Got {type(ticker_list)}.')
-    assert all(isinstance(ticker, str) for ticker in ticker_list), TypeError(
-        'All elements in `ticker_list` must be of type str.'
+    assert isinstance(simbol_list, (list, str)), TypeError(
+        f'Input must be of type `list` or `str`. Got {type(simbol_list)}.'
+    )
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    symbol_list = coerce_str_to_list(simbol_list)
+
+    assert all(isinstance(symbol, str) for symbol in symbol_list), TypeError(
+        'All elements in `symbol_list` must be of type str.'
     )
     assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
 
@@ -144,8 +154,8 @@ def scrape_yahoo_finance_news(ticker_list: List[str], user_query: str) -> Tuple[
     singular_urls = []
 
     # For each symbol determine the list of URLs to scrape
-    if ticker_list is not None and len(ticker_list) > 0:
-        for symbol in ticker_list:
+    if symbol_list is not None and len(symbol_list) > 0:
+        for symbol in symbol_list:
             try:
                 general_urls.append(f'https://finance.yahoo.com/quote/{symbol}/')
                 news = yfinance.Ticker(symbol).news

@@ -5,6 +5,8 @@ from pprint import pprint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import yaml
+from langchain.output_parsers import PydanticOutputParser
+from langchain_core.language_models.llms import LLM
 from langchain_core.messages.base import BaseMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
@@ -12,19 +14,16 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
-from langchain_core.language_models.llms import LLM
-from financial_insights.src.tools import ConversationalResponse
+
+from financial_insights.src.tools import transform_string_to_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
 # Prompt template for function calling
 FUNCTION_CALLING_SYSTEM_PROMPT = """
-You are a helpful assistant and you have access to the following tools:
+You are a helpful AI assistant with access to external tools.
 
-{tools}
-
-You must always select one or more of the above tools and answer 
-with only a JSON list of objects matching the following schema:
+When you need to use one or more tools, format your response as follows:
 
 ```json
 [{{
@@ -32,6 +31,9 @@ with only a JSON list of objects matching the following schema:
   "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
 }}]
 ```
+
+Available tools:
+{tools}
 
 If one tool is called after another, the former tool must follow the latter tool in the list.
 Please list all the relevant tools until the last tool.
@@ -46,7 +48,7 @@ class FunctionCalling:
     def __init__(
         self,
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
-        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = ConversationalResponse,
+        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
         system_prompt: Optional[str] = FUNCTION_CALLING_SYSTEM_PROMPT,
         config_path: str = CONFIG_PATH,
     ) -> None:
@@ -146,7 +148,7 @@ class FunctionCalling:
             # Instantiate the LLM
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
-                streaming=True,
+                streaming=False,
                 coe=self.llm_info['coe'],
                 do_sample=self.llm_info['do_sample'],
                 max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
@@ -250,15 +252,79 @@ class FunctionCalling:
 
         assert all(isinstance(tool['tool'], str) for tool in invoked_tools), TypeError('The tool name must be a string')
 
-        # If the only tool is the conversational response, return the response only
-        if len(invoked_tools) == 1 and invoked_tools[0]['tool'].lower() == 'conversationalresponse':  # type: ignore
-            return [invoked_tools[0]['tool_input']['response']], None  # type: ignore
+        # The prompt template for input retrieval
+        prompt_template_input_retrieval = (
+            'Retrieve the tool inputs from the following answer, then populate its fields accordingly.\n'
+            'Tool inputs: {tool_input}\n'
+            'Answer: {previous_answer}.\n'
+            'Format instructions: {format_instructions}'
+        )
 
-        # Otherwise, invoke each tool and return both the responses and the messages
-        for tool in invoked_tools:
-            if tool['tool'].lower() != 'conversationalresponse':  # type: ignore
-                response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])  # type: ignore
-                tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
+        # Initialize values
+        retrieved_input = None
+        response = None
+
+        # Invoke each tool and return both the responses and the messages
+        for idx, tool in enumerate(invoked_tools):
+            logging.info(f'Executing tool: {tool["tool"]}...')
+            # Only for tools that follows the first tool
+            if idx != 0:
+                assert isinstance(tool['tool'], str), TypeError(
+                    f'The tool name must be a strin. Got type {type(tool["name"])}.'
+                )
+                assert isinstance(self.tools, list), TypeError(
+                    f'The tools must be a list. Got type {type(self.tools)}.'
+                )
+
+                # The input schema for the current tool
+                InputSchema = get_current_input_schema(self.tools, tool['tool'])
+
+                # The parser for the input retrieval
+                parser_input_retrieval = PydanticOutputParser(pydantic_object=InputSchema)  # type: ignore
+
+                # The prompt for the input retrieval
+                prompt_input_retrieval = PromptTemplate(
+                    template=prompt_template_input_retrieval,
+                    input_variables=['tool_input', 'previous_answer'],
+                    partial_variables={'format_instructions': parser_input_retrieval.get_format_instructions()},
+                )
+
+                # The chain for the input retrieval
+                chain_input_retrieval = prompt_input_retrieval | self.llm | parser_input_retrieval
+
+                # Retrieve the tool inputs for the current tool
+                retrieved_input = chain_input_retrieval.invoke(
+                    {'tool_input': json.dumps(tool['tool_input']), 'previous_answer': response}
+                )
+
+            # Populate the relevant fields of the current tool inputs with the retrieved inputs
+            retrieved_input_dict = retrieved_input.dict() if retrieved_input is not None else dict()
+            retrieved_input_total = dict()
+            assert isinstance(
+                tool['tool_input'], dict
+            ), f'`tool_input` must be of type dict. Got type {type(tool["tool_input"])}.'
+
+            # If the retrieved input is not None, populate it with the retrieved inputs
+            # Otherwise, use the original tool inputs
+            for key, value in tool['tool_input'].items():
+                if retrieved_input_dict.get(key) is not None:
+                    retrieved_input_total[key] = value
+                else:
+                    retrieved_input_total[key] = tool['tool_input'][key]
+
+            # Deal with the case where the tool input was a list, but has been stringified by the LLM
+            retrieved_input_total_dict = dict()
+            for key, value in retrieved_input_total.items():
+                if isinstance(value, str):
+                    retrieved_input_total_dict[key] = transform_string_to_list(value)
+                else:
+                    retrieved_input_total_dict[key] = value
+
+            # Invoke the tool with the retrieved inputs
+            response = tools_map[tool['tool'].lower()].invoke(retrieved_input_total)  # type: ignore
+
+            # Append the response to the tools messages
+            tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
 
         # All the messages, but only the last response will be returned
         return tools_msgs, response
@@ -287,10 +353,13 @@ class FunctionCalling:
             try:
                 json.loads(json_str)
             except:
-                json_correction_prompt = """|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a json format corrector tool<|eot_id|><|start_header_id|>user<|end_header_id|>
-                fix the following json file: {json} 
-                <|eot_id|><|start_header_id|>assistant<|end_header_id|>
-                fixed json: """  # noqa E501
+                json_correction_prompt = """<|begin_of_text|><|start_of_system|>
+                    You are a JSON format corrector tool.
+                    <|end_of_system|><|start_of_user|>
+                    Fix the following JSON file: {json}
+                    <|end_of_user|><|start_of_assistant|>
+                    Fixed JSON:
+                    """  # noqa E501
                 json_correction_prompt_template = PromptTemplate.from_template(json_correction_prompt)
                 json_correction_chain = json_correction_prompt_template | self.llm
                 json_str = json_correction_chain.invoke({'json': json_str})
@@ -317,19 +386,14 @@ class FunctionCalling:
         formatted_messages = []
         for message in messages:
             if message.type == 'system':
-                sys_placeholder = (
-                    '<|begin_of_text|><|start_header_id|>system<|end_header_id|>system<|end_header_id|> {msg}'
-                )
+                sys_placeholder = '<|begin_of_text|><|start_of_system|>\n{msg}\n<|end_of_system|>'
                 formatted_messages.append(sys_placeholder.format(msg=message.content))
             elif message.type == 'human':
-                human_placeholder = '<|eot_id|><|start_header_id|>user<|end_header_id|>\nUser: {msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
+                human_placeholder = '<|start_of_user|>\nUser: {msg}\n<|end_of_user|><|start_of_assistant|>\nAssistant:'
                 formatted_messages.append(human_placeholder.format(msg=message.content))
             elif message.type == 'ai':
-                assistant_placeholder = '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant: {msg}'
+                assistant_placeholder = '<|start_of_assistant|>\nAssistant: {msg}\n<|end_of_assistant|>'
                 formatted_messages.append(assistant_placeholder.format(msg=message.content))
-            elif message.type == 'tool':
-                tool_placeholder = '<|eot_id|><|start_header_id|>tools<|end_header_id|>\n{msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
-                formatted_messages.append(tool_placeholder.format(msg=message.content))
             else:
                 raise ValueError(f'Invalid message type: {message.type}')
         return '\n'.join(formatted_messages)
@@ -383,3 +447,17 @@ class FunctionCalling:
             pprint(function_calling_prompt)
 
         return tools_messages, response
+
+
+class FallbackSchema(BaseModel):
+    """Default schema for InputSchema"""
+
+    pass
+
+
+def get_current_input_schema(tools: list[Tool | StructuredTool], tool_name: str) -> Type[BaseModel] | None:
+    """Get the input schema of a tool by name."""
+    for tool in tools:
+        if tool.name == tool_name:
+            return tool.args_schema
+    return FallbackSchema

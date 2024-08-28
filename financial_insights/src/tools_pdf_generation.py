@@ -10,12 +10,16 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
 
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
+
+EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
 
 BACKGROUND_COLOUR = (255, 229, 180)
 L_MARGIN = 15
@@ -129,15 +133,22 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
     figure_regex = re.compile(r'financial_insights/*[^\s]+\.png')
     directory_regex = re.compile(rf'{repo_dir}/')
     endline_regex = re.compile(r'\n\n')
+    startline_regex = re.compile(r'^\n\n')
 
     for doc in documents:
         parts = doc.split('\n\n\n\n')
         for part in parts:
             # Search for figure paths
             figure_matches = figure_regex.findall(part)
-            cleaned_part = figure_regex.sub('', part)  # remove figure paths from text
-            cleaned_part = directory_regex.sub('', cleaned_part)
-            cleaned_part = endline_regex.sub('', cleaned_part)
+            if len(figure_matches) > 0:
+                # Remove figure paths from text
+                cleaned_part = figure_regex.sub('', part)
+                # Clean extra newline
+                cleaned_part = directory_regex.sub('', cleaned_part)
+                cleaned_part = endline_regex.sub('', cleaned_part)
+            else:
+                # Clean extra newline
+                cleaned_part = startline_regex.sub('', part)
 
             if figure_matches:
                 for figure_path in figure_matches:
@@ -206,8 +217,18 @@ def generate_pdf(
         )
 
     # Parse and split the documents
-    text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=0)
-    docs = [Document(page_content=content['text']) for content in content_list if len(content['text']) > 0]
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=0)
+    docs = list()
+
+    # Compose the documents
+    for content_item in content_list:
+        text_item = content_item['text']
+        if isinstance(text_item, str) and len(text_item) > 0:
+            docs.append(Document(page_content=text_item))
+        else:
+            docs.append(Document(page_content=EMPTY_TEXT_PLACEHOLDER))
+
+    # Split the documents
     split_docs = text_splitter.split_documents(docs)
 
     # Add a summary at the beginning
@@ -225,12 +246,21 @@ def generate_pdf(
         for idx, item in enumerate(content_list):
             time.sleep(0.01)
             summary_bar.progress(idx + 1, text=progress_text)
+
+            # Add the section title
             pdf.chapter_title(intermediate_titles[idx])
+
+            # Add the section summary
             pdf.chapter_summary(intermediate_summaries[idx])
-            if item['text'] is not None:
+
+            # Add the section body
+            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER:
                 pdf.chapter_body(item['text'])
+
+            # Add the section figures
             if item['figure_path'] is not None and len(item['figure_path']) > 0:
                 pdf.add_figure(item['figure_path'])
+
         time.sleep(0.01)
         summary_bar.empty()
     else:
@@ -249,12 +279,6 @@ class Summary(BaseModel):
 
     title: str = Field(description='Title of the document')
     summary: str = Field(description='Extracted summary of the document')
-
-
-class SummariesList(BaseModel):
-    """List of title and summaries of a document."""
-
-    items: List[Summary] = Field(description='List of titles and summaries of a document')
 
 
 class ReduceSummary(BaseModel):
@@ -280,20 +304,19 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     llm = streamlit.session_state.fc.llm
 
     # Map parser
-    map_parser = PydanticOutputParser(pydantic_object=SummariesList)  # type: ignore
+    map_parser = PydanticOutputParser(pydantic_object=Summary)
 
     # Map template
-    map_template = """The following is a set of documents
-        {docs}
-        Based on this list of docs, please identify the main themes by document.\n.
-        The list of them must match the list of documents\n.
+    map_template = """The following is a document:
+        {doc}
+        Please identify the main theme (title + summary) of this document.\n.
         {format_instructions}
         """
 
     # Map prompt
     map_prompt = PromptTemplate(
         template=map_template,
-        input_variables=['docs'],
+        input_variables=['doc'],
         partial_variables={'format_instructions': map_parser.get_format_instructions()},
     )
 
@@ -301,12 +324,12 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     map_chain = map_prompt | llm | map_parser
 
     # Extract intermediate titles and summaries for each document in the split docs
-    intermediate_results = map_chain.invoke(split_docs).items
+    intermediate_results = [map_chain.invoke(doc) for doc in split_docs]
     intermediate_summaries = [item.summary for item in intermediate_results]
     intermediate_titles = [item.title for item in intermediate_results]
 
     # Reduce parser
-    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Reduce template
     reduce_template = """The following is set of summaries:
@@ -329,7 +352,7 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
 
     # Abstract parser
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Abstract template
     abstract_template = """Write a concise summary of the following:
@@ -377,7 +400,7 @@ def pdf_rag(user_query: str, pdf_files_names: List[str]) -> Any:
         documents.extend(loader.load())
 
     # Instantiate the text splitter
-    text_splitter = CharacterTextSplitter(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=MAX_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     # Split documents into chunks
     chunked_documents = text_splitter.split_documents(documents)
 

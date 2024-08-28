@@ -10,28 +10,31 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
+
+# from langchain_core.pydantic_v1 import BaseModel, Field
+from llama_index.core.bridge.pydantic import BaseModel, Field
 from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
-from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
 from financial_insights.streamlit.constants import *
+from utils.model_wrappers.api_gateway import APIGateway
 
 
 class DatabaseSchema(BaseModel):
     """Create a SQL database for a list of stocks/companies."""
 
-    symbol_list: List[str] = Field('List of stock ticker symbols.')
+    symbol_list: List[str] | str = Field('List of stock ticker symbols for which to create the SQL database.')
     start_date: datetime.date = Field('Start date.')
     end_date: datetime.date = Field('End date.')
 
 
 @tool(args_schema=DatabaseSchema)
 def create_stock_database(
-    symbol_list: List[str] = list(),
+    symbol_list: List[str] | str,
     start_date: datetime.date = datetime.datetime.today().date() - datetime.timedelta(days=365),
     end_date: datetime.date = datetime.datetime.today().date(),
 ) -> Dict[str, List[str]]:
@@ -39,7 +42,7 @@ def create_stock_database(
     Create a SQL database for a list of stocks/companies.
 
     Args:
-        symbol_list: List of stock ticker symbols.
+        symbol_list: List of stock ticker symbols for which to create the SQL database.
         start_date: Start date for the historical data.
         end_date: End date for the historical data.
 
@@ -49,7 +52,18 @@ def create_stock_database(
     Raises:
         ValueError: If `start_date` is greater than or equal to `end_date`.
     """
-    # Check dates
+    # Check inputs
+    assert isinstance(
+        symbol_list, (list, str)
+    ), f'`symbol_list` must be a list or a string. Got type{(type(symbol_list))}.'
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    symbol_list = coerce_str_to_list(symbol_list)
+
+    assert all([isinstance(name, str) for name in symbol_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
+    )
+
     if start_date > end_date or (end_date - datetime.timedelta(days=365)) < start_date:
         raise ValueError('Start date must be before the end date.')
 
@@ -96,7 +110,11 @@ def store_company_dataframes_to_sqlite(
         for df_name, data in company_data.items():
             # Build a table name using the company symbol and the dataframe purpose/type
             table_name = f'{company_base_name}_{df_name}'
-            df = convert_data_to_frame(data, df_name)
+            try:
+                df = convert_data_to_frame(data, df_name)
+            except:
+                logging.warning(f'Could not convert {df_name} to `pandas.DataFrame`.')
+                continue
 
             # Make sure the column names are SQLite-friendly
             for column in df.columns:
@@ -119,13 +137,13 @@ class QueryDatabaseSchema(BaseModel):
     """Query a SQL database for a list of stocks/companies."""
 
     user_query: str = Field('Query to be performed on the database')
-    symbol_list: List[str] = Field('List of stock ticker symbols.')
+    symbol_list: List[str] | str = Field('List of stock ticker symbols.')
     method: str = Field('Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector"')
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
-    user_query: str, symbol_list: List[str], method: str
+    user_query: str, symbol_list: List[str] | str, method: str
 ) -> Union[Any, Dict[str, str | List[str]]]:
     """
     Query a SQL database for a list of stocks/companies.
@@ -144,9 +162,17 @@ def query_stock_database(
         Exception: If `symbol_list` is an empty string.
     """
     # Checks the inputs
-    assert isinstance(user_query, str), TypeError(f'symbol_list must be of type str. Got {(type(user_query))}')
-    assert isinstance(symbol_list, list), TypeError('Symbol List must be a list of strings.')
-    assert len(symbol_list) > 0, 'Symbol List must contain at least one symbol: please specify the company to query.'
+    assert isinstance(user_query, str), TypeError(f'`symbol_list` must be of type str. Got {(type(user_query))}')
+
+    assert isinstance(symbol_list, (list, str)), TypeError(
+        f'`symbol_list` must be a list or a string. Got type {type(symbol_list)}.'
+    )
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    symbol_list = coerce_str_to_list(symbol_list)
+
+    assert all([isinstance(name, str) for name in symbol_list]), TypeError('`symbol_list` must be a list of strings.')
+
     assert isinstance(method, str), TypeError(f'method must be of type str. Got {type(method)}')
     assert method in [
         'text-to-SQL',
@@ -174,15 +200,19 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
     """
     # Prompt template for the SQL queries
     prompt = PromptTemplate.from_template(
-        """<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
+        """<|begin_of_text|><|start_of_system|> 
         
         {selected_schemas}
         
-        Generate a query using valid SQLite to answer the following questions 
-        for the summarized tables schemas provided above.
-        Do not assume the values on the database tables before generating the SQL query, 
-        always generate a SQL code that queries what is asked. 
-        The query must be in the format: ```sql\nquery\n```
+        Generate a valid SQLite query to answer the following question,
+        based on the summarized table schemas provided above.
+        Do not assume any values in the database tables before generating the SQL query. 
+        Always generate SQL code that queries exactly what is asked. 
+        The queries must be formatted as follows: 
+        
+        ```sql
+        query
+        ```
         
         Example:
         
@@ -190,10 +220,10 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
         SELECT * FROM mainTable;
         ```
         
-        <|eot_id|><|start_header_id|>user<|end_header_id|>\
+        <|end_of_system|><|start_of_user|>
             
         {input}
-        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+        <|end_of_user|><|start_of_assistant|>"""
     )
 
     # Chain that receives the natural language input and the table schemas, invoke the LLM,
@@ -276,7 +306,7 @@ def sql_finder(text: str) -> Any:
             query = match.group(1)
             return query
         else:
-            raise Exception('No SQL code found in LLM generation')
+            raise Exception(f'No SQL code found in LLM generation from {text}.')
 
 
 def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> Any:
@@ -347,7 +377,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     summary_text = get_table_summaries_from_symbols(symbol_list)
 
     # The output parser
-    parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
+    parser = PydanticOutputParser(pydantic_object=TableNames)
 
     # The prompt template
     prompt_template = (
@@ -364,13 +394,43 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         partial_variables={'format_instructions': parser.get_format_instructions()},
     )
 
-    # The chain
-    chain = prompt | streamlit.session_state.fc.llm | parser
-
     # Invoke the chain with the user query and the table summaries
-    response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
+    max_tokens_to_generate_list = list({streamlit.session_state.fc.llm_info['max_tokens_to_generate'], 1024, 256, 128})
+    # Bound the number of tokens to generate based on the config value
+    max_tokens_to_generate_list = [
+        elem
+        for elem in max_tokens_to_generate_list
+        if elem < streamlit.session_state.fc.llm_info['max_tokens_to_generate']
+    ]
 
-    return response.table_names  # type: ignore
+    # Call the LLM for each number of tokens to generate
+    # Return the first valid response
+    for item in max_tokens_to_generate_list:
+        try:
+            # Instantiate the LLM
+            llm = APIGateway.load_llm(
+                type=streamlit.session_state.fc.llm_info['api'],
+                streaming=False,
+                coe=streamlit.session_state.fc.llm_info['coe'],
+                do_sample=streamlit.session_state.fc.llm_info['do_sample'],
+                max_tokens_to_generate=item,
+                temperature=streamlit.session_state.fc.llm_info['temperature'],
+                select_expert=streamlit.session_state.fc.llm_info['select_expert'],
+                process_prompt=False,
+                sambaverse_model_name=streamlit.session_state.fc.llm_info['sambaverse_model_name'],
+            )
+
+            # The chain
+            chain = prompt | llm | parser
+            response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
+            assert isinstance(response.table_names, list) and all(
+                [isinstance(elem, str) for elem in response.table_names]
+            ), 'Invalid response'
+            return response.table_names
+        except:
+            pass
+
+    return list()
 
 
 def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
