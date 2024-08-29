@@ -41,7 +41,7 @@ def get_stock_database() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_database_query(user_request, query_method)
             if query_method == 'text-to-SQL':
-                content = response_dict['message']
+                content = response_dict
             elif query_method == 'PandasAI-SqliteConnector':
                 content = ''
                 for symbol in list(response_dict):
@@ -73,13 +73,10 @@ def handle_database_creation(
     ), f'`requested_companies` should be a string. Got type {type(requested_companies)}.'
     assert len(requested_companies) > 0, 'No companies selected.'
 
-    streamlit.session_state.tools = ['retrieve_symbol_list', 'create_stock_database']
+    streamlit.session_state.tools = ['create_stock_database']
     attach_tools(streamlit.session_state.tools)
 
-    user_request = (
-        'Please create a SQL database for the following list of companies.\n' + requested_companies + '\n'
-        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
-    )
+    user_request = 'Please create a SQL database for the following list of companies.\n' + requested_companies + '\n'
     user_request += f'\nThe requested dates for data retrieval are from {start_date} to {end_date}'
 
     return handle_userinput(requested_companies, user_request)
@@ -100,7 +97,7 @@ def handle_database_query(
 
     assert query_method in ['text-to-SQL', 'PandasAI-SqliteConnector'], f'Invalid query method {query_method}'
 
-    streamlit.session_state.tools = ['retrieve_symbol_list', 'query_stock_database']
+    streamlit.session_state.tools = ['query_stock_database']
 
     attach_tools(streamlit.session_state.tools)
 

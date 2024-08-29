@@ -117,15 +117,13 @@ def handle_stock_query(
         dataframe_name = 'None'
 
     streamlit.session_state.tools = [
-        'retrieve_symbol_list',
         'get_stock_info',
     ]
     attach_tools(streamlit.session_state.tools)
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
-        f'Then provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
+        f'Please provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
         'Take your time and reason step by step about the inputs and outputs of each function.\n'
     )
 

@@ -20,7 +20,6 @@ from financial_insights.src.tools_pdf_generation import pdf_rag
 from financial_insights.src.tools_stocks import (
     get_historical_price,
     get_stock_info,
-    retrieve_symbol_list,
     retrieve_symbol_quantity_list,
 )
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
@@ -30,7 +29,6 @@ from financial_insights.streamlit.constants import *
 TOOLS = {
     'get_stock_info': get_stock_info,
     'get_historical_price': get_historical_price,
-    'retrieve_symbol_list': retrieve_symbol_list,
     'retrieve_symbol_quantity_list': retrieve_symbol_quantity_list,
     'scrape_yahoo_finance_news': scrape_yahoo_finance_news,
     'get_conversational_response': get_conversational_response,
@@ -88,10 +86,7 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
 
     with streamlit.spinner('Processing...'):
         with st_capture(output.code):
-            tool_messages, response = streamlit.session_state.fc.function_call_llm(
-                query=user_query,
-                debug=True,
-            )
+            response = streamlit.session_state.fc.invoke_tools(query=user_query)
 
     streamlit.session_state.chat_history.append(user_question)
     streamlit.session_state.chat_history.append(response)

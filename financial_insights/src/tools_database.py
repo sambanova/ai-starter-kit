@@ -20,21 +20,22 @@ from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
 from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
-
+from financial_insights.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
 
 class DatabaseSchema(BaseModel):
     """Create a SQL database for a list of stocks/companies."""
 
-    symbol_list: List[str] | str = Field('List of stock ticker symbols for which to create the SQL database.')
+    company_list: List[str] | str = Field('List of stock ticker symbols for which to create the SQL database.')
     start_date: datetime.date = Field('Start date.')
     end_date: datetime.date = Field('End date.')
 
 
 @tool(args_schema=DatabaseSchema)
 def create_stock_database(
-    symbol_list: List[str] | str,
+    company_list: List[str] | str,
     start_date: datetime.date = datetime.datetime.today().date() - datetime.timedelta(days=365),
     end_date: datetime.date = datetime.datetime.today().date(),
 ) -> Dict[str, List[str]]:
@@ -42,7 +43,7 @@ def create_stock_database(
     Create a SQL database for a list of stocks/companies.
 
     Args:
-        symbol_list: List of stock ticker symbols for which to create the SQL database.
+        company_list: List of stock ticker symbols for which to create the SQL database.
         start_date: Start date for the historical data.
         end_date: End date for the historical data.
 
@@ -50,22 +51,26 @@ def create_stock_database(
         A dictionary with company symbols as keys and a list of SQL table names as values.
 
     Raises:
+        TypeError: If the input is not a list or string.
         ValueError: If `start_date` is greater than or equal to `end_date`.
     """
     # Check inputs
-    assert isinstance(
-        symbol_list, (list, str)
-    ), f'`symbol_list` must be a list or a string. Got type{(type(symbol_list))}.'
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'`company_list` must be a list or a string. Got type{(type(company_list))}.'
+    )
 
-    # If `symbol_list` is a string, coerce it to a list of strings
-    symbol_list = coerce_str_to_list(symbol_list)
+    # If `company_list` is a string, coerce it to a list of strings
+    company_list = coerce_str_to_list(company_list)
 
-    assert all([isinstance(name, str) for name in symbol_list]), TypeError(
+    assert all([isinstance(name, str) for name in company_list]), TypeError(
         '`company_names_list` must be a list of strings.'
     )
 
-    if start_date > end_date or (end_date - datetime.timedelta(days=365)) < start_date:
-        raise ValueError('Start date must be before the end date.')
+    symbol_list = retrieve_symbol_list(company_list)
+
+    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
+        'Start date must be before the end date.'
+    )
 
     # Extract yfinance data
     company_data_dict = dict()
@@ -80,7 +85,7 @@ def create_stock_database(
 
 def store_company_dataframes_to_sqlite(
     db_name: str, company_data_dict: Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]
-) -> Dict[str, list[str]]:
+) -> Dict[str, List[str]]:
     """
     Store multiple dataframes for each company into an SQLite database.
 
@@ -97,7 +102,7 @@ def store_company_dataframes_to_sqlite(
     engine = create_engine(f'sqlite:///{DB_PATH}')
 
     # Create a dictionary with company names as keys and SQL tables as values
-    company_tables: Dict[str, list[str]] = dict()
+    company_tables: Dict[str, List[str]] = dict()
 
     # Process each company
     for company, company_data in company_data_dict.items():
@@ -121,7 +126,11 @@ def store_company_dataframes_to_sqlite(
                 df = df.rename({column: f'{column}'.replace(' ', '_')}, axis='columns')
 
             # Convert list-type and dict-type entries to JSON strings
-            df = df.applymap(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
+            try:
+                df = df.applymap(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
+            except:
+                logging.warning(f'Could not convert {df_name} to JSON.')
+                continue
 
             # Store the dataframe in an SQLite database table
             df.to_sql(table_name, engine, if_exists='replace', index=False)
@@ -137,39 +146,45 @@ class QueryDatabaseSchema(BaseModel):
     """Query a SQL database for a list of stocks/companies."""
 
     user_query: str = Field('Query to be performed on the database')
-    symbol_list: List[str] | str = Field('List of stock ticker symbols.')
+    company_list: List[str] | str = Field('List of stock ticker symbols.')
     method: str = Field('Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector"')
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
-    user_query: str, symbol_list: List[str] | str, method: str
+    user_query: str, company_list: List[str] | str, method: str
 ) -> Union[Any, Dict[str, str | List[str]]]:
     """
     Query a SQL database for a list of stocks/companies.
 
     Args:
         user_query: Query to be performed on the database.
-        symbol_list: List of stock ticker symbols.
+        company_list: List of stock ticker symbols.
         method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
 
     Returns:
         The result of the query.
 
     Raises:
-        TypeError: If `user_query`, `symbol_list` and `method` are not strings.
+        TypeError: If `user_query`, `company_list` and `method` are not strings.
         ValueError: If `method` is not one of `text-to-SQL` or `PandasAI-SqliteConnector`.
         Exception: If `symbol_list` is an empty string.
     """
     # Checks the inputs
     assert isinstance(user_query, str), TypeError(f'`symbol_list` must be of type str. Got {(type(user_query))}')
 
-    assert isinstance(symbol_list, (list, str)), TypeError(
-        f'`symbol_list` must be a list or a string. Got type {type(symbol_list)}.'
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'`symbol_list` must be a list or a string. Got type {type(company_list)}.'
     )
 
     # If `symbol_list` is a string, coerce it to a list of strings
-    symbol_list = coerce_str_to_list(symbol_list)
+    company_list = coerce_str_to_list(company_list)
+
+    assert all([isinstance(name, str) for name in company_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
+    )
+
+    symbol_list = retrieve_symbol_list(company_list)
 
     assert all([isinstance(name, str) for name in symbol_list]), TypeError('`symbol_list` must be a list of strings.')
 
@@ -191,51 +206,35 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
     """
     Query a SQL database for a list of stocks/companies.
 
+    NB. The user request may require multiple queries in order to retrieve the desired information.
+
     Args:
         user_query: Query to be performed on the database.
         symbol_list: List of stock ticker symbols.
 
     Returns:
-        The result of the query.
+        The result of the query, as a dictionary with the following elements:
+        - `queries`: A list of SQL queries that were used to retrieve the data.
+        - `results`: The results of the execution of each query in `queries`.
     """
-    # Prompt template for the SQL queries
-    prompt = PromptTemplate.from_template(
-        """<|begin_of_text|><|start_of_system|> 
-        
-        {selected_schemas}
-        
-        Generate a valid SQLite query to answer the following question,
-        based on the summarized table schemas provided above.
-        Do not assume any values in the database tables before generating the SQL query. 
-        Always generate SQL code that queries exactly what is asked. 
-        The queries must be formatted as follows: 
-        
-        ```sql
-        query
-        ```
-        
-        Example:
-        
-        ```sql
-        SELECT * FROM mainTable;
-        ```
-        
-        <|end_of_system|><|start_of_user|>
-            
-        {input}
-        <|end_of_user|><|start_of_assistant|>"""
+    query_generation_prompt =  PromptTemplate(
+        template=SQL_QUERY_PROMPT_TEMPLATE,
+        input_variables=['top_k', 'selected_schemas', 'query'],
     )
-
     # Chain that receives the natural language input and the table schemas, invoke the LLM,
     # and finally execute the SQL finder method, retrieving only the filtered SQL query
-    query_generation_chain = prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
+    query_generation_chain = query_generation_prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
 
     # Extract the names of the SQL tables that are relevant to the user query
     selected_tables = select_database_tables(user_query, symbol_list)
     selected_schemas = get_table_summaries_from_names(selected_tables)
 
     # Generate the SQL query
-    query: str = query_generation_chain.invoke({'selected_schemas': selected_schemas, 'input': user_query})
+    query: str = query_generation_chain.invoke(
+        {   
+            'top_k': TOP_K,
+            'selected_schemas': selected_schemas,
+            'query': user_query})
 
     # Split the SQL query into multiple queries
     queries = query.split(';')
@@ -244,6 +243,11 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
     # Create a SQL database engine and connect to it using the selected tables
     engine = create_engine(f'sqlite:///{DB_PATH}')
     db = SQLDatabase(engine=engine, include_tables=selected_tables)
+
+    # TODO: With larger context windows
+    # https://python.langchain.com/v0.1/docs/use_cases/sql/quickstart/#convert-question-to-sql-query
+    # from langchain.chains import create_sql_query_chain
+    # chain = create_sql_query_chain(streamlit.session_state.fc.llm, db)
 
     # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
@@ -261,14 +265,9 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
         if len(query) > 0:
             results.append(query_executor.invoke(query))
 
-    message = '\n'.join(
-        [f'Query:\n{query}\nexecuted with result:\n{result}' for query, result in zip(queries, results)]
-    )
-
     response_dict: Dict[str, str | List[str]] = dict()
     response_dict['queries'] = queries
     response_dict['results'] = results
-    response_dict['message'] = message
     return response_dict
 
 
@@ -285,21 +284,12 @@ def sql_finder(text: str) -> Any:
     Raises:
         Exception: If no SQL query was found in the input text.
     """
-
-    # regex for finding sql_code_pattern with format:
-    # ```sql
-    #    <query>
-    # ```
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
     match = sql_code_pattern.search(text)
     if match is not None:
         query = match.group(1)
         return query
     else:
-        # regex for finding sql_code_pattern with format:
-        # ```
-        # <quey>
-        # ```
         code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
         match = code_pattern.search(text)
         if match is not None:

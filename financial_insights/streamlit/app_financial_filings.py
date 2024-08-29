@@ -87,7 +87,7 @@ def handle_financial_filings(
         Exception: If `response` (the final return from `handle_userinput`) does not conform to the return type.
     """
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['retrieve_symbol_list', 'retrieve_filings']
+    streamlit.session_state.tools = ['retrieve_filings']
 
     # Attach the tools for the LLM to use
     attach_tools(streamlit.session_state.tools)
@@ -95,8 +95,7 @@ def handle_financial_filings(
     # Compose the user request
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
-        'Then provide an answer after retrieving the provided context using RAG.\n'
+        'Please provide an answer after retrieving the provided context using RAG.\n'
         f'In order to provide context for the question, please retrieve the given SEC EDGAR '
         f'financial filing type: {filing_type} '
         f'and filing quarter: {filing_quarter} '

@@ -34,11 +34,14 @@ STOCK_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'stock_query_figures/')
 HISTORY_FIGURES_DIR = os.path.join(CACHE_DIR, 'history_figures/')
 DB_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'db_query_figures/')
 
-# Main text processing constants
+# Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4
 MAX_CHUNK_SIZE = 1024
 CHUNK_OVERLAP = 256
+RETRIEVE_HEADLINES = False
+TOP_K = 10
 
 # SambaNova
 SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
 SAMBANOVA_ORANGE = (238, 118, 36)
+

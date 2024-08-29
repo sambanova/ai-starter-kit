@@ -35,6 +35,9 @@ def get_qa_response(
         f'All documents must be of type `langchain.schema.Document`.'
     )
 
+    # TODO
+    # Add an option to use E5 from our endpoints.
+
     # Instantiate the embedding model
     embedding_model = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
 

@@ -50,7 +50,6 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
     user_request (str): The user's question or input.
     """
     streamlit.session_state.tools = [
-        'retrieve_symbol_list',
         'scrape_yahoo_finance_news',
     ]
     attach_tools(

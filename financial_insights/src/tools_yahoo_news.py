@@ -125,7 +125,7 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
     Useful for when you need to find financial news about a public company.
 
     Args:
-        symbol_list: List of tickers about which to search for financial news.
+        company_list: List of tickers about which to search for financial news.
             For example, AAPL for Apple, MSFT for Microsoft.
         user_query: The search query to be used in the search bar on Yahoo Finance.
 

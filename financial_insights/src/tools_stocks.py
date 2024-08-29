@@ -1,11 +1,8 @@
 import datetime
-import json
-import os
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
-import requests  # type: ignore
 import streamlit
 import yfinance
 from langchain.output_parsers import PydanticOutputParser
@@ -28,7 +25,7 @@ class StockInfoSchema(BaseModel):
     """Return the correct stock information given the appropriate ticker symbol."""
 
     user_query: str = Field('User query to retrieve stock information.')
-    symbol_list: List[str] | str = Field('List of stock ticker symbols.')
+    company_list: List[str] | str = Field('List of stock ticker symbols.')
     dataframe_name: Optional[str] = Field('Name of the dataframe to be used.')
 
 
@@ -40,14 +37,14 @@ class TickerSymbol(BaseModel):
 
 @tool(args_schema=StockInfoSchema)
 def get_stock_info(
-    user_query: str, symbol_list: List[str] | str, dataframe_name: Optional[str] = None
+    user_query: str, company_list: List[str] | str, dataframe_name: Optional[str] = None
 ) -> Dict[str, str]:
     """
     Return the correct stock information given the appropriate ticker symbol.
 
     Args:
         user_query: User query to retrieve stock information.
-        symbol_list: List of stock ticker symbols.
+        company_list: List of stock ticker symbols.
         dataframe_name: Name of the dataframe to be used.
 
     Returns:
@@ -57,18 +54,22 @@ def get_stock_info(
         TypeError: If `user_query` is not a string or `symbol_list` is not a list of strings,
             or `dataframe_name` is not a string.
     """
+
     # Checks the inputs
     assert isinstance(user_query, str), TypeError(f'User query must be of type string. Got {(type(user_query))}.')
-    assert isinstance(symbol_list, (list, str)), TypeError(
-        f'Symbol list must be of type list or string. Got {(type(symbol_list))}.'
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'`company_list` must be of type list or string. Got {(type(company_list))}.'
     )
 
     # If `symbol_list` is a string, coerce it to a list of strings
-    symbol_list = coerce_str_to_list(symbol_list)
+    company_list = coerce_str_to_list(company_list)
 
-    assert all(isinstance(symbol, str) for symbol in symbol_list), TypeError(
-        'All elements in the symbol list must be of type string.'
+    assert all([isinstance(name, str) for name in company_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
     )
+
+    symbol_list = retrieve_symbol_list(company_list)
+
     assert isinstance(dataframe_name, str | None), TypeError(
         f'Dataframe name must be a string. Got {(type(dataframe_name))}.'
     )
@@ -152,13 +153,6 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     return df.chat(user_query)
 
 
-class RetrievalCompanyNameSchema(BaseModel):
-    """Retrieve a list of company names."""
-
-    company_names_list: List[str] | str = Field('List of company names to retrieve from the query.')
-
-
-@tool(args_schema=RetrievalCompanyNameSchema)
 def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> Optional[List[str]]:
     """
     Retrieve a list of ticker symbols.
@@ -180,40 +174,11 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> Option
     # If `symbol_list` is a string, coerce it to a list of strings
     company_names_list = coerce_str_to_list(company_names_list)
 
-    if len(company_names_list) == 0:
-        return list()
-
     assert all([isinstance(name, str) for name in company_names_list]), TypeError(
         '`company_names_list` must be a list of strings.'
     )
 
-    # URL to the JSON file
-    url = 'https://www.sec.gov/files/company_tickers.json'
-
-    # Fetch the JSON data from the URL
-    response = requests.get(url)
-
     symbol_list = list()
-
-    # Specify the file path where you want to save the JSON data
-    file_path = kit_dir + '/company_tickers.json'
-
-    # Check if the request was successful
-    if response.status_code == 200:
-        data = response.json()
-
-        # Save the DataFrame to a json file
-        if not os.path.exists(kit_dir):
-            os.makedirs(kit_dir)
-
-        # Write the JSON data to the file
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
-    else:
-        # Load JSON data from the file
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
 
     # Iterate over the JSON data to extract ticker symbols
     for company in company_names_list:
@@ -252,12 +217,12 @@ class RetrievalSymbolQuantitySchema(BaseModel):
     If you can't retrieve the quantity, use 'Close'.
     """
 
-    symbol_list: List[str] = Field('List of stock ticker symbols', examples=['AAPL', 'MSFT'])
+    company_list: List[str] = Field('List of stock ticker symbols', examples=['AAPL', 'MSFT'])
     quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
 
 
 @tool(args_schema=RetrievalSymbolQuantitySchema)
-def retrieve_symbol_quantity_list(symbol_list: List[str], quantity: str) -> Tuple[List[str], str]:
+def retrieve_symbol_quantity_list(company_list: List[str], quantity: str) -> Tuple[List[str], str]:
     """Retrieve a list of ticker symbols and the quantity that the user wants to analyze."""
 
     return symbol_list, quantity
@@ -266,7 +231,7 @@ def retrieve_symbol_quantity_list(symbol_list: List[str], quantity: str) -> Tupl
 class HistoricalPriceSchema(BaseModel):
     """Fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
 
-    symbol_list: List[str] = Field('List of stock ticker symbol.')
+    company_list: List[str] = Field('List of stock ticker symbol.')
     quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
     end_date: datetime.date = Field(
         'Typically today unless a specific end date is provided. End date MUST be greater than start date.'
@@ -282,13 +247,13 @@ class HistoricalPriceSchema(BaseModel):
 
 @tool(args_schema=HistoricalPriceSchema)
 def get_historical_price(
-    symbol_list: List[str], quantity: str, start_date: datetime.date, end_date: datetime.date
+    company_list: List[str], quantity: str, start_date: datetime.date, end_date: datetime.date
 ) -> pandas.DataFrame:
     """
     Fetch historical stock prices for a given list of ticker symbols from 'start_date' to 'end_date'.
 
     Args:
-        symbol: Stock ticker symbol.
+        company_list: Stock ticker symbol.
         quantity: Quantity to analize.
         end_date: Typically today unless a specific end date is provided. End date MUST be greater than start date
         start_date: Set explicitly, or calculated as 'end_date - date interval'
@@ -300,6 +265,20 @@ def get_historical_price(
     Returns:
         A `pandas DataFrame` with historical price data.
     """
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'`company_list` must be of type list or string. Got {(type(company_list))}.'
+    )
+    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
+        'Start date must be before the end date.'
+    )
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    company_list = coerce_str_to_list(company_list)
+
+    assert all([isinstance(name, str) for name in company_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
+    )
+    symbol_list = retrieve_symbol_list(company_list)
 
     # Initialise a pandas DataFrame with symbols as columns and dates as index
     data_price = pandas.DataFrame(columns=symbol_list)

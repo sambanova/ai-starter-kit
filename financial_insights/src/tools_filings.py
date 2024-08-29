@@ -23,9 +23,6 @@ logging.basicConfig(level=logging.INFO)
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-RETRIEVE_HEADLINES = False
-
-
 class SecEdgarFilingsInput(BaseModel):
     """Retrieve the text of a financial filing from SEC Edgar and then answer the original user question."""
 
