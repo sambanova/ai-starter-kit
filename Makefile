@@ -71,12 +71,23 @@ start-parsing-service-replit: replit-setup-parsing-service
 .PHONY: replit-setup-parsing-service
 replit-setup-parsing-service:
 	@echo "Setting up parsing service for Repl.it..."
-	@cd $(PARSING_DIR) && ( \
-		echo "Current directory: $(shell pwd)"; \
-		echo "PARSING_DIR: $(PARSING_DIR)"; \
-		echo "Installing requirements..."; \
-		pip install -r requirements.txt; \
-	)
+	@echo "Current directory: $$(pwd)"
+	@echo "PARSING_DIR: $(PARSING_DIR)"
+	@if [ -d "$(PARSING_DIR)" ]; then \
+		cd $(PARSING_DIR) && \
+		echo "Changed to directory: $$(pwd)" && \
+		if [ -f "Makefile" ]; then \
+			echo "Running make install..." && \
+			make install; \
+		else \
+			echo "Error: Makefile not found in $(PARSING_DIR)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "Error: Directory $(PARSING_DIR) not found"; \
+		exit 1; \
+	fi
+
 
 .PHONY: post-process-replit
 post-process-replit:
