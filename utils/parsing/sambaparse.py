@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Optional, List, Tuple
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
+import shutil
 from typing import List, Dict, Optional, Tuple, Union, Any
 
 load_dotenv()
@@ -20,6 +21,16 @@ class SambaParse:
     def __init__(self, config_path: str):
         with open(config_path, "r") as file:
             self.config = yaml.safe_load(file)
+    
+    # Set the default Unstructured API key as an environment variable if not already set
+        if "UNSTRUCTURED_API_KEY" not in os.environ:
+            default_api_key = self.config.get("partitioning", {}).get("default_unstructured_api_key")
+            if default_api_key:
+                os.environ["UNSTRUCTURED_API_KEY"] = default_api_key
+                logger.info("Using default Unstructured API key from config file.")
+            else:
+                logger.warning("No Unstructured API key found in environment or config file.")
+
 
     def run_ingest(
         self,
@@ -141,9 +152,8 @@ class SambaParse:
                 command.extend(["--partition-by-api", "--api-key", api_key])
                 command.extend(["--partition-endpoint", partition_endpoint_url])
             else:
-                raise ValueError(
-                    "UNSTRUCTURED_API_KEY environment variable is not set."
-                )
+                logger.warning("No Unstructured API key available. Partitioning by API will be skipped.")
+
 
         if self.config["partitioning"]["strategy"] == "hi_res":
             if (
@@ -405,3 +415,49 @@ def parse_doc_universal(
     )
 
     return texts, metadata_list, langchain_docs
+
+
+def parse_doc_streamlit(docs: List, 
+              kit_dir: str,
+              additional_metadata: Optional[Dict] = None,
+              ) -> List[Document]:
+    """
+    Parse the uploaded documents and return a list of LangChain documents.
+
+    Args:
+        docs (List[UploadFile]): A list of uploaded files.
+        kit_dir (str): The directory of the current kit.
+        additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
+            Defaults to an empty dictionary.
+
+    Returns:
+        List[Document]: A list of LangChain documents.
+    """
+    if additional_metadata is None:
+        additional_metadata = {}
+
+    # Create the data/tmp folder if it doesn't exist
+    temp_folder = os.path.join(kit_dir, "data/tmp")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    else:
+        # If there are already files there, delete them
+        for filename in os.listdir(temp_folder):
+            file_path = os.path.join(temp_folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
+
+    # Save all selected files to the tmp dir with their file names
+    for doc in docs:
+        temp_file = os.path.join(temp_folder, doc.name)
+        with open(temp_file, "wb") as f:
+            f.write(doc.getvalue())
+
+    # Pass in the temp folder for processing into the parse_doc_universal function
+    _, _, langchain_docs = parse_doc_universal(doc=temp_folder, additional_metadata=additional_metadata)
+    return langchain_docs
