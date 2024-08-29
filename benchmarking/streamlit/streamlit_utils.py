@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib.axes._axes import Axes
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -40,7 +41,7 @@ def plot_dataframe_summary(df_req_info, ax):
         value_name="Value",
     )
     sns.barplot(
-        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax
+        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax, estimator=np.median
     ).set(
         xlabel="Batch Size Used",
         ylabel="tokens/s",
@@ -76,7 +77,7 @@ def plot_client_vs_server_barplots(
     # Create the plot
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax).set(
+    sns.barplot(data=df_melted, x=x_col, y="Value", hue="Metric", ax=ax, estimator=np.median).set(
         xlabel="Batch Size Used",
         ylabel=ylabel,
         title=title,
