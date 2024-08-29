@@ -46,32 +46,32 @@ def include_pdf_report() -> None:
 
     with cols[0]:
         include_stock = streamlit.checkbox(
-            r'$\textsf{\normalsize Include saved stock queries}$',
+            'Include saved stock queries',
             key='checkbox_include_stock',
             value=False,
             on_change=check_inclusions,
         )
         include_database = streamlit.checkbox(
-            r'$\textsf{\normalsize Include saved stock database queries}$',
+            'Include saved stock database queries',
             key='checkbox_include_database',
             value=False,
             on_change=check_inclusions,
         )
         inlude_yahoo_news = streamlit.checkbox(
-            r'$\textsf{\normalsize Include saved Yahoo News queries}$',
+            'Include saved Yahoo News queries',
             key='checkbox_include_yahoo_news',
             value=False,
             on_change=check_inclusions,
         )
         include_filings = streamlit.checkbox(
-            r'$\textsf{\normalsize Include saved financial filings queries}$',
+            'Include saved financial filings queries',
             key='checkbox_include_filings',
             value=False,
             on_change=check_inclusions,
         )
     with cols[1]:
         include_pdf_rag = streamlit.checkbox(
-            r'$\textsf{\normalsize Include saved PDF report queries}$',
+            'Include saved PDF report queries',
             key='checkbox_include_pdf_rag',
             value=False,
             on_change=check_inclusions,
@@ -79,7 +79,7 @@ def include_pdf_report() -> None:
         # Add a vertical space
         streamlit.text('\n' * 3)
         generate_from_history = streamlit.checkbox(
-            r'$\textsf{\normalsize Generate from the whole chat history}$',
+            'Generate from the whole chat history',
             key='checkbox_generate_from_history',
             value=False,
             on_change=check_generate_from_history,
@@ -109,11 +109,11 @@ def include_pdf_report() -> None:
         data_paths['history'] = HISTORY_PATH
 
     # Add title name (optional)
-    title_name = streamlit.text_input(r'$\textsf{\normalsize Title Name}$', 'Financial Report')
+    title_name = streamlit.text_input('Title Name', 'Financial Report')
 
     # Include summary for each section
     include_summary = streamlit.checkbox(
-        r'$\textsf{\normalsize Include summary from each section}$',
+        'Include summary from each section',
         key='checkbox_summary',
         value=False,
         help='This will take longer!',
@@ -150,7 +150,7 @@ def include_pdf_report() -> None:
 
     # Use the previously generated PDF reports
     use_generated_pdf = streamlit.checkbox(
-        r'$\textsf{\normalsize Use generated PDF}$',
+        'Use generated PDF',
         key='checkbox_use_generated_pdf',
         value=False,
         on_change=check_use_generated_pdf,
@@ -158,7 +158,7 @@ def include_pdf_report() -> None:
 
     # Upload your own PDF reports
     upload_your_pdf = streamlit.checkbox(
-        r'$\textsf{\normalsize Upload your PDF}$',
+        'Upload your PDF',
         key='checkbox_upload_your_pdf',
         value=False,
         on_change=check_upload_your_pdf,

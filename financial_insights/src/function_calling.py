@@ -321,7 +321,7 @@ class FunctionCalling:
                     retrieved_input_total_dict[key] = value
 
             # Invoke the tool with the retrieved inputs
-            response = tools_map[tool['tool'].lower()].invoke(retrieved_input_total)  # type: ignore
+            response = tools_map[tool['tool'].lower()].invoke(retrieved_input_total_dict)  # type: ignore
 
             # Append the response to the tools messages
             tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))

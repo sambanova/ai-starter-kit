@@ -347,8 +347,8 @@ def plot_price_over_time(data_close: pandas.DataFrame) -> Figure:
     pyplot.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
 
     # Add grid
-    ax.grid(True, axis='x', linestyle='--', alpha=0.7)
-    ax.grid(True, axis='y', linestyle='--', alpha=0.7)
+    ax.grid(True, axis='x', linestyle='--', alpha=0.75)
+    ax.grid(True, axis='y', linestyle='--', alpha=0.75)
 
     # Customize colors
     ax.set_facecolor('lightgray')

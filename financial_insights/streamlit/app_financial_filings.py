@@ -18,8 +18,8 @@ def include_financial_filings() -> None:
     )
 
     # User request
-    user_request = streamlit.text_input(r'$\textsf{\normalsize Enter your query:}$', key='financial-filings')
-    company_name = streamlit.text_input(r'$\textsf{\normalsize Company name (optional if in the query already)}$')
+    user_request = streamlit.text_input('Enter your query:', key='financial-filings')
+    company_name = streamlit.text_input('Company name (optional if in the query already)')
     # Define the range of years
     start_year = 2020
     end_year = 2024
