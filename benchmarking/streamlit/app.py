@@ -179,7 +179,7 @@ def main():
                     df_req_info,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server TTFT and Client TTFT per request",
+                    "Barplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )
@@ -187,7 +187,7 @@ def main():
                     df_req_info,
                     "batch_size_used",
                     ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
-                    "Boxplots for Server latency and Client latency",
+                    "Barplots for Server latency and Client latency",
                     "seconds",
                     ax[1],
                 )
@@ -198,7 +198,7 @@ def main():
                         "server_output_token_per_s_per_request",
                         "client_output_token_per_s_per_request",
                     ],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Barplots for Server token/s and Client token/s per request",
                     "tokens/s",
                     ax[2],
                 )
@@ -208,7 +208,7 @@ def main():
 
             except Exception as e:
                 st.error(
-                    f"Error: {e}. For more error details, please look at the terminal."
+                    f"Error: {e}."
                 )
 
 
