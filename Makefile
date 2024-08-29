@@ -56,8 +56,8 @@ replit: replit-install start-parsing-service-replit post-process-replit
 .PHONY: replit-install
 replit-install:
 	@echo "Installing dependencies for Repl.it (skipping system dependencies)..."
-	$(PIP) install --upgrade pip
-	$(PIP) install -r $(BASE_REQUIREMENTS)
+	pip install --upgrade pip
+	pip install -r $(BASE_REQUIREMENTS)
 
 .PHONY: start-parsing-service-replit
 start-parsing-service-replit: replit-setup-parsing-service
@@ -75,14 +75,14 @@ replit-setup-parsing-service:
 		echo "Current directory: $(shell pwd)"; \
 		echo "PARSING_DIR: $(PARSING_DIR)"; \
 		echo "Installing requirements..."; \
-		$(PIP) install -r requirements.txt; \
+		pip install -r requirements.txt; \
 	)
 
 .PHONY: post-process-replit
 post-process-replit:
 	@echo "Post-processing installation for Repl.it..."
-	$(PIP) uninstall -y google-search-results
-	$(PIP) install google-search-results==2.4.2
+	pip uninstall -y google-search-results
+	pip install google-search-results==2.4.2
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
