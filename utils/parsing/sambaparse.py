@@ -21,6 +21,16 @@ class SambaParse:
     def __init__(self, config_path: str):
         with open(config_path, "r") as file:
             self.config = yaml.safe_load(file)
+    
+    # Set the default Unstructured API key as an environment variable if not already set
+        if "UNSTRUCTURED_API_KEY" not in os.environ:
+            default_api_key = self.config.get("partitioning", {}).get("default_unstructured_api_key")
+            if default_api_key:
+                os.environ["UNSTRUCTURED_API_KEY"] = default_api_key
+                logger.info("Using default Unstructured API key from config file.")
+            else:
+                logger.warning("No Unstructured API key found in environment or config file.")
+
 
     def run_ingest(
         self,
@@ -142,9 +152,8 @@ class SambaParse:
                 command.extend(["--partition-by-api", "--api-key", api_key])
                 command.extend(["--partition-endpoint", partition_endpoint_url])
             else:
-                raise ValueError(
-                    "UNSTRUCTURED_API_KEY environment variable is not set."
-                )
+                logger.warning("No Unstructured API key available. Partitioning by API will be skipped.")
+
 
         if self.config["partitioning"]["strategy"] == "hi_res":
             if (
