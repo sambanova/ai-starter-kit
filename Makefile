@@ -51,7 +51,7 @@ all:
 
 # Repl.it specific targets
 .PHONY: replit
-replit: replit-venv install start-parsing-service post-process
+replit: replit-venv replit-install start-parsing-service post-process
 
 .PHONY: replit-venv
 replit-venv:
@@ -62,6 +62,14 @@ replit-venv:
 	else \
 		echo "Using existing virtual environment."; \
 	fi
+
+.PHONY: replit-install
+replit-install:
+	@echo "Installing dependencies for Repl.it (skipping system dependencies)..."
+	@. $(VENV_PATH)/bin/activate && \
+	$(PIP) install --upgrade pip && \
+	$(PIP) install -r $(BASE_REQUIREMENTS) && \
+	deactivate
 
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
