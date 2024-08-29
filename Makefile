@@ -49,6 +49,20 @@ all:
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
+# Repl.it specific targets
+.PHONY: replit
+replit: replit-venv install start-parsing-service post-process
+
+.PHONY: replit-venv
+replit-venv:
+	@echo "Setting up virtual environment for Repl.it..."
+	@if [ ! -d $(VENV_PATH) ]; then \
+		echo "Creating new virtual environment..."; \
+		$(PYTHON) -m venv $(VENV_PATH); \
+	else \
+		echo "Using existing virtual environment."; \
+	fi
+
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
@@ -402,6 +416,7 @@ format:
 help:
 	@echo "Available targets:"
 	@echo "  all                    : Set up main project, create or use venv, install dependencies, start parsing service, and post-process"
+	@echo "  replit                 : Set up project for Repl.it (skips pyenv check)"
 	@echo "  ensure-system-dependencies : Ensure Poppler and Tesseract are installed"
 	@echo "  ensure-poppler         : Install Poppler if not already installed"
 	@echo "  ensure-tesseract       : Install Tesseract if not already installed"
