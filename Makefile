@@ -51,26 +51,38 @@ all:
 
 # Repl.it specific targets
 .PHONY: replit
-replit: replit-venv replit-install start-parsing-service post-process
-
-.PHONY: replit-venv
-replit-venv:
-	@echo "Setting up virtual environment for Repl.it..."
-	@if [ ! -d $(VENV_PATH) ]; then \
-		echo "Creating new virtual environment..."; \
-		$(PYTHON) -m venv $(VENV_PATH); \
-	else \
-		echo "Using existing virtual environment."; \
-	fi
+replit: replit-install start-parsing-service-replit post-process-replit
 
 .PHONY: replit-install
 replit-install:
 	@echo "Installing dependencies for Repl.it (skipping system dependencies)..."
-	@. $(VENV_PATH)/bin/activate && \
-	$(PIP) install --upgrade pip && \
-	$(PIP) install -r $(BASE_REQUIREMENTS) && \
-	deactivate
+	$(PIP) install --upgrade pip
+	$(PIP) install -r $(BASE_REQUIREMENTS)
 
+.PHONY: start-parsing-service-replit
+start-parsing-service-replit: replit-setup-parsing-service
+	@echo "Starting parsing service in the background..."
+	@cd $(PARSING_DIR) && \
+	PORT=$$PORT make run-web-app > parsing_service.log 2>&1 & \
+	echo $$! > parsing_service.pid
+	@echo "Parsing service started. PID stored in $(PARSING_DIR)/parsing_service.pid"
+	@echo "Use 'make parsing-log' to view the service log."
+
+.PHONY: replit-setup-parsing-service
+replit-setup-parsing-service:
+	@echo "Setting up parsing service for Repl.it..."
+	@cd $(PARSING_DIR) && ( \
+		echo "Current directory: $(shell pwd)"; \
+		echo "PARSING_DIR: $(PARSING_DIR)"; \
+		echo "Installing requirements..."; \
+		$(PIP) install -r requirements.txt; \
+	)
+
+.PHONY: post-process-replit
+post-process-replit:
+	@echo "Post-processing installation for Repl.it..."
+	$(PIP) uninstall -y google-search-results
+	$(PIP) install google-search-results==2.4.2
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
