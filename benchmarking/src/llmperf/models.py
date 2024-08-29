@@ -16,6 +16,7 @@ class RequestConfig(BaseModel):
         metadata: Additional metadata to attach to the request for logging or validation purposes.
     """
 
+    request_idx: int
     model: str
     prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
