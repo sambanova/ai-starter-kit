@@ -143,7 +143,6 @@ def handle_stock_data_analysis(
         return None
 
     streamlit.session_state.tools = [
-        'retrieve_symbol_quantity_list',
         'get_historical_price',
     ]
     attach_tools(

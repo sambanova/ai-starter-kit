@@ -1,7 +1,7 @@
 # Prompt template for the SQL queries
 SQL_QUERY_PROMPT_TEMPLATE = """
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    
+
     You are a SQLite expert. Given an input question, please generate a syntactically correct SQLite query to run.
     Unless the user specifies in the question a specific number of examples to obtain,
     query for at most {top_k} results using the LIMIT clause as per SQLite.
@@ -16,23 +16,26 @@ SQL_QUERY_PROMPT_TEMPLATE = """
 
     Only use the following tables:
     {selected_schemas}
-    
+
     The queries must be formatted as follows: 
-    
+
     ```sql
     query
     ```
-    
+
     Example:
-    
+
     ```sql
     SELECT * FROM mainTable;
     ```
-    
+
     <|eot_id|>
-    
+
     <|start_header_id|>user<|end_header_id|>
+
     {query}
+
     <|eot_id|>
+
     <|start_header_id|>assistant<|end_header_id|>
 """

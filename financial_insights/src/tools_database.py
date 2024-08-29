@@ -20,7 +20,12 @@ from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
 from financial_insights.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
-from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools import (
+    coerce_str_to_list,
+    convert_data_to_frame,
+    extract_yfinance_data,
+    get_conversational_response,
+)
 from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
@@ -203,7 +208,7 @@ def query_stock_database(
         raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}')
 
 
-def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[str, str | List[str]]:
+def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     """
     Query a SQL database for a list of stocks/companies.
 
@@ -214,14 +219,14 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
         symbol_list: List of stock ticker symbols.
 
     Returns:
-        The result of the query, as a dictionary with the following elements:
-        - `queries`: A list of SQL queries that were used to retrieve the data.
-        - `results`: The results of the execution of each query in `queries`.
+        The  answer to the user query.
     """
+    # The query generation prompt
     query_generation_prompt = PromptTemplate(
         template=SQL_QUERY_PROMPT_TEMPLATE,
         input_variables=['top_k', 'selected_schemas', 'query'],
     )
+
     # Chain that receives the natural language input and the table schemas, invoke the LLM,
     # and finally execute the SQL finder method, retrieving only the filtered SQL query
     query_generation_chain = query_generation_prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
@@ -267,7 +272,13 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
     response_dict: Dict[str, str | List[str]] = dict()
     response_dict['queries'] = queries
     response_dict['results'] = results
-    return response_dict
+
+    # Get conversational response
+    answer = get_conversational_response.invoke(
+        {'user_query': user_query, 'response_object': json.dumps(response_dict)}
+    )
+
+    return answer
 
 
 def sql_finder(text: str) -> Any:

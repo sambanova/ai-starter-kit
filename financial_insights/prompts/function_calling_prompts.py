@@ -1,30 +1,38 @@
 FUNCTION_CALLING_PROMPT_TEMPLATE = """
-<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+  <|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-When you receive a tool call response, use the output to format an answer to the orginal user question.
+  When you receive a tool call response, use the output to format an answer to the orginal user question.
 
-You are a helpful assistant with tool calling capabilities.<|eot_id|><|start_header_id|>user<|end_header_id|>
+  You are a helpful assistant with tool calling capabilities.
 
-Given the following functions/tools, please respond with a JSON for a function call
-with its proper arguments that best answers the given prompt.
+  Format instructions: {format_instructions}
 
-Respond in the format
+  <|eot_id|>
 
-```json
-[{{
- "name": function name,
-  "parameters": dictionary of argument name and its value
-}}]
-```
+  <|start_header_id|>user<|end_header_id|>
 
-Do not use variables.
+  Given the following functions/tools, please respond with a JSON for a function call
+  with its proper arguments that best answers the given prompt.
 
-Available tools:
-{tools}
+  Respond in the format
 
-Please only select one tool.
+  ```json
+  [{{
+  "name": function name,
+    "parameters": dictionary of argument name and its value
+  }}]
+  ```
 
-Question: {user_query}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+  Do not use variables.
 
-Format instructions: {format_instructions}
+  Available tools:
+  {tools}
+
+  Please only select one tool.
+
+  Question: {user_query}
+
+  <|eot_id|>
+
+  |start_header_id|>assistant<|end_header_id|>
 """

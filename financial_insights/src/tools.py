@@ -14,6 +14,7 @@ from langchain_core.tools import tool
 # from langchain_core.pydantic_v1 import BaseModel, Field
 from llama_index.core.bridge.pydantic import BaseModel, Field
 
+from financial_insights.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
 from financial_insights.streamlit.constants import *
 
 
@@ -42,17 +43,9 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     # Convert object to string
     response_string = json.dumps(response_object)
 
-    # The prompt template
-    conversational_prompt_template = (
-        'Here is the user request:\n{user_query}\n'
-        + 'Here is the response object:\n{response_string}\n'
-        + 'Please rephrase and return the response object in a conversational, but formal style. '
-        'Format instructions: {format_instructions}.'
-    )
-
     # The prompt
     conversational_prompt = PromptTemplate(
-        template=conversational_prompt_template,
+        template=CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE,
         input_variables=['user_query', 'response_string'],
         partial_variables={'format_instructions': conversational_parser.get_format_instructions()},
     )

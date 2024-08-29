@@ -92,7 +92,7 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
     with streamlit.chat_message('user'):
         streamlit.write(f'{user_question}')
 
-    stream_response_object(response, stream_response=True)
+    stream_response_object(response)
 
     return response
 
@@ -105,43 +105,40 @@ def stream_chat_history() -> None:
         with streamlit.chat_message('user'):
             streamlit.write(question)
 
-        stream_response_object(answer, stream_response=True)
+        stream_response_object(answer)
 
 
-def stream_response_object(response: Any, stream_response: bool = False) -> Any:
+def stream_response_object(response: Any) -> Any:
     if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
-        return stream_complex_response(response, stream_response)
+        return stream_complex_response(response)
 
     elif isinstance(response, list) or isinstance(response, dict):
-        return stream_complex_response(response, stream_response)
+        return stream_complex_response(response)
 
     elif isinstance(response, tuple):
         json_response = list()
         for item in response:
-            json_response.append(stream_complex_response(item, stream_response))
+            json_response.append(stream_complex_response(item))
         return json.dumps(json_response)
     else:
         return
 
 
-def stream_complex_response(response: Any, stream_response: bool = False) -> Any:
+def stream_complex_response(response: Any) -> Any:
     if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
-        if stream_response:
-            stream_single_response(response)
+        stream_single_response(response)
 
     elif isinstance(response, list):
-        if stream_response:
-            for item in response:
-                stream_single_response(item)
+        for item in response:
+            stream_single_response(item)
 
     elif isinstance(response, dict):
-        if stream_response:
-            for key, value in response.items():
-                if isinstance(value, str):
-                    stream_single_response(key + ': ' + value)
-                elif isinstance(value, list):
-                    # If all values are strings
-                    stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
+        for key, value in response.items():
+            if isinstance(value, str):
+                stream_single_response(key + ': ' + value)
+            elif isinstance(value, list):
+                # If all values are strings
+                stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
 
     try:
         return json.dumps(response)
@@ -153,6 +150,7 @@ def stream_single_response(response: Any) -> None:
     """Streamlit chatbot response."""
     # If response is a string
     if isinstance(response, (str, float, int)):
+        response = escape_markdown(str(response))
         with streamlit.chat_message(
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
@@ -218,3 +216,23 @@ def extract_path_after(directory: str, path: str) -> Optional[str]:
 
     # Return the substring from the character after the directory onwards
     return norm_path[start_pos + 1 :]
+
+
+def escape_markdown(text: str) -> str:
+    """
+    Escapes special characters in the given text to make it compatible with Markdown.
+
+    Args:
+        text: The input text to be escaped.
+
+    Returns:
+        The escaped text.
+    """
+    # List of characters that need to be escaped in Markdown
+    special_chars = ['\\', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!', '$', '`', '|', ':']
+
+    # Escape each character by adding a backslash
+    for char in special_chars:
+        text = text.replace(char, '\\' + char)
+
+    return text
