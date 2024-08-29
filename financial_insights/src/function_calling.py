@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 from langchain_core.language_models.llms import LLM
@@ -226,17 +226,3 @@ class FunctionCalling:
         answer = tools_map[tool_name].invoke(tool_parameters)
 
         return answer
-
-
-class FallbackSchema(BaseModel):
-    """Default schema for InputSchema"""
-
-    pass
-
-
-def get_current_input_schema(tools: list[Tool | StructuredTool], tool_name: str) -> Type[BaseModel] | None:
-    """Get the input schema of a tool by name."""
-    for tool in tools:
-        if tool.name == tool_name:
-            return tool.args_schema
-    return FallbackSchema

@@ -20,7 +20,6 @@ from financial_insights.src.tools_pdf_generation import pdf_rag
 from financial_insights.src.tools_stocks import (
     get_historical_price,
     get_stock_info,
-    retrieve_symbol_quantity_list,
 )
 from financial_insights.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_insights.streamlit.constants import *
@@ -29,7 +28,6 @@ from financial_insights.streamlit.constants import *
 TOOLS = {
     'get_stock_info': get_stock_info,
     'get_historical_price': get_historical_price,
-    'retrieve_symbol_quantity_list': retrieve_symbol_quantity_list,
     'scrape_yahoo_finance_news': scrape_yahoo_finance_news,
     'get_conversational_response': get_conversational_response,
     'retrieve_filings': retrieve_filings,

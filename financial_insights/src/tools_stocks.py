@@ -1,6 +1,6 @@
 import datetime
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pandas
 import streamlit
@@ -153,7 +153,7 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     return df.chat(user_query)
 
 
-def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> Optional[List[str]]:
+def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[str]:
     """
     Retrieve a list of ticker symbols.
 
@@ -173,6 +173,8 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> Option
 
     # If `symbol_list` is a string, coerce it to a list of strings
     company_names_list = coerce_str_to_list(company_names_list)
+
+    assert len(company_names_list) > 0, ValueError('`company_names_list` cannot be empty.')
 
     assert all([isinstance(name, str) for name in company_names_list]), TypeError(
         '`company_names_list` must be a list of strings.'
@@ -219,13 +221,6 @@ class RetrievalSymbolQuantitySchema(BaseModel):
 
     company_list: List[str] = Field('List of stock ticker symbols', examples=['AAPL', 'MSFT'])
     quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
-
-
-@tool(args_schema=RetrievalSymbolQuantitySchema)
-def retrieve_symbol_quantity_list(company_list: List[str], quantity: str) -> Tuple[List[str], str]:
-    """Retrieve a list of ticker symbols and the quantity that the user wants to analyze."""
-
-    return symbol_list, quantity
 
 
 class HistoricalPriceSchema(BaseModel):

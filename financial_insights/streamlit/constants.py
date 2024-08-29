@@ -44,4 +44,3 @@ TOP_K = 10
 # SambaNova
 SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
 SAMBANOVA_ORANGE = (238, 118, 36)
-

@@ -19,11 +19,12 @@ from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
+from financial_insights.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
 from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
 from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
-from financial_insights.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
+
 
 class DatabaseSchema(BaseModel):
     """Create a SQL database for a list of stocks/companies."""
@@ -217,7 +218,7 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
         - `queries`: A list of SQL queries that were used to retrieve the data.
         - `results`: The results of the execution of each query in `queries`.
     """
-    query_generation_prompt =  PromptTemplate(
+    query_generation_prompt = PromptTemplate(
         template=SQL_QUERY_PROMPT_TEMPLATE,
         input_variables=['top_k', 'selected_schemas', 'query'],
     )
@@ -231,10 +232,8 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Dict[st
 
     # Generate the SQL query
     query: str = query_generation_chain.invoke(
-        {   
-            'top_k': TOP_K,
-            'selected_schemas': selected_schemas,
-            'query': user_query})
+        {'top_k': TOP_K, 'selected_schemas': selected_schemas, 'query': user_query}
+    )
 
     # Split the SQL query into multiple queries
     queries = query.split(';')
