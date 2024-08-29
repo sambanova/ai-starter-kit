@@ -184,6 +184,9 @@ def retrieve_filings(
     # Return the QA response
     response = get_qa_response(user_question, documents)
 
+    # Assert that response is indexable
+    assert isinstance(response, dict), 'QA response is not a dictionary.'
+
     # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
     query_dict = {
         'filing_type': filing_type,

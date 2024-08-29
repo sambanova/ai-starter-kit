@@ -1,9 +1,9 @@
-import os
 from typing import Any, List
 
 import streamlit
-from langchain.chains import RetrievalQA
-from langchain.prompts import load_prompt
+from langchain import hub
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -47,30 +47,23 @@ def get_qa_response(
     # Load config
     config = _get_config_info(CONFIG_PATH)
 
-    # Load retrieval prompt
-    prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama30b-web_crawling_data_retriever.yaml'))
-
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
         search_type='similarity_score_threshold',
         search_kwargs={
-            'score_threshold': config['tools']['rag']['retrieval']['score_threshold'],  # type: ignore
-            'k': config['tools']['rag']['retrieval']['k_retrieved_documents'],  # type: ignore
+            'score_threshold': config['rag']['retrieval']['score_threshold'],  # type: ignore
+            'k': config['rag']['retrieval']['k_retrieved_documents'],  # type: ignore
         },
     )
 
+    # See full prompt at https://smith.langchain.com/hub/langchain-ai/retrieval-qa-chat
+    retrieval_qa_chat_prompt = hub.pull('langchain-ai/retrieval-qa-chat')
+
     # Create a retrieval-based QA chain
-    qa_chain = RetrievalQA.from_llm(
-        llm=streamlit.session_state.fc.llm,
-        retriever=vectorstore.as_retriever(),
-        return_source_documents=True,
-        verbose=True,
-        input_key='question',
-        output_key='answer',
-        prompt=prompt,
-    )
+    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.fc.llm, retrieval_qa_chat_prompt)
+    qa_chain = create_retrieval_chain(vectorstore.as_retriever(), combine_docs_chain)
 
     # Function to answer questions based on the input documents
-    response = qa_chain.invoke({'question': user_request})
+    response = qa_chain.invoke({'input': user_request})
 
     return response

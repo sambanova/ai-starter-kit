@@ -5,6 +5,7 @@ llama-index==0.11.1
 langchain==0.2.11
 langchain-community==0.2.10
 langchain-core>=0.2.6,<0.3.0
+langchainhub==0.1.21
 mypy==1.11.2
 pandasai==2.2.10
 plotly == 5.22.0

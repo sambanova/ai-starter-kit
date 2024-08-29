@@ -312,10 +312,13 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
     # Get the QA response
     response = get_qa_response(user_query, documents)
 
+    # Assert that response is indexable
+    assert isinstance(response, dict), 'QA response is not a dictionary.'
+
     # Extract the answer from  the QA response
     answer = response['answer']
 
     # Extract the urls from the QA response
-    url_list = list({doc.metadata['url'] for doc in response['source_documents']})
+    url_list = [doc.metadata['url'] for doc in response['context']]
 
     return answer, url_list
