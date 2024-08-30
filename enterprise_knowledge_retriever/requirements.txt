@@ -16,6 +16,7 @@ sseclient-py==1.8.0
 unstructured==0.14.9
 unstructured_inference==0.7.36
 unstructured_pytesseract==0.3.12
+unstructured-client==0.18.0
 pytesseract==0.3.10
 chromadb==0.5.3
 langgraph==0.0.55
