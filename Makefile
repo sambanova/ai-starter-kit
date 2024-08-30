@@ -69,10 +69,10 @@ replit-kit:
 	else \
 		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
 	fi
+	@echo "Downgrading NLTK to version 3.8.1..."
+	@pip install nltk==3.8.1 --no-cache-dir
 	@echo "Downloading NLTK punkt resource..."
-	@python -c "import nltk; nltk.download('punkt', download_dir='/home/runner/nltk_data')"
-	@echo "Setting NLTK_DATA environment variable..."
-	@export NLTK_DATA="/home/runner/nltk_data"
+	@python -c "import nltk; nltk.download('punkt')"
 	@echo "Kit $(KIT) setup complete."
 	@if [ -n "$(RUN_COMMAND)" ]; then \
 		echo "Running command: $(RUN_COMMAND)"; \
@@ -80,7 +80,8 @@ replit-kit:
 	else \
 		echo "No run command specified. Setup complete."; \
 	fi
-	
+
+
 # Update the existing replit target to include the new kit option
 .PHONY: replit
 replit:
