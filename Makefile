@@ -65,7 +65,7 @@ replit-kit:
 	@cd $(KIT) && \
 	pip install --upgrade pip && \
 	if [ -f "requirements.txt" ]; then \
-		pip install -r requirements.txt; \
+		pip install -r requirements.txt --no-cache-dir; \
 	else \
 		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
 	fi
