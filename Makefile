@@ -90,7 +90,7 @@ replit:
 replit-install:
 	@echo "Installing dependencies for Repl.it (skipping system dependencies)..."
 	pip install --upgrade pip
-	pip install -r $(BASE_REQUIREMENTS)
+	pip install -r $(BASE_REQUIREMENTS) --no-cache-dir
 
 .PHONY: start-parsing-service-replit
 start-parsing-service-replit: replit-setup-parsing-service
@@ -292,7 +292,7 @@ install: ensure-qpdf ensure-system-dependencies ensure-libheif
 	@echo "Installing dependencies..."
 	@. $(VENV_PATH)/bin/activate && \
 	$(PIP) install --upgrade pip && \
-	$(PIP) install -r $(BASE_REQUIREMENTS) && \
+	$(PIP) install -r $(BASE_REQUIREMENTS) --no-cache-dir && \
 	deactivate
 
 # Post-process installation
@@ -443,7 +443,7 @@ setup-test-suite: ensure-pyenv
 	@$(PYTHON) -m venv $(TEST_SUITE_VENV)
 	@. $(TEST_SUITE_VENV)/bin/activate && \
 		$(PIP) install --upgrade pip && \
-		$(PIP) install -r $(TEST_SUITE_REQUIREMENTS) && \
+		$(PIP) install -r $(TEST_SUITE_REQUIREMENTS) --no-cache-dir && \
 		deactivate
 
 .PHONY: clean-test-suite
