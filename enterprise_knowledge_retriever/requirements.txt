@@ -13,7 +13,7 @@ python-dotenv==1.0.0
 streamlit-extras==0.4.3
 pillow==10.4.0
 sseclient-py==1.8.0
-unstructured[pdf]==0.14.9
+unstructured==0.14.9
 unstructured_inference==0.7.36
 unstructured_pytesseract==0.3.12
 unstructured-client==0.18.0

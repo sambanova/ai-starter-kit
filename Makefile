@@ -70,7 +70,9 @@ replit-kit:
 		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
 	fi
 	@echo "Downloading NLTK punkt resource..."
-	@python -c "import nltk; nltk.download('punkt')"
+	@python -c "import nltk; nltk.download('punkt', download_dir='/home/runner/nltk_data')"
+	@echo "Setting NLTK_DATA environment variable..."
+	@export NLTK_DATA="/home/runner/nltk_data"
 	@echo "Kit $(KIT) setup complete."
 	@if [ -n "$(RUN_COMMAND)" ]; then \
 		echo "Running command: $(RUN_COMMAND)"; \
