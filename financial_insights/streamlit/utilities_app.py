@@ -17,7 +17,8 @@ from financial_insights.streamlit.constants import *
 
 def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     """
-    Loads json config file
+    Loads json config file.
+
     Args:
         path (str, optional): The path to the config file.
         Defaults to CONFIG_PATH.

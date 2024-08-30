@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional, Union
 import pandas
 import streamlit
 import yfinance
-from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
@@ -36,7 +36,7 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     """Turn a response in a conversational format of the same language as the user query."""
 
     # The output parser
-    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)
+    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)  # type: ignore
 
     # Convert object to string
     response_string = json.dumps(response_object)

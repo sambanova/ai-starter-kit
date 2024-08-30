@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Union
 
 import pandas
 import streamlit
-from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
@@ -375,7 +375,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     summary_text = get_table_summaries_from_symbols(symbol_list)
 
     # The output parser
-    parser = PydanticOutputParser(pydantic_object=TableNames)
+    parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
 
     # The prompt template
     prompt_template = (
