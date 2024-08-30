@@ -69,6 +69,8 @@ replit-kit:
 	else \
 		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
 	fi
+	@echo "Downloading NLTK punkt resource..."
+	@python -c "import nltk; nltk.download('punkt')"
 	@echo "Kit $(KIT) setup complete."
 	@if [ -n "$(RUN_COMMAND)" ]; then \
 		echo "Running command: $(RUN_COMMAND)"; \
@@ -76,12 +78,12 @@ replit-kit:
 	else \
 		echo "No run command specified. Setup complete."; \
 	fi
-
+	
 # Update the existing replit target to include the new kit option
 .PHONY: replit
 replit:
 	@if [ -n "$(KIT)" ]; then \
-		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)" post-process-replit; \
+		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)"; \
 	else \
 		make replit-install post-process-replit; \
 	fi
@@ -127,7 +129,6 @@ post-process-replit:
 	@echo "Post-processing installation for Repl.it..."
 	pip uninstall -y google-search-results
 	pip install google-search-results==2.4.2
-	python -m nltk.downloader punkt
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
