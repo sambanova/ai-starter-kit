@@ -81,7 +81,7 @@ replit-kit:
 .PHONY: replit
 replit:
 	@if [ -n "$(KIT)" ]; then \
-		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)"; \
+		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)" post-process-replit; \
 	else \
 		make replit-install post-process-replit; \
 	fi
