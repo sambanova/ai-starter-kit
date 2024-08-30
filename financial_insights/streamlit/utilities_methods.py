@@ -130,15 +130,15 @@ def stream_complex_response(response: Any) -> Any:
 
     elif isinstance(response, list):
         for item in response:
-            stream_single_response(item)
+            stream_single_response(item + '\n')
 
     elif isinstance(response, dict):
         for key, value in response.items():
             if isinstance(value, str):
-                stream_single_response(key + ': ' + value)
+                stream_single_response(value + '\n')
             elif isinstance(value, list):
                 # If all values are strings
-                stream_single_response(key + ': ' + ', '.join([str(item) for item in value]) + '.')
+                stream_single_response(', '.join([str(item) for item in value]) + '\n')
 
     try:
         return json.dumps(response)
@@ -150,15 +150,16 @@ def stream_single_response(response: Any) -> None:
     """Streamlit chatbot response."""
     # If response is a string
     if isinstance(response, (str, float, int)):
-        response = escape_markdown(str(response))
+        response = str(response)
         with streamlit.chat_message(
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             if isinstance(response, str):
                 if not response.endswith('.png'):
-                    # Ploat the last path of the png file
-                    streamlit.write(response)
+                    # Clean and write the response
+                    markdown_response = escape_markdown(response)
+                    streamlit.write(markdown_response)
                 else:
                     # Load the image after extracting the last path of the png file
                     image = Image.open(response.split(' ')[-1])
@@ -229,7 +230,7 @@ def escape_markdown(text: str) -> str:
         The escaped text.
     """
     # List of characters that need to be escaped in Markdown
-    special_chars = ['\\', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!', '$', '`', '|', ':']
+    special_chars = ['\\', '{', '}', '[', ']', '(', ')', '>', '#', '$', '`', '|']
 
     # Escape each character by adding a backslash
     for char in special_chars:

@@ -115,43 +115,25 @@ def save_output_callback(
     # If the response is a list, try to dump it to a JSON file,
     # otherwise split it up and write each element individually
     elif isinstance(response, list):
-        try:
-            # Write the list to a JSON file
-            with open(filename, 'a') as json_file:
-                json.dump(response, json_file)
-        except TypeError:
-            # If the elements of the list are not JSON serializable
-            for elem in response:
-                save_simple_output(elem, filename)
+        for elem in response:
+            save_simple_output(elem + '\n', filename)
 
     # If the response is a list, try to dump it to a JSON file,
     # otherwise split it up and write pair of key and value individually
     elif isinstance(response, dict):
-        try:
-            # Write the dictionary to a JSON file
-            with open(filename, 'a') as json_file:
-                json.dump(response, json_file)
-        except TypeError:
-            # If the elements of the dictionary are not JSON serializable
-            for key, value in response.items():
-                save_simple_output(key, filename)
-                with open(filename, 'a') as text_file:
-                    if user_request is not None:
-                        text_file.write(user_request)
-                    text_file.write('\n')
-                save_simple_output(value, filename)
+        for key, value in response.items():
+            with open(filename, 'a') as text_file:
+                if isinstance(value, str):
+                    save_simple_output(value + '\n', filename)
+                elif isinstance(value, list):
+                    save_simple_output(', '.join([str(item) for item in value]) + '.' + '\n', filename)
 
     # If the response is a tuple, try to dump it to a JSON file,
     # otherwise split it up and write each element individually
     elif isinstance(response, tuple):
-        try:
-            # Write the tuple to a JSON file
-            with open(filename, 'a') as json_file:
-                json.dump(response, json_file)
-        except TypeError:
-            for elem in response:
-                # If the elements of the dictionary are not JSON serializable
-                save_simple_output(response, filename)
+        for elem in response:
+            # If the elements of the dictionary are not JSON serializable
+            save_simple_output(response + '\n', filename)
 
     else:
         raise ValueError('Invalid response type')
