@@ -2,6 +2,7 @@ llm:
   api: "fastapi" #  set either sambastudio, sambaverse or fastapi
   max_tokens_to_generate: 500
   temperature: 0.0
+  select_expert: "llama3-405b"
 
 use_cases:
   - General Assistant

@@ -75,7 +75,7 @@ def main():
         '--llm-api', 
         type=str, 
         required=True, 
-        default="sambastudio",
+        default="fastapi",
         help="The LLM API type. It could be either sambastudio or fastapi. Default value: sambastudio"
     )
 

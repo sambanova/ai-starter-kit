@@ -109,7 +109,7 @@ def main():
 
         st.text_input(
             "Model Name",
-            value="COE/Meta-Llama-3-8B-Instruct",
+            value="llama3-405b",
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
