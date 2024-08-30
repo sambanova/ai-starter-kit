@@ -63,7 +63,7 @@ replit-install:
 start-parsing-service-replit: replit-setup-parsing-service
 	@echo "Starting parsing service in the background..."
 	@cd $(PARSING_DIR) && \
-	PORT=$$PORT make run-web-app > parsing_service.log 2>&1 & \
+	make run-web-app > parsing_service.log 2>&1 & \
 	echo $$! > parsing_service.pid
 	@echo "Parsing service started. PID stored in $(PARSING_DIR)/parsing_service.pid"
 	@echo "Use 'make parsing-log' to view the service log."
