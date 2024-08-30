@@ -127,6 +127,7 @@ post-process-replit:
 	@echo "Post-processing installation for Repl.it..."
 	pip uninstall -y google-search-results
 	pip install google-search-results==2.4.2
+	python -m nltk.downloader punkt
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
