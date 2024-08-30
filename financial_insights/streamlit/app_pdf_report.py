@@ -173,20 +173,21 @@ def include_pdf_report() -> None:
                 if os.path.isfile(os.path.join(PDF_GENERATION_DIRECTORY, f)) and f.endswith('.pdf')
             ]
 
-            # Display files horizontally using Streamlit columns
-            cols = streamlit.columns(len(files))
+            if len(files) > 0:
+                # Display files horizontally using Streamlit columns
+                cols = streamlit.columns(len(files))
 
-            for idx, file in enumerate(files):
-                with cols[idx]:
-                    if streamlit.button(
-                        file,
-                        key=f'file-{idx}',
-                        on_click=handle_click_selected_file,
-                        args=(file,),
-                        disabled=True if file in streamlit.session_state.selected_files else False,
-                    ):
-                        pass
-            streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")
+                for idx, file in enumerate(files):
+                    with cols[idx]:
+                        if streamlit.button(
+                            file,
+                            key=f'file-{idx}',
+                            on_click=handle_click_selected_file,
+                            args=(file,),
+                            disabled=True if file in streamlit.session_state.selected_files else False,
+                        ):
+                            pass
+                streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")
 
         elif upload_your_pdf and not use_generated_pdf:
             # Add a PDF document for RAG
