@@ -49,9 +49,42 @@ all:
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
-# Repl.it specific targets
+# Repl.it specific targets for kit installation
+.PHONY: replit-kit
+replit-kit:
+	@if [ -z "$(KIT)" ]; then \
+		echo "Error: KIT variable is not set. Usage: make replit-kit KIT=<kit_name> [RUN_COMMAND=<command>]"; \
+		exit 1; \
+	fi
+	@echo "Setting up kit $(KIT) for Repl.it..."
+	@if [ ! -d "$(KIT)" ]; then \
+		echo "Error: Kit directory '$(KIT)' not found."; \
+		exit 1; \
+	fi
+	@echo "Installing dependencies for kit $(KIT)..."
+	@cd $(KIT) && \
+	pip install --upgrade pip && \
+	if [ -f "requirements.txt" ]; then \
+		pip install -r requirements.txt; \
+	else \
+		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
+	fi
+	@echo "Kit $(KIT) setup complete."
+	@if [ -n "$(RUN_COMMAND)" ]; then \
+		echo "Running command: $(RUN_COMMAND)"; \
+		cd $(KIT) && eval $(RUN_COMMAND); \
+	else \
+		echo "No run command specified. Setup complete."; \
+	fi
+
+# Update the existing replit target to include the new kit option
 .PHONY: replit
-replit: replit-install start-parsing-service-replit post-process-replit
+replit:
+	@if [ -n "$(KIT)" ]; then \
+		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)"; \
+	else \
+		make replit-install post-process-replit; \
+	fi
 
 .PHONY: replit-install
 replit-install:
