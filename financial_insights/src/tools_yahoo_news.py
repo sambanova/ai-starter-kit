@@ -44,8 +44,8 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
 
     Returns:
         A tuple containing the following pair:
-        1. The answer to the user query.
-        2. A list of links to articles that have been used for retrieval to answer the user query.
+            1. The answer to the user query.
+            2. A list of links to articles that have been used for retrieval to answer the user query.
 
     Raises:
         TypeError: If `symbol_list` is not a list of strings or `user_query` is not a string.

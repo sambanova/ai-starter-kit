@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
 import pandas
 from bs4 import BeautifulSoup
@@ -74,7 +74,7 @@ def retrieve_filings(
     assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
 
     # Retrieve the filing text from SEC Edgar
-    dl = Downloader(os.environ.get('SEC_API_ORGANIZATION'), os.environ.get('SEC_API_EMAIL'))
+    downloader = Downloader(os.environ.get('SEC_API_ORGANIZATION'), os.environ.get('SEC_API_EMAIL'))
 
     # Extract today's year
     current_year = datetime.datetime.now().date().year
@@ -102,8 +102,68 @@ def retrieve_filings(
     else:
         raise ValueError('The filing type must be either "10-K" or "10-Q".')
 
+    # Parse filings
+    filename, report_date = parse_filings(downloader, ticker_symbol, filing_type, filing_quarter, year, delta)
+
+    # Load the dataframe from the text file
+    try:
+        df = pandas.read_csv(CACHE_DIR + f'{filename}' + '.csv')
+    except FileNotFoundError:
+        logging.error('No scraped data found.')
+
+    # Convert DataFrame rows into Document objects
+    documents = []
+    for _, row in df.iterrows():
+        document = Document(page_content=row['text'])
+        documents.append(document)
+
+    # Return the QA response
+    response = get_qa_response(user_question, documents)
+
+    # Assert that response is indexable
+    assert isinstance(response, dict), 'QA response is not a dictionary.'
+
+    # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
+    assert isinstance(report_date, datetime.datetime), 'The report date is not a of type `datetime.date`.'
+    query_dict = {
+        'filing_type': filing_type,
+        'filing_quarter': filing_quarter,
+        'ticker_symbol': ticker_symbol,
+        'report_date': report_date.date().year,
+    }
+
+    answer = (
+        'Filing type: {filing_type},\nFiling quarter: {filing_quarter},\n'
+        'Ticker symbol: {ticker_symbol},\nYear of filing: {report_date}'.format(**query_dict)
+    )
+    answer += '\n\n' + response['answer']
+    return answer
+
+
+def parse_filings(
+    downloader: Downloader, ticker_symbol: str, filing_type: str, filing_quarter: int, year: int, delta: int = 10
+) -> Tuple[str, str]:
+    """
+    Search the filing, parse it and save it.
+    
+    The relevant filing refers to a company by ticker symbol, filing type, for a specific quarter and year.
+
+    Args:
+        downloader: Downloader object to download the filings from SEC website.
+        ticker_symbol: Ticker symbol of the company to be parsed.
+        filing_type: Filing type of the company to be parsed.
+        filing_quarter: Filing quarter of the company to be parsed.
+        year: Year of the company to be parsed.
+        delta: Maximum number of years to be searched.
+    
+    Returns:
+        A tuple of the followimg pair:
+            1. The filename of the relevant parsed filing.
+            2. The report date of the relevant parsed filing.
+    """
+
     # Extract the metadata of the filings
-    metadatas = dl.get_filing_metadatas(
+    metadatas = downloader.get_filing_metadatas(
         RequestedFilings(ticker_or_cik=ticker_symbol, form_type=filing_type, limit=delta)
     )
 
@@ -123,7 +183,7 @@ def retrieve_filings(
                 # Logging
                 logging.info(f'Found filing: {metadata}')
                 # Download the matching filing
-                html_text = dl.download_filing(url=metadata.primary_doc_url)
+                html_text = downloader.download_filing(url=metadata.primary_doc_url)
 
                 # Convert html to text
                 soup = BeautifulSoup(html_text, 'html.parser')
@@ -167,35 +227,4 @@ def retrieve_filings(
                 'of the year {date} is not available'
             )
 
-    # Load the dataframe from the text file
-    try:
-        df = pandas.read_csv(CACHE_DIR + f'{filename}' + '.csv')
-    except FileNotFoundError:
-        logging.error('No scraped data found.')
-
-    # Convert DataFrame rows into Document objects
-    documents = []
-    for _, row in df.iterrows():
-        document = Document(page_content=row['text'])
-        documents.append(document)
-
-    # Return the QA response
-    response = get_qa_response(user_question, documents)
-
-    # Assert that response is indexable
-    assert isinstance(response, dict), 'QA response is not a dictionary.'
-
-    # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
-    query_dict = {
-        'filing_type': filing_type,
-        'filing_quarter': filing_quarter,
-        'ticker_symbol': ticker_symbol,
-        'report_date': report_date.date().year,
-    }
-
-    answer = (
-        'Filing type: {filing_type},\nFiling quarter: {filing_quarter},\n'
-        'Ticker symbol: {ticker_symbol},\nYear of filing: {report_date}'.format(**query_dict)
-    )
-    answer += '\n\n' + response['answer']
-    return answer
+    return filename, report_date
