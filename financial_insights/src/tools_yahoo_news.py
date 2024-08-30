@@ -9,10 +9,8 @@ import yfinance
 from bs4 import BeautifulSoup
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
-
-# from langchain_core.pydantic_v1 import BaseModel, Field
-from llama_index.core.bridge.pydantic import BaseModel, Field
 
 from financial_insights.src.tools import coerce_str_to_list
 from financial_insights.src.utilities_retrieval import get_qa_response

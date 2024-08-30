@@ -9,10 +9,8 @@ import streamlit
 import yfinance
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
-
-# from langchain_core.pydantic_v1 import BaseModel, Field
-from llama_index.core.bridge.pydantic import BaseModel, Field
 
 from financial_insights.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
 from financial_insights.streamlit.constants import *

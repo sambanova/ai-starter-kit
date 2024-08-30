@@ -7,10 +7,8 @@ import streamlit
 import yfinance
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
-
-# from langchain_core.pydantic_v1 import BaseModel, Field
-from llama_index.core.bridge.pydantic import BaseModel, Field
 from matplotlib import dates as mdates
 from matplotlib import pyplot
 from matplotlib.figure import Figure

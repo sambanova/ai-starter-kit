@@ -8,10 +8,8 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
-
-# from langchain_core.pydantic_v1 import BaseModel, Field
-from llama_index.core.bridge.pydantic import BaseModel, Field
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
