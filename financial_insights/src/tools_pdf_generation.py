@@ -10,7 +10,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from pydantic import  BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -302,7 +302,7 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     llm = streamlit.session_state.fc.llm
 
     # Map parser
-    map_parser = PydanticOutputParser(pydantic_object=Summary)
+    map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore
 
     # Map template
     map_template = """The following is a document:
@@ -327,7 +327,7 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     intermediate_titles = [item.title for item in intermediate_results]
 
     # Reduce parser
-    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
+    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
 
     # Reduce template
     reduce_template = """The following is set of summaries:
@@ -350,7 +350,7 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
 
     # Abstract parser
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
 
     # Abstract template
     abstract_template = """Write a concise summary of the following:

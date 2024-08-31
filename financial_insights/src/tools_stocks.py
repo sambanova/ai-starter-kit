@@ -7,7 +7,7 @@ import streamlit
 import yfinance
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from pydantic import  BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from matplotlib import dates as mdates
 from matplotlib import pyplot
@@ -188,7 +188,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The parser
-        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)
+        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)  # type: ignore
 
         # The prompt
         prompt_symbol = PromptTemplate(
