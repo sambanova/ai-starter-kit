@@ -36,7 +36,7 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     """Turn a response in a conversational format of the same language as the user query."""
 
     # The output parser
-    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)  # type: ignore
+    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)
 
     # Convert object to string
     response_string = json.dumps(response_object)

@@ -32,6 +32,7 @@ def get_stock_database() -> None:
 
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Query database </h3>', unsafe_allow_html=True)
+    streamlit.write(r':red[NB: Before querying the database for one company, you need to create it!]')
     query_method = streamlit.selectbox('Select method:', ['text-to-SQL', 'PandasAI-SqliteConnector'], index=0)
     user_request = streamlit.text_input(
         'Enter your query.',
