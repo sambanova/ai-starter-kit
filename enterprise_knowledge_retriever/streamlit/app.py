@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -11,7 +12,7 @@ sys.path.append(repo_dir)
 
 import streamlit as st
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
-from utils.visual.env_utils import env_input_fields, initialize_env_variables
+from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
@@ -21,22 +22,25 @@ logging.info("URL: http://localhost:8501")
 
 def handle_userinput(user_question):
     if user_question:
-        with st.spinner("Processing..."):
-            response = st.session_state.conversation.invoke({"question":user_question})
-        st.session_state.chat_history.append(user_question)
-        st.session_state.chat_history.append(response["answer"])
+        try:
+            with st.spinner("Processing..."):
+                response = st.session_state.conversation.invoke({"question":user_question})
+            st.session_state.chat_history.append(user_question)
+            st.session_state.chat_history.append(response["answer"])
 
-        sources = set([
-            f'{sd.metadata["filename"]}'
-            for sd in response["source_documents"]
-        ])
-        sources_text = ""
-        for index, source in enumerate(sources, start=1):
-            source_link = source
-            sources_text += (
-                f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
-            )
-        st.session_state.sources_history.append(sources_text)
+            sources = set([
+                f'{sd.metadata["filename"]}'
+                for sd in response["source_documents"]
+            ])
+            sources_text = ""
+            for index, source in enumerate(sources, start=1):
+                source_link = source
+                sources_text += (
+                    f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
+                )
+            st.session_state.sources_history.append(sources_text)
+        except Exception as e:
+            st.error(f"An error occurred while processing your question: {str(e)}")
 
     for ques, ans, source in zip(
         st.session_state.chat_history[::2],
@@ -58,9 +62,21 @@ def handle_userinput(user_question):
                         unsafe_allow_html=True,
                     )
 
+def initialize_document_retrieval():
+    if are_credentials_set():
+        try:
+            return DocumentRetrieval()
+        except Exception as e:
+            st.error(f"Failed to initialize DocumentRetrieval: {str(e)}")
+            return None
+    return None
+
 def main(): 
-    # Initialize environment variables with blank values
+    # Initialize environment variables
     initialize_env_variables()
+
+    with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -91,10 +107,10 @@ def main():
         url, api_key = env_input_fields()
 
         # Check if credentials are set
-        if url and api_key:
+        if are_credentials_set():
             st.success("Credentials are set")
             if st.session_state.document_retrieval is None:
-                st.session_state.document_retrieval = DocumentRetrieval()
+                st.session_state.document_retrieval = initialize_document_retrieval()
         else:
             st.warning("Please set your credentials")
 
@@ -104,9 +120,14 @@ def main():
                 "", ("Upload files (create new vector db)", "Use existing vector db")
             )
             if "Upload" in datasource:
-                docs = st.file_uploader(
-                    "Add files", accept_multiple_files=True, type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
-                )
+                if config.get('pdf_only_mode', False):
+                    docs = st.file_uploader(
+                        "Add PDF files", accept_multiple_files=True, type=["pdf"]
+                    )
+                else:
+                    docs = st.file_uploader(
+                        "Add files", accept_multiple_files=True, type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
+                    )
                 st.markdown("**2. Process your documents and create vector store**")
                 st.markdown(
                     "**Note:** Depending on the size and number of your documents, this could take several minutes"
@@ -114,26 +135,33 @@ def main():
                 st.markdown("Create database")
                 if st.button("Process"):
                     with st.spinner("Processing"):
-                        text_chunks = st.session_state.document_retrieval.parse_doc(docs)
-                        embeddings = st.session_state.document_retrieval.load_embedding_model()
-                        vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=None)
-                        st.session_state.vectorstore = vectorstore
-                        st.session_state.document_retrieval.init_retriever(vectorstore)
-                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                        st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
-                    st.session_state.input_disabled = False
+                        try:
+                            text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                            embeddings = st.session_state.document_retrieval.load_embedding_model()
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=None)
+                            st.session_state.vectorstore = vectorstore
+                            st.session_state.document_retrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                            st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
+                            st.session_state.input_disabled = False
+                        except Exception as e:
+                            st.error(f"An error occurred while processing: {str(e)}")
+                
                 st.markdown("[Optional] Save database for reuse")
                 save_location = st.text_input("Save location", "./data/my-vector-db").strip()
                 if st.button("Process and Save database"):
                     with st.spinner("Processing"):
-                        text_chunks = st.session_state.document_retrieval.parse_doc(docs)
-                        embeddings = st.session_state.document_retrieval.load_embedding_model()
-                        vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
-                        st.session_state.vectorstore = vectorstore
-                        st.session_state.document_retrieval.init_retriever(vectorstore)
-                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                        st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
-                    st.session_state.input_disabled = False
+                        try:
+                            text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                            embeddings = st.session_state.document_retrieval.load_embedding_model()
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
+                            st.session_state.vectorstore = vectorstore
+                            st.session_state.document_retrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                            st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
+                            st.session_state.input_disabled = False
+                        except Exception as e:
+                            st.error(f"An error occurred while processing and saving: {str(e)}")
 
             else:
                 db_path = st.text_input(
@@ -147,18 +175,21 @@ def main():
                 if st.button("Load"):
                     with st.spinner("Loading vector DB..."):
                         if db_path == "":
-                            st.error("You must provide a provide a path", icon="🚨")
+                            st.error("You must provide a path", icon="🚨")
                         else:
                             if os.path.exists(db_path):
-                                embeddings = st.session_state.document_retrieval.load_embedding_model()
-                                vectorstore = st.session_state.document_retrieval.load_vdb(db_path, embeddings)
-                                st.toast("Database loaded")
-                                st.session_state.vectorstore = vectorstore
-                                st.session_state.document_retrieval.init_retriever(vectorstore)
-                                st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                                st.session_state.input_disabled = False
+                                try:
+                                    embeddings = st.session_state.document_retrieval.load_embedding_model()
+                                    vectorstore = st.session_state.document_retrieval.load_vdb(db_path, embeddings)
+                                    st.toast("Database loaded")
+                                    st.session_state.vectorstore = vectorstore
+                                    st.session_state.document_retrieval.init_retriever(vectorstore)
+                                    st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                    st.session_state.input_disabled = False
+                                except Exception as e:
+                                    st.error(f"An error occurred while loading the database: {str(e)}")
                             else:
-                                st.error("database not present at " + db_path, icon="🚨")
+                                st.error("Database not present at " + db_path, icon="🚨")
 
             st.markdown("**3. Ask questions about your data!**")
 
