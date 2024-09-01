@@ -75,3 +75,6 @@ jsonlines==4.0.0
 # Development tools
 black
 ipykernel==6.29.4
+
+#llm-eval
+weave-0.51.1

@@ -14,6 +14,7 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain.docstore.document import Document
 import shutil
 from typing import List, Dict, Optional
+import weave
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -31,6 +32,9 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 
 from utils.parsing.sambaparse import SambaParse, parse_doc_universal
+
+# Initialize Weave with your project name 
+weave.init("sambanova_ekr")
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
