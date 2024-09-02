@@ -86,13 +86,13 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
     # Global instance of the registry
     vectorstore_registry = streamlit.session_state.vectorstore_registry
 
-    # Get the vectostore object `as retriever``
+    # Get the vectostore registry and the current `session_id`
     vectorstore_registry, session_id = get_retriever(documents, vectorstore_registry, session_id)
 
     # Get the QA chain from the retriever
     qa_chain = get_qa_chain(vectorstore_registry.get_retriever(session_id))
 
-    # Function to answer questions based on the input documents
+    # Invoke the QA chain to get an answer to the user
     response = invoke_qa_chain(qa_chain, user_request)
 
     # Clean up the vectorstore from the registry after usage
