@@ -14,6 +14,7 @@ sys.path.append(repo_dir)
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
+from financial_insights.src.utilities_retrieval import VectorstoreRegistry
 from financial_insights.streamlit.app_financial_filings import include_financial_filings
 from financial_insights.streamlit.app_pdf_report import include_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
@@ -134,10 +135,15 @@ def main() -> None:
                 # Display the current directory contents
                 display_directory_contents(streamlit.session_state.current_path, default_path)
 
-    if 'fc' not in streamlit.session_state:
-        streamlit.session_state.fc = None
+    # Initialize the chat history
     if 'chat_history' not in streamlit.session_state:
         streamlit.session_state.chat_history = list()
+    # Initialize function calling
+    if 'fc' not in streamlit.session_state:
+        streamlit.session_state.fc = None
+    # Initialize the registry only once and store it in Streamlit session state
+    if 'vectorstore_registry' not in streamlit.session_state:
+        streamlit.session_state.vectorstore_registry = VectorstoreRegistry()
 
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
     columns[0].image(SAMBANOVA_LOGO, width=100)

@@ -84,14 +84,13 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
     )
 
     # Global instance of the registry
-    vectorstore_registry = VectorstoreRegistry()
+    vectorstore_registry = streamlit.session_state.vectorstore_registry
 
     # Get the vectostore object `as retriever``
     vectorstore_registry, session_id = get_retriever(documents, vectorstore_registry, session_id)
 
     # Get the QA chain from the retriever
-    assert isinstance(vectorstore_registry.get_retriever(session_id), VectorStoreRetriever), f'No retriever was build for session {session_id}.'
-    qa_chain = get_qa_chain(vectorstore_registry.get_retriever(session_id))  # type: ignore
+    qa_chain = get_qa_chain(vectorstore_registry.get_retriever(session_id))
 
     # Function to answer questions based on the input documents
     response = invoke_qa_chain(qa_chain, user_request)
@@ -166,7 +165,7 @@ def get_retriever(
     if session_id is None:
         session_id = str(uuid4())
 
-     # Load config
+    # Load config
     config = _get_config_info(CONFIG_PATH)
 
     # Check if vectorstore and retriever exist for this session
@@ -191,10 +190,10 @@ def get_retriever(
 
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
-            search_kwargs={
-                'k': retrieval_info['k_retrieved_documents'],
-            },
-        )
+        search_kwargs={
+            'k': retrieval_info['k_retrieved_documents'],
+        },
+    )
 
     assert isinstance(retriever, VectorStoreRetriever), f'Could not retrieve retriever for session_id {session_id}.'
 
@@ -217,7 +216,9 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
     Returns:
         A retrieval QA chain using the provided retriever.
     """
-    assert isinstance(retriever, VectorStoreRetriever), f'`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. Got type {type(retriever)}.'
+    assert isinstance(
+        retriever, VectorStoreRetriever
+    ), f'`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. Got type {type(retriever)}.'
     # See full prompt at https://smith.langchain.com/hub/langchain-ai/retrieval-qa-chat
     retrieval_qa_chat_prompt = hub.pull('langchain-ai/retrieval-qa-chat')
 
