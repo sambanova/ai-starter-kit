@@ -14,6 +14,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from financial_insights.src.tools import coerce_str_to_list, time_llm
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
@@ -287,7 +288,7 @@ class ReduceSummary(BaseModel):
 
 def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], str, str]:
     """
-    Summarize the text using the LLM.
+    Summarize the text in `split_docs` using the LLM.
 
     Args:
         split_docs: List of documents to summarize.
@@ -298,33 +299,57 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
             - Final summary of the document.
             - Abstract of the document.
     """
+    # Extract intermediate titles and summaries for each document in the split docs
+    intermediate_results = [invoke_summary_map_chain(doc) for doc in split_docs]
+    intermediate_summaries = [item.summary for item in intermediate_results]
+    intermediate_titles = [item.title for item in intermediate_results]
+
+    # Extract final summary from intermediate summaries
+    final_summary = invoke_reduction_chain(intermediate_summaries)
+
+    # Extract abstract from the final summary
+    abstract = invoke_abstract_chain(final_summary)
+
+    return intermediate_summaries, intermediate_titles, final_summary, abstract
+
+
+@time_llm
+def invoke_abstract_chain(final_summary: str) -> Any:
+    """Invoke the LLM to extract an abstract for the final summary."""
+
     # Extract the LLM
     llm = streamlit.session_state.fc.llm
 
-    # Map parser
-    map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore
+    # Abstract parser
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
 
-    # Map template
-    map_template = """The following is a document:
-        {doc}
-        Please identify the main theme (title + summary) of this document.\n.
+    # Abstract template
+    abstract_template = """Write a concise summary of the following:
+        {final_summary}.\n
         {format_instructions}
         """
 
-    # Map prompt
-    map_prompt = PromptTemplate(
-        template=map_template,
-        input_variables=['doc'],
-        partial_variables={'format_instructions': map_parser.get_format_instructions()},
+    # Abstract prompt
+    abstact_prompt = PromptTemplate(
+        template=abstract_template,
+        input_variables=['final_summary'],
+        partial_variables={'format_instructions': abstract_parser.get_format_instructions()},
     )
 
-    # Map chain
-    map_chain = map_prompt | llm | map_parser
+    # Abstract chain
+    abstract_chain = abstact_prompt | llm | abstract_parser
 
-    # Extract intermediate titles and summaries for each document in the split docs
-    intermediate_results = [map_chain.invoke(doc) for doc in split_docs]
-    intermediate_summaries = [item.summary for item in intermediate_results]
-    intermediate_titles = [item.title for item in intermediate_results]
+    # Run chain
+    abstract = abstract_chain.invoke(final_summary).summary
+
+    return abstract
+
+
+@time_llm
+def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
+    """Invoke the LLM to reduce a list of intermediate summaries to one final summary."""
+    # Extract the LLM
+    llm = streamlit.session_state.fc.llm
 
     # Reduce parser
     reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
@@ -349,47 +374,67 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
     # Run chain
     final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
 
-    # Abstract parser
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    return final_summary
 
-    # Abstract template
-    abstract_template = """Write a concise summary of the following:
-        {final_summary}.\n
+
+@time_llm
+def invoke_summary_map_chain(doc: Document) -> Any:
+    """Invoke the LLM to summarize the text in `doc` using the LLM."""
+
+    # Extract the LLM
+    llm = streamlit.session_state.fc.llm
+
+    # Map parser
+    map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore
+
+    # Map template
+    map_template = """The following is a document:
+        {doc}
+        Please identify the main theme (title + summary) of this document.\n.
         {format_instructions}
         """
 
-    # Abstract prompt
-    abstact_prompt = PromptTemplate(
-        template=abstract_template,
-        input_variables=['final_summary'],
-        partial_variables={'format_instructions': abstract_parser.get_format_instructions()},
+    # Map prompt
+    map_prompt = PromptTemplate(
+        template=map_template,
+        input_variables=['doc'],
+        partial_variables={'format_instructions': map_parser.get_format_instructions()},
     )
 
-    # Abstract chain
-    abstract_chain = abstact_prompt | llm | abstract_parser
+    # Map chain
+    map_chain = map_prompt | llm | map_parser
 
-    # Run chain
-    abstract = abstract_chain.invoke(final_summary).summary
-
-    return intermediate_summaries, intermediate_titles, final_summary, abstract
+    return map_chain.invoke(doc)
 
 
 class PDFRAGInput(BaseModel):
     """Use the provided PDF file to answer the user query using RAG."""
 
     user_query: str = Field('The user query.')
-    pdf_files_names: List[str] = Field('The path to the PDF file to be used for RAG.')
+    pdf_files_names: List[str] | str = Field('The list of paths to the PDF file to be used for RAG.')
 
 
 @tool(args_schema=PDFRAGInput)
-def pdf_rag(user_query: str, pdf_files_names: List[str]) -> Any:
+def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     """
     Elaborate the answer using RAG.
 
     Args:
         user_query: The user query.
         pdf_files: The path to the PDF file to be used for RAG.
+
+    Returns:
+        The answer to the user query, generated using RAG.
     """
+    # Check inputs
+    assert isinstance(user_query, str), 'The user query must be a string.'
+    assert isinstance(pdf_files_names, (list, str)), 'The PDF files must be a list of paths or a path string.'
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    pdf_files_names = coerce_str_to_list(pdf_files_names)
+
+    assert all(isinstance(file, str) for file in pdf_files_names), 'The PDF files must be a list of path strings.'
+
     # Load PDF files
     documents = []
     for file in pdf_files_names:

@@ -2,7 +2,8 @@ import ast
 import datetime
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar, Union
 
 import pandas
 import streamlit
@@ -15,12 +16,52 @@ from langchain_core.tools import tool
 from financial_insights.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
 from financial_insights.streamlit.constants import *
 
+# Generic function type
+F = TypeVar('F', bound=Callable[..., Any])
+
+
+class HasCall(Protocol):
+    """Class to check if a class has a call method."""
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        pass
+
+
+# Configure a dedicated logger for timing logs
+def get_timing_logger() -> logging.Logger:
+    timing_logger = logging.getLogger('timingLogger')
+    if not timing_logger.hasHandlers():
+        timing_logger.setLevel(logging.INFO)
+        timing_file_handler = logging.FileHandler(LLM_CALLS_LOGGER_PATH)
+        timing_file_handler.setLevel(logging.INFO)
+        timing_formatter = logging.Formatter('%(asctime)s - %(message)s')
+        timing_file_handler.setFormatter(timing_formatter)
+        timing_logger.addHandler(timing_file_handler)
+    return timing_logger
+
+
+# Configure a regular logger for general purposes
+def get_general_logger() -> logging.Logger:
+    general_logger = logging.getLogger('generalLogger')
+    if not general_logger.hasHandlers():
+        general_logger.setLevel(logging.INFO)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        general_formatter = logging.Formatter('%(asctime)s - %(message)s')
+        console_handler.setFormatter(general_formatter)
+        general_logger.addHandler(console_handler)
+    return general_logger
+
+
+# Get the loggers
+timing_logger = get_timing_logger()
+general_logger = get_general_logger()
+
 
 # Tool schema for the conversational response tool
 class ConversationalResponse(BaseModel):
     """Elaborate a conversational answer"""
 
-    response: str = Field(description='The conversational answer')
+    response: str = Field(description='The conversational answer.')
 
 
 # tool schema for the final conversational response tool
@@ -49,10 +90,13 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     )
 
     # The chain
-    conversational_chain = conversational_prompt | streamlit.session_state.fc.llm | conversational_parser
-
-    # Get response from the LLM
-    response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
+    if '405b' in streamlit.session_state.fc.llm.model.lower():
+        conversational_chain = conversational_prompt | streamlit.session_state.fc.llm
+        response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
+    else:
+        conversational_chain = conversational_prompt | streamlit.session_state.fc.llm | conversational_parser
+        # Get response from the LLM
+        response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
 
     return response
 
@@ -410,3 +454,56 @@ def coerce_str_to_list(input_string: Union[str, List[str]]) -> List[str]:
 
     else:
         raise TypeError(f'Input must be a string or a list of strings. Got {type(input_string)}.')
+
+
+def time_llm(func: F) -> Any:
+    """
+    Decorator to measure the execution time of a function and log the duration.
+
+    Args:
+        func: The function to be decorated.
+
+    Returns:
+        The wrapped function that returns the original function's return value.
+    """
+
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        """
+        Wrapper function to execute the timing logic.
+
+        Args:
+            *args: Variable length argument list for the decorated function.
+            **kwargs: Arbitrary keyword arguments for the decorated function.
+
+        Returns:
+            The original function's return value.
+        """
+        # Create a scratchpad placeholder
+        scratchpad = streamlit.empty()
+
+        # Initialize time
+        start_time = time.time()
+
+        # Call the function
+        result = func(*args, **kwargs)
+
+        # End time
+        end_time = time.time()
+
+        # Compute duration
+        duration = end_time - start_time
+
+        # Log to file
+        timing_logger.info(f'{func.__name__} took {duration:.2f} seconds.\n')
+
+        # Stream duration to scratchpad
+        scratchpad.markdown(
+            f'- **<span style="color:rgb{SAMBANOVA_ORANGE}">{func.__name__}</span>'
+            f'** took **<span style="color:rgb{SAMBANOVA_ORANGE}">{duration:.2f}</span>** seconds.',
+            unsafe_allow_html=True,
+        )
+
+        # Return only result
+        return result
+
+    return wrapper

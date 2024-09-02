@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 import re
 from typing import Any, Dict, List, Union
 
@@ -23,16 +22,20 @@ from financial_insights.src.tools import (
     convert_data_to_frame,
     extract_yfinance_data,
     get_conversational_response,
+    get_general_logger,
+    time_llm,
 )
 from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
+logger = get_general_logger()
+
 
 class DatabaseSchema(BaseModel):
     """Create a SQL database for a list of stocks/companies."""
 
-    company_list: List[str] | str = Field('List of stock ticker symbols for which to create the SQL database.')
+    company_list: List[str] | str = Field('List of companies for which to create the SQL database.')
     start_date: datetime.date = Field('Start date.')
     end_date: datetime.date = Field('End date.')
 
@@ -47,7 +50,7 @@ def create_stock_database(
     Create a SQL database for a list of stocks/companies.
 
     Args:
-        company_list: List of stock ticker symbols for which to create the SQL database.
+        company_list: List of companies for which to create the SQL database.
         start_date: Start date for the historical data.
         end_date: End date for the historical data.
 
@@ -70,6 +73,7 @@ def create_stock_database(
         '`company_names_list` must be a list of strings.'
     )
 
+    # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
     assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
@@ -122,7 +126,7 @@ def store_company_dataframes_to_sqlite(
             try:
                 df = convert_data_to_frame(data, df_name)
             except:
-                logging.warning(f'Could not convert {df_name} to `pandas.DataFrame`.')
+                logger.warning(f'Could not convert {df_name} to `pandas.DataFrame`.')
                 continue
 
             # Make sure the column names are SQLite-friendly
@@ -133,12 +137,12 @@ def store_company_dataframes_to_sqlite(
             try:
                 df = df.applymap(lambda x: json.dumps(x) if isinstance(x, (list, dict)) else x)
             except:
-                logging.warning(f'Could not convert {df_name} to JSON.')
+                logger.warning(f'Could not convert {df_name} to JSON.')
                 continue
 
             # Store the dataframe in an SQLite database table
             df.to_sql(table_name, engine, if_exists='replace', index=False)
-            logging.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
+            logger.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
 
             # Populated company tables list with table name
             company_tables[company].append(table_name)
@@ -188,6 +192,7 @@ def query_stock_database(
         '`company_names_list` must be a list of strings.'
     )
 
+    # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
     assert all([isinstance(name, str) for name in symbol_list]), TypeError('`symbol_list` must be a list of strings.')
@@ -219,28 +224,12 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     Returns:
         The  answer to the user query.
     """
-    # The query generation prompt
-    query_generation_prompt = PromptTemplate(
-        template=SQL_QUERY_PROMPT_TEMPLATE,
-        input_variables=['top_k', 'selected_schemas', 'query'],
-    )
-
-    # Chain that receives the natural language input and the table schemas, invoke the LLM,
-    # and finally execute the SQL finder method, retrieving only the filtered SQL query
-    query_generation_chain = query_generation_prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
-
     # Extract the names of the SQL tables that are relevant to the user query
     selected_tables = select_database_tables(user_query, symbol_list)
     selected_schemas = get_table_summaries_from_names(selected_tables)
 
-    # Generate the SQL query
-    query: str = query_generation_chain.invoke(
-        {'top_k': TOP_K, 'selected_schemas': selected_schemas, 'query': user_query}
-    )
-
-    # Split the SQL query into multiple queries
-    queries = query.split(';')
-    queries = [query for query in queries if len(query) > 0]
+    # Get the SQL queries that are relevant to the user query
+    queries_list = get_sql_queries(selected_schemas, user_query)
 
     # Create a SQL database engine and connect to it using the selected tables
     engine = create_engine(f'sqlite:///{DB_PATH}')
@@ -253,7 +242,7 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
 
     # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
-    logging.warning(
+    logger.warning(
         'Executing model-generated SQL queries. There are inherent risks in doing this. '
         + 'Make sure that your database connection permissions are always scoped '
         + 'as narrowly as possible for your chain. '
@@ -263,12 +252,12 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
 
     # Invoke the SQL executor on each query
     results = []
-    for query in queries:
+    for query in queries_list:
         if len(query) > 0:
             results.append(query_executor.invoke(query))
 
     response_dict: Dict[str, str | List[str]] = dict()
-    response_dict['queries'] = queries
+    response_dict['queries'] = queries_list
     response_dict['results'] = results
 
     # Get conversational response
@@ -277,6 +266,40 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     )
 
     return answer
+
+
+@time_llm
+def get_sql_queries(selected_schemas: str, user_query: str) -> List[str]:
+    """
+    Get the list of SQL queries to be executed, by calling the LLM on the user query and the relevant table schemas.
+
+    Args:
+        selected_schemas: The schemas of the most relevant tables to be used to generate the SQL queries.
+        user_query: The user query to be used to generate the SQL queries.
+
+    Returns:
+        A list of SQL queries to be executed.
+    """
+    # The query generation prompt
+    query_generation_prompt = PromptTemplate(
+        template=SQL_QUERY_PROMPT_TEMPLATE,
+        input_variables=['top_k', 'selected_schemas', 'query'],
+    )
+
+    # Chain that receives the natural language input and the table schemas, invoke the LLM,
+    # and finally execute the SQL finder method, retrieving only the filtered SQL query
+    query_generation_chain = query_generation_prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
+
+    # Generate the SQL query
+    query: str = query_generation_chain.invoke(
+        {'top_k': TOP_K, 'selected_schemas': selected_schemas, 'query': user_query}
+    )
+
+    # Split the SQL query into multiple queries
+    queries_list = query.split(';')
+    queries_list = [query for query in queries_list if len(query) > 0]
+
+    return queries_list
 
 
 def sql_finder(text: str) -> Any:
@@ -330,28 +353,45 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
 
         response[symbol] = list()
         for table in selected_tables:
-            # Instantiate the connector to the SQL database
-            connector = SqliteConnector(
-                config={
-                    'database': DB_PATH,
-                    'table': table,
-                }
-            )
-
-            # Instantiate the `pandasai.SmartDataframe` dataframe
-            df = SmartDataframe(
-                connector,
-                config={
-                    'llm': streamlit.session_state.fc.llm,
-                    'open_charts': False,
-                    'save_charts': True,
-                    'save_charts_path': DB_QUERY_FIGURES_DIR,
-                },
-            )
             # Append the response for the given company symbol
-            response[symbol].append(df.chat(user_query))
+            response[symbol].append(interrogate_table(DB_PATH, table, user_query))
 
     return response
+
+
+@time_llm
+def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
+    """
+    Interrogate a SQL table using `pandasai`.
+
+    Args:
+        db_path: The path to the SQL database file.
+        table: The name of the SQL table to interrogate.
+        user_query: The user query.
+
+    Returns:
+        The answer to the user query.
+    """
+    # Instantiate the connector to the SQL database
+    connector = SqliteConnector(
+        config={
+            'database': db_path,
+            'table': table,
+        }
+    )
+
+    # Instantiate the `pandasai.SmartDataframe` dataframe
+    df = SmartDataframe(
+        connector,
+        config={
+            'llm': streamlit.session_state.fc.llm,
+            'open_charts': False,
+            'save_charts': True,
+            'save_charts_path': DB_QUERY_FIGURES_DIR,
+        },
+    )
+
+    return df.chat(user_query)
 
 
 class TableNames(BaseModel):
@@ -360,6 +400,7 @@ class TableNames(BaseModel):
     table_names: List[str] = Field(description='List of the most relevant table names for the user query.')
 
 
+@time_llm
 def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]:
     """
     Selects the SQL tables that are relevant for the user query.

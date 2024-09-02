@@ -151,12 +151,9 @@ def handle_stock_data_analysis(
     )
     if start_date is not None or end_date is not None:
         user_request = (
-            'Please fetch the following market information for a given list of companies '
-            'and within the following dates.\n'
-            'First retrieve the list of ticker symbols from the list of company names within the query.\n'
-            + user_question
+            'Fetch historical stock prices for a given list of companies from "start_date" to "end_date".\n'
+            f'The requested dates are from {start_date} to {end_date}' + user_question
         )
-        user_request += f'\nThe requested dates are from {start_date} to {end_date}'
 
     response = handle_userinput(user_question, user_request)
 

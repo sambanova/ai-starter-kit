@@ -144,8 +144,8 @@ def parse_filings(
     downloader: Downloader, ticker_symbol: str, filing_type: str, filing_quarter: int, year: int, delta: int = 10
 ) -> Tuple[str, str]:
     """
-    Search the filing, parse it and save it.
-    
+    Search the filing, parse it, and save it.
+
     The relevant filing refers to a company by ticker symbol, filing type, for a specific quarter and year.
 
     Args:
@@ -155,7 +155,7 @@ def parse_filings(
         filing_quarter: Filing quarter of the company to be parsed.
         year: Year of the company to be parsed.
         delta: Maximum number of years to be searched.
-    
+
     Returns:
         A tuple of the followimg pair:
             1. The filename of the relevant parsed filing.

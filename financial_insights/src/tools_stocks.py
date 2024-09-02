@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
-from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data
+from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
 from financial_insights.streamlit.constants import *
 
 
@@ -66,55 +66,80 @@ def get_stock_info(
         '`company_names_list` must be a list of strings.'
     )
 
+    # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
     assert isinstance(dataframe_name, str | None), TypeError(
         f'Dataframe name must be a string. Got {(type(dataframe_name))}.'
     )
 
-    response_dict: Dict[str, str] = dict()
-
-    for symbol in symbol_list:
-        # If the user has not provided a dataframe name then use the generic yfinance langchain connector
-        if dataframe_name is None:
-            response_dict[symbol] = yahoo_connector_answer(user_query, symbol)
-        # If the user has provided a dataframe name then use the custom langchain connector
-        else:
-            # Extract the relevant yfinance data
-            company_data_dict = extract_yfinance_data(
-                symbol,
-                start_date=datetime.datetime.today().date() - timedelta(days=365),
-                end_date=datetime.datetime.today().date(),
-            )
-
-            # Extract the relevant dataframe from the yfinance data dictionary
-            data = company_data_dict[dataframe_name]
-            # Coerce the retrieved data to a `pandas.DataFrame`
-            dataframe = convert_data_to_frame(data, dataframe_name)
-
-            try:
-                # Instantiate a `pandasai.SmartDataframe` object
-                df = SmartDataframe(
-                    dataframe,
-                    config={
-                        'llm': streamlit.session_state.fc.llm,
-                        'open_charts': False,
-                        'save_charts': True,
-                        'save_charts_path': STOCK_QUERY_FIGURES_DIR,
-                        'enable_cache': False,
-                    },
-                )
-
-                # Answer the user query by symbol
-                response_dict[symbol] = df.chat(user_query)
-            except:
-                # If the answer could not be generated, then use the generic yfinance langchain connector
-                response_dict[symbol] = yahoo_connector_answer(user_query, symbol)
+    # Retrieve the correct stock information
+    response_dict: Dict[str, str] = get_stock_info_from_dataframe(user_query, symbol_list, dataframe_name)
 
     return response_dict
 
 
-def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
+def get_stock_info_from_dataframe(
+    user_query: str,
+    symbol_list: List[str],
+    dataframe_name: str | None = None,
+) -> Dict[str, Any]:
+    """
+    Interrogate the dataframe via `pandasai` to retrieve the correct stock information.
+
+    Args:
+        user_query: String containing the user query.
+        symbol_list: List of strings containing the ticker symbols.
+        dataframe_name: The name of the dataframe that contains the stock information.
+
+    Returns:
+        A dictionary containing the stock information for each company symbol.
+    """
+    response_dict = dict()
+    for symbol in symbol_list:
+        # If the user has not provided a dataframe name then use the generic yfinance langchain connector
+        if dataframe_name is None:
+            response_dict[symbol] = get_yahoo_connector_answer(user_query, symbol)
+        # If the user has provided a dataframe name then use the custom langchain connector
+        else:
+            response_dict[symbol] = get_pandasai_answer_from_dataframe(user_query, symbol, dataframe_name)
+
+    return response_dict
+
+
+def get_pandasai_answer_from_dataframe(user_query: str, symbol: str, dataframe_name: str) -> Any:
+    """
+    Get the relevant stock information by querying the corresponding dataframe via `pandasai`.
+    
+    Args:
+        user_query: The user query to answer.
+        symbol: The ticker symbol for which to retrieve the relevant stock information.
+        dataframe_name: The name of the dataframe that contains the stock information.
+
+    Returns:
+        The relevant stock information answering the user query for the given company symbol.
+    """
+    # Extract the relevant yfinance data
+    company_data_dict = extract_yfinance_data(
+        symbol,
+        start_date=datetime.datetime.today().date() - timedelta(days=365),
+        end_date=datetime.datetime.today().date(),
+    )
+
+    # Extract the relevant dataframe from the yfinance data dictionary
+    data = company_data_dict[dataframe_name]
+    # Coerce the retrieved data to a `pandas.DataFrame`
+    dataframe = convert_data_to_frame(data, dataframe_name)
+
+    try:
+        # Answer the user query by symbol
+        return interrogate_dataframe_pandasai(dataframe, user_query)
+    except:
+        # If the answer could not be generated, then use the generic yfinance langchain connector
+        return get_yahoo_connector_answer(user_query, symbol)
+
+
+def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     """
     Answer the user query using the generic `pandasai.connectors.yahoo_finance.YahooFinanceConnector`.
 
@@ -135,9 +160,26 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     # Instantiate a `pandasai.connectors.yahoo_finance.YahooFinanceConnector` object with the relevant symbol
     yahoo_connector = YahooFinanceConnector(symbol)
 
-    # Instantiate a `pandasai.SmartDataframe` object with the relevant connector and user query
+    # Answer the user query by symbol
+    return interrogate_dataframe_pandasai(yahoo_connector, user_query)
+
+
+@time_llm
+def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str) -> Any:
+    """
+    Interrogate a dataframe via `pandasai` with the user query.
+
+    Args:
+        df_pandas: The dataframe to interrogate.
+        user_query: The user query to answer with information from the dataframe.
+
+    Returns:
+        The response to the user query, generated by the LLM via `pandasai`.
+    """
+
+    # Instantiate a `pandasai.SmartDataframe` object with the relevant `pandas.DataFrame` and user query
     df = SmartDataframe(
-        yahoo_connector,
+        df_pandas,
         config={
             'llm': streamlit.session_state.fc.llm,
             'open_charts': False,
@@ -147,10 +189,10 @@ def yahoo_connector_answer(user_query: str, symbol: str) -> Any:
         },
     )
 
-    # Answer the user query by symbol
     return df.chat(user_query)
 
 
+@time_llm
 def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[str]:
     """
     Retrieve a list of ticker symbols.
@@ -217,15 +259,19 @@ class RetrievalSymbolQuantitySchema(BaseModel):
     If you can't retrieve the quantity, use 'Close'.
     """
 
-    company_list: List[str] = Field('List of stock ticker symbols', examples=['AAPL', 'MSFT'])
-    quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
+    company_list: List[str] | str = Field('List of required companies.', examples=['Google', 'Microsoft'])
+    quantity: str = Field(
+        'Quantity to analize', examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+    )
 
 
 class HistoricalPriceSchema(BaseModel):
     """Fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
 
-    company_list: List[str] = Field('List of stock ticker symbol.')
-    quantity: str = Field('Quantity to analize', examples=['Open', 'Close'])
+    company_list: List[str] | str = Field('List of required companies.', examples=['Google', 'Microsoft'])
+    quantity: str = Field(
+        'Quantity to analize', examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+    )
     end_date: datetime.date = Field(
         'Typically today unless a specific end date is provided. End date MUST be greater than start date.'
     )
@@ -240,13 +286,13 @@ class HistoricalPriceSchema(BaseModel):
 
 @tool(args_schema=HistoricalPriceSchema)
 def get_historical_price(
-    company_list: List[str], quantity: str, start_date: datetime.date, end_date: datetime.date
+    company_list: List[str] | str, quantity: str, start_date: datetime.date, end_date: datetime.date
 ) -> pandas.DataFrame:
     """
-    Fetch historical stock prices for a given list of ticker symbols from 'start_date' to 'end_date'.
+    Fetch historical stock prices for a given list of companies from 'start_date' to 'end_date'.
 
     Args:
-        company_list: Stock ticker symbol.
+        company_list: List of required companies.
         quantity: Quantity to analize.
         end_date: Typically today unless a specific end date is provided. End date MUST be greater than start date
         start_date: Set explicitly, or calculated as 'end_date - date interval'
@@ -271,8 +317,36 @@ def get_historical_price(
     assert all([isinstance(name, str) for name in company_list]), TypeError(
         '`company_names_list` must be a list of strings.'
     )
+
+    # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
+    # Retrive the historical price data
+    data_price = download_data_history(symbol_list, quantity, start_date, end_date)
+
+    # Plot the historical data
+    fig = plot_price_over_time(data_price)
+    return fig, data_price, symbol_list
+
+
+def download_data_history(
+    symbol_list: List[str],
+    quantity: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> pandas.DataFrame:
+    """
+    Download historical price data from Yahoo Finance.
+
+    Args:
+        symbol_list: A list of company ticker symbols.
+        quantity: Quantity to analize.
+        start_date: The start of the time period.
+        end_date: The end of the time period.
+
+    Returns:
+        A `pandas.DataFrame` object containing the historical price data for each symbol.
+    """
     # Initialise a pandas DataFrame with symbols as columns and dates as index
     data_price = pandas.DataFrame(columns=symbol_list)
 
@@ -282,9 +356,7 @@ def get_historical_price(
         data_history = data.history(start=start_date, end=end_date)
         data_price[symbol] = data_history[quantity]
 
-    # Plot the historical data
-    fig = plot_price_over_time(data_price)
-    return fig, data_price, symbol_list
+    return data_price
 
 
 def plot_price_over_time(data_close: pandas.DataFrame) -> Figure:

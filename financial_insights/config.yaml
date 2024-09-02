@@ -1,23 +1,21 @@
+prod_mode: False
+
 llm: 
   "api": "fastapi"
   "temperature": 0
   "max_tokens_to_generate": 1024
-  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
   "coe": True #set as true if using Sambastudio CoE endpoint
   "select_expert": "llama3-70b"
   "do_sample": False
-  "type": "sambastudio" # set either sambastudio or cpu
   "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
-
+  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
 
 rag:
   embedding_model: 
-    "type": "fastapi" # set either sambastudio or cpu
+    "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
     "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
-    "select_expert": "model-name" #set if using SambaStudio CoE embedding expert
-  vector_db:
-    "path": "data/my-vector-db" # path to your previously created chroma vdb
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
   retrieval:
     "k_retrieved_documents": 5
-    "score_threshold": 0.7
+    "score_threshold": 0.2

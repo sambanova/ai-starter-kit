@@ -9,6 +9,7 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 
 from financial_insights.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
+from financial_insights.src.tools import time_llm
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
@@ -37,13 +38,16 @@ class FunctionCalling:
             TypeError: If `system_prompt` is not a string.
         """
         # Load the configs from the config file
-        configs = self.get_config_info(config_path)
+        configs = self.get_llm_config_info(config_path)
 
         # Set the llm information
-        self.llm_info = configs[0]
+        self.llm_info = configs.llm
 
         # Set the LLM
         self.llm = self.set_llm()
+
+        # Set the production flag
+        self.prod_mode = configs.prod_mode
 
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
@@ -65,7 +69,7 @@ class FunctionCalling:
         assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
-    def get_config_info(self, config_path: str) -> Tuple[Dict[str, str | float | None]]:
+    def get_llm_config_info(self, config_path: str) -> Tuple[Dict[str, str | float | None]]:
         """
         Loads the json config file.
 
@@ -116,6 +120,14 @@ class FunctionCalling:
                 'Sambaverse `model_name` must be a string.'
             )
 
+            # Get the LLM credentials following `prod_mode`
+            if self.prod_mode:
+                fastapi_url = st.session_state.FASTAPI_URL
+                fastapi_api_key = st.session_state.FASTAPI_API_KEY
+            else:
+                fastapi_url = os.environ.get("FASTAPI_URL") or st.session_state.FASTAPI_URL
+                fastapi_api_key = os.environ.get("FASTAPI_API_KEY") or st.session_state.FASTAPI_API_KEY
+
             # Instantiate the LLM
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
@@ -127,6 +139,8 @@ class FunctionCalling:
                 select_expert=self.llm_info['select_expert'],
                 process_prompt=False,
                 sambaverse_model_name=self.llm_info['sambaverse_model_name'],
+                fastapi_url=fastapi_url,
+                fastapi_api_key=fastapi_api_key,
             )
         else:
             raise ValueError(
@@ -192,6 +206,35 @@ class FunctionCalling:
         # Checks the inputs
         assert isinstance(query, str), TypeError(f'Query must be a string. Got {type(query)}.')
 
+        # Find the relevant tool
+        invoked_tool = self.find_relevant_tool(query)
+
+        # Extract the tool parameters
+        tool_name = invoked_tool['name']
+        tool_parameters = invoked_tool['parameters']
+
+        # Create a map of tools with their names
+        if self.tools is not None:
+            tools_map = {tool.name: tool for tool in self.tools}
+        else:
+            tools_map = {}
+
+        # Invoke the tool with the retrieved inputs
+        answer = tools_map[tool_name].invoke(tool_parameters)
+
+        return answer
+
+    @time_llm
+    def find_relevant_tool(self, query: str) -> Any:
+        """
+        Find the relevant tool to be invoked based on the query.
+
+        Args:
+            query: The query to be used.
+
+        Returns:
+            The relevant tool to be invoked based on the query.
+        """
         # JSON output parser
         function_calling_parser = JsonOutputParser()
 
@@ -206,23 +249,15 @@ class FunctionCalling:
         chain_function_calling = function_calling_prompt | self.llm | function_calling_parser
 
         # Invoke the LLM to find the relevant tools
-        invoked_tools = chain_function_calling.invoke({'tools': self.tools_schemas, 'user_query': query})
+        for i in range(MAX_RETRIES):
+            try:
+                invoked_tools = chain_function_calling.invoke({'tools': self.tools_schemas, 'user_query': query})
+                break
+            except:
+                continue
 
         assert len(invoked_tools) == 1, f'Expected one tool, got {len(invoked_tools)}.'
 
         invoked_tool = invoked_tools[0]
 
-        # Extract the tool parameters
-        tool_name = invoked_tool['name']
-        tool_parameters = invoked_tool['parameters']
-
-        # Create a map of tools with their name
-        if self.tools is not None:
-            tools_map = {tool.name: tool for tool in self.tools}
-        else:
-            tools_map = {}
-
-        # Invoke the tool with the retrieved inputs
-        answer = tools_map[tool_name].invoke(tool_parameters)
-
-        return answer
+        return invoked_tool

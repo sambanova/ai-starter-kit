@@ -14,7 +14,7 @@ FUNCTION_CALLING_PROMPT_TEMPLATE = """
   Given the following functions/tools, please respond with a JSON for a function call
   with its proper arguments that best answers the given prompt.
 
-  Respond in the format
+  Respond in the JSON format
 
   ```json
   [{{

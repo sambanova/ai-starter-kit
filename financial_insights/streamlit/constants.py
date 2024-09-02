@@ -21,6 +21,7 @@ YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.csv')
 FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
 PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
 WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
+LLM_CALLS_LOGGER_PATH = os.path.join(CACHE_DIR, 'llm_calls_logger.txt')
 
 # Main source directories
 SOURCE_DIR = os.path.join(CACHE_DIR, 'sources/')
@@ -44,3 +45,6 @@ TOP_K = 10
 # SambaNova
 SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
 SAMBANOVA_ORANGE = (238, 118, 36)
+
+# LLM constants
+MAX_RETRIES = 3

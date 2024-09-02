@@ -104,8 +104,7 @@ def handle_database_query(
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'First retrieve the list of ticker symbols from the list of company names within the query.\n'
-        f'Then provide an answer after converting the query from natural language to SQL.\n'
+        f'Please provide an answer after converting the query from natural language to SQL.\n'
         + 'Use the method: "'
         + query_method
         + '" to generate the response.'

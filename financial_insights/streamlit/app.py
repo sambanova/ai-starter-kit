@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 
@@ -25,11 +24,12 @@ from financial_insights.streamlit.utilities_app import (
     set_css_styles,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
-
-logging.basicConfig(level=logging.INFO)
-
+from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
 
 def main() -> None:
+    # Initialize environment variables
+    initialize_env_variables(prod_mode)
+
     # Create cache
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
@@ -41,75 +41,89 @@ def main() -> None:
         layout='wide',
     )
 
+    # Set CSS styles
     set_css_styles()
 
+    # Add SambaNova logo
     streamlit.logo(
         image=SAMBANOVA_LOGO,
         link=SAMBANOVA_LOGO,
         icon_image=SAMBANOVA_LOGO,
     )
 
+    # Add sidebar
     with streamlit.sidebar:
-        # Navigation menu
-        streamlit.title('Navigation')
-        menu = streamlit.radio(
-            'Go to',
-            [
-                'Home',
-                'Stock Data Analysis',
-                'Stock Database',
-                'Financial News Scraping',
-                'Financial Filings Analysis',
-                'Generate PDF Report',
-                'Print Chat History',
-            ],
-        )
-
-        streamlit.title('Saved Files')
-
-        # Custom button to clear all files
-        with stylable_container(
-            key='blue-button',
-            css_styles=get_blue_button_style(),
-        ):
-            if streamlit.button(
-                label='Clear All Files',
-                key='clear-button',
-                help='This will delete all saved files',
-            ):
-                clear_directory(CACHE_DIR)
-                clear_directory(SOURCE_DIR)
-                clear_directory(STOCK_QUERY_FIGURES_DIR)
-                clear_directory(HISTORY_FIGURES_DIR)
-                clear_directory(DB_QUERY_FIGURES_DIR)
-                clear_directory(PDF_SOURCES_DIRECTORY)
-                clear_directory(PDF_GENERATION_DIRECTORY)
-                streamlit.sidebar.success('All files have been deleted.')
-
-        # Set the default path (you can change this to any desired default path)
-        default_path = './financial_insights/streamlit/cache'
-        # Use Streamlit's session state to persist the current path
-        if 'current_path' not in streamlit.session_state:
-            streamlit.session_state.current_path = default_path
-
-        # Input to allow user to go back to a parent directory
-        if streamlit.sidebar.button('⬅️ Back', key=f'back') and streamlit.session_state.current_path != default_path:
-            streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
-
-            # Display the current directory contents
-            display_directory_contents(streamlit.session_state.current_path, default_path)
+        if not are_credentials_set():
+            url, api_key = env_input_fields()
+            if streamlit.button("Save Credentials", key="save_credentials_sidebar"):
+                message = save_credentials(url, api_key, prod_mode)
+                streamlit.success(message)
+                streamlit.experimental_rerun()
         else:
-            # Display the current directory contents
-            display_directory_contents(streamlit.session_state.current_path, default_path)
+            streamlit.success("Credentials are set")
+            if streamlit.button("Clear Credentials", key="clear_credentials"):
+                save_credentials("", "", prod_mode)
+                streamlit.experimental_rerun()
+
+        if are_credentials_set():
+            
+            # Navigation menu
+            streamlit.title('Navigation')
+            menu = streamlit.radio(
+                'Go to',
+                [
+                    'Home',
+                    'Stock Data Analysis',
+                    'Stock Database',
+                    'Financial News Scraping',
+                    'Financial Filings Analysis',
+                    'Generate PDF Report',
+                    'Print Chat History',
+                ],
+            )
+
+            # Add saved files
+            streamlit.title('Saved Files')
+
+            # Custom button to clear all files
+            with stylable_container(
+                key='blue-button',
+                css_styles=get_blue_button_style(),
+            ):
+                if streamlit.button(
+                    label='Clear All Files',
+                    key='clear-button',
+                    help='This will delete all saved files',
+                ):
+                    clear_directory(CACHE_DIR)
+                    clear_directory(SOURCE_DIR)
+                    clear_directory(STOCK_QUERY_FIGURES_DIR)
+                    clear_directory(HISTORY_FIGURES_DIR)
+                    clear_directory(DB_QUERY_FIGURES_DIR)
+                    clear_directory(PDF_SOURCES_DIRECTORY)
+                    clear_directory(PDF_GENERATION_DIRECTORY)
+                    streamlit.sidebar.success('All files have been deleted.')
+
+            # Set the default path
+            default_path = './financial_insights/streamlit/cache'
+            # Use Streamlit's session state to persist the current path
+            if 'current_path' not in streamlit.session_state:
+                streamlit.session_state.current_path = default_path
+
+            # Input to allow user to go back to a parent directory
+            if streamlit.sidebar.button('⬅️ Back', key=f'back') and streamlit.session_state.current_path != default_path:
+                streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
+
+                # Display the current directory contents
+                display_directory_contents(streamlit.session_state.current_path, default_path)
+            else:
+                # Display the current directory contents
+                display_directory_contents(streamlit.session_state.current_path, default_path)
 
     if 'fc' not in streamlit.session_state:
         streamlit.session_state.fc = None
     if 'chat_history' not in streamlit.session_state:
         streamlit.session_state.chat_history = list()
-    if 'tools' not in streamlit.session_state:
-        streamlit.session_state.tools = ['get_time', 'python_repl', 'query_db']
-    if 'max_iterations' not in streamlit.session_state:
-        streamlit.session_state.max_iterations = 5
 
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
     columns[0].image(SAMBANOVA_LOGO, width=100)
