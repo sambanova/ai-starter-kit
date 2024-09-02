@@ -13,10 +13,10 @@ python-dotenv==1.0.0
 streamlit-extras==0.4.3
 pillow==10.4.0
 sseclient-py==1.8.0
-unstructured==0.14.9
-unstructured_inference==0.7.36
-unstructured_pytesseract==0.3.12
-pytesseract==0.3.10
+# unstructured==0.14.9
+# unstructured_inference==0.7.36
+# unstructured_pytesseract==0.3.12
+# pytesseract==0.3.10
 chromadb==0.5.3
 langgraph==0.0.55
 openpyxl==3.1.4

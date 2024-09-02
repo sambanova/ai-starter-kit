@@ -32,7 +32,8 @@ sys.path.append(repo_dir)
 sys.path.append(utils_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
-
+import uuid
+import streamlit as st
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 NORMALIZE_EMBEDDINGS = True
@@ -73,7 +74,8 @@ class VectorDb():
         create_vdb: Create a vector database from the raw files in a specific input directory 
     """
     def __init__(self) -> None:
-        pass
+        self.collection_id = str(uuid.uuid4())
+        self.vector_collections = set()
 
     def load_files(self, input_path, recursive=False, load_txt=True, load_pdf=False, urls = None) -> list:
         """Load files from input location
@@ -157,9 +159,11 @@ class VectorDb():
         logger.info(f"Total {len(chunks)} chunks created")
 
         return chunks
+    
+    
 
     def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str,
-                            output_db: str = None):
+                            output_db: str = None, collection_name: str = None):
         """Creates a vector store
 
         Args:
@@ -168,6 +172,9 @@ class VectorDb():
             db_type (str): vector db type
             output_db (str, optional): output path to save the vector db. Defaults to None.
         """
+        if collection_name is None:
+            collection_name = f"collection_{self.collection_id}"
+            print(f'This is the collection name {collection_name}')
 
         if db_type == "faiss":
             vector_store = FAISS.from_documents(
@@ -179,23 +186,23 @@ class VectorDb():
 
         elif db_type == "chroma":
             if output_db:
+                vector_store = Chroma()
+                vector_store.delete_collection()
                 vector_store = Chroma.from_documents(
                     documents=chunks,
                     embedding=embeddings,
-                    persist_directory=output_db
+                    persist_directory=output_db,
+                    collection_name=collection_name
                 )
             else:
-                try:
-                    vector_store = Chroma()
-                    vector_store.delete_collection()
-                    print("colelction deleted")
-                except Exception as e:
-                    print("colelction not deleted")
-                    pass
+                vector_store = Chroma()
+                vector_store.delete_collection()
                 vector_store = Chroma.from_documents(
                     documents=chunks,
-                    embedding=embeddings
+                    embedding=embeddings,
+                    collection_name=collection_name
                 )
+            self.vector_collections.add(collection_name)
 
         elif db_type == "qdrant":
             if output_db:
@@ -216,15 +223,26 @@ class VectorDb():
 
         return vector_store
 
-    def load_vdb(self, persist_directory, embedding_model, db_type="chroma"):
-
+    def load_vdb(self, persist_directory, embedding_model, db_type="chroma", collection_name=None):
         if db_type == "faiss":
             vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)
         elif db_type == "chroma":
-            vector_store = Chroma(persist_directory=persist_directory, embedding_function=embedding_model)
+            if collection_name:
+                vector_store = Chroma(
+                    persist_directory=persist_directory,
+                    embedding_function=embedding_model,
+                    collection_name=collection_name
+                )
+            else:
+                vector_store = Chroma(
+                    persist_directory=persist_directory,
+                    embedding_function=embedding_model
+                )
         elif db_type == "qdrant":
-            # TODO: vector_store = Qdrant...
+            # TODO: Implement Qdrant loading
             pass
+        else:
+            raise ValueError(f"Unsupported database type: {db_type}")
 
         return vector_store
 
@@ -322,7 +340,6 @@ if __name__ == "__main__":
         default="faiss",
         help="Type of vector store (default: faiss)",
     )
-
     args = parser.parse_args()
 
     vectordb = VectorDb()

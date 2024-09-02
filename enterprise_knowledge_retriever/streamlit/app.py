@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import yaml
+import streamlit as st
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -10,9 +11,11 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-import streamlit as st
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
-from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set
+from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
+from utils.vectordb.vector_db import VectorDb
+
+
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
@@ -72,11 +75,15 @@ def initialize_document_retrieval():
     return None
 
 def main(): 
-    # Initialize environment variables
-    initialize_env_variables()
+   
 
     with open(CONFIG_PATH, 'r') as yaml_file:
-            config = yaml.safe_load(yaml_file)
+        config = yaml.safe_load(yaml_file)
+    
+    prod_mode = config.get('prod_mode', False)
+    default_collection = config.get('default_collection', 'ekr_default_collection')
+
+    initialize_env_variables(prod_mode)
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -103,16 +110,21 @@ def main():
     with st.sidebar:
         st.title("Setup")
 
-        # Add the credential input fields
-        url, api_key = env_input_fields()
-
-        # Check if credentials are set
-        if are_credentials_set():
+        if not are_credentials_set():
+            url, api_key = env_input_fields()
+            if st.button("Save Credentials", key="save_credentials_sidebar"):
+                message = save_credentials(url, api_key, prod_mode)
+                st.success(message)
+                st.experimental_rerun()
+        else:
             st.success("Credentials are set")
+            if st.button("Clear Credentials", key="clear_credentials"):
+                save_credentials("", "", prod_mode)
+                st.experimental_rerun()
+
+        if are_credentials_set():
             if st.session_state.document_retrieval is None:
                 st.session_state.document_retrieval = initialize_document_retrieval()
-        else:
-            st.warning("Please set your credentials")
 
         if st.session_state.document_retrieval is not None:
             st.markdown("**1. Pick a datasource**")
@@ -138,30 +150,32 @@ def main():
                         try:
                             text_chunks = st.session_state.document_retrieval.parse_doc(docs)
                             embeddings = st.session_state.document_retrieval.load_embedding_model()
-                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=None)
+                            collection_name = default_collection if not prod_mode else None
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=None, collection_name=collection_name)
                             st.session_state.vectorstore = vectorstore
                             st.session_state.document_retrieval.init_retriever(vectorstore)
                             st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                            st.toast(f"File uploaded! Go ahead and ask some questions",icon='🎉')
+                            st.toast(f"File uploaded! Go ahead and ask some questions", icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
                             st.error(f"An error occurred while processing: {str(e)}")
                 
-                st.markdown("[Optional] Save database for reuse")
-                save_location = st.text_input("Save location", "./data/my-vector-db").strip()
-                if st.button("Process and Save database"):
-                    with st.spinner("Processing"):
-                        try:
-                            text_chunks = st.session_state.document_retrieval.parse_doc(docs)
-                            embeddings = st.session_state.document_retrieval.load_embedding_model()
-                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=save_location)
-                            st.session_state.vectorstore = vectorstore
-                            st.session_state.document_retrieval.init_retriever(vectorstore)
-                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                            st.toast(f"File uploaded and saved to {PERSIST_DIRECTORY}! Go ahead and ask some questions",icon='🎉')
-                            st.session_state.input_disabled = False
-                        except Exception as e:
-                            st.error(f"An error occurred while processing and saving: {str(e)}")
+                if not prod_mode:
+                    st.markdown("[Optional] Save database for reuse")
+                    save_location = st.text_input("Save location", "./data/my-vector-db").strip()
+                    if st.button("Process and Save database"):
+                        with st.spinner("Processing"):
+                            try:
+                                text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                                embeddings = st.session_state.document_retrieval.load_embedding_model()
+                                vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=save_location, collection_name=default_collection)
+                                st.session_state.vectorstore = vectorstore
+                                st.session_state.document_retrieval.init_retriever(vectorstore)
+                                st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                st.toast(f"File uploaded and saved to {save_location} with collection '{default_collection}'! Go ahead and ask some questions", icon='🎉')
+                                st.session_state.input_disabled = False
+                            except Exception as e:
+                                st.error(f"An error occurred while processing and saving: {str(e)}")
 
             else:
                 db_path = st.text_input(
@@ -180,8 +194,9 @@ def main():
                             if os.path.exists(db_path):
                                 try:
                                     embeddings = st.session_state.document_retrieval.load_embedding_model()
-                                    vectorstore = st.session_state.document_retrieval.load_vdb(db_path, embeddings)
-                                    st.toast("Database loaded")
+                                    collection_name = default_collection if not prod_mode else None
+                                    vectorstore = st.session_state.document_retrieval.load_vdb(db_path, embeddings, collection_name=collection_name)
+                                    st.toast(f"Database loaded{'with collection ' + default_collection if not prod_mode else ''}")
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)
                                     st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
@@ -190,7 +205,6 @@ def main():
                                     st.error(f"An error occurred while loading the database: {str(e)}")
                             else:
                                 st.error("Database not present at " + db_path, icon="🚨")
-
             st.markdown("**3. Ask questions about your data!**")
 
             with st.expander("Additional settings", expanded=True):
@@ -213,6 +227,8 @@ def main():
 
     user_question = st.chat_input("Ask questions about your data", disabled=st.session_state.input_disabled)
     handle_userinput(user_question)
+
+
 
 if __name__ == "__main__":
     main()
