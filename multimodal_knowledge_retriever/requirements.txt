@@ -12,3 +12,4 @@ sseclient-py==1.8.0
 unstructured_inference==0.7.29
 unstructured[pdf]==0.13.6
 chromadb==0.4.24
+nltk==3.8.1

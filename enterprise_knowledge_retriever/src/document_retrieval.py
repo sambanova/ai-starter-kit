@@ -14,6 +14,7 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain.docstore.document import Document
 import shutil
 from typing import List, Dict, Optional
+import weave
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -23,6 +24,7 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
+import streamlit as st
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
@@ -31,6 +33,9 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 
 from utils.parsing.sambaparse import SambaParse, parse_doc_universal
+
+# Initialize Weave with your project name 
+weave.init("sambanova_ekr")
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
@@ -117,8 +122,10 @@ class DocumentRetrieval():
         self.embedding_model_info =config_info[2] 
         self.retrieval_info =config_info[3] 
         self.prompts = config_info[4]
+        self.prod_mode = config_info[5]
         self.retriever = None
         self.llm=self.set_llm()
+    
 
     def get_config_info(self):
         """
@@ -132,11 +139,19 @@ class DocumentRetrieval():
         embedding_model_info = config["embedding_model"]
         retrieval_info = config["retrieval"]
         prompts = config["prompts"]
+        prod_mode = config["prod_mode"]
         
-        return api_info, llm_info, embedding_model_info, retrieval_info, prompts
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts,prod_mode
     
 
     def set_llm(self):
+        if self.prod_mode:
+            fastapi_url = st.session_state.FASTAPI_URL
+            fastapi_api_key = st.session_state.FASTAPI_API_KEY
+        else:
+            fastapi_url = os.environ.get("FASTAPI_URL") or st.session_state.FASTAPI_URL
+            fastapi_api_key = os.environ.get("FASTAPI_API_KEY") or st.session_state.FASTAPI_API_KEY
+
         llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
@@ -147,6 +162,8 @@ class DocumentRetrieval():
             select_expert=self.llm_info["select_expert"],
             process_prompt=False,
             sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+            fastapi_url=fastapi_url,
+            fastapi_api_key=fastapi_api_key
         )
         return llm
             
@@ -202,12 +219,14 @@ class DocumentRetrieval():
             ) 
         return embeddings  
 
-    def create_vector_store(self, text_chunks, embeddings, output_db=None):
-        vectorstore = self.vectordb.create_vector_store(text_chunks, embeddings, output_db=output_db, db_type="chroma")
+    def create_vector_store(self, text_chunks, embeddings, output_db=None, collection_name=None):
+        print(f'Collection name is {collection_name}')
+        vectorstore = self.vectordb.create_vector_store(text_chunks, embeddings, output_db=output_db, collection_name=collection_name, db_type="chroma")
         return vectorstore
     
-    def load_vdb(self, db_path, embeddings):
-        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type="chroma")
+    def load_vdb(self, db_path, embeddings, collection_name=None):
+        print(f'Loading collection name is {collection_name}')
+        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type="chroma", collection_name=collection_name)
         return vectorstore
     
     def init_retriever(self, vectorstore):

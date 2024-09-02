@@ -128,6 +128,10 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 
 - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
 
+## Windows requirements
+
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
+
 ## Deploy the parsing service 
 
 This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the parsing service.

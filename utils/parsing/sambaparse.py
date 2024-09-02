@@ -3,10 +3,11 @@ import yaml
 import subprocess
 import json
 import logging
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Union, Any
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
-from typing import List, Dict, Optional, Tuple, Union, Any
+import shutil
+from langchain_community.document_loaders import PyMuPDFLoader
 
 load_dotenv()
 
@@ -21,12 +22,21 @@ class SambaParse:
         with open(config_path, "r") as file:
             self.config = yaml.safe_load(file)
 
+        # Set the default Unstructured API key as an environment variable if not already set
+        if "UNSTRUCTURED_API_KEY" not in os.environ:
+            default_api_key = self.config.get("partitioning", {}).get("default_unstructured_api_key")
+            if default_api_key:
+                os.environ["UNSTRUCTURED_API_KEY"] = default_api_key
+                logger.info("Using default Unstructured API key from config file.")
+            else:
+                logger.warning("No Unstructured API key found in environment or config file.")
+
     def run_ingest(
         self,
         source_type: str,
         input_path: Optional[str] = None,
         additional_metadata: Optional[Dict] = None,
-    ):
+    ) -> Tuple[List[str], List[Dict], List[Document]]:
         """
         Runs the ingest process for the specified source type and input path.
 
@@ -38,6 +48,9 @@ class SambaParse:
         Returns:
             Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
         """
+        if not self.config["partitioning"]["partition_by_api"]:
+            return self._run_ingest_pymupdf(input_path, additional_metadata)
+
         output_dir = self.config["processor"]["output_dir"]
 
         # Create the output directory if it doesn't exist
@@ -77,7 +90,6 @@ class SambaParse:
                 ",".join(self.config["partitioning"]["metadata_include"]),
             ]
         )
-
 
         if self.config["partitioning"]["skip_infer_table_types"]:
             command.extend(
@@ -141,9 +153,7 @@ class SambaParse:
                 command.extend(["--partition-by-api", "--api-key", api_key])
                 command.extend(["--partition-endpoint", partition_endpoint_url])
             else:
-                raise ValueError(
-                    "UNSTRUCTURED_API_KEY environment variable is not set."
-                )
+                logger.warning("No Unstructured API key available. Partitioning by API will be skipped.")
 
         if self.config["partitioning"]["strategy"] == "hi_res":
             if (
@@ -261,6 +271,55 @@ class SambaParse:
             )
             logger.info("Additional processing completed.")
             return texts, metadata_list, langchain_docs
+
+    def _run_ingest_pymupdf(
+        self, input_path: str, additional_metadata: Optional[Dict] = None
+    ) -> Tuple[List[str], List[Dict], List[Document]]:
+        """
+        Runs the ingest process using PyMuPDF via LangChain.
+
+        Args:
+            input_path (str): The input path for the source.
+            additional_metadata (Optional[Dict]): Additional metadata to include in the processed documents.
+
+        Returns:
+            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+        """
+        if not input_path:
+            raise ValueError("Input path is required for PyMuPDF processing.")
+
+        texts = []
+        metadata_list = []
+        langchain_docs = []
+
+        if os.path.isfile(input_path):
+            file_paths = [input_path]
+        else:
+            file_paths = [
+                os.path.join(input_path, f)
+                for f in os.listdir(input_path)
+                if f.lower().endswith('.pdf')
+            ]
+
+        for file_path in file_paths:
+            loader = PyMuPDFLoader(file_path)
+            docs = loader.load()
+
+            for doc in docs:
+                text = doc.page_content
+                metadata = doc.metadata
+
+                # Add 'filename' key to metadata
+                metadata['filename'] = os.path.basename(metadata['source'])
+
+                if additional_metadata:
+                    metadata.update(additional_metadata)
+
+                texts.append(text)
+                metadata_list.append(metadata)
+                langchain_docs.append(doc)
+
+        return texts, metadata_list, langchain_docs
 
 
 def convert_to_string(value: Union[List, Tuple, Dict, Any]) -> str:
@@ -400,8 +459,69 @@ def parse_doc_universal(
     config_path = os.path.join(current_dir, "config.yaml")
 
     wrapper = SambaParse(config_path)
-    texts, metadata_list, langchain_docs = wrapper.run_ingest(
-        source_type, input_path=doc, additional_metadata=additional_metadata
-    )
 
-    return texts, metadata_list, langchain_docs
+    def process_file(file_path):
+        if file_path.lower().endswith('.pdf'):
+            return wrapper._run_ingest_pymupdf(file_path, additional_metadata)
+        else:
+            # Use the original method for non-PDF files
+            return wrapper.run_ingest(source_type, input_path=file_path, additional_metadata=additional_metadata)
+
+    if os.path.isfile(doc):
+        return process_file(doc)
+    else:
+        all_texts, all_metadata, all_docs = [], [], []
+        for root, _, files in os.walk(doc):
+            for file in files:
+                file_path = os.path.join(root, file)
+                texts, metadata_list, langchain_docs = process_file(file_path)
+                all_texts.extend(texts)
+                all_metadata.extend(metadata_list)
+                all_docs.extend(langchain_docs)
+        return all_texts, all_metadata, all_docs
+
+
+def parse_doc_streamlit(docs: List, 
+              kit_dir: str,
+              additional_metadata: Optional[Dict] = None,
+              ) -> List[Document]:
+    """
+    Parse the uploaded documents and return a list of LangChain documents.
+
+    Args:
+        docs (List[UploadFile]): A list of uploaded files.
+        kit_dir (str): The directory of the current kit.
+        additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
+            Defaults to an empty dictionary.
+
+    Returns:
+        List[Document]: A list of LangChain documents.
+    """
+    if additional_metadata is None:
+        additional_metadata = {}
+
+    # Create the data/tmp folder if it doesn't exist
+    temp_folder = os.path.join(kit_dir, "data/tmp")
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    else:
+        # If there are already files there, delete them
+        for filename in os.listdir(temp_folder):
+            file_path = os.path.join(temp_folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
+
+    # Save all selected files to the tmp dir with their file names
+    for doc in docs:
+        temp_file = os.path.join(temp_folder, doc.name)
+        with open(temp_file, "wb") as f:
+            f.write(doc.getvalue())
+
+    # Pass in the temp folder for processing into the parse_doc_universal function
+    _, _, langchain_docs = parse_doc_universal(doc=temp_folder, additional_metadata=additional_metadata)
+    return langchain_docs

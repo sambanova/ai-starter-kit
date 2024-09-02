@@ -1,4 +1,8 @@
-api: "sambastudio" #  set either sambastudio, sambaverse or fastapi
+api: "fastapi" #  set either sambastudio, sambaverse or fastapi
+
+pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
+prod_mode: False
+default_collection:  "ekr_default_collection"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -12,13 +16,13 @@ llm:
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3-8B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    "select_expert": "llama3-8b" #set if using FastAPI, Sambaverse or SambaStudio CoE llm expert
     #fastApi CoE expert name -> "llama3-8b"
 
 retrieval:
     "k_retrieved_documents": 15 #set if rerank enabled 
     "score_threshold": 0.2
-    "rerank": True # set if you want to rerank retriever results 
+    "rerank": False # set if you want to rerank retriever results 
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
     "final_k_retrieved_documents": 5
 

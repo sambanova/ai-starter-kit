@@ -373,7 +373,7 @@ def rag(query: str) -> str:
     vdb = VectorDb()
 
     # load embedding model
-    embeddings = vdb.load_embedding_model(
+    embeddings = APIGateway.load_embedding_model(
         type=rag_info['embedding_model']['type'],
         batch_size=rag_info['embedding_model']['batch_size'],
         coe=rag_info['embedding_model']['coe'],
@@ -415,8 +415,8 @@ def rag(query: str) -> str:
     )
 
     response = qa_chain.invoke({'question': query})
-
     answer = response['answer']
-    source_documents = set([json.loads(doc.metadata['data_source'])['url'] for doc in response['source_documents']])
+    
+    source_documents = set([doc.metadata['filename'] for doc in response['source_documents']])
 
     return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'

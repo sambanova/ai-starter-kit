@@ -18,7 +18,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-LLM_API_OPTIONS = ["sambastudio", "fastapi"]
+LLM_API_OPTIONS = ["fastapi", "sambastudio"]
 
 
 @st.cache_data
@@ -128,7 +128,7 @@ def main():
 
         llm_model = st.text_input(
             "Model Name",
-            value="COE/Meta-Llama-3-8B-Instruct",
+            value="llama3-405b",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         st.session_state.llm = f"{llm_model}"

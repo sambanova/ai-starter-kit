@@ -55,8 +55,8 @@ if __name__ == "__main__":
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
-    model_name = "COE/Meta-Llama-3-8B-Instruct"
-    llm_api = "sambastudio"
+    model_name = "llama3-405b"
+    llm_api = "fastapi"
 
     params = {
         # "do_sample": False,

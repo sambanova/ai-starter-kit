@@ -1,0 +1,5 @@
+tool:
+  - 'serpapi' # Options: serpapi, serper, openserp
+search_engine: 'google' # Options: google, bing, baidu
+max_results: 5
+query: 'Albert Einstein'

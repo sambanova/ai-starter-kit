@@ -31,7 +31,8 @@ partitioning:
   metadata_include: []
   partition_endpoint: 'http://localhost'
   unstructured_port: 8005
-  partition_by_api: True # set as true if using API server
+  partition_by_api: False # set as true if using API server
+  default_unstructured_api_key: 123456789abcde
 
 chunking:
   enabled: True
