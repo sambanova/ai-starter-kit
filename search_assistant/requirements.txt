@@ -15,3 +15,4 @@ html2text==2024.2.26
 unstructured[pdf]==0.12.4
 fake-useragent==1.5.1
 watchdog==4.0.0
+chromadb==0.5.3

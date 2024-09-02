@@ -87,6 +87,7 @@ replit-kit:
 replit:
 	@if [ -n "$(KIT)" ]; then \
 		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)"; \
+		make post-process-replit; \
 	else \
 		make replit-install post-process-replit; \
 	fi
