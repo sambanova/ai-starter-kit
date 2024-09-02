@@ -77,9 +77,13 @@ def main() -> None:
                 streamlit.rerun()
         else:
             streamlit.success('Credentials are set')
-            if streamlit.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', '', prod_mode)
-                streamlit.rerun()
+            with stylable_container(
+                key='blue-button',
+                css_styles=get_blue_button_style(),
+            ):
+                if streamlit.button('Clear Credentials', key='clear_credentials'):
+                    save_credentials('', '', prod_mode)
+                    streamlit.rerun()
 
         if are_credentials_set():
             # Navigation menu
