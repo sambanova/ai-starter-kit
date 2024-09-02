@@ -221,7 +221,7 @@ class FunctionCalling:
         if self.tools is not None:
             tools_map = {tool.name: tool for tool in self.tools}
         else:
-            tools_map = {}
+            tools_map = dict()
 
         # Invoke the tool with the retrieved inputs
         answer = tools_map[tool_name].invoke(tool_parameters)

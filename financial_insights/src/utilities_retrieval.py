@@ -25,8 +25,8 @@ class VectorstoreRegistry:
     """A thread-safe registry for managing in-memory vectorstores."""
 
     def __init__(self) -> None:
-        self._vectorstore_registry: Dict[str, Chroma] = {}
-        self._retriever_registry: Dict[str, VectorStoreRetriever] = {}
+        self._vectorstore_registry: Dict[str, Chroma] = dict()
+        self._retriever_registry: Dict[str, VectorStoreRetriever] = dict()
         self._lock = threading.Lock()
 
     def get_vectorstore(self, session_id: str) -> Chroma | None:

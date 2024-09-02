@@ -496,7 +496,7 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
     # Check that there are SQL tables
     assert len(tables_names) > 0, 'No SQL tables found.'
 
-    table_summaries = {}
+    table_summaries = dict()
     for table in tables_names:
         # Extract the first word from the name string to get the symbol
         table_symbol = table.split('_')[0]
@@ -536,7 +536,7 @@ def get_table_summaries_from_names(table_names: List[str]) -> str:
         inspected_table.split('_')[0].lower() for inspected_table in inspected_tables_names
     ]
 
-    table_summaries = {}
+    table_summaries = dict()
     for table in table_names:
         # Extract the first word from the name string to get the symbol
         table_symbol = table.split('_')[0].lower()
