@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -8,11 +7,12 @@ import pandas
 import streamlit
 import yaml
 from matplotlib.figure import Figure
-
-logging.basicConfig(level=logging.INFO)
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+from financial_insights.src.tools import get_general_logger
 from financial_insights.streamlit.constants import *
+
+logger = get_general_logger()
 
 
 def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
@@ -284,9 +284,9 @@ def download_file(file: str) -> None:
                 mime='text/plain',
             )
     except Exception as e:
-        logging.warning('Error reading file', str(e))
+        logger.warning('Error reading file', str(e))
     except FileNotFoundError as e:
-        logging.warning('File not found', str(e))
+        logger.warning('File not found', str(e))
 
 
 def set_css_styles() -> None:

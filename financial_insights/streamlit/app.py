@@ -1,6 +1,9 @@
 import os
 import sys
 
+import weave
+import yaml
+
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -24,12 +27,14 @@ from financial_insights.streamlit.utilities_app import (
     set_css_styles,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
-from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
+from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
+
+# Initialize Weave with your project name
+if os.getenv('WANDB_API_KEY') is not None:
+    weave.init('sambanova_financial_insights')
+
 
 def main() -> None:
-    # Initialize environment variables
-    initialize_env_variables(prod_mode)
-
     # Create cache
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
@@ -52,21 +57,30 @@ def main() -> None:
     )
 
     # Add sidebar
+    # Initialize credentials
+    streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
+    streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
+
+    # Load the config
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+    # Get the production flag
+    prod_mode = config['prod_mode']
+
     with streamlit.sidebar:
         if not are_credentials_set():
             url, api_key = env_input_fields()
-            if streamlit.button("Save Credentials", key="save_credentials_sidebar"):
+            if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
-                streamlit.experimental_rerun()
+                streamlit.rerun()
         else:
-            streamlit.success("Credentials are set")
-            if streamlit.button("Clear Credentials", key="clear_credentials"):
-                save_credentials("", "", prod_mode)
-                streamlit.experimental_rerun()
+            streamlit.success('Credentials are set')
+            if streamlit.button('Clear Credentials', key='clear_credentials'):
+                save_credentials('', '', prod_mode)
+                streamlit.rerun()
 
         if are_credentials_set():
-            
             # Navigation menu
             streamlit.title('Navigation')
             menu = streamlit.radio(
@@ -129,66 +143,67 @@ def main() -> None:
     columns[0].image(SAMBANOVA_LOGO, width=100)
     columns[1].title('SambaNova Financial Assistant')
 
-    # Home page
-    if menu == 'Home':
-        streamlit.title('Financial Insights with LLMs')
+    if are_credentials_set():
+        # Home page
+        if menu == 'Home':
+            streamlit.title('Financial Insights with LLMs')
 
-        streamlit.write(
+            streamlit.write(
+                """
+                Welcome to the Financial Insights application.
+                This app demonstrates the capabilities of large language models (LLMs)
+                in extracting and analyzing financial data using function calling, web scraping,
+                and retrieval-augmented generation (RAG).
+                
+                Use the navigation menu to explore various features including:
+                
+                - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
+                - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
+                - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
+                - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
+                - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
+                or on the whole chat history.
+                - **Print Chat History**: Print the whole chat history.
             """
-            Welcome to the Financial Insights application.
-            This app demonstrates the capabilities of large language models (LLMs)
-            in extracting and analyzing financial data using function calling, web scraping,
-            and retrieval-augmented generation (RAG).
-            
-            Use the navigation menu to explore various features including:
-            
-            - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
-            - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
-            - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
-            - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
-            - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
-               or on the whole chat history.
-            - **Print Chat History**: Print the whole chat history.
-        """
-        )
+            )
 
-    # Stock Data Analysis page
-    elif menu == 'Stock Data Analysis':
-        get_stock_data_analysis()
+        # Stock Data Analysis page
+        elif menu == 'Stock Data Analysis':
+            get_stock_data_analysis()
 
-    elif menu == 'Stock Database':
-        get_stock_database()
+        elif menu == 'Stock Database':
+            get_stock_database()
 
-    # Financial News Scraping page
-    elif menu == 'Financial News Scraping':
-        get_yfinance_news()
+        # Financial News Scraping page
+        elif menu == 'Financial News Scraping':
+            get_yfinance_news()
 
-    # Financial Filings Analysis page
-    elif menu == 'Financial Filings Analysis':
-        include_financial_filings()
+        # Financial Filings Analysis page
+        elif menu == 'Financial Filings Analysis':
+            include_financial_filings()
 
-    # Generate PDF Report page
-    elif menu == 'Generate PDF Report':
-        include_pdf_report()
+        # Generate PDF Report page
+        elif menu == 'Generate PDF Report':
+            include_pdf_report()
 
-    # Print Chat History page
-    elif menu == 'Print Chat History':
-        # Custom button to clear chat history
-        with stylable_container(
-            key='blue-button',
-            css_styles=get_blue_button_style(),
-        ):
-            if streamlit.button('Clear Chat History'):
-                streamlit.session_state.chat_history = list()
-                # Log message
-                streamlit.write(f'Cleared chat history.')
+        # Print Chat History page
+        elif menu == 'Print Chat History':
+            # Custom button to clear chat history
+            with stylable_container(
+                key='blue-button',
+                css_styles=get_blue_button_style(),
+            ):
+                if streamlit.button('Clear Chat History'):
+                    streamlit.session_state.chat_history = list()
+                    # Log message
+                    streamlit.write(f'Cleared chat history.')
 
-        # Add button to stream chat history
-        if streamlit.button('Print Chat History'):
-            if len(streamlit.session_state.chat_history) == 0:
-                streamlit.write('No chat history to show.')
-            else:
-                stream_chat_history()
+            # Add button to stream chat history
+            if streamlit.button('Print Chat History'):
+                if len(streamlit.session_state.chat_history) == 0:
+                    streamlit.write('No chat history to show.')
+                else:
+                    stream_chat_history()
 
 
 if __name__ == '__main__':

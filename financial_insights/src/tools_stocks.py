@@ -110,7 +110,7 @@ def get_stock_info_from_dataframe(
 def get_pandasai_answer_from_dataframe(user_query: str, symbol: str, dataframe_name: str) -> Any:
     """
     Get the relevant stock information by querying the corresponding dataframe via `pandasai`.
-    
+
     Args:
         user_query: The user query to answer.
         symbol: The ticker symbol for which to retrieve the relevant stock information.

@@ -22,6 +22,7 @@ F = TypeVar('F', bound=Callable[..., Any])
 
 class HasCall(Protocol):
     """Class to check if a class has a call method."""
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         pass
 
@@ -51,6 +52,8 @@ def get_general_logger() -> logging.Logger:
         general_logger.addHandler(console_handler)
     return general_logger
 
+
+logger = get_general_logger()
 
 # Get the loggers
 timing_logger = get_timing_logger()
@@ -134,13 +137,13 @@ def extract_yfinance_data(
     try:
         company_dict['info'] = company.info
     except:
-        logging.warning('Could not retrieve the `info` dataframe.')
+        logger.warning('Could not retrieve the `info` dataframe.')
 
     # Get historical market data
     try:
         company_dict['history'] = company.history(start=start_date, end=end_date)
     except:
-        logging.warning('Could not retrieve the `history` dataframe.')
+        logger.warning('Could not retrieve the `history` dataframe.')
 
     # Get meta information about the history (requires history() to be called first)
     company_dict['history_metadata'] = company.history_metadata
@@ -149,161 +152,161 @@ def extract_yfinance_data(
     try:
         company_dict['actions'] = company.actions
     except:
-        logging.warning('Could not retrieve the `actions` dataframe.')
+        logger.warning('Could not retrieve the `actions` dataframe.')
 
     # Get dividends
     try:
         company_dict['dividends'] = company.dividends
     except:
-        logging.warning('Could not retrieve the `dividends` dataframe.')
+        logger.warning('Could not retrieve the `dividends` dataframe.')
 
     # Get splits
     try:
         company_dict['splits'] = company.splits
     except:
-        logging.warning('Could not retrieve the `splits` dataframe.')
+        logger.warning('Could not retrieve the `splits` dataframe.')
 
     # Get capital gains
     try:
         company_dict['capital_gains'] = company.capital_gains  # only for mutual funds & etfs
     except:
-        logging.warning('Could not retrieve the `capital gains` dataframe.')
+        logger.warning('Could not retrieve the `capital gains` dataframe.')
 
     # Get share count
     try:
         company_dict['shares'] = company.get_shares_full(start=start_date, end=end_date)
     except:
-        logging.warning('Could not retrieve the `shares` dataframe.')
+        logger.warning('Could not retrieve the `shares` dataframe.')
 
     # Get financials
     # Get income statement
     try:
         company_dict['income_stmt'] = convert_index_to_column(company.income_stmt.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `income_stmt` dataframe.')
+        logger.warning('Could not retrieve the `income_stmt` dataframe.')
 
     # Get quarterly income statement
     try:
         company_dict['quarterly_income_stmt'] = convert_index_to_column(company.quarterly_income_stmt.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `quarterly_income_stmt` dataframe.')
+        logger.warning('Could not retrieve the `quarterly_income_stmt` dataframe.')
 
     # Get balance sheet
     try:
         company_dict['balance_sheet'] = convert_index_to_column(company.balance_sheet.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `balance_sheet` dataframe.')
+        logger.warning('Could not retrieve the `balance_sheet` dataframe.')
 
     # Get quarterly balance sheet
     try:
         company_dict['quarterly_balance_sheet'] = convert_index_to_column(company.quarterly_balance_sheet.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `quarterly_balance_sheet` dataframe.')
+        logger.warning('Could not retrieve the `quarterly_balance_sheet` dataframe.')
 
     # Get cash flow statement
     try:
         company_dict['cashflow'] = convert_index_to_column(company.cashflow.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `cashflow` dataframe.')
+        logger.warning('Could not retrieve the `cashflow` dataframe.')
 
     # Get quarterly cash flow
     try:
         company_dict['quarterly_cashflow'] = convert_index_to_column(company.quarterly_cashflow.T, 'Date')
     except:
-        logging.warning('Could not retrieve the `quarterly_cashflow` dataframe.')
+        logger.warning('Could not retrieve the `quarterly_cashflow` dataframe.')
     # see `Ticker.get_income_stmt()` for more options
 
     # Get major holders
     try:
         company_dict['major_holders'] = company.major_holders
     except:
-        logging.warning('Could not retrieve the `major_holders` dataframe.')
+        logger.warning('Could not retrieve the `major_holders` dataframe.')
 
     # Get institutional holders
     try:
         company_dict['institutional_holders'] = company.institutional_holders
     except:
-        logging.warning('Could not retrieve the `institutional_holders` dataframe.')
+        logger.warning('Could not retrieve the `institutional_holders` dataframe.')
 
     # Get mutual fund holders
     try:
         company_dict['mutualfund_holders'] = company.mutualfund_holders
     except:
-        logging.warning('Could not retrieve the `mutualfund_holders` dataframe.')
+        logger.warning('Could not retrieve the `mutualfund_holders` dataframe.')
 
     # Get insider transactions
     try:
         company_dict['insider_transactions'] = company.insider_transactions
     except:
-        logging.warning('Could not retrieve the `insider_transactions` dataframe.')
+        logger.warning('Could not retrieve the `insider_transactions` dataframe.')
 
     # Get insider purchases
     try:
         company_dict['insider_purchases'] = company.insider_purchases
     except:
-        logging.warning('Could not retrieve the `insider_purchases` dataframe.')
+        logger.warning('Could not retrieve the `insider_purchases` dataframe.')
 
     # Get insider sales
     try:
         company_dict['insider_roster_holders'] = company.insider_roster_holders
     except:
-        logging.warning('Could not retrieve the `insider_roster_holders` dataframe.')
+        logger.warning('Could not retrieve the `insider_roster_holders` dataframe.')
 
     # Get sustainability
     try:
         company_dict['sustainability'] = company.sustainability
     except:
-        logging.warning('Could not retrieve the `sustainability` dataframe.')
+        logger.warning('Could not retrieve the `sustainability` dataframe.')
 
     # Get recommendations
     try:
         company_dict['recommendations'] = company.recommendations
     except:
-        logging.warning('Could not retrieve the `recommendations` dataframe.')
+        logger.warning('Could not retrieve the `recommendations` dataframe.')
 
     # Get recommendations summary
     try:
         company_dict['recommendations_summary'] = company.recommendations_summary
     except:
-        logging.warning('Could not retrieve the `recommendations` dataframe.')
+        logger.warning('Could not retrieve the `recommendations` dataframe.')
 
     # Get upgrades downgrades
     try:
         company_dict['upgrades_downgrades'] = company.upgrades_downgrades
     except:
-        logging.warning('Could not retrieve the `upgrades_downgrades` dataframe.')
+        logger.warning('Could not retrieve the `upgrades_downgrades` dataframe.')
 
     # Get future and historic earnings dates, returns at most next 4 quarters and last 8 quarters by default.
     # Note: If more are needed use company.get_earnings_dates(limit=XX) with increased limit argument.
     try:
         company_dict['earnings_dates'] = company.earnings_dates
     except:
-        logging.warning('Could not retrieve the `earnings_dates` dataframe.')
+        logger.warning('Could not retrieve the `earnings_dates` dataframe.')
 
     # Get ISIN code - *experimental*
     # ISIN = International Securities Identification Number
     try:
         company_dict['isin'] = company.isin
     except:
-        logging.warning('Could not retrieve the `isin` dataframe.')
+        logger.warning('Could not retrieve the `isin` dataframe.')
 
     # Get options expirations
     try:
         company_dict['options'] = company.options
     except:
-        logging.warning('Could not retrieve the `options` dataframe.')
+        logger.warning('Could not retrieve the `options` dataframe.')
 
     # Get news
     try:
         company_dict['news'] = company.news
     except:
-        logging.warning('Could not retrieve the `news` dataframe.')
+        logger.warning('Could not retrieve the `news` dataframe.')
 
     # # Get option chain for specific expiration
     try:
         company_dict['option_chain'] = company.option_chain()
     except:
-        logging.warning('Could not retrieve the `option chain` dataframe.')
+        logger.warning('Could not retrieve the `option chain` dataframe.')
     # data available via: opt.calls, opt.puts
 
     return company_dict

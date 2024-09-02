@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+from typing import Tuple
 
 def initialize_env_variables(prod_mode=False):
     if not prod_mode:
@@ -21,14 +22,14 @@ def set_env_variables(url, api_key, prod_mode=False):
         os.environ["FASTAPI_URL"] = url
         os.environ["FASTAPI_API_KEY"] = api_key
 
-def env_input_fields():
+def env_input_fields() -> Tuple[str, str]:
     url = st.text_input("API URL", value=st.session_state.FASTAPI_URL, type="password")
     api_key = st.text_input("API Key", value=st.session_state.FASTAPI_API_KEY, type="password")
     return url, api_key
 
-def are_credentials_set():
+def are_credentials_set() -> bool:
     return bool(st.session_state.FASTAPI_URL and st.session_state.FASTAPI_API_KEY)
 
-def save_credentials(url, api_key, prod_mode=False):
+def save_credentials(url, api_key, prod_mode=False) -> str:
     set_env_variables(url, api_key, prod_mode)
     return "Credentials saved successfully!"

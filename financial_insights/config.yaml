@@ -18,4 +18,3 @@ rag:
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
   retrieval:
     "k_retrieved_documents": 5
-    "score_threshold": 0.2

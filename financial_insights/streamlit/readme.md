@@ -98,7 +98,7 @@ These can be included in the project `.env` file.
 For `FAST-API`:
 ```
 FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
-FASTAPI_API_KEY = "<you-api-key>"
+FASTAPI_API_KEY = "<your-fastapi-api-key>"
 ```
 
 For the `SEC-EDGAR` functionalities.
@@ -111,4 +111,9 @@ SEC_API_ORGANIZATION="<your organization>"
 
 # Your email address
 SEC_API_EMAIL="<name.surname@provider.com>"
+```
+
+For `Weave` users:
+```
+WANDB_API_KEY = "<your-wandb-api-key>"
 ```

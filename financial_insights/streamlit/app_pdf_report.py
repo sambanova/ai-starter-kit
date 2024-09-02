@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 from typing import Any, Dict, List
@@ -7,12 +6,13 @@ import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from financial_insights.src.function_calling import FunctionCalling
+from financial_insights.src.tools import get_general_logger
 from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
 from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
-logging.basicConfig(level=logging.INFO)
+logger = get_general_logger()
 
 
 def include_pdf_report() -> None:
@@ -326,9 +326,9 @@ def handle_pdf_generation(
             # Copy selected document to pdf generation directory
             shutil.copy(source_file, destination_file)
 
-            logging.info(f'{source_file} has been copied to {destination_file}')
+            logger.info(f'{source_file} has been copied to {destination_file}')
         except Exception as e:
-            logging.error('Error while copying file', exc_info=True)
+            logger.error('Error while copying file', exc_info=True)
 
     # Extract the documents from the selected files
     documents = read_txt_files(PDF_SOURCES_DIRECTORY)

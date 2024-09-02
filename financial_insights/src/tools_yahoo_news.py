@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from typing import List, Set, Tuple
@@ -12,13 +11,13 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from financial_insights.src.tools import coerce_str_to_list
+from financial_insights.src.tools import coerce_str_to_list, get_general_logger
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
-logging.basicConfig(level=logging.INFO)
-
 RETRIEVE_HEADLINES = False
+
+logger = get_general_logger()
 
 
 class YahooFinanceNewsInput(BaseModel):
@@ -68,7 +67,7 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
 
     # Scrape the news articles
     retrieve_text_yahoo_finance_news(link_urls)
-    logging.info('News from Yahoo Finance successfully extracted and saved.')
+    logger.info('News from Yahoo Finance successfully extracted and saved.')
 
     return get_qa_response_from_news(WEB_SCRAPING_PATH, user_query)
 
@@ -129,9 +128,9 @@ def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
                 for filtered_text in filtered_texts:
                     data.append({'type': 'p', 'url': link_url, 'text': filtered_text})
 
-            logging.info('News articles have been successfully scraped')
+            logger.info('News articles have been successfully scraped')
         else:
-            logging.warning(f'Failed to retrieve the page. Status code: {link_response.status_code}')
+            logger.warning(f'Failed to retrieve the page. Status code: {link_response.status_code}')
 
     # Filter all texts
     headlines_list = filter_texts_set(headlines)
@@ -221,9 +220,9 @@ def get_url_list(symbol_list: List[str]) -> List[str]:
                 link_urls.extend([link['href'] for link in links])
             else:
                 link_urls.append(url)
-            logging.info('News articles have been successfully scraped')
+            logger.info('News articles have been successfully scraped')
         else:
-            logging.warning(f'Failed to retrieve the page. Status code: {response.status_code}')
+            logger.warning(f'Failed to retrieve the page. Status code: {response.status_code}')
 
     # Remove duplicate URLs from the list of links
     link_urls = list(set(link_urls))
@@ -256,7 +255,7 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
     try:
         df = pandas.read_csv(WEB_SCRAPING_PATH)
     except FileNotFoundError:
-        logging.error('No scraped data found.')
+        logger.error('No scraped data found.')
 
     # Convert DataFrame rows into Document objects
     documents = []

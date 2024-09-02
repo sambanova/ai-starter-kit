@@ -1,6 +1,8 @@
 import json
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import streamlit
 import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
@@ -38,16 +40,16 @@ class FunctionCalling:
             TypeError: If `system_prompt` is not a string.
         """
         # Load the configs from the config file
-        configs = self.get_llm_config_info(config_path)
+        llm_info, prod_mode_info = self.get_llm_config_info(config_path)
+
+        # Set the production flag
+        self.prod_mode = prod_mode_info
 
         # Set the llm information
-        self.llm_info = configs.llm
+        self.llm_info = llm_info
 
         # Set the LLM
         self.llm = self.set_llm()
-
-        # Set the production flag
-        self.prod_mode = configs.prod_mode
 
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
@@ -69,7 +71,7 @@ class FunctionCalling:
         assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
-    def get_llm_config_info(self, config_path: str) -> Tuple[Dict[str, str | float | None]]:
+    def get_llm_config_info(self, config_path: str) -> Tuple[Any, Any]:
         """
         Loads the json config file.
 
@@ -91,7 +93,9 @@ class FunctionCalling:
         # Get the llm information
         llm_info = config['llm']
 
-        return (llm_info,)
+        prod_mode_info = config['prod_mode']
+
+        return (llm_info, prod_mode_info)
 
     def set_llm(self) -> LLM:
         """
@@ -122,11 +126,11 @@ class FunctionCalling:
 
             # Get the LLM credentials following `prod_mode`
             if self.prod_mode:
-                fastapi_url = st.session_state.FASTAPI_URL
-                fastapi_api_key = st.session_state.FASTAPI_API_KEY
+                fastapi_url = streamlit.session_state.FASTAPI_URL
+                fastapi_api_key = streamlit.session_state.FASTAPI_API_KEY
             else:
-                fastapi_url = os.environ.get("FASTAPI_URL") or st.session_state.FASTAPI_URL
-                fastapi_api_key = os.environ.get("FASTAPI_API_KEY") or st.session_state.FASTAPI_API_KEY
+                fastapi_url = os.environ.get('FASTAPI_URL') or streamlit.session_state.FASTAPI_URL
+                fastapi_api_key = os.environ.get('FASTAPI_API_KEY') or streamlit.session_state.FASTAPI_API_KEY
 
             # Instantiate the LLM
             llm = APIGateway.load_llm(

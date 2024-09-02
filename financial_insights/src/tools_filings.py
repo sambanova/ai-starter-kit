@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 from typing import Optional, Tuple
 
@@ -13,12 +12,13 @@ from langchain_core.tools import tool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
+from financial_insights.src.tools import get_general_logger
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
-logging.basicConfig(level=logging.INFO)
-
 load_dotenv(os.path.join(repo_dir, '.env'))
+
+logger = get_general_logger()
 
 
 class SecEdgarFilingsInput(BaseModel):
@@ -109,7 +109,7 @@ def retrieve_filings(
     try:
         df = pandas.read_csv(CACHE_DIR + f'{filename}' + '.csv')
     except FileNotFoundError:
-        logging.error('No scraped data found.')
+        logger.error('No scraped data found.')
 
     # Convert DataFrame rows into Document objects
     documents = []
@@ -181,7 +181,7 @@ def parse_filings(
             # Check the matching quarter
             if filing_quarter == 0 or (filing_quarter is not None and (report_date.month - filing_quarter * 3) <= 1):
                 # Logging
-                logging.info(f'Found filing: {metadata}')
+                logger.info(f'Found filing: {metadata}')
                 # Download the matching filing
                 html_text = downloader.download_filing(url=metadata.primary_doc_url)
 
