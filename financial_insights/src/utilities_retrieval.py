@@ -1,4 +1,3 @@
-import threading
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -22,44 +21,37 @@ from utils.model_wrappers.api_gateway import APIGateway
 
 
 class VectorstoreRegistry:
-    """A thread-safe registry for managing in-memory vectorstores."""
+    """A registry for managing in-memory vectorstores."""
 
     def __init__(self) -> None:
         self._vectorstore_registry: Dict[str, Chroma] = dict()
         self._retriever_registry: Dict[str, VectorStoreRetriever] = dict()
-        self._lock = threading.Lock()
 
     def get_vectorstore(self, session_id: str) -> Chroma | None:
         """Retrieve the vectorstore for the given session_id."""
-        with self._lock:
-            return self._vectorstore_registry.get(session_id)
+        return self._vectorstore_registry.get(session_id)
 
     def set_vectorstore(self, session_id: str, vectorstore: Chroma) -> None:
         """Set the vectorstore for the given session_id."""
-        with self._lock:
-            self._vectorstore_registry[session_id] = vectorstore
+        self._vectorstore_registry[session_id] = vectorstore
 
     def delete_vectorstore(self, session_id: str) -> None:
         """Delete the vectorstore for the given session_id."""
-        with self._lock:
-            if session_id in self._vectorstore_registry:
-                del self._vectorstore_registry[session_id]
+        if session_id in self._vectorstore_registry:
+            del self._vectorstore_registry[session_id]
 
     def get_retriever(self, session_id: str) -> VectorStoreRetriever | None:
         """Retrieve the retriever for the given session_id."""
-        with self._lock:
-            return self._retriever_registry.get(session_id)
+        return self._retriever_registry.get(session_id)
 
     def set_retriever(self, session_id: str, retriever: VectorStoreRetriever) -> None:
         """Set the retriever for the given session_id."""
-        with self._lock:
-            self._retriever_registry[session_id] = retriever
+        self._retriever_registry[session_id] = retriever
 
     def delete_retriever(self, session_id: str) -> None:
         """Delete the retriever for the given session_id."""
-        with self._lock:
-            if session_id in self._retriever_registry:
-                del self._retriever_registry[session_id]
+        if session_id in self._retriever_registry:
+            del self._retriever_registry[session_id]
 
 
 def get_qa_response(user_request: str, documents: List[Document], session_id: Optional[str] = None) -> Any:
