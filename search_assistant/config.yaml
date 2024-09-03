@@ -1,5 +1,7 @@
 api: "fastapi" # set either sambastudio, sambaverse or fastapi
 prod_mode: False
+additional_env_vars:
+  - SERPAPI_API_KEY
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
