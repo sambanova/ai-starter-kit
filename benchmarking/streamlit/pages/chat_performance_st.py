@@ -200,7 +200,7 @@ def main():
                                 unsafe_allow_html=True,
                             )
     except Exception as e:
-        st.error(f"Error: {e}. For more error details, please look at the terminal.")
+        st.error(f"Error: {e}.")
 
 
 if __name__ == "__main__":
