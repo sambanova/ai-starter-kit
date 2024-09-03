@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import base64
 from langchain_core.output_parsers import StrOutputParser
@@ -8,8 +9,17 @@ from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.embeddings.sambanova import SambaStudioEmbeddings
 from langchain_core.prompts import load_prompt
 import nest_asyncio
-from langchain_core.runnables.graph import CurveStyle, NodeColors, MermaidDrawMethod
+from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod
 import dotenv
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+from utils.model_wrappers.api_gateway import APIGateway
 
 dotenv.load_dotenv()
 
@@ -50,30 +60,28 @@ class BaseComponents:
     #     self.llm = ChatOllama(model=local_llm, temperature=0)
     
 
-    def init_llm(self): 
+    def init_llm(self) -> None:
+        """
+        Initializes the Large Language Model (LLM) based on the specified API.
 
-        if self.configs["api"] == "sambastudio":
-                self.llm = SambaStudio(
-                    streaming=True,
-                    model_kwargs={
-                            "max_tokens_to_generate": 2048,
-                            "select_expert": "Meta-Llama-3-8B-Instruct",
-                            "process_prompt": False
-                        }
-                )
+        Args:
+            self: The instance of the class.
 
-        elif self.configs["api"] == "sambaverse":
-            self.llm = Sambaverse(
-                streaming=False,
-                model_kwargs={
-                    "do_sample": False,
-                    "process_prompt": True,
-                    "select_expert": "llama-2-70b-chat-hf",
-                },
-            )
-        
-        else:
-            raise ValueError("Please enter sambastudio or sambaverse for api in config.yaml")
+        Returns:
+            None
+        """
+
+        self.llm = APIGateway.load_llm(
+            type=self.configs["api"],
+            streaming=True,
+            coe=self.configs['llm']["coe"],
+            do_sample=self.configs['llm']["do_sample"],
+            max_tokens_to_generate=self.configs['llm']["max_tokens_to_generate"],
+            temperature=self.configs['llm']["temperature"],
+            select_expert=self.configs['llm']["select_expert"],
+            process_prompt=False,
+            sambaverse_model_name=self.configs['llm']["sambaverse_model_name"],
+        )
 
     def _format_docs(self, docs):
     

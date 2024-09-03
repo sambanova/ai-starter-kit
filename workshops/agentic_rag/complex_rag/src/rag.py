@@ -1,7 +1,7 @@
 import os
+import sys
 from typing import List, Dict
 from typing_extensions import TypedDict
-from complex_rag.src.base import BaseComponents
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langgraph.graph import END, StateGraph
 from langchain.embeddings import HuggingFaceInstructEmbeddings
@@ -9,6 +9,15 @@ from langchain.vectorstores import Chroma
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import load_prompt
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+from complex_rag.src.base import BaseComponents
 
 
 class RAGComponents(BaseComponents):
@@ -26,32 +35,32 @@ class RAGComponents(BaseComponents):
 
     def init_retrieval_grader(self) -> None:
 
-        retrieval_grader_prompt = load_prompt(os.path.join(self.prompts_path, "retrieval_grader_prompt.yaml"))
+        retrieval_grader_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-retrieval_grading.yaml"))
         self.retrieval_grader = retrieval_grader_prompt | self.llm | JsonOutputParser()
 
     def init_qa_chain(self) -> None:
 
-        qa_prompt = load_prompt(os.path.join(self.prompts_path, "qa_prompt.yaml"))
+        qa_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-qa.yaml"))
         self.qa_chain = qa_prompt | self.llm | StrOutputParser()
 
     def init_hallucination_chain(self) -> None:
 
-        hallucination_prompt = load_prompt(os.path.join(self.prompts_path, "hallucination_prompt.yaml"))
+        hallucination_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-hallucination_detection.yaml"))
         self.hallucination_chain = hallucination_prompt | self.llm | JsonOutputParser()
 
     def init_grading_chain(self) -> None:
 
-        grading_prompt = load_prompt(os.path.join(self.prompts_path, "grading_prompt.yaml"))
+        grading_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-answer_grading.yaml"))
         self.grading_chain = grading_prompt | self.llm | JsonOutputParser()
 
     def init_failure_chain(self) -> None:
 
-        failure_prompt = load_prompt(os.path.join(self.prompts_path, "failure_prompt.yaml"))
+        failure_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-failure_msg.yaml"))
         self.failure_chain = failure_prompt | self.llm | StrOutputParser()
 
     def init_final_generation(self) -> None:
 
-        final_chain_prompt = load_prompt(os.path.join(self.prompts_path, "final_chain_prompt.yaml"))
+        final_chain_prompt = load_prompt(os.path.join(self.prompts_path, "llama3-prompt_engineering-final_chain.yaml"))
         self.final_chain = final_chain_prompt | self.llm | StrOutputParser()
 
     ### RAG functionalities

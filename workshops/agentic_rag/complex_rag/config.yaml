@@ -1,0 +1,47 @@
+api: "fastapi"
+
+embedding_model: 
+    "type": "cpu" # set either sambastudio or cpu
+    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
+    "select_expert": "e5-mistral-7b-instruct-8192" #set if using SambaStudio CoE embedding expert
+
+loaders: 
+    pdf: "unstructured"
+    txt: "text_loader"
+
+llm: 
+    "temperature": 0.0
+    "do_sample": False
+    "max_tokens_to_generate": 1200
+    "sambaverse_model_name": "Meta/llama-3-70b-chat-hf"
+    "coe": True #set as true if using Sambastudio CoE endpoint
+    "select_expert": "llama3-70b" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
+    #fastApi CoE expert name -> "llama3-405b"
+
+retrieval:
+    "chunk_size": 1024
+    "chunk_overlap": 240
+    "example_selector_k": 1
+    "entity_key": "filename"
+    "k_retrieved_documents": 20
+    "score_threshold": 0.2
+    "rerank": False
+    "reranker": 'BAAI/bge-reranker-large'
+    "final_k_retrieved_documents": 4
+    "n_tavily_results": 5
+
+codegen:
+    "max_attemps": 5
+
+prompts: 
+    "retrieval_grader_prompt": "agent_workflows/prompts/llama3-prompt_engineering-retrieval_grading.yaml"
+    "qa_prompt": "agent_workflows/prompts/llama3-prompt_engineering-qa.yaml"
+    "hallucination_prompt": "agent_workflows/prompts/llama3-prompt_engineering-hallucination_detection.yaml"
+    "grading_prompt": "agent_workflows/prompts/llama3-prompt_engineering-answer_grading.yaml"
+    "code_router_prompt": "agent_workflows/prompts/llama3-prompt_engineering-code_router.yaml"
+    "codegen_prompt": "agent_workflows/prompts/llama3-prompt_engineering-codegen.yaml"
+    "codegen_qc_prompt": "agent_workflows/prompts/llama3-prompt_engineering-codegen_qc.yaml"
+    "refactor_prompt": "agent_workflows/prompts/llama3-prompt_engineering-code_refactor.yaml"
+    "failure_prompt": "agent_workflows/prompts/llama3-prompt_engineering-failure_msg.yaml"
+    "final_chain_prompt": "agent_workflows/prompts/llama3-prompt_engineering-final_chain.yaml"

@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -10,8 +11,10 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-from workshops.genai_summit.complex_rag.src.document_retrieval import DocumentRetrieval
+from utils.vectordb.vector_db import VectorDb
 from workshops.genai_summit.complex_rag.src.rag import COMPLEXRAG
+from utils.model_wrappers.api_gateway import APIGateway 
+from utils.parsing.sambaparse import parse_doc_streamlit
 
  
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
@@ -20,6 +23,30 @@ PERSIST_DIRECTORY = os.path.join(kit_dir,f"data/my-vector-db")
 
 logging.basicConfig(level=logging.INFO)
 logging.info("URL: http://localhost:8501")
+
+def get_config_info(CONFIG_PATH: str):
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        api_info = config["api"]
+        llm_info =  config["llm"]
+        embedding_model_info = config["embedding_model"]
+        retrieval_info = config["retrieval"]
+        prompts = config["prompts"]
+        
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts
+
+def load_embedding_model(embedding_model_info: dict) -> None:
+        embeddings = APIGateway.load_embedding_model(
+            type=embedding_model_info["type"],
+            batch_size=embedding_model_info["batch_size"],
+            coe=embedding_model_info["coe"],
+            select_expert=embedding_model_info["select_expert"]
+            ) 
+        return embeddings  
 
 def handle_userinput(app, user_question):
     if user_question:
@@ -64,8 +91,10 @@ def handle_userinput(app, user_question):
                     )
 
 def main(): 
-    documentRetrieval =  DocumentRetrieval()
-    *_, embedding_model_info ,retrieval_info, _ = documentRetrieval.get_config_info()
+    
+    vdb = VectorDb()
+    _, _, embedding_model_info, _, _ = get_config_info(CONFIG_PATH=CONFIG_PATH)
+    embeddings = load_embedding_model(embedding_model_info=embedding_model_info)
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -105,13 +134,10 @@ def main():
             if st.button("Process"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
-                    # get the text chunks
-                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = parse_doc_streamlit(docs, kit_dir=kit_dir)
                     # create vector store
-                    embeddings = documentRetrieval.load_embedding_model()
                     st.session_state.embeddings = embeddings
-                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
+                    vectorstore = vdb.create_vector_store(text_chunks, embeddings, db_type="chroma", output_db=None)
                     st.session_state.vectorstore = vectorstore
 
                     # instantiate rag
@@ -139,13 +165,10 @@ def main():
             if st.button("Process and Save database"):
                 with st.spinner("Processing"):
                     # get pdf text
-                    raw_text, meta_data = documentRetrieval.get_data_for_splitting(docs)
-                    # get the text chunks
-                    text_chunks = documentRetrieval.get_text_chunks_with_metadata(docs=raw_text, meta_data=meta_data)
+                    text_chunks = parse_doc_streamlit(docs, kit_dir=kit_dir)
                     # create vector store
-                    embeddings = documentRetrieval.load_embedding_model()
                     st.session_state.embeddings = embeddings
-                    vectorstore = documentRetrieval.create_vector_store(text_chunks, embeddings, output_db=None)
+                    vectorstore = vdb.create_vector_store(text_chunks, embeddings, db_type="chroma", output_db=None)
                     st.session_state.vectorstore = vectorstore
 
                     # instantiate rag
@@ -185,9 +208,8 @@ def main():
                     else:
                         if os.path.exists(db_path):
                             # load the vectorstore
-                            embeddings = documentRetrieval.load_embedding_model()
                             st.session_state.embeddings = embeddings
-                            vectorstore = documentRetrieval.load_vdb(db_path, embeddings)
+                            vectorstore = vdb.create_vector_store(text_chunks, embeddings, db_type="chroma", output_db=None)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session
