@@ -1,5 +1,4 @@
 from typing import Any, Dict, List, Optional, Tuple
-from uuid import uuid4
 
 import streamlit
 import yaml
@@ -18,40 +17,6 @@ from financial_insights.src.tools import time_llm
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import _get_config_info
 from utils.model_wrappers.api_gateway import APIGateway
-
-
-class VectorstoreRegistry:
-    """A registry for managing in-memory vectorstores."""
-
-    def __init__(self) -> None:
-        self._vectorstore_registry: Dict[str, Chroma] = dict()
-        self._retriever_registry: Dict[str, VectorStoreRetriever] = dict()
-
-    def get_vectorstore(self, session_id: str) -> Chroma | None:
-        """Retrieve the vectorstore for the given session_id."""
-        return self._vectorstore_registry.get(session_id)
-
-    def set_vectorstore(self, session_id: str, vectorstore: Chroma) -> None:
-        """Set the vectorstore for the given session_id."""
-        self._vectorstore_registry[session_id] = vectorstore
-
-    def delete_vectorstore(self, session_id: str) -> None:
-        """Delete the vectorstore for the given session_id."""
-        if session_id in self._vectorstore_registry:
-            del self._vectorstore_registry[session_id]
-
-    def get_retriever(self, session_id: str) -> VectorStoreRetriever | None:
-        """Retrieve the retriever for the given session_id."""
-        return self._retriever_registry.get(session_id)
-
-    def set_retriever(self, session_id: str, retriever: VectorStoreRetriever) -> None:
-        """Set the retriever for the given session_id."""
-        self._retriever_registry[session_id] = retriever
-
-    def delete_retriever(self, session_id: str) -> None:
-        """Delete the retriever for the given session_id."""
-        if session_id in self._retriever_registry:
-            del self._retriever_registry[session_id]
 
 
 def get_qa_response(user_request: str, documents: List[Document], session_id: Optional[str] = None) -> Any:
@@ -75,23 +40,14 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
         f'All documents must be of type `langchain.schema.Document`.'
     )
 
-    # Global instance of the registry
-    vectorstore_registry = streamlit.session_state.vectorstore_registry
-
     # Get the vectostore registry and the current `session_id`
-    vectorstore_registry, session_id = get_retriever(documents, vectorstore_registry, session_id)
+    vectorstore, retriever = get_vectorstore_retriever(documents)
 
     # Get the QA chain from the retriever
-    qa_chain = get_qa_chain(vectorstore_registry.get_retriever(session_id))
+    qa_chain = get_qa_chain(retriever)
 
     # Invoke the QA chain to get an answer to the user
     response = invoke_qa_chain(qa_chain, user_request)
-
-    # Clean up the vectorstore from the registry after usage
-    vectorstore_registry.delete_vectorstore(session_id)
-
-    # Clean the retriever after usage
-    vectorstore_registry.delete_retriever(session_id)
 
     return response
 
@@ -135,11 +91,9 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
         )
 
 
-def get_retriever(
+def get_vectorstore_retriever(
     documents: List[Document],
-    vectorstore_registry: VectorstoreRegistry = VectorstoreRegistry(),
-    session_id: Optional[str] = None,
-) -> Tuple[VectorstoreRegistry, str]:
+) -> Tuple[Chroma, VectorStoreRetriever]:
     """
     Get the retriever for a given session id and documents.
 
@@ -153,32 +107,19 @@ def get_retriever(
     Returns:
         A tuple with the vectorstore registry and the current session id.
     """
-    # Generate a unique identifier for the session if not provided
-    if session_id is None:
-        session_id = str(uuid4())
-
     # Load config
     config = _get_config_info(CONFIG_PATH)
 
-    # Check if vectorstore and retriever exist for this session
-    vectorstore = vectorstore_registry.get_vectorstore(session_id)
-    retriever = vectorstore_registry.get_retriever(session_id)
+    # Retrieve RAG config information
+    embedding_model_info, retrieval_info = get_retrieval_config_info()
 
-    if vectorstore is None:
-        # Retrieve RAG config information
-        embedding_model_info, retrieval_info = get_retrieval_config_info()
+    # Instantiate the embedding model
+    embedding_model = load_embedding_model(embedding_model_info)
 
-        # Instantiate the embedding model
-        embedding_model = load_embedding_model(embedding_model_info)
+    # Instantiate the vectorstore with an explicit in-memory configuration
+    vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
 
-        # Instantiate the vectorstore with an explicit in-memory configuration
-        vectorstore_registry.set_vectorstore(
-            session_id, Chroma.from_documents(documents, embedding_model, persist_directory=None)
-        )
-
-    # Get the vectorstore for this session
-    vectorstore = vectorstore_registry.get_vectorstore(session_id)
-    assert isinstance(vectorstore, Chroma), f'Could not retrieve vectorstore for session_id {session_id}.'
+    assert isinstance(vectorstore, Chroma), f'Could not retrieve the vectorstore.'
 
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
@@ -187,15 +128,9 @@ def get_retriever(
         },
     )
 
-    assert isinstance(retriever, VectorStoreRetriever), f'Could not retrieve retriever for session_id {session_id}.'
+    assert isinstance(retriever, VectorStoreRetriever), f'Could not retrieve the retriever.'
 
-    # Instantiate the retriever
-    vectorstore_registry.set_retriever(session_id=session_id, retriever=retriever)
-
-    # Delete local vectorstore and retriever
-    del vectorstore, retriever
-
-    return vectorstore_registry, session_id
+    return vectorstore, retriever
 
 
 def get_qa_chain(retriever: VectorStoreRetriever) -> Any:

@@ -32,7 +32,7 @@ def get_timing_logger() -> logging.Logger:
     timing_logger = logging.getLogger('timingLogger')
     if not timing_logger.hasHandlers():
         timing_logger.setLevel(logging.INFO)
-        timing_file_handler = logging.FileHandler(LLM_CALLS_LOGGER_PATH)
+        timing_file_handler = logging.StreamHandler()
         timing_file_handler.setLevel(logging.INFO)
         timing_formatter = logging.Formatter('%(asctime)s - %(message)s')
         timing_file_handler.setFormatter(timing_formatter)

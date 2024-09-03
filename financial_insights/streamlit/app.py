@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 
@@ -14,7 +15,6 @@ sys.path.append(repo_dir)
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
-from financial_insights.src.utilities_retrieval import VectorstoreRegistry
 from financial_insights.streamlit.app_financial_filings import include_financial_filings
 from financial_insights.streamlit.app_pdf_report import include_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
@@ -22,9 +22,10 @@ from financial_insights.streamlit.app_stock_database import get_stock_database
 from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import (
-    clear_directory,
+    clear_cache,
     display_directory_contents,
     get_blue_button_style,
+    initialize_session,
     set_css_styles,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
@@ -34,11 +35,25 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, save_c
 if os.getenv('WANDB_API_KEY') is not None:
     weave.init('sambanova_financial_insights')
 
+# Load the config
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+# Get the production flag
+prod_mode = config['prod_mode']
+
 
 def main() -> None:
+    # Initialize session
+    initialize_session(streamlit.session_state, prod_mode)
+
     # Create cache
-    if not os.path.exists(CACHE_DIR):
-        os.makedirs(CACHE_DIR)
+    cache_created = False
+    if not cache_created and not os.path.exists(streamlit.session_state.cache_dir):
+        cache_created = True
+        os.makedirs(streamlit.session_state.cache_dir, exist_ok=True)
+        os.makedirs(streamlit.session_state.source_dir, exist_ok=True)
+        os.makedirs(streamlit.session_state.pdf_sources_directory, exist_ok=True)
+        os.makedirs(streamlit.session_state.pdf_generation_directory, exist_ok=True)
 
     # Streamlit app setup
     streamlit.set_page_config(
@@ -57,17 +72,11 @@ def main() -> None:
         icon_image=SAMBANOVA_LOGO,
     )
 
-    # Add sidebar
     # Initialize credentials
     streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
     streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
 
-    # Load the config
-    with open(CONFIG_PATH, 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
-    # Get the production flag
-    prod_mode = config['prod_mode']
-
+    # Add sidebar
     with streamlit.sidebar:
         if not are_credentials_set():
             url, api_key = env_input_fields()
@@ -84,6 +93,16 @@ def main() -> None:
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
                     streamlit.rerun()
+
+        # Custom button to clear chat history
+        with stylable_container(
+            key='blue-button',
+            css_styles=get_blue_button_style(),
+        ):
+            time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
+            if streamlit.button('Exit App') or time_delta.seconds > EXIT_TIME_DELTA:
+                clear_cache(delete=True)
+                return
 
         if are_credentials_set():
             # Navigation menu
@@ -114,23 +133,20 @@ def main() -> None:
                     key='clear-button',
                     help='This will delete all saved files',
                 ):
-                    clear_directory(CACHE_DIR)
-                    clear_directory(SOURCE_DIR)
-                    clear_directory(STOCK_QUERY_FIGURES_DIR)
-                    clear_directory(HISTORY_FIGURES_DIR)
-                    clear_directory(DB_QUERY_FIGURES_DIR)
-                    clear_directory(PDF_SOURCES_DIRECTORY)
-                    clear_directory(PDF_GENERATION_DIRECTORY)
-                    streamlit.sidebar.success('All files have been deleted.')
+                    try:
+                        clear_cache(delete=False)
+                        streamlit.sidebar.success('All files have been deleted.')
+                    except:
+                        pass
 
             # Set the default path
-            default_path = './financial_insights/streamlit/cache'
+            default_path = streamlit.session_state.cache_dir
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
                 streamlit.session_state.current_path = default_path
 
-            # Input to allow user to go back to a parent directory
-            if streamlit.sidebar.button('⬅️ Back', key=f'back') and streamlit.session_state.current_path != default_path:
+            # Input to allow user to go back to a parent directory, up to the cache, but not beyond the cache
+            if streamlit.sidebar.button('⬅️ Back', key=f'back') and default_path in streamlit.session_state.current_path:
                 streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
 
                 # Display the current directory contents
@@ -139,16 +155,7 @@ def main() -> None:
                 # Display the current directory contents
                 display_directory_contents(streamlit.session_state.current_path, default_path)
 
-    # Initialize the chat history
-    if 'chat_history' not in streamlit.session_state:
-        streamlit.session_state.chat_history = list()
-    # Initialize function calling
-    if 'fc' not in streamlit.session_state:
-        streamlit.session_state.fc = None
-    # Initialize the registry only once and store it in Streamlit session state
-    if 'vectorstore_registry' not in streamlit.session_state:
-        streamlit.session_state.vectorstore_registry = VectorstoreRegistry()
-
+    # Title of the main page
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
     columns[0].image(SAMBANOVA_LOGO, width=100)
     columns[1].title('SambaNova Financial Assistant')
@@ -181,6 +188,7 @@ def main() -> None:
         elif menu == 'Stock Data Analysis':
             get_stock_data_analysis()
 
+        # Stock Database page
         elif menu == 'Stock Database':
             get_stock_database()
 

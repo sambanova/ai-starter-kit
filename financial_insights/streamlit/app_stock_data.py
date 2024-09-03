@@ -11,6 +11,8 @@ from financial_insights.streamlit.utilities_methods import attach_tools, handle_
 
 
 def get_stock_data_analysis() -> None:
+    """Include the app for the stock data analysis."""
+
     streamlit.markdown('<h2> Stock Data Analysis </h2>', unsafe_allow_html=True)
     streamlit.markdown(
         '<a href="https://pypi.org/project/yfinance/" target="_blank" '
@@ -18,8 +20,6 @@ def get_stock_data_analysis() -> None:
         unsafe_allow_html=True,
     )
     streamlit.markdown('<h3> Info retrieval </h3>', unsafe_allow_html=True)
-
-    output = streamlit.empty()
 
     user_request = streamlit.text_input(
         'Enter the info that you want to retrieve for given companies.',
@@ -65,19 +65,18 @@ def get_stock_data_analysis() -> None:
             response_dict = handle_stock_query(user_request, dataframe_name)
 
             # Save the output to the history file
-            save_output_callback(response_dict, HISTORY_PATH, user_request)
+            save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
             # Save the output to the stock query file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(response_dict, STOCK_QUERY_PATH, user_request),
+                args=(response_dict, streamlit.session_state.stock_query_path, user_request),
             ):
                 pass
 
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
-    output = streamlit.empty()
     user_request = streamlit.text_input(
         'Enter the quantities that you want to plot for given companies\n'
         'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.'
@@ -90,12 +89,16 @@ def get_stock_data_analysis() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
-        save_historical_price_callback(user_request, symbol_list, data, fig, start_date, end_date, HISTORY_PATH)
+        # Save the output to the history file
+        save_historical_price_callback(
+            user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.history_path
+        )
 
+        # Save the output to the stock query file
         if streamlit.button(
             'Save Analysis',
             on_click=save_historical_price_callback,
-            args=(user_request, symbol_list, data, fig, start_date, end_date, STOCK_QUERY_PATH),
+            args=(user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.stock_query_path),
         ):
             pass
 
@@ -134,29 +137,45 @@ def handle_stock_data_analysis(
     user_question: str, start_date: DateWidgetReturn, end_date: DateWidgetReturn
 ) -> Tuple[pandas.DataFrame, Figure, List[str]]:
     """
-    Handle user input and generate a response, also update chat UI in streamlit app
+    Handle the user request for the historical stock data analysis.
 
     Args:
-        symbol (str): The user's question or input.
+       user_question: The user's question.
+       start_date: The start date of the historical price.
+       end_date: The end date of the historical price.
+
+    Returns:
+        A tuple with the following elements:
+            - The figure with historical price data.
+            - A dataframe with historical price data.
+            - The list of company ticker symbols.
+
+    Raises:
+        TypeError: If `response` does not conform to the return type.
     """
     if user_question is None:
         return None
 
-    streamlit.session_state.tools = [
-        'get_historical_price',
-    ]
+    # Declare the permitted tools for function calling
+    streamlit.session_state.tools = ['get_historical_price']
+
+    # Attach the tools for the LLM to use
     attach_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
     )
+
+    # Compose the user request
     if start_date is not None or end_date is not None:
         user_request = (
             'Fetch historical stock prices for a given list of companies from "start_date" to "end_date".\n'
             f'The requested dates are from {start_date} to {end_date}' + user_question
         )
 
+    # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
 
+    # Check the final answer of the LLM
     assert (
         isinstance(response, tuple)
         and len(response) == 3
@@ -164,6 +183,6 @@ def handle_stock_data_analysis(
         and isinstance(response[1], pandas.DataFrame)
         and isinstance(response[2], list)
         and all([isinstance(i, str) for i in response[2]])
-    ), f'Invalid response: {response}'
+    ), TypeError(f'Invalid response: {response}.')
 
     return response

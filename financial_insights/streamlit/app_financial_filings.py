@@ -8,7 +8,7 @@ from financial_insights.streamlit.utilities_methods import attach_tools, handle_
 
 
 def include_financial_filings() -> None:
-    """Include the app for financial filings analysis."""
+    """Include the app for the financial filings analysis."""
 
     streamlit.markdown('<h2> Financial Filings Analysis </h2>', unsafe_allow_html=True)
     streamlit.markdown(
@@ -19,6 +19,7 @@ def include_financial_filings() -> None:
 
     # User request
     user_request = streamlit.text_input('Enter your query:', key='financial-filings')
+    # Company name
     company_name = streamlit.text_input('Company name (optional if in the query already)')
     # Define the range of years
     start_year = 2020
@@ -49,13 +50,13 @@ def include_financial_filings() -> None:
             )
 
             # Save the query and answer to the history text file
-            save_output_callback(answer, HISTORY_PATH, user_request)
+            save_output_callback(answer, streamlit.session_state.history_path, user_request)
 
             # Save the query and answer to the filing text file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(answer, FILINGS_PATH, user_request),
+                args=(answer, streamlit.session_state.filings_path, user_request),
             ):
                 pass
 
@@ -68,23 +69,25 @@ def handle_financial_filings(
     selected_year: Optional[int] = 2023,
 ) -> str:
     """
-    Handle the user request for financial filing data.
+    Handle the user request for the financial filing data.
 
     Args:
         user_question: The user's question about financial filings.
         company_name: The company name to search for.
         filing_type: The type of financial filing to search for, between `10-K` and `10-Q`.
             Default is `10-K`.
+        filing_quarter: The quarter of the financial filing to search for,
+            between 1 and 4. Default is `0`.
         selected_year: The year of the financial filing to search for.
 
     Returns:
         A tuple of the following elements:
-            - The final LLM answer to the user's question.
-            - A dictionary of metadata about the retrieval, with the following keys:
+            - The final LLM answer to the user's question,
+                preceded by the metadata about the retrieval:
                 `filing_type`, `filing_quarter`, `ticker_symbol`, and `report_date`.
 
     Raises:
-        Exception: If `response` (the final return from `handle_userinput`) does not conform to the return type.
+        TypeError: If the LLM response does not conform to the return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['retrieve_filings']
@@ -107,6 +110,6 @@ def handle_financial_filings(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, str), f'Invalid response: {response}'
+    assert isinstance(response, str), TypeError(f'Invalid LLM response: {response}.')
 
     return response

@@ -184,7 +184,7 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
             'llm': streamlit.session_state.fc.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': STOCK_QUERY_FIGURES_DIR,
+            'save_charts_path': streamlit.session_state.stock_query_figures_dir,
             'enable_cache': False,
         },
     )
@@ -302,7 +302,10 @@ def get_historical_price(
             Start date must always be before the current date.
 
     Returns:
-        A `pandas DataFrame` with historical price data.
+        A tuple with the following elements:
+            - The figure with historical price data.
+            - A dataframe with historical price data.
+            - The list of company ticker symbols.
     """
     assert isinstance(company_list, (list, str)), TypeError(
         f'`company_list` must be of type list or string. Got {(type(company_list))}.'

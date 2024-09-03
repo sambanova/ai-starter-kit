@@ -117,3 +117,8 @@ For `Weave` users:
 ```
 WANDB_API_KEY = "<your-wandb-api-key>"
 ```
+
+## Exit the app
+Once you have finished using the app, you can exit the app by clicking on `Exit` at the top of the sidebar.
+This will clear the cache.
+Otherwise, the cache will be automatically cleared after a predefined time period.

@@ -11,29 +11,11 @@ sys.path.append(repo_dir)
 # Main config file
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
-# Main cache directories
+# Cache directory template
 CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache/')
-HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')
-PDF_GENERATION_DIRECTORY = os.path.join(CACHE_DIR, 'pdf_generation/')
-STOCK_QUERY_PATH = os.path.join(CACHE_DIR, 'stock_query.txt')
-DB_QUERY_PATH = os.path.join(CACHE_DIR, 'db_query.txt')
-YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.csv')
-FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
-PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
-WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
-LLM_CALLS_LOGGER_PATH = os.path.join(CACHE_DIR, 'llm_calls_logger.txt')
 
-# Main source directories
-SOURCE_DIR = os.path.join(CACHE_DIR, 'sources/')
-DB_PATH = os.path.join(SOURCE_DIR, 'stock_database.db')
-YFINANCE_NEWS_TXT_PATH = os.path.join(SOURCE_DIR, 'yfinance_news.txt')
-YFINANCE_NEWS_CSV_PATH = os.path.join(SOURCE_DIR, 'yfinance_news.csv')
-PDF_SOURCES_DIRECTORY = os.path.join(SOURCE_DIR, 'pdf_sources/')
-
-# Main figures directories
-STOCK_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'stock_query_figures/')
-HISTORY_FIGURES_DIR = os.path.join(CACHE_DIR, 'history_figures/')
-DB_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'db_query_figures/')
+# App configuration
+EXIT_TIME_DELTA = 1800
 
 # Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4

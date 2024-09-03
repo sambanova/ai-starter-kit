@@ -14,7 +14,6 @@ def get_yfinance_news() -> None:
         'style="color:cornflowerblue;text-decoration:underline;"><h3>via Yahoo! Finance News</h3></a>',
         unsafe_allow_html=True,
     )
-    output = streamlit.empty()
 
     user_request = streamlit.text_input(
         'Enter the yfinance news that you want to retrieve for given companies',
@@ -32,26 +31,39 @@ def get_yfinance_news() -> None:
         if answer is not None:
             content = answer + '\n\n'.join(url_list)
 
-            save_output_callback(content, HISTORY_PATH, user_request)
+            # Save the query and answer to the history text file
+            save_output_callback(content, streamlit.session_state.history_path, user_request)
 
+            # Save the query and answer to the Yahoo Finance News text file
             if streamlit.button(
                 'Save Answer',
                 on_click=save_output_callback,
-                args=(content, YFINANCE_NEWS_PATH, user_request),
+                args=(content, streamlit.session_state.yfinance_news_path, user_request),
             ):
                 pass
 
 
 def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
     """
-    Handle user input and generate a response, also update chat UI in streamlit app
+    Handle the user request for the Yahoo News data.
 
-    Args:
-    user_request (str): The user's question or input.
+     Args:
+         user_question: The user input question that is used to retrieve the Yahoo Finance News data.
+
+     Returns:
+         A tuple containing the following pair:
+             1. The answer to the user query.
+             2. A list of links to articles that have been used for retrieval to answer the user query.
+
+     Raises:
+         TypeError: If the LLM response does not conform to the return type.
     """
+    # Declare the permitted tools for function calling
     streamlit.session_state.tools = [
         'scrape_yahoo_finance_news',
     ]
+
+    # Attach the tools for the LLM to use
     attach_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
@@ -65,14 +77,16 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         + 'Finally, provide the answer to the user.'
     )
 
+    # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
 
+    # Check the final answer of the LLM
     assert (
         isinstance(response, tuple)
         and len(response) == 2
         and isinstance(response[0], str)
         and isinstance(response[1], list)
         and all(isinstance(item, str) for item in response[1])
-    ), f'Invalid response: {response}'
+    ), TypeError(f'Invalid response: {response}.')
 
     return response

@@ -1,9 +1,9 @@
-import os
 import re
 from typing import List, Set, Tuple
 
 import pandas
 import requests
+import streamlit
 import yfinance
 from bs4 import BeautifulSoup
 from langchain.schema import Document
@@ -69,7 +69,7 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
     retrieve_text_yahoo_finance_news(link_urls)
     logger.info('News from Yahoo Finance successfully extracted and saved.')
 
-    return get_qa_response_from_news(WEB_SCRAPING_PATH, user_query)
+    return get_qa_response_from_news(streamlit.session_state.web_scraping_path, user_query)
 
 
 def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
@@ -143,12 +143,10 @@ def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
     df.drop_duplicates().reset_index(drop=True, inplace=True)
 
     # Save the DataFrame to a CSV file
-    if not os.path.exists(CACHE_DIR):
-        os.makedirs(CACHE_DIR)
-    df.to_csv(YFINANCE_NEWS_CSV_PATH, index=False)
+    df.to_csv(streamlit.session_state.yfinance_news_csv_path, index=False)
 
     # Save the data to a text file in the specified order
-    with open(YFINANCE_NEWS_TXT_PATH, 'w') as file:
+    with open(streamlit.session_state.yfinance_news_txt_path, 'w') as file:
         if RETRIEVE_HEADLINES:
             file.write('=== Headlines ===\n')
             for item in headlines_list:
@@ -170,7 +168,7 @@ def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
     # Convert the list to a DataFrame
     df_text_url = pandas.DataFrame(data)
     # Save the DataFrame to a CSV file
-    df_text_url.to_csv(WEB_SCRAPING_PATH, index=False)
+    df_text_url.to_csv(streamlit.session_state.web_scraping_path, index=False)
 
 
 def get_url_list(symbol_list: List[str]) -> List[str]:
@@ -253,7 +251,7 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
     """
     # Load the dataframe from the text file
     try:
-        df = pandas.read_csv(WEB_SCRAPING_PATH)
+        df = pandas.read_csv(streamlit.session_state.web_scraping_path)
     except FileNotFoundError:
         logger.error('No scraped data found.')
 

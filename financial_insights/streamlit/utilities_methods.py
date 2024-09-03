@@ -40,13 +40,13 @@ TOOLS = {
 @contextmanager
 def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]:
     """
-    Context manager to catch stdout and send it to an output function.
+    Context manager to catch `stdout` and send it to an output function.
 
     Args:
-        output_func (Callable[[str], None]): Function to write terminal output to.
+        output_func: Function to which the terminal output is written.
 
-    Yields:
-        None: A generator that redirects stdout to the output_func.
+    Returns:
+        A generator that redirects `stdout` to the `output_func`.
     """
     stdout = StringIO()
     with redirect_stdout(stdout):
@@ -61,10 +61,10 @@ def attach_tools(
     default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
 ) -> None:
     """
-    Attach the tools to the streamit session for the LLM to use.
+    Attach the tools to the Streamlit session for the LLM to use.
 
     Args:
-        tools (list): list of tools to be used
+        tools: list of tools to be used.
     """
     if tools is not None:
         set_tools = [TOOLS[name] for name in tools]
@@ -75,10 +75,14 @@ def attach_tools(
 
 def handle_userinput(user_question: Optional[str], user_query: Optional[str]) -> Optional[Any]:
     """
-    Handle user input and generate a response, also update chat UI in streamlit app.
+    Handle the user input and generate a response, also update chat UI in the Streamlit app.
 
     Args:
-        user_question (str): The user's question or input.
+        user_question: The resulting prompt or input.
+        user_query: The original user's query.
+
+    Returns:
+        The LLM reponse.
     """
     output = streamlit.empty()
 
@@ -98,6 +102,8 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
 
 
 def stream_chat_history() -> None:
+    """Stream the chat history."""
+
     for question, answer in zip(
         streamlit.session_state.chat_history[::2],
         streamlit.session_state.chat_history[1::2],
@@ -109,6 +115,8 @@ def stream_chat_history() -> None:
 
 
 def stream_response_object(response: Any) -> Any:
+    """Stream the LLM response."""
+
     if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
         return stream_complex_response(response)
 
@@ -125,6 +133,8 @@ def stream_response_object(response: Any) -> Any:
 
 
 def stream_complex_response(response: Any) -> Any:
+    """Stream a complex LLM response."""
+
     if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
         stream_single_response(response)
 
@@ -147,7 +157,8 @@ def stream_complex_response(response: Any) -> Any:
 
 
 def stream_single_response(response: Any) -> None:
-    """Streamlit chatbot response."""
+    """Stream a simple LLM response."""
+
     # If response is a string
     if isinstance(response, (str, float, int)):
         response = str(response)
@@ -170,7 +181,7 @@ def stream_single_response(response: Any) -> None:
                 png_paths = extract_png_paths(response)
                 for path in png_paths:
                     if path != response:
-                        # Extract the last part of path
+                        # Extract the last part of the path
                         relative_path = extract_path_after('ai-starter-kit', path)
                         assert isinstance(relative_path, str), 'Path should be a string'
                         # Load the image
@@ -181,16 +192,16 @@ def stream_single_response(response: Any) -> None:
     # If response is a figure
     elif isinstance(response, Figure):
         # Display the image
-        # streamlit.image(response, use_column_width=True)
-        # Show the figure
         streamlit.pyplot(response)
 
     # If response is a dataframe, display its head
-    elif isinstance(response, pandas.DataFrame):
+    elif isinstance(response, (pandas.Series, pandas.DataFrame)):
         streamlit.write(response.head())
 
 
 def extract_png_paths(sentence: str) -> List[str]:
+    """Extract all png paths from a string."""
+
     png_pattern = r'\b\S+\.png\b'
     png_paths: List[str] = []
     matches = re.findall(png_pattern, sentence)
@@ -198,6 +209,8 @@ def extract_png_paths(sentence: str) -> List[str]:
 
 
 def extract_path_after(directory: str, path: str) -> Optional[str]:
+    """Extract the relative path after a given directory."""
+
     # Normalize paths to avoid issues with different path representations
     norm_directory = os.path.normpath(directory)
     norm_path = os.path.normpath(path)
@@ -206,14 +219,16 @@ def extract_path_after(directory: str, path: str) -> Optional[str]:
     try:
         index = norm_path.index(norm_directory)
     except ValueError:
-        return None  # The directory is not in the path
+        # The directory is not in the path
+        return None
 
     # Extracting the part after the directory
     start_pos = index + len(norm_directory)
 
     # Ensure that the directory is found in the path at the end of a segment
     if start_pos >= len(norm_path) or norm_path[start_pos] != os.sep:
-        return None  # The directory is not in the path
+        # The directory is not in the path
+        return None
 
     # Return the substring from the character after the directory onwards
     return norm_path[start_pos + 1 :]
@@ -221,7 +236,7 @@ def extract_path_after(directory: str, path: str) -> Optional[str]:
 
 def escape_markdown(text: str) -> str:
     """
-    Escapes special characters in the given text to make it compatible with Markdown.
+    Escape special characters in the given text to make it compatible with `Markdown`.
 
     Args:
         text: The input text to be escaped.

@@ -1,7 +1,10 @@
+import datetime
 import json
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+from uuid import uuid4
 
 import pandas
 import streamlit
@@ -20,22 +23,23 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     Loads json config file.
 
     Args:
-        path (str, optional): The path to the config file.
+        path: The path to the config file.
         Defaults to CONFIG_PATH.
     Returns:
-        api_info (string): string containing API to use:
-            SambaStudio or Sambaverse.
-        embedding_model_info (string):
-            String containing embedding model type to use,
-            SambaStudio or CPU.
-        llm_info (dict): Dictionary containing LLM parameters.
-        retrieval_info (dict):
-            Dictionary containing retrieval parameters
-        web_crawling_params (dict):
-            Dictionary containing web crawling parameters
-        extra_loaders (list):
-            List containing extra loader to use when doing web crawling
-            (only pdf available in base kit)
+        A dictionary with the config information:
+            - api_info: string containing API to use:
+                `fastapi`, `sambastudio` or `sambaverse`.
+            - embedding_model_info:
+                String containing embedding model type to use,
+                `sambastudio` or `cpu`.
+            - llm_info: Dictionary containing LLM parameters.
+            - retrieval_info:
+                Dictionary containing retrieval parameters.
+            - web_crawling_params:
+                Dictionary containing web crawling parameters.
+            - extra_loaders:
+                List containing extra loader to use when doing web crawling
+                (only pdf available in base kit).
     """
     # Read config file
     with open(config_path, 'r') as yaml_file:
@@ -47,7 +51,6 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     return config
 
 
-# Save dataframe and figure callback for streamlit button
 def save_historical_price_callback(
     user_query: str,
     symbol_list: List[str],
@@ -57,11 +60,16 @@ def save_historical_price_callback(
     end_date: DateWidgetReturn,
     save_path: Optional[str] = None,
 ) -> None:
-    dir_name = HISTORY_FIGURES_DIR
-    # Create temporary cache for storing historical price data
+    """Save dataframe and figure callback for streamlit button."""
+
+    # Derive the directory name
+    dir_name = streamlit.session_state.history_figures_dir
+
+    # Create the directory for storing historical price data
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
+    # Derive the filename
     filename = dir_name + f"stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}"
 
     # Write the dataframe to a csv file
@@ -70,9 +78,10 @@ def save_historical_price_callback(
     # Save the plots
     fig.savefig(f'{filename}.png', bbox_inches='tight')
 
+    # Compose the content including the user query and the filename
     content = '\n\n' + user_query + '\n\n' + f'{filename}.png' + '\n\n'
 
-    # Save the figure path to a file
+    # Save the content path to a file
     if save_path is not None:
         save_output_callback(content, save_path)
 
@@ -82,6 +91,8 @@ def save_output_callback(
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
+    """Save the output callback for streamlit button."""
+    # Check the inputs
     assert isinstance(response, (str, list, dict, tuple, pandas.DataFrame)), TypeError(
         f'Response must be a string, a list, a dictionary, or a tuple. Got type {type(response)}'
     )
@@ -95,32 +106,27 @@ def save_output_callback(
     with open(filename, 'a') as text_file:
         text_file.write('\n\n')
 
+    # Add the user query
     if user_request is not None:
         with open(filename, 'a') as text_file:
             text_file.write(user_request)
             text_file.write('\n\n')
 
-    # Create temporary cache for storing historical price data
-    if not os.path.exists(CACHE_DIR):
-        os.makedirs(CACHE_DIR)
-
     # If the response is a set, convert it to a list
     if isinstance(response, set):
         response = list(response)
 
-    # If the reponse is a simple element, save it as is
+    # If the reponse is a simple element, save it as it is
     if isinstance(response, (str, float, int, pandas.Series, pandas.DataFrame)):
         # Write the string to a txt file
         save_simple_output(response, filename)
 
-    # If the response is a list, try to dump it to a JSON file,
-    # otherwise split it up and write each element individually
+    # If the response is a list, split it up and write each element individually
     elif isinstance(response, list):
         for elem in response:
             save_simple_output(elem + '\n', filename)
 
-    # If the response is a list, try to dump it to a JSON file,
-    # otherwise split it up and write pair of key and value individually
+    # If the response is a dict, split it up and write pair of key and value individually
     elif isinstance(response, dict):
         for key, value in response.items():
             with open(filename, 'a') as text_file:
@@ -129,11 +135,9 @@ def save_output_callback(
                 elif isinstance(value, list):
                     save_simple_output(', '.join([str(item) for item in value]) + '.' + '\n', filename)
 
-    # If the response is a tuple, try to dump it to a JSON file,
-    # otherwise split it up and write each element individually
+    # If the response is a tuple, split it up and write each element individually
     elif isinstance(response, tuple):
         for elem in response:
-            # If the elements of the dictionary are not JSON serializable
             save_simple_output(response + '\n', filename)
 
     else:
@@ -165,6 +169,7 @@ def save_simple_output(
         # Write the dataframe to a CSV file
         response_dict = response.to_dict()
 
+        # Convert the dictionary into a string
         stripped_string = dump_stripped_json(response_dict)
 
         # Write the stripped string to a txt file
@@ -173,7 +178,7 @@ def save_simple_output(
     else:
         raise ValueError('Invalid response type')
 
-    # Spaces between elements
+    # Spaces between elements or closing space
     with open(filename, 'a') as text_file:
         text_file.write('\n\n')
 
@@ -189,7 +194,7 @@ def dump_stripped_json(data: Any, indent: int = 2) -> str:
     Returns:
         A string representation of the JSON data without parentheses and apostrophes.
     """
-    # First, dump the data to a JSON string
+    # Dump the data to a JSON string
     json_string = json.dumps(data, indent=indent)
 
     # Remove parentheses and apostrophes
@@ -203,16 +208,11 @@ def dump_stripped_json(data: Any, indent: int = 2) -> str:
 
 def list_files_in_directory(directory: str) -> List[str]:
     """List all files in the given directory."""
-    # Create temporary cache for storing historical price data
-    if not os.path.exists(CACHE_DIR):
-        os.makedirs(CACHE_DIR)
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
 def list_directory(directory: str) -> Tuple[List[str], List[str]]:
-    """
-    List subdirectories and files in the given directory.
-    """
+    """List subdirectories and files in the given directory."""
     subdirectories = []
     files = []
 
@@ -231,12 +231,10 @@ def list_directory(directory: str) -> Tuple[List[str], List[str]]:
 
 
 def display_directory_contents(path: str, default_path: str) -> None:
-    """
-    Display subdirectories and files in the current path.
-    """
+    """Display subdirectories and files in the current path."""
     subdirectories, files = list_directory(path)
 
-    streamlit.sidebar.markdown(f'### Directory: {path}')
+    streamlit.sidebar.markdown(f'### Directory: {Path(path).name}')
 
     if subdirectories:
         streamlit.sidebar.markdown('#### Subdirectories:')
@@ -261,6 +259,7 @@ def display_directory_contents(path: str, default_path: str) -> None:
 
 def clear_directory(directory: str) -> None:
     """Delete all files in the given directory."""
+
     # List subdirectories and files
     subdirectories, files = list_directory(directory)
     for filename in os.listdir(directory):
@@ -272,13 +271,39 @@ def clear_directory(directory: str) -> None:
             streamlit.error(f'Error deleting file {file_path}: {e}')
 
 
+def clear_cache(delete: bool = False) -> None:
+    """Clear and/or delete the cache."""
+
+    # Clear the cache
+    clear_directory(streamlit.session_state.cache_dir)
+    subdirectories = os.listdir(streamlit.session_state.cache_dir)
+    # Delete all directories in the cache
+    for directory in subdirectories:
+        path = os.path.join(streamlit.session_state.cache_dir, directory)
+        clear_directory(path)
+        subdirectories = os.listdir(path)
+        for subdirectory in subdirectories:
+            sub_path = os.path.join(path, subdirectory)
+            clear_directory(sub_path)
+            if delete:
+                # Delete the subdirectory
+                os.rmdir(sub_path)
+        if delete:
+            # Delete the directory
+            os.rmdir(path)
+    # Delete the cache
+    os.rmdir(streamlit.session_state.cache_dir)
+
+
 def download_file(file: str) -> None:
+    """Add a button to download the file."""
+
     try:
         # with open(file, 'r') as f:
         with open(file, encoding='utf8', errors='ignore') as f:
             file_content = f.read()
             streamlit.sidebar.download_button(
-                label=f'{file}',
+                label=f'{Path(file).name}',
                 data=file_content,
                 file_name=file,
                 mime='text/plain',
@@ -287,6 +312,75 @@ def download_file(file: str) -> None:
         logger.warning('Error reading file', str(e))
     except FileNotFoundError as e:
         logger.warning('File not found', str(e))
+
+
+def initialize_session(
+    session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
+    prod_mode: bool = False,
+) -> None:
+    """Initialize the Streamlit `session_state`."""
+    # Initialize the chat history
+    if 'chat_history' not in session_state:
+        session_state.chat_history = list()
+    # Initialize function calling
+    if 'fc' not in session_state:
+        session_state.fc = None
+
+    # Initialize the session id
+    if 'session_id' not in session_state:
+        session_state.session_id = str(uuid4())
+
+    # Initialize cache directory
+    if prod_mode:
+        if 'cache_dir' not in session_state:
+            session_state.cache_dir = CACHE_DIR[:-1] + f'_{session_state.session_id}/'
+    else:
+        if 'cache_dir' not in session_state:
+            session_state.cache_dir = CACHE_DIR
+
+    # Main cache directories
+    if 'history_path' not in session_state:
+        session_state.history_path = os.path.join(session_state.cache_dir, 'chat_history.txt')
+    if 'pdf_generation_directory' not in session_state:
+        session_state.pdf_generation_directory = os.path.join(streamlit.session_state.cache_dir, 'pdf_generation/')
+    if 'stock_query_path' not in session_state:
+        session_state.stock_query_path = os.path.join(streamlit.session_state.cache_dir, 'stock_query.txt')
+    if 'db_query_path' not in session_state:
+        session_state.db_query_path = os.path.join(streamlit.session_state.cache_dir, 'db_query.txt')
+    if 'yfinance_news_path' not in session_state:
+        session_state.yfinance_news_path = os.path.join(streamlit.session_state.cache_dir, 'yfinance_news.txt')
+    if 'filings_path' not in session_state:
+        session_state.filings_path = os.path.join(streamlit.session_state.cache_dir, 'filings.txt')
+    if 'pdf_rag_path' not in session_state:
+        session_state.pdf_rag_path = os.path.join(streamlit.session_state.cache_dir, 'pdf_rag.txt')
+    if 'web_scraping_path' not in session_state:
+        session_state.web_scraping_path = os.path.join(streamlit.session_state.cache_dir, 'web_scraping.csv')
+    if 'llm_class_logger_path' not in session_state:
+        session_state.llm_class_logger_path = os.path.join(streamlit.session_state.cache_dir, 'llm_calls_logger.txt')
+
+    # Main source directories
+    if 'source_dir' not in session_state:
+        session_state.source_dir = os.path.join(streamlit.session_state.cache_dir, 'sources/')
+    if 'db_path' not in session_state:
+        session_state.db_path = os.path.join(session_state.source_dir, 'stock_database.db')
+    if 'yfinance_news_txt_path' not in session_state:
+        session_state.yfinance_news_txt_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.txt')
+    if 'yfinance_news_csv_path' not in session_state:
+        session_state.yfinance_news_csv_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.csv')
+    if 'pdf_sources_directory' not in session_state:
+        session_state.pdf_sources_directory = os.path.join(session_state.source_dir, 'pdf_sources/')
+
+    # Main figures directories
+    if 'stock_query_figures_dir' not in session_state:
+        session_state.stock_query_figures_dir = os.path.join(session_state.cache_dir, 'stock_query_figures/')
+    if 'history_figures_dir' not in session_state:
+        session_state.history_figures_dir = os.path.join(session_state.cache_dir, 'history_figures/')
+    if 'db_query_figures_dir' not in session_state:
+        session_state.db_query_figures_dir = os.path.join(session_state.cache_dir, 'db_query_figures/')
+
+    # Launch time
+    if 'launch_time' not in session_state:
+        session_state.launch_time = datetime.datetime.now()
 
 
 def set_css_styles() -> None:

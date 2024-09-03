@@ -438,7 +438,7 @@ def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     # Load PDF files
     documents = []
     for file in pdf_files_names:
-        pdf_path = os.path.join(PDF_GENERATION_DIRECTORY, file)
+        pdf_path = os.path.join(streamlit.session_state.pdf_generation_directory, file)
         loader = PyPDFLoader(pdf_path)
         documents.extend(loader.load())
 
