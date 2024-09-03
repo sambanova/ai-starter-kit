@@ -697,16 +697,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = (total_request_count - 1) // self.num_workers
-        remainder = (total_request_count - 1) % self.num_workers
+        requests_per_thread = (total_request_count) // self.num_workers
+        remainder = (total_request_count) % self.num_workers
 
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
         idx = 0
-        
-        # Add the first request to its own batch
-        request_config_batches.append([request_configs[idx].copy()])
-        idx += 1 
 
         # Create batches of requests for each worker
         for worker in range(self.num_workers):
