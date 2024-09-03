@@ -72,9 +72,8 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         'You are an expert in the stock market. '
         + 'Please answer the following question, that could be general or for a given list of companies. \n'
         + user_question
-        + 'First possibly retrieve the list of ticker symbols from the list of company names within the query.\n'
-        + 'Then retrieve the news articles from webscraping Yahoo Finance.\n'
-        + 'Finally, provide the answer to the user.'
+        + 'Please retrieve the relevant news articles from webscraping Yahoo Finance.\n'
+        + 'Then, provide the answer to the user.'
     )
 
     # Call the LLM on the user request with the attached tools

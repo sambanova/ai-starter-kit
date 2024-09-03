@@ -179,7 +179,7 @@ def main() -> None:
                 - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
                 - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
                 - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
-                or on the whole chat history.
+                    or on the whole chat history.
                 - **Print Chat History**: Print the whole chat history.
             """
             )

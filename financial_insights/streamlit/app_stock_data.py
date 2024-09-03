@@ -126,8 +126,7 @@ def handle_stock_query(
 
     user_request = (
         'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        f'Please provide an answer after retrieving the company info using the dataframe "{dataframe_name}".\n'
-        'Take your time and reason step by step about the inputs and outputs of each function.\n'
+        f'Please provide an answer after retrieving the relevant company info using the dataframe "{dataframe_name}".\n'
     )
 
     return handle_userinput(user_question, user_request)
@@ -169,7 +168,8 @@ def handle_stock_data_analysis(
     if start_date is not None or end_date is not None:
         user_request = (
             'Fetch historical stock prices for a given list of companies from "start_date" to "end_date".\n'
-            f'The requested dates are from {start_date} to {end_date}' + user_question
+            f'The requested dates are from {start_date} to {end_date}.\n'
+            'User request: ' + user_question
         )
 
     # Call the LLM on the user request with the attached tools

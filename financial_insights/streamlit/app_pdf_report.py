@@ -403,7 +403,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
 
     # Compose the user request
     user_request = (
-        'Please use RAG from the provided PDF file to answer the following question: '
+        'Please use RAG from the provided PDF files to answer the following question: '
         + user_question
         + f"\nReport names: {', '.join(report_names)}."
     )
