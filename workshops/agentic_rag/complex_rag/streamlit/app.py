@@ -12,7 +12,7 @@ sys.path.append(repo_dir)
 
 import streamlit as st
 from utils.vectordb.vector_db import VectorDb
-from workshops.genai_summit.complex_rag.src.rag import COMPLEXRAG
+from workshops.agentic_rag.complex_rag.src.rag import COMPLEXRAG
 from utils.model_wrappers.api_gateway import APIGateway 
 from utils.parsing.sambaparse import parse_doc_streamlit
 
