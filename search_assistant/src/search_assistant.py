@@ -35,6 +35,7 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
+from utils.visual.env_utils import DEFAULT_FASTAPI_URL
 from serpapi import GoogleSearch
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -139,11 +140,10 @@ class SearchAssistant:
         Returns:
         llm (SambaStudio or Sambaverse): Langchain LLM to use
         """
+        fastapi_url = DEFAULT_FASTAPI_URL
         if self.prod_mode:
-            fastapi_url = st.session_state.FASTAPI_URL
             fastapi_api_key = st.session_state.FASTAPI_API_KEY
         else:
-            fastapi_url = os.environ.get("FASTAPI_URL") or st.session_state.FASTAPI_URL
             fastapi_api_key = os.environ.get("FASTAPI_API_KEY") or st.session_state.FASTAPI_API_KEY
 
         llm = APIGateway.load_llm(
