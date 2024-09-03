@@ -115,12 +115,12 @@ def main():
             if st.button("Save Credentials", key="save_credentials_sidebar"):
                 message = save_credentials(url, api_key, prod_mode)
                 st.success(message)
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.success("Credentials are set")
             if st.button("Clear Credentials", key="clear_credentials"):
                 save_credentials("", "", prod_mode)
-                st.experimental_rerun()
+                st.rerun()
 
         if are_credentials_set():
             if st.session_state.document_retrieval is None:
