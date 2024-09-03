@@ -52,7 +52,7 @@ class SearchComponents(BaseComponents):
         
         self.configs: Dict = self.load_config(configs)
         self.prompts_paths: Dict = self.configs["prompts"]
-    
+
     @log_method
     def tavily_web_search(self, state: dict) -> dict:
         """
@@ -98,3 +98,26 @@ class SearchComponents(BaseComponents):
 
         print(documents)
         return {"documents": documents, "question": question}
+    
+    @log_method
+    def final_answer_search(self, state: dict) -> dict:
+        """
+        This method is used to generate the final answer based on the original question and the generated text.
+
+        Args:
+            state: The state dictionary containing the original
+            question, the generated text, and other variables.
+
+        Returns:
+            The updated state dictionary containing the final answer.
+        """
+
+        original_question: str = state['original_question']
+        generation: str = state['generation']
+
+        print('---Final Generation---')
+        print(generation)
+
+        final_answer: str = self.final_chain.invoke({'question': original_question, 'generation': generation})
+
+        return {'generation': final_answer, 'original_question': ''}

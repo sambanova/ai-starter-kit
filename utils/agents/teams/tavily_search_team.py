@@ -53,12 +53,12 @@ class TavilySearchTeam(RAGComponents, CodeGenComponents, SearchComponents):
         workflow: StateGraph = StateGraph(SearchGraphState)
 
         # Define the nodes
-
+        
         workflow.add_node('search', self.tavily_web_search)
         workflow.add_node('grade_documents', self.grade_documents)
         workflow.add_node('generate', self.rag_generate)
         workflow.add_node('failure_msg', self.failure_msg)
-        workflow.add_node('return_final_answer', self.final_answer)
+        workflow.add_node('return_final_answer', self.final_answer_search)
 
         return workflow
 
