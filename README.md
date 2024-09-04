@@ -175,7 +175,7 @@ Currently, there are two ways to obtain an API key from SambaNova. You can get a
 
 ### Use SambaNova Cloud (Option 1)
 
-SambaNova Cloud allows you to interact with multiple open-source models. You can find more information and get your API key on the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
+You can find more information and get your API key on the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
 
 Integrate SambaNova Cloud LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
