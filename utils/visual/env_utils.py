@@ -1,12 +1,12 @@
 import os
 import streamlit as st
-from typing import Tuple
+from typing import Tuple, Optional
 import netrc
 
 
 DEFAULT_FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
 
-def initialize_env_variables(prod_mode=False, additional_env_vars=None):
+def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optional[List[str]] = None) -> None:
     if additional_env_vars is None:
         additional_env_vars = []
 

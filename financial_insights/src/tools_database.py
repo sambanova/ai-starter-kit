@@ -156,23 +156,26 @@ class QueryDatabaseSchema(BaseModel):
     """Tool for querying a SQL database containing information about stocks or companies."""
 
     user_query: str = Field(..., description='Query to be performed on the database.')
-    company_list: List[str] | str = Field(..., description='List of company names.')
+    company_list: List[str] | str = Field(..., description='List of required companies.')
     method: str = Field(
-        ..., description='Method to be used to generate the query. Either "text-to-SQL" or "PandasAI-SqliteConnector".'
+        description='Method to be used to generate the query. Either "text-to-SQL" or "PandasAI-SqliteConnector".'
     )
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
-    user_query: str, company_list: List[str] | str, method: str
+    user_query: str,
+    company_list: List[str] | str,
+    method: str = 'text-to-SQL',
 ) -> Any | Dict[str, str | List[str]]:
     """
     Tool for querying a SQL database containing information about stocks or companies.
 
     Args:
         user_query: Query to be performed on the database.
-        company_list: List of company names.
+        company_list: List of required companies.
         method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
+            Default is "text-to-SQL".
 
     Returns:
         The result of the query.

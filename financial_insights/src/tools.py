@@ -57,7 +57,7 @@ logger = get_logger()
 class ConversationalResponse(BaseModel):
     """Model representing a conversational answer."""
 
-    response: str = Field(..., description='The conversational answer.')
+    response: str = Field(description='The conversational answer.')
 
 
 class FinalConversationalResponse(BaseModel):
