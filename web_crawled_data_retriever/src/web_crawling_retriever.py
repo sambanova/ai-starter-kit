@@ -11,6 +11,7 @@ from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
 from langchain.prompts import load_prompt
 from langchain_community.document_loaders import UnstructuredURLLoader
+
 from utils.model_wrappers.api_gateway import APIGateway
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +62,7 @@ class WebCrawlingRetrieval:
         Args:
             path (str, optional): The path to the config file. Defaults to CONFIG_PATH.
         Returns:
-            api_info (string): string containing API to use SambaStudio or Sambaverse.
+            api_info (string): string containing API to use sambastudio or sncloud.
             embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
             llm_info (dict): Dictionary containing LLM parameters.
             retrieval_info (dict): Dictionary containing retrieval parameters
@@ -225,16 +226,15 @@ class WebCrawlingRetrieval:
         """
         Initializes the LLM endpoint
         """
-        self.llm = llm = APIGateway.load_llm(
+        self.llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
-            coe=self.llm_info["coe"],
-            do_sample=self.llm_info["do_sample"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
-            select_expert=self.llm_info["select_expert"],
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name']
         )
 
     def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
@@ -247,11 +247,11 @@ class WebCrawlingRetrieval:
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
         self.embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
 
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(
@@ -289,11 +289,11 @@ class WebCrawlingRetrieval:
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
         self.embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
         if update:
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(
