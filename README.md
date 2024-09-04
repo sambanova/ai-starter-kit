@@ -183,7 +183,7 @@ To integrate SambaNova Cloud LLMs with this AI starter kit, update the API infor
 - Enter the SambaNovaCloud URL and API key in the `.env` file, for example:
   
 ```bash
-SAMBANOVA_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
+SAMBANOVA_URL = "https://fast-api.snova.ai/v1/chat/completions"
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
