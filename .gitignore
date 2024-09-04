@@ -238,6 +238,7 @@ benchmarking/debug
 =======
 # agent workflow
 agent_workflows/output
+agent_workflows/data/tmp
 
 logs/
 
