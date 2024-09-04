@@ -807,7 +807,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            if self.llm_api == "fastapi":
+            if self.llm_api == "sncloud":
                 updated_sampling_params = {
                     "max_tokens": output_token_count,
                 }
