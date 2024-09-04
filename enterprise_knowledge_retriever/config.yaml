@@ -1,8 +1,7 @@
-api: "fastapi" #  set either sambastudio, sambaverse or fastapi
+api: "sncloud" #  set either sambastudio or sncloud
 
 pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
 prod_mode: False
-default_collection:  "ekr_default_collection"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -14,10 +13,9 @@ llm:
     "temperature": 0.0
     "do_sample": False
     "max_tokens_to_generate": 1200
-    "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "llama3-8b" #set if using FastAPI, Sambaverse or SambaStudio CoE llm expert
-    #fastApi CoE expert name -> "llama3-8b"
+    "select_expert": "llama3-8b" #set if using sncloud, SambaStudio CoE llm expert
+    #sncloud CoE expert name -> "llama3-8b"
 
 retrieval:
     "k_retrieved_documents": 15 #set if rerank enabled 

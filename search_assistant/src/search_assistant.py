@@ -35,7 +35,7 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
-from utils.visual.env_utils import DEFAULT_FASTAPI_URL
+from utils.visual.env_utils import DEFAULT_FASTAPI_URL, get_wandb_key
 from serpapi import GoogleSearch
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -43,8 +43,17 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, "data/my-vector-db")
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-# Initialize Weave with your project name 
-weave.init("sambanova_search_assistant")
+# Handle the WANDB_API_KEY resolution before importing weave
+wandb_api_key = get_wandb_key()
+
+# If WANDB_API_KEY is set, proceed with weave initialization
+if wandb_api_key:
+    import weave
+    # Initialize Weave with your project name
+    weave.init("sambanova_search_assistant")
+else:
+    print("WANDB_API_KEY is not set. Weave initialization skipped.")
+    
 
 class SearchAssistant:
     """
@@ -140,7 +149,7 @@ class SearchAssistant:
         Returns:
         llm (SambaStudio or Sambaverse): Langchain LLM to use
         """
-        fastapi_url = DEFAULT_FASTAPI_URL
+        sncloud_url = DEFAULT_FASTAPI_URL
         if self.prod_mode:
             fastapi_api_key = st.session_state.FASTAPI_API_KEY
         else:
@@ -155,8 +164,7 @@ class SearchAssistant:
             temperature=self.llm_info["temperature"],
             select_expert=self.llm_info["select_expert"],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-            fastapi_url=fastapi_url,
+            sambanova_url=sncloud_url,
             fastapi_api_key=fastapi_api_key
         )
         return llm

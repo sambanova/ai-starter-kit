@@ -1,48 +1,44 @@
 llm: 
-  "api": "fastapi"  # set either sambastudio, sambaverse or fastapi
+  "api": "sncloud" #  set either sambastudio or sncloud
   "do_sample": False
   "temperature": 0.01
   "max_tokens_to_generate": 2048
-  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct"
   "coe": True #set as true if using Sambastudio CoE endpoint
-  "select_expert": "llama3-405b" #set if using Sambaverse or SambaStudio CoE llm expert
-  #fastapi expert name -> "llama3-70b"
+  "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
+        #sncloud CoE expert name -> "llama3-405b"
 
 tools:
     query_db:
       llm: 
-        "api": "fastapi"  # set either sambastudio, sambaverse or fastapi
+        "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
-        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using Sambaverse or SambaStudio CoE llm expert
-        #fastapi expert name -> "llama3-70b"
+        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
+        #sncloud CoE expert name -> "llama3-405b"
       db:
         "path": "data/chinook.db" 
 
     translate:
       llm: 
-        "api": "fastapi"  # set either sambastudio, sambaverse or fastapi
+        "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
-        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using Sambaverse or SambaStudio CoE llm expert
-        #fastapi expert name -> "llama3-8b"
+        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
+        #sncloud CoE expert name -> "llama3-405b"
 
     rag:
       llm:
-        "api": "fastapi"  # set either sambastudio, sambaverse or fastapi
+        "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
         "temperature": 0.01 
         "max_tokens_to_generate": 1024
-        "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using Sambaverse or SambaStudio CoE llm expert
-        #fastapi expert name -> "llama3-8b"
+        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
+        #sncloud CoE expert name -> "llama3-405b"
       embedding_model: 
         "type": "cpu" # set either sambastudio or cpu
         "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)

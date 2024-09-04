@@ -14,7 +14,6 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain.docstore.document import Document
 import shutil
 from typing import List, Dict, Optional
-import weave
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
@@ -24,7 +23,9 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway 
 from utils.vectordb.vector_db import VectorDb
+from utils.visual.env_utils import get_wandb_key
 import streamlit as st
+
 
 CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir,"data/my-vector-db")
@@ -34,8 +35,17 @@ load_dotenv(os.path.join(repo_dir,'.env'))
 
 from utils.parsing.sambaparse import SambaParse, parse_doc_universal
 
-# Initialize Weave with your project name 
-weave.init("sambanova_ekr")
+
+# Handle the WANDB_API_KEY resolution before importing weave
+wandb_api_key = get_wandb_key()
+
+# If WANDB_API_KEY is set, proceed with weave initialization
+if wandb_api_key:
+    import weave
+    # Initialize Weave with your project name
+    weave.init("sambanova_ekr")
+else:
+    print("WANDB_API_KEY is not set. Weave initialization skipped.")
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
@@ -161,7 +171,6 @@ class DocumentRetrieval():
             temperature=self.llm_info["temperature"],
             select_expert=self.llm_info["select_expert"],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
             fastapi_url=fastapi_url,
             fastapi_api_key=fastapi_api_key
         )

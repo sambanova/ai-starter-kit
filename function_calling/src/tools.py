@@ -26,7 +26,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway 
-from vectordb.vector_db import VectorDb  # type: ignore
+from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -240,7 +240,6 @@ def query_db(query: str) -> str:
         temperature=query_db_info['llm']['temperature'],
         select_expert=query_db_info['llm']['select_expert'],
         process_prompt=False,
-        sambaverse_model_name=query_db_info['llm']['sambaverse_model_name'],
     )           
 
     db_path = os.path.join(kit_dir, query_db_info['db']['path'])
@@ -330,7 +329,6 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         temperature=translate_info['llm']['temperature'],
         select_expert=translate_info['llm']['select_expert'],
         process_prompt=False,
-        sambaverse_model_name=translate_info['llm']['sambaverse_model_name'],
     )     
 
     return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
@@ -367,7 +365,6 @@ def rag(query: str) -> str:
         temperature=rag_info['llm']['temperature'],
         select_expert=rag_info['llm']['select_expert'],
         process_prompt=False,
-        sambaverse_model_name=rag_info['llm']['sambaverse_model_name'],
     )     
 
     vdb = VectorDb()

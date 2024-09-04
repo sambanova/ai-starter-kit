@@ -69,7 +69,6 @@ class BaseComponents:
             temperature=self.configs['llm']["temperature"],
             select_expert=self.configs['llm']["select_expert"],
             process_prompt=False,
-            sambaverse_model_name=self.configs['llm']["sambaverse_model_name"],
         )
 
     def _format_docs(self, docs: List[Document]) -> str:
