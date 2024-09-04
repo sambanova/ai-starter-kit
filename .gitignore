@@ -252,6 +252,11 @@ utils/eval/data
 #wandb
 wandb/
 
+# VSCode
+.vscode/*
+
+# all .db files
+*.db
 utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
