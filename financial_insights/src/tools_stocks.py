@@ -102,10 +102,7 @@ def get_stock_info_from_dataframe(
             response_dict[symbol] = get_yahoo_connector_answer(user_query, symbol)
         # If the user has provided a dataframe name then use the custom langchain connector
         else:
-            try:
-                response_dict[symbol] = get_pandasai_answer_from_dataframe(user_query, symbol, dataframe_name)
-            except:
-                response_dict[symbol] = get_yahoo_connector_answer(user_query, symbol)
+            response_dict[symbol] = get_pandasai_answer_from_dataframe(user_query, symbol, dataframe_name)
 
     return response_dict
 
