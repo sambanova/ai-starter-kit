@@ -26,11 +26,11 @@ class SecEdgarFilingsInput(BaseModel):
     """Tool for retrieving a financial filing from SEC Edgar and then answering the original user question."""
 
     user_question: str = Field(..., description='The user question.')
-    user_request: str = Field(..., description='The retrieval request.')
+    user_request: str = Field(description='The full retrieval request.')
     ticker_symbol: str = Field(..., description='The company ticker symbol.')
     filing_type: str = Field(..., description='The type of filing (either "10-K" or "10-Q").')
     filing_quarter: Optional[int] = Field(
-        None, description='The quarter of the filing (1, 2, 3, or 4). Defaults to 0 for no quarter.'
+        None, description='The quarter of the filing (1, 2, 3, or 4). Defaults to None for no quarter.'
     )
     year: int = Field(..., description='The year of the filing.')
 
@@ -49,10 +49,10 @@ def retrieve_filings(
 
     Args:
         user_question: The user question.
-        user_request: The retrieval request.
+        user_request: The full retrieval request.
         ticker_symbol: The company ticker symbol.
         filing_type: The type of filing (either `10-K` or `10-Q`).
-        filing_quarter: The quarter of the filing (among 1, 2, 3, 4). Defaults to 0 for no quarter.
+        filing_quarter: The quarter of the filing (among 1, 2, 3, 4). Defaults to None for no quarter.
         year: The year of the filing.
 
     Returns:

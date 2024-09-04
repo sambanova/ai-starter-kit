@@ -65,10 +65,11 @@ def main() -> None:
         # Schedule deletion after EXIT_TIME_DELTA minutes
         schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
     else:
-        try:
-            schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-        except:
-            logger.warning('Could not schedule deletion of cache directory.')
+        if prod_mode:
+            try:
+                schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+            except:
+                logger.warning('Could not schedule deletion of cache directory.')
 
     # Streamlit app setup
     streamlit.set_page_config(
@@ -87,16 +88,6 @@ def main() -> None:
         icon_image=SAMBANOVA_LOGO,
     )
 
-    # Initialize credentials
-    if 'FASTAPI_URL' not in streamlit.session_state:
-        streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
-    if 'FASTAPI_API_KEY' not in streamlit.session_state:
-        streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
-    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
-        streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION', '')
-    if 'SEC_API_EMAIL' not in streamlit.session_state:
-        streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL', '')
-
     # Add sidebar
     with streamlit.sidebar:
         if not are_credentials_set():
@@ -104,7 +95,7 @@ def main() -> None:
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
-                streamlit.rerun()
+
         else:
             streamlit.success('Credentials are set')
             with stylable_container(
@@ -113,22 +104,24 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
-                    streamlit.rerun()
 
         # Populate SEC-EDGAR credentials
-        if streamlit.session_state.SEC_API_ORGANIZATION == '':
+        if streamlit.session_state.SEC_API_ORGANIZATION is None:
             streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-                'SEC_API_ORGANIZATION for SEC-EDGAR as\n"<your organization>"'
+                'SEC_API_ORGANIZATION for SEC-EDGAR as\n"<your organization>"', None
             )
-        if streamlit.session_state.SEC_API_EMAIL == '':
+        if streamlit.session_state.SEC_API_EMAIL is None:
             streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-                'SEC_API_EMAIL for SEC-EDGAR as\n"<name.surname@email_provider.com>"'
+                'SEC_API_EMAIL for SEC-EDGAR as\n"<name.surname@email_provider.com>"', None
             )
         # Save button
-        if streamlit.session_state.SEC_API_ORGANIZATION == '' or streamlit.session_state.SEC_API_EMAIL == '':
-            if streamlit.button('Save SEC Credentials'):
-                if streamlit.session_state.SEC_API_ORGANIZATION != '' and streamlit.session_state.SEC_API_EMAIL != '':
-                    streamlit.success('SEC credentials saved successfully!')
+        if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+            if streamlit.button('Save SEC EDGAR details'):
+                if (
+                    streamlit.session_state.SEC_API_ORGANIZATION is not None
+                    and streamlit.session_state.SEC_API_EMAIL is not None
+                ):
+                    streamlit.success('SEC EDGAR details saved successfully!')
                 else:
                     streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
 

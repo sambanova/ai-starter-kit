@@ -9,7 +9,7 @@
 SambaNova Financial Assistant
 ======================
 
-<!-- TOC -->
+Welcome to the Sambanova Financial Insights application.
 
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
@@ -24,7 +24,6 @@ SambaNova Financial Assistant
 
 # Overview
 
-Welcome to the Financial Insights application.
 This app demonstrates the capabilities of large language models (LLMs)
 in extracting and analyzing financial data using function calling, web scraping,
 and retrieval-augmented generation (RAG).
@@ -79,8 +78,8 @@ If you want to use virtualenv or conda environment:
 
 ```
 cd ai_starter_kit/
-python3 -m venv agent_env
-source financial_insights
+python3 -m venv financial_insights_env
+source financial_insights_env/bin/activate
 pip install --upgrade pip
 pip  install  -r  financial_insights/requirements.txt
 ```
@@ -102,7 +101,7 @@ FASTAPI_API_KEY = "<your-fastapi-api-key>"
 ```
 
 For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
-USER_AGENT: <Company Name> <Email Address>
+USER_AGENT: ```<Company Name> <Email Address>```
 ```
 # Your organization
 SEC_API_ORGANIZATION="<your organization>"
