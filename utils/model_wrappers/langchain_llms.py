@@ -1187,6 +1187,8 @@ class SambaNovaCloud(LLM):
     ``SAMBANOVA_URL`` set with your SambaNova Cloud URL.
     ``SAMBANOVA_API_KEY`` set with your SambaNova Cloud API Key.
 
+    http://cloud.sambanova.ai/
+
     Example:
     .. code-block:: python
 
