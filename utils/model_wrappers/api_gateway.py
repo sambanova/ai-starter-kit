@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Optional
 
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings, SambaStudioEmbeddings
+from langchain_community.embeddings import HuggingFaceInstructEmbeddings  # , SambaStudioEmbeddings
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.llms import LLM
@@ -14,6 +14,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
+from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaNovaFastAPI
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
