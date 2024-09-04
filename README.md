@@ -151,6 +151,13 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 </tr>
 
 <tr>
+<td width="20%"><a href="financial_insights/readme.md"> Financial Assistant</a></td>
+<td width="50%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
+<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> Advanced AI Capabilities </td>   
+</tr>
+
+<tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="50%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
 <td width="15%"> SambaStudio, SambaNovaCloud</td>
