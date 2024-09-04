@@ -1,4 +1,4 @@
-streamlit==1.25.0
+streamlit==1.38.0
 streamlit-extras==0.3.6
 pydantic==2.7.0
 pydantic_core==2.18.1
