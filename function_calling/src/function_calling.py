@@ -7,7 +7,7 @@ from typing import List, Optional, Type, Union
 
 import yaml
 from dotenv import load_dotenv
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
@@ -107,10 +107,10 @@ class FunctionCallingLlm:
 
         return (llm_info,)
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse, SambaNovaFastAPI]:
+    def set_llm(self) -> Union[SambaStudio, SambaNovaFastAPI]:
         """
         Set the LLM to use.
-        sambaverse, sambastudio and fastapi endpoints implemented.
+        sambastudio and sncloud endpoints implemented.
         """
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
@@ -120,8 +120,7 @@ class FunctionCallingLlm:
             max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
             temperature=self.llm_info["temperature"],
             select_expert=self.llm_info["select_expert"],
-            process_prompt=False,
-            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
+            process_prompt=False
         )           
         return llm
 
@@ -255,7 +254,7 @@ class FunctionCallingLlm:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
     
-    def msgs_to_fast_api(self, msgs: list) -> list:
+    def msgs_to_sncloud(self, msgs: list) -> list:
         """
         convert a list of langchain messages with roles to expected FastCoE input
 
@@ -293,8 +292,8 @@ class FunctionCallingLlm:
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            if self.llm_info['api'] == 'fastapi':
-                prompt = self.msgs_to_fast_api(history)
+            if self.llm_info['api'] == 'sncloud':
+                prompt = self.msgs_to_sncloud(history)
             else:
                 prompt = self.msgs_to_llama3_str(history)
             print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   

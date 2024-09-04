@@ -34,7 +34,6 @@ Search Assistant
     - [Customize embedding storage](#customize-embedding-storage)
     - [Customize retrieval](#customize-retrieval)
     - [Customize LLM usage](#customize-llm-usage)
-        - [Sambaverse endpoint](#sambaverse-endpoint)
         - [SambaStudio endpoint](#sambastudio-endpoint)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -60,7 +59,7 @@ This example is ready to use.
 
 # Before you begin
 
-You can use this model with Sambaverse or SambaStudio, but you have to do some setup first. 
+You can use this model with SambaStudio, but you have to do some setup first. 
 
 ## Clone this repository
 
@@ -74,16 +73,13 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 ### Update the Embeddings API information
 
@@ -124,7 +120,7 @@ If you want to use virtualenv or conda environment
 
 - For [openSERP](https://github.com/karust/openserp) follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY for SambaStudio or Sambaverse. The add the key to in the environment variables file in the root repo directory `sn-ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`)
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY for SambaStudio. The add the key to in the environment variables file in the root repo directory `sn-ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`)
 
   > Setting more than of these tools it's optional you can set only one and run the kit with this, there are some pros and cons of each one of these tools
 
@@ -319,17 +315,7 @@ and
 
 ## Customize LLM usage 
 
-You can further customize the model itself. If you're using Sambaverse, you can also compare model performance for your use case. 
-
-### Sambaverse endpoint
-
-You can test the performance of multiple models available in Sambaverse. For changing the model used by this starter kit:
-
-If you're using a Sambaverse endpoint, follow these steps:
-
-1. In the playground, find the model you're interested in. 
-2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
-3. Modify the parameters for calling the model. In the `config.yaml` file, set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify temperature and maximum generation token.
+You can further customize the model itself.
 
 ### SambaStudio endpoint
 
