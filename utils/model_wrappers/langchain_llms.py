@@ -1199,11 +1199,11 @@ class SambaNovaCloud(LLM):
         )
     """
 
-    fastapi_url: str = ''
-    """Url to use"""
+    sambanova_url: str = ''
+    """SambaNova Cloud Url"""
 
-    fastapi_api_key: str = ''
-    """fastAPI CoE api key"""
+    sambanova_api_key: str = ''
+    """SambaNova Cloud api key"""
 
     max_tokens: int = 1024
     """max tokens to generate"""
@@ -1237,13 +1237,13 @@ class SambaNovaCloud(LLM):
     @property
     def _llm_type(self) -> str:
         """Return type of llm."""
-        return 'Sambastudio Fast CoE'
+        return 'SambaNova Cloud'
 
     @pre_init
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
-        values['fastapi_url'] = get_from_dict_or_env(values, 'fastapi_url', 'FASTAPI_URL')
-        values['fastapi_api_key'] = get_from_dict_or_env(values, 'fastapi_api_key', 'FASTAPI_API_KEY')
+        values['sambanova_url'] = get_from_dict_or_env(values, 'sambanova_url', 'SAMBANOVA_URL')
+        values['sambanova_api_key'] = get_from_dict_or_env(values, 'sambanova_api_key', 'SAMBANOVA_API_KEY')
         return values
 
     def _handle_nlp_predict_stream(
@@ -1283,8 +1283,8 @@ class SambaNovaCloud(LLM):
         }
         # Streaming output
         response = http_session.post(
-            self.fastapi_url,
-            headers={'Authorization': f'Basic {self.fastapi_api_key}', 'Content-Type': 'application/json'},
+            self.sambanova_url,
+            headers={'Authorization': f'Basic {self.sambanova_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
@@ -1383,7 +1383,7 @@ class SambaNovaCloud(LLM):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> str:
-        """Call out to Sambanova's complete endpoint.
+        """Call out to Sambanova's  complete endpoint.
 
         Args:
             prompt: The prompt to pass into the model.
