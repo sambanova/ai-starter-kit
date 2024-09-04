@@ -81,7 +81,7 @@ def main():
         config = yaml.safe_load(yaml_file)
     
     prod_mode = config.get('prod_mode', False)
-    default_collection = config.get('default_collection', 'ekr_default_collection')
+    default_collection = 'ekr_default_collection'
 
     initialize_env_variables(prod_mode)
 
@@ -115,12 +115,12 @@ def main():
             if st.button("Save Credentials", key="save_credentials_sidebar"):
                 message = save_credentials(url, api_key, prod_mode)
                 st.success(message)
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.success("Credentials are set")
             if st.button("Clear Credentials", key="clear_credentials"):
                 save_credentials("", "", prod_mode)
-                st.experimental_rerun()
+                st.rerun()
 
         if are_credentials_set():
             if st.session_state.document_retrieval is None:
@@ -128,9 +128,15 @@ def main():
 
         if st.session_state.document_retrieval is not None:
             st.markdown("**1. Pick a datasource**")
-            datasource = st.selectbox(
-                "", ("Upload files (create new vector db)", "Use existing vector db")
-            )
+            
+
+            # Conditionally set the options based on prod_mode
+            datasource_options = ["Upload files (create new vector db)"]
+            if not prod_mode:
+                datasource_options.append("Use existing vector db")
+            
+            datasource = st.selectbox("", datasource_options)
+
             if "Upload" in datasource:
                 if config.get('pdf_only_mode', False):
                     docs = st.file_uploader(
@@ -177,7 +183,7 @@ def main():
                             except Exception as e:
                                 st.error(f"An error occurred while processing and saving: {str(e)}")
 
-            else:
+            elif not prod_mode and "Use existing" in datasource:
                 db_path = st.text_input(
                     f"Absolute path to your DB folder",
                     placeholder="E.g., /Users/<username>/path/to/your/vectordb",

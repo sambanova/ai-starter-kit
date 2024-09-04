@@ -174,7 +174,7 @@ class VectorDb():
         """
         if collection_name is None:
             collection_name = f"collection_{self.collection_id}"
-            print(f'This is the collection name {collection_name}')
+            logger.info(f'This is the collection name: {collection_name}')
 
         if db_type == "faiss":
             vector_store = FAISS.from_documents(

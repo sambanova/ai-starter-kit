@@ -9,6 +9,7 @@ import yaml
 from typing import Any, Dict, List, Tuple
 
 from pathlib import Path
+
 file_location = Path(__file__).parent.resolve()
 
 import pandas as pd
@@ -24,6 +25,7 @@ from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 from dotenv import load_dotenv
 
 import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -33,8 +35,11 @@ logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
 load_dotenv("../.env", override=True)
 
-SYSTEM_PROMPT_PATH = os.path.join(file_location, "../prompts/system-prompt_template.yaml")
+SYSTEM_PROMPT_PATH = os.path.join(
+    file_location, "../prompts/system-prompt_template.yaml"
+)
 USER_PROMPT_PATH = os.path.join(file_location, "../prompts/user-prompt_template.yaml")
+
 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
@@ -46,7 +51,7 @@ class BasePerformanceEvaluator(abc.ABC):
         llm_api: str = "sambastudio",
         is_stream_mode: bool = True,
         timeout: int = 600,
-    ):    
+    ):
         self.model_name = model_name
         self.results_dir = results_dir
         self.num_workers = num_workers
@@ -62,7 +67,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
     def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
-    
+
     @staticmethod
     def sanitize_file_prefix(prefix: str):
         """Utility for sanitizing the output file prefix.
@@ -71,7 +76,7 @@ class BasePerformanceEvaluator(abc.ABC):
             prefix (str): Output file prefix
 
         Returns:
-            Sanitized outfile prefix        
+            Sanitized outfile prefix
         """
         outfile_prefix = re.sub(r"[^\w\d-]+", "-", prefix)
         outfile_prefix = re.sub(r"-{2,}", "-", outfile_prefix)
@@ -96,10 +101,10 @@ class BasePerformanceEvaluator(abc.ABC):
     @abc.abstractmethod
     def build_prompt(self, *args, **kwargs):
         pass
-    
+
     def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
         """Modifies original text to desired number of output tokens based on corresponding tokenizer.
-        For smaller outputs, process trims original text. 
+        For smaller outputs, process trims original text.
         For larger outputs, process pads original text with multiple pad tokens.
 
         Args:
@@ -114,18 +119,22 @@ class BasePerformanceEvaluator(abc.ABC):
 
         if token_count > target_token_count:
             # Trim the text
-            tokens = tokens[:target_token_count-1]
+            tokens = tokens[: target_token_count - 1]
         elif token_count < target_token_count:
             # Pad the text
-            pad_token = self.tokenizer.pad_token if self.tokenizer.pad_token else "<pad>"
+            pad_token = (
+                self.tokenizer.pad_token if self.tokenizer.pad_token else "<pad>"
+            )
             tokens += [pad_token] * (target_token_count - token_count - 1)
-        
+
         # Convert tokens back to text
         adjusted_text = self.tokenizer.convert_tokens_to_string(tokens)
-        
+
         # Validate token count
-        assert len(self.tokenizer.tokenize(adjusted_text)) == (target_token_count - 1), "Token count mismatch!"
-        
+        assert len(self.tokenizer.tokenize(adjusted_text)) == (
+            target_token_count - 1
+        ), "Token count mismatch!"
+
         return adjusted_text
 
     def send_requests(
@@ -146,13 +155,15 @@ class BasePerformanceEvaluator(abc.ABC):
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
                 break
-            req_metrics, response_text, request_config = llm_request(request_config, self.tokenizer)
-            
+            req_metrics, response_text, request_config = llm_request(
+                request_config, self.tokenizer
+            )
+
             # Create response object containing metrics, generated text, and corresponding request config
             response_object = LLMResponse(
                 metrics=req_metrics,
                 response_text=response_text,
-                request_config=request_config
+                request_config=request_config,
             )
             completed_requests.extend([response_object])
             progress_bar.update(1)
@@ -202,7 +213,9 @@ class BasePerformanceEvaluator(abc.ABC):
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            quantiles = (
+                series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            )
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f"p{int(quantile * 100)}"
@@ -210,19 +223,19 @@ class BasePerformanceEvaluator(abc.ABC):
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]["quantiles"] = quantiles_reformatted_keys
 
-            series_mean = round(series.mean(),4)
+            series_mean = round(series.mean(), 4)
             logger.info(f"    mean = {series_mean}")
             metrics_summary[metric]["mean"] = series_mean
 
-            series_min = round(series.min(),4)
+            series_min = round(series.min(), 4)
             logger.info(f"    min = {series_min}")
             metrics_summary[metric]["min"] = series_min
 
-            series_max = round(series.max(),4)
+            series_max = round(series.max(), 4)
             logger.info(f"    max = {series_max}")
             metrics_summary[metric]["max"] = series_max
 
-            series_std = round(series.std(),4)
+            series_std = round(series.std(), 4)
             logger.info(f"    stddev = {series_std}")
             metrics_summary[metric]["stddev"] = series_std
 
@@ -247,13 +260,19 @@ class BasePerformanceEvaluator(abc.ABC):
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
-        overall_output_throughput = round(metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum() / (end_time - start_time),4)
+        overall_output_throughput = round(
+            metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum()
+            / (end_time - start_time),
+            4,
+        )
         logger.info(f"Overall Output Throughput: {overall_output_throughput}")
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
 
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
-        num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60,4)
+        num_completed_requests_per_min = round(
+            num_completed_requests / (end_time - start_time) * 60, 4
+        )
         logger.info(f"Number Of Completed Requests: {num_completed_requests}")
         logger.info(f"Number Of Concurrent Workers: {self.num_workers}")
         logger.info(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
@@ -266,11 +285,11 @@ class BasePerformanceEvaluator(abc.ABC):
         return metrics_summary
 
     def save_results(
-            self, 
-            filename: str, 
-            summary: Dict[str, Any], 
-            individual_responses: List[LLMResponse],
-        ):
+        self,
+        filename: str,
+        summary: Dict[str, Any],
+        individual_responses: List[LLMResponse],
+    ):
         """Save the performance evaluation results to a file.
 
         Args:
@@ -323,12 +342,8 @@ class BasePerformanceEvaluator(abc.ABC):
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
-            self, 
-            input_file_path: str,
-            save_response_texts: bool = False,
-            *args, 
-            **kwargs
-        ):
+        self, input_file_path: str, save_response_texts: bool = False, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
@@ -358,17 +373,19 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         generation_mode = ""
         if self.is_stream_mode:
             generation_mode = "stream"
-        
-        output_file_name = f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
+
+        output_file_name = (
+            f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
+        )
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
         self,
         filename: str,
-        summary: Dict[str, Any], 
-        individual_responses: List[LLMResponse]
+        summary: Dict[str, Any],
+        individual_responses: List[LLMResponse],
     ) -> None:
-        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is setup as True 
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is setup as True
 
         Args:
             filename (str): The base name of the file to save the results to.
@@ -378,12 +395,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             e: if an error happens when creating the output file related to prompts and completions, an error will be raised
         """
-        
-        super().save_results(
-            filename, 
-            summary, 
-            individual_responses
-        )
+
+        super().save_results(filename, summary, individual_responses)
 
         # If specified, save the llm responses to output file
         if self.save_response_texts:
@@ -394,10 +407,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
             # Save response texts
             try:
-                self.response_texts_file_path = f"{results_dir}/{response_texts_file_name}.jsonl"
+                self.response_texts_file_path = (
+                    f"{results_dir}/{response_texts_file_name}.jsonl"
+                )
                 with open(self.response_texts_file_path, "w") as f:
                     for response in individual_responses:
-                        output_json = {"prompt": response.request_config.prompt_tuple[0], "completion": str(response.response_text)}
+                        output_json = {
+                            "prompt": response.request_config.prompt_tuple[0],
+                            "completion": str(response.response_text),
+                        }
                         f.write(json.dumps(output_json))
                         f.write("\n")
             except Exception as e:
@@ -422,14 +440,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.results_dir:
             filename = self.create_output_filename()
             self.save_results(
-                filename, 
-                summary, 
+                filename,
+                summary,
                 individual_responses,
             )
 
     def get_token_throughput_latencies(
-        self, 
-        sampling_params: Dict[str, Any]
+        self, sampling_params: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
         """This function is used to measure the token throughput and latencies.
 
@@ -471,7 +488,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             request_config_batches.append(request_config_batch)
 
         threads = []
-        llm_responses : List[LLMResponse] = []
+        llm_responses: List[LLMResponse] = []
         progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         for request_config_batch in request_config_batches:
@@ -571,11 +588,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
 
         # Specific prompt templating for mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower().replace("-",""):
+        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower().replace(
+            "-", ""
+        ):
             prompt = "[INST]" + raw_prompt + "[/INST]"
 
         # Specific prompt templating for Llama-3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower().replace("-",""):
+        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower().replace(
+            "-", ""
+        ):
             system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
 
             prompt = (
@@ -586,7 +607,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
         # Specific prompt templating for Llama-2 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower().replace("-",""):
+        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower().replace(
+            "-", ""
+        ):
             system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
             prompt = system_prompt + raw_prompt + "[/INST]"
 
@@ -613,8 +636,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         generation_mode = ""
         if self.is_stream_mode:
-            generation_mode  = "stream"
-        
+            generation_mode = "stream"
+
         output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
         return self.sanitize_file_prefix(output_file_name)
 
@@ -657,7 +680,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         if self.results_dir:
             filename = self.create_output_filename(num_input_tokens, num_output_tokens)
             self.save_results(filename, summary, individual_responses)
-            
+
         return summary, individual_responses
 
     def get_token_throughput_latencies(
@@ -697,8 +720,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = total_request_count // self.num_workers
-        remainder = total_request_count % self.num_workers
+        requests_per_thread = (total_request_count) // self.num_workers
+        remainder = (total_request_count) % self.num_workers
 
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
@@ -712,7 +735,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             request_config_batch = request_configs[
                 idx : idx + num_requests_for_thread
             ].copy()
-            idx = idx + num_requests_for_thread
+            idx += num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
         # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
@@ -827,30 +850,25 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return request_configs
 
-    def build_prompt(
-        self, num_input_tokens: int
-    ) -> Tuple[str, int]:
+    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
         """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
-        multiple times to reach a user set input_token_count. Depending on the LLM being queried, there may be an added
-        system prompt.
-
-        The method generates a prompt based on the model type and the provided input and output token counts.
-        For Mistral models, a fixed prompt template is used.
-        For Llama3 models, a system prompt is generated and the user input is appended.
-        For other models, a system prompt is generated and the user input is appended.
+        multiple times to reach a user set input_token_count.
 
         Args:
             num_input_tokens (int): The user specified length of the input prompt.
-            num_output_tokens (int): The number of tokens for the model to generate.
 
         Returns:
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
         # Load from prompt files
-        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
+        prompt_template = yaml.safe_load(
+            PromptTemplate.from_file(USER_PROMPT_PATH).template
+        )["template"]
 
         #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-                
+        full_input_prompt = self.adjust_to_exact_tokens(
+            prompt_template, num_input_tokens
+        )
+
         return (full_input_prompt, self.get_token_length(full_input_prompt))

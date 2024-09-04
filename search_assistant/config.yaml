@@ -1,4 +1,7 @@
 api: "fastapi" # set either sambastudio, sambaverse or fastapi
+prod_mode: False
+additional_env_vars:
+  - SERPAPI_API_KEY
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -19,7 +22,7 @@ llm:
 retrieval:
     "chunk_size": 1200
     "chunk_overlap": 240
-    "db_type": "faiss"
+    "db_type": "chroma"
     "k_retrieved_documents": 3
     "score_treshold": 0.3
 
