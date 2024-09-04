@@ -167,7 +167,7 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 </tbody>
 </table>
 
-# Get started with SambaNova AI starter kit
+# Get Started 
 
 ## Getting a SambaNova API key and setting your generative models
 
