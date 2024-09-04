@@ -22,7 +22,7 @@ logger = get_logger()
 
 
 class YahooFinanceNewsInput(BaseModel):
-    """Model representing the input for the YahooFinanceNews tool."""
+    """Tool for searching financial news on Yahoo Finance through web scraping."""
 
     company_list: List[str] | str = Field(
         ..., description='A list of companies to search.', example=['Google', 'Microsoft']
@@ -33,7 +33,7 @@ class YahooFinanceNewsInput(BaseModel):
 @tool(args_schema=YahooFinanceNewsInput)
 def scrape_yahoo_finance_news(company_list: List[str] | str, user_query: str) -> Tuple[str, List[str]]:
     """
-    Tool that searches financial news on Yahoo Finance by webscraping.
+    Tool for searching financial news on Yahoo Finance through web scraping.
 
     Useful for when you need to find financial news about a public company.
 

@@ -61,7 +61,7 @@ class ConversationalResponse(BaseModel):
 
 
 class FinalConversationalResponse(BaseModel):
-    """Model to turn a response into a conversational format in the same language as the user query."""
+    """Tool for converting a response into a conversational format in the same language as the user query."""
 
     user_query: str = Field(..., description='The user query.')
     response_object: str = Field(..., description='The response to the query, formatted in a conversational style.')
@@ -69,7 +69,16 @@ class FinalConversationalResponse(BaseModel):
 
 @tool(args_schema=FinalConversationalResponse)
 def get_conversational_response(user_query: str, response_object: Any) -> Any:
-    """Turn a response in a conversational format of the same language as the user query."""
+    """
+    Tool for converting a response into a conversational format in the same language as the user query.
+
+    Args:
+        user_query: The user query.
+        response_object: The response to the query, formatted in a conversational style.
+
+    Returns:
+        A conversational response.
+    """
 
     # The output parser
     conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)  # type: ignore

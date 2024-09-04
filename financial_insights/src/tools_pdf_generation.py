@@ -410,7 +410,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
 
 
 class PDFRAGInput(BaseModel):
-    """Model to retrieve the provided PDF file(s) to answer the user query using RAG."""
+    """Tool retrieving the provided PDF file(s) to answer the user query via Retrieval-Augmented Generation (RAG)."""
 
     user_query: str = Field(..., description='The user query.')
     pdf_files_names: List[str] | str = Field(
@@ -421,7 +421,7 @@ class PDFRAGInput(BaseModel):
 @tool(args_schema=PDFRAGInput)
 def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     """
-    Elaborate the answer using RAG.
+    Tool retrieving the provided PDF file(s) to answer the user query via Retrieval-Augmented Generation (RAG).
 
     Args:
         user_query: The user query.

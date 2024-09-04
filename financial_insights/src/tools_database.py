@@ -33,7 +33,7 @@ logger = get_logger()
 
 
 class DatabaseSchema(BaseModel):
-    """Model representing the schema for creating a SQL database for a list of stocks/companies."""
+    """Tool for creating a SQL database for a list of stocks or companies."""
 
     company_list: List[str] | str = Field(..., description='List of companies for which to create the SQL database.')
     start_date: datetime.date = Field(..., description='Start date for data retrieval.')
@@ -47,7 +47,7 @@ def create_stock_database(
     end_date: datetime.date = datetime.datetime.today().date(),
 ) -> Dict[str, List[str]]:
     """
-    Create a SQL database for a list of stocks/companies.
+    Tool for creating a SQL database for a list of stocks or companies.
 
     Args:
         company_list: List of companies for which to create the SQL database.
@@ -153,7 +153,7 @@ def store_company_dataframes_to_sqlite(
 
 
 class QueryDatabaseSchema(BaseModel):
-    """Model for querying a SQL database for a list of stocks/companies."""
+    """Tool for querying a SQL database containing information about stocks or companies."""
 
     user_query: str = Field(..., description='Query to be performed on the database.')
     company_list: List[str] | str = Field(..., description='List of company names.')
@@ -167,7 +167,7 @@ def query_stock_database(
     user_query: str, company_list: List[str] | str, method: str
 ) -> Any | Dict[str, str | List[str]]:
     """
-    Query a SQL database for a list of stocks/companies.
+    Tool for querying a SQL database containing information about stocks or companies.
 
     Args:
         user_query: Query to be performed on the database.

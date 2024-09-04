@@ -28,7 +28,7 @@ class StockInfoSchema(BaseModel):
 
 
 class TickerSymbol(BaseModel):
-    """Model representing the ticker symbol of a company."""
+    """Tool for returning the correct stock information given the appropriate company ticker symbol."""
 
     symbol: str = Field(..., description='The ticker symbol of the company.')
 
@@ -38,7 +38,7 @@ def get_stock_info(
     user_query: str, company_list: List[str] | str, dataframe_name: Optional[str] = None
 ) -> Dict[str, str]:
     """
-    Return the correct stock information given the appropriate ticker symbol.
+    Tool for returning the correct stock information given the appropriate company ticker symbol.
 
     Args:
         user_query: User query to retrieve stock information.
@@ -268,7 +268,7 @@ class RetrievalSymbolQuantitySchema(BaseModel):
 
 
 class HistoricalPriceSchema(BaseModel):
-    """Model to fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
+    """Tool for fetching historical stock prices for a given list of companies from `start_date` to `end_date`."""
 
     company_list: List[str] | str = Field(
         ..., description='List of required companies.', examples=['Google', 'Microsoft']
@@ -295,7 +295,7 @@ def get_historical_price(
     company_list: List[str] | str, quantity: str, start_date: datetime.date, end_date: datetime.date
 ) -> pandas.DataFrame:
     """
-    Fetch historical stock prices for a given list of companies from 'start_date' to 'end_date'.
+    Tool for fetching historical stock prices for a given list of companies from `start_date` to `end_date`.
 
     Args:
         company_list: List of required companies.

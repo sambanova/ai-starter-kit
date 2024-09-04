@@ -23,7 +23,7 @@ logger = get_logger()
 
 
 class SecEdgarFilingsInput(BaseModel):
-    """Model to retrieve the text of a financial filing from SEC Edgar and then answer the original user question."""
+    """Tool for retrieving a financial filing from SEC Edgar and then answering the original user question."""
 
     user_question: str = Field(..., description='The user question.')
     user_request: str = Field(..., description='The retrieval request.')
@@ -45,7 +45,7 @@ def retrieve_filings(
     year: int,
 ) -> str:
     """
-    Retrieve the text of a financial filing from SEC Edgar and then answer the original user question.
+    Tool for retrieving a financial filing from SEC Edgar and then answering the original user question.
 
     Args:
         user_question: The user question.
