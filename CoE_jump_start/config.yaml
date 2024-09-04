@@ -6,8 +6,8 @@ llm:
     "max_tokens_to_generate": 1200
     "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
     "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using FastCoE, Sambaverse or SambaStudio CoE llm expert
-    #fastApi CoE expert name -> "llama3-8b"
+    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
+    
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -76,9 +76,9 @@ expert_prompt: |
   <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 coe_name_map:
-  Finance expert: "finance-chat"
-  Math expert: "deepseek-llm-67b-chat"
-  Code expert: "deepseek-llm-67b-chat"
+  Finance expert: "Meta-Llama-3.1-70B-Instruct"
+  Math expert: "Meta-Llama-3.1-70B-Instruct"
+  Code expert: "Meta-Llama-3.1-70B-Instruct"
   Medical expert: "medicine-chat"
   Legal expert: "law-chat"
   History expert: "Meta-Llama-3-70B-Instruct"
