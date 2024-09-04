@@ -59,9 +59,6 @@ This sample is ready-to-use. We provide:
 - Instructions for setup with SambaStudio.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
-- A video overview of the setup process:
-
-https://github.com/sambanova/ai-starter-kit/assets/150964187/958528ae-00c8-4934-b64f-80a03dd746f0
 
 # Before you begin
 
