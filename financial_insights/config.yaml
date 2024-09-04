@@ -1,0 +1,21 @@
+prod_mode: False
+
+llm: 
+  "api": "fastapi" # Either "fastapi" or "sambastudio" or 'sambaverse"
+  "temperature": 0
+  "max_tokens_to_generate": 1024
+  "coe": True
+  "select_expert": "llama3-70b"
+  "do_sample": False
+  "batch_size": 1
+  "sambaverse_model_name": "Meta/Meta-Llama-3-70B-Instruct" # Only if "api" set to "sambaverse"
+
+rag:
+  embedding_model: 
+    "type": "cpu" # Either "sambastudio" or "cpu"
+    "batch_size": 1
+    "coe": True
+    "select_expert": "e5-mistral-7b-instruct" # Set if using "sambastudio" CoE embedding expert
+  retrieval:
+    "k_retrieved_documents": 5
+
