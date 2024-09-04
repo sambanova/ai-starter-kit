@@ -402,6 +402,7 @@ def initialize_session(
 
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
     """Create a temporary directory with specified subdirectories."""
+
     os.makedirs(dir)
     for subdir in subdirs:
         os.makedirs(subdir)
@@ -409,6 +410,7 @@ def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
 
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
+
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
         print(f'Temporary directory {temp_dir} deleted.')
@@ -416,6 +418,7 @@ def delete_temp_dir(temp_dir: str) -> None:
 
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
+
     schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
 
     def run_scheduler() -> None:
