@@ -27,9 +27,7 @@ class SambaParse:
             default_api_key = self.config.get("partitioning", {}).get("default_unstructured_api_key")
             if default_api_key:
                 os.environ["UNSTRUCTURED_API_KEY"] = default_api_key
-                logger.info("Using default Unstructured API key from config file.")
-            else:
-                logger.warning("No Unstructured API key found in environment or config file.")
+
 
     def run_ingest(
         self,

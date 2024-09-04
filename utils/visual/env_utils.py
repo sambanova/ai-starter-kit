@@ -1,5 +1,7 @@
 import os
 import streamlit as st
+import netrc
+
 
 DEFAULT_FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
 
@@ -59,3 +61,32 @@ def are_credentials_set(additional_env_vars=None):
 def save_credentials(api_key, additional_vars=None, prod_mode=False):
     set_env_variables(api_key, additional_vars, prod_mode)
     return "Credentials saved successfully!"
+
+
+def get_wandb_key():
+    # Check for WANDB_API_KEY in environment variables
+    env_wandb_api_key = os.getenv('WANDB_API_KEY')
+
+    # Check for WANDB_API_KEY in ~/.netrc
+    try:
+        netrc_path = os.path.expanduser('~/.netrc')
+        netrc_data = netrc.netrc(netrc_path)
+        netrc_wandb_api_key = netrc_data.authenticators('api.wandb.ai')
+    except (FileNotFoundError, netrc.NetrcParseError):
+        netrc_wandb_api_key = None
+
+    # If both are set, handle the conflict
+    if env_wandb_api_key and netrc_wandb_api_key:
+        print("WANDB_API_KEY is set in both the environment and ~/.netrc. Prioritizing environment variable.")
+        # Optionally, you can choose to remove one of them, here we remove the env variable
+        del os.environ['WANDB_API_KEY']  # Remove from environment to prioritize ~/.netrc
+        return netrc_wandb_api_key[2] if netrc_wandb_api_key else None  # Return the key from .netrc
+    
+    # Return the key from environment if available, otherwise from .netrc
+    if env_wandb_api_key:
+        return env_wandb_api_key
+    elif netrc_wandb_api_key:
+        return netrc_wandb_api_key[2] if netrc_wandb_api_key else None
+    
+    # If neither is set, return None
+    return None
