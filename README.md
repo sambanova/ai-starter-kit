@@ -9,7 +9,7 @@
 
 # Overview
 
-SambaNova AI Starter Kits are a collection of open-source examples and guides to facilitate the deployment of AI-driven use cases in the enterprise.
+SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
 To run these examples, you can obtain a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
