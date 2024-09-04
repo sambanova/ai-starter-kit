@@ -175,9 +175,9 @@ Currently, there are two ways to obtain an API key from SambaNova. You can get a
 
 ### Use SambaNova Cloud (Option 1)
 
-You can find more information and get your API key on the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
+For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
 
-Integrate SambaNova Cloud LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Enter the SambaNovaCloud URL and API key in the `.env` file, for example:
@@ -189,9 +189,9 @@ SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
 
 ### Use SambaStudio (Option 2)
 
-Begin by deploying your LLM of choice (e.g. Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin by deploying your LLM of choice (e.g., Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-Integrate your LLM deployed on SambaStudio with this AI starter kit by updating the API information for the SambaNova LLM. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+To integrate your LLM deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
