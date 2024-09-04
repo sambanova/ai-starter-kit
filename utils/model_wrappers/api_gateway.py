@@ -2,11 +2,10 @@ import os
 import sys
 import logging
 from typing import Optional
-
+from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.llms import LLM
 from langchain_community.embeddings import SambaStudioEmbeddings, HuggingFaceInstructEmbeddings
 from langchain_community.llms.sambanova import SambaStudio, Sambaverse
-from langchain_core.embeddings import Embeddings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, ".."))
