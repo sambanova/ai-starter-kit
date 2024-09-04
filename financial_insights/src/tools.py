@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar
 
 import pandas
 import streamlit
@@ -27,52 +27,44 @@ class HasCall(Protocol):
         pass
 
 
-# Configure a dedicated logger for timing logs
-def get_timing_logger() -> logging.Logger:
-    timing_logger = logging.getLogger('timingLogger')
-    if not timing_logger.hasHandlers():
-        timing_logger.setLevel(logging.INFO)
-        timing_file_handler = logging.StreamHandler()
-        timing_file_handler.setLevel(logging.INFO)
-        timing_formatter = logging.Formatter('%(asctime)s - %(message)s')
-        timing_file_handler.setFormatter(timing_formatter)
-        timing_logger.addHandler(timing_file_handler)
-    return timing_logger
+# Configure the logger
+def get_logger(logger_name: str = 'logger') -> logging.Logger:
+    # Get or create a logger instance
+    logger = logging.getLogger(logger_name)
 
+    # Ensure that the logger has not been configured with handlers already
+    if not logger.hasHandlers():
+        logger.setLevel(logging.INFO)
 
-# Configure a regular logger for general purposes
-def get_general_logger() -> logging.Logger:
-    general_logger = logging.getLogger('generalLogger')
-    if not general_logger.hasHandlers():
-        general_logger.setLevel(logging.INFO)
+        # Prevent log messages from being propagated to the root logger
+        logger.propagate = False
+
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
-        general_formatter = logging.Formatter('%(asctime)s - %(message)s')
+        general_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         console_handler.setFormatter(general_formatter)
-        general_logger.addHandler(console_handler)
-    return general_logger
 
+        logger.addHandler(console_handler)
 
-logger = get_general_logger()
+    return logger
+
 
 # Get the loggers
-timing_logger = get_timing_logger()
-general_logger = get_general_logger()
+timing_logger = get_logger('timingLogger')
+logger = get_logger()
 
 
-# Tool schema for the conversational response tool
 class ConversationalResponse(BaseModel):
-    """Elaborate a conversational answer"""
+    """Model representing a conversational answer."""
 
-    response: str = Field(description='The conversational answer.')
+    response: str = Field(..., description='The conversational answer.')
 
 
-# tool schema for the final conversational response tool
 class FinalConversationalResponse(BaseModel):
-    """Turn a response in a conversational format of the same language as the user query."""
+    """Model to turn a response into a conversational format in the same language as the user query."""
 
-    user_query: str = Field(description='The user query.')
-    response_object: str = Field(description='The response to the query, to be put in conversational format.')
+    user_query: str = Field(..., description='The user query.')
+    response_object: str = Field(..., description='The response to the query, formatted in a conversational style.')
 
 
 @tool(args_schema=FinalConversationalResponse)
@@ -106,7 +98,7 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
 
 def extract_yfinance_data(
     symbol: str, start_date: datetime.date, end_date: datetime.date
-) -> Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]:
+) -> Dict[str, pandas.DataFrame | Dict[Any, Any]]:
     """
     Extracts all the data of a given company using Yahoo Finance for specified dates.
 
@@ -428,7 +420,7 @@ def transform_string_to_list(input_string: str) -> List[str] | str:
     return input_string
 
 
-def coerce_str_to_list(input_string: Union[str, List[str]]) -> List[str]:
+def coerce_str_to_list(input_string: str | List[str]) -> List[str]:
     """
     Coerce a string to a list of strings.
 

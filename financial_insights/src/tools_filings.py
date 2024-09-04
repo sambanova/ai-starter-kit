@@ -13,24 +13,26 @@ from langchain_core.tools import tool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
-from financial_insights.src.tools import get_general_logger
+from financial_insights.src.tools import get_logger
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-logger = get_general_logger()
+logger = get_logger()
 
 
 class SecEdgarFilingsInput(BaseModel):
-    """Retrieve the text of a financial filing from SEC Edgar and then answer the original user question."""
+    """Model to retrieve the text of a financial filing from SEC Edgar and then answer the original user question."""
 
-    user_question: str = Field('The user question.')
-    user_request: str = Field('The retrieval request.')
-    ticker_symbol: str = Field('The company ticker symbol.')
-    filing_type: str = Field('The type of filing (either "10-K" or "10-Q").')
-    filing_quarter: Optional[int] = Field('The quarter of the filing (among 1, 2, 3, 4). Defaults to 0 for no quarter.')
-    year: int = Field('The year of the filing.')
+    user_question: str = Field(..., description='The user question.')
+    user_request: str = Field(..., description='The retrieval request.')
+    ticker_symbol: str = Field(..., description='The company ticker symbol.')
+    filing_type: str = Field(..., description='The type of filing (either "10-K" or "10-Q").')
+    filing_quarter: Optional[int] = Field(
+        None, description='The quarter of the filing (1, 2, 3, or 4). Defaults to 0 for no quarter.'
+    )
+    year: int = Field(..., description='The year of the filing.')
 
 
 @tool(args_schema=SecEdgarFilingsInput)
@@ -75,7 +77,7 @@ def retrieve_filings(
     assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
 
     # Retrieve the filing text from SEC Edgar
-    downloader = Downloader(os.environ.get('SEC_API_ORGANIZATION'), os.environ.get('SEC_API_EMAIL'))
+    downloader = Downloader(streamlit.session_state.SEC_API_ORGANIZATION, streamlit.session_state.SEC_API_EMAIL)
 
     # Extract today's year
     current_year = datetime.datetime.now().date().year

@@ -47,16 +47,16 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
     """
     Handle the user request for the Yahoo News data.
 
-     Args:
-         user_question: The user input question that is used to retrieve the Yahoo Finance News data.
+    Args:
+        user_question: The user input question that is used to retrieve the Yahoo Finance News data.
 
-     Returns:
-         A tuple containing the following pair:
-             1. The answer to the user query.
-             2. A list of links to articles that have been used for retrieval to answer the user query.
+    Returns:
+        A tuple containing the following pair:
+            1. The answer to the user query.
+            2. A list of links to articles that have been used for retrieval to answer the user query.
 
-     Raises:
-         TypeError: If the LLM response does not conform to the return type.
+    Raises:
+        TypeError: If the LLM response does not conform to the return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = [
@@ -68,13 +68,15 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         tools=streamlit.session_state.tools,
         default_tool=None,
     )
-    user_request = (
-        'You are an expert in the stock market. '
-        + 'Please answer the following question, that could be general or for a given list of companies. \n'
-        + user_question
-        + 'Please retrieve the relevant news articles from webscraping Yahoo Finance.\n'
-        + 'Then, provide the answer to the user.'
-    )
+    user_request = f"""
+        You are an expert in the stock market.
+        Please answer the following question, which may be general or related to a specific list of companies:
+        {user_question}
+
+        First, extract the company (or companies) from the user query, if applicable.
+        Then, retrieve the relevant news articles by web scraping Yahoo Finance,
+        and then provide the answer to the user.
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)

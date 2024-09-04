@@ -20,17 +20,17 @@ from financial_insights.streamlit.constants import *
 
 
 class StockInfoSchema(BaseModel):
-    """Return the correct stock information given the appropriate ticker symbol."""
+    """Model to retrieve the correct stock information given the appropriate ticker symbol."""
 
-    user_query: str = Field('User query to retrieve stock information.')
-    company_list: List[str] | str = Field('List of stock ticker symbols.')
-    dataframe_name: Optional[str] = Field('Name of the dataframe to be used.')
+    user_query: str = Field(..., description='User query to retrieve stock information.')
+    company_list: List[str] | str = Field(..., description='List of stock ticker symbols or a single ticker symbol.')
+    dataframe_name: Optional[str] = Field(None, description='Name of the dataframe to be used, if applicable.')
 
 
 class TickerSymbol(BaseModel):
-    """The ticker symbol of the company"""
+    """Model representing the ticker symbol of a company."""
 
-    symbol: str = Field('The ticker symbol of the company')
+    symbol: str = Field(..., description='The ticker symbol of the company.')
 
 
 @tool(args_schema=StockInfoSchema)
@@ -251,36 +251,42 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
 
 class RetrievalSymbolQuantitySchema(BaseModel):
     """
-    Retrieve a list of ticker symbols and the quantity that the user wants to analyze.
+    Model to retrieve a list of ticker symbols and the quantity that the user wants to analyze.
 
-    The quantity must be one of the following:
-
-    Open, High, Low, Close, Volume, Dividends, Stock Splits.
-    If you can't retrieve the quantity, use 'Close'.
+    The quantity must be one of the following: Open, High, Low, Close, Volume, Dividends, Stock Splits.
+    If you can't retrieve the specified quantity, use 'Close'.
     """
 
-    company_list: List[str] | str = Field('List of required companies.', examples=['Google', 'Microsoft'])
+    company_list: List[str] | str = Field(
+        ..., description='List of required companies.', examples=['Google', 'Microsoft']
+    )
     quantity: str = Field(
-        'Quantity to analize', examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+        ...,
+        description='Quantity to analyze.',
+        examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'],
     )
 
 
 class HistoricalPriceSchema(BaseModel):
-    """Fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
+    """Model to fetch historical stock prices for a given list of ticker symbols from `start_date` to `end_date`."""
 
-    company_list: List[str] | str = Field('List of required companies.', examples=['Google', 'Microsoft'])
-    quantity: str = Field(
-        'Quantity to analize', examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+    company_list: List[str] | str = Field(
+        ..., description='List of required companies.', examples=['Google', 'Microsoft']
     )
-    end_date: datetime.date = Field(
-        'Typically today unless a specific end date is provided. End date MUST be greater than start date.'
+    quantity: str = Field(
+        ...,
+        description='Quantity to analyze.',
+        examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'],
     )
     start_date: datetime.date = Field(
-        "Set explicitly, or calculated as 'end_date - date interval' "
-        "(for example, if prompted 'over the past 6 months', "
-        "date interval = 6 months so start_date would be 6 months earlier than today's date). "
-        "Default to '1900-01-01' if vaguely asked for historical price. "
-        'Start date must always be before the current date'
+        ...,
+        description='The start date for retrieving historical prices.'
+        + 'Default to "2000-01-01" if the date is vaguely requested. Must be before the end date.',
+    )
+    end_date: datetime.date = Field(
+        ...,
+        description='The end date for retrieving historical prices.'
+        + 'Typically today unless a specific end date is provided. Must be greater than the start date.',
     )
 
 
@@ -298,7 +304,7 @@ def get_historical_price(
         start_date: Set explicitly, or calculated as 'end_date - date interval'
             (for example, if prompted 'over the past 6 months',
             date interval = 6 months so start_date would be 6 months earlier than today's date).
-            Default to '1900-01-01' if vaguely asked for historical price.
+            Default to '2000-01-01' if vaguely asked for historical price.
             Start date must always be before the current date.
 
     Returns:

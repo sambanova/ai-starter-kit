@@ -1,18 +1,19 @@
 import os
 import shutil
+from base64 import b64encode
 from typing import Any, Dict, List
 
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from financial_insights.src.function_calling import FunctionCalling
-from financial_insights.src.tools import get_general_logger
+from financial_insights.src.tools import get_logger
 from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
 from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
 
-logger = get_general_logger()
+logger = get_logger()
 
 
 def include_pdf_report() -> None:
@@ -127,18 +128,22 @@ def include_pdf_report() -> None:
             report_name = title_name.lower().replace(' ', '_') + '.pdf'
 
             # generate_pdf_report(data)
-            handle_pdf_generation(title_name, report_name, data_paths, include_summary)
+            pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
 
-            with open(
-                streamlit.session_state.pdf_generation_directory + report_name, encoding='utf8', errors='ignore'
-            ) as f:
-                file_content = f.read()
-                streamlit.download_button(
-                    label=report_name,
-                    data=file_content,
-                    file_name=report_name,
-                    mime='text/plain',
-                )
+            # Embed PDF to display it:
+            base64_pdf = b64encode(pdf_handler).decode('utf-8')
+            pdf_display = (
+                f'<embed src="data:application/pdf;base64,{base64_pdf}"'
+                ' width="700" height="400" type="application/pdf">'
+            )
+            streamlit.markdown(pdf_display, unsafe_allow_html=True)
+            # Add download button
+            streamlit.download_button(
+                label='Download Report',
+                data=pdf_handler,
+                file_name=streamlit.session_state.pdf_generation_directory + report_name,
+                mime='application/pdf',
+            )
         streamlit.write('PDF report generated successfully.')
 
     # Use PDF report for RAG
@@ -185,6 +190,7 @@ def include_pdf_report() -> None:
                         if streamlit.button(
                             file,
                             key=f'file-{idx}',
+                            type='primary',
                             on_click=handle_click_selected_file,
                             args=(file,),
                             disabled=True if file in streamlit.session_state.selected_files else False,
@@ -213,8 +219,8 @@ def include_pdf_report() -> None:
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file in uploaded_files:
                     assert isinstance(file, UploadedFile), f'{file} is not instance of UploadedFile.'
-                    with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:  # type: ignore
-                        f.write(file.getbuffer())  # type: ignore
+                    with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
+                        f.write(file.getbuffer())
 
         # The user request
         user_request = streamlit.text_input(
@@ -283,7 +289,7 @@ def handle_pdf_generation(
     report_name: str = 'financial_report',
     data_paths: Dict[str, str] = dict(),
     include_summary: bool = False,
-) -> None:
+) -> bytes:
     """
     Generate a PDF report using the provided data paths.
 
@@ -336,7 +342,9 @@ def handle_pdf_generation(
     report_content = parse_documents(documents)
 
     # Generate the PDF report
-    generate_pdf(report_content, output_file, title_name, include_summary)
+    pdf_handler = generate_pdf(report_content, output_file, title_name, include_summary)
+
+    return pdf_handler
 
 
 def check_generate_from_history() -> None:
@@ -402,11 +410,12 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     attach_tools(streamlit.session_state.tools)
 
     # Compose the user request
-    user_request = (
-        'Please use RAG from the provided PDF files to answer the following question: '
-        + user_question
-        + f"\nReport names: {', '.join(report_names)}."
-    )
+    user_request = f"""
+        Please use RAG (Retrieval-Augmented Generation) from the provided PDF files to answer the following question:
+        {user_question}
+
+        Report names: {', '.join(report_names)}.
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)

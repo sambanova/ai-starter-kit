@@ -1,7 +1,7 @@
 import datetime
 import json
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import pandas
 import streamlit
@@ -22,22 +22,22 @@ from financial_insights.src.tools import (
     convert_data_to_frame,
     extract_yfinance_data,
     get_conversational_response,
-    get_general_logger,
+    get_logger,
     time_llm,
 )
 from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
-logger = get_general_logger()
+logger = get_logger()
 
 
 class DatabaseSchema(BaseModel):
-    """Create a SQL database for a list of stocks/companies."""
+    """Model representing the schema for creating a SQL database for a list of stocks/companies."""
 
-    company_list: List[str] | str = Field('List of companies for which to create the SQL database.')
-    start_date: datetime.date = Field('Start date.')
-    end_date: datetime.date = Field('End date.')
+    company_list: List[str] | str = Field(..., description='List of companies for which to create the SQL database.')
+    start_date: datetime.date = Field(..., description='Start date for data retrieval.')
+    end_date: datetime.date = Field(..., description='End date for data retrieval.')
 
 
 @tool(args_schema=DatabaseSchema)
@@ -51,8 +51,8 @@ def create_stock_database(
 
     Args:
         company_list: List of companies for which to create the SQL database.
-        start_date: Start date for the historical data.
-        end_date: End date for the historical data.
+        start_date: Start date for data retrieval.
+        end_date: End date for data retrieval.
 
     Returns:
         A dictionary with company symbols as keys and a list of SQL table names as values.
@@ -94,7 +94,7 @@ def create_stock_database(
 
 
 def store_company_dataframes_to_sqlite(
-    db_name: str, company_data_dict: Dict[str, Union[pandas.DataFrame, Dict[Any, Any]]]
+    db_name: str, company_data_dict: Dict[str, pandas.DataFrame | Dict[Any, Any]]
 ) -> Dict[str, List[str]]:
     """
     Store multiple dataframes for each company into an SQLite database.
@@ -153,23 +153,25 @@ def store_company_dataframes_to_sqlite(
 
 
 class QueryDatabaseSchema(BaseModel):
-    """Query a SQL database for a list of stocks/companies."""
+    """Model for querying a SQL database for a list of stocks/companies."""
 
-    user_query: str = Field('Query to be performed on the database')
-    company_list: List[str] | str = Field('List of stock ticker symbols.')
-    method: str = Field('Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector"')
+    user_query: str = Field(..., description='Query to be performed on the database.')
+    company_list: List[str] | str = Field(..., description='List of company names.')
+    method: str = Field(
+        ..., description='Method to be used to generate the query. Either "text-to-SQL" or "PandasAI-SqliteConnector".'
+    )
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
     user_query: str, company_list: List[str] | str, method: str
-) -> Union[Any, Dict[str, str | List[str]]]:
+) -> Any | Dict[str, str | List[str]]:
     """
     Query a SQL database for a list of stocks/companies.
 
     Args:
         user_query: Query to be performed on the database.
-        company_list: List of stock ticker symbols.
+        company_list: List of company names.
         method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
 
     Returns:
@@ -397,9 +399,9 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
 
 
 class TableNames(BaseModel):
-    """Output object for the relevant table names."""
+    """Model representing the output object for relevant table names."""
 
-    table_names: List[str] = Field(description='List of the most relevant table names for the user query.')
+    table_names: List[str] = Field(..., description='List of the most relevant table names for the user query.')
 
 
 @time_llm

@@ -3,7 +3,7 @@ import os
 import re
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Any, Callable, Generator, List, Optional, Type, Union
+from typing import Any, Callable, Generator, List, Optional, Type
 
 import pandas
 import streamlit
@@ -58,7 +58,7 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
 
 def attach_tools(
     tools: Optional[List[str]] = None,
-    default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
+    default_tool: Optional[StructuredTool | Tool | Type[BaseModel]] = None,
 ) -> None:
     """
     Attach the tools to the Streamlit session for the LLM to use.

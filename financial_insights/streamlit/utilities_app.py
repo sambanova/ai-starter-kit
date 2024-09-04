@@ -2,20 +2,24 @@ import datetime
 import json
 import os
 import re
+import shutil
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from threading import Thread
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import pandas
+import schedule
 import streamlit
 import yaml
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_insights.src.tools import get_general_logger
+from financial_insights.src.tools import get_logger
 from financial_insights.streamlit.constants import *
 
-logger = get_general_logger()
+logger = get_logger()
 
 
 def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
@@ -87,14 +91,14 @@ def save_historical_price_callback(
 
 
 def save_output_callback(
-    response: Union[str, List[str], Dict[str, str]],
+    response: str | List[str] | Dict[str, str],
     save_path: str,
     user_request: Optional[str] = None,
 ) -> None:
     """Save the output callback for streamlit button."""
     # Check the inputs
-    assert isinstance(response, (str, list, dict, tuple, pandas.DataFrame)), TypeError(
-        f'Response must be a string, a list, a dictionary, or a tuple. Got type {type(response)}'
+    assert isinstance(response, (str, list, dict, tuple, pandas.Series, pandas.DataFrame)), TypeError(
+        f'Response must be a string, a list, a dictionary, a tuple. a series, or a dataframe. Got type {type(response)}'
     )
     assert isinstance(save_path, str), TypeError('Save path must be a string.')
     assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
@@ -295,19 +299,32 @@ def clear_cache(delete: bool = False) -> None:
     os.rmdir(streamlit.session_state.cache_dir)
 
 
-def download_file(file: str) -> None:
+def download_file(filename: str) -> None:
     """Add a button to download the file."""
 
+    # Extract the format from the filename
+    format = Path(filename).suffix[1:]
+
+    # Extract the correct mime type from the format
+    if format == 'txt':
+        file_mime = 'text/plain'
+    elif format == 'csv':
+        file_mime = 'text/csv'
+    elif format == 'png':
+        file_mime = 'image/png'
+    elif format == 'pdf':
+        file_mime = 'application/pdf'
+    else:
+        return
     try:
-        # with open(file, 'r') as f:
-        with open(file, encoding='utf8', errors='ignore') as f:
-            file_content = f.read()
-            streamlit.sidebar.download_button(
-                label=f'{Path(file).name}',
-                data=file_content,
-                file_name=file,
-                mime='text/plain',
-            )
+        with open(filename, 'rb') as f:
+            data = f.read()
+        streamlit.sidebar.download_button(
+            label=f'{Path(filename).name}',
+            data=data,
+            file_name=filename,
+            mime=file_mime,
+        )
     except Exception as e:
         logger.warning('Error reading file', str(e))
     except FileNotFoundError as e:
@@ -383,105 +400,133 @@ def initialize_session(
         session_state.launch_time = datetime.datetime.now()
 
 
+def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
+    """Create a temporary directory with specified subdirectories."""
+    os.makedirs(dir)
+    for subdir in subdirs:
+        os.makedirs(subdir)
+
+
+def delete_temp_dir(temp_dir: str) -> None:
+    """Delete the temporary directory and its contents."""
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+        print(f'Temporary directory {temp_dir} deleted.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """Schedule the deletion of the temporary directory after a delay."""
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
 def set_css_styles() -> None:
     streamlit.markdown(
         """
-    <style>
-    /* General body styling */
+        <style>
+        /* General body styling */
 
-    html, body {
-        font-size: 16px,
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        color: #e0e0e0;
-        background-color: #1e1e1e;
-    }
+        html, body {
+            font-size: 16px,
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+        }
 
-    /* Header styling */
-    h1, h2, h3, h4, h5, h6 {
-        color: #EE7624;
-        margin-bottom: 1em;
-    }
+        /* Header styling */
+        h1, h2, h3, h4, h5, h6 {
+            color: #EE7624;
+            margin-bottom: 1em;
+        }
 
-    /* Paragraph and text styling */
-    p, label {
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 0.5em;
-        color: #e0e0e0;
-    }
+        /* Paragraph and text styling */
+        p, label {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 0.5em;
+            color: #e0e0e0;
+        }
 
-    /* Button styling */
-    .stButton > button {
-        background-color: #3A8EBA;
-        color: white;
-        padding: 0.75em 1.5em;
-        font-size: 1;
-        border: none;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .stButton > button:hover {
-        background-color: #45a049;
-    }
+        /* Button styling */
+        .stButton > button {
+            background-color: #3A8EBA;
+            color: white;
+            padding: 0.75em 1.5em;
+            font-size: 1;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .stButton > button:hover {
+            background-color: #45a049;
+        }
 
-    /* Radio button styling */
-    .stRadio > label {
-        font-size: 1;
-    }
-    .stRadio > div > div > label {
-        font-size: 1;
-        padding: 0.25em 0.75em;
-        cursor: pointer;
-        color: #e0e0e0;
-    }
-    .stRadio > div > div {
-        margin-bottom: 0.5em;
-    }
+        /* Radio button styling */
+        .stRadio > label {
+            font-size: 1;
+        }
+        .stRadio > div > div > label {
+            font-size: 1;
+            padding: 0.25em 0.75em;
+            cursor: pointer;
+            color: #e0e0e0;
+        }
+        .stRadio > div > div {
+            margin-bottom: 0.5em;
+        }
 
-    /* Input field styling */
-    input[type="text"], input[type="date"] select {
-        width: 100%;
-        padding: 0.75em;
-        margin: 0.5em 0 1em 0;
-        display: inline-block;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-        font-size: 16px;
-        background-color: #2c2c2c;
-        color: #e0e0e0;
-    }
+        /* Input field styling */
+        input[type="text"], input[type="date"] select {
+            width: 100%;
+            padding: 0.75em;
+            margin: 0.5em 0 1em 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+        }
 
-    /* Checkbox styling */
-    .stCheckbox > label {
-        font-size: 16px;
-    }
+        /* Checkbox styling */
+        .stCheckbox > label {
+            font-size: 16px;
+        }
 
-    /* Container styling */
-    .main {
-        font-size: 16px;
-        padding: 2em;
-        background: #2c2c2c;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        margin-bottom: 2em;
-    }
+        /* Container styling */
+        .main {
+            font-size: 16px;
+            padding: 2em;
+            background: #2c2c2c;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2em;
+        }
 
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: #1e1e1e;
-    }
-    .css-1d391kg .css-1v3fvcr, .css-1d391kg .css-1l5dyp6 {
-        color: #e0e0e0;
-    }
-    </style>
+        /* Sidebar styling */
+        .css-1d391kg {
+            background-color: #1e1e1e;
+        }
+        .css-1d391kg .css-1v3fvcr, .css-1d391kg .css-1l5dyp6 {
+            color: #e0e0e0;
+        }
+        </style>
     """,
         unsafe_allow_html=True,
     )
 
 
 def get_blue_button_style() -> str:
+    """Get the CSS style for a blue button."""
     return """
         button {
             background-color: #2C3E50;

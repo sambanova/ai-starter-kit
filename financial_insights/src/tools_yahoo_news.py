@@ -1,5 +1,5 @@
 import re
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 import pandas
 import requests
@@ -11,34 +11,34 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from financial_insights.src.tools import coerce_str_to_list, get_general_logger
+from financial_insights.src.tools import coerce_str_to_list, get_logger
+from financial_insights.src.tools_stocks import retrieve_symbol_list
 from financial_insights.src.utilities_retrieval import get_qa_response
 from financial_insights.streamlit.constants import *
 
 RETRIEVE_HEADLINES = False
 
-logger = get_general_logger()
+logger = get_logger()
 
 
 class YahooFinanceNewsInput(BaseModel):
-    """Input for the YahooFinanceNews tool."""
+    """Model representing the input for the YahooFinanceNews tool."""
 
-    simbol_list: List[str] | str = Field(
-        description='A list of ticker symbols to search.',
+    company_list: List[str] | str = Field(
+        ..., description='A list of companies to search.', example=['Google', 'Microsoft']
     )
-    user_query: str = Field(description='The original user query.')
+    user_query: str = Field(..., description='The original user query.')
 
 
 @tool(args_schema=YahooFinanceNewsInput)
-def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> Tuple[str, List[str]]:
+def scrape_yahoo_finance_news(company_list: List[str] | str, user_query: str) -> Tuple[str, List[str]]:
     """
     Tool that searches financial news on Yahoo Finance by webscraping.
 
     Useful for when you need to find financial news about a public company.
 
     Args:
-        company_list: List of tickers about which to search for financial news.
-            For example, AAPL for Apple, MSFT for Microsoft.
+        company_list: List of companies about which to search for financial news.
         user_query: The search query to be used in the search bar on Yahoo Finance.
 
     Returns:
@@ -50,17 +50,23 @@ def scrape_yahoo_finance_news(simbol_list: List[str] | str, user_query: str) -> 
         TypeError: If `symbol_list` is not a list of strings or `user_query` is not a string.
     """
     # Check inputs
-    assert isinstance(simbol_list, (list, str)), TypeError(
-        f'Input must be of type `list` or `str`. Got {type(simbol_list)}.'
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'Input must be of type `list` or `str`. Got {type(company_list)}.'
     )
 
-    # If `symbol_list` is a string, coerce it to a list of strings
-    symbol_list = coerce_str_to_list(simbol_list)
+    # If `company_list` is a string, coerce it to a list of strings
+    company_list = coerce_str_to_list(company_list)
 
-    assert all(isinstance(symbol, str) for symbol in symbol_list), TypeError(
-        'All elements in `symbol_list` must be of type str.'
+    assert all(isinstance(company, str) for company in company_list), TypeError(
+        'All elements in `company_list` must be of type str.'
     )
     assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
+
+    # Retrieve the list of ticker symbols
+    try:
+        symbol_list = retrieve_symbol_list(company_list)
+    except:
+        symbol_list = None
 
     # Get the list of relevant urls for the list of companies
     link_urls = get_url_list(symbol_list)
@@ -171,7 +177,7 @@ def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
     df_text_url.to_csv(streamlit.session_state.web_scraping_path, index=False)
 
 
-def get_url_list(symbol_list: List[str]) -> List[str]:
+def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
     """
     Get the most relevant urls from Yahoo Finance News for a given list of company ticker symbols.
 
@@ -218,7 +224,6 @@ def get_url_list(symbol_list: List[str]) -> List[str]:
                 link_urls.extend([link['href'] for link in links])
             else:
                 link_urls.append(url)
-            logger.info('News articles have been successfully scraped')
         else:
             logger.warning(f'Failed to retrieve the page. Status code: {response.status_code}')
 

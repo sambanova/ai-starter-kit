@@ -111,7 +111,11 @@ def handle_stock_query(
     Handle user input and generate a response, also update chat UI in streamlit app
 
     Args:
-        user_question (str): The user's question or input.
+        user_question: The user's question or input.
+        dataframe_name: The name of the dataframe to be used for analysis.
+
+    Returns:
+        The LLM response to the user's question.
     """
     if user_question is None:
         return None
@@ -119,15 +123,21 @@ def handle_stock_query(
     if dataframe_name is None:
         dataframe_name = 'None'
 
-    streamlit.session_state.tools = [
-        'get_stock_info',
-    ]
+    # Declare the permitted tools for function calling
+    streamlit.session_state.tools = ['get_stock_info']
+
+    # Attach the tools for the LLM to use
     attach_tools(streamlit.session_state.tools)
 
-    user_request = (
-        'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        f'Please provide an answer after retrieving the relevant company info using the dataframe "{dataframe_name}".\n'
-    )
+    # Compose the user request
+    user_request = f"""
+        Please answer the following query based on a given list of companies:
+        {user_question}
+
+        First, extract the company (or companies) from the user query.
+        Then, use the dataframe "{dataframe_name}"
+        to retrieve the relevant company information before providing your answer.
+    """
 
     return handle_userinput(user_question, user_request)
 
@@ -150,8 +160,12 @@ def handle_stock_data_analysis(
             - The list of company ticker symbols.
 
     Raises:
+        ValueError: If `start_date` and `end_date` are both None.
         TypeError: If `response` does not conform to the return type.
     """
+    # Check inputs
+    assert start_date is not None or end_date is not None, ValueError('Start date or end date must be provided.')
+
     if user_question is None:
         return None
 
@@ -165,12 +179,12 @@ def handle_stock_data_analysis(
     )
 
     # Compose the user request
-    if start_date is not None or end_date is not None:
-        user_request = (
-            'Fetch historical stock prices for a given list of companies from "start_date" to "end_date".\n'
-            f'The requested dates are from {start_date} to {end_date}.\n'
-            'User request: ' + user_question
-        )
+    user_request = f"""
+        Fetch historical stock prices for a given list of companies from {start_date} to {end_date}.
+        Extract the company (or companies) from the user query.
+        
+        User query: {user_question}
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)

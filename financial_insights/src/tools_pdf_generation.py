@@ -160,24 +160,25 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
 
 # Define your desired data structure.
 class SectionTitleSummary(BaseModel):
-    """The title and summary of a section."""
+    """Model representing the title and summary of a section."""
 
-    title: str = Field(description='Title of the section.')
-    summary: str = Field(description='Summary of the section.')
+    title: str = Field(..., description='Title of the section.')
+    summary: str = Field(..., description='Summary of the section.')
 
 
 class SectionTitle(BaseModel):
-    """The title of a section"""
+    """Model representing the title of a section."""
 
-    title: str = Field(description='Title of the section.')
+    title: str = Field(..., description='The title of the section.')
 
 
+@streamlit.cache_data
 def generate_pdf(
     report_content: List[Tuple[str, Optional[str]]],
     output_file: str,
     title_name: str,
     include_summary: bool = False,
-) -> None:
+) -> bytes:
     """
     Generate a PDF report from the given parsed content.
 
@@ -271,19 +272,20 @@ def generate_pdf(
                 pdf.add_figure(item['figure_path'])
 
     pdf.output(output_file)
+    return bytes(pdf.output())
 
 
 class Summary(BaseModel):
-    """Title and summary of a document"""
+    """Model representing the title and summary of a document."""
 
-    title: str = Field(description='Title of the document')
-    summary: str = Field(description='Extracted summary of the document')
+    title: str = Field(..., description='The title of the document.')
+    summary: str = Field(..., description='The extracted summary of the document.')
 
 
 class ReduceSummary(BaseModel):
-    """Final concise summary of the documents."""
+    """Model representing the final concise summary of the documents."""
 
-    summary: str = Field(description='Final concise summary of the documents')
+    summary: str = Field(..., description='The final concise summary of the documents.')
 
 
 def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], str, str]:
@@ -408,10 +410,12 @@ def invoke_summary_map_chain(doc: Document) -> Any:
 
 
 class PDFRAGInput(BaseModel):
-    """Use the provided PDF file to answer the user query using RAG."""
+    """Model to retrieve the provided PDF file(s) to answer the user query using RAG."""
 
-    user_query: str = Field('The user query.')
-    pdf_files_names: List[str] | str = Field('The list of paths to the PDF file to be used for RAG.')
+    user_query: str = Field(..., description='The user query.')
+    pdf_files_names: List[str] | str = Field(
+        ..., description='The list of paths to the PDF file(s) to be used for RAG.'
+    )
 
 
 @tool(args_schema=PDFRAGInput)

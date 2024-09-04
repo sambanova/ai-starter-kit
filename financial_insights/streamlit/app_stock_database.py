@@ -95,8 +95,12 @@ def handle_database_creation(
     attach_tools(streamlit.session_state.tools)
 
     # Compose the user request
-    user_request = 'Please create a SQL database for the following list of companies.\n' + requested_companies + '\n'
-    user_request += f'\nThe requested dates for data retrieval are from {start_date} to {end_date}'
+    user_request = f"""
+        Please create a SQL database for the following list of companies:
+        {requested_companies}
+
+        The requested dates for data retrieval are from {start_date} to {end_date}.
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(requested_companies, user_request)
@@ -104,7 +108,9 @@ def handle_database_creation(
     # Check the final answer of the LLM
     assert isinstance(response, dict), f'`response` should be of type `dict`. Got {type(response)}.'
     assert all(isinstance(key, str) for key in response.keys()), f'`response.keys()` should be of type `str`.'
-    assert all(isinstance(value, str) for value in response.values()), f'`response.values()` should be of type `str`.'
+    assert all(
+        isinstance(value, str) for value in list(response.values())[0]
+    ), f'`response.values()` should be of type `str`.'
 
     return response
 
@@ -134,13 +140,14 @@ def handle_database_query(
     attach_tools(streamlit.session_state.tools)
 
     # Compose the user request
-    user_request = (
-        'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        f'Please provide an answer after converting the query from natural language to SQL.\n'
-        + 'Use the method: "'
-        + query_method
-        + '" to generate the response.'
-    )
+    user_request = f"""
+        Please answer the following query for the given list of companies:
+        {user_question}
+
+        First, extract the company (or companies) from the user query.
+        Then, convert the query from natural language to SQL using the method:
+        "{query_method}" to generate the response.
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)

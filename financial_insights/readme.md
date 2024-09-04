@@ -17,7 +17,7 @@ SambaNova Financial Assistant
     - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
     - [Update the Embeddings API information](#update-the-embeddings-api-information)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-    - [Workshop deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
+    - [Deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
 - [Environment variables](#environment-variables)
 
 <!-- /TOC -->
@@ -71,7 +71,7 @@ The next step is to set up your environment variables to use one of the models a
 
 We recommend that you run the starter kit in a virtual environment or use a container. 
 
-## Workshop deployment: Use a virtual environment (3.11 preferred)
+## Deployment: Use a virtual environment (3.11 preferred)
 
 If you want to use virtualenv or conda environment:
 
@@ -101,16 +101,14 @@ FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
 FASTAPI_API_KEY = "<your-fastapi-api-key>"
 ```
 
-For the `SEC-EDGAR` functionalities.
+For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
+USER_AGENT: <Company Name> <Email Address>
 ```
-# Your name and surname
-USER_AGENT="<Name Surname (name.surname@provider.com)>"
-
 # Your organization
 SEC_API_ORGANIZATION="<your organization>"
 
 # Your email address
-SEC_API_EMAIL="<name.surname@provider.com>"
+SEC_API_EMAIL="<name.surname@email_provider.com>"
 ```
 
 For `Weave` users:

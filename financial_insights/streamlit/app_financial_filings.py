@@ -96,15 +96,17 @@ def handle_financial_filings(
     attach_tools(streamlit.session_state.tools)
 
     # Compose the user request
-    user_request = (
-        'Please answer the following query for a given list of companies. ' + user_question + '\n'
-        'Please provide an answer after retrieving the provided context using RAG.\n'
-        f'In order to provide context for the question, please retrieve the given SEC EDGAR '
-        f'financial filing type: {filing_type} '
-        f'and filing quarter: {filing_quarter} '
-        f'for the company {company_name} for the year {selected_year}.\n'
-        f'The original user question is the following: {user_question}'
-    )
+    user_request = f"""
+        Please answer the following query based on a list of companies using RAG (Retrieval-Augmented Generation).
+
+        To provide context, retrieve the specified SEC EDGAR financial filing:
+        - Filing type: {filing_type}
+        - Filing quarter: {filing_quarter}
+        - Company: {company_name}
+        - Year: {selected_year}
+
+        The user question is: {user_question}
+    """
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)

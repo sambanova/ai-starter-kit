@@ -14,8 +14,8 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 # Cache directory template
 CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache/')
 
-# App configuration
-EXIT_TIME_DELTA = 1800
+# Minutes for scheduled cache deletion
+EXIT_TIME_DELTA = 30
 
 # Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4

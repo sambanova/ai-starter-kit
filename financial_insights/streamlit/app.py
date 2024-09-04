@@ -15,6 +15,7 @@ sys.path.append(repo_dir)
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
+from financial_insights.src.tools import get_logger
 from financial_insights.streamlit.app_financial_filings import include_financial_filings
 from financial_insights.streamlit.app_pdf_report import include_pdf_report
 from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
@@ -23,9 +24,11 @@ from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
 from financial_insights.streamlit.constants import *
 from financial_insights.streamlit.utilities_app import (
     clear_cache,
+    create_temp_dir_with_subdirs,
     display_directory_contents,
     get_blue_button_style,
     initialize_session,
+    schedule_temp_dir_deletion,
     set_css_styles,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
@@ -41,6 +44,8 @@ with open(CONFIG_PATH, 'r') as yaml_file:
 # Get the production flag
 prod_mode = config['prod_mode']
 
+logger = get_logger()
+
 
 def main() -> None:
     # Initialize session
@@ -50,10 +55,20 @@ def main() -> None:
     cache_created = False
     if not cache_created and not os.path.exists(streamlit.session_state.cache_dir):
         cache_created = True
-        os.makedirs(streamlit.session_state.cache_dir, exist_ok=True)
-        os.makedirs(streamlit.session_state.source_dir, exist_ok=True)
-        os.makedirs(streamlit.session_state.pdf_sources_directory, exist_ok=True)
-        os.makedirs(streamlit.session_state.pdf_generation_directory, exist_ok=True)
+        subdirectories = [
+            streamlit.session_state.source_dir,
+            streamlit.session_state.pdf_sources_directory,
+            streamlit.session_state.pdf_generation_directory,
+        ]
+        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+
+        # Schedule deletion after EXIT_TIME_DELTA minutes
+        schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+    else:
+        try:
+            schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+        except:
+            logger.warning('Could not schedule deletion of cache directory.')
 
     # Streamlit app setup
     streamlit.set_page_config(
@@ -73,8 +88,14 @@ def main() -> None:
     )
 
     # Initialize credentials
-    streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
-    streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
+    if 'FASTAPI_URL' not in streamlit.session_state:
+        streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
+    if 'FASTAPI_API_KEY' not in streamlit.session_state:
+        streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
+    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
+        streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION', '')
+    if 'SEC_API_EMAIL' not in streamlit.session_state:
+        streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL', '')
 
     # Add sidebar
     with streamlit.sidebar:
@@ -94,14 +115,35 @@ def main() -> None:
                     save_credentials('', '', prod_mode)
                     streamlit.rerun()
 
+        # Populate SEC-EDGAR credentials
+        if streamlit.session_state.SEC_API_ORGANIZATION == '':
+            streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
+                'SEC_API_ORGANIZATION for SEC-EDGAR as\n"<your organization>"'
+            )
+        if streamlit.session_state.SEC_API_EMAIL == '':
+            streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
+                'SEC_API_EMAIL for SEC-EDGAR as\n"<name.surname@email_provider.com>"'
+            )
+        # Save button
+        if streamlit.session_state.SEC_API_ORGANIZATION == '' or streamlit.session_state.SEC_API_EMAIL == '':
+            if streamlit.button('Save SEC Credentials'):
+                if streamlit.session_state.SEC_API_ORGANIZATION != '' and streamlit.session_state.SEC_API_EMAIL != '':
+                    streamlit.success('SEC credentials saved successfully!')
+                else:
+                    streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+
         # Custom button to clear chat history
         with stylable_container(
             key='blue-button',
             css_styles=get_blue_button_style(),
         ):
             time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
-            if streamlit.button('Exit App') or time_delta.seconds > EXIT_TIME_DELTA:
-                clear_cache(delete=True)
+            if (
+                streamlit.button('Exit App', help='This will delete the cache!')
+                or time_delta.seconds / 30 > EXIT_TIME_DELTA
+            ):
+                if prod_mode:
+                    clear_cache(delete=True)
                 return
 
         if are_credentials_set():
@@ -167,21 +209,21 @@ def main() -> None:
 
             streamlit.write(
                 """
-                Welcome to the Financial Insights application.
-                This app demonstrates the capabilities of large language models (LLMs)
-                in extracting and analyzing financial data using function calling, web scraping,
-                and retrieval-augmented generation (RAG).
-                
-                Use the navigation menu to explore various features including:
-                
-                - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
-                - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
-                - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
-                - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
-                - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
-                    or on the whole chat history.
-                - **Print Chat History**: Print the whole chat history.
-            """
+                    Welcome to the Financial Insights application.
+                    This app demonstrates the capabilities of large language models (LLMs)
+                    in extracting and analyzing financial data using function calling, web scraping,
+                    and retrieval-augmented generation (RAG).
+                    
+                    Use the navigation menu to explore various features including:
+                    
+                    - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
+                    - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
+                    - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
+                    - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
+                    - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
+                        or on the whole chat history.
+                    - **Print Chat History**: Print the whole chat history.
+                """
             )
 
         # Stock Data Analysis page
