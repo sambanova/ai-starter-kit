@@ -24,7 +24,6 @@ Post Call Analysis
 - [How the starter kit works](#how-the-starter-kit-works)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Customize the model](#customize-the-model)
-        - [Sambaverse](#sambaverse)
         - [SambaStudio](#sambastudio)
         - [Improve results with prompt engineering](#improve-results-with-prompt-engineering)
         - [Customize the factual accuracy analysis](#customize-the-factual-accuracy-analysis)
@@ -38,7 +37,7 @@ Post Call Analysis
 
 This AI starter kit illustrates a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform.
 
-NOTE: You must use SambaStudio for the Automatic Speech Recognition (ASR) workflow. You can use Sambaverse or SambaStudio to perform text analysis.
+NOTE: You must use SambaStudio for the Automatic Speech Recognition (ASR) workflow. You can use SambaNovaCloud or SambaStudio to perform text analysis.
 
 This starter kit provides:
 
@@ -75,12 +74,12 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
-You must perform SambaStudio setup and can optionally perform Sambaverse setup.
+You must perform SambaStudio setup.
 
 - The ASR pipeline requires that you perform the SambaStudio setup steps.
-- For the text analysis, you can use either SambaStudio, FastAPI or Sambaverse.
+- For the text analysis, you can use either SambaStudio, SambaNovaCloud.
 
 - For **SambaStudio** setup please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
@@ -93,11 +92,8 @@ You must perform SambaStudio setup and can optionally perform Sambaverse setup.
         SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 ### Update the Embeddings API information
 
@@ -221,17 +217,7 @@ You can customize this starter kit in many ways.
 
 ## Customize the model 
 
-The precise process for customizing the model depends on whether you're using Sambaverse or SambaStudio.
-
-### Sambaverse
-
-With Sambaverse, you can test and compare the performance of several models.
-
-To change the model that this starter kit is using:
-
-1. Log in to Sambaverse.
-2. Find the model you want to use in the playground, select the three dots, click **Show code**, and find the values of `modelName` and `select_expert`.
-3. To modify the parameters for calling the model, open `config.yaml` and set the values of `sambaverse_model_name` and `sambaverse_expert`. You can also modify `temperature` and `maximum generation token` to experiment with that.
+You can customize the Large Language Model. The customization depends on the endpoint that you are using.
 
 ### SambaStudio
 

@@ -164,7 +164,7 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are three ways to obtain an API key from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+Currently, there are two ways to obtain an API key from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 ### Use SambaNova Cloud (Option 1)
 
 SambaNova Cloud allows you to interact with multiple open-source models. You can find more information and get your API key on the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
