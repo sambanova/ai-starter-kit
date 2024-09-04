@@ -140,7 +140,7 @@ class SearchAssistant:
         Returns:
         llm (SambaStudio or Sambaverse): Langchain LLM to use
         """
-        fastapi_url = DEFAULT_FASTAPI_URL
+        sncloud_url = DEFAULT_FASTAPI_URL
         if self.prod_mode:
             fastapi_api_key = st.session_state.FASTAPI_API_KEY
         else:
@@ -155,8 +155,7 @@ class SearchAssistant:
             temperature=self.llm_info["temperature"],
             select_expert=self.llm_info["select_expert"],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-            fastapi_url=fastapi_url,
+            sambanova_url=sncloud_url,
             fastapi_api_key=fastapi_api_key
         )
         return llm

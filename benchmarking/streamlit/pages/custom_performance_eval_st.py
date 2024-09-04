@@ -60,7 +60,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
 
     if st.session_state.llm_api == "sambastudio":
         sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
-    elif st.session_state.llm_api == "fastapi":
+    elif st.session_state.llm_api == "sncloud":
         sampling_params = {"max_tokens": st.session_state.max_tokens}
     else:
         sampling_params = {}
