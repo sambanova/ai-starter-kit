@@ -55,7 +55,7 @@ This AI Starter Kit is an example of a semantic search workflow. You send your P
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaStudio.
+- Instructions for setup with SambaNova Cloud or SambaStudio.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
 
