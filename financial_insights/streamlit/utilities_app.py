@@ -248,7 +248,7 @@ def display_directory_contents(path: str, default_path: str) -> None:
     if subdirectories:
         streamlit.sidebar.markdown('#### Subdirectories:')
         for idx, subdir in enumerate(subdirectories):
-            if streamlit.sidebar.button(f'📁 {subdir}', key=subdir):
+            if streamlit.sidebar.button(f'📁 {subdir}', key=f'{subdir}_{idx}'):
                 streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
 
                 files_subdir = list_files_in_directory(os.path.join(path, subdir))
@@ -420,6 +420,35 @@ def initialize_session(
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
 
+    # Cache creation
+    if 'cache_created' not in streamlit.session_state:
+        streamlit.session_state.cache_created = False
+
+
+def submit_sec_edgar_details() -> None:
+    """Add the SEC-EDGAR details to the session state."""
+
+    key = 'sidebar-sec-edgar'
+    # Populate SEC-EDGAR credentials
+    if streamlit.session_state.SEC_API_ORGANIZATION is None:
+        streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
+            'For SEC-EDGAR: "<your organization>"', None, key=key + '-organization'
+        )
+    if streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
+            'For SEC-EDGAR: "<name.surname@email_provider.com>"', None, key=key + '-email'
+        )
+    # Save button
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        if streamlit.button('Save SEC EDGAR details', key=key + '-button'):
+            if (
+                streamlit.session_state.SEC_API_ORGANIZATION is not None
+                and streamlit.session_state.SEC_API_EMAIL is not None
+            ):
+                streamlit.success('SEC EDGAR details saved successfully!')
+            else:
+                streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+
 
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
     """Create a temporary directory with specified subdirectories."""
@@ -433,8 +462,11 @@ def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
 
     if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-        print(f'Temporary directory {temp_dir} deleted.')
+        try:
+            shutil.rmtree(temp_dir)
+            logger.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logger.warning(f'Could not delete temporary directory {temp_dir}.')
 
 
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:

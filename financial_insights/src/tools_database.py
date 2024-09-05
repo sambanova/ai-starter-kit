@@ -143,8 +143,11 @@ def store_company_dataframes_to_sqlite(
                 continue
 
             # Store the dataframe in an SQLite database table
-            df.to_sql(table_name, engine, if_exists='replace', index=False)
-            logger.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
+            try:
+                df.to_sql(table_name, engine, if_exists='replace', index=False)
+                logger.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
+            except:
+                logger.warning(f'Could not store {df_name} to SQLite database.')
 
             # Populated company tables list with table name
             company_tables[company].append(table_name)
@@ -353,11 +356,6 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
         # Extract the SQL tables that are relevant to the user query.
         selected_tables = select_database_tables(user_query, [symbol])
 
-        # Add instructions on how to deal with the plots
-        user_query += (
-            '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
-        )
-
         response[symbol] = list()
         for table in selected_tables:
             # Append the response for the given company symbol
@@ -398,7 +396,10 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
         },
     )
 
-    return df.chat(user_query)
+    # Interrogate the dataframe
+    response = table + ': ' + str(df.chat(user_query))
+
+    return response
 
 
 class TableNames(BaseModel):

@@ -30,6 +30,7 @@ from financial_insights.streamlit.utilities_app import (
     initialize_session,
     schedule_temp_dir_deletion,
     set_css_styles,
+    submit_sec_edgar_details,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
 from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
@@ -50,26 +51,6 @@ logger = get_logger()
 def main() -> None:
     # Initialize session
     initialize_session(streamlit.session_state, prod_mode)
-
-    # Create cache
-    cache_created = False
-    if not cache_created and not os.path.exists(streamlit.session_state.cache_dir):
-        cache_created = True
-        subdirectories = [
-            streamlit.session_state.source_dir,
-            streamlit.session_state.pdf_sources_directory,
-            streamlit.session_state.pdf_generation_directory,
-        ]
-        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
-        # Schedule deletion after EXIT_TIME_DELTA minutes
-        schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-    else:
-        if prod_mode:
-            try:
-                schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-            except:
-                logger.warning('Could not schedule deletion of cache directory.')
 
     # Streamlit app setup
     streamlit.set_page_config(
@@ -105,25 +86,25 @@ def main() -> None:
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
 
-        # Populate SEC-EDGAR credentials
-        if streamlit.session_state.SEC_API_ORGANIZATION is None:
-            streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-                'SEC_API_ORGANIZATION for SEC-EDGAR as\n"<your organization>"', None
-            )
-        if streamlit.session_state.SEC_API_EMAIL is None:
-            streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-                'SEC_API_EMAIL for SEC-EDGAR as\n"<name.surname@email_provider.com>"', None
-            )
-        # Save button
-        if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
-            if streamlit.button('Save SEC EDGAR details'):
-                if (
-                    streamlit.session_state.SEC_API_ORGANIZATION is not None
-                    and streamlit.session_state.SEC_API_EMAIL is not None
-                ):
-                    streamlit.success('SEC EDGAR details saved successfully!')
-                else:
-                    streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+        if (
+            not streamlit.session_state.cache_created
+            and not os.path.exists(streamlit.session_state.cache_dir)
+            and are_credentials_set()
+        ):
+            streamlit.session_state.cache_created = True
+            subdirectories = [
+                streamlit.session_state.source_dir,
+                streamlit.session_state.pdf_sources_directory,
+                streamlit.session_state.pdf_generation_directory,
+            ]
+            create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+
+            # In production, schedule deletion after EXIT_TIME_DELTA minutes
+            if prod_mode:
+                try:
+                    schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+                except:
+                    logger.warning('Could not schedule deletion of cache directory.')
 
         # Custom button to clear chat history
         with stylable_container(
@@ -137,6 +118,7 @@ def main() -> None:
             ):
                 if prod_mode:
                     clear_cache(delete=True)
+                    streamlit.write(r':red[You have been logged out.]')
                 return
 
         if are_credentials_set():
@@ -154,6 +136,9 @@ def main() -> None:
                     'Print Chat History',
                 ],
             )
+
+            # Populate SEC-EDGAR credentials
+            submit_sec_edgar_details()
 
             # Add saved files
             streamlit.title('Saved Files')

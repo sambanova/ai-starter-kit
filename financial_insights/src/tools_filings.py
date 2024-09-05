@@ -3,6 +3,7 @@ import os
 from typing import Optional, Tuple
 
 import pandas
+import requests
 import streamlit
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -77,7 +78,10 @@ def retrieve_filings(
     assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
 
     # Retrieve the filing text from SEC Edgar
-    downloader = Downloader(streamlit.session_state.SEC_API_ORGANIZATION, streamlit.session_state.SEC_API_EMAIL)
+    try:
+        downloader = Downloader(streamlit.session_state.SEC_API_ORGANIZATION, streamlit.session_state.SEC_API_EMAIL)
+    except requests.exceptions.HTTPError:
+        raise Exception('Please submit your SEC EDGAR details (organization and email) in the sidebar first.')
 
     # Extract today's year
     current_year = datetime.datetime.now().date().year
