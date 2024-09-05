@@ -107,7 +107,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
