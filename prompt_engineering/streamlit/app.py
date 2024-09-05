@@ -87,11 +87,8 @@ def main():
     col1, col2 = st.columns([1, 1])
     with col1:
         st.text_input(
-            "Model Selection",
+            "Model display",
             llm_expert,
-            help='''
-            \nNote: Working only with Llama 2 and Llama 3 for now.
-            ''',
             disabled=True
         )
         st.write(f":red[**Architecture:**] {model_info[selected_model_for_prompt]['Model Architecture']}  \n:red[**Prompting Tips:**] {model_info[selected_model_for_prompt]['Architecture Prompting Implications']}")
