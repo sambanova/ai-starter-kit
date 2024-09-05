@@ -21,7 +21,7 @@ Table of Contents:
     - [Clone this repository](#clone-this-repository)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the generative model](#set-up-the-generative-model)
-        - [Set up the embedding model](#update-the-embedding-model)
+        - [Set up the embedding model](#set-up-the-embedding-model)
     - [Windows requirements](#windows-requirements)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
