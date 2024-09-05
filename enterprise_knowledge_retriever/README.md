@@ -50,8 +50,7 @@ This AI Starter Kit is an example of a semantic search workflow. You send your P
 
 - A configurable SambaStudio connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
-- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/)
-- An implementation of a semantic search workflow using [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph)
+- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/) or [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph)
 - Prompt construction strategies.
 
 This sample is ready-to-use. We provide:
