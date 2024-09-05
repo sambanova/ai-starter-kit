@@ -208,7 +208,7 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 ## Setting your embedding models
 
-Currently, you can set your embedding models on CPU or SambaStudio. 
+Currently, you can set your embedding models on CPU or SambaStudio. Note that embedding models are not available yet through SambaNova Cloud, but they will be in future releases.
 
 ### Use CPU embedding (Option 1)
 
