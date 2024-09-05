@@ -171,7 +171,7 @@ This workflow, included with this starter kit, is an example of parsing and inde
 
 3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of the text. These embeddings are then used for storing and retrieving the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
-   *For more information about what embeddings are, click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526).*
+   * For more information about what embeddings are, click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526).*
 
 4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database where the embedding acts as the index. In this template, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with their own pros and cons. This starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but it can easily be updated to use another if desired. In terms of metadata, `filename` and `page` are also attached to the embeddings, which are extracted during parsing of the PDF documents.
 
@@ -184,13 +184,13 @@ This workflow is an example of leveraging data stored in a vector database along
 
 1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embedding model in the ingestion workflow.
  
-2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
+2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. Thus, the vector database also acts as a retriever for fetching relevant information.
 
-    *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b).*
+   * For more information about embeddings and their retrieval, click [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b).*
 
 3. **Rerank retrieved content** After retrieving a specified number of relevant chunks of information, a reranker model can be set to rerank the retrieved passages in order of relevance to the user query. Then, the top N documents with the highest relevance scores are selected and passed to the QA chain as context.
 
-*Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/).*
+   * For more information about retrieval augmented generation with LangChain, click [here](https://python.langchain.com/docs/modules/data_connection/).*
 
 </details>
 
