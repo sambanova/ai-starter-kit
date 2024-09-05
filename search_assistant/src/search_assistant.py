@@ -141,12 +141,12 @@ class SearchAssistant:
         llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
         """
         if self.prod_mode:
-            sambanova_api_key = st.session_state.FASTAPI_API_KEY
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
-            if 'FASTAPI_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('FASTAPI_API_KEY') or st.session_state.FASTAPI_API_KEY
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
             else:
-                sambanova_api_key = os.environ.get('FASTAPI_API_KEY')
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         llm = APIGateway.load_llm(
             type=self.api_info,
