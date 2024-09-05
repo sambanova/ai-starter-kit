@@ -73,7 +73,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the models, environment variables and config file
 
-### Set up the inference model
+### Set up the generative model
 
 The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
@@ -93,7 +93,7 @@ You have the following options to set up your embedding model:
 
 ## Windows requirements
 
-- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
 # Deploy the starter kit GUI
 
@@ -114,7 +114,7 @@ If you want to use virtualenv or conda environment:
 
 2. Run the following command:
 
-    > This kit can be deployed using either a simple [LCEL]() implementation or a [LangGraph]() implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
+    > This kit can be deployed using either a simple LCECL implementation or a LangGraph implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
 
     - LCEL version
 
