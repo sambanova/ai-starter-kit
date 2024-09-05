@@ -155,9 +155,10 @@ https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-
 
 After you've deployed the GUI, you can use the start kit. Follow these steps:
 
-1. In the **Pick a data source** pane, drag and drop or browse for files. The data source can be a [Chroma](https://docs.trychroma.com/getting-started) vectorstore or a series of PDF files.
+1. In the **Pick a datasource** pane, either drag and drop files or browse to select them. The data source can be a series of PDF files or a
+ [Chroma](https://docs.trychroma.com/getting-started) vectorstore.
 
-2. Click **Process** to process all loaded PDFs. A vectorstore is created in memory. You can store on disk if you want.
+2. Click **Process** to process all loaded PDFs. This will create a vectorstore in memory, which you can optionally save to disk. Note: This step may take some time, particularly if you are processing large documents or using CPU-based embeddings. 
 
 3. In the main panel, you can ask questions about the PDF data. 
 
