@@ -85,12 +85,28 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
+        if prod_mode:
+            if (
+                not streamlit.session_state.cache_created
+                and not os.path.exists(streamlit.session_state.cache_dir)
+                and are_credentials_set()
+            ):
+                streamlit.session_state.cache_created = True
+                subdirectories = [
+                    streamlit.session_state.source_dir,
+                    streamlit.session_state.pdf_sources_directory,
+                    streamlit.session_state.pdf_generation_directory,
+                ]
+                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
-        if (
-            not streamlit.session_state.cache_created
-            and not os.path.exists(streamlit.session_state.cache_dir)
-            and are_credentials_set()
-        ):
+                # In production, schedule deletion after EXIT_TIME_DELTA minutes
+                try:
+                    schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+                except:
+                    logger.warning('Could not schedule deletion of cache directory.')
+
+        else:
+            # In dev mode
             streamlit.session_state.cache_created = True
             subdirectories = [
                 streamlit.session_state.source_dir,
@@ -98,13 +114,6 @@ def main() -> None:
                 streamlit.session_state.pdf_generation_directory,
             ]
             create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
-            # In production, schedule deletion after EXIT_TIME_DELTA minutes
-            if prod_mode:
-                try:
-                    schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-                except:
-                    logger.warning('Could not schedule deletion of cache directory.')
 
         # Custom button to clear chat history
         with stylable_container(

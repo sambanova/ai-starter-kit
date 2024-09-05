@@ -453,9 +453,9 @@ def submit_sec_edgar_details() -> None:
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
     """Create a temporary directory with specified subdirectories."""
 
-    os.makedirs(dir)
+    os.makedirs(dir, exist_ok=True)
     for subdir in subdirs:
-        os.makedirs(subdir)
+        os.makedirs(subdir, exist_ok=True)
 
 
 def delete_temp_dir(temp_dir: str) -> None:
