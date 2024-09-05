@@ -10,155 +10,37 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st                                      # for gui elements, secrets management
-import yaml                                                 # for loading prompt example config file
-import requests                                             # for calling web APIs
 import base64                                               # for showing the SVG Sambanova icon
-from typing import Tuple                                    # for type hint
-from langchain.prompts import PromptTemplate, load_prompt   # for creating and loading prompting yaml files
 from dotenv import load_dotenv                              # for loading env variables
 
-from utils.model_wrappers.api_gateway import APIGateway
+from src.llm_management import LLMManager
 
 # load env variables 
 load_dotenv(os.path.join(repo_dir,'.env'))
 
-# define config path
-CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
-
 logging.basicConfig(level=logging.INFO)
 logging.info("URL: https://localhost:8501")
 
-
-def _get_expert(selected_model: str, api_info: str) -> str:
-    """Gets the model expert name expected by SambaStudio
-
-    Args:
-        selected_model (str): selected model from Streamlit
-        api_info (str): API type
-    Raises:
-        ValueError: raises when selected model has not valid value
-
-    Returns:
-        str: valid model expert 
-    """
-    if selected_model == "Llama3 8B":
-        if api_info == "sambastudio":
-            model_expert = "Meta-Llama-3-8B-Instruct"
-        elif api_info == "sambaverse":
-            model_expert = "Meta-Llama-3-8B"
-    elif selected_model == "Llama2 70B":
-        model_expert = "llama-2-70b-chat-hf"
-    else:
-        raise ValueError("Only `selected_model` valid values are `Llama3 8B` and `Llama2 70B`")
-    
-    return model_expert
-
-
 @st.cache_data
-def call_fastapi_api(prompt: str, selected_model: str, llm_info: dict) -> str:
-    """Calls a LLama3-8B Sambanova endpoint (Currently the only model supported by FastAPI endpoint). Uses an input prompt and returns a completion of it.
+def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> str:
+    """Calls the API endpoint. Uses an input prompt and returns a completion of it.
 
     Args:
+        llm_manager (LLMManager): llm manager object
         prompt (str): prompt text
-        selected_model (str): selected model from Streamlit. Not used for now.
-        api_info (str): API type. Not used for now.
+        selected_model (str): selected model from Streamlit
         
     Returns:
         str: completion of the input prompt
     """
-    model_expert = "llama3-8b"
-    
+        
     # Setting llm
-    llm = set_llm(llm_info, coe_flag=False, model_expert=model_expert)
+    llm = llm_manager.set_llm(model_expert=llm_expert)
     
     # Get completion from llm
     completion_text = llm.invoke(prompt)
     return completion_text
 
-@st.cache_data
-def call_sambanova_api(prompt: str, selected_model: str,  llm_info: dict) -> str:
-    """Calls a Llama Sambanova endpoint. Uses an input prompt and returns a completion of it.
-
-    Args:
-        prompt (str): prompt text
-        selected_model (str): selected model from Streamlit
-        api_info (str): API type
-        
-    Returns:
-        str: completion of the input prompt
-    """
-    model_expert = _get_expert(selected_model, llm_info["api"])
-    
-    # Setting llm
-    llm = set_llm(llm_info, coe_flag=True, model_expert=model_expert)
-    
-    # Get completion from llm
-    completion_text = llm.invoke(prompt)
-    return completion_text
-
-@st.cache_data
-def call_sambaverse_api(prompt: str, selected_model: str, llm_info: dict) -> str:
-    """Calls a LLama2-70B Sambaverse endpoint. Uses an input prompt and returns a completion of it.
-
-    Args:
-        prompt (str): prompt text
-        selected_model (str): selected model from Streamlit
-        api_info (str): API type
-        
-    Returns:
-        str: completion of the input prompt
-    """
-    model_expert = _get_expert(selected_model, llm_info["api"])
-    
-    # Setting llm
-    llm = set_llm(llm_info, coe_flag=True, model_expert=model_expert)
-    
-    # Get completion from llm
-    completion_text = llm.invoke(prompt)
-    return completion_text
-
-def set_llm(llm_info, coe_flag, model_expert):
-    llm = APIGateway.load_llm(
-        type=llm_info["api"],
-        streaming=False,
-        coe=coe_flag,
-        max_tokens_to_generate=llm_info["max_tokens_to_generate"],
-        temperature=llm_info["temperature"],
-        select_expert=model_expert,
-        sambaverse_model_name=f"Meta/{model_expert}",
-    )
-    return llm
-
-def get_config_info() -> Tuple[str, dict, list]:
-    """Loads json config file
-    """
-    
-    # Read config file
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as file:
-        config = yaml.safe_load(file)
-    model_info = config["models"]
-    llm_info = config["llm"]
-    prompt_use_cases = config["use_cases"]
-    
-    return llm_info, model_info, prompt_use_cases
-
-def get_prompt_template(model: str, prompt_use_case: str) -> str:
-    """Reads a prompt template from an specified model and use case
-
-    Args:
-        model (str): model name 
-        prompt_use_case (str): use case name
-
-    Returns:
-        str: prompt template associated to the model and use case selected
-    """
-    
-    # Load prompt from the corresponding yaml file
-    prompt_file_name = f"{model.lower().replace(' ','_')}-prompt_engineering-{prompt_use_case.lower().replace(' ','_')}_usecase.yaml"
-    prompt = load_prompt(f'./prompts/{prompt_file_name}')
-    
-    return prompt.template
-    
 
 def render_svg(svg_path: str) -> None:
     """Renders the given svg string.
@@ -174,44 +56,6 @@ def render_svg(svg_path: str) -> None:
     html = r'<img src="data:image/svg+xml;base64,%s" width="60"/>' % b64
     st.write(html, unsafe_allow_html=True)
 
-
-def create_prompt_yamls() -> None:
-    """Shows a way how prompt yamls can be created. We're going to save our prompts in yaml files.
-    """
-    
-    # Given a set of prompts based on the use case and model used
-    prompts_templates = {
-        "General Assistant": {
-            "Llama2 70B": "[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers should not include any unsafe, unethical, or illegal content. If you don't understand the question or don't know the answer, please don't share false information. <</SYS>>\n\nHow can I write better prompts for large language models? [/INST]"        
-        },
-        "Document Search": {
-            "Llama2 70B": "[INST] <<SYS>> Use the following pieces of context to answer the question at the end. If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context. <</SYS>>\nContext: Early Account Closure Fee $30 (if account is closed within 6 months of opening) \nReplacement of ATM Card $5 per card \nReplacement Of Lost Passbook $15 per passbook \nQuestion: I lost my ATM card. How much will it cost to replace it? [/INST]"
-        },
-        "Product Selection": {
-            "Llama2 70B": "[INST] <<SYS>> You are an electrical engineer ai assistant.  You will be given context that will help answer a question.  You will interpret the context for useful information that will answer the question.  Provide concise, helpful, technical information (focusing on numerical information).  <</SYS>> [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching frequency of max20710?'\n    contexts: VREF  Range | | See Table 8 for accuracy vs. �REF VREF (Note 6 ) | 0.6016 | | 1.0 | V | | FEEDBACK LOOP | | | | | | | | Integrator Recovery-Time Constant | tREC tREC  | | | 20 | | �s μs | | Gain (see the Control Loop Stability section for details) | RGAIN RGAIN  | Selected by R_SELB or PMBus ( ( Note 5,6,7,8) 5,6,7,8) | 0.72 | 0.9 | 1.1 | mV/A mV/A | | | | | 1.4 | 1.8 | 2.2 | | | | | | 2.9 | 3.6 | 4.3 | | | SWITCHING FREQUENCY | | | | | | | | Switching Frequency | ��� fSW  | 400kHz/600kHz/800kHz 400kHz/600kHz/800kHz selected by C_SELB; other values are set through PMBus (Note 6 ) | | 400 | | kHz kHz | | | | | | 500 | | | | | | | | 600 | | | | | | | | 700 | | | | | | | | 800 | | | | | | | | 900 | | | | Switching Frequency Accuracy | | ( ( Note 5,7,8) 5,7,8) | -20 | | +20 | % % | | INPUT PROTECTION | | | | | | | | Rising VDDH VDDH  UVLO Threshold | VDDH UVLO | (Note 5) | | 4.25 | 4.47 | V | | Falling VDDH VDDH  UVLO Threshold | | | 3.7 | 3.9 | | | | Hysteresis | | | | 350 | | mV mV |\n\n    [INST] Given the context you received, answer the question.  Please do not infer anything if the question cannot be deduced from the context or make anything up; simply state you cannot find the information.\n\n    Sure, here is the answer to the question:[/INST]"
-        },
-        "Code Generation": {
-            "Llama2 70B": "[INST] <<SYS>> You are a helpful code assistant. Generate a valid JSON object based on the inpput. \nExample: name: John lastname: Smith address: #1 Samuel St. would be converted to:\n{\n\"\"address\"\": \"\"#1 Samuel St.\"\",\n\"\"lastname\"\": \"\"Smith\"\",\n\"\"name\"\": \"\"John\"\"\n} <</SYS>>\n[INST] Input: name: Ted lastname: Pot address: #1 Bisson St. [/INST]"
-        },
-        "Summarization": {
-            "Llama2 70B": "[INST] <<SYS>> You are a helpful assistant. Your answers should not include any unsafe, unethical, or illegal content. <</SYS>>\n\nSummarize the customer support call transcript below:\n\nCustomer: Hi, I'm having trouble accessing my account.\n\nSupport Agent: Sure, can you please provide me with your account username?\n\nCustomer: It's 'example123'.\n\nSupport Agent: Thank you. I see that there was a recent security update that might have affected access. Let me check on that for you.\n\nCustomer: Okay, thank you.\n\nSupport Agent: It seems like there was a temporary glitch in the system. I've fixed it, and you should be able to access your account now.\n\nCustomer: Great, thank you so much for your help!\n\nSupport Agent: You're welcome. Is there anything else I can assist you with today?\n\nCustomer: No, that's all. Thank you again.\n\nSummarize the conversation highlighting the customer's issue, the steps taken by the support agent to resolve it, and the resolution outcome. [/INST]"
-        },
-        "Question & Answering": {
-            "Llama2 70B": "[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers should not include any unsafe, unethical, or illegal content. If you don't understand the question or don't know the answer, please don't share false information. <</SYS>>\n\nBased on the following excerpt extraction from an Amazon revenue report, answer the question.\n\nExcerpt:\n\nTotal revenue for Q4 2023 reached $150 billion, marking a 20% increase compared to the same period last year. The largest contributor to this revenue growth was the North American market, which saw a 25% increase in sales, reaching $90 billion. International sales also showed significant growth, with a 15% increase, totaling $60 billion.\n\nQuestion:\n\nWhat was the percentage increase in total revenue for Amazon in Q4 2023 compared to the same period last year? [/INST]"
-        },
-        "Query decomposition": {
-            "Llama2 70B": "[INST] <<SYS>> Decompose a complex query into a list of questions that can be addressed individually. Follow these rules: 1. Only use the information given in the query. 2. The output is in JSON format. 3. No explanation or conclusions are necessary. <</SYS>>\n\nQuery example:\n\n'''Compare the prices, security features, engines, and overall user experience of Ford Escape and Toyota Rav4.'''\n\nOutput:\n\n<<<{questions: ['1. What is the price of the Ford Escape and how does it vary across different trim levels?','2. What is the price of the Toyota Rav4 and how does it vary across different trim levels?','3. What are the security features offered in the Ford Escape?','4. What are the security features offered in the Toyota Rav4?','5. What are the engine specifications of the Ford Escape?','6. What are the engine specifications of the Toyota Rav4?','7. What is the overall user experience of the Ford Escape?','8. What is the overall user experience of the Toyota Rav4?']}>>>\n\nNew query:\n\n'''Compare the features, performance, and prices of the iPhone models iPhone 12, iPhone 12 Pro, and iPhone 12 Pro Max, including differences in camera capabilities, display specifications, battery life, and overall user experience.'''\n\nOuput: [/INST]"
-        }
-    }
-    
-    # Iterate and save prompts in yaml files
-    for usecase_key, usecase_value in prompts_templates.items():
-        for model_key, prommpt_template in usecase_value.items():
-            prompt_file_name = f"{model_key.lower().replace(' ','_')}-prompt_engineering-{usecase_key.lower().replace(' ','_')}_usecase"
-            prompt = PromptTemplate.from_template(prommpt_template)
-            prompt.save(f"./prompts/{prompt_file_name}.yaml")
-            
-
 def main():
     
     # Set up title
@@ -222,26 +66,35 @@ def main():
     with col2:
         st.title('Prompt Engineering Starter Kit')
 
-    # Get model information and prompt use cases from config file
-    llm_info, model_info, prompt_use_cases = get_config_info()
-    model_names = [key for key, _ in model_info.items()]
-    if llm_info["api"] == "fastapi":
-        model_names.remove("Llama2 70B")
+    # Instantiate LLMManager class 
+    llm_manager = LLMManager()
     
-    st.session_state["model_info"] = model_info
+    llm_info = llm_manager.llm_info
+    model_info = llm_manager.model_info
+    prompt_use_cases = llm_manager.prompt_use_cases
+    
+    # Set up model names
+    model_names = [key for key, _ in model_info.items()]
+    model_name_candidates = [model_name for model_name in model_names if model_name.lower() in llm_info["select_expert"].lower().replace("-","")]
+    
+    if len(model_name_candidates)>0:
+        llm_expert = llm_info["select_expert"]
+        selected_model_for_prompt = model_name_candidates[0]
+    else:
+        raise Exception("The llm expert specified doesn't match with the list of models provided in config.")
     
     # Set up model selection drop box
     col1, col2 = st.columns([1, 1])
     with col1:
-        selected_model = st.selectbox(
+        st.text_input(
             "Model Selection",
-            model_names,
-            index=0,
+            llm_expert,
             help='''
-            \nNote: Working only with Llam2 70B for now.
+            \nNote: Working only with Llama 2 and Llama 3 for now.
             ''',
+            disabled=True
         )
-        st.write(f":red[**Architecture:**] {st.session_state.model_info[selected_model]['Model Architecture']}  \n:red[**Prompting Tips:**] {st.session_state.model_info[selected_model]['Architecture Prompting Implications']}")
+        st.write(f":red[**Architecture:**] {model_info[selected_model_for_prompt]['Model Architecture']}  \n:red[**Prompting Tips:**] {model_info[selected_model_for_prompt]['Architecture Prompting Implications']}")
 
     # Set up use case drop box
     with col2:
@@ -258,10 +111,10 @@ def main():
             \n:red[**Query decomposition:**] Aids on simplyfying complex queries into small and precise sub-questions. Vital for breaking down complex queries into more manageable sub-tasks, facilitating more effective information retrieval and generation processes.
             ''',
         )
-        st.write(f":red[**Meta Tag Format:**]  \n {st.session_state.model_info[selected_model]['Meta Tag Format']}")
+        st.write(f":red[**Meta Tag Format:**]  \n {model_info[selected_model_for_prompt]['Meta Tag Format']}")
 
     # Set up prompting area. Show prompt depending on the model selected and use case
-    prompt_template = get_prompt_template(selected_model, selected_prompt_use_case)
+    prompt_template = llm_manager.get_prompt_template(selected_model_for_prompt, selected_prompt_use_case)
     prompt = st.text_area(
         "Prompt",
         prompt_template,
@@ -273,13 +126,13 @@ def main():
         response_content = ""
         # Call endpoint and show the response content
         if llm_info["api"] == "sambastudio":
-            response_content = call_sambanova_api(prompt, selected_model, llm_info)
+            response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
         elif llm_info["api"] == "sambaverse":
-            response_content = call_sambaverse_api(prompt, selected_model, llm_info)
+            response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
-        elif llm_info["api"] == "fastapi":
-            response_content = call_fastapi_api(prompt, selected_model, llm_info)
+        elif llm_info["api"] == "sncloud":
+            response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
         else:
             st.error('Please select a valid API in your config file "sambastudio" or "sambaverse" ')

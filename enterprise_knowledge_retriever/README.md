@@ -48,20 +48,16 @@ Table of Contents:
 
 This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
 
-- A configurable SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
-- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/)
-- An implementation of a semantic search workflow using [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph)
+- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/) or [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph).
 - Prompt construction strategies.
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaStudio.
+- Instructions for setup with SambaNova Cloud or SambaStudio.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
-- A video overview of the setup process:
-
-https://github.com/sambanova/ai-starter-kit/assets/150964187/958528ae-00c8-4934-b64f-80a03dd746f0
 
 # Before you begin
 
@@ -77,86 +73,35 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the models and config file
 
-### Set up the inference endpoint, configs and environment variables
+### Set up the inference model, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- If using **SambaNova Cloud**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+- If using **SambaStudio**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-### Update the Embeddings API information
+### Set up the embedding model
 
-You have these options to specify the embedding API info: 
+You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **Option 1 (default): Use a CPU embedding model**
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
+In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
 * **Option 2: Set a SambaStudio embedding model**
 
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
-
-## Install system dependencies
-
-- Ubuntu installation:
-
-    ```bash
-    sudo apt install tesseract-ocr
-    ```
-
-- Mac Homebrew installation:
-
-    ```bash
-    brew install tesseract
-    ```
-
-- Windows installation:
-    > [Windows tessearct installation](https://github.com/UB-Mannheim/tesseract/wiki)
-
-- For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
+To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
 ## Windows requirements
 
 - If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
-## Deploy the parsing service 
-
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the parsing service.
-Follow the instructions to deploy the parsing service locally [here](../README.md#parsing-service-management)
-
-- Also, make sure you add the following variables to the `.env` file in the ai-starter-kit root directory:
-
-     ```bash
-     UNSTRUCTURED_API_KEY="your_API_key_here"
-     UNSTRUCTURED_URL="http://localhost:8005/general/v0/general"
-     ```
-- Or if you are using docker to run this kit:
-
-     ```bash
-     UNSTRUCTURED_API_KEY="your_API_key_here"
-     UNSTRUCTURED_URL="http://host.docker.internal:8005/general/v0/general"
-     ```
-
-- > You can omit UNSTRUCTURED_API_KEY by setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents.
-
-## Parsing service issues
-If you are having problems with the local parsing service [here](../README.md#parsing-service-issues). Also, remember to stop the parsing service as part of the clean up process by running:
-```bash
-make stop-parsing-service
-```
-
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend Python 3.10 or 3.11. 
 
 ## Option 1: Use a virtual environment
 
@@ -208,17 +153,19 @@ https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-
 
 # Use the starter kit 
 
-After you've deployed the GUI, you can use the start kit. Follow these steps:
+After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
-1. In the **Pick a data source** pane, drag and drop or browse for files. The data source can be a [Chroma](https://docs.trychroma.com/getting-started) vectorstore or a series of PDF files.
+1. In the **Pick a datasource** pane, either drag and drop files or browse to select them. The data source can be a series of PDF files or a
+ [Chroma](https://docs.trychroma.com/getting-started) vectorstore.
 
-2. Click **Process** to process all loaded PDFs. A vectorstore is created in memory. You can store on disk if you want.
+2. Click **Process** to process all loaded PDFs. This will create a vectorstore in memory, which you can optionally save to disk. **Note**: This step may take some time, particularly if you are processing large documents or using CPU-based embeddings. 
 
 3. In the main panel, you can ask questions about the PDF data. 
 
-This workflow uses the AI starter kit as is with an ingestion, retrieval, response workflow. 
+This pipeline uses the AI starter kit as is with an ingestion, retrieval, and Q&A workflows. More details about each workflow are provided below:
 
-## Ingestion workflow
+<details>
+<summary> Ingestion workflow </summary>
 
 This workflow, included with this starter kit, is an example of parsing and indexing data for subsequent Q&A. The steps are:
 
@@ -232,7 +179,10 @@ This workflow, included with this starter kit, is an example of parsing and inde
 
 4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, `filename` and `page` are also attached to the embeddings which are extracted during parsing of the PDF documents.
 
-## Retrieval workflow
+</details>
+
+<details>
+<summary> Retrieval workflow </summary>
 
 This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A off your data. The steps are:
 
@@ -246,13 +196,18 @@ This workflow is an example of leveraging data stored in a vector database along
 
 *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
-## Q&A workflow
+</details>
+
+<details>
+<summary> Q&A workflow </summary>
 
 After the relevant information is retrieved, the content is sent to a SambaNova LLM to generate a final response to the user query.
 
 Before being sent to the LLM, the user's query is combined with the retrieved content along with instructions to form the prompt. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
 
 *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+
+</details>
 
 # Customizing the starter kit
 
@@ -375,24 +330,4 @@ file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (version 1.25.0)
-- pydantic (version 2.7.0)
-- pydantic_core (version 2.18.1)
-- langchain-community (version 0.2.10)
-- langchain-core (version 0.2.25)
-- langchain (version 0.2.11)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- faiss-cpu (version 1.7.4)
-- PyPDF2 (version 3.0.1)
-- python-dotenv (version 1.0.0)
-- streamlit-extras
-- pillow (version 9.1.0)
-- sseclient-py (version 1.8.0)
-- unstructured[pdf] (version 0.13.3)
-- unstructured_inference (version 0.7.27)
-- PyMuPDF (version 1.23.4)
-- chromadb (version 0.4.24)
-- langgraph (version 0.0.55)
+All the packages/tools are listed in the requirements.txt file in the project directory.
