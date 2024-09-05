@@ -97,7 +97,7 @@ class SearchAssistant:
         config_path (str): Path to the YAML configuration file.
 
         Returns:
-        api_info (string): string containing API to use SambaStudio or Sambaverse.
+        api_info (string): string containing API to use SambaStudio or SambaNovaCloud.
         embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
@@ -138,7 +138,7 @@ class SearchAssistant:
         Initializes the LLM endpoint
 
         Returns:
-        llm (SambaStudio or Sambaverse): Langchain LLM to use
+        llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
         """
         if self.prod_mode:
             sambanova_api_key = st.session_state.FASTAPI_API_KEY
