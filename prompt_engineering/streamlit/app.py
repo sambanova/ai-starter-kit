@@ -125,14 +125,11 @@ def main():
         if llm_info["api"] == "sambastudio":
             response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
-        elif llm_info["api"] == "sambaverse":
-            response_content = call_api(llm_manager, prompt, llm_expert)
-            st.write(response_content)
         elif llm_info["api"] == "sncloud":
             response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
         else:
-            st.error('Please select a valid API in your config file "sambastudio" or "sambaverse" ')
+            st.error('Please select a valid API in your config file "sncloud" or "sambastudio" ')
 
 if __name__ == "__main__":
     # run following method if you want to know how prompt yaml files were created.
