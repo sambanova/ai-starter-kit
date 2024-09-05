@@ -97,7 +97,7 @@ You have the following options to set up your embedding model:
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. We also recommend Python 3.10 or 3.11. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
 ## Option 1: Use a virtual environment
 
