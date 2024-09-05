@@ -132,6 +132,7 @@ def main():
     vdb = VectorDb()
     _, _, embedding_model_info, _, _ = get_config_info(CONFIG_PATH=CONFIG_PATH)
     embeddings = load_embedding_model(embedding_model_info=embedding_model_info)
+    default_collection = 'agent_workflows_default_collection'
 
     st.set_page_config(
         page_title="AI Starter Kit",
@@ -247,7 +248,8 @@ def main():
                     text_chunks = parse_doc_streamlit(docs, kit_dir=kit_dir)
                     # create vector store
                     st.session_state.embeddings = embeddings
-                    vectorstore = vdb.create_vector_store(text_chunks, embeddings, db_type="chroma", output_db=None)
+                    vectorstore = vdb.create_vector_store(text_chunks, embeddings,output_db=save_location,
+                                                           db_type="chroma", collection_name=default_collection)
                     st.session_state.vectorstore = vectorstore
 
                     # instantiate rag
@@ -325,7 +327,7 @@ def main():
                         if os.path.exists(db_path):
                             # load the vectorstore
                             st.session_state.embeddings = embeddings
-                            vectorstore = vdb.create_vector_store(text_chunks, embeddings, db_type="chroma", output_db=None)
+                            vectorstore = vdb.load_vdb(db_path, embeddings, collection_name=default_collection)
                             st.toast("Database loaded")
 
                             # assign vectorstore to session

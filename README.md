@@ -9,9 +9,9 @@
 
 # Overview
 
-SambaNova AI Starter Kits are a collection of open-source examples and guides to facilitate the deployment of AI-driven use cases in the enterprise.
+SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, if you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud. Most code examples are written in Python, though the concepts can be applied in any language.
+To run these examples, you can obtain a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us</a> on Discord <a href="https://discord.gg/YWFrcZKf" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -151,6 +151,13 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 </tr>
 
 <tr>
+<td width="20%"><a href="financial_insights/readme.md"> Financial Assistant</a></td>
+<td width="50%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
+<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> Advanced AI Capabilities </td>   
+</tr>
+
+<tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="50%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
 <td width="15%"> SambaStudio, SambaNovaCloud</td>
@@ -160,30 +167,31 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 </tbody>
 </table>
 
-# Get started with SambaNova AI starter kit
+# Getting Started 
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
+
 ### Use SambaNova Cloud (Option 1)
 
-SambaNova Cloud allows you to interact with multiple open-source models. You can find more information and get your API key on the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
+For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
 
-Integrate SambaNova Cloud LLMs with this AI starter kit by updating the API information. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Enter the SambaNovaCloud URL and API key in the `.env` file, for example:
   
 ```bash
-SAMBANOVA_URL = "https://fastapi.snova.ai/api/v1/chat/completion"
+SAMBANOVA_URL = "https://fast-api.snova.ai/v1/chat/completions"
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
 ### Use SambaStudio (Option 2)
 
-Begin by deploying your LLM of choice (e.g. Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin by deploying your LLM of choice (e.g., Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-Integrate your LLM deployed on SambaStudio with this AI starter kit by updating the API information for the SambaNova LLM. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+To integrate your LLM deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
