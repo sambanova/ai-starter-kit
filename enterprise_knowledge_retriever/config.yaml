@@ -1,8 +1,5 @@
 api: "sncloud" #  set either sambastudio or sncloud
 
-pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
-prod_mode: False
-
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
@@ -23,6 +20,9 @@ retrieval:
     "rerank": False # set if you want to rerank retriever results 
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
     "final_k_retrieved_documents": 5
+
+pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
+prod_mode: False
 
 prompts: 
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
