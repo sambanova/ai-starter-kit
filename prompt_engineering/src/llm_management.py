@@ -56,8 +56,7 @@ class LLMManager:
             coe=self.llm_info["coe"],
             max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
             temperature=self.llm_info["temperature"],
-            select_expert=model_expert,
-            sambaverse_model_name=f"Meta/{model_expert}",
+            select_expert=model_expert
         )
         return llm
 
