@@ -60,6 +60,7 @@ def get_stock_data_analysis() -> None:
             ],
         ),
     )
+
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_stock_query(user_request, dataframe_name)
