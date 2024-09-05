@@ -6,6 +6,7 @@ langchain-experimental==0.0.60
 sseclient-py==1.8.0
 streamlit==1.36.0
 types-PyYAML==6.0.12.20240311
+matplotlib==3.8.0
 
 InstructorEmbedding==1.0.1
 transformers==4.44.1

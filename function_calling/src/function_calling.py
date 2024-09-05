@@ -23,7 +23,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway 
+from utils.model_wrappers.api_gateway import APIGateway
 from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
 
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -115,13 +115,13 @@ class FunctionCallingLlm:
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
             streaming=True,
-            coe=self.llm_info["coe"],
-            do_sample=self.llm_info["do_sample"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
-            select_expert=self.llm_info["select_expert"],
-            process_prompt=False
-        )           
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
+            process_prompt=False,
+        )
         return llm
 
     def get_tools_schemas(
@@ -215,16 +215,20 @@ class FunctionCallingLlm:
             try:
                 json.loads(json_str)
             except:
+                print(f'not parsable json: \n{json_str}\n  attempting to fix')
                 json_correction_prompt = """|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a json format corrector tool<|eot_id|><|start_header_id|>user<|end_header_id|>
-                fix the following json file: {json} 
+                fix the following non parsable json file: {json} 
                 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
                 fixed json: """  # noqa E501
                 json_correction_prompt_template = PromptTemplate.from_template(json_correction_prompt)
                 json_correction_chain = json_correction_prompt_template | self.llm
                 json_str = json_correction_chain.invoke({'json': json_str})
+                print(f'Corrected json: {json_str}')
         else:
-            # implement here not finding json format parsing to json or error rising
-            json_str = None
+            # will assume is a conversational response given is not json formatted
+            print('response is not json formatted assuming conversational response')
+            dummy_json_response = [{'tool': 'ConversationalResponse', 'tool_input': {'response': input_string}}]
+            json_str = json.dumps(dummy_json_response)
         return json_str
 
     def msgs_to_llama3_str(self, msgs: list) -> str:
@@ -253,7 +257,7 @@ class FunctionCallingLlm:
             else:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
-    
+
     def msgs_to_sncloud(self, msgs: list) -> list:
         """
         convert a list of langchain messages with roles to expected FastCoE input
@@ -296,7 +300,7 @@ class FunctionCallingLlm:
                 prompt = self.msgs_to_sncloud(history)
             else:
                 prompt = self.msgs_to_llama3_str(history)
-            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   
+            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')
             llm_response = self.llm.invoke(prompt)
             print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
