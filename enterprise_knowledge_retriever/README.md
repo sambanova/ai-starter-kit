@@ -138,12 +138,6 @@ Follow the instructions to deploy the parsing service locally [here](../README.m
 
 - > You can omit UNSTRUCTURED_API_KEY by setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents.
 
-## Parsing service issues
-If you are having problems with the local parsing service [here](../README.md#parsing-service-issues). Also, remember to stop the parsing service as part of the clean up process by running:
-```bash
-make stop-parsing-service
-```
-
 # Deploy the starter kit GUI
 
 We recommend that you run the starter kit in a virtual environment or use a container. 
