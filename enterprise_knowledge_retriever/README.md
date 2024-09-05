@@ -372,24 +372,4 @@ file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (version 1.25.0)
-- pydantic (version 2.7.0)
-- pydantic_core (version 2.18.1)
-- langchain-community (version 0.2.10)
-- langchain-core (version 0.2.25)
-- langchain (version 0.2.11)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- faiss-cpu (version 1.7.4)
-- PyPDF2 (version 3.0.1)
-- python-dotenv (version 1.0.0)
-- streamlit-extras
-- pillow (version 9.1.0)
-- sseclient-py (version 1.8.0)
-- unstructured[pdf] (version 0.13.3)
-- unstructured_inference (version 0.7.27)
-- PyMuPDF (version 1.23.4)
-- chromadb (version 0.4.24)
-- langgraph (version 0.0.55)
+All the packages/tools are listed in the requirements.txt file in the project directory.
