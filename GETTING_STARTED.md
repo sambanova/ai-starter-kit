@@ -88,8 +88,6 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 
 ## Starter Applications
 
-## Starter Applications
-
 | Application | Description | Demo | Source Code |
 |-------------|-------------|------|-------------|
 | Enterprise Knowledge Retrieval Chatbot | Build a retrieval-augmented generation (RAG) chatbot using your enterprise documents | [Live Demo](https://sambanova-ai-starter-kits-ekr.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/enterprise_knowledge_retriever/README.md) |
