@@ -73,7 +73,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the models, environment variables and config file
 
-### Set up the inference model
+### Set up the generative model
 
 The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
