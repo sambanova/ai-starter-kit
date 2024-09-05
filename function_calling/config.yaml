@@ -1,5 +1,3 @@
-prod_mode: False
-
 llm: 
   "api": "sncloud" #  set either sambastudio or sncloud
   "do_sample": False
@@ -51,3 +49,5 @@ tools:
       retrieval:
         "k_retrieved_documents": 3
         "score_treshold": 0.3
+
+prod_mode: False
