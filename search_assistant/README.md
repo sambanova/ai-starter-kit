@@ -93,7 +93,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
@@ -366,19 +366,4 @@ Learn more about prompt engineering [here](https://www.promptingguide.ai/)
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (Version 1.32.2)
-- streamlit-extras (Version 0.3.6)
-- langchain (Version 0.2.11)
-- langchain_community (Version 0.2.10)
-- sentence_transformers (Version 2.2.2)
-- instructorembedding (Version 1.0.1)
-- faiss-cpu (Version 1.7.4)
-- python-dotenv (Version 1.0.0)
-- pydantic (Version 1.10.14)
-- pydantic_core (Version 2.10.1)
-- sseclient-py (Version 1.8.0)
-- google-search-results (Version 2.4.2)
-- html2text (Version 2024.2.26)
-- unstructured[pdf] (Version 0.12.4)
+All the packages/tools are listed in the requirements.txt file in the project directory. 

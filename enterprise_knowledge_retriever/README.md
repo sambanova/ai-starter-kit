@@ -73,7 +73,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the models, environment variables and config file
 
-### Set up the inference model
+### Set up the generative model
 
 The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
@@ -93,11 +93,11 @@ You have the following options to set up your embedding model:
 
 ## Windows requirements
 
-- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. We also recommend Python 3.10 or 3.11. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
 ## Option 1: Use a virtual environment
 
@@ -114,7 +114,7 @@ If you want to use virtualenv or conda environment:
 
 2. Run the following command:
 
-    > This kit can be deployed using either a simple [LCEL]() implementation or a [LangGraph]() implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
+    > This kit can be deployed using either a simple LCECL implementation or a LangGraph implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
 
     - LCEL version
 
@@ -165,32 +165,32 @@ This pipeline uses the AI starter kit as is with an ingestion, retrieval, and Q&
 
 This workflow, included with this starter kit, is an example of parsing and indexing data for subsequent Q&A. The steps are:
 
-1. **Document parsing:** Python packages like [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from file documents. On the LangChain website, multiple [integrations](https://python.langchain.com/v0.2/docs/how_to/#document-loaders) for text extraction from multiple file types are available. Depending on the quality and the format of the files, this step might require customization for different use cases. this kit uses in behind for the document parsing step the [parser util](../utils/parser/), which leverages the unstructured module to parse the documents.
+1. **Document parsing:** Python packages like [PyMuPDF](https://pypi.org/project/PyMuPDF/) or [unstructured](https://github.com/Unstructured-IO/unstructured-inference) are used to extract text from file documents. On the LangChain website, multiple [integrations](https://python.langchain.com/v0.2/docs/how_to/#document-loaders) for text extraction from multiple file types are available. Depending on the quality and the format of the files, this step might require customization for different use cases. This kit uses the [parser util](../utils/parsing/) in the background for the document parsing step, which leverages either PyMuPDF or the unstructured module to parse the documents.
 
-2. **Split data:** After the data has been parsed and its content extracted, is needed to split the data into chunks of text to be embedded and stored in a vector database. The size of the chunks of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using the [parser util](../utils/parser/) that leverages unstructured module to split the parsed documents into chunks
+2. **Split data:** After the data has been parsed and its content extracted, it is necessary to split the data into chunks of text to be embedded and stored in a vector database. The size of the text chunks depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text also impacts performance; for instance, ensuring there are no word or sentence breaks is crucial. The downloaded data is split using the [parser util](../utils/parsing/), which leverages either PyMuPDF or the unstructured module to split the parsed documents into chunks.
 
-3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of the text. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+3. **Embed data:** For each chunk of text from the previous step, we use an embeddings model to create a vector representation of the text. These embeddings are then used for storing and retrieving the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain_community.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
-   NOTE: For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
+   *For more information about what embeddings are, click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526).*
 
-4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, `filename` and `page` are also attached to the embeddings which are extracted during parsing of the PDF documents.
+4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database where the embedding acts as the index. In this template, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with their own pros and cons. This starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but it can easily be updated to use another if desired. In terms of metadata, `filename` and `page` are also attached to the embeddings, which are extracted during parsing of the PDF documents.
 
 </details>
 
 <details>
 <summary> Retrieval workflow </summary>
 
-This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A off your data. The steps are:
+This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A from your data. The steps are:
 
-1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embedding model in the ingestion workflow.
+1. **Embed query:** The first step is to convert a user-submitted query to a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Use the same embedding mode for query parsing and to generate embeddings. In this start kit, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain_community.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same embedding model in the ingestion workflow.
  
-2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. The vector database therefore also acts as a retriever for fetching relevant information from the database.
+2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which in turn returns *relevant* entries (content) in it. Thus, the vector database also acts as a retriever for fetching relevant information.
 
-    *More information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
+   *For more information about embeddings and their retrieval, click [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b).*
 
-3. **Rerank retrieved content** After retrieving a specified number of relevant chunks of information, a reranker model can be set to rerank the retrieved passages in order of relevance to the user query. Then are selected the top N documents with higher relevance scores and passes those chunks to the QA chain as context.
+3. **Rerank retrieved content** After retrieving a specified number of relevant chunks of information, a reranker model can be set to rerank the retrieved passages in order of relevance to the user query. Then, the top N documents with the highest relevance scores are selected and passed to the QA chain as context.
 
-*Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
+   *For more information about retrieval augmented generation with LangChain, click [here](https://python.langchain.com/docs/modules/data_connection/).*
 
 </details>
 
@@ -201,7 +201,7 @@ After the relevant information is retrieved, the content is sent to a SambaNova 
 
 Before being sent to the LLM, the user's query is combined with the retrieved content along with instructions to form the prompt. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
 
-*Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+*To learn more about prompt engineering, click [here](https://www.promptingguide.ai/).*
 
 </details>
 

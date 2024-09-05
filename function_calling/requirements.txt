@@ -7,7 +7,7 @@ sseclient-py==1.8.0
 streamlit==1.36.0
 types-PyYAML==6.0.12.20240311
 matplotlib==3.8.0
-
+weave==0.51.1
 InstructorEmbedding==1.0.1
 transformers==4.44.1
 sentence-transformers==2.2.2 

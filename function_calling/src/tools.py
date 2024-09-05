@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from typing import Optional, Union
 
+import streamlit as st
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
@@ -40,8 +41,9 @@ def get_config_info(config_path: str) -> dict:
     with open(config_path, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
     tools_info = config['tools']
+    prod_mode = config['prod_mode']
 
-    return tools_info
+    return tools_info, prod_mode
 
 
 ##Get time tool
@@ -226,9 +228,18 @@ def query_db(query: str) -> str:
     Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
     # get tool configs
-    query_db_info = get_config_info(CONFIG_PATH)['query_db']
+    query_db_info = get_config_info(CONFIG_PATH)[0]['query_db']
 
     # set the llm based in tool configs
+    prod_mode = get_config_info(CONFIG_PATH)[1]
+    if prod_mode:
+        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+    else:
+        if 'SAMBANOVA_API_KEY' in st.session_state:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+        else:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
     llm = APIGateway.load_llm(
         type=query_db_info['llm']['api'],
         streaming=True,
@@ -238,6 +249,7 @@ def query_db(query: str) -> str:
         temperature=query_db_info['llm']['temperature'],
         select_expert=query_db_info['llm']['select_expert'],
         process_prompt=False,
+        sambanova_api_key=sambanova_api_key,
     )
 
     db_path = os.path.join(kit_dir, query_db_info['db']['path'])
@@ -321,9 +333,18 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
     """
 
     # get tool configs
-    translate_info = get_config_info(CONFIG_PATH)['translate']
+    translate_info = get_config_info(CONFIG_PATH)[0]['translate']
 
     # set the llm based in tool configs
+    prod_mode = get_config_info(CONFIG_PATH)[1]
+    if prod_mode:
+        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+    else:
+        if 'SAMBANOVA_API_KEY' in st.session_state:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+        else:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
     llm = APIGateway.load_llm(
         type=translate_info['llm']['api'],
         streaming=True,
@@ -333,6 +354,7 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         temperature=translate_info['llm']['temperature'],
         select_expert=translate_info['llm']['select_expert'],
         process_prompt=False,
+        sambanova_api_key=sambanova_api_key,
     )
 
     return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
@@ -357,9 +379,18 @@ def rag(query: str) -> str:
     """
 
     # get tool configs
-    rag_info = get_config_info(CONFIG_PATH)['rag']
+    rag_info = get_config_info(CONFIG_PATH)[0]['rag']
 
     # set the llm based in tool configs
+    prod_mode = get_config_info(CONFIG_PATH)[1]
+    if prod_mode:
+        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+    else:
+        if 'SAMBANOVA_API_KEY' in st.session_state:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+        else:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
     llm = APIGateway.load_llm(
         type=rag_info['llm']['api'],
         streaming=True,
@@ -369,6 +400,7 @@ def rag(query: str) -> str:
         temperature=rag_info['llm']['temperature'],
         select_expert=rag_info['llm']['select_expert'],
         process_prompt=False,
+        sambanova_api_key=sambanova_api_key,
     )
 
     vdb = VectorDb()

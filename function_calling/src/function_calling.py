@@ -5,6 +5,7 @@ import sys
 from pprint import pprint
 from typing import List, Optional, Type, Union
 
+import streamlit as st
 import yaml
 from dotenv import load_dotenv
 from langchain_community.llms.sambanova import SambaStudio
@@ -24,9 +25,22 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
+from utils.model_wrappers.langchain_llms import SambaNovaCloud
+from utils.visual.env_utils import get_wandb_key
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+# Handle the WANDB_API_KEY resolution before importing weave
+wandb_api_key = get_wandb_key()
+
+# If WANDB_API_KEY is set, proceed with weave initialization
+if wandb_api_key:
+    import weave
+
+    # Initialize Weave with your project name
+    weave.init('sambanova_search_assistant')
+else:
+    print('WANDB_API_KEY is not set. Weave initialization skipped.')
+
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -85,6 +99,7 @@ class FunctionCallingLlm:
         """
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
+        self.prod_mode = configs[1]
         self.llm = self.set_llm()
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
@@ -104,14 +119,23 @@ class FunctionCallingLlm:
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         llm_info = config['llm']
+        prod_mode = config['prod_mode']
 
-        return (llm_info,)
+        return (llm_info, prod_mode)
 
-    def set_llm(self) -> Union[SambaStudio, SambaNovaFastAPI]:
+    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
         """
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
         """
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
             streaming=True,
@@ -121,6 +145,7 @@ class FunctionCallingLlm:
             temperature=self.llm_info['temperature'],
             select_expert=self.llm_info['select_expert'],
             process_prompt=False,
+            sambanova_api_key=sambanova_api_key,
         )
         return llm
 
