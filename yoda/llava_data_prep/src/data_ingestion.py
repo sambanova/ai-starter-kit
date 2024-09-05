@@ -1,10 +1,11 @@
 from datasets import load_dataset
 # from pydantic import BaseModel, Field, UUID4
-# from typing import List, Union
+from typing import List
 import logging 
 import os
 import json
 import uuid
+import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 
@@ -63,7 +64,10 @@ class LlaVaData:
                         and may take some time to process.")
 
         img_dir: str = os.path.join(output_dir, "data", "images")
-        json_path: str = os.path.join(output_dir, "data", f"annotations_{split}.json")
+        if split == "validation":
+            json_path: str = os.path.join(output_dir, "data", f"annotations_val.json")
+        else:
+            json_path: str = os.path.join(output_dir, "data", f"annotations_{split}.json")
 
         # Create data directory if it doesn't exist
         if not os.path.exists(os.path.join(output_dir, "data")):
@@ -87,7 +91,8 @@ class LlaVaData:
             # Here we add the image token to the question, per SN guidance. \
             # Would like to use pydantic for typing, but "from" key is problematic.
             question: str = ds[split][i]["question"] + "\n<image>"
-            answer: str = ds[split][i]["answers"]
+            # Lazily take one of the potential answers.
+            answer: str = np.random.choice(ds[split][i]["answers"])
             new_data = {
                 "id": unique_uuid,
                 "image": f"{unique_uuid}.png",
