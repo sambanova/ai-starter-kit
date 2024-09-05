@@ -45,21 +45,15 @@ def get_stock_database() -> None:
     if streamlit.button(label='Query database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             response_dict = handle_database_query(user_request, query_method)
-            if query_method == 'text-to-SQL':
-                content = response_dict
-            elif query_method == 'PandasAI-SqliteConnector':
-                content = ''
-                for symbol in list(response_dict):
-                    content += '\n\n'.join(response_dict[symbol])
 
             # Save the query and answer to the history text file
-            save_output_callback(content, streamlit.session_state.history_path, user_request)
+            save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
             # Save the query and answer to the database query text file
             if streamlit.button(
                 'Save Query',
                 on_click=save_output_callback,
-                args=(content, streamlit.session_state.db_query_path, user_request),
+                args=(response_dict, streamlit.session_state.db_query_path, user_request),
             ):
                 pass
 

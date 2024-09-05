@@ -23,6 +23,7 @@ MAX_CHUNK_SIZE = 1024
 CHUNK_OVERLAP = 256
 RETRIEVE_HEADLINES = False
 TOP_K = 10
+MAX_URLS = 1000
 
 # SambaNova
 SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'

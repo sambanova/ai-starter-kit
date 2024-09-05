@@ -24,8 +24,8 @@ logger = get_logger()
 class YahooFinanceNewsInput(BaseModel):
     """Tool for searching financial news on Yahoo Finance through web scraping."""
 
-    company_list: List[str] | str = Field(
-        ..., description='A list of companies to search.', example=['Google', 'Microsoft']
+    company_list: Optional[List[str] | str] = Field(
+        None, description='A list of companies to search, if applicable.', example=['Google', 'Microsoft']
     )
     user_query: str = Field(..., description='The original user query.')
 
@@ -49,18 +49,19 @@ def scrape_yahoo_finance_news(company_list: List[str] | str, user_query: str) ->
     Raises:
         TypeError: If `symbol_list` is not a list of strings or `user_query` is not a string.
     """
-    # Check inputs
-    assert isinstance(company_list, (list, str)), TypeError(
-        f'Input must be of type `list` or `str`. Got {type(company_list)}.'
-    )
+    if company_list is not None:
+        # Check inputs
+        assert isinstance(company_list, (list, str)), TypeError(
+            f'Input must be of type `list` or `str`. Got {type(company_list)}.'
+        )
 
-    # If `company_list` is a string, coerce it to a list of strings
-    company_list = coerce_str_to_list(company_list)
+        # If `company_list` is a string, coerce it to a list of strings
+        company_list = coerce_str_to_list(company_list)
 
-    assert all(isinstance(company, str) for company in company_list), TypeError(
-        'All elements in `company_list` must be of type str.'
-    )
-    assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
+        assert all(isinstance(company, str) for company in company_list), TypeError(
+            'All elements in `company_list` must be of type str.'
+        )
+        assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
 
     # Retrieve the list of ticker symbols
     try:
@@ -237,7 +238,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
         or link_url.startswith('https://finance.yahoo.com/quote/')
     ]
 
-    return link_urls
+    return link_urls[0:MAX_URLS]
 
 
 def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[str, List[str]]:

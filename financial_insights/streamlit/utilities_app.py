@@ -18,6 +18,7 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
 from financial_insights.src.tools import get_logger
 from financial_insights.streamlit.constants import *
+from utils.visual.env_utils import initialize_env_variables
 
 logger = get_logger()
 
@@ -238,12 +239,16 @@ def display_directory_contents(path: str, default_path: str) -> None:
     """Display subdirectories and files in the current path."""
     subdirectories, files = list_directory(path)
 
-    streamlit.sidebar.markdown(f'### Directory: {Path(path).name}')
+    dir_name = Path(path).name
+    if dir_name.startswith('cache'):
+        dir_name = 'cache'
+
+    streamlit.sidebar.markdown(f'### Directory: {dir_name}')
 
     if subdirectories:
         streamlit.sidebar.markdown('#### Subdirectories:')
         for idx, subdir in enumerate(subdirectories):
-            if streamlit.sidebar.button(f'📁 {subdir}', key=subdir):
+            if streamlit.sidebar.button(f'📁 {subdir}', key=f'{subdir}_{idx}'):
                 streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
 
                 files_subdir = list_files_in_directory(os.path.join(path, subdir))
@@ -336,6 +341,22 @@ def initialize_session(
     prod_mode: bool = False,
 ) -> None:
     """Initialize the Streamlit `session_state`."""
+
+    # Initialize credentials
+    initialize_env_variables(prod_mode)
+
+    # Initialize SEC EDGAR credentials
+    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
+        if prod_mode:
+            streamlit.session_state.SEC_API_ORGANIZATION = None
+        else:
+            streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
+    if 'SEC_API_EMAIL' not in streamlit.session_state:
+        if prod_mode:
+            streamlit.session_state.SEC_API_EMAIL = None
+        else:
+            streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
+
     # Initialize the chat history
     if 'chat_history' not in session_state:
         session_state.chat_history = list()
@@ -350,7 +371,7 @@ def initialize_session(
     # Initialize cache directory
     if prod_mode:
         if 'cache_dir' not in session_state:
-            session_state.cache_dir = CACHE_DIR[:-1] + f'_{session_state.session_id}/'
+            session_state.cache_dir = CACHE_DIR[:-1] + '/cache' + f'_{session_state.session_id}/'
     else:
         if 'cache_dir' not in session_state:
             session_state.cache_dir = CACHE_DIR
@@ -399,23 +420,58 @@ def initialize_session(
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
 
+    # Cache creation
+    if 'cache_created' not in streamlit.session_state:
+        streamlit.session_state.cache_created = False
+
+
+def submit_sec_edgar_details() -> None:
+    """Add the SEC-EDGAR details to the session state."""
+
+    key = 'sidebar-sec-edgar'
+    # Populate SEC-EDGAR credentials
+    if streamlit.session_state.SEC_API_ORGANIZATION is None:
+        streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
+            'For SEC-EDGAR: "<your organization>"', None, key=key + '-organization'
+        )
+    if streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
+            'For SEC-EDGAR: "<name.surname@email_provider.com>"', None, key=key + '-email'
+        )
+    # Save button
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        if streamlit.button('Save SEC EDGAR details', key=key + '-button'):
+            if (
+                streamlit.session_state.SEC_API_ORGANIZATION is not None
+                and streamlit.session_state.SEC_API_EMAIL is not None
+            ):
+                streamlit.success('SEC EDGAR details saved successfully!')
+            else:
+                streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+
 
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
     """Create a temporary directory with specified subdirectories."""
-    os.makedirs(dir)
+
+    os.makedirs(dir, exist_ok=True)
     for subdir in subdirs:
-        os.makedirs(subdir)
+        os.makedirs(subdir, exist_ok=True)
 
 
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
+
     if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-        print(f'Temporary directory {temp_dir} deleted.')
+        try:
+            shutil.rmtree(temp_dir)
+            logger.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logger.warning(f'Could not delete temporary directory {temp_dir}.')
 
 
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
+
     schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
 
     def run_scheduler() -> None:
@@ -428,6 +484,8 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 
 
 def set_css_styles() -> None:
+    """Set the CSS style for the streamlit app."""
+
     streamlit.markdown(
         """
         <style>
