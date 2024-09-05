@@ -179,7 +179,7 @@ For more information and to obtain your API key, visit the [SambaNova Cloud webp
 
 To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
-- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
+- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
 - Enter the SambaNovaCloud URL and API key in the `.env` file, for example:
   
 ```bash
@@ -193,7 +193,7 @@ Begin by deploying your LLM of choice (e.g., Llama 3 8B) to an endpoint for infe
 
 To integrate your LLM deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
-- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
+- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
 "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 is entered in the `.env` file as:
