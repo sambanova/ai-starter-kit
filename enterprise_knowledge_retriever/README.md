@@ -87,7 +87,7 @@ The next step is to set up your environment variables to use one of the inferenc
 
 You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **Option 1 (default): Use a CPU embedding model**
 
 In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
@@ -95,52 +95,13 @@ In the [config file](./config.yaml), set the variable `type` in `embedding_model
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
-## Install system dependencies
-
-- Ubuntu installation:
-
-    ```bash
-    sudo apt install tesseract-ocr
-    ```
-
-- Mac Homebrew installation:
-
-    ```bash
-    brew install tesseract
-    ```
-
-- Windows installation:
-    > [Windows tessearct installation](https://github.com/UB-Mannheim/tesseract/wiki)
-
-- For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html)
-
 ## Windows requirements
 
 - If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [**Microsoft Visual C++ Build Tools**](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
-## Deploy the parsing service 
-
-This Starter kit uses a custom implementation of the Unstructured module so you will need to deploy the parsing service.
-Follow the instructions to deploy the parsing service locally [here](../README.md#parsing-service-management)
-
-- Also, make sure you add the following variables to the `.env` file in the ai-starter-kit root directory:
-
-     ```bash
-     UNSTRUCTURED_API_KEY="your_API_key_here"
-     UNSTRUCTURED_URL="http://localhost:8005/general/v0/general"
-     ```
-- Or if you are using docker to run this kit:
-
-     ```bash
-     UNSTRUCTURED_API_KEY="your_API_key_here"
-     UNSTRUCTURED_URL="http://host.docker.internal:8005/general/v0/general"
-     ```
-
-- > You can omit UNSTRUCTURED_API_KEY by setting the parameter 'partition_by_api' in `partition` section in the parser util [config file](../utils/parsing/config.yaml) as false, but then you will be able to parse only PDF documents.
-
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend Python 3.10 or 3.11. 
 
 ## Option 1: Use a virtual environment
 
