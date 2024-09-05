@@ -20,15 +20,15 @@ from financial_insights.streamlit.constants import *
 
 
 class StockInfoSchema(BaseModel):
-    """Model to retrieve the correct stock information given the appropriate ticker symbol."""
+    """Tool for retrieving accurate stock information for a list of companies using the specified dataframe name."""
 
     user_query: str = Field(..., description='User query to retrieve stock information.')
-    company_list: List[str] | str = Field(..., description='List of stock ticker symbols or a single ticker symbol.')
+    company_list: List[str] | str = Field(..., description='List of required companies.')
     dataframe_name: Optional[str] = Field(None, description='Name of the dataframe to be used, if applicable.')
 
 
 class TickerSymbol(BaseModel):
-    """Tool for returning the correct stock information given the appropriate company ticker symbol."""
+    """Model for the stock ticker symbol of a specified company."""
 
     symbol: str = Field(..., description='The ticker symbol of the company.')
 
@@ -38,11 +38,11 @@ def get_stock_info(
     user_query: str, company_list: List[str] | str, dataframe_name: Optional[str] = None
 ) -> Dict[str, str]:
     """
-    Tool for returning the correct stock information given the appropriate company ticker symbol.
+    Tool for retrieving accurate stock information for a list of companies using the specified dataframe name.
 
     Args:
         user_query: User query to retrieve stock information.
-        company_list: List of stock ticker symbols.
+        company_list: List of required companies.
         dataframe_name: Name of the dataframe to be used.
 
     Returns:
@@ -249,63 +249,43 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
     return list(set(symbol_list))
 
 
-class RetrievalSymbolQuantitySchema(BaseModel):
-    """
-    Model to retrieve a list of ticker symbols and the quantity that the user wants to analyze.
-
-    The quantity must be one of the following: Open, High, Low, Close, Volume, Dividends, Stock Splits.
-    If you can't retrieve the specified quantity, use 'Close'.
-    """
-
-    company_list: List[str] | str = Field(
-        ..., description='List of required companies.', examples=['Google', 'Microsoft']
-    )
-    quantity: str = Field(
-        ...,
-        description='Quantity to analyze.',
-        examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'],
-    )
-
-
 class HistoricalPriceSchema(BaseModel):
     """Tool for fetching historical stock prices for a given list of companies from `start_date` to `end_date`."""
 
     company_list: List[str] | str = Field(
         ..., description='List of required companies.', examples=['Google', 'Microsoft']
     )
-    quantity: str = Field(
-        ...,
-        description='Quantity to analyze.',
-        examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'],
-    )
     start_date: datetime.date = Field(
-        ...,
         description='The start date for retrieving historical prices.'
         + 'Default to "2000-01-01" if the date is vaguely requested. Must be before the end date.',
     )
     end_date: datetime.date = Field(
-        ...,
         description='The end date for retrieving historical prices.'
         + 'Typically today unless a specific end date is provided. Must be greater than the start date.',
+    )
+    quantity: str = Field(
+        'Close',
+        description='The specific quantity to analyze. Defaults to "Close" if not specified.',
+        examples=['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'],
     )
 
 
 @tool(args_schema=HistoricalPriceSchema)
 def get_historical_price(
-    company_list: List[str] | str, quantity: str, start_date: datetime.date, end_date: datetime.date
+    company_list: List[str] | str, start_date: datetime.date, end_date: datetime.date, quantity: str = 'Close'
 ) -> pandas.DataFrame:
     """
     Tool for fetching historical stock prices for a given list of companies from `start_date` to `end_date`.
 
     Args:
         company_list: List of required companies.
-        quantity: Quantity to analize.
         end_date: Typically today unless a specific end date is provided. End date MUST be greater than start date
         start_date: Set explicitly, or calculated as 'end_date - date interval'
             (for example, if prompted 'over the past 6 months',
             date interval = 6 months so start_date would be 6 months earlier than today's date).
             Default to '2000-01-01' if vaguely asked for historical price.
             Start date must always be before the current date.
+        quantity: Quantity to analize. Default is `Close`.
 
     Returns:
         A tuple with the following elements:

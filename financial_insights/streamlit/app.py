@@ -30,6 +30,7 @@ from financial_insights.streamlit.utilities_app import (
     initialize_session,
     schedule_temp_dir_deletion,
     set_css_styles,
+    submit_sec_edgar_details,
 )
 from financial_insights.streamlit.utilities_methods import stream_chat_history
 from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
@@ -51,25 +52,6 @@ def main() -> None:
     # Initialize session
     initialize_session(streamlit.session_state, prod_mode)
 
-    # Create cache
-    cache_created = False
-    if not cache_created and not os.path.exists(streamlit.session_state.cache_dir):
-        cache_created = True
-        subdirectories = [
-            streamlit.session_state.source_dir,
-            streamlit.session_state.pdf_sources_directory,
-            streamlit.session_state.pdf_generation_directory,
-        ]
-        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
-        # Schedule deletion after EXIT_TIME_DELTA minutes
-        schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-    else:
-        try:
-            schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
-        except:
-            logger.warning('Could not schedule deletion of cache directory.')
-
     # Streamlit app setup
     streamlit.set_page_config(
         page_title='Finance App',
@@ -87,16 +69,6 @@ def main() -> None:
         icon_image=SAMBANOVA_LOGO,
     )
 
-    # Initialize credentials
-    if 'FASTAPI_URL' not in streamlit.session_state:
-        streamlit.session_state.FASTAPI_URL = os.getenv('FASTAPI_URL', '')
-    if 'FASTAPI_API_KEY' not in streamlit.session_state:
-        streamlit.session_state.FASTAPI_API_KEY = os.getenv('FASTAPI_API_KEY', '')
-    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
-        streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION', '')
-    if 'SEC_API_EMAIL' not in streamlit.session_state:
-        streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL', '')
-
     # Add sidebar
     with streamlit.sidebar:
         if not are_credentials_set():
@@ -104,7 +76,7 @@ def main() -> None:
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
-                streamlit.rerun()
+
         else:
             streamlit.success('Credentials are set')
             with stylable_container(
@@ -113,24 +85,35 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
-                    streamlit.rerun()
+        if prod_mode:
+            if (
+                not streamlit.session_state.cache_created
+                and not os.path.exists(streamlit.session_state.cache_dir)
+                and are_credentials_set()
+            ):
+                streamlit.session_state.cache_created = True
+                subdirectories = [
+                    streamlit.session_state.source_dir,
+                    streamlit.session_state.pdf_sources_directory,
+                    streamlit.session_state.pdf_generation_directory,
+                ]
+                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
-        # Populate SEC-EDGAR credentials
-        if streamlit.session_state.SEC_API_ORGANIZATION == '':
-            streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-                'SEC_API_ORGANIZATION for SEC-EDGAR as\n"<your organization>"'
-            )
-        if streamlit.session_state.SEC_API_EMAIL == '':
-            streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-                'SEC_API_EMAIL for SEC-EDGAR as\n"<name.surname@email_provider.com>"'
-            )
-        # Save button
-        if streamlit.session_state.SEC_API_ORGANIZATION == '' or streamlit.session_state.SEC_API_EMAIL == '':
-            if streamlit.button('Save SEC Credentials'):
-                if streamlit.session_state.SEC_API_ORGANIZATION != '' and streamlit.session_state.SEC_API_EMAIL != '':
-                    streamlit.success('SEC credentials saved successfully!')
-                else:
-                    streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+                # In production, schedule deletion after EXIT_TIME_DELTA minutes
+                try:
+                    schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+                except:
+                    logger.warning('Could not schedule deletion of cache directory.')
+
+        else:
+            # In dev mode
+            streamlit.session_state.cache_created = True
+            subdirectories = [
+                streamlit.session_state.source_dir,
+                streamlit.session_state.pdf_sources_directory,
+                streamlit.session_state.pdf_generation_directory,
+            ]
+            create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
         # Custom button to clear chat history
         with stylable_container(
@@ -144,6 +127,7 @@ def main() -> None:
             ):
                 if prod_mode:
                     clear_cache(delete=True)
+                    streamlit.write(r':red[You have been logged out.]')
                 return
 
         if are_credentials_set():
@@ -161,6 +145,9 @@ def main() -> None:
                     'Print Chat History',
                 ],
             )
+
+            # Populate SEC-EDGAR credentials
+            submit_sec_edgar_details()
 
             # Add saved files
             streamlit.title('Saved Files')

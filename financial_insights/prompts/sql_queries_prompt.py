@@ -11,6 +11,7 @@ SQL_QUERY_PROMPT_TEMPLATE = """
     - Wrap each column name in double quotes (") to denote them as delimited identifiers.
     - Ensure you only use column names and tables listed below.
     - Use date('now') function to get the current date if the question involves "today".
+    - If an exact match for a table or column is not found, use the semantically closest one.
 
     Only use the following tables:
     {selected_schemas}

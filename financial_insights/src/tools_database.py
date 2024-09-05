@@ -143,8 +143,11 @@ def store_company_dataframes_to_sqlite(
                 continue
 
             # Store the dataframe in an SQLite database table
-            df.to_sql(table_name, engine, if_exists='replace', index=False)
-            logger.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
+            try:
+                df.to_sql(table_name, engine, if_exists='replace', index=False)
+                logger.info(f"DataFrame '{df_name}' for {company} stored in table '{table_name}'.")
+            except:
+                logger.warning(f'Could not store {df_name} to SQLite database.')
 
             # Populated company tables list with table name
             company_tables[company].append(table_name)
@@ -156,23 +159,26 @@ class QueryDatabaseSchema(BaseModel):
     """Tool for querying a SQL database containing information about stocks or companies."""
 
     user_query: str = Field(..., description='Query to be performed on the database.')
-    company_list: List[str] | str = Field(..., description='List of company names.')
+    company_list: List[str] | str = Field(..., description='List of required companies.')
     method: str = Field(
-        ..., description='Method to be used to generate the query. Either "text-to-SQL" or "PandasAI-SqliteConnector".'
+        description='Method to be used to generate the query. Either "text-to-SQL" or "PandasAI-SqliteConnector".'
     )
 
 
 @tool(args_schema=QueryDatabaseSchema)
 def query_stock_database(
-    user_query: str, company_list: List[str] | str, method: str
+    user_query: str,
+    company_list: List[str] | str,
+    method: str = 'text-to-SQL',
 ) -> Any | Dict[str, str | List[str]]:
     """
     Tool for querying a SQL database containing information about stocks or companies.
 
     Args:
         user_query: Query to be performed on the database.
-        company_list: List of company names.
+        company_list: List of required companies.
         method: Method to be used in query. Either "text-to-SQL" or "PandasAI-SqliteConnector".
+            Default is "text-to-SQL".
 
     Returns:
         The result of the query.
@@ -350,11 +356,6 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
         # Extract the SQL tables that are relevant to the user query.
         selected_tables = select_database_tables(user_query, [symbol])
 
-        # Add instructions on how to deal with the plots
-        user_query += (
-            '\nPlease add information on which table is being used (table name) as a text string or in the plot title.'
-        )
-
         response[symbol] = list()
         for table in selected_tables:
             # Append the response for the given company symbol
@@ -395,7 +396,10 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
         },
     )
 
-    return df.chat(user_query)
+    # Interrogate the dataframe
+    response = table + ': ' + str(df.chat(user_query))
+
+    return response
 
 
 class TableNames(BaseModel):

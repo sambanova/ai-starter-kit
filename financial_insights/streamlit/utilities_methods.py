@@ -144,8 +144,10 @@ def stream_complex_response(response: Any) -> Any:
 
     elif isinstance(response, dict):
         for key, value in response.items():
-            if isinstance(value, str):
-                stream_single_response(value + '\n')
+            if isinstance(value, (str, float, int)):
+                if isinstance(value, float):
+                    value = round(value, 2)
+                stream_single_response(str(value) + '\n')
             elif isinstance(value, list):
                 # If all values are strings
                 stream_single_response(', '.join([str(item) for item in value]) + '\n')
