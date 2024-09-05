@@ -218,9 +218,9 @@ You can run the Hugging Face embedding models locally on CPU. In this case, no i
 
 Alternatively, you can use SambaStudio embedding model endpoints instead of the CPU-based HugginFace embeddings to increase inference speed. Please follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.
 
-Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
+To integrate your embedding model deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
-- Create the `.env` file at `ai-starter-kit/.env` if it doesn't exist.
+- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
 - Set your SambaStudio variables. For example, an endpoint with the URL
 `"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
 is entered in the `.env` file as:
