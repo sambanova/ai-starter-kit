@@ -19,7 +19,7 @@ Table of Contents:
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the models and config file](#set-up-the-models-and-config-file)
+    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
         - [Update the Embeddings API information](#update-the-embeddings-api-information)
     - [Install system dependencies](#install-system-dependencies)
