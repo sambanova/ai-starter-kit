@@ -162,7 +162,7 @@ After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
 3. In the main panel, you can ask questions about the PDF data. 
 
-This workflow uses the AI starter kit as is with an ingestion, retrieval, and Q&A workflows. More details are provided below:
+This pipeline uses the AI starter kit as is with an ingestion, retrieval, and Q&A workflows. More details are provided below:
 
 <details>
 <summary> Ingestion workflow </summary>
