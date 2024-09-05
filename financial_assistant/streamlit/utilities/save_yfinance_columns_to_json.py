@@ -3,8 +3,8 @@ import json
 from collections import OrderedDict
 from datetime import timedelta
 
-from financial_insights.src.tools import convert_data_to_frame, extract_yfinance_data
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import convert_data_to_frame, extract_yfinance_data
+from financial_assistant.streamlit.constants import *
 
 
 def save_yfinance_columns_to_json(symbol: str = 'GOOG') -> None:

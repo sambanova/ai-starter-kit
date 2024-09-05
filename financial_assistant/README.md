@@ -78,15 +78,15 @@ If you want to use virtualenv or conda environment:
 
 ```
 cd ai_starter_kit/
-python3 -m venv financial_insights_env
-source financial_insights_env/bin/activate
+python3 -m venv financial_assistant_env
+source financial_assistant_env/bin/activate
 pip install --upgrade pip
-pip  install  -r  financial_insights/requirements.txt
+pip  install  -r  financial_assistant/requirements.txt
 ```
 
 2. Run the following command:
 ```
-cd financial_insights/streamlit/
+cd financial_assistant/streamlit/
 streamlit run app.py --browser.gatherUsageStats false 
 ```
 

@@ -16,8 +16,8 @@ from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
-from financial_insights.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
-from financial_insights.src.tools import (
+from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
+from financial_assistant.src.tools import (
     coerce_str_to_list,
     convert_data_to_frame,
     extract_yfinance_data,
@@ -25,8 +25,8 @@ from financial_insights.src.tools import (
     get_logger,
     time_llm,
 )
-from financial_insights.src.tools_stocks import retrieve_symbol_list
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools_stocks import retrieve_symbol_list
+from financial_assistant.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()

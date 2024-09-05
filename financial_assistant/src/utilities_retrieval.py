@@ -13,9 +13,9 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
-from financial_insights.src.tools import time_llm
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import _get_config_info
+from financial_assistant.src.tools import time_llm
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import _get_config_info
 from utils.model_wrappers.api_gateway import APIGateway
 
 

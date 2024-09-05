@@ -16,8 +16,8 @@ import yaml
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_insights.src.tools import get_logger
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import get_logger
+from financial_assistant.streamlit.constants import *
 from utils.visual.env_utils import initialize_env_variables
 
 logger = get_logger()

@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_stock_database() -> None:

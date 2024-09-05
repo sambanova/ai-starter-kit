@@ -6,12 +6,12 @@ from typing import Any, Dict, List
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from financial_insights.src.function_calling import FunctionCalling
-from financial_insights.src.tools import get_logger
-from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.src.function_calling import FunctionCalling
+from financial_assistant.src.tools import get_logger
+from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 logger = get_logger()
 

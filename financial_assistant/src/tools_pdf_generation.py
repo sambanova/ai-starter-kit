@@ -14,9 +14,9 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from financial_insights.src.tools import coerce_str_to_list, time_llm
-from financial_insights.src.utilities_retrieval import get_qa_response
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import coerce_str_to_list, time_llm
+from financial_assistant.src.utilities_retrieval import get_qa_response
+from financial_assistant.streamlit.constants import *
 
 EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
 
@@ -128,8 +128,8 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
             - The text.
             - The paths of any `png` figures.
     """
-    report_content: List[Tuple[str, List[str] | None]]= list()
-    figure_regex = re.compile(r'financial_insights/*[^\s]+\.png')
+    report_content: List[Tuple[str, List[str] | None]] = list()
+    figure_regex = re.compile(r'financial_assistant/*[^\s]+\.png')
     directory_regex = re.compile(rf'{repo_dir}/')
     endline_regex = re.compile(r'\n\n')
     startline_regex = re.compile(r'^\n\n')
@@ -272,7 +272,7 @@ def generate_pdf(
     else:
         for idx, item in enumerate(content_list):
             pdf.chapter_title('Query ' + str(idx))
-            if item['text'] is not None  and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
+            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
                 pdf.chapter_body(item['text'])
             if item['figure_path'] is not None and len((item['figure_path'])) > 0:
                 for figure in item['figure_path']:

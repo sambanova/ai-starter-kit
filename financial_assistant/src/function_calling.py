@@ -10,9 +10,9 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 
-from financial_insights.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
-from financial_insights.src.tools import time_llm
-from financial_insights.streamlit.constants import *
+from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
+from financial_assistant.src.tools import time_llm
+from financial_assistant.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
 
 

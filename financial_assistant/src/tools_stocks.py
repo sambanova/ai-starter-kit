@@ -15,8 +15,8 @@ from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
-from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
+from financial_assistant.streamlit.constants import *
 
 
 class StockInfoSchema(BaseModel):

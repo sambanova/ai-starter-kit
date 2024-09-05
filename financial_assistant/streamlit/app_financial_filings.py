@@ -2,9 +2,9 @@ from typing import Optional
 
 import streamlit
 
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def include_financial_filings() -> None:
