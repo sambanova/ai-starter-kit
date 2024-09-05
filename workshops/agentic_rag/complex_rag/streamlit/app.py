@@ -252,9 +252,25 @@ def main():
             )
             if st.button("Reset conversation"):
                 # reset create conversation chain
-                st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(
-                    st.session_state.vectorstore
-                )
+                # instantiate rag
+                rag = COMPLEXRAG(
+                config=CONFIG_PATH,
+                prompts_path=PROMPTS_PATH,
+                embeddings = st.session_state.embeddings,
+                vectorstore=st.session_state.vectorstore)
+                
+                # Initialize chains
+                rag.initialize()
+
+                # Build nodes
+                workflow = rag.create_rag_nodes()
+
+                # Build graph
+                app = rag.build_rag_graph(workflow)
+                st.session_state.app = app
+
+                # create conversation chain
+                st.session_state.conversation = rag
                 st.session_state.chat_history = []
                 st.toast(
                     "Conversation reset. The next response will clear the history on the screen"

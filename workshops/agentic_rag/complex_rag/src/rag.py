@@ -31,6 +31,8 @@ class RAGComponents(BaseComponents):
         self.configs = self.load_config(config)
         self.prompts_path = prompts_path
 
+        print(self.configs)
+
     ### RAG Chains
 
     def init_retrieval_grader(self) -> None:

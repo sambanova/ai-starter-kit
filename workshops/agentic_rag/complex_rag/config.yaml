@@ -22,17 +22,7 @@ llm:
 retrieval:
     "chunk_size": 1024
     "chunk_overlap": 240
-    "example_selector_k": 1
-    "entity_key": "filename"
-    "k_retrieved_documents": 20
-    "score_threshold": 0.2
-    "rerank": False
-    "reranker": 'BAAI/bge-reranker-large'
-    "final_k_retrieved_documents": 4
-    "n_tavily_results": 5
-
-codegen:
-    "max_attemps": 5
+    "k_retrieved_documents": 4
 
 prompts: 
     "retrieval_grader_prompt": "agent_workflows/prompts/llama3-prompt_engineering-retrieval_grading.yaml"
