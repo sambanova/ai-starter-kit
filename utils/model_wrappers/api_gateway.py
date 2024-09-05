@@ -149,8 +149,8 @@ class APIGateway:
 
             fastapi_url (str): Optional fastApi CoE endpoint URL",
             fastapi_api_key (str): Optional fastApi CoE endpoint API key.,
-            fastapi_url (str): Optional SambaNova Cloud URL",
-            fastapi_api_key (str): Optional SambaNovaCloud API key.
+            sambanova_url (str): Optional SambaNova Cloud URL",
+            sambanova_api_key (str): Optional SambaNovaCloud API key.
 
         Returns:
             langchain llm model
@@ -242,7 +242,7 @@ class APIGateway:
         elif type == 'sncloud':
             envs = {
                 'sambanova_url': sambanova_url,
-                'fastapi_api_key': sambanova_api_key,
+                'sambanova_api_key': sambanova_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             llm = SambaNovaCloud(
