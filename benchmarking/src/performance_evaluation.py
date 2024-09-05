@@ -23,6 +23,8 @@ from llmperf.models import RequestConfig, LLMResponse
 import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 from dotenv import load_dotenv
+import streamlit as st
+from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 import logging
 
@@ -501,10 +503,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                     start_time,
                 ),
             )
+            
             threads.append(thread)
             thread.start()
 
         for thread in threads:
+            add_script_run_ctx(thread)
             thread.join()
 
         if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
@@ -756,10 +760,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 ),
             )
             threads.append(thread)
+            add_script_run_ctx(thread)
             thread.start()
 
         # Wait for all threads to complete
         for thread in threads:
+            add_script_run_ctx(thread)
             thread.join()
 
         # Error handling
