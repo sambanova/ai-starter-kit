@@ -1,3 +1,5 @@
+prod_mode: False
+
 llm: 
   "api": "sncloud" #  set either sambastudio or sncloud
   "do_sample": False
