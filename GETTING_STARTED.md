@@ -15,17 +15,15 @@ To get started, follow these steps:
    export SAMBANOVA_API_KEY=<your-api-key-here>
    ```
 
-
 ## Support Models
 
 For model names, you can pick from the list below:
 
 | Model | Context Length | Output Length | Dtype |
 |-------|----------------|---------------|-------|
-| Meta-Llama-3.1-8B-Instruct | 8192 | 1000 | BF16 |
+| Meta-Llama-3.1-8B-Instruct | 8192 | 1000 | BF16 |  
 | Meta-Llama-3.1-70B-Instruct | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
-
 
 ## Hello World: Your First API Request
 
@@ -94,76 +92,37 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 
 Build a retrieval-augmented generation (RAG) chatbot using your enterprise documents. 
 
-- [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/)
-- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/enterprise-knowledge-retrieval) 
-- To run locally:
-  ```shell
-  git clone https://github.com/sambanova/ai-starter-kit.git
-  cd ai-starter-kit/enterprise-knowledge-retrieval
-  pip install -r requirements.txt
-  streamlit run app.py
-  ```
+- [Live Demo](https://sambanova-ai-starter-kits-ekr.replit.app/)
+- [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/enterprise_knowledge_retriever/README.md) 
 
-### 2. Conversational AI Assistant 
+### 2. Conversational Search Assistant 
 
-Create an AI-powered conversational assistant that understands context and generates human-like responses.
+Semantic search using search engine snippets.
 
-- [Live Demo](https://sambanova-ai-starter-kits-conversational-ai.replit.app/)  
-- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/conversational-ai)
-- To run locally: 
-  ```shell
-  git clone https://github.com/sambanova/ai-starter-kit.git  
-  cd ai-starter-kit/conversational-ai
-  pip install -r requirements.txt
-  streamlit run app.py
-  ```
+- [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/)  
+- [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/search_assistant/README.md)
 
-### 3. Text Summarization Tool
+### 3. Financial Insights 
 
-Automatically generate concise summaries of long articles or documents.
+Agentic finance assistant built on our API 
 
-- [Live Demo](https://sambanova-ai-starter-kits-text-summarizer.replit.app/)
-- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/text-summarization) 
-- To run locally:
-  ```shell 
-  git clone https://github.com/sambanova/ai-starter-kit.git
-  cd ai-starter-kit/text-summarization  
-  pip install -r requirements.txt
-  streamlit run app.py
-  ```
+- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/financial_insights) 
 
-### 4. Code Generation Assistant
+### 4. Function Calling 
 
-Streamline your coding with an AI-powered code generation assistant.
+Tools calling implementation and generic function calling module 
 
-- [Live Demo](https://sambanova-ai-starter-kits-code-generation.replit.app/)
-- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/code-generation)
-- To run locally:  
-  ```shell
-  git clone https://github.com/sambanova/ai-starter-kit.git
-  cd ai-starter-kit/code-generation
-  pip install -r requirements.txt 
-  streamlit run app.py
-  ```
+- [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md)
 
-### 5. Content Creation Toolkit 
+### 5. Benchmarking Kit 
 
-Automate content creation tasks like writing articles, generating product descriptions, and more.
+Evaluates performance of multiple LLM models in SambaStudio 
 
-- [Live Demo](https://sambanova-ai-starter-kits-content-creation.replit.app/) 
-- [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/content-creation)
-- To run locally:
-  ```shell
-  git clone https://github.com/sambanova/ai-starter-kit.git
-  cd ai-starter-kit/content-creation  
-  pip install -r requirements.txt
-  streamlit run app.py 
-  ```
+- [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md)
 
 ## Contributing
 
 We welcome contributions to the SambaNova Quickstarts repository! If you have ideas for new quickstart projects or improvements to existing ones, please [open an issue](https://github.com/sambanova/ai-starter-kit/issues/new) or submit a [pull request](https://github.com/sambanova/ai-starter-kit/pulls).
-
 
 ## Next Steps
 
@@ -172,9 +131,8 @@ We welcome contributions to the SambaNova Quickstarts repository! If you have id
 - Join our [SambaNova Discord community](https://discord.gg/54bNAqRw) for discussions and support  
 - Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) for additional help
 
-
 ### FAQs
 
 * More models will be available soon.
 * We are working on increasing the context length.
-* For now, our API supports inference only ; embedding functionality is not available yet.
+* For now, our API supports inference only; embedding functionality is not available yet.
