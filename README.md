@@ -208,11 +208,15 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 ## Setting your embedding models
 
-Currently, you can set your embedding models on SambaStudio or CPU. 
+Currently, you can set your embedding models on CPU or SambaStudio. 
 
-### Use SambaStudio (Option 1)
+### Use CPU (Option 1)
 
-You can use SambaStudio embedding model endpoints instead of the CPU-based HugginFace embeddings to increase inference speed. Please follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.
+You can run the Hugging Face embedding models locally on CPU. In this case, no information is needed in the `.env` file.
+
+### Use SambaStudio (Option 2)
+
+Alternatively, you can use SambaStudio embedding model endpoints instead of the CPU-based HugginFace embeddings to increase inference speed. Please follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.
 
 Update API information for the SambaNova embedding endpoint. These are represented as configurable variables in the environment variables file in `ai-starter-kit/.env`:
 
@@ -228,10 +232,6 @@ SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
 SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
-
-### Use CPU (Option 2)
-
-Alternatively, you can run the Hugging Face embedding models on CPU. In this case, no information is needed in the `.env` file.
 
 ## Run the desired starter kit
 
