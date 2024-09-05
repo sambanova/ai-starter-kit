@@ -1,7 +1,4 @@
 api: "sncloud" #  set either sambastudio or sncloud
-prod_mode: False
-additional_env_vars:
-  - SERPAPI_API_KEY
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -36,6 +33,10 @@ web_crawling:
         - 'reddit.com'
         - 'whatsapp.com'
         - 'wa.me' 
+
+prod_mode: False
+additional_env_vars:
+  - SERPAPI_API_KEY
 
 extra_loaders:
     - "pdf"
