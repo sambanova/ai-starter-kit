@@ -48,7 +48,7 @@ Table of Contents:
 
 This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
 
-- A configurable SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
 - An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/) or [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph).
 - Prompt construction strategies.
