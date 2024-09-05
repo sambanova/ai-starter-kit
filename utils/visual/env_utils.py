@@ -4,8 +4,6 @@ from typing import List, Optional, Tuple
 
 import streamlit as st
 
-DEFAULT_FASTAPI_URL = 'https://fast-api.snova.ai/v1/chat/completions'
-
 
 def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optional[List[str]] = None) -> None:
     if additional_env_vars is None:
