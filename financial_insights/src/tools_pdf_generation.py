@@ -128,11 +128,14 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
             - The text.
             - The paths of any `png` figures.
     """
-    report_content = []
+    report_content: List[Tuple[str, List[str] | None]]= list()
     figure_regex = re.compile(r'financial_insights/*[^\s]+\.png')
     directory_regex = re.compile(rf'{repo_dir}/')
     endline_regex = re.compile(r'\n\n')
     startline_regex = re.compile(r'^\n\n')
+    selectd_tables_regex = re.compile(r'Table')
+    column_space_regex = re.compile(r': , ')
+    final_column_space_regex = re.compile(r': \.')
 
     for doc in documents:
         parts = doc.split('\n\n\n\n')
@@ -145,13 +148,15 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
                 # Clean extra newline
                 cleaned_part = directory_regex.sub('', cleaned_part)
                 cleaned_part = endline_regex.sub('', cleaned_part)
+                cleaned_part = re.sub(selectd_tables_regex, '\nSelected SQL tables: Table', cleaned_part, count=1)
+                cleaned_part = column_space_regex.sub(', ', cleaned_part)
+                cleaned_part = final_column_space_regex.sub('.', cleaned_part)
             else:
                 # Clean extra newline
                 cleaned_part = startline_regex.sub('', part)
 
             if figure_matches:
-                for figure_path in figure_matches:
-                    report_content.append((cleaned_part.strip(), figure_path))
+                report_content.append((cleaned_part.strip(), figure_matches))
             else:
                 report_content.append((cleaned_part.strip(), None))
 
@@ -202,17 +207,17 @@ def generate_pdf(
     )
 
     pdf.add_page()
-    content_list: List[Dict[str, str]] = list()
+    content_list: List[Dict[str, str | List[str]]] = list()
     for idx, content in enumerate(report_content):
-        text, figure_path = content
-        if (text is None and figure_path is None) or (text is not None and len(text) == 0 and figure_path is None):
+        text, figure_paths = content
+        if (text is None and figure_paths is None) or (text is not None and len(text) == 0 and figure_paths is None):
             continue
 
         # Clean the text to conform to unicode standards
         content_list.append(
             {
                 'text': clean_unicode_text(text),
-                'figure_path': figure_path if figure_path is not None else '',
+                'figure_path': figure_paths if figure_paths is not None else list(),
             }
         )
 
@@ -254,22 +259,24 @@ def generate_pdf(
             pdf.chapter_summary(intermediate_summaries[idx])
 
             # Add the section body
-            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER:
+            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
                 pdf.chapter_body(item['text'])
 
             # Add the section figures
             if item['figure_path'] is not None and len(item['figure_path']) > 0:
-                pdf.add_figure(item['figure_path'])
+                for figure in item['figure_path']:
+                    pdf.add_figure(figure)
 
         time.sleep(0.01)
         summary_bar.empty()
     else:
         for idx, item in enumerate(content_list):
             pdf.chapter_title('Query ' + str(idx))
-            if item['text'] is not None:
+            if item['text'] is not None  and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
                 pdf.chapter_body(item['text'])
             if item['figure_path'] is not None and len((item['figure_path'])) > 0:
-                pdf.add_figure(item['figure_path'])
+                for figure in item['figure_path']:
+                    pdf.add_figure(figure)
 
     pdf.output(output_file)
     return bytes(pdf.output())

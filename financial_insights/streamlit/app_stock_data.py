@@ -1,3 +1,4 @@
+import json
 from typing import Any, List, Optional, Tuple
 
 import pandas
@@ -25,7 +26,9 @@ def get_stock_data_analysis() -> None:
         'Enter the info that you want to retrieve for given companies.',
         key='stock-query',
     )
-    dataframe_name = streamlit.selectbox(
+
+    columns = streamlit.columns(3, vertical_alignment='center')
+    dataframe_name = columns[0].selectbox(
         'Select Data Source:',
         sorted(
             [
@@ -59,7 +62,23 @@ def get_stock_data_analysis() -> None:
                 'news',
             ],
         ),
+        None,
     )
+
+    with open(YFINANCE_COLUMNS_JSON, 'r') as json_file:
+        dataframes_json = json.load(json_file)
+    columns[2].write('Show columns per dataframe')
+    columns[2].json(body=dataframes_json, expanded=False)
+
+    columns[1].markdown(
+        f'<span style="color:rgb{SAMBANOVA_ORANGE}">Show selected columns</span>',
+        unsafe_allow_html=True,
+    )
+    if dataframe_name is not None:
+        dataframe_columns = dataframes_json[dataframe_name]
+        columns[1].json(dataframe_columns, expanded=False)
+    else:
+        columns[1].write(None)
 
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):

@@ -397,7 +397,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     )
 
     # Interrogate the dataframe
-    response = table + ': ' + str(df.chat(user_query))
+    response = 'Table ' + table + ': ' + str(df.chat(user_query))
 
     return response
 
