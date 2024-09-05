@@ -1,10 +1,8 @@
-import json
 import operator
 import os
 import re
 import sys
 from datetime import datetime
-from pprint import pprint
 from typing import Optional, Union
 
 import yaml
@@ -13,7 +11,7 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
@@ -25,7 +23,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway 
+from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -201,7 +199,7 @@ def sql_finder(text: str) -> str:
     # ```sql
     #    <query>
     # ```
-    
+
     print(f'query_db: query generation LLM raw response: \n{text}\n')
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
     match = sql_code_pattern.search(text)
@@ -240,7 +238,7 @@ def query_db(query: str) -> str:
         temperature=query_db_info['llm']['temperature'],
         select_expert=query_db_info['llm']['select_expert'],
         process_prompt=False,
-    )           
+    )
 
     db_path = os.path.join(kit_dir, query_db_info['db']['path'])
     db_uri = f'sqlite:///{db_path}'
@@ -252,10 +250,16 @@ def query_db(query: str) -> str:
         {table_info}
         
         Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
-        Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked. 
-        The query must be in the format: ```sql\nquery\n```
+        Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
+        Do not assume ids in tables when inserting new values let them null or use the max id + 1
+        The queries must be formatted including backticks code symbols as follows:
+        do not include comments in the query
+            
+        ```sql
+        query
+        ```
         
-        Example:
+        Example format:
         
         ```sql
         SELECT * FROM mainTable;
@@ -270,11 +274,11 @@ def query_db(query: str) -> str:
     # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
     # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
-    
+
     table_info = db.get_table_info()
-    
+
     print(f'query_db: Calling query generation LLM with input: \n{query}\n')
-    
+
     query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
 
     print(f'query_db: query generation LLM filtered response: \n{query}\n')
@@ -285,7 +289,7 @@ def query_db(query: str) -> str:
 
     results = []
     for query in queries:
-         if query.strip() != '':
+        if query.strip() != '':
             print(f'query_db: executing query: \n{query}\n')
             results.append(query_executor.invoke(query))
             print(f'query_db: query result: \n{results[-1]}\n')
@@ -329,7 +333,7 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         temperature=translate_info['llm']['temperature'],
         select_expert=translate_info['llm']['select_expert'],
         process_prompt=False,
-    )     
+    )
 
     return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
 
@@ -365,7 +369,7 @@ def rag(query: str) -> str:
         temperature=rag_info['llm']['temperature'],
         select_expert=rag_info['llm']['select_expert'],
         process_prompt=False,
-    )     
+    )
 
     vdb = VectorDb()
 
@@ -413,7 +417,7 @@ def rag(query: str) -> str:
 
     response = qa_chain.invoke({'question': query})
     answer = response['answer']
-    
+
     source_documents = set([doc.metadata['filename'] for doc in response['source_documents']])
 
     return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'
