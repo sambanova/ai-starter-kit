@@ -25,7 +25,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
+from utils.model_wrappers.langchain_llms import SambaNovaCloud
 from utils.visual.env_utils import get_wandb_key
 
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -123,7 +123,7 @@ class FunctionCallingLlm:
 
         return (llm_info, prod_mode)
 
-    def set_llm(self) -> Union[SambaStudio, SambaNovaFastAPI]:
+    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
         """
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
