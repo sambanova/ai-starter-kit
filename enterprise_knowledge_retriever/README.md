@@ -162,9 +162,10 @@ After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
 3. In the main panel, you can ask questions about the PDF data. 
 
-This workflow uses the AI starter kit as is with an ingestion, retrieval, and Q&A workflows. 
+This workflow uses the AI starter kit as is with an ingestion, retrieval, and Q&A workflows. More details are provided below:
 
-## Ingestion workflow
+<details>
+<summary> Ingestion workflow </summary>
 
 This workflow, included with this starter kit, is an example of parsing and indexing data for subsequent Q&A. The steps are:
 
@@ -178,7 +179,10 @@ This workflow, included with this starter kit, is an example of parsing and inde
 
 4. **Store embeddings:** Embeddings for each chunk, along with content and relevant metadata (such as source documents) are stored in a vector database. The embedding acts as the index in the database. In this template, we store information with each entry, which can be modified to suit your needs. There are several vector database options available, each with their own pros and cons. This starter kit is set up to use [Chroma](https://github.com/chroma-core/chroma) as the vector database because it is a free, open-source option with straightforward setup, but can easily be updated to use another if desired. In terms of metadata, `filename` and `page` are also attached to the embeddings which are extracted during parsing of the PDF documents.
 
-## Retrieval workflow
+</details>
+
+<details>
+<summary> Retrieval workflow </summary>
 
 This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A off your data. The steps are:
 
@@ -192,13 +196,18 @@ This workflow is an example of leveraging data stored in a vector database along
 
 *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
-## Q&A workflow
+</details>
+
+<details>
+<summary> Q&A workflow </summary>
 
 After the relevant information is retrieved, the content is sent to a SambaNova LLM to generate a final response to the user query.
 
 Before being sent to the LLM, the user's query is combined with the retrieved content along with instructions to form the prompt. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the quality of response for this use case.
 
 *Learn more about [Prompt engineering](https://www.promptingguide.ai/)*
+
+</details>
 
 # Customizing the starter kit
 
