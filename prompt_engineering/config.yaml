@@ -1,5 +1,5 @@
 llm:
-  api: "sncloud" #  set either sambastudio or sncloud
+  api: "sncloud" #  set either sncloud or sambastudio
   max_tokens_to_generate: 500
   temperature: 0.0
   coe: True
