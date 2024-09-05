@@ -86,11 +86,11 @@ The next step is to set up your environment variables to use one of the models a
 
 ### Update the Embeddings API information
 
-You have these options to specify the embedding API info: 
+You have the following options to specify the embedding API info: 
 
 * **Option 1: Use a CPU embedding model**
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
+In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
 
 * **Option 2: Set a SambaStudio embedding model**
 
@@ -99,8 +99,6 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
 
 ## Install system dependencies
 
