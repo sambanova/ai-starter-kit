@@ -12,7 +12,7 @@ class LlaVaData:
     "Download huggingface datasets and save to local storage."
 
     def download_hf_data_documentVQA(self, 
-                         dataset_name: str = "download_hf_data_documentVQA", 
+                         dataset_name: str = "HuggingFaceM4/DocumentVQA", 
                          output_dir: str = "./",
                          split: str = "train",
                          ) -> None:
