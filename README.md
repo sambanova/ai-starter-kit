@@ -33,7 +33,7 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="50%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud </td>
+<td width="15%"> SambaStudio, SambaNova Cloud </td>
 <td width="15%"> Data Ingestion & Preparation </td>  
 </tr>
 
@@ -62,21 +62,21 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 <td width="20%"><a href="prompt_engineering/README.md">Prompt Engineering</a></td>
 </td>
 <td width="50%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Model Development & Optimization </td> 
 </tr>
 
 <tr>
 <td width="20%"><a href="edgar_qna/README.md">EDGAR Q&A</a></td>
 <td width="50%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Intelligent Information Retrieval </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="50%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Intelligent Information Retrieval </td>  
 </tr>
 
@@ -90,14 +90,14 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="50%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="15%"> SambaStudio, SambaNovaCloud </td>
+<td width="15%"> SambaStudio, SambaNova Cloud </td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
 <td width="50%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
-<td width="15%">SambaStudio, SambaNovaCloud</td>
+<td width="15%">SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
@@ -111,28 +111,28 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 <tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="50%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
-<td width="15%">SambaStudio, SambaNovaCloud</td>
+<td width="15%">SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a></td>
 <td width="50%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
-<td width="15%">SambaStudio, SambaNovaCloud</td>
+<td width="15%">SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
 <td width="50%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen that can answer singular or compound questions, with or without math. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. It uses a Corrective RAG team and a Corrective Web Search team. </td>
-<td width="15%"> SambaStudio, SambaNovaCloud </td>
+<td width="15%"> SambaStudio, SambaNova Cloud </td>
 <td width="15%"> Advanced AI Capabilities </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="50%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Advanced AI Capabilities </td>    
 </tr>
 
@@ -153,14 +153,14 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 <tr>
 <td width="20%"><a href="financial_insights/readme.md"> Financial Assistant</a></td>
 <td width="50%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Advanced AI Capabilities </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="50%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
-<td width="15%"> SambaStudio, SambaNovaCloud</td>
+<td width="15%"> SambaStudio, SambaNova Cloud</td>
 <td width="15%"> Advanced AI Capabilities </td>   
 </tr>
 
@@ -180,7 +180,7 @@ For more information and to obtain your API key, visit the [SambaNova Cloud webp
 To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaNovaCloud API key in the `.env` file, for example:
+- Enter the SambaNova Cloud API key in the `.env` file, for example:
   
 ```bash
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
