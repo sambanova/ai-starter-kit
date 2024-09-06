@@ -77,7 +77,7 @@ def get_expert(
 
     inputs = json.dumps(
         {
-            "conversation_id": "sambaverse-conversation-id",
+            "conversation_id": "sambacloud-conversation-id",
             "messages": [{"message_id": 0, "role": "user", "content": input_text}],
             "prompt": prompt,
             "streaming": True,
@@ -210,7 +210,6 @@ def get_llm(expert: Optional[str] = None):
         temperature=llm_info["temperature"],
         select_expert=expert or llm_info["select_expert"],
         process_prompt=False,
-        sambaverse_model_name=llm_info["sambaverse_model_name"],
     )
 
 

@@ -40,13 +40,14 @@ This AI starter kit supports the following features:
 - Streamlit app for easy interaction and visualization
 - Supports various configuration options through the `config.yaml` file
 
-## Prerequisites
+## Set up the models, environment variables and config file
 
-- Python (>3.11.3 and <3.12)
-- A [Sambaverse](https://sambaverse.sambanova.ai/) account
-- A [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html) account with at least two running endpoints:
-  - A Composition of Experts (CoE) model
-  - A text embedding model with a batch size larger than 1 (set/view this via the model parameters)
+### Set up the generative model
+
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. For this kit you can deploy your models using SambaStudio.
+
+- **SambaStudio (Option 1)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
 ## Key dependencies
 
@@ -95,7 +96,6 @@ The config.yaml file is crucial for customizing the behavior of the CoE LLM Rout
       "temperature": 0.0
       "do_sample": False
       "max_tokens_to_generate": 1200
-      "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
       "coe": True #set as true if using Sambastudio CoE endpoint
       "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
   ```
@@ -161,9 +161,6 @@ This crucial section maps the expert categories to specific CoE models. When add
 Remember to update the .env file in the root directory of the ai-starter-kit with your API keys and endpoints:
 
   ```bash
-# NEEDED FOR SAMBAVERSE
-SAMBAVERSE_API_KEY="your-sambaverse-api-key"
-SAMBAVERSE_URL="https://sambaverse.sambanova.ai/"
 
 # NEEDED FOR SAMBASTUDIO COE MODEL
 SAMBASTUDIO_BASE_URL="https://your-sambastudio.url"
