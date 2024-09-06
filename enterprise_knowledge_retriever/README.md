@@ -298,26 +298,25 @@ The starter kit uses a LLM model in SambaStudio. You can fine tune the SambaStud
 
 ## Experiment with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt template was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
 
-```python
-custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
-
-{context}    
-
-Question: {question}
-
-Helpful answer: [/INST]"""
-
-CUSTOMPROMPT = PromptTemplate(
-template=custom_prompt_template, input_variables=["context", "question"]
-)
+```yaml
+template: |
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a knowledge base assistant chatbot powered by Sambanova's AI chip accelerator, designed to answer questions based on user-uploaded documents. 
+    Use the following pieces of retrieved context to answer the question. Each piece of context includes the Source for reference. If the question references a specific source, then filter out that source and give a response based on that source. 
+    If the answer is not in the context, say: "This information isn't in my current knowledge base." Then, suggest a related topic you can discuss based on the available context.
+    Maintain a professional yet conversational tone. Do not use images or emojis in your answer.
+    Prioritize accuracy and only provide information directly supported by the context. <|eot_id|><|start_header_id|>user<|end_header_id|>
+    Question: {question} 
+    Context: {context} 
+    \n ------- \n
+    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 ```
 
 You can make modifications in the following location:
 
 ```
-file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
+file: prompts/qa_prompt.yaml
 ```
 
 # Third-party tools and data sources
