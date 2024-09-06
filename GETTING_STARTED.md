@@ -1,31 +1,33 @@
-[![SambaNova logo](./images/SambaNova-dark-logo-1.png)](https://sambanova.ai/)
+<a href="https://sambanova.ai/">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="./images/SambaNova-dark-logo-1.png" height="60">
+</picture>
+</a>
 
-# QuickStart Guide: Getting Started with SambaNova APIs
 
-Welcome to the **SambaNova QuickStart Guide**. This guide will help you set up your API key, run a "Hello World" example, explore a few starter applications, and integrate with Langchain to jumpstart your journey with SambaNova's APIs. Let's get started!
+# SambaNova API QuickStart Guide
 
-## Setting up Your SambaNova API Key
+This guide walks through setting up an API key, performing a few sample queries with and without LangChain, and shares example applications to bootstrap application development for common AI use cases with open-source Python code on the SambaNova GitHub page. Let's get started!
 
-To get started, follow these steps:
+## Setting up SambaNova API Key
 
-1. Create an account on the [SambaNova Developer Portal](https://sambanova.ai/fast-api) to get your API key.
+1. Create an account on the [SambaNova Developer Portal](https://sambanova.ai/fast-api) to get an API key.
 2. Once logged in, navigate to the API section and generate a new key. 
 3. Set your API key as an environment variable:
    ```shell
    export SAMBANOVA_API_KEY=<your-api-key-here>
    ```
 
-## Support Models
+## Supported Models
 
-For model names, you can pick from the list below:
-
-| Model | Context Length | Output Length | Dtype |
+| Model | Context Length | Output Length | Dtype / Precision |
 |-------|----------------|---------------|-------|
 | Meta-Llama-3.1-8B-Instruct | 8192 | 1000 | BF16 |  
 | Meta-Llama-3.1-70B-Instruct | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
 
-## Hello World: Your First API Request
+## Query the API
 
 Install the OpenAI Python library:
 ```shell  
@@ -88,6 +90,8 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 
 ## Starter Applications
 
+[SambaNova AI Starter Kits](https://community.sambanova.ai/t/ai-starter-kits/160) help you build fast, bootstrapping application development for common AI use cases with open-source Python code on a SambaNova GitHub repository. They let you see how the code works and customize it to your needs, so you can prove the business value of AI. Here are some of the most popular kits:
+
 | Application | Description | Demo | Source Code |
 |-------------|-------------|------|-------------|
 | Enterprise Knowledge Retrieval Chatbot | Build a retrieval-augmented generation (RAG) chatbot using your enterprise documents | [Live Demo](https://sambanova-ai-starter-kits-ekr.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/enterprise_knowledge_retriever/README.md) |
@@ -96,19 +100,15 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 | Function Calling | Tools calling implementation and generic function calling module | - | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md) |
 | Benchmarking Kit | Evaluates performance of multiple LLM models in SambaStudio | [Live Demo](https://sambanova-ai-starter-kits-benchmarking.replit.app/)  | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md) |
 
-## Contributing
+## Get Help
 
-We welcome contributions to the SambaNova Quickstarts repository! If you have ideas for new quickstart projects or improvements to existing ones, please [open an issue](https://github.com/sambanova/ai-starter-kit/issues/new) or submit a [pull request](https://github.com/sambanova/ai-starter-kit/pulls).
-
-## Next Steps
-
-### Community and Support
-
-- Join our [SambaNova Discord community](https://discord.gg/54bNAqRw) for discussions and support  
 - Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) for additional help
+- Find answers and post questions in the [SambaNova Community](https://community.sambanova.ai/latest)
+- Join our [SambaNova Discord](https://discord.gg/54bNAqRw) for discussions and support  
+- Let us know your most wanted features and challenges via the channels above
+- More inference models, longer context lengths, and embeddings models are coming soon!
 
-### FAQs
+  
+## Contribute
 
-* More models will be available soon.
-* We are working on increasing the context length.
-* For now, our API supports inference only; embedding functionality is not available yet.
+Building something cool? We welcome contributions to the SambaNova Quickstarts repository! If you have ideas for new quickstart projects or improvements to existing ones, please [open an issue](https://github.com/sambanova/ai-starter-kit/issues/new) or submit a [pull request](https://github.com/sambanova/ai-starter-kit/pulls) and we'll respond right away.
