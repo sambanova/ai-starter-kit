@@ -44,14 +44,14 @@ Search Assistant
 
 This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using Google search information as the source. This kit includes:
 
- -   A configurable SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
+ -   A configurable SambaNova Cloud or SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
  -   Configurable integrations with multiple SERP APIs
  -   An strategy for an instant question - search - answer workflow
  -   An strategy for a query - search - web-crawl - answer workflow
 
-This example is ready to use. 
+This example is ready to use: 
 
 * Run the model following the steps in [Before you begin](#before-you-begin) and [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
 * Learn how the model works and look at resources in [Workflow overview](#workflow-overview).
