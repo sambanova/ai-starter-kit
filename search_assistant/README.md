@@ -24,7 +24,6 @@ Search Assistant
 - [Workflow overview](#workflow-overview)
     - [Answer and search workflow](#answer-and-search-workflow)
     - [Answer and scrape sites workflow](#answer-and-scrape-sites-workflow)
-    - [Retrieval workflow](#retrieval-workflow)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Use a custom serp tool](#use-a-custom-serp-tool)
     - [Customize website scraping](#customize-website-scraping)
@@ -161,9 +160,9 @@ This AI starter kit implements two distinct workflows each with a series of oper
 
 ## Answer and scrape sites workflow
 
-1. **Search** Use the Serp tool to retrieve the search results and get links of organic search result.
+1. **Search:** Use the Serp tool to retrieve the search results and get links of organic search result.
 
-2. **Website crawling**  Scrape the HTML from the website using Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document, which is built on top of the [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) Python packages.
+2. **Website crawling:**  Scrape the HTML from the website using Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document, which is built on top of the [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) Python packages.
 
 3. **Document parsing:** Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply transformations to extract specific information or modify the documents' content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. Transformers process many documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
 
@@ -177,21 +176,19 @@ This AI starter kit implements two distinct workflows each with a series of oper
     
 5. **Data embedding:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain_community.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
-   For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)
+   *For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)*
 
 6. **Embedding storage:**  Embeddings for each chunk, along with content and relevant metadata (such as source website), are stored in a vector database. The embedding acts as the index in the database. In this starter kit, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with its own pros and cons. This starter kit uses [Chroma](https://docs.trychroma.com/getting-started) as the vector database because it's a free, open-source option with straightforward setup, but can easily be updated to use another database if desired. In terms of metadata, `website source`  is also attached to the embeddings which are stored during web scraping.
 
-## Retrieval workflow
+7. **Retrieval workflow (optional):**  This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181). The steps are:
 
-This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
-
-1. **Embed query:** The first step is to convert a user-submitted query into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, we recommend that you use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
+    * **Embed query:** The first step is to convert a user-submitted query into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, we recommend that you use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
  
-2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which returns *relevant* entries (content). The vector database acts as a retriever for fetching relevant information from the database.
+    * **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which returns *relevant* entries (content). The vector database acts as a retriever for fetching relevant information from the database.
     
-     Find more information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)
+     *Find more information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*
  
-     Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)
+     *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*
 
 # Customizing the starter kit
 
