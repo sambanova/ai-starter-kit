@@ -5,9 +5,10 @@ import sys
 from pprint import pprint
 from typing import List, Optional, Type, Union
 
+import streamlit as st
 import yaml
 from dotenv import load_dotenv
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
@@ -23,10 +24,23 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway 
-from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
+from utils.model_wrappers.api_gateway import APIGateway
+from utils.model_wrappers.langchain_llms import SambaNovaCloud
+from utils.visual.env_utils import get_wandb_key
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+# Handle the WANDB_API_KEY resolution before importing weave
+wandb_api_key = get_wandb_key()
+
+# If WANDB_API_KEY is set, proceed with weave initialization
+if wandb_api_key:
+    import weave
+
+    # Initialize Weave with your project name
+    weave.init('sambanova_search_assistant')
+else:
+    print('WANDB_API_KEY is not set. Weave initialization skipped.')
+
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -85,6 +99,7 @@ class FunctionCallingLlm:
         """
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
+        self.prod_mode = configs[1]
         self.llm = self.set_llm()
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
@@ -104,25 +119,34 @@ class FunctionCallingLlm:
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         llm_info = config['llm']
+        prod_mode = config['prod_mode']
 
-        return (llm_info,)
+        return (llm_info, prod_mode)
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse, SambaNovaFastAPI]:
+    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
         """
         Set the LLM to use.
-        sambaverse, sambastudio and fastapi endpoints implemented.
+        sambastudio and sncloud endpoints implemented.
         """
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
             streaming=True,
-            coe=self.llm_info["coe"],
-            do_sample=self.llm_info["do_sample"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
-            select_expert=self.llm_info["select_expert"],
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info["sambaverse_model_name"],
-        )           
+            sambanova_api_key=sambanova_api_key,
+        )
         return llm
 
     def get_tools_schemas(
@@ -216,16 +240,20 @@ class FunctionCallingLlm:
             try:
                 json.loads(json_str)
             except:
+                print(f'not parsable json: \n{json_str}\n  attempting to fix')
                 json_correction_prompt = """|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a json format corrector tool<|eot_id|><|start_header_id|>user<|end_header_id|>
-                fix the following json file: {json} 
+                fix the following non parsable json file: {json} 
                 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
                 fixed json: """  # noqa E501
                 json_correction_prompt_template = PromptTemplate.from_template(json_correction_prompt)
                 json_correction_chain = json_correction_prompt_template | self.llm
                 json_str = json_correction_chain.invoke({'json': json_str})
+                print(f'Corrected json: {json_str}')
         else:
-            # implement here not finding json format parsing to json or error rising
-            json_str = None
+            # will assume is a conversational response given is not json formatted
+            print('response is not json formatted assuming conversational response')
+            dummy_json_response = [{'tool': 'ConversationalResponse', 'tool_input': {'response': input_string}}]
+            json_str = json.dumps(dummy_json_response)
         return json_str
 
     def msgs_to_llama3_str(self, msgs: list) -> str:
@@ -254,8 +282,8 @@ class FunctionCallingLlm:
             else:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
-    
-    def msgs_to_fast_api(self, msgs: list) -> list:
+
+    def msgs_to_sncloud(self, msgs: list) -> list:
         """
         convert a list of langchain messages with roles to expected FastCoE input
 
@@ -293,11 +321,11 @@ class FunctionCallingLlm:
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
 
-            if self.llm_info['api'] == 'fastapi':
-                prompt = self.msgs_to_fast_api(history)
+            if self.llm_info['api'] == 'sncloud':
+                prompt = self.msgs_to_sncloud(history)
             else:
                 prompt = self.msgs_to_llama3_str(history)
-            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')   
+            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')
             llm_response = self.llm.invoke(prompt)
             print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)

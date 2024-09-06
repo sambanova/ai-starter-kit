@@ -37,7 +37,6 @@ Table of Contents:
     - [Customize data embedding](#customize-data-embedding)
     - [Customize embedding storage](#customize-embedding-storage)
     - [Customize retrieval](#customize-retrieval)
-    - [Compare models with Sambaverse](#compare-models-with-sambaverse)
     - [Finetune a SambaStudio model](#finetune-a-sambastudio-model)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
     - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -96,16 +95,13 @@ To use this AI starter kit without modifications, follow these steps.
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
+    Then, in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
 ### Update the Embeddings API information
 
@@ -119,7 +115,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
@@ -140,7 +136,7 @@ Running from local install is the simplest option and includes a simple Streamli
 
 
 1. Update pip and install dependencies. We recomment that you use virtual env or `conda` environment for installation.
-```
+```bash
 cd ai_starter_kit/edgar_qna/
 python3 -m venv edgar_env
 source edgar_env/bin/activate
@@ -149,7 +145,7 @@ pip  install  -r  requirements.txt
 
 2. Run the following command:
 
-```
+```bash
 streamlit run streamlit/app_qna.py --browser.gatherUsageStats false 
 ```
 This opens the demo in your default browser at port 8501. 
@@ -160,7 +156,7 @@ This option is a Streamlit-based UI for experimenting with a multiturn conversat
 
 
 1. Update pip and install dependencies. We recomment that you use virtual env or `conda` environment for installation.
-```
+```bash
 cd ai_starter_kit/edgar_qna/
 python3 -m venv edgar_env
 source edgar_env/bin/activate
@@ -169,7 +165,7 @@ pip  install  -r  requirements.txt
 
 2. Run the following command:
 
-```
+```bash
 streamlit run app_chat.py --browser.gatherUsageStats false 
 ```
 This will open the demo in your default browser at port 8501.
@@ -186,7 +182,7 @@ This option is a Streamlit-based UI for experimenting with a comparative questio
 
 
 1. Update pip and install dependencies. We recomment that you use virtual env or `conda` environment for installation.
-```
+```bash
 cd ai_starter_kit/edgar_qna/
 python3 -m venv edgar_env
 source edgar_env/bin/activate
@@ -194,7 +190,7 @@ pip  install  -r  requirements.txt
 ```
 
 2. Run the following command:
-```
+```bash
 streamlit run app_comparative_chat.py --browser.gatherUsageStats false 
 ```
 This will open the demo in your default browser at port 8501.
@@ -205,7 +201,7 @@ Running through Docker is the most scalable approach for running this AI starter
 In this example, you execute the comparative chat demo (as in option 3).
 
 1. To run the container with the AI starter kit image, enter the following command:
-```
+```bash
 docker-compose up --build
 ```
 
@@ -298,18 +294,6 @@ retrieval:
     "n_retrieved_documents": 3
 ```
 
-
-## Compare models with Sambaverse 
-
-If you are using a Sambaverse endpoint, you can test the performance of different models avalable in Sambaverse. 
-
-To change the target model, follow these steps: 
-
-1. Search the available models in playground and select a model. 
-2. Click the three dots and select **Show code**.  
-3. Find the values of these two tags: `modelName` and `select_expert` 
-4. in the `config,yaml` file,  set the values of `sambaverse_model_name` and `sambaverse_expert`
-5. Optional, modify temperature and maximun generation token.
 
 ## Finetune a SambaStudio model
 

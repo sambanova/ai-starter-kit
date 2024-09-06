@@ -1,45 +1,37 @@
+import json
+import logging
 import os
+import re
 import sys
+from urllib.parse import urlparse
+
+import requests
+import streamlit as st
+import weave
 import yaml
-import torch
 from dotenv import load_dotenv
-from typing import Any, Dict, List, Optional
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.chains.base import Chain
-from langchain.prompts import BasePromptTemplate, load_prompt
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.callbacks import CallbackManagerForChainRun
-from langchain_core.language_models import BaseLanguageModel
-from langchain.docstore.document import Document
 from langchain.memory import ConversationSummaryMemory
+from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain.prompts import load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-import shutil
-from typing import List, Dict, Optional
-import weave
-import requests
-import re
-from urllib.parse import urldefrag, urljoin, urlparse
-import streamlit as st
-import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway 
-from utils.vectordb.vector_db import VectorDb
-from utils.visual.env_utils import DEFAULT_FASTAPI_URL, get_wandb_key
 from serpapi import GoogleSearch
 
+from utils.model_wrappers.api_gateway import APIGateway
+from utils.vectordb.vector_db import VectorDb
+from utils.visual.env_utils import get_wandb_key
+
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-PERSIST_DIRECTORY = os.path.join(kit_dir, "data/my-vector-db")
+PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -49,11 +41,12 @@ wandb_api_key = get_wandb_key()
 # If WANDB_API_KEY is set, proceed with weave initialization
 if wandb_api_key:
     import weave
+
     # Initialize Weave with your project name
-    weave.init("sambanova_search_assistant")
+    weave.init('sambanova_search_assistant')
 else:
-    print("WANDB_API_KEY is not set. Weave initialization skipped.")
-    
+    print('WANDB_API_KEY is not set. Weave initialization skipped.')
+
 
 class SearchAssistant:
     """
@@ -69,7 +62,7 @@ class SearchAssistant:
         If not provided, default values will be used.
         """
 
-          # Set up logger
+        # Set up logger
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         handler = logging.StreamHandler()
@@ -95,8 +88,6 @@ class SearchAssistant:
         self.vectordb = VectorDb()
         self.qa_chain = None
         self.memory = None
-        
-       
 
     def _get_config_info(self, config_path):
         """
@@ -106,7 +97,7 @@ class SearchAssistant:
         config_path (str): Path to the YAML configuration file.
 
         Returns:
-        api_info (string): string containing API to use SambaStudio or Sambaverse.
+        api_info (string): string containing API to use SambaStudio or SambaNovaCloud.
         embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
@@ -147,26 +138,26 @@ class SearchAssistant:
         Initializes the LLM endpoint
 
         Returns:
-        llm (SambaStudio or Sambaverse): Langchain LLM to use
+        llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
         """
-        fastapi_url = DEFAULT_FASTAPI_URL
         if self.prod_mode:
-            fastapi_api_key = st.session_state.FASTAPI_API_KEY
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
-            fastapi_api_key = os.environ.get("FASTAPI_API_KEY") or st.session_state.FASTAPI_API_KEY
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
-            coe=self.llm_info["coe"],
-            do_sample=self.llm_info["do_sample"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
-            select_expert=self.llm_info["select_expert"],
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-            fastapi_url=fastapi_url,
-            fastapi_api_key=fastapi_api_key
+            sambanova_api_key=sambanova_api_key,
         )
         return llm
 
@@ -264,16 +255,16 @@ class SearchAssistant:
                         links.extend(sitelinks)
                     links = list(filter(lambda x: x is not None, links))
                 else:
-                    context = "Answer not found"
+                    context = 'Answer not found'
                     links = []
                     self.logger.info(f'No answer found for query: {query}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
                 self.logger.error(f'Request failed with status code: {response.status_code}')
                 self.logger.error(f'Error message: {response.text}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
             self.logger.error(f'Error message: {e}')
 
@@ -323,16 +314,16 @@ class SearchAssistant:
                     context = '\n\n'.join(context)
                     self.logger.info(f'Context found: {context}')
                 else:
-                    context = "Answer not found"
+                    context = 'Answer not found'
                     links = []
                     self.logger.info(f'No answer found for query: {query}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
                 self.logger.error(f'Request failed with status code: {response.status_code}')
                 self.logger.error(f'Error message: {response.text}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
             self.logger.error(f'Error message: {e}')
 
@@ -365,10 +356,11 @@ class SearchAssistant:
         """
         if engine not in ['google', 'bing']:
             raise ValueError('engine must be either google or bing')
-        params = {'q': query, 
-            'num': limit, 
-            'engine': engine, 
-            'api_key': st.session_state.SERPAPI_API_KEY if self.prod_mode else os.environ.get('SERPAPI_API_KEY')
+        params = {
+            'q': query,
+            'num': limit,
+            'engine': engine,
+            'api_key': st.session_state.SERPAPI_API_KEY if self.prod_mode else os.environ.get('SERPAPI_API_KEY'),
         }
 
         try:
@@ -387,11 +379,11 @@ class SearchAssistant:
                 context = '\n\n'.join(context)
                 self.logger.info(f'Context found: {context}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
                 self.logger.info(f'No answer found for query: {query}. Raw response: {response}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
             self.logger.error(f'Error message: {e}')
 
@@ -536,11 +528,11 @@ class SearchAssistant:
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
         embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
 
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(
@@ -580,11 +572,11 @@ class SearchAssistant:
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
         embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(
@@ -701,7 +693,7 @@ class SearchAssistant:
             self.create_and_save_local()
             self.set_retrieval_qa_chain(conversational=True)
         else:
-            return {"message": f"No links found for '{query}'. Try again"}
+            return {'message': f"No links found for '{query}'. Try again"}
 
     def get_relevant_queries(self, query):
         """

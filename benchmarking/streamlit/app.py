@@ -18,7 +18,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-LLM_API_OPTIONS = ["fastapi", "sambastudio"]
+LLM_API_OPTIONS = ["sncloud", "sambastudio"]
 
 
 @st.cache_data

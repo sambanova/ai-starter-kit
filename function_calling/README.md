@@ -7,7 +7,6 @@
 </a>
 
 # Function Calling kit
-======================
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 
@@ -29,7 +28,7 @@ This function calling kit is an example of tools calling implementation and a ge
 
 # Before you begin
 
-To use this in your application you need an instruction model, we recommend to use the Meta Llama3 70B or Llama3 8B, either from Sambaverse or from SambaStudio CoE.
+To use this in your application you need an instruction model, we recommend to use the Meta Llama3 70B or Llama3 8B, from SambaStudio CoE.
 
 ## Clone this repository
 
@@ -40,16 +39,13 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 ### Update the Embedding API information
 
@@ -63,7 +59,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
@@ -98,7 +94,7 @@ We provide a simple module for using the Function Calling LLM, for this you will
 
     > See more in [langchain tools](https://python.langchain.com/v0.1/docs/modules/tools/)
 
-2. Instantiate your Function calling LLM, passing the model to use (either Sambaverse or Sambastudio), and the required tools as argument, then you can invoke the function calling pipeline using the `function_call_llm` method passing the user query
+2. Instantiate your Function calling LLM, passing the model to use (Sambastudio), and the required tools as argument, then you can invoke the function calling pipeline using the `function_call_llm` method passing the user query
 
     ``` python
         from function_calling.src.function_calling  import FunctionCallingLlm

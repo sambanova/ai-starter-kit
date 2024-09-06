@@ -22,7 +22,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 import os
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint, SambaNovaEmbeddingModel
+from langchain_community.llms.sambanova import SambaStudio
+from langchain_community.embeddings.sambanova import SambaStudioEmbeddings
 import yaml
 
 # Use embeddings As Part of Langchain
@@ -47,7 +48,7 @@ except ImportError:
 
 def main():
     # snsdk_model retuns a langchain Embedding Object which can be used within langchain
-    snsdk_model = SambaNovaEmbeddingModel()
+    snsdk_model = SambaStudioEmbeddings()
 
     # An Example Using Raw Text and Cosine Similarity
     documents = [
@@ -78,34 +79,12 @@ def main():
     embeddings = snsdk_model
 
 
-    if api_info == "sambaverse":
-        llm = SambaverseEndpoint(
-            sambaverse_model_name=llm_info["sambaverse_model_name"],
-            #sambaverse_url=os.getenv("SAMBAVERSE_URL"),
-            sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-            model_kwargs={
-                "do_sample": False, 
-                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "temperature": llm_info["temperature"],
-                "process_prompt": True,
-                "select_expert": llm_info["smabaverse_select_expert"]
-                #"stop_sequences": { "type":"str", "value":""},
-                # "repetition_penalty": {"type": "float", "value": "1"},
-                # "top_k": {"type": "int", "value": "50"},
-                # "top_p": {"type": "float", "value": "1"}
-            }
-        )
-    
-    elif api_info == "sambastudio":
-        llm = SambaNovaEndpoint(
+    if api_info == "sambastudio":
+        llm = SambaStudio(
             model_kwargs={
                 "do_sample": True, 
                 "temperature": llm_info["temperature"],
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                            #"stop_sequences": { "type":"str", "value":""},
-            # "repetition_penalty": {"type": "float", "value": "1"},
-            # "top_k": {"type": "int", "value": "50"},
-            # "top_p": {"type": "float", "value": "1"}
             }
         ) 
 
