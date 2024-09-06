@@ -149,7 +149,7 @@ After the GUI is up and running, you can start making selections in the left pan
 
 # Workflow overview
 
-This AI starter kit implements two distinct workflows each with a series of operations:
+This AI starter kit implements two distinct workflows, each with a series of operations:
 
 <details>
 <summary> Answer and search workflow </summary>
