@@ -49,6 +49,90 @@ all:
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
+# Repl.it specific targets for kit installation
+.PHONY: replit-kit
+replit-kit:
+	@if [ -z "$(KIT)" ]; then \
+		echo "Error: KIT variable is not set. Usage: make replit-kit KIT=<kit_name> [RUN_COMMAND=<command>]"; \
+		exit 1; \
+	fi
+	@echo "Setting up kit $(KIT) for Repl.it..."
+	@if [ ! -d "$(KIT)" ]; then \
+		echo "Error: Kit directory '$(KIT)' not found."; \
+		exit 1; \
+	fi
+	@echo "Installing dependencies for kit $(KIT)..."
+	@cd $(KIT) && \
+	pip install --upgrade pip && \
+	if [ -f "requirements.txt" ]; then \
+		pip install -r requirements.txt --no-cache-dir; \
+	else \
+		echo "Warning: requirements.txt not found in $(KIT). Skipping kit-specific dependencies."; \
+	fi
+	@echo "Downgrading NLTK to version 3.8.1..."
+	@pip install nltk==3.8.1 --no-cache-dir
+	@echo "Downloading NLTK punkt resource..."
+	@python -c "import nltk; nltk.download('punkt')"
+	@echo "Kit $(KIT) setup complete."
+	@if [ -n "$(RUN_COMMAND)" ]; then \
+		echo "Running command: $(RUN_COMMAND)"; \
+		cd $(KIT) && eval $(RUN_COMMAND); \
+	else \
+		echo "No run command specified. Setup complete."; \
+	fi
+
+
+# Update the existing replit target to include the new kit option
+.PHONY: replit
+replit:
+	@if [ -n "$(KIT)" ]; then \
+		make replit-kit KIT=$(KIT) RUN_COMMAND="$(RUN_COMMAND)"; \
+		make post-process-replit; \
+	else \
+		make replit-install post-process-replit; \
+	fi
+
+.PHONY: replit-install
+replit-install:
+	@echo "Installing dependencies for Repl.it (skipping system dependencies)..."
+	pip install --upgrade pip
+	pip install -r $(BASE_REQUIREMENTS) --no-cache-dir
+
+.PHONY: start-parsing-service-replit
+start-parsing-service-replit: replit-setup-parsing-service
+	@echo "Starting parsing service in the background..."
+	@cd $(PARSING_DIR) && \
+	make run-web-app > parsing_service.log 2>&1 & \
+	echo $$! > parsing_service.pid
+	@echo "Parsing service started. PID stored in $(PARSING_DIR)/parsing_service.pid"
+	@echo "Use 'make parsing-log' to view the service log."
+
+.PHONY: replit-setup-parsing-service
+replit-setup-parsing-service:
+	@echo "Setting up parsing service for Repl.it..."
+	@echo "Current directory: $$(pwd)"
+	@echo "PARSING_DIR: $(PARSING_DIR)"
+	@if [ -d "$(PARSING_DIR)" ]; then \
+		cd $(PARSING_DIR) && \
+		echo "Changed to directory: $$(pwd)" && \
+		if [ -f "Makefile" ]; then \
+			echo "Running make install..." && \
+			make install; \
+		else \
+			echo "Error: Makefile not found in $(PARSING_DIR)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "Error: Directory $(PARSING_DIR) not found"; \
+		exit 1; \
+	fi
+
+
+.PHONY: post-process-replit
+post-process-replit:
+	@echo "Post-processing installation for Repl.it..."
+	pip uninstall -y google-search-results
+	pip install google-search-results==2.4.2
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
@@ -214,7 +298,7 @@ install: ensure-qpdf ensure-system-dependencies ensure-libheif
 	@echo "Installing dependencies..."
 	@. $(VENV_PATH)/bin/activate && \
 	$(PIP) install --upgrade pip && \
-	$(PIP) install -r $(BASE_REQUIREMENTS) && \
+	$(PIP) install -r $(BASE_REQUIREMENTS) --no-cache-dir && \
 	deactivate
 
 # Post-process installation
@@ -365,7 +449,7 @@ setup-test-suite: ensure-pyenv
 	@$(PYTHON) -m venv $(TEST_SUITE_VENV)
 	@. $(TEST_SUITE_VENV)/bin/activate && \
 		$(PIP) install --upgrade pip && \
-		$(PIP) install -r $(TEST_SUITE_REQUIREMENTS) && \
+		$(PIP) install -r $(TEST_SUITE_REQUIREMENTS) --no-cache-dir && \
 		deactivate
 
 .PHONY: clean-test-suite
@@ -402,6 +486,7 @@ format:
 help:
 	@echo "Available targets:"
 	@echo "  all                    : Set up main project, create or use venv, install dependencies, start parsing service, and post-process"
+	@echo "  replit                 : Set up project for Repl.it (skips pyenv check)"
 	@echo "  ensure-system-dependencies : Ensure Poppler and Tesseract are installed"
 	@echo "  ensure-poppler         : Install Poppler if not already installed"
 	@echo "  ensure-tesseract       : Install Tesseract if not already installed"

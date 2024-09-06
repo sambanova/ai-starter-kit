@@ -33,7 +33,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.sambanova_endpoint import SambaNovaEndpoint, SambaverseEndpoint
+from langchain_community.llms.sambanova import SambaStudio
 import yaml
 
 CONFIG_PATH = os.path.join(current_dir,'config.yaml')
@@ -103,34 +103,12 @@ def instantiate_llm():
     # Example LLM instantiation:
     # For a Sambanova LLM:
 
-    if api_info == "sambaverse":
-        llm = SambaverseEndpoint(
-            sambaverse_model_name=llm_info["sambaverse_model_name"],
-            #sambaverse_url=os.getenv("SAMBAVERSE_URL"),
-            sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-            model_kwargs={
-                "do_sample": False, 
-                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "temperature": llm_info["temperature"],
-                "process_prompt": True,
-                "select_expert": llm_info["sambaverse_select_expert"]
-                #"stop_sequences": { "type":"str", "value":""},
-                # "repetition_penalty": {"type": "float", "value": "1"},
-                # "top_k": {"type": "int", "value": "50"},
-                # "top_p": {"type": "float", "value": "1"}
-            }
-        )
-    
-    elif api_info == "sambastudio":
-        llm = SambaNovaEndpoint(
+    if api_info == "sambastudio":
+        llm = SambaStudio(
             model_kwargs={
                 "do_sample": True, 
                 "temperature": llm_info["temperature"],
                 "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                            #"stop_sequences": { "type":"str", "value":""},
-            # "repetition_penalty": {"type": "float", "value": "1"},
-            # "top_k": {"type": "int", "value": "50"},
-            # "top_p": {"type": "float", "value": "1"}
             }
         ) 
 

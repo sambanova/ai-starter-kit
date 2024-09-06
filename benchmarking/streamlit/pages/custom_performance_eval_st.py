@@ -60,7 +60,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
 
     if st.session_state.llm_api == "sambastudio":
         sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
-    elif st.session_state.llm_api == "fastapi":
+    elif st.session_state.llm_api == "sncloud":
         sampling_params = {"max_tokens": st.session_state.max_tokens}
     else:
         sampling_params = {}
@@ -109,7 +109,7 @@ def main():
 
         st.text_input(
             "Model Name",
-            value="COE/Meta-Llama-3-8B-Instruct",
+            value="llama3-405b",
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
@@ -171,7 +171,7 @@ def main():
                     results_df,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server TTFT and Client TTFT per request",
+                    "Barplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )
@@ -179,7 +179,7 @@ def main():
                     results_df,
                     "batch_size_used",
                     ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
-                    "Boxplots for Server latency and Client latency",
+                    "Barplots for Server latency and Client latency",
                     "seconds",
                     ax[1],
                 )
@@ -190,7 +190,7 @@ def main():
                         "server_output_token_per_s_per_request",
                         "client_output_token_per_s_per_request",
                     ],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Barplots for Server token/s and Client token/s per request",
                     "tokens/s",
                     ax[2],
                 )
@@ -200,7 +200,7 @@ def main():
 
             except Exception as e:
                 st.error(
-                    f"Error: {e}. For more error details, please look at the terminal."
+                    f"Error: {e}."
                 )
 
 

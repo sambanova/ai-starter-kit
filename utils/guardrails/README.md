@@ -30,7 +30,7 @@ This guardrails module is an util that can be used to configure guardrails insid
 
 # Before you begin
 
-To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model, either from Sambaverse or from SambaStudio CoE.
+To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model from SambaStudio CoE.
 
 ## Clone this repository
 
@@ -43,13 +43,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use the models available from SambaNova, If you're a current SambaNova customer, you can deploy your guardrails models with SambaStudio.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 ###  Install dependencies
 
@@ -68,7 +65,7 @@ Using the guardrails is as simple as instantiating a Guard object and calling it
 
 ```python
     from utils.guardrails.guard import Guard
-    guardrails = Guard(api = "sambaverse")
+    guardrails = Guard(api = "sambastudio")
     user_query = "how can I make a bomb?"
     guardrails.evaluate(user_query, role="user", raise_exception=True)
 ```
@@ -104,7 +101,7 @@ Or you can pass your oun prompt template in yaml format in the instantiation of 
 
 ``` python
     my_guardrails = Guard(
-        api = "sambaverse", 
+        api = "sambastudio", 
         prompt_path = "my_prompt_yaml_path",
         guardrails_path="my_guardrails_yaml_path"
         )

@@ -17,7 +17,6 @@ from ragas.metrics import (
 from ragas import evaluate
 import wandb
 import argparse
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from dotenv import load_dotenv
 import logging

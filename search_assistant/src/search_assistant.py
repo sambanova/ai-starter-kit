@@ -1,46 +1,56 @@
 import json
+import logging
 import os
 import re
 import sys
-from urllib.parse import urldefrag, urljoin, urlparse
+from urllib.parse import urlparse
 
 import requests
+import streamlit as st
+import weave
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.globals import set_debug
 from langchain.memory import ConversationSummaryMemory
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from langchain.prompts import load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
-from utils.model_wrappers.api_gateway import APIGateway
-from serpapi import GoogleSearch
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from serpapi import GoogleSearch
+
+from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
-import logging
-
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-set_debug(False)
-load_dotenv(os.path.join(repo_dir, '.env'))
+from utils.visual.env_utils import get_wandb_key
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
+
+load_dotenv(os.path.join(repo_dir, '.env'))
+
+# Handle the WANDB_API_KEY resolution before importing weave
+wandb_api_key = get_wandb_key()
+
+# If WANDB_API_KEY is set, proceed with weave initialization
+if wandb_api_key:
+    import weave
+
+    # Initialize Weave with your project name
+    weave.init('sambanova_search_assistant')
+else:
+    print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 
 class SearchAssistant:
     """
-    class used to do generation over search query results and scraped sites
+    Class used to do generation over search query results and scraped sites
     """
 
     def __init__(self, config=None) -> None:
@@ -51,6 +61,15 @@ class SearchAssistant:
         config (dict, optional):  Extra configuration parameters for the search Assistant.
         If not provided, default values will be used.
         """
+
+        # Set up logger
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
         if config is None:
             self.config = {}
         else:
@@ -62,6 +81,7 @@ class SearchAssistant:
         self.retrieval_info = config_info[3]
         self.web_crawling_params = config_info[4]
         self.extra_loaders = config_info[5]
+        self.prod_mode = config_info[6]
         self.documents = None
         self.urls = None
         self.llm = self.init_llm_model()
@@ -77,12 +97,13 @@ class SearchAssistant:
         config_path (str): Path to the YAML configuration file.
 
         Returns:
-        api_info (string): string containing API to use SambaStudio or Sambaverse.
+        api_info (string): string containing API to use SambaStudio or SambaNovaCloud.
         embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
         web_crawling_params (dict): Dictionary containing web crawling parameters
         extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available in base kit)
+        prod_mode (bool): Boolean indicating whether the app is in production mode
         """
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
@@ -92,8 +113,9 @@ class SearchAssistant:
         retrieval_info = config['retrieval']
         web_crawling_params = config['web_crawling']
         extra_loaders = config['extra_loaders']
+        prod_mode = config['prod_mode']
 
-        return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
+        return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders, prod_mode
 
     def init_memory(self):
         """
@@ -116,22 +138,39 @@ class SearchAssistant:
         Initializes the LLM endpoint
 
         Returns:
-        llm (SambaStudio or Sambaverse): Langchain LLM to use
+        llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
         """
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
         llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
-            coe=self.llm_info["coe"],
-            do_sample=self.llm_info["do_sample"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
-            select_expert=self.llm_info["select_expert"],
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name']
+            sambanova_api_key=sambanova_api_key,
         )
         return llm
 
     def reformulate_query_with_history(self, query):
+        """
+        Reformulates the query based on the conversation history.
+
+        Args:
+        query (str): The current query to reformulate.
+
+        Returns:
+        str: The reformulated query.
+        """
         if self.memory is None:
             self.init_memory()
         custom_condensed_question_prompt = load_prompt(
@@ -151,7 +190,7 @@ class SearchAssistant:
         text (str): The text from which to remove URLs.
 
         Returns:
-        (str) The text with all URLs removed.
+        str: The text with all URLs removed.
         """
         url_pattern = r'https?://\S+|www\.\S+'
         return re.sub(url_pattern, '', text)
@@ -208,7 +247,7 @@ class SearchAssistant:
                     for i, result in enumerate(results):
                         context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
                     context = '\n\n'.join(context)
-                    logging.info(f'Context found: {context}')
+                    self.logger.info(f'Context found: {context}')
                     if include_site_links:
                         sitelinks = []
                         for r in [r.get('sitelinks', []) for r in results]:
@@ -216,18 +255,18 @@ class SearchAssistant:
                         links.extend(sitelinks)
                     links = list(filter(lambda x: x is not None, links))
                 else:
-                    context = "Answer not found"
+                    context = 'Answer not found'
                     links = []
-                    logging.info(f'No answer found for query: {query}')
+                    self.logger.info(f'No answer found for query: {query}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
-                logging.error(f'Request failed with status code: {response.status_code}')
-                logging.error(f'Error message: {response.text}')
+                self.logger.error(f'Request failed with status code: {response.status_code}')
+                self.logger.error(f'Error message: {response.text}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
-            logging.error(f'Error message: {e}')
+            self.logger.error(f'Error message: {e}')
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
@@ -273,20 +312,20 @@ class SearchAssistant:
                     for i, result in enumerate(results):
                         context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}')
                     context = '\n\n'.join(context)
-                    logging.info(f'Context found: {context}')
+                    self.logger.info(f'Context found: {context}')
                 else:
-                    context = "Answer not found"
+                    context = 'Answer not found'
                     links = []
-                    logging.info(f'No answer found for query: {query}')
+                    self.logger.info(f'No answer found for query: {query}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
-                logging.error(f'Request failed with status code: {response.status_code}')
-                logging.error(f'Error message: {response.text}')
+                self.logger.error(f'Request failed with status code: {response.status_code}')
+                self.logger.error(f'Error message: {response.text}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
-            logging.error(f'Error message: {e}')
+            self.logger.error(f'Error message: {e}')
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
@@ -317,7 +356,12 @@ class SearchAssistant:
         """
         if engine not in ['google', 'bing']:
             raise ValueError('engine must be either google or bing')
-        params = {'q': query, 'num': limit, 'engine': engine, 'api_key': os.environ.get('SERPAPI_API_KEY')}
+        params = {
+            'q': query,
+            'num': limit,
+            'engine': engine,
+            'api_key': st.session_state.SERPAPI_API_KEY if self.prod_mode else os.environ.get('SERPAPI_API_KEY'),
+        }
 
         try:
             search = GoogleSearch(params)
@@ -333,20 +377,18 @@ class SearchAssistant:
                 for i, result in enumerate(results):
                     context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
                 context = '\n\n'.join(context)
-                logging.info(f'Context found: {context}')
+                self.logger.info(f'Context found: {context}')
             else:
-                context = "Answer not found"
+                context = 'Answer not found'
                 links = []
-                logging.info(f'No answer found for query: {query}. Raw response: {response}')
+                self.logger.info(f'No answer found for query: {query}. Raw response: {response}')
         except Exception as e:
-            context = "Answer not found"
+            context = 'Answer not found'
             links = []
-            logging.error(f'Error message: {e}')
+            self.logger.error(f'Error message: {e}')
 
         if do_analysis:
             prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
-            # results_str = json.dumps(results) #TODO remove if works with serpapi
-            # results_str = self.remove_links(results_str)
             formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt)
             return self.parse_serp_analysis_output(answer, links), links
@@ -486,11 +528,11 @@ class SearchAssistant:
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
         embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
 
         if os.path.exists(persist_directory) and not force_reload and not update:
             self.vector_store = self.vectordb.load_vdb(
@@ -530,11 +572,11 @@ class SearchAssistant:
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
         embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info["type"],
-            batch_size=self.embedding_model_info["batch_size"],
-            coe=self.embedding_model_info["coe"],
-            select_expert=self.embedding_model_info["select_expert"]
-            ) 
+            type=self.embedding_model_info['type'],
+            batch_size=self.embedding_model_info['batch_size'],
+            coe=self.embedding_model_info['coe'],
+            select_expert=self.embedding_model_info['select_expert'],
+        )
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(
@@ -651,7 +693,7 @@ class SearchAssistant:
             self.create_and_save_local()
             self.set_retrieval_qa_chain(conversational=True)
         else:
-            return {"message": f"No links found for '{query}'. Try again"}
+            return {'message': f"No links found for '{query}'. Try again"}
 
     def get_relevant_queries(self, query):
         """
@@ -700,9 +742,7 @@ class SearchAssistant:
         query (str): The query to search.
 
         Returns:
-
-        result (str): The final Result to que user query
-
+        result (str): The final Result to the user query
         """
         result = self.qa_chain.invoke(query)
         result['answer'] = self.parse_retrieval_output(result)

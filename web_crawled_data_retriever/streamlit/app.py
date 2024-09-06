@@ -177,7 +177,7 @@ def main():
             if st.button("Clear List"):
                 st.session_state.base_urls_list = []
                 st.session_state.full_urls_list = []
-                st.experimental_rerun()
+                st.rerun()
             # selection of crawling depth and crawling process
             st.markdown("<hr>", unsafe_allow_html=True)   
             st.markdown("**3. Choose the crawling depth**")
@@ -194,7 +194,7 @@ def main():
                     crawler = WebCrawlingRetrieval()
                     st.session_state.docs, sources = crawler.web_crawl(st.session_state.base_urls_list, depth=depth)
                     st.session_state.full_urls_list=sources
-                    st.experimental_rerun()
+                    st.rerun()
             with st.expander(f"{len(st.session_state.full_urls_list)} crawled URLs",expanded=False):
                 st.write(st.session_state.full_urls_list)
             if "Select websites" in datasource:

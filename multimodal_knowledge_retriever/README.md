@@ -37,7 +37,6 @@ Multimodal Knowledge Retrieval
     - [Customize Retrieval](#customize-retrieval)
     - [Customize the LLM](#customize-the-llm)
         - [SambaStudio endpoint](#sambastudio-endpoint)
-        - [Sambaverse endpoint](#sambaverse-endpoint)
         - [Experiment with Prompt Engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
@@ -89,7 +88,7 @@ This overview should help users understand the strengths and limitations of the 
 
 This starter kit, you need both a LVLM and a LLM. 
 * We use the Llava 1.5 LVLM, which is currently available only in SambaStudio. 
-* You can use a LLM of your choice, either from Sambaverse or from SambaStudio. 
+* You can use a LLM of your choice, from SambaStudio. 
 
 It might make sense to use two SambaStudio models.
 
@@ -112,20 +111,17 @@ git clone https://github.com/sambanova/ai-starter-kit.git
     LVLM_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
     LVLM_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
     LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-
+    ```
 
 ## Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
-
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 ## Update the Embeddings API information
 
@@ -139,7 +135,7 @@ You have these options to specify the embedding API info:
 
 To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
 
-1. Follow the instructions [here](../README.md#use-sambastudio-option-1) for setting up your environment variables.
+1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
 
@@ -349,13 +345,6 @@ The starter kit uses the SN LLM model, which can be further fine-tuned to improv
 1. To train a model in SambaStudio, [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
 2. To modify the parameters for calling the model, make changes to the `config.yaml` file. 
 3. You can also set the values of temperature and maximum generation token in that file. 
-
-### Sambaverse endpoint
-
-You can test the performance of multiple models avalable in Sambaverse by the model:
-
-1. Search the available models in playground and select the three dots. Click **Show code**, and search for the values of the `modelName` and `select_expert` tags.
-2. To modify the parameters for calling the model, change the values of `sambaverse_model_name` and `sambaverse_expert` in *llm* in the `config.yaml` file. 3. You can also set the values of temperature and maximum generation token in that file. 
 
 ### Experiment with Prompt Engineering
 

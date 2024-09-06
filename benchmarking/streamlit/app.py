@@ -18,7 +18,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-LLM_API_OPTIONS = ["sambastudio", "fastapi"]
+LLM_API_OPTIONS = ["sncloud", "sambastudio"]
 
 
 @st.cache_data
@@ -42,7 +42,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
-        llm_api=st.session_state.llm_api 
+        llm_api=st.session_state.llm_api,
     )
 
     performance_evaluator.run_benchmark(
@@ -128,14 +128,12 @@ def main():
 
         llm_model = st.text_input(
             "Model Name",
-            value="COE/Meta-Llama-3-8B-Instruct",
+            value="llama3-405b",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         st.session_state.llm = f"{llm_model}"
 
-        st.session_state.llm_api = st.selectbox(
-            "API type", options=LLM_API_OPTIONS
-        )
+        st.session_state.llm_api = st.selectbox("API type", options=LLM_API_OPTIONS)
 
         st.session_state.input_tokens = st.number_input(
             "Number of input tokens", min_value=50, max_value=2000, value=1000, step=1
@@ -146,7 +144,7 @@ def main():
         )
 
         st.session_state.number_requests = st.number_input(
-            "Number of total requests", min_value=10, max_value=100, value=32, step=1
+            "Number of total requests", min_value=10, max_value=1000, value=32, step=1
         )
 
         st.session_state.number_concurrent_workers = st.number_input(
@@ -156,7 +154,7 @@ def main():
         st.session_state.timeout = st.number_input(
             "Timeout", min_value=60, max_value=1800, value=600, step=1
         )
-        
+
         sidebar_option = st.sidebar.button("Run!")
 
     if sidebar_option:
@@ -170,16 +168,20 @@ def main():
 
                 st.subheader("Performance metrics plots")
                 expected_output_tokens = st.session_state.output_tokens
-                generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
+                generated_output_tokens = (
+                    df_req_info.server_number_output_tokens.unique()[0]
+                )
                 if not pd.isnull(generated_output_tokens):
-                    st.markdown(f"Difference between expected output tokens {expected_output_tokens} and generated output tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)} token(s)")
-                
+                    st.markdown(
+                        f"Difference between expected output tokens {expected_output_tokens} and generated output tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)} token(s)"
+                    )
+
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
                 plot_client_vs_server_barplots(
                     df_req_info,
                     "batch_size_used",
                     ["server_ttft_s", "client_ttft_s"],
-                    "Boxplots for Server TTFT and Client TTFT per request",
+                    "Barplots for Server TTFT and Client TTFT per request",
                     "seconds",
                     ax[0],
                 )
@@ -187,7 +189,7 @@ def main():
                     df_req_info,
                     "batch_size_used",
                     ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
-                    "Boxplots for Server latency and Client latency",
+                    "Barplots for Server latency and Client latency",
                     "seconds",
                     ax[1],
                 )
@@ -198,7 +200,7 @@ def main():
                         "server_output_token_per_s_per_request",
                         "client_output_token_per_s_per_request",
                     ],
-                    "Boxplots for Server token/s and Client token/s per request",
+                    "Barplots for Server token/s and Client token/s per request",
                     "tokens/s",
                     ax[2],
                 )
@@ -207,9 +209,7 @@ def main():
                 st.pyplot(fig)
 
             except Exception as e:
-                st.error(
-                    f"Error: {e}. For more error details, please look at the terminal."
-                )
+                st.error(f"Error: {e}.")
 
 
 if __name__ == "__main__":

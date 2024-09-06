@@ -238,6 +238,7 @@ benchmarking/debug
 =======
 # agent workflow
 agent_workflows/output
+agent_workflows/data/tmp
 
 logs/
 
@@ -252,6 +253,11 @@ utils/eval/data
 #wandb
 wandb/
 
+# VSCode
+.vscode/*
+
+# all .db files
+*.db
 utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave

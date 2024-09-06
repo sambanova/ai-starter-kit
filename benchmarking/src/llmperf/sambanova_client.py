@@ -503,6 +503,130 @@ class FastAPI(BaseAPIEndpoint):
 
         return metrics, generated_text   
 
+
+class SambaNovaCloudAPI(BaseAPIEndpoint):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Load sambanova cloud env variables
+        self.base_url = os.environ.get("SAMBANOVA_URL")
+        self.api_key = os.environ.get("SAMBANOVA_API_KEY")
+        
+    def _get_url(self) -> str:
+        """Builds url for API call
+
+        Returns:
+            str: url needed for API
+        """
+        return self.base_url
+    
+    def _get_headers(self):
+        """ Gets headers for API call """
+        return {"Authorization": f"Basic {self.api_key}", 'Content-Type': 'application/json'} 
+    
+    def _get_json_data(self) -> dict:
+        """Gets json body for API call
+
+        Returns:
+            dict: API call body 
+        """
+        
+        prompt = self.request_config.prompt_tuple[0]
+        sampling_params = self.request_config.sampling_params
+        sampling_params["model"] = self.request_config.model
+        
+        if self.request_config.is_stream_mode:
+            sampling_params["stream"] = "true"
+            sampling_params["stream_options"] = {"include_usage": "true"}
+        else:
+            # TODO: support not streaming mode
+            raise ValueError("Streaming mode required")
+                    
+        data = {"messages": [{"role": "user", "content": prompt}]}
+        data.update(sampling_params)
+        
+        return data
+
+    def compute_metrics(self, metrics: dict) -> tuple[dict, str]:
+        """Computes metrics for SambaNovaCloud endpoint
+
+        Args:
+            metrics (dict): basic metrics dictionary
+
+        Returns:
+            tuple[dict, str]: tuple containing the metrics structure with server and client side values, and the complete generated text
+        """
+        
+        # Get API request components
+        url = self._get_url()
+        headers = self._get_headers()
+        json_data = self._get_json_data()
+        
+        # Set variables
+        generated_text = ""
+        events_received = []
+        events_timings = []
+        
+        # Start measuring time
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
+        start_time = event_start_time = time.monotonic()
+
+
+        with requests.post(
+            url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode
+        ) as response:
+            
+            if response.status_code != 200:
+                response.raise_for_status()
+
+            client = sseclient.SSEClient(response)
+            generated_text = ""
+            
+            for event in client.events():                        
+                try:    
+                    # check streaming events before last stream returns DONE
+                    if event.data != "[DONE]" :
+                        data = json.loads(event.data)
+                        # if events don't contain "usage" key, which only shows up in stream returning performance metrics
+                        if data.get("usage") is None:
+                            # if streams still don't hit a finish reason
+                            if data['choices'][0]["finish_reason"] is None:
+                                # log s timings
+                                events_timings.append(time.monotonic() - event_start_time)
+                                event_start_time = time.monotonic()
+                                # concatenate streaming text pieces
+                                stream_content = data['choices'][0]["delta"]["content"]
+                                events_received.append(stream_content)
+                                generated_text += stream_content
+                        # process streaming chunk when performance usage is provided
+                        else: 
+                            response_dict = data["usage"]
+                except Exception as e:
+                    raise Exception(f"Error: {e} at streamed event: {event.data}")
+        
+        # End measuring time
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S")  
+        total_request_time = time.monotonic() - start_time
+        ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
+    
+        # Populate server and client metrics
+        prompt_len  = self.request_config.prompt_tuple[1]
+        number_chunks_recieved = len(events_received)
+        
+        num_output_tokens = self._get_token_length(generated_text)
+        server_metrics = self._populate_server_metrics(response_dict, metrics)
+        metrics = self._populate_client_metrics(
+            prompt_len,
+            num_output_tokens,
+            ttft,
+            total_request_time,
+            server_metrics,
+            number_chunks_recieved,
+        )
+
+        return metrics, generated_text   
+
+
 def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tuple:
     """Makes a single completion request to a LLM API
 
@@ -522,10 +646,10 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
     metrics[common_metrics.ERROR_MSG] = ""
     
     try:
-        
-        if request_config.llm_api == "fastapi":
-            fastapi_client = FastAPI(request_config, tokenizer)
-            metrics, generated_text = fastapi_client.compute_metrics(metrics)
+       
+        if request_config.llm_api == "sncloud":
+            sncloud_client = SambaNovaCloudAPI(request_config, tokenizer)
+            metrics, generated_text = sncloud_client.compute_metrics(metrics)
         
         elif request_config.llm_api == "sambastudio":
             sambastudio_client = SambaStudioAPI(request_config, tokenizer)
@@ -556,12 +680,8 @@ if __name__ == "__main__":
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
-    # model = "COE/llama-2-7b-chat-hf"
-    # model = "COE/llama-2-13b-chat-hf"
-    # model = "COE/Mistral-7B-Instruct-v0.2"
-    # model = "COE/Meta-Llama-3-8B-Instruct"
-    model = "COE/Meta-Llama-3-8B-Instruct"
-    llm_api = "sambastudio"
+    model = "llama3-405b"
+    llm_api = "sncloud"
     tokenizer = get_tokenizer(model)
 
     prompt = "This is a test example, so tell me about anything"
@@ -576,7 +696,7 @@ if __name__ == "__main__":
             # "top_p": 0.95,
             # "process_prompt": "False",
         },
-        mode="stream",
+        is_stream_mode=True,
         num_concurrent_workers=1,
     )
 

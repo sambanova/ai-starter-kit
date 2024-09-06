@@ -3,10 +3,10 @@ import os
 import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from time import sleep
 from typing import Callable, Generator, Optional
 
 import streamlit as st
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -17,9 +17,11 @@ sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm  # type: ignore
 from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate  # type: ignore
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
 
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 # tool mapping of available tools
 TOOLS = {
@@ -30,6 +32,16 @@ TOOLS = {
     'translate': translate,
     'rag': rag,
 }
+
+
+def load_config():
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
+config = load_config()
+prod_mode = config.get('prod_mode', False)
+additional_env_vars = config.get('additional_env_vars', None)
 
 
 @contextmanager
@@ -105,6 +117,8 @@ def main() -> None:
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
 
+    initialize_env_variables(prod_mode, additional_env_vars)
+
     if 'fc' not in st.session_state:
         st.session_state.fc = None
     if 'chat_history' not in st.session_state:
@@ -120,35 +134,50 @@ def main() -> None:
 
     with st.sidebar:
         st.title('Setup')
-        st.markdown('**1. Select the tools for function calling.**')
-        st.session_state.tools = st.multiselect(
-            'Available tools',
-            ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
-            ['get_time', 'python_repl', 'query_db'],
-        )
-        st.markdown('**2. Set the maximum number of iterations your want the model to run**')
-        st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
-        st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
-        if st.button('Set'):
-            with st.spinner('Processing'):
-                set_fc_llm(st.session_state.tools)
-                st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
-            st.session_state.input_disabled = False
 
-        st.markdown('**3. Ask questions about your data!**')
+        if not are_credentials_set(additional_env_vars):
+            api_key, additional_vars = env_input_fields(additional_env_vars)
+            if st.button('Save Credentials'):
+                message = save_credentials(api_key, additional_vars, prod_mode)
+                st.success(message)
+                st.rerun()
 
-        with st.expander('**Execution scratchpad**', expanded=True):
-            output = st.empty()  # type: ignore
+        else:
+            st.success('Credentials are set')
+            if st.button('Clear Credentials'):
+                save_credentials('', {var: '' for var in (additional_env_vars or [])}, prod_mode)
+                st.rerun()
 
-        with st.expander('Additional settings', expanded=False):
-            st.markdown('**Interaction options**')
+        if are_credentials_set(additional_env_vars):
+            st.markdown('**1. Select the tools for function calling.**')
+            st.session_state.tools = st.multiselect(
+                'Available tools',
+                ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
+                ['get_time', 'python_repl', 'query_db'],
+            )
+            st.markdown('**2. Set the maximum number of iterations your want the model to run**')
+            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
+            st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
+            if st.button('Set'):
+                with st.spinner('Processing'):
+                    set_fc_llm(st.session_state.tools)
+                    st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
+                st.session_state.input_disabled = False
 
-            st.markdown('**Reset chat**')
-            st.markdown('**Note:** Resetting the chat will clear all interactions history')
-            if st.button('Reset conversation'):
-                st.session_state.chat_history = []
-                st.session_state.sources_history = []
-                st.toast('Interactions reset. The next response will clear the history on the screen')
+            st.markdown('**3. Ask questions about your data!**')
+
+            with st.expander('**Execution scratchpad**', expanded=True):
+                output = st.empty()  # type: ignore
+
+            with st.expander('Additional settings', expanded=False):
+                st.markdown('**Interaction options**')
+
+                st.markdown('**Reset chat**')
+                st.markdown('**Note:** Resetting the chat will clear all interactions history')
+                if st.button('Reset conversation'):
+                    st.session_state.chat_history = []
+                    st.session_state.sources_history = []
+                    st.toast('Interactions reset. The next response will clear the history on the screen')
 
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled)
     handle_userinput(user_question)

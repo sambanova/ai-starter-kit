@@ -21,14 +21,14 @@ Prompt Engineering Starter Kit
 - [Use the starterkit GUI](#use-the-starterkit-gui)
 - [Customize the starter kit](#customize-the-starter-kit)
     - [Include additional models](#include-additional-models)
+        - [Include models using SambaNova Cloud](#include-models-using-sambanova-cloud)
         - [Include models using SambaStudio](#include-models-using-sambastudio)
-        - [Include models using Sambaverse](#include-models-using-sambaverse)
     - [Edit a prompt template](#edit-a-prompt-template)
-    - [Add prompt templates](#add-prompt-templates)
+    - [Add prompt templates and use cases](#add-prompt-templates-and-use-cases)
 - [Examples, third-party tools, and data sources](#examples-third-party-tools-and-data-sources)
 
 <!-- /TOC -->
-
+Add prompt templates / use cases
 # Before you begin
 
 You have to set up your environment before you can run the starter kit. 
@@ -44,16 +44,13 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud API.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
-
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
-
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 
 # Deploy the starter kit GUI
@@ -66,14 +63,14 @@ If you want to use virtualenv or conda environment
 
 1. Install and update pip.
 
-    ```
+    ```bash
     cd ai-starter-kit/prompt-engineering
     python3 -m venv prompt_engineering_env
     source prompt_engineering_env/bin/activate
     pip install -r requirements.txt
     ```
 2. Run the following command:
-    ```
+    ```bash
     streamlit run streamlit/app.py --browser.gatherUsageStats false 
     ```
 
@@ -99,7 +96,7 @@ You will be prompted to go to the link (http://localhost:8501/) in your browser 
 
 To use the starter kit, follow these steps:
 
-1. Choose the LLM to use from the options available under **Model Selection** (Currently, only Llama2 70B and Llama3 8B are available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
+1. Confirm the LLM to use from the text under **Model display** (Currently, only Llama2 and Llama3 models are available). You'll see a description of the architecture, prompting tips, and the metatag format required to optimize the model's performance.
 
 2. In **Use Case for Sample Prompt**, select a template. You have the following choices:
 
@@ -113,9 +110,9 @@ To use the starter kit, follow these steps:
 
     - **Summarization**: Outputs a summary based on a given context. Essential for condensing large volumes of text 
 
-3. In the **Prompt** field, review and edit the input to the model 
+3. In the **Prompt** field, review and edit the input to the model, or use directly the default prompt. 
 
-4. Click the **Send** button to submit the prompt. The model will retrieve and display the response.
+4. Click the **Send** button to submit the prompt. The model will generate and display the response.
 
 # Customize the starter kit
 
@@ -123,39 +120,37 @@ You have several options for customizing this starter kit.
 
 ## Include additional models
 
-You can include more models with the kit. They will then show up in the **Model Selection** pulldown in the GUI. 
+You can include more models with the kit. They will then show up in the **Model display** in the GUI according to the name of the `select_expert` value in the config file. 
+
+### Include models using SambaNova Cloud
+
+If you're using a SambaNova Cloud endpoint, follow these steps:
+ 
+1. In the `config.json` file, add the `select_expert` name. Then, include the model description in the `models` section, like the ones already there. Ensure that both names are compatible. Example:
+    - `select_expert` value: `Mistral-7B-Instruct-v0.2`
+    - model name under `models`: `Mistral`  
+2. Populate the API key provided for SambaNova Cloud.
+3. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder, but will follow the metatags needed for the LLM model we want to add.
 
 ### Include models using SambaStudio
 
 If you're using a SambaStudio endpoint, follow these steps:
 
 1. Create a SambaStudio endpoint for inference. 
-2. In the `config.json` file, include the model description in the model section, like the ones already there.
-3. Populate key variables on your env file
-4. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambanova_api` in `streamlit/app.py` for an example.
-5. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
-
-### Include models using Sambaverse
-
-If you're using a Sambaverse endpoint, follow these steps:
-
-1. In the playground, find the model you're interested in. 
-2. Select the three dots and then **Show code** and note down the values of `modelName` and `select_expert`. 
-3. Add in the `_get_expert` method the model you're trying to incorporate based on the type of API endpoint. See `call_sambaverse_api` in `streamlit/app.py` for an example.
-4. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder.
-
-### Include models using FastAPI
-
-For now we're only supporting `llama3-8b`. We'll support more models in near future.
+2. In the `config.json` file, add the `select_expert` name. Then, include the model description in the `models` section, like the ones already there. Ensure that both names are compatible. Example:
+    - `select_expert` value: `Mistral-7B-Instruct-v0.2`
+    - model name under `models`: `Mistral`  
+3. Populate key variables on your env file.
+4. Use `create_prompt_yamls` as a tool to create the prompts needed for your new model. These prompts will have a similar structure as the ones already existing in `prompt_engineering/prompts` folder, but will follow the metatags needed for the LLM model we want to add.
 
 ## Edit a prompt template
 
 To change a template: 
 
-1. Edit the `create_prompt_yamls()` method in `streamlit/app.py`.
+1. Edit the `create_prompt_yamls()` method in `src/llm_management.py`.
 2. Execute the method to modify the prompt yaml file in the `prompts` folder.
 
-## Add prompt templates
+## Add prompt templates and use cases
 
 To add a prompt template:
 
@@ -171,10 +166,9 @@ For further examples, we encourage you to visit any of the following resources:
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
 - streamlit (version 1.25.0)
-- langchain (version 1.1.4)
+- langchain (version 0.2.25)
 - python-dotenv (version 1.0.0)
-- Requests (version 2.31.0)
-- sseclient (version 0.0.27)
+- sseclient (version 1.8.0)
 - streamlit-extras (version 0.3.6)
-- pydantic (version 1.10.14)
-- pydantic_core (version 2.10.1)
+- pydantic (version 2.7.0)
+- pydantic_core (version 2.18.1)

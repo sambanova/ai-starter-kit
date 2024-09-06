@@ -3,14 +3,14 @@
 
 python src/evaluator.py \
 --mode custom \
---model-name "COE/Meta-Llama-3-8B-Instruct" \
+--model-name "llama3-405b" \
 --results-dir "./data/results/llmperf" \
 --num-workers 1 \
 --timeout 600 \
 --input-file-path "<CUSTOM DATASET PATH HERE>" \
 --save-llm-responses False \
---sampling-params '{"max_tokens_to_generate": 256}' \
---llm-api "sambastudio"
+--sampling-params '{"max_tokens": 256}' \
+--llm-api "sncloud"
 
 # Notes:
 # 1. Replace <CUSTOM DATASET PATH HERE> with the path to your custom dataset.
@@ -35,11 +35,11 @@ python src/evaluator.py \
 #          OR
 #      --model-name "Meta-Llama-3-8B-Instruct"
 #
-# 4. For FastAPI endpoints, change the llm-api parameter to "fastapi" and use the model name directly.
+# 4. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
 #   For example:
 #      --model-name "llama3-8b"
 #
 # 5. You can modify the number of maximum tokens depending on the LLM endpoint type.
 #   If it's "sambastudio": add or modify in the `--sampling-params` dictionary the `max_tokens_to_generate` key and a value
-#   If it's "fastapi": add or modify in the `--sampling-params` dictionary the `max_tokens` key and a value   
+#   If it's "sncloud": add or modify in the `--sampling-params` dictionary the `max_tokens` key and a value   
 #

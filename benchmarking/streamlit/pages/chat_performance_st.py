@@ -99,7 +99,7 @@ def main():
         # Show LLM parameters
         llm_model = st.text_input(
             "Model Name",
-            value="COE/Meta-Llama-3-8B-Instruct",
+            value="llama3-405b",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         llm_selected = f"{llm_model}"
@@ -200,7 +200,7 @@ def main():
                                 unsafe_allow_html=True,
                             )
     except Exception as e:
-        st.error(f"Error: {e}. For more error details, please look at the terminal.")
+        st.error(f"Error: {e}.")
 
 
 if __name__ == "__main__":

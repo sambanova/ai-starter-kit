@@ -46,11 +46,10 @@ Some things to note:
  * This kit is fine-tuning models from Hugging Face using the name of the model and the model_id referred to later.
  * We hope to have embedding model fine-tuning capability in SambaStudio very soon which will allow you to fine-tune embeddings models on SambaNova RDUs.
  * In this kit the SambaNova LLM is used in the dataset creation process, namely in creating questions and answers from the chunks in order to finetune the model.
- * This kit allows the use of either SambaStudio or SambaVerse: 
+ * This kit allows the use of SambaStudio: 
 
 # Before you begin
 
-You can use this model with Sambaverse or SambaStudio, but you have to do some setup first. 
 
 ## Clone the repo and install dependencies
 
@@ -70,13 +69,12 @@ Clone the start kit repo.
 
 ## Set up the account and config file 
 
-You can use the model with SambaStudio or Sambaverse. 
 
 ## Set up the models and config file
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+The next step is to set up your environment to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaStudio.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
@@ -84,8 +82,6 @@ The next step is to set up your environment to use one of the models available f
 - If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
 
 # Using the model
 

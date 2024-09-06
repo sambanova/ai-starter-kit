@@ -3,14 +3,14 @@
 
 python src/evaluator.py \
 --mode synthetic \
---model-name "COE/Meta-Llama-3-8B-Instruct" \
+--model-name "llama3-405b" \
 --results-dir "./data/results/llmperf" \
 --num-workers 1 \
 --timeout 600 \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
 --num-requests 16 \
---llm-api "sambastudio"
+--llm-api "sncloud"
 
 # Notes:
 # 1. For CoE Models, make sure to include the prefix "COE/" before the expert name.
@@ -33,6 +33,6 @@ python src/evaluator.py \
 #          OR
 #      --model-name "Meta-Llama-3-8B-Instruct"
 #
-# 3. For FastAPI endpoints, change the llm-api parameter to "fastapi" and use the model name directly.
+# 3. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
 #   For example:
 #      --model-name "llama3-8b"
