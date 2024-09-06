@@ -142,8 +142,8 @@ After the GUI is up and running, you can start making selections in the left pan
 2. Select the search engine you want to use for retrieval.
 3. Set the maximum number of search results to retrieve.
 4. Select the method for retrieval
-    - **Search and answer** Does a search for each query you pass to the search assistant, and uses the search result snippets to provide an answer.
-    - **Search and Scrape Sites** Asks you for an initial query and searches and scrapes the sites. Creates a vector database from the result. You can then as other questions related to your initial query and the method uses the stored information to give an answer.
+    - **Search and answer**: Does a search for each query you pass to the search assistant, and uses the search result snippets to provide an answer.
+    - **Search and Scrape Sites**: Asks you for an initial query and searches and scrapes the sites. Creates a vector database from the result. You can then as other questions related to your initial query and the method uses the stored information to give an answer.
 5. Click the **Set** button to start asking questions!
 
 
