@@ -1,36 +1,24 @@
 import sys
 import os
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
-
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
-
 import json
 from tqdm import tqdm
-
 import argparse
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain_community.vectorstores import Chroma
 from langchain.chains import create_retrieval_chain
-from utils.sambanova_endpoint import SambaStudio, SambaStudioEmbeddings, Sambaverse
 import yaml
-import json
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import seaborn as sns
 import random
-from typing import Dict, List
 from difflib import SequenceMatcher
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -38,7 +26,9 @@ kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
 repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
 sys.path.append(kit_dir)
-sys.path.append(repo_dir)
+sys.path.append(repo_dir
+                )
+from utils.model_wrappers.api_gateway import APIGateway
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,10 +39,10 @@ with open(CONFIG_PATH, "r") as yaml_file:
     config = yaml.safe_load(yaml_file)
 api_info = config["api"]
 llm_info = config["llm"]
+embedding_model_info = config["embedding_model"]
 retrieval_info = config["retrieval"]
 
 load_dotenv(os.path.join(repo_dir, ".env"))
-
 
 def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     supported_experts_map = config["supported_experts_map"]
@@ -70,7 +60,6 @@ def get_expert_val(res: Union[Dict[str, Any], str]) -> str:
     expert = next((x for x in supported_experts if x in data), "Generalist")
     return supported_experts_map.get(expert, "Generalist")
 
-
 def get_expert(
     input_text: str,
     do_sample: bool = False,
@@ -83,7 +72,7 @@ def get_expert(
     use_requests: bool = False,
     use_wrapper: bool = False,
 ) -> Dict[str, Any]:
-    select_expert = config["llm"]["samabaverse_select_expert"]
+    select_expert = config["llm"]["select_expert"]
     prompt = config["expert_prompt"].format(input=input_text)
 
     inputs = json.dumps(
@@ -107,16 +96,7 @@ def get_expert(
     }
 
     if use_wrapper:
-        llm = SambaStudio(
-            streaming=True,
-            model_kwargs={
-                "do_sample": do_sample,
-                "temperature": temperature,
-                "max_tokens_to_generate": max_tokens_to_generate,
-                "select_expert": select_expert,
-                "process_prompt": False,
-            },
-        )
+        llm = get_llm()
         chat_prompt = ChatPromptTemplate.from_template(config["expert_prompt"])
         return llm.invoke(chat_prompt.format_prompt(input=input_text).to_string())
     elif use_requests:
@@ -153,10 +133,13 @@ def get_expert(
             json.dumps(tuning_params),
         )
 
-
 def run_e2e_vector_database(user_query: str, documents):
-    snsdk_model = SambaStudioEmbeddings()
-    embeddings = snsdk_model
+    embeddings = APIGateway.load_embedding_model(
+        type=embedding_model_info["type"],
+        batch_size=embedding_model_info["batch_size"],
+        coe=embedding_model_info["coe"],
+        select_expert=embedding_model_info["select_expert"]
+    )
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=retrieval_info["chunk_size"],
@@ -196,7 +179,6 @@ def run_e2e_vector_database(user_query: str, documents):
 
     return expert, response["answer"]
 
-
 def run_simple_llm_invoke(user_query: str):
     router_response = get_expert(user_query, use_wrapper=True)
     expert = get_expert_val(router_response)
@@ -212,40 +194,24 @@ def run_simple_llm_invoke(user_query: str):
 
     return expert, response
 
-
 def get_expert_only(user_query: str):
     expert_response = get_expert(user_query, use_wrapper=True)
     expert = get_expert_val(expert_response)
     logger.info(f"Expert for query '{user_query}': {expert}")
     return expert_response
 
-
-def get_llm(expert: Optional[str] = None) -> Union[Sambaverse, SambaStudio]:
-    if api_info == "sambaverse":
-        return Sambaverse(
-            sambaverse_model_name=llm_info["sambaverse_model_name"],
-            sambaverse_api_key=os.getenv("SAMBAVERSE_API_KEY"),
-            model_kwargs={
-                "do_sample": False,
-                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "temperature": llm_info["temperature"],
-                "process_prompt": True,
-                "select_expert": expert or llm_info["samabaverse_select_expert"],
-            },
-        )
-    elif api_info == "sambastudio":
-        return SambaStudio(
-            streaming=True,
-            model_kwargs={
-                "do_sample": True,
-                "temperature": llm_info["temperature"],
-                "max_tokens_to_generate": llm_info["max_tokens_to_generate"],
-                "select_expert": expert or llm_info["samabaverse_select_expert"],
-                "process_prompt": False,
-            },
-        )
-    else:
-        raise ValueError("Invalid API configuration")
+def get_llm(expert: Optional[str] = None):
+    return APIGateway.load_llm(
+        type=api_info,
+        streaming=True,
+        coe=llm_info["coe"],
+        do_sample=llm_info["do_sample"],
+        max_tokens_to_generate=llm_info["max_tokens_to_generate"],
+        temperature=llm_info["temperature"],
+        select_expert=expert or llm_info["select_expert"],
+        process_prompt=False,
+        sambaverse_model_name=llm_info["sambaverse_model_name"],
+    )
 
 
 def run_bulk_routing_eval(dataset_path: str, num_examples: int = None):

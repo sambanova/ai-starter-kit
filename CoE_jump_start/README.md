@@ -90,12 +90,14 @@ The config.yaml file is crucial for customizing the behavior of the CoE LLM Rout
 
   ```yaml
   api: sambastudio
-  llm:
-    temperature: 0.1
-    max_tokens_to_generate: 1024
-    sambaverse_model_name: "Meta-Llama-3-70B-Instruct"
-    samabaverse_select_expert: "Meta-Llama-3-70B-Instruct"
-    coe_routing: true
+
+  llm: 
+      "temperature": 0.0
+      "do_sample": False
+      "max_tokens_to_generate": 1200
+      "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+      "coe": True #set as true if using Sambastudio CoE endpoint
+      "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
   ```
   These settings define the API to use and the parameters for the language model.
 
@@ -187,25 +189,25 @@ Update the config.yaml file with your desired configuration, then run the use_co
 Update the config.yaml file with your desired configuration, then run the use_coe_model.py script with the desired mode:
   
   ```bash
-  python use_coe_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
+  python src/use_CoE_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
   ```
 
   1. Expert Mode: Get only the expert category for a given query
 
   ```bash
-  python use_coe_model.py expert --query "What is the capital of France?"
+  python src/use_CoE_model.py expert --query "What is the capital of France?"
   ```
 
   2. Simple Mode: Run a simple LLM invoke with routing
 
   ```bash
-  python use_coe_model.py simple --query "Explain the concept of supply and demand."
+  python src/use_CoE_model.py simple --query "Explain the concept of supply and demand."
   ```
 
-  3. Bulk Mode: Run bulk routing evaluation on a dataset
+  3. Bulk Mode: Run bulk routing evaluation on a dataset (For an example JSONL File to test this on see the notebook)
 
   ```bash
-  python use_coe_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
+  python src/use_CoE_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
   ```
 
   The dataset file should be in JSONL (JSON Lines) format, where each line is a valid JSON object containing a 'prompt' and a 'router_label'. Here's an example of how your dataset.jsonl file should be formatted:
@@ -218,12 +220,7 @@ Update the config.yaml file with your desired configuration, then run the use_co
   ```
   Ensure that the 'router_label' values match the categories defined in your config.yaml file.
 
-  4. Expert Mode: Get only the expert category for a given query
-
-  ```bash
-  python use_coe_model.py expert --query "What is the capital of France?"
-  ```
-
+Note: E2E With Vector DB Is not run via script but is run via the streamlit app detailed in the following section.
 
 ## Using the Jupyter Notebook
 

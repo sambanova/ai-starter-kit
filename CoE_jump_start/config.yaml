@@ -1,10 +1,19 @@
 api: sambastudio
-llm:
-  temperature: 0.1
-  max_tokens_to_generate: 1024
-  sambaverse_model_name: "Meta-Llama-3-70B-Instruct"
-  samabaverse_select_expert: "Meta-Llama-3-70B-Instruct"
-  coe_routing: true
+
+llm: 
+    "temperature": 0.0
+    "do_sample": False
+    "max_tokens_to_generate": 1200
+    "sambaverse_model_name": "Meta/Meta-Llama-3-8B-Instruct"
+    "coe": True #set as true if using Sambastudio CoE endpoint
+    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
+    
+
+embedding_model: 
+    "type": "cpu" # set either sambastudio or cpu
+    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
+    "coe": False #set true if using Sambastudio embeddings in a CoE endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
 
 retrieval:
   chunk_size: 1000
@@ -67,9 +76,9 @@ expert_prompt: |
   <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 coe_name_map:
-  Finance expert: "finance-chat"
-  Math expert: "deepseek-llm-67b-chat"
-  Code expert: "deepseek-llm-67b-chat"
+  Finance expert: "Meta-Llama-3.1-70B-Instruct"
+  Math expert: "Meta-Llama-3.1-70B-Instruct"
+  Code expert: "Meta-Llama-3.1-70B-Instruct"
   Medical expert: "medicine-chat"
   Legal expert: "law-chat"
   History expert: "Meta-Llama-3-70B-Instruct"
@@ -78,4 +87,4 @@ coe_name_map:
   Literature expert: "Meta-Llama-3-8B-Instruct"
   Science expert: "Mistral-7B-Instruct-v0.2"
   Social Science expert: "Mistral-7B-Instruct-v0.2"
-  Generalist: "Meta-Llama-3-70B-Instruct"
+  Generalist: "Meta-Llama-3.1-70B-Instruct"
