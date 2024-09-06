@@ -34,7 +34,6 @@ Table of Contents:
     - [Store embeddings](#store-embeddings)
     - [Retrieval and Reranking](#retrieval-and-reranking)
     - [Customize the LLM](#customize-the-llm)
-        - [SambaStudio endpoint](#sambastudio-endpoint)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
