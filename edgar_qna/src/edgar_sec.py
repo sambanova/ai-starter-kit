@@ -84,7 +84,6 @@ class SecFiling:
             temperature=self.llm_info["temperature"],
             select_expert=self.llm_info["select_expert"],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name']
         )
         
     def download_sec_data(self, ticker: str) -> list:
