@@ -5,6 +5,7 @@ import yaml
 import re
 import logging
 import subprocess
+from snapi.snapi import USER_AGENT
 from snsdk import SnSdk
 from typing import Optional, List
 from dotenv import load_dotenv
@@ -65,7 +66,11 @@ class SnsdkWrapper:
             host_url=host_url,
             access_key=access_key,
             tenant_id=tenant_id,
+            user_agent=USER_AGENT,
         )
+
+        # Set up cookie to avoid auth issues
+        self.snsdk_client.http_session.cookies.set("tenant", tenant_id)
 
     """Internal methods"""
 
@@ -375,7 +380,6 @@ class SnsdkWrapper:
         """
         list_projects_response = self.snsdk_client.list_projects()
         if list_projects_response["status_code"] == 200:
-            print(list_projects_response)
             projects = []
             for project in list_projects_response.get("projects"):
                 if verbose:
@@ -1084,7 +1088,10 @@ class SnsdkWrapper:
             return None
 
     def check_job_progress(
-        self, project_name: Optional[str] = None, job_name: Optional[str] = None
+        self,
+        project_name: Optional[str] = None,
+        job_name: Optional[str] = None,
+        verbose: Optional[bool] = False,
     ) -> dict:
         """
         Check the progress of a job in a specific SambaStudio project.
@@ -1124,10 +1131,27 @@ class SnsdkWrapper:
         check_job_progress_response = self.snsdk_client.job_info(
             project=project_id, job=job_id
         )
+
         if check_job_progress_response["status_code"] == 200:
-            # TODO implement logic to filter out response, blocked by authorization error
-            # job_progress = {}
-            # logging.info(f"Job '{job_name}' with progress status: {job_progress}")
+            if verbose:
+                job_progress = {
+                    k: v for k, v in check_job_progress_response["data"].items()
+                }
+            else:
+                job_progress = {
+                    k: v
+                    for k, v in check_job_progress_response["data"].items()
+                    if k
+                    in [
+                        "job_name",
+                        "job_id",
+                        "job_type",
+                        "status",
+                        "time_created",
+                    ]
+                }
+
+            logging.info(f"Job '{job_name}' with progress status: {job_progress}")
             return job_progress
         else:
             logging.error(
@@ -1296,14 +1320,17 @@ class SnsdkWrapper:
         )
         if list_checkpoints_response["status_code"] == 200:
             checkpoints = []
-            # TODO implement logic to filter out response, blocked by authorization error
-            # for checkpoint in list_checkpoints_response:
-            #    if verbose:
-            #        checkpoints.append({k:v for k,v in checkpoint.items()})
-            #    else:
-            #        checkpoints.append(
-            #            {k:v for k,v in checkpoint.items() if k in ["checkpoint_id", "status"]}
-            #        )
+            for checkpoint in list_checkpoints_response["data"]["checkpoints"]:
+                if verbose:
+                    checkpoints.append({k: v for k, v in checkpoint.items()})
+                else:
+                    checkpoints.append(
+                        {
+                            k: v
+                            for k, v in checkpoint.items()
+                            if k in ["checkpoint_name", "checkpoint_id"]
+                        }
+                    )
             return checkpoints
         else:
             logging.error(
@@ -1572,7 +1599,7 @@ class SnsdkWrapper:
         # check extra params passed or config file passed
         if model_version is None:
             self._raise_error_if_config_is_none()
-            model_version  = self.config["model_checkpoint"]["model_version"]
+            model_version = self.config["model_checkpoint"]["model_version"]
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
             endpoint_description = self.config["endpoint"]["endpoint_description"]
