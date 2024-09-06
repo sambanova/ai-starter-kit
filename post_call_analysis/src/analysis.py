@@ -44,7 +44,6 @@ model = APIGateway.load_llm(
     temperature=llm_info["temperature"],
     select_expert=llm_info["select_expert"],
     process_prompt=False,
-    sambaverse_model_name=llm_info['sambaverse_model_name']
 )
 
 def load_conversation(transcription, transcription_path):

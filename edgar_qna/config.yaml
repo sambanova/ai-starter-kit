@@ -1,7 +1,7 @@
-api: "fastapi" # set either sambastudio or sambaverse or fastapi
+api: "sncloud" # set either sncloud or sambastudio 
 
 embedding_model: 
-    "type": "sambastudio" # set either sambastudio or cpu
+    "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
     "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
@@ -10,10 +10,9 @@ llm:
     "temperature": 0.1
     "max_tokens_to_generate": 1000
     "do_sample": False
-    "sambaverse_model_name": "Meta/llama-2-70b-chat-hf"
     "coe": True  #set as true if using Sambastudio CoE endpoint
-    "select_expert": "llama3-405b" #set if using Sambaverse or SambaStudio CoE llm expert
-    #fastApi CoE expert name -> "llama3-8b"
+    "select_expert": "llama3-405b" #set if using SambaStudio CoE llm expert
+    #sncloud CoE expert name -> "llama3-405b"
 
 retrieval:
     "chunk_size": 500

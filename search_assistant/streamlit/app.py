@@ -1,7 +1,8 @@
 import os
 import sys
-import yaml
+
 import streamlit as st
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -14,20 +15,23 @@ sys.path.append(repo_dir)
 import concurrent.futures
 
 from search_assistant.src.search_assistant import SearchAssistant
-from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 logging.basicConfig(level=logging.INFO)
-logging.info("URL: http://localhost:8501")
+logging.info('URL: http://localhost:8501')
+
 
 def load_config():
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
+
 config = load_config()
 prod_mode = config.get('prod_mode', False)
 additional_env_vars = config.get('additional_env_vars', None)
+
 
 def handle_user_input(user_question):
     if user_question:
@@ -103,6 +107,7 @@ def handle_user_input(user_question):
                             f"[{question}](https://www.google.com/search?q={question.replace(' ', '+')})",
                         )
 
+
 def main():
     st.set_page_config(
         page_title='AI Starter Kit',
@@ -145,14 +150,14 @@ def main():
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
-            if st.button("Save Credentials"):
+            if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)
                 st.rerun()
         else:
-            st.success("Credentials are set")
-            if st.button("Clear Credentials"):
-                save_credentials("", "", {var: "" for var in (additional_env_vars or [])}, prod_mode)
+            st.success('Credentials are set')
+            if st.button('Clear Credentials'):
+                save_credentials('', {var: '' for var in (additional_env_vars or [])}, prod_mode)
                 st.rerun()
 
         if are_credentials_set(additional_env_vars):
@@ -170,7 +175,6 @@ def main():
                 elif tool == 'openserp':
                     st.session_state.tool = ['openserp']
                     st.session_state.search_engine = st.selectbox('Search engine to use', ['google', 'baidu'])
-
 
             st.session_state.max_results = st.slider('Max number of results to retrieve', 1, 20, 5)
 
@@ -196,7 +200,7 @@ def main():
                                 search_engine=st.session_state.search_engine,
                             )
                             if scraper_state is not None:
-                                st.error(scraper_state.get("message"))
+                                st.error(scraper_state.get('message'))
                             st.session_state.input_disabled = False
                             st.toast('Search done and knowledge base updated you can chat now')
                     elif method == 'Search and answer':
@@ -214,7 +218,9 @@ def main():
                 st.session_state.show_sources = st.checkbox('Show sources', value=True)
 
                 st.markdown('**Reset chat**')
-                st.markdown('**Note:** Resetting the chat will clear all conversation history and not updated documents.')
+                st.markdown(
+                    '**Note:** Resetting the chat will clear all conversation history and not updated documents.'
+                )
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
@@ -227,6 +233,7 @@ def main():
         'Ask questions about data in provided sites', disabled=st.session_state.input_disabled
     )
     handle_user_input(user_question)
+
 
 if __name__ == '__main__':
     main()
