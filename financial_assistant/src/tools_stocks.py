@@ -98,7 +98,7 @@ def get_stock_info_from_dataframe(
     response_dict = dict()
     for symbol in symbol_list:
         # If the user has not provided a dataframe name then use the generic yfinance langchain connector
-        if dataframe_name is None:
+        if dataframe_name is None or dataframe_name == 'None':
             response_dict[symbol] = get_yahoo_connector_answer(user_query, symbol)
         # If the user has provided a dataframe name then use the custom langchain connector
         else:

@@ -177,7 +177,6 @@ class SectionTitle(BaseModel):
     title: str = Field(..., description='The title of the section.')
 
 
-@streamlit.cache_data
 def generate_pdf(
     report_content: List[Tuple[str, Optional[str]]],
     output_file: str,
