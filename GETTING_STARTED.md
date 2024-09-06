@@ -94,7 +94,7 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 | Conversational Search Assistant | Semantic search using search engine snippets | [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/search_assistant/README.md) |
 | Financial Insights | Agentic finance assistant built on our API | - | [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/financial_insights) |
 | Function Calling | Tools calling implementation and generic function calling module | - | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md) |
-| Benchmarking Kit | Evaluates performance of multiple LLM models in SambaStudio | - | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md) |
+| Benchmarking Kit | Evaluates performance of multiple LLM models in SambaStudio | [Live Demo](https://sambanova-ai-starter-kits-benchmarking.replit.app/)  | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md) |
 
 ## Contributing
 
