@@ -1218,6 +1218,15 @@ class SambaNovaCloud(LLM):
     model: str = 'llama3-8b'
     """LLM model expert to use"""
 
+    temperature: float = 0.0
+    """model temperature"""
+
+    top_p: float = 0.0
+    """model top p"""
+
+    top_k: int = 1
+    """model top k"""
+
     stream_api: bool = True
     """use stream api"""
 
@@ -1236,7 +1245,14 @@ class SambaNovaCloud(LLM):
     @property
     def _identifying_params(self) -> Dict[str, Any]:
         """Get the identifying parameters."""
-        return {'model': self.model, 'max_tokens': self.max_tokens, 'stop': self.stop_tokens}
+        return {
+            'model': self.model,
+            'max_tokens': self.max_tokens,
+            'stop': self.stop_tokens,
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
+        }
 
     @property
     def _llm_type(self) -> str:
@@ -1284,6 +1300,9 @@ class SambaNovaCloud(LLM):
             'max_tokens': self.max_tokens,
             'stop': stop,
             'model': self.model,
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
             'stream': self.stream_api,
             'stream_options': self.stream_options,
         }
