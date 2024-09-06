@@ -14,10 +14,10 @@ Search Assistant
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the models and config file](#set-up-the-models-and-config-file)
-        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embeddings API information](#update-the-embeddings-api-information)
-- [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
+        - [Set up the generative model](#set-up-the-generative-model)
+        - [Set up the embedding model](#set-up-the-embedding-model)
+- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
     - [Run the demo](#run-the-demo)
@@ -44,22 +44,20 @@ Search Assistant
 
 This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using Google search information as the source. This kit includes:
 
- -   A configurable SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
+ -   A configurable SambaNova Cloud or SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
  -   Configurable integrations with multiple SERP APIs
  -   An strategy for an instant question - search - answer workflow
  -   An strategy for a query - search - web-crawl - answer workflow
 
-This example is ready to use. 
+This example is ready to use: 
 
-* Run the model following the steps in [Before you begin](#before-you-begin) and [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+* Run the model following the steps in [Before you begin](#before-you-begin) and [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
 * Learn how the model works and look at resources in [Workflow overview](#workflow-overview).
 * Customize the model to meet your organization's needs by looking at the [Customizing the starter kit](#customizing-the-starter-kit) section.
 
 # Before you begin
-
-You can use this model with SambaStudio, but you have to do some setup first. 
 
 ## Clone this repository
 
@@ -69,39 +67,29 @@ Clone the start kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the models and config file
+## Set up the models, environment variables and config file
 
-### Set up the inference endpoint, configs and environment variables
+### Set up the generative model
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-### Update the Embeddings API information
+### Set up the embedding model
 
-You have these options to specify the embedding API info: 
+You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
-* **Option 2: Set a SambaStudio embedding model**
+# Deploy the starter kit GUI
 
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
-
-# Bring up the starter kit GUI
-
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
 ## Option 1: Use a virtual environment
 
@@ -116,13 +104,13 @@ If you want to use virtualenv or conda environment
     pip install -r requirements.txt
     ```
 
-2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp).
+2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).
 
-- For [openSERP](https://github.com/karust/openserp) follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`).
 
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY for SambaStudio. The add the key to in the environment variables file in the root repo directory `sn-ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`)
+- For [openSERP](https://github.com/karust/openserp): Follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
-  > Setting more than of these tools it's optional you can set only one and run the kit with this, there are some pros and cons of each one of these tools
+  > Setting more than one of these tools is optional; you can set just one and run the kit with it. Each tool has its own pros and cons.
 
 
 3. Run the following command:
@@ -366,4 +354,4 @@ Learn more about prompt engineering [here](https://www.promptingguide.ai/)
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. 
+All the packages/tools are listed in the `requirements.txt` file in the project directory. 
