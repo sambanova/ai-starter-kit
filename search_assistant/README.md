@@ -106,7 +106,7 @@ If you want to use virtualenv or conda environment
 
 2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).
 
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`).
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`, as `SERPAPI_API_KEY` or `SERPER_API_KEY`.
 
 - For [openSERP](https://github.com/karust/openserp): Follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
