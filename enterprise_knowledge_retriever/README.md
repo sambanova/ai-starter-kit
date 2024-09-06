@@ -294,4 +294,4 @@ file: prompts/qa_prompt.yaml
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory.
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
