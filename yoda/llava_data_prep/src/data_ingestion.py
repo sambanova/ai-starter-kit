@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset # type: ignore
 import logging 
 import os
 import json
@@ -53,7 +53,7 @@ class LlaVaData:
         if split == "validation":
             json_path: str = os.path.join(output_dir, "data", f"annotations_val.json")
         else:
-            json_path: str = os.path.join(output_dir, "data", f"annotations_{split}.json")
+            json_path = os.path.join(output_dir, "data", f"annotations_{split}.json")
 
         # Create data directory if it doesn't exist
         if not os.path.exists(os.path.join(output_dir, "data")):
