@@ -313,7 +313,7 @@ template: |
     Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 ```
 
-You can make modifications in the following location:
+You can make modifications to the prompt template in the following file: 
 
 ```
 file: prompts/qa_prompt.yaml
