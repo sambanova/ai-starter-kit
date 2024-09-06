@@ -262,7 +262,9 @@ You can do this modification in the [config.yaml](config.yaml) file:
     "final_k_retrieved_documents": 5
 ```
 
-There, you will be able to select the final number of retrieved documents and decide whether to use the reranker. If `rerank` is set to `False`, then no reranker is used, and `final_k_retrieved_documents` represents the number of retrieved documents by the retriever. If `rerank` is set to `True`, `k_retrieved_documents` first represent the number of documents retrieverd by the retriever, and `final_k_retrieved_documents` represents the final number of documents after reranking. 
+There, you will be able to select the final number of retrieved documents and decide whether to use the reranker: 
+* If `rerank` is set to `False`, then no reranker is used, and `final_k_retrieved_documents` represents the number of retrieved documents by the retriever. 
+* If `rerank` is set to `True`, `k_retrieved_documents` first represent the number of documents retrieved by the retriever, and `final_k_retrieved_documents` represents the final number of documents after reranking. 
 
 The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file for the LCEL implementation, or the `retrieve()` function in the [utils/rag/rag_components.py](../utils/rag/rag_components.py) file for the LangGraph implementation. 
 
