@@ -90,7 +90,7 @@ cd ai_starter_kit/
 python3 -m venv complex_rag_env
 source complex_rag_env/bin/activate
 pip install --upgrade pip
-pip  install  -r  complex_rag/requirements.txt
+pip  install  -r  /workshops/agentic_rag/complex_rag/requirements.txt
 ```
 * Windows
 ```
@@ -98,7 +98,7 @@ cd ai_starter_kit/
 python3 -m venv complex_rag_env
 complex_rag>complex_rag_env\Scripts\activate
 pip install --upgrade pip
-pip  install  -r  complex_rag\requirements.txt
+pip  install  -r  /workshops/agentic_rag/complex_rag/requirements.txt
 ```
 
 2. Run the following command:
