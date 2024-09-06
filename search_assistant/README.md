@@ -17,7 +17,7 @@ Search Assistant
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the generative model](#set-up-the-generative-model)
         - [Set up the embedding model](#set-up-the-embedding-model)
-- [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
     - [Run the demo](#run-the-demo)
@@ -53,7 +53,7 @@ This AI Starter Kit is an example of a semantic search workflow that can be buil
 
 This example is ready to use: 
 
-* Run the model following the steps in [Before you begin](#before-you-begin) and [Bring up the starter kit GUI](#bring-up-the-starter-kit-gui)
+* Run the model following the steps in [Before you begin](#before-you-begin) and [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
 * Learn how the model works and look at resources in [Workflow overview](#workflow-overview).
 * Customize the model to meet your organization's needs by looking at the [Customizing the starter kit](#customizing-the-starter-kit) section.
 
@@ -87,7 +87,7 @@ You have the following options to set up your embedding model:
 
 * **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
-# Bring up the starter kit GUI
+# Deploy the starter kit GUI
 
 We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
