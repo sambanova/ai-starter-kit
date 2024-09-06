@@ -81,6 +81,9 @@ You must perform SambaStudio setup.
 - The ASR pipeline requires that you perform the SambaStudio setup steps.
 - For the text analysis, you can use either SambaStudio, SambaNovaCloud.
 
+- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+
 - For **SambaStudio** setup please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
     Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
@@ -91,9 +94,6 @@ You must perform SambaStudio setup.
     ``` bash
         SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
     ```
-
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 ### Update the Embeddings API information
 

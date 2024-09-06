@@ -20,17 +20,13 @@ Table of Contents:
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
-        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embeddings API information](#update-the-embeddings-api-information)
-    - [Install system dependencies](#install-system-dependencies)
-    - [Deploy the AI starter kit Parser util](#deploy-the-ai-starter-kit-parser-util)
+        - [Set up the generative model](#set-up-the-generative-model)
+        - [Set up the embedding model](#set-up-the-embedding-model)
+    - [Windows requirements](#windows-requirements)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
 - [Use the starter kit](#use-the-starter-kit)
-    - [Ingestion workflow](#ingestion-workflow)
-    - [Retrieval workflow](#retrieval-workflow)
-    - [Q&A workflow](#qa-workflow)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Import Data](#import-data)
     - [Split Data](#split-data)
@@ -230,11 +226,11 @@ This enterprise knowledge retriever kit includes a custom implementation of unst
 
 ## Split Data
 
-You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
+You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting; see more [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
 The `chunking` inside the parser utils config, which is used in this starter kit, can be further customized using the `chunk_max_characters` and `chunk_overlap` parameters. For LLMs with a long sequence length, use a larger value of `chunk_max_characters` to provide the LLM with broader context and improve performance. The `chunk_overlap` parameter is used to maintain continuity between different chunks.
 
-* You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
+You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml); see more [here](../utils/parsing/README.md).
 
 ## Embed data
 
@@ -302,26 +298,25 @@ The starter kit uses a LLM model in SambaStudio. You can fine tune the SambaStud
 
 ## Experiment with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt template was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
 
-```python
-custom_prompt_template = """[INST]<<SYS>> You are a helpful assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer is not in the context, say that you don't know. Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this\". Do not use images or emojis in your answer. Keep the answer conversational and professional.<</SYS>>
-
-{context}    
-
-Question: {question}
-
-Helpful answer: [/INST]"""
-
-CUSTOMPROMPT = PromptTemplate(
-template=custom_prompt_template, input_variables=["context", "question"]
-)
+```yaml
+template: |
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a knowledge base assistant chatbot powered by Sambanova's AI chip accelerator, designed to answer questions based on user-uploaded documents. 
+    Use the following pieces of retrieved context to answer the question. Each piece of context includes the Source for reference. If the question references a specific source, then filter out that source and give a response based on that source. 
+    If the answer is not in the context, say: "This information isn't in my current knowledge base." Then, suggest a related topic you can discuss based on the available context.
+    Maintain a professional yet conversational tone. Do not use images or emojis in your answer.
+    Prioritize accuracy and only provide information directly supported by the context. <|eot_id|><|start_header_id|>user<|end_header_id|>
+    Question: {question} 
+    Context: {context} 
+    \n ------- \n
+    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 ```
 
-You can make modifications in the following location:
+You can make modifications to the prompt template in the following file: 
 
 ```
-file: prompts/llama7b-knowledge_retriever-custom_qa_prompt.yaml
+file: prompts/qa_prompt.yaml
 ```
 
 # Third-party tools and data sources
