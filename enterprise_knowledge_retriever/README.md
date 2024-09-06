@@ -286,9 +286,7 @@ function: retrieve
 
 ## Customize the LLM
 
-Certain customizations to the LLM itself can affect the starter kit performance.
-
-To modify the parameters for calling the model, make changes to the `config.yaml` file. You can also set the values of temperature and maximum generation token in that file. 
+Certain customizations to the LLM itself can affect the starter kit performance. To modify the parameters for calling the model, make changes to the [config file](./config.yaml). You can also set the values of `temperature` and `max_tokens_to_generate` in that file. 
 
 ## Experiment with prompt engineering
 
