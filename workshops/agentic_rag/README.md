@@ -48,75 +48,30 @@ You have to set up your environment before you can run or customize the starter 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
+```bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the account and config file
+## Set up the models, environment variables and config file
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse. 
+### Set up the generative model
 
-## *For this workshop we will be focusing on SambaStudio, since it will host the Llama 3 8B model that resides within our Samba-1 Turbo Composition of Experts.   Skip the Sambaverse setup unless you would like to test our models on your own via our hosted service.  The performance will not be optimized when using Sambaverse*
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-### Setup for Sambaverse users 
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.net) and select your model. 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
-3. In the repo root directory find the config file in `sn-ai-starter-kit/.env` and specify the Sambaverse API key (with no spaces), as in the following example: 
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-```yaml
-    SAMBAVERSE_API_KEY="456789ab-cdef-0123-4567-89abcdef0123"
-```
+### Set up the embedding model
 
-4. In the [config file](./config.yaml), set the `api` variable to `"sambaverse"`.
+You have the following options to set up your embedding model:
 
-### Setup for SambaStudio users
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-To perform this setup, you will be using a hosted endpoint that has been setup for this workshop.  In enterprise settings, you must be a SambaNova customer with a SambaStudio account. The endpoint information will be shared in the workshop.  For customers:
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
-2. Select the LLM you want to use (e.g. Llama 2 70B chat) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
-3. Update the `sn-ai-starter-kit/.env` config file in the root repo directory. Here's an example: 
-
- ```
-   BASE_URL="https://api-stage.sambanova.net"
-   PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-   ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-   API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-   ```
-
-4. Open the [config file](./config.yaml), set the variable `api` to `"sambastudio"`, and save the file
-
-### Update the Embedding API information
-
-You have these options to specify the embedding API info: 
-
-* **Option 1: Use a CPU embedding model**
-
-    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
-
-* **Option 2: Set a SambaStudio embedding model**
-
-    To increase inference speed, you can use SambaStudio E5 embedding model endpoint instead of using the default (CPU) Hugging Face embeddings, Follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.  For the workshop, we will provide the E5 endpoint with batch size 32 for inference.
-
-    NOTE: Be sure to set batch size model parameter to 32.
-
-    1. Update API information for the SambaNova embedding endpoint in the **`sn-ai-starter-kit/.env`** file in the root repo directory. For example: 
-
-    * Assume you have an endpoint with the URL
-        "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-    * You can enter the following in the env file (with no spaces):
-        ```
-        EMBED_BASE_URL="https://api-stage.sambanova.net"
-        EMBED_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-        EMBED_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-        EMBED_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-        ```
-    2. In the [config file](./config.yaml), set the variable `embedding_model` to `"sambastudio"`
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
-    > 
-    > You can see the difference in how they are set in the [vectordb.py file](../vectordb/vector_db.py)  (`load_embedding_model method`).
 
 
 # Deploy the starter kit GUI
