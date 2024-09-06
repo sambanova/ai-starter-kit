@@ -250,32 +250,21 @@ By default, we use Chroma. You can change the vector store by setting `db_type` 
 
 ## Retrieval and Reranking
 
-A wide collection of retriever options is available. In this starter kit, the vector store was used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
+A wide collection of retriever options is available. In this starter kit, the vector store is used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
 
-You can do this modification in the following location:
-file: [config.yaml](config.yaml)
+You can do this modification in the [config.yaml](config.yaml) file:
 
 ```yaml
     "k_retrieved_documents": 15
     "score_threshold": 0.2
-    "rerank": True
+    "rerank": False
     "reranker": 'BAAI/bge-reranker-large'
-    "final_k_retrieved_documents": 3
+    "final_k_retrieved_documents": 5
 ```
 
-There you will be able to select the final number of retrieved documents, and if you want to use or not the reranker.
+There, you will be able to select the final number of retrieved documents and decide whether to use the reranker. If `rerank` is set to `False`, then no reranker is used, and `final_k_retrieved_documents` represents the number of retrieved documents by the retriever. If `rerank` is set to `True`, `k_retrieved_documents` first represent the number of documents retrieverd by the retriever, and `final_k_retrieved_documents` represents the final number of documents after reranking. 
 
-and the implementation can be customized in file: [document_retrieval.py](src/document_retrieval.py) for LCEL implementation.
-
-``` python
-function: get_qa_retrieval_chain
-```
-
-or in [utils/rag/rag_components.py](../utils/rag/rag_components.py) for LangGraph implementation
-
-``` python
-function: retrieve
-```
+The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file for the LCEL implementation, or the `retrieve()` function in the [utils/rag/rag_components.py](../utils/rag/rag_components.py) file for the LangGraph implementation. 
 
 ## Customize the LLM
 
