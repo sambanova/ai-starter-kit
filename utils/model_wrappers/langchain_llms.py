@@ -1321,6 +1321,10 @@ class SambaNovaCloud(LLM):
                 # check if the response is a final event in that case event data response is '[DONE]'
                 if chunk['data'] != '[DONE]':
                     data = json.loads(chunk['data'])
+                    if data.get('error'):
+                        raise RuntimeError(
+                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                        )
                     # check if the response is a final response with usage stats (not includes content)
                     if data.get('usage') is None:
                         # check is not "end of text" response
