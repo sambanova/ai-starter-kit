@@ -289,12 +289,7 @@ function: retrieve
 
 Certain customizations to the LLM itself can affect the starter kit performance.
 
-### SambaStudio endpoint
-
-The starter kit uses a LLM model in SambaStudio. You can fine tune the SambaStudio model to improve response quality. 
-
-* To train a model in SambaStudio, [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html), [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html) and [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
-* To modify the parameters for calling the model, make changes to the `config.yaml` file. You can also set the values of temperature and maximum generation token in that file. 
+To modify the parameters for calling the model, make changes to the `config.yaml` file. You can also set the values of temperature and maximum generation token in that file. 
 
 ## Experiment with prompt engineering
 
