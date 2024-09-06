@@ -38,7 +38,7 @@ class Guard:
         Initialize Guard class with specified LLM and guardrails.
 
         Parameters:
-        - api (str): The LLM API to use, Default is 'sambastudio'.
+        - api (str): The LLM API to use, default is 'sambastudio'.
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is 'utils/guardrails/guardrails.yaml'.
         - coe (bool, optional): Whether the llama-guard model is in a SambaStudio CoE endpoint
