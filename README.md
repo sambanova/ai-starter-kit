@@ -180,10 +180,9 @@ For more information and to obtain your API key, visit the [SambaNova Cloud webp
 To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaNovaCloud URL and API key in the `.env` file, for example:
+- Enter the SambaNovaCloud API key in the `.env` file, for example:
   
 ```bash
-SAMBANOVA_URL = "https://fast-api.snova.ai/v1/chat/completions"
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
