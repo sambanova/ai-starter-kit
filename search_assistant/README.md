@@ -104,13 +104,13 @@ If you want to use virtualenv or conda environment
     pip install -r requirements.txt
     ```
 
-2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), [openSERP](https://github.com/karust/openserp).
+2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).
 
-- For [openSERP](https://github.com/karust/openserp) follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`).
 
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/) create an account and follow the instructions to get your API_KEY for SambaStudio. The add the key to in the environment variables file in the root repo directory `sn-ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`)
+- For [openSERP](https://github.com/karust/openserp): Follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
-  > Setting more than of these tools it's optional you can set only one and run the kit with this, there are some pros and cons of each one of these tools
+  > Setting more than one of these tools is optional; you can set just one and run the kit with it. Each tool has its own pros and cons.
 
 
 3. Run the following command:
