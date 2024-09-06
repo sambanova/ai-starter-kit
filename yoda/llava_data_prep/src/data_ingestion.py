@@ -1,6 +1,4 @@
 from datasets import load_dataset
-# from pydantic import BaseModel, Field, UUID4
-from typing import List
 import logging 
 import os
 import json
@@ -8,18 +6,6 @@ import uuid
 import numpy as np
 
 logging.basicConfig(level=logging.INFO)
-
-# class Conversation(BaseModel):
-#     from_field: str = Field(..., alias='from')
-#     value: Union[str, List[str]]
-
-#     class Config:
-#         allow_population_by_field_name = True
-
-# class Data(BaseModel):
-#     id: UUID4
-#     image: str
-#     conversations: List[Conversation]
 
 class LlaVaData:
 
@@ -81,7 +67,8 @@ class LlaVaData:
 
         logging.info(f"Saving {split} to {os.path.join(output_dir, 'data')}")
 
-        # Create a unique identifier for each row.  Name the image as the UUID for simplicity.
+        # Create a unique identifier for each row.  
+        # Name the image as the UUID for simplicity.
         for i in range(len(ds[split])):
             unique_uuid: str = str(uuid.uuid4())
             image = ds[split][i]["image"]
@@ -93,6 +80,7 @@ class LlaVaData:
             question: str = ds[split][i]["question"] + "\n<image>"
             # Lazily take one of the potential answers.
             answer: str = np.random.choice(ds[split][i]["answers"])
+
             new_data = {
                 "id": unique_uuid,
                 "image": f"{unique_uuid}.png",
