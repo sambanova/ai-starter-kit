@@ -323,7 +323,7 @@ template: |
           Answer: 
 ```
 
-Those modifications can be done in the [Prompt](./prompts) folder.
+Those modifications can be done in the [prompts](./prompts) folder.
 
 *Learn more about prompt engineering [here](https://www.promptingguide.ai/).*
 
