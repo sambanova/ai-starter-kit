@@ -300,37 +300,30 @@ You can modify the parameters for calling the model and the `temperature` and `m
 
 ## Experiment with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` are the documents retrieved by the search engine.
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the search engine.
+
 ```yaml
 template: |
-          <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
-          If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
-          Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n
-          context
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. 
+          Please ensure that your responses are socially unbiased and positive in nature.
+
+          You will receive a user question and a set of contexts with google results of the user query, each context starts reference number with this structure [reference:n], where n is a number. Please use the context and cite the context at the end of each sentence if applicable.
+          You should give a concise answer to the question based only in the contexts.
+          You must cite the contexts using the reference number with the format [reference:x] withing the answer
+          Your answer must be written in the same language as the question, if the information to return an answer is not in the context reply: "answer not found"
+          Do not provide any extra analysis and keep your response as short as possible, if a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't make up false information.
+
+          <context>
           {context}
-          end of context
-          <</SYS>>/n
-          Question: {question}
-          Helpful Answer: [/INST]
-)
+          </context>
+
+          <|eot_id|><|start_header_id|>user<|end_header_id|>
+          User Question: {question}
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+          Answer: 
 ```
-Those modifications can be done in the following locations:
 
-  > Prompt: retrieval Q&A chain  
-  >
-  > file: [prompts/llama7b-web_scraped_data_retriever.yaml](prompts/llama7b-web_scraped_data_retriever.yaml)
-
-  > Prompt: Serpapi search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
-
-  > Prompt: Serper search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
-
-  > Prompt: OpenSerp search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
+Those modifications can be done in the [Prompt][./prompts] folder.
 
 Learn more about prompt engineering [here](https://www.promptingguide.ai/)
 
