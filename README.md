@@ -128,7 +128,7 @@ The table belows lists the available kits, which are grouped into four categorie
 
 <tr>
 <td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
-<td width="40%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen that can answer singular or compound questions, with or without math. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. It uses a Corrective RAG team and a Corrective Web Search team. </td>
+<td width="40%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. </td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>  
 </tr>
