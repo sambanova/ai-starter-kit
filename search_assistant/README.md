@@ -200,7 +200,7 @@ You can customize this starter kit based on your use case.
 
 ## Use a custom serp tool
 
-You can modify or change the behavior of the search step by including your custom method in [SearchAssistant](./src/search_assistant.py) class. Your method must be able to receive a query, have a `do_analysis` flag, and return a result and a list of retrieved URLS.
+You can modify or change the behavior of the search step by including your custom method in [SearchAssistant](./src/search_assistant.py) class. Your method must be able to receive a query, have a `do_analysis` flag, and return a result and a list of retrieved URLs.
 
 This modification can be done in the following location:
 > file: [src/search_assistant.py](src/search_assistant.py)
@@ -216,7 +216,7 @@ This modification can be done in the following location:
 >function: `load_htmls`
 >
 
-The maximum number of sites in the scraping method is set to 20 scraped sited, but you can modify that limit and the web crawling behavior in the following location:
+The maximum number of sites in the scraping method is set to 20, but you can modify that limit and the web crawling behavior in the following location:
 
 > file: [config.yaml](config.yaml)
 >```yaml
@@ -256,9 +256,9 @@ This modification can be done in the following location:
 >retrieval:
 >    "chunk_size": 1200
 >    "chunk_overlap": 240
->    "db_type": "faiss"
->    "k_retrieved_documents": 4
->    "score_treshold": 0.5
+>    "db_type": "chroma"
+>    "k_retrieved_documents": 3
+>    "score_treshold": 0.3
 >```
 
 ## Customize data embedding
