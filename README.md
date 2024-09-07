@@ -17,6 +17,8 @@ Questions? Just <a href="https://discord.gg/YWFrcZKf" target="_blank">message us
 
 # Available AI Starter Kits
 
+The table belows lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities. For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
+
 <table style="width: 100%;">
 <thead>
 <tr>
