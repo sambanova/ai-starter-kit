@@ -263,15 +263,11 @@ This modification can be done in the following location:
 
 ## Customize data embedding
 
-Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). Several of these models are available on SambaStudio and can be used or further fine-tuned on specific datasets to improve performance.
+Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models, such as [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) and [e5-mistral-7b-instruct](https://huggingface.co/intfloat/e5-mistral-7b-instruct), are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
 
-This modification can be done in the following location:
-> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
->
-> function: `load_embedding_model`
->
-
-> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md).
+To change the embedding model, do the following:
+* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), e5-large-v2 from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
+* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 ## Customize embedding storage
 
@@ -300,7 +296,7 @@ and
 
 ## Customize LLM usage 
 
-You can further customize the model itself. You can modify the parameters for calling the model and the `temperature` and `max_tokens_to_generate` in the [config.yaml](config.yaml)` file.
+You can modify the parameters for calling the model and the `temperature` and `max_tokens_to_generate` in the [config.yaml](config.yaml) file.
 
 ## Experiment with prompt engineering
 
