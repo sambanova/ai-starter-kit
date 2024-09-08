@@ -4,7 +4,7 @@ llm:
   "temperature": 0.0
   "max_tokens_to_generate": 1024
   "coe": True #set as true if using Sambastudio CoE endpoint
-  "select_expert": "llama3-70b" #set if using sncloud, SambaStudio CoE llm expert
+  "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
         #sncloud CoE expert name -> "llama3-405b"
 
 tools:
