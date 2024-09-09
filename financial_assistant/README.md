@@ -20,8 +20,6 @@ Welcome to the Sambanova Financial Insights application.
     - [Deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
 - [Environment variables](#environment-variables)
 
-<!-- /TOC -->
-
 # Overview
 
 This app demonstrates the capabilities of large language models (LLMs)

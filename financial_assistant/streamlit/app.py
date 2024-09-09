@@ -76,7 +76,7 @@ def main() -> None:
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
-
+                streamlit.rerun()
         else:
             streamlit.success('Credentials are set')
             with stylable_container(
@@ -85,6 +85,7 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
+                    streamlit.rerun()
         if prod_mode:
             if (
                 not streamlit.session_state.cache_created

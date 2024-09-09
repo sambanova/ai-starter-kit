@@ -356,6 +356,10 @@ def initialize_session(
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
+    # Initialize the session id
+    if 'session_id' not in session_state:
+        session_state.session_id = str(uuid4())
+
     # Initialize the production mode
     if 'prod_mode' not in session_state:
         session_state.prod_mode = prod_mode
@@ -366,12 +370,12 @@ def initialize_session(
     # Initialize SEC EDGAR credentials
     if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
         if prod_mode:
-            streamlit.session_state.SEC_API_ORGANIZATION = None
+            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
         else:
             streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
     if 'SEC_API_EMAIL' not in streamlit.session_state:
         if prod_mode:
-            streamlit.session_state.SEC_API_EMAIL = None
+            streamlit.session_state.SEC_API_EMAIL = f'user_{session_state.session_id}@sambanova_cloud.com'
         else:
             streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
 
@@ -381,10 +385,6 @@ def initialize_session(
     # Initialize function calling
     if 'fc' not in session_state:
         session_state.llm = None
-
-    # Initialize the session id
-    if 'session_id' not in session_state:
-        session_state.session_id = str(uuid4())
 
     # Initialize cache directory
     if prod_mode:
