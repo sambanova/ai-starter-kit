@@ -15,8 +15,9 @@ This function calling kit is an example of tools calling implementation and a ge
 - [Function Calling kit](#function-calling-kit)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
+    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
+        - [Set up the generative model](#set-up-the-generative-model)
+        - [Set up the embedding model](#set-up-the-embedding-model)
     - [Install dependencies](#install-dependencies)
 - [Use the Function Calling kit](#use-the-function-calling-kit)
     - [Quick start](#quick-start)
@@ -36,8 +37,9 @@ Clone the starter kit repo.
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
+## Set up the models, environment variables and config file
 
-### Set up the inference endpoint, configs and environment variables
+### Set up the generative model
 
 The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
@@ -47,7 +49,7 @@ The next step is to set up your environment variables to use one of the models a
 - **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
     Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-### Update the Embedding API information
+### Set up the embedding model
 
 You have these options to specify the embedding API info:
 
