@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Optional
 
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings  # , SambaStudioEmbeddings
+from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.llms import LLM
