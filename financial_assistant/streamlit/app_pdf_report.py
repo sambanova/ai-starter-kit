@@ -6,12 +6,12 @@ from typing import Any, Dict, List
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from financial_insights.src.function_calling import FunctionCalling
-from financial_insights.src.tools import get_logger
-from financial_insights.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.src.llm import SambaNovaLLM
+from financial_assistant.src.tools import get_logger
+from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 logger = get_logger()
 
@@ -25,20 +25,6 @@ def include_pdf_report() -> None:
     if 'uploaded_files' not in streamlit.session_state:
         streamlit.session_state.uploaded_files = []
 
-    # Initialize session state for checkboxes if not already done
-    if 'checkbox_include_stock' not in streamlit.session_state:
-        streamlit.session_state.checkbox_include_stock = False
-    if 'checkbox_include_database' not in streamlit.session_state:
-        streamlit.session_state.checkbox_include_database = False
-    if 'checkbox_include_yahoo_news' not in streamlit.session_state:
-        streamlit.session_state.checkbox_include_yahoo_news = False
-    if 'checkbox_include_filings' not in streamlit.session_state:
-        streamlit.session_state.checkbox_include_filings = False
-    if 'checkbox_include_pdf_rag' not in streamlit.session_state:
-        streamlit.session_state.checkbox_include_pdf_rag = False
-    if 'checkbox_generate_from_history' not in streamlit.session_state:
-        streamlit.session_state.checkbox_generate_from_history = False
-
     # PDF generation
     streamlit.markdown('<h2> Generate PDF Report </h2>', unsafe_allow_html=True)
 
@@ -49,27 +35,28 @@ def include_pdf_report() -> None:
         include_stock = streamlit.checkbox(
             'Include saved stock queries',
             key='checkbox_include_stock',
-            value=False,
+            value=True,
             on_change=check_inclusions,
         )
         include_database = streamlit.checkbox(
             'Include saved stock database queries',
             key='checkbox_include_database',
-            value=False,
+            value=True,
             on_change=check_inclusions,
         )
         inlude_yahoo_news = streamlit.checkbox(
             'Include saved Yahoo News queries',
             key='checkbox_include_yahoo_news',
-            value=False,
+            value=True,
             on_change=check_inclusions,
         )
         include_filings = streamlit.checkbox(
             'Include saved financial filings queries',
             key='checkbox_include_filings',
-            value=False,
+            value=True,
             on_change=check_inclusions,
         )
+
     with cols[1]:
         include_pdf_rag = streamlit.checkbox(
             'Include saved PDF report queries',
@@ -85,6 +72,20 @@ def include_pdf_report() -> None:
             value=False,
             on_change=check_generate_from_history,
         )
+
+    # Initialize session state for checkboxes if not already done
+    if 'checkbox_include_stock' not in streamlit.session_state:
+        streamlit.session_state.checkbox_include_stock = include_stock
+    if 'checkbox_include_database' not in streamlit.session_state:
+        streamlit.session_state.checkbox_include_database = include_database
+    if 'checkbox_include_yahoo_news' not in streamlit.session_state:
+        streamlit.session_state.checkbox_include_yahoo_news = inlude_yahoo_news
+    if 'checkbox_include_filings' not in streamlit.session_state:
+        streamlit.session_state.checkbox_include_filings = include_filings
+    if 'checkbox_include_pdf_rag' not in streamlit.session_state:
+        streamlit.session_state.checkbox_include_pdf_rag = include_pdf_rag
+    if 'checkbox_generate_from_history' not in streamlit.session_state:
+        streamlit.session_state.checkbox_generate_from_history = generate_from_history
 
     data_paths = dict()
     if include_stock:
@@ -116,7 +117,7 @@ def include_pdf_report() -> None:
     include_summary = streamlit.checkbox(
         'Include summary from each section',
         key='checkbox_summary',
-        value=False,
+        value=True,
         help='This will take longer!',
     )
     if include_summary:
@@ -149,17 +150,11 @@ def include_pdf_report() -> None:
     # Use PDF report for RAG
     streamlit.markdown('<h2> Use PDF Report for RAG </h2>', unsafe_allow_html=True)
 
-    # Initialize session state for checkboxes if not already done
-    if 'checkbox_use_generated_pdf' not in streamlit.session_state:
-        streamlit.session_state.checkbox_use_generated_pdf = False
-    if 'checkbox_upload_your_pdf' not in streamlit.session_state:
-        streamlit.session_state.checkbox_upload_your_pdf = False
-
     # Use the previously generated PDF reports
     use_generated_pdf = streamlit.checkbox(
         'Use generated PDF',
         key='checkbox_use_generated_pdf',
-        value=False,
+        value=True,
         on_change=check_use_generated_pdf,
     )
 
@@ -170,6 +165,12 @@ def include_pdf_report() -> None:
         value=False,
         on_change=check_upload_your_pdf,
     )
+
+    # Initialize session state for checkboxes if not already done
+    if 'checkbox_use_generated_pdf' not in streamlit.session_state:
+        streamlit.session_state.checkbox_use_generated_pdf = use_generated_pdf
+    if 'checkbox_upload_your_pdf' not in streamlit.session_state:
+        streamlit.session_state.checkbox_upload_your_pdf = upload_your_pdf
 
     if use_generated_pdf or upload_your_pdf:
         if use_generated_pdf and not upload_your_pdf:
@@ -226,6 +227,7 @@ def include_pdf_report() -> None:
         user_request = streamlit.text_input(
             'Enter the info that you want to retrieve for given companies.',
             key='pdf-rag',
+            value="What conclusions can we draw about Meta's strategy?",
         )
 
         # Use PDF reports for RAG
@@ -308,7 +310,7 @@ def handle_pdf_generation(
         Exception: If there are no file in `data_paths` from which to generate a PDF.
     """
     # Initialize the function calling object
-    streamlit.session_state.fc = FunctionCalling()
+    streamlit.session_state.llm = SambaNovaLLM()
 
     # Clean the sources directory if it exists
     if os.path.exists(streamlit.session_state.pdf_sources_directory):

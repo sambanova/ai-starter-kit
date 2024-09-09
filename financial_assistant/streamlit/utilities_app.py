@@ -16,8 +16,8 @@ import yaml
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_insights.src.tools import get_logger
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import get_logger
+from financial_assistant.streamlit.constants import *
 from utils.visual.env_utils import initialize_env_variables
 
 logger = get_logger()
@@ -33,10 +33,10 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     Returns:
         A dictionary with the config information:
             - api_info: string containing API to use:
-                `fastapi`, `sambastudio` or `sambaverse`.
+                `sncloud` or `sambastudio`.
             - embedding_model_info:
                 String containing embedding model type to use,
-                `sambastudio` or `cpu`.
+                `cpu` or `sambastudio`.
             - llm_info: Dictionary containing LLM parameters.
             - retrieval_info:
                 Dictionary containing retrieval parameters.
@@ -237,6 +237,7 @@ def list_directory(directory: str) -> Tuple[List[str], List[str]]:
 
 def display_directory_contents(path: str, default_path: str) -> None:
     """Display subdirectories and files in the current path."""
+
     subdirectories, files = list_directory(path)
 
     dir_name = Path(path).name
@@ -266,42 +267,55 @@ def display_directory_contents(path: str, default_path: str) -> None:
     return
 
 
-def clear_directory(directory: str) -> None:
+def clear_directory(directory: str, delete_subdirectories: bool = False) -> None:
     """Delete all files in the given directory."""
 
-    # List subdirectories and files
-    subdirectories, files = list_directory(directory)
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            streamlit.error(f'Error deleting file {file_path}: {e}')
+    try:
+        if not os.path.exists(directory):
+            streamlit.error(f'Directory does not exist: {directory}')
+            return
+
+        for item in os.listdir(directory):
+            item_path = os.path.join(directory, item)
+            try:
+                if os.path.isfile(item_path):
+                    os.unlink(item_path)
+                elif os.path.isdir(item_path):
+                    if delete_subdirectories:
+                        shutil.rmtree(item_path)
+            except Exception as e:
+                streamlit.error(f'Error deleting {item_path}: {e}')
+    except Exception as e:
+        streamlit.error(f'Error processing directory {directory}: {e}')
 
 
 def clear_cache(delete: bool = False) -> None:
     """Clear and/or delete the cache."""
 
-    # Clear the cache
-    clear_directory(streamlit.session_state.cache_dir)
-    subdirectories = os.listdir(streamlit.session_state.cache_dir)
-    # Delete all directories in the cache
-    for directory in subdirectories:
-        path = os.path.join(streamlit.session_state.cache_dir, directory)
-        clear_directory(path)
-        subdirectories = os.listdir(path)
-        for subdirectory in subdirectories:
-            sub_path = os.path.join(path, subdirectory)
-            clear_directory(sub_path)
-            if delete:
-                # Delete the subdirectory
-                os.rmdir(sub_path)
-        if delete:
-            # Delete the directory
-            os.rmdir(path)
-    # Delete the cache
-    os.rmdir(streamlit.session_state.cache_dir)
+    cache_dir = streamlit.session_state.cache_dir
+
+    if not os.path.exists(cache_dir):
+        streamlit.error(f'Cache directory does not exist: {cache_dir}')
+        return
+
+    # Clear the cache directory
+    clear_directory(cache_dir, delete)
+
+    if delete:
+        try:
+            shutil.rmtree(cache_dir)
+            streamlit.success(f'Successfully deleted cache directory: {Path(cache_dir).name}')
+        except Exception as e:
+            streamlit.error(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
+
+        for root, dirs, _ in os.walk(cache_dir, topdown=False):
+            for dir in dirs:
+                path = os.path.join(root, dir)
+                clear_directory(path, delete)
+                try:
+                    os.rmdir(path)
+                except Exception as e:
+                    streamlit.error(f'Error deleting directory {path}: {e}')
 
 
 def download_file(filename: str) -> None:
@@ -342,18 +356,26 @@ def initialize_session(
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
+    # Initialize the session id
+    if 'session_id' not in session_state:
+        session_state.session_id = str(uuid4())
+
+    # Initialize the production mode
+    if 'prod_mode' not in session_state:
+        session_state.prod_mode = prod_mode
+
     # Initialize credentials
     initialize_env_variables(prod_mode)
 
     # Initialize SEC EDGAR credentials
     if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
         if prod_mode:
-            streamlit.session_state.SEC_API_ORGANIZATION = None
+            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
         else:
             streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
     if 'SEC_API_EMAIL' not in streamlit.session_state:
         if prod_mode:
-            streamlit.session_state.SEC_API_EMAIL = None
+            streamlit.session_state.SEC_API_EMAIL = f'user_{session_state.session_id}@sambanova_cloud.com'
         else:
             streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
 
@@ -362,11 +384,7 @@ def initialize_session(
         session_state.chat_history = list()
     # Initialize function calling
     if 'fc' not in session_state:
-        session_state.fc = None
-
-    # Initialize the session id
-    if 'session_id' not in session_state:
-        session_state.session_id = str(uuid4())
+        session_state.llm = None
 
     # Initialize cache directory
     if prod_mode:
@@ -429,14 +447,20 @@ def submit_sec_edgar_details() -> None:
     """Add the SEC-EDGAR details to the session state."""
 
     key = 'sidebar-sec-edgar'
+    sec_edgar_help = """Must provide organization and email address
+        to comply with the SEC Edgar's downloading fair access
+        <a href="https://www.sec.gov/os/webmaster-faq#code-support" target="_blank">policy</a>.
+    """
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.markdown(sec_edgar_help, unsafe_allow_html=True)
     # Populate SEC-EDGAR credentials
     if streamlit.session_state.SEC_API_ORGANIZATION is None:
         streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-            'For SEC-EDGAR: "<your organization>"', None, key=key + '-organization'
+            'For SEC-EDGAR: <your organization>', None, key=key + '-organization'
         )
     if streamlit.session_state.SEC_API_EMAIL is None:
         streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-            'For SEC-EDGAR: "<name.surname@email_provider.com>"', None, key=key + '-email'
+            'For SEC-EDGAR: <user@email_provider.com>', None, key=key + '-email'
         )
     # Save button
     if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
@@ -446,8 +470,8 @@ def submit_sec_edgar_details() -> None:
                 and streamlit.session_state.SEC_API_EMAIL is not None
             ):
                 streamlit.success('SEC EDGAR details saved successfully!')
-            else:
-                streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+        else:
+            streamlit.warning('Please enter organization and email.')
 
 
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:

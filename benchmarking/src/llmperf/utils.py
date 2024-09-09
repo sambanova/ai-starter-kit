@@ -5,6 +5,8 @@ from typing import Any, Dict, Tuple
 
 from transformers import AutoTokenizer
 
+
+SAMBANOVA_URL="https://api.sambanova.ai/v1/chat/completions"
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 MODEL_TYPE_IDENTIFIER = {
     "mistral": "mistral",

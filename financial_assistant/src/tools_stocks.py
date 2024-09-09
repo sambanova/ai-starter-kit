@@ -15,8 +15,8 @@ from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
-from financial_insights.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
+from financial_assistant.streamlit.constants import *
 
 
 class StockInfoSchema(BaseModel):
@@ -98,7 +98,7 @@ def get_stock_info_from_dataframe(
     response_dict = dict()
     for symbol in symbol_list:
         # If the user has not provided a dataframe name then use the generic yfinance langchain connector
-        if dataframe_name is None:
+        if dataframe_name is None or dataframe_name == 'None':
             response_dict[symbol] = get_yahoo_connector_answer(user_query, symbol)
         # If the user has provided a dataframe name then use the custom langchain connector
         else:
@@ -181,7 +181,7 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
     df = SmartDataframe(
         df_pandas,
         config={
-            'llm': streamlit.session_state.fc.llm,
+            'llm': streamlit.session_state.llm.llm,
             'open_charts': False,
             'save_charts': True,
             'save_charts_path': streamlit.session_state.stock_query_figures_dir,
@@ -240,7 +240,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The chain
-        chain_symbol = prompt_symbol | streamlit.session_state.fc.llm | parser_symbol
+        chain_symbol = prompt_symbol | streamlit.session_state.llm.llm | parser_symbol
 
         # Invoke the chain to derive the ticker symbol of the company
         symbol = chain_symbol.invoke(company).symbol

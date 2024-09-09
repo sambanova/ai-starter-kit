@@ -15,14 +15,14 @@ sys.path.append(repo_dir)
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
-from financial_insights.src.tools import get_logger
-from financial_insights.streamlit.app_financial_filings import include_financial_filings
-from financial_insights.streamlit.app_pdf_report import include_pdf_report
-from financial_insights.streamlit.app_stock_data import get_stock_data_analysis
-from financial_insights.streamlit.app_stock_database import get_stock_database
-from financial_insights.streamlit.app_yfinance_news import get_yfinance_news
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import (
+from financial_assistant.src.tools import get_logger
+from financial_assistant.streamlit.app_financial_filings import include_financial_filings
+from financial_assistant.streamlit.app_pdf_report import include_pdf_report
+from financial_assistant.streamlit.app_stock_data import get_stock_data_analysis
+from financial_assistant.streamlit.app_stock_database import get_stock_database
+from financial_assistant.streamlit.app_yfinance_news import get_yfinance_news
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import (
     clear_cache,
     create_temp_dir_with_subdirs,
     display_directory_contents,
@@ -32,12 +32,12 @@ from financial_insights.streamlit.utilities_app import (
     set_css_styles,
     submit_sec_edgar_details,
 )
-from financial_insights.streamlit.utilities_methods import stream_chat_history
+from financial_assistant.streamlit.utilities_methods import stream_chat_history
 from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
 
 # Initialize Weave with your project name
 if os.getenv('WANDB_API_KEY') is not None:
-    weave.init('sambanova_financial_insights')
+    weave.init('sambanova_financial_assistant')
 
 # Load the config
 with open(CONFIG_PATH, 'r') as yaml_file:
@@ -76,7 +76,7 @@ def main() -> None:
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
-
+                streamlit.rerun()
         else:
             streamlit.success('Credentials are set')
             with stylable_container(
@@ -85,6 +85,7 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
+                    streamlit.rerun()
         if prod_mode:
             if (
                 not streamlit.session_state.cache_created
@@ -146,9 +147,6 @@ def main() -> None:
                 ],
             )
 
-            # Populate SEC-EDGAR credentials
-            submit_sec_edgar_details()
-
             # Add saved files
             streamlit.title('Saved Files')
 
@@ -196,7 +194,7 @@ def main() -> None:
 
             streamlit.write(
                 """
-                    Welcome to the Financial Insights application.
+                    Welcome to SambaNova Financial Assistant.
                     This app demonstrates the capabilities of large language models (LLMs)
                     in extracting and analyzing financial data using function calling, web scraping,
                     and retrieval-augmented generation (RAG).
@@ -227,7 +225,13 @@ def main() -> None:
 
         # Financial Filings Analysis page
         elif menu == 'Financial Filings Analysis':
-            include_financial_filings()
+            # Populate SEC-EDGAR credentials
+            submit_sec_edgar_details()
+            if (
+                streamlit.session_state.SEC_API_ORGANIZATION is not None
+                and streamlit.session_state.SEC_API_EMAIL is not None
+            ):
+                include_financial_filings()
 
         # Generate PDF Report page
         elif menu == 'Generate PDF Report':
