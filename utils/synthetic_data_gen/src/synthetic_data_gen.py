@@ -7,8 +7,8 @@ from typing import Dict, List, Optional, Union
 import yaml
 from dotenv import load_dotenv
 from langchain.prompts import load_prompt
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings, SambaStudioEmbeddings
-from langchain_community.llms.sambanova import SambaStudio, Sambaverse
+from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -27,7 +27,8 @@ sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_llms import SambaNovaFastAPI
+from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
+from utils.model_wrappers.langchain_llms import SambaNovaCloud
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -88,7 +89,7 @@ class SyntheticDataGen:
             config = yaml.safe_load(file)
             return config
 
-    def set_llm(self) -> Union[SambaStudio, Sambaverse, SambaNovaFastAPI]:
+    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
         """
         Set the LLM to use for generation.
 
@@ -96,7 +97,7 @@ class SyntheticDataGen:
         None
 
         Returns:
-        SambaStudio, Sambaverse or SambaNovaFastAPI instance
+        SambaStudio, or SambaNovaCloud instance
         """
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
@@ -107,7 +108,6 @@ class SyntheticDataGen:
             temperature=self.llm_info['temperature'],
             select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambaverse_model_name=self.llm_info['sambaverse_model_name'],
         )
         return llm
 

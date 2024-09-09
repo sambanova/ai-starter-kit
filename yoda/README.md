@@ -41,7 +41,7 @@ When you work with YoDa, you'll go through several phases until you arrive at a 
    * Pretraining Generation: Generate a JSONL file containing sections of the provided data. Enables the model to do completion over queries.
    * Finetuning Generation: Process each document to create a series of synthetic questions and answers based on the content. This method uses a powerful LLM (Llama 2 70B) and a pipeline composed of prompting and postprocessing techniques. The generated data is stored in JSONL files. This method teaches the model to follow instructions and answer questions.
 2. **Data preparation**. Preprocessing and formatting the generated data to make it suitable for training. This step transforms the data into the required format and structure necessary for training the large language model.
-3. **Training / Finetuning**. In this stage, you fine tune the model in SambaStudio using your data. Finetuning includes updating the model's parameters to adapt it to the specific characteristics and patterns present in the prepared dataset. Note that this starter kit does not support Sambaverse as the model needs to be finetuned.
+3. **Training / Finetuning**. In this stage, you fine tune the model in SambaStudio using your data. Finetuning includes updating the model's parameters to adapt it to the specific characteristics and patterns present in the prepared dataset.
 4. **Evaluation**. The evaluation phase creates a set of responses to assess the performance of the finetuned language model. It involves using the set of evaluation queries for:
    * Obtaining responses from a baseline model.
    * Obtaining responses from your custom model.
