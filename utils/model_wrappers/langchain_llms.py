@@ -1263,7 +1263,7 @@ class SambaNovaCloud(LLM):
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and python package exists in environment."""
         values['sambanova_url'] = get_from_dict_or_env(
-            values, 'sambanova_url', 'SAMBANOVA_URL', default='https://fast-api.snova.ai/v1/chat/completions'
+            values, 'sambanova_url', 'SAMBANOVA_URL', default='https://api.sambanova.ai/v1/chat/completions'
         )
         values['sambanova_api_key'] = get_from_dict_or_env(values, 'sambanova_api_key', 'SAMBANOVA_API_KEY')
         return values
