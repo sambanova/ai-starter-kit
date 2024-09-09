@@ -155,10 +155,11 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="financial_insights/README.md"> Financial Assistant</a></td>
+<td width="20%"><a href="financial_assistants/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
 <td width="20%"> SambaNova FastAPI, SambaStudio</td>
-<td width="20%"> Advanced AI Capabilities </td>   
+<td width="20%"> Advanced AI Capabilities </td>
+<td width="20%"> Intelligent Information Retrieval </td>
 </tr>
 
 <tr>
