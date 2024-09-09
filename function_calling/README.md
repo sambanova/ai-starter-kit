@@ -121,14 +121,8 @@ On that page you will be able to select your function calling tools and the max 
 
 The example module can be further customized based on the use case.
 
-The complete tools generation, methods, prompting and parsing for implementing function calling, can be found and further customized for your specific use case following the [Guide notebook](function_calling_guide.ipynb)  
+The complete tools generation, methods, prompting and parsing for implementing function calling, can be found and further customized for your specific use case following the [Guide notebook](./notebooks/function_calling_guide.ipynb)  
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
-
-* python-dotenv (version 1.0.1)
-* langchain (version 0.2.11)
-* langchain-community (version 0.2.10)
-* langchain-experimental (version 0.0.6)
-* sseclient-py (version 1.8.0)
+All the packages/tools are listed in the `requirements.txt` file in the project directory. 
