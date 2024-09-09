@@ -1066,7 +1066,7 @@ class SambaNovaFastAPI(LLM):
         # Streaming output
         response = http_session.post(
             self.fastapi_url,
-            headers={'Authorization': f'Basic {self.fastapi_api_key}', 'Content-Type': 'application/json'},
+            headers={'Authorization': f'Bearer {self.fastapi_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
@@ -1309,7 +1309,7 @@ class SambaNovaCloud(LLM):
         # Streaming output
         response = http_session.post(
             self.sambanova_url,
-            headers={'Authorization': f'Basic {self.sambanova_api_key}', 'Content-Type': 'application/json'},
+            headers={'Authorization': f'Bearer {self.sambanova_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
