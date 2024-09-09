@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from financial_assistant.src.function_calling import FunctionCalling
+from financial_assistant.src.llm import SambaNovaLLM
 from financial_assistant.src.tools import get_logger
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_assistant.streamlit.constants import *
@@ -310,7 +310,7 @@ def handle_pdf_generation(
         Exception: If there are no file in `data_paths` from which to generate a PDF.
     """
     # Initialize the function calling object
-    streamlit.session_state.fc = FunctionCalling()
+    streamlit.session_state.llm = SambaNovaLLM()
 
     # Clean the sources directory if it exists
     if os.path.exists(streamlit.session_state.pdf_sources_directory):

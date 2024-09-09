@@ -17,6 +17,7 @@ from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
 from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
+from financial_assistant.src.llm import get_sambanova_credentials
 from financial_assistant.src.tools import (
     coerce_str_to_list,
     convert_data_to_frame,
@@ -27,7 +28,6 @@ from financial_assistant.src.tools import (
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_methods import get_sambanova_credentials
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
@@ -250,7 +250,7 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     # TODO: With larger context windows
     # https://python.langchain.com/v0.1/docs/use_cases/sql/quickstart/#convert-question-to-sql-query
     # from langchain.chains import create_sql_query_chain
-    # chain = create_sql_query_chain(streamlit.session_state.fc.llm, db)
+    # chain = create_sql_query_chain(streamlit.session_state.llm.llm, db)
 
     # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
@@ -300,7 +300,7 @@ def get_sql_queries(selected_schemas: str, user_query: str) -> List[str]:
 
     # Chain that receives the natural language input and the table schemas, invoke the LLM,
     # and finally execute the SQL finder method, retrieving only the filtered SQL query
-    query_generation_chain = query_generation_prompt | streamlit.session_state.fc.llm | RunnableLambda(sql_finder)
+    query_generation_chain = query_generation_prompt | streamlit.session_state.llm.llm | RunnableLambda(sql_finder)
 
     # Generate the SQL query
     query: str = query_generation_chain.invoke(
@@ -392,7 +392,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     df = SmartDataframe(
         connector,
         config={
-            'llm': streamlit.session_state.fc.llm,
+            'llm': streamlit.session_state.llm.llm,
             'open_charts': False,
             'save_charts': True,
             'save_charts_path': streamlit.session_state.db_query_figures_dir,
@@ -445,12 +445,12 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     )
 
     # Invoke the chain with the user query and the table summaries
-    max_tokens_to_generate_list = list({streamlit.session_state.fc.llm_info['max_tokens_to_generate'], 1024, 256, 128})
+    max_tokens_to_generate_list = list({streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 256, 128})
     # Bound the number of tokens to generate based on the config value
     max_tokens_to_generate_list = [
         elem
         for elem in max_tokens_to_generate_list
-        if elem < streamlit.session_state.fc.llm_info['max_tokens_to_generate']
+        if elem < streamlit.session_state.llm.llm_info['max_tokens_to_generate']
     ]
 
     # Get the Sambanova API key
@@ -462,13 +462,13 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         try:
             # Instantiate the LLM
             llm = APIGateway.load_llm(
-                type=streamlit.session_state.fc.llm_info['api'],
+                type=streamlit.session_state.llm.llm_info['api'],
                 streaming=False,
-                coe=streamlit.session_state.fc.llm_info['coe'],
-                do_sample=streamlit.session_state.fc.llm_info['do_sample'],
+                coe=streamlit.session_state.llm.llm_info['coe'],
+                do_sample=streamlit.session_state.llm.llm_info['do_sample'],
                 max_tokens_to_generate=item,
-                temperature=streamlit.session_state.fc.llm_info['temperature'],
-                select_expert=streamlit.session_state.fc.llm_info['select_expert'],
+                temperature=streamlit.session_state.llm.llm_info['temperature'],
+                select_expert=streamlit.session_state.llm.llm_info['select_expert'],
                 process_prompt=False,
                 sambanova_api_key=sambanova_api_key,
             )

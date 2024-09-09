@@ -1,6 +1,8 @@
 import json
+import os
 from typing import Any, Dict, List, Optional, Union
 
+import streamlit
 import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
@@ -11,12 +13,11 @@ from langchain_core.tools import StructuredTool, Tool
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.tools import time_llm
 from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_methods import get_sambanova_credentials
 from utils.model_wrappers.api_gateway import APIGateway
 
 
-class FunctionCalling:
-    """Class for function calling."""
+class SambaNovaLLM:
+    """A class for initializing and managing a Large Language Model (LLM) and performing function calls."""
 
     def __init__(
         self,
@@ -262,3 +263,18 @@ class FunctionCalling:
         invoked_tool = invoked_tools[0]
 
         return invoked_tool
+
+
+def get_sambanova_credentials() -> str:
+    """Get the LLM credentials (`SAMBANOVA_API_KEY`) following `prod_mode`."""
+
+    if streamlit.session_state.prod_mode:
+        sambanova_api_key = streamlit.session_state.SAMBANOVA_API_KEY
+    else:
+        if 'SAMBANOVA_API_KEY' in streamlit.session_state:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or streamlit.session_state.SAMBANOVA_API_KEY
+        else:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
+    assert isinstance(sambanova_api_key, str), 'SAMBANOVA_API_KEY must be a string.'
+    return sambanova_api_key

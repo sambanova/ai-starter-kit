@@ -366,7 +366,7 @@ def initialize_session(
         session_state.chat_history = list()
     # Initialize function calling
     if 'fc' not in session_state:
-        session_state.fc = None
+        session_state.llm = None
 
     # Initialize the session id
     if 'session_id' not in session_state:

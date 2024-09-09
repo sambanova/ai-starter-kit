@@ -151,7 +151,7 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
     retrieval_qa_chat_prompt = hub.pull('langchain-ai/retrieval-qa-chat')
 
     # Create a retrieval-based QA chain
-    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.fc.llm, retrieval_qa_chat_prompt)
+    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.llm.llm, retrieval_qa_chat_prompt)
     qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
     return qa_chain

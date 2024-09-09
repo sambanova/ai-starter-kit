@@ -181,7 +181,7 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
     df = SmartDataframe(
         df_pandas,
         config={
-            'llm': streamlit.session_state.fc.llm,
+            'llm': streamlit.session_state.llm.llm,
             'open_charts': False,
             'save_charts': True,
             'save_charts_path': streamlit.session_state.stock_query_figures_dir,
@@ -240,7 +240,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The chain
-        chain_symbol = prompt_symbol | streamlit.session_state.fc.llm | parser_symbol
+        chain_symbol = prompt_symbol | streamlit.session_state.llm.llm | parser_symbol
 
         # Invoke the chain to derive the ticker symbol of the company
         symbol = chain_symbol.invoke(company).symbol

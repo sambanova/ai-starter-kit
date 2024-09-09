@@ -342,7 +342,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     """Invoke the LLM to extract an abstract for the final summary."""
 
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Abstract parser
     abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
@@ -373,7 +373,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
 def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     """Invoke the LLM to reduce a list of intermediate summaries to one final summary."""
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Reduce parser
     reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
@@ -406,7 +406,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     """Invoke the LLM to summarize the text in `doc` using the LLM."""
 
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Map parser
     map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore

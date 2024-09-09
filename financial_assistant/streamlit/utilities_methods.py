@@ -12,7 +12,7 @@ from langchain_core.tools import StructuredTool, Tool
 from matplotlib.figure import Figure
 from PIL import Image
 
-from financial_assistant.src.function_calling import FunctionCalling
+from financial_assistant.src.llm import SambaNovaLLM
 from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
@@ -35,21 +35,6 @@ TOOLS = {
     'query_stock_database': query_stock_database,
     'pdf_rag': pdf_rag,
 }
-
-
-def get_sambanova_credentials() -> str:
-    """Get the LLM credentials (`SAMBANOVA_API_KEY`) following `prod_mode`."""
-
-    if streamlit.session_state.prod_mode:
-        sambanova_api_key = streamlit.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in streamlit.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or streamlit.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
-    assert isinstance(sambanova_api_key, str), 'SAMBANOVA_API_KEY must be a string.'
-    return sambanova_api_key
 
 
 @contextmanager
@@ -85,7 +70,7 @@ def attach_tools(
         set_tools = [TOOLS[name] for name in tools]
     else:
         set_tools = [default_tool]
-    streamlit.session_state.fc = FunctionCalling(tools=set_tools, default_tool=default_tool)
+    streamlit.session_state.llm = SambaNovaLLM(tools=set_tools, default_tool=default_tool)
 
 
 def handle_userinput(user_question: Optional[str], user_query: Optional[str]) -> Optional[Any]:
@@ -103,7 +88,7 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
 
     with streamlit.spinner('Processing...'):
         with st_capture(output.code):
-            response = streamlit.session_state.fc.invoke_tools(query=user_query)
+            response = streamlit.session_state.llm.invoke_tools(query=user_query)
 
     streamlit.session_state.chat_history.append(user_question)
     streamlit.session_state.chat_history.append(response)
