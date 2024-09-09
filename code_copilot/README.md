@@ -14,22 +14,22 @@ Code Copilot
 - [Code Copilot](#code-copilot)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
-    - [Set up the account and config file for the LLM](#set-up-the-account-and-config-file-for-the-llm)
+    - [Set up the account for using the LLM](#set-up-the-account-for-using-the-llm)
+        - [Setup for Sambanova Cloud users](#setup-for-sambanova-cloud-users)
         - [Setup for SambaStudio users](#setup-for-sambastudio-users)
-        - [Setup for Sambaverse users](#setup-for-sambaverse-users)
     - [Get Continue Extension/plugin](#get-continue-extensionplugin)
 - [Setting up](#setting-up)
     - [Setup Continue](#setup-continue)
-    - [Set custom Sambanova integration](#set-custom-sambanova-integration)
+    - [Set the custom SambaNova integration](#set-the-custom-sambanova-integration)
 - [Usage](#usage)
     - [Ask question to the LLM in your IDE](#ask-question-to-the-llm-in-your-ide)
     - [Ask about selected code](#ask-about-selected-code)
     - [Edit code](#edit-code)
     - [Understand terminal errors](#understand-terminal-errors)
-    - [custom commands](#custom-commands)
+    - [Custom commands](#custom-commands)
 - [Customizing the connector](#customizing-the-connector)
-    - [modify the model to use](#modify-the-model-to-use)
-    - [add custom commands](#add-custom-commands)
+    - [Modify the parameters and the model to use](#modify-the-parameters-and-the-model-to-use)
+    - [Add custom commands](#add-custom-commands)
 - [Acknowledgments](#acknowledgments)
 
 <!-- /TOC -->
@@ -38,26 +38,26 @@ Code Copilot
 
 This AI Starter Kit is a demonstration of how to use Sambanova's models as coding assistants leveraging the [Continue](https://www.continue.dev/) extension for VSCode and JetBrains.  The Kit includes:
 
-- A configurable SambaStudio - Continue connector. The connector generates answers from a deployed LLM.
+- A configurable SambaNova Cloud - Continue connector. The connector generates answers from a SambaNova cloud hosted model.
 
-- A configurable Sambaverse - Continue connector. The connector generates answers from a sambaverse hosted model.
+- A configurable SambaStudio - Continue connector. The connector generates answers from a deployed LLM.
 
 - An installation, setup, and usage guide.
 
 # Before you begin
 
-For this starter kit, you will need access to an Sambaverse account or a SambaStudio Environment.
-> You can use a LLM of your choice, either from Sambaverse or from SambaStudio, but is highly recommended to use Meta-Llama-3-8B-Instruct
+For this starter kit, you will need access to an SambaNova Cloud account or a SambaStudio Environment.
+> You can use a LLM of your choice, either from SambaNova Cloud or from SambaStudio, but is highly recommended to use Meta-Llama-3-8B-Instruct
 
 ## Set up the account for using the LLM 
 
-The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available Sambaverse.
+The next step sets you up to use one of the models available from SambaNova. It depends on whether you're a SambaNova customer who uses SambaStudio or you want to use the publicly available SambaNova Cloud.
 
-### Setup for Sambaverse users 
+### Setup for Sambanova Cloud users 
 
-1. Create a Sambaverse account at [Sambaverse](sambaverse.sambanova.ai) and select your model.
+1. Create a SambaNova Cloud account at [SambaNova Cloud](https://cloud.sambanova.ai).
 
-2. Get your [Sambaverse API key](https://docs.sambanova.ai/sambaverse/latest/use-sambaverse.html#_your_api_key) (from the user button).
+2. Get your [SambaNova Cloud API key](https://cloud.sambanova.ai/apis) 
 
 ### Setup for SambaStudio users
 
@@ -79,21 +79,21 @@ After installing Continue you will need to do the basic setup
 
 - First you will be prompted to select a model to use you can skip this step and close the ***Continue** window
 
-## Set the custom Sambanova integration
+## Set the custom SambaNova integration
 
-After the basic installation it is needed to set the custom SambaStudio and Sambaverse ***Continue*** connectors
+After the basic installation it is needed to set the custom SambaNovaCloud or the SambaStudio ***Continue*** connectors
 
 First you should modify the ***Continue*** `config.ts` file
 
 - Open the `config.ts` file in  `~/.continue/` folder and replace the contents with the contents of the [config.ts](config.ts) kit provided file.
 
-- If you are using Sambaverse: replace the sambaverse_api_key variable  with your previously generated Sambaverse api key
+- If you are using SambaNova Cloud: replace the sambanova_api_key variable  with your previously generated SambaNova Cloud api key
 
     For example, for an api key `123456ab-cdef-0123-4567-890abcdef` update the first section in the config.ts file as:
 
     ```ts
-    //Sambaverse usage
-    const sambaverse_api_key = "123456ab-cdef-0123-4567-890abcdef"
+    //SambaNova Cloud usage
+    const sambanova_api_key = "123456ab-cdef-0123-4567-890abcdef"
     ```
 
 - If you are using SambaStudio: replace the sambastudio_base_url, sambastudio_project_id, sambastudio_endpoint_id and sambastudio_api_key variables with your SambaStudio endpoint keys:
@@ -140,12 +140,11 @@ The example template can be further customized based on the use case.
 
 ## Modify the parameters and the model to use
 
-You can change the default Sambaverse model or the default model used with SambaStudio CoE models modifying the model and expert selection in [config.ts](config.ts) file:
+You can change the default SambaNova Cloud model or the default model used with SambaStudio CoE models modifying the model and expert selection in [config.ts](config.ts) file:
 
-- If using Sambaverse:
+- If using SambaNova Cloud:
     ```ts
-        const sambaverse_model_name = "Meta/Meta-Llama-3-8B-Instruct";
-        const sambaverse_expert_name = "Meta-Llama-3-8B-Instruct";
+        const sambanova_model = "llama3-405b";
     ```
 
 - If using SambaStudio CoE:
@@ -154,7 +153,7 @@ You can change the default Sambaverse model or the default model used with Samba
         const sambastudio_coe_expert_name = "Meta-Llama-3-8B-Instruct";
     ```
 
-Also you can modify model parameters modifying the `body` params of the Sambaverse model and Sambastudio model in the `SambastudioModel` an `SambaverseModel` definitions of [config.ts file](config.ts).
+Also you can modify model parameters modifying the `body` params of the SambaNova Cloud model and Sambastudio model in the `SambastudioModel` an `SambaNovaCloudModel` definitions of [config.ts file](config.ts).
 
 ## Add custom commands
 
