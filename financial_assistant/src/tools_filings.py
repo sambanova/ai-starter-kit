@@ -14,9 +14,9 @@ from langchain_core.tools import tool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
+from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list, get_logger
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
-from financial_assistant.src.utilities_retrieval import get_qa_response
 from financial_assistant.streamlit.constants import *
 
 load_dotenv(os.path.join(repo_dir, '.env'))

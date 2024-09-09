@@ -14,8 +14,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list, time_llm
-from financial_assistant.src.utilities_retrieval import get_qa_response
 from financial_assistant.streamlit.constants import *
 
 EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
