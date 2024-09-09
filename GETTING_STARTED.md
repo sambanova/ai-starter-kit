@@ -38,6 +38,8 @@ Perform a chat completion:
 
 ```python
 from openai import OpenAI
+import os
+
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 client = OpenAI(
