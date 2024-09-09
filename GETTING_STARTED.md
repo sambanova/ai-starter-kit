@@ -16,7 +16,7 @@ This guide walks through setting up an API key, performing a few sample queries 
 2. Once logged in, navigate to the API section and generate a new key. 
 3. Set your API key as an environment variable:
    ```shell
-   export SAMBANOVA_API_KEY=<your-api-key-here>
+   export SAMBANOVA_API_KEY="your-api-key-here"
    ```
 
 ## Supported Models
