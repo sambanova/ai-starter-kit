@@ -14,9 +14,9 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from financial_insights.src.tools import coerce_str_to_list, time_llm
-from financial_insights.src.utilities_retrieval import get_qa_response
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.retrieval import get_qa_response
+from financial_assistant.src.tools import coerce_str_to_list, time_llm
+from financial_assistant.streamlit.constants import *
 
 EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
 
@@ -128,11 +128,14 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
             - The text.
             - The paths of any `png` figures.
     """
-    report_content = []
-    figure_regex = re.compile(r'financial_insights/*[^\s]+\.png')
+    report_content: List[Tuple[str, List[str] | None]] = list()
+    figure_regex = re.compile(r'financial_assistant/*[^\s]+\.png')
     directory_regex = re.compile(rf'{repo_dir}/')
     endline_regex = re.compile(r'\n\n')
     startline_regex = re.compile(r'^\n\n')
+    selectd_tables_regex = re.compile(r'Table')
+    column_space_regex = re.compile(r': , ')
+    final_column_space_regex = re.compile(r': \.')
 
     for doc in documents:
         parts = doc.split('\n\n\n\n')
@@ -145,13 +148,15 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
                 # Clean extra newline
                 cleaned_part = directory_regex.sub('', cleaned_part)
                 cleaned_part = endline_regex.sub('', cleaned_part)
+                cleaned_part = re.sub(selectd_tables_regex, '\nSelected SQL tables: Table', cleaned_part, count=1)
+                cleaned_part = column_space_regex.sub(', ', cleaned_part)
+                cleaned_part = final_column_space_regex.sub('.', cleaned_part)
             else:
                 # Clean extra newline
                 cleaned_part = startline_regex.sub('', part)
 
             if figure_matches:
-                for figure_path in figure_matches:
-                    report_content.append((cleaned_part.strip(), figure_path))
+                report_content.append((cleaned_part.strip(), figure_matches))
             else:
                 report_content.append((cleaned_part.strip(), None))
 
@@ -172,7 +177,6 @@ class SectionTitle(BaseModel):
     title: str = Field(..., description='The title of the section.')
 
 
-@streamlit.cache_data
 def generate_pdf(
     report_content: List[Tuple[str, Optional[str]]],
     output_file: str,
@@ -202,17 +206,17 @@ def generate_pdf(
     )
 
     pdf.add_page()
-    content_list: List[Dict[str, str]] = list()
+    content_list: List[Dict[str, str | List[str]]] = list()
     for idx, content in enumerate(report_content):
-        text, figure_path = content
-        if (text is None and figure_path is None) or (text is not None and len(text) == 0 and figure_path is None):
+        text, figure_paths = content
+        if (text is None and figure_paths is None) or (text is not None and len(text) == 0 and figure_paths is None):
             continue
 
         # Clean the text to conform to unicode standards
         content_list.append(
             {
                 'text': clean_unicode_text(text),
-                'figure_path': figure_path if figure_path is not None else '',
+                'figure_path': figure_paths if figure_paths is not None else list(),
             }
         )
 
@@ -237,39 +241,47 @@ def generate_pdf(
         summary_bar = streamlit.progress(0, text=progress_text)
 
         intermediate_summaries, intermediate_titles, final_summary, abstract = summarize_text(split_docs)
-        pdf.chapter_title('Abstract')
-        pdf.chapter_summary(abstract)
+        if len(abstract) > 0:
+            pdf.chapter_title('Abstract')
+            pdf.chapter_summary(abstract)
 
-        pdf.chapter_title('Summary')
-        pdf.chapter_summary(final_summary)
+        if len(final_summary) > 0:
+            pdf.chapter_title('Summary')
+            pdf.chapter_summary(final_summary)
 
         for idx, item in enumerate(content_list):
             time.sleep(0.01)
             summary_bar.progress(idx + 1, text=progress_text)
 
             # Add the section title
-            pdf.chapter_title(intermediate_titles[idx])
+            if len(intermediate_titles[idx]) > 0:
+                pdf.chapter_title(intermediate_titles[idx])
+            else:
+                pdf.chapter_title('Section ' + str(idx + 1))
 
             # Add the section summary
-            pdf.chapter_summary(intermediate_summaries[idx])
+            if len(intermediate_summaries[idx]) > 0:
+                pdf.chapter_summary(intermediate_summaries[idx])
 
             # Add the section body
-            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER:
+            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
                 pdf.chapter_body(item['text'])
 
             # Add the section figures
             if item['figure_path'] is not None and len(item['figure_path']) > 0:
-                pdf.add_figure(item['figure_path'])
+                for figure in item['figure_path']:
+                    pdf.add_figure(figure)
 
         time.sleep(0.01)
         summary_bar.empty()
     else:
         for idx, item in enumerate(content_list):
             pdf.chapter_title('Query ' + str(idx))
-            if item['text'] is not None:
+            if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
                 pdf.chapter_body(item['text'])
             if item['figure_path'] is not None and len((item['figure_path'])) > 0:
-                pdf.add_figure(item['figure_path'])
+                for figure in item['figure_path']:
+                    pdf.add_figure(figure)
 
     pdf.output(output_file)
     return bytes(pdf.output())
@@ -302,15 +314,27 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
             - Abstract of the document.
     """
     # Extract intermediate titles and summaries for each document in the split docs
-    intermediate_results = [invoke_summary_map_chain(doc) for doc in split_docs]
+    intermediate_results = list()
+    for doc in split_docs:
+        try:
+            intermediate_results.append(invoke_summary_map_chain(doc))
+        except:
+            intermediate_results.append(Summary(title='', summary=''))
+
     intermediate_summaries = [item.summary for item in intermediate_results]
     intermediate_titles = [item.title for item in intermediate_results]
 
     # Extract final summary from intermediate summaries
-    final_summary = invoke_reduction_chain(intermediate_summaries)
+    try:
+        final_summary = invoke_reduction_chain(intermediate_summaries)
+    except:
+        final_summary = ''
 
     # Extract abstract from the final summary
-    abstract = invoke_abstract_chain(final_summary)
+    try:
+        abstract = invoke_abstract_chain(final_summary)
+    except:
+        abstract = ''
 
     return intermediate_summaries, intermediate_titles, final_summary, abstract
 
@@ -320,7 +344,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     """Invoke the LLM to extract an abstract for the final summary."""
 
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Abstract parser
     abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
@@ -351,7 +375,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
 def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     """Invoke the LLM to reduce a list of intermediate summaries to one final summary."""
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Reduce parser
     reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
@@ -384,7 +408,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     """Invoke the LLM to summarize the text in `doc` using the LLM."""
 
     # Extract the LLM
-    llm = streamlit.session_state.fc.llm
+    llm = streamlit.session_state.llm.llm
 
     # Map parser
     map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore

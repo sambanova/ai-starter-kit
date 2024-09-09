@@ -2,9 +2,9 @@ from typing import List, Tuple
 
 import streamlit
 
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_yfinance_news() -> None:
@@ -18,6 +18,7 @@ def get_yfinance_news() -> None:
     user_request = streamlit.text_input(
         'Enter the yfinance news that you want to retrieve for given companies',
         key='yahoo_news',
+        value='Have there been changes in strategy, products, and research for Meta? Can you provide some examples?',
     )
 
     # Retrieve news

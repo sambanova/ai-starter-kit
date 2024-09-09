@@ -11,10 +11,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from financial_insights.src.tools import coerce_str_to_list, get_logger
-from financial_insights.src.tools_stocks import retrieve_symbol_list
-from financial_insights.src.utilities_retrieval import get_qa_response
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.retrieval import get_qa_response
+from financial_assistant.src.tools import coerce_str_to_list, get_logger
+from financial_assistant.src.tools_stocks import retrieve_symbol_list
+from financial_assistant.streamlit.constants import *
 
 RETRIEVE_HEADLINES = False
 
@@ -280,7 +280,10 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
     answer = response['answer']
 
     # Extract the urls from the QA response
-    url_list = [doc.metadata['url'] for doc in response['context']]
+    url_list = list()
+    for doc in response['context']:
+        if doc.metadata.get('url') is not None:
+            url_list.append(doc.metadata['url'])
 
     return answer, url_list
 

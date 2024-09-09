@@ -13,9 +13,9 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
-from financial_insights.src.tools import time_llm
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import _get_config_info
+from financial_assistant.src.tools import time_llm
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import _get_config_info
 from utils.model_wrappers.api_gateway import APIGateway
 
 
@@ -73,6 +73,7 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
 
 def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
     """Load the embedding model following the config information."""
+
     if embedding_model_info['type'] == 'cpu':
         embeddings_cpu = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
         return embeddings_cpu
@@ -87,7 +88,7 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
     else:
         raise ValueError(
             f'`config.rag["embedding_model"]["type"]` can only be `cpu` or `sambastudio. '
-            'Got {embedding_model_info["type"]}.'
+            f'Got {embedding_model_info["type"]}.'
         )
 
 
@@ -150,7 +151,7 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
     retrieval_qa_chat_prompt = hub.pull('langchain-ai/retrieval-qa-chat')
 
     # Create a retrieval-based QA chain
-    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.fc.llm, retrieval_qa_chat_prompt)
+    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.llm.llm, retrieval_qa_chat_prompt)
     qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
     return qa_chain

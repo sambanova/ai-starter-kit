@@ -31,3 +31,6 @@ SAMBANOVA_ORANGE = (238, 118, 36)
 
 # LLM constants
 MAX_RETRIES = 3
+
+# STOCK INFO
+YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')

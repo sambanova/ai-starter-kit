@@ -20,8 +20,6 @@ Welcome to the Sambanova Financial Insights application.
     - [Deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
 - [Environment variables](#environment-variables)
 
-<!-- /TOC -->
-
 # Overview
 
 This app demonstrates the capabilities of large language models (LLMs)
@@ -49,56 +47,60 @@ You have to set up your environment before you can run or customize the starter 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
+
+```bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the inference endpoint, configs and environment variables
+## Set up the models, environment variables and config file
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+### Set up the generative model
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
+
+### Set up the embedding model
+
+You have the following options to set up your embedding model:
+
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
+This will make use of `langchain_community.embeddings.sentence_transformer.SentenceTransformerEmbeddings`.
+
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
+
+## Windows requirements
+
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
-## Deployment: Use a virtual environment (3.11 preferred)
+## Use a virtual environment
 
 If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
-```
-cd ai_starter_kit/
-python3 -m venv financial_insights_env
-source financial_insights_env/bin/activate
-pip install --upgrade pip
-pip  install  -r  financial_insights/requirements.txt
-```
+    ```bash
+    cd ai_starter_kit/financial_assistant
+    python3 -m venv financial_assistant
+    source financial_assistant/bin/activate
+    pip  install  -r  requirements.txt
+    ```
 
 2. Run the following command:
-```
-cd financial_insights/streamlit/
-streamlit run app.py --browser.gatherUsageStats false 
-```
 
-## Environment variables
-Please set up the following environment variables in your virtual environment or container before launching the app.
-These can be included in the project `.env` file.
+    ```bash
+        streamlit run streamlit/app.py --browser.gatherUsageStats false 
+    ```
 
-For `FAST-API`:
-```
-FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
-FASTAPI_API_KEY = "<your-fastapi-api-key>"
-```
+## Further settings
 
 For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
 USER_AGENT: ```<Company Name> <Email Address>```
@@ -107,7 +109,7 @@ USER_AGENT: ```<Company Name> <Email Address>```
 SEC_API_ORGANIZATION="<your organization>"
 
 # Your email address
-SEC_API_EMAIL="<name.surname@email_provider.com>"
+SEC_API_EMAIL="<user@email_provider.com>"
 ```
 
 For `Weave` users:
