@@ -256,6 +256,8 @@ def generate_pdf(
             # Add the section title
             if len(intermediate_titles[idx]) > 0:
                 pdf.chapter_title(intermediate_titles[idx])
+            else:
+                pdf.chapter_title('Section ' + str(idx + 1))
 
             # Add the section summary
             if len(intermediate_summaries[idx]) > 0:
@@ -317,7 +319,7 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
         try:
             intermediate_results.append(invoke_summary_map_chain(doc))
         except:
-            intermediate_results.append('')
+            intermediate_results.append(Summary(title='', summary=''))
 
     intermediate_summaries = [item.summary for item in intermediate_results]
     intermediate_titles = [item.title for item in intermediate_results]
