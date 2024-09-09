@@ -237,6 +237,7 @@ def list_directory(directory: str) -> Tuple[List[str], List[str]]:
 
 def display_directory_contents(path: str, default_path: str) -> None:
     """Display subdirectories and files in the current path."""
+
     subdirectories, files = list_directory(path)
 
     dir_name = Path(path).name
@@ -266,42 +267,55 @@ def display_directory_contents(path: str, default_path: str) -> None:
     return
 
 
-def clear_directory(directory: str) -> None:
+def clear_directory(directory: str, delete_subdirectories: bool = False) -> None:
     """Delete all files in the given directory."""
 
-    # List subdirectories and files
-    subdirectories, files = list_directory(directory)
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            streamlit.error(f'Error deleting file {file_path}: {e}')
+    try:
+        if not os.path.exists(directory):
+            streamlit.error(f'Directory does not exist: {directory}')
+            return
+
+        for item in os.listdir(directory):
+            item_path = os.path.join(directory, item)
+            try:
+                if os.path.isfile(item_path):
+                    os.unlink(item_path)
+                elif os.path.isdir(item_path):
+                    if delete_subdirectories:
+                        shutil.rmtree(item_path)
+            except Exception as e:
+                streamlit.error(f'Error deleting {item_path}: {e}')
+    except Exception as e:
+        streamlit.error(f'Error processing directory {directory}: {e}')
 
 
 def clear_cache(delete: bool = False) -> None:
     """Clear and/or delete the cache."""
 
-    # Clear the cache
-    clear_directory(streamlit.session_state.cache_dir)
-    subdirectories = os.listdir(streamlit.session_state.cache_dir)
-    # Delete all directories in the cache
-    for directory in subdirectories:
-        path = os.path.join(streamlit.session_state.cache_dir, directory)
-        clear_directory(path)
-        subdirectories = os.listdir(path)
-        for subdirectory in subdirectories:
-            sub_path = os.path.join(path, subdirectory)
-            clear_directory(sub_path)
-            if delete:
-                # Delete the subdirectory
-                os.rmdir(sub_path)
-        if delete:
-            # Delete the directory
-            os.rmdir(path)
-    # Delete the cache
-    os.rmdir(streamlit.session_state.cache_dir)
+    cache_dir = streamlit.session_state.cache_dir
+
+    if not os.path.exists(cache_dir):
+        streamlit.error(f'Cache directory does not exist: {cache_dir}')
+        return
+
+    # Clear the cache directory
+    clear_directory(cache_dir, delete)
+
+    if delete:
+        try:
+            shutil.rmtree(cache_dir)
+            streamlit.success(f'Successfully deleted cache directory: {Path(cache_dir).name}')
+        except Exception as e:
+            streamlit.error(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
+
+        for root, dirs, _ in os.walk(cache_dir, topdown=False):
+            for dir in dirs:
+                path = os.path.join(root, dir)
+                clear_directory(path, delete)
+                try:
+                    os.rmdir(path)
+                except Exception as e:
+                    streamlit.error(f'Error deleting directory {path}: {e}')
 
 
 def download_file(filename: str) -> None:
