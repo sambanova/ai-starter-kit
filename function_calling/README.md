@@ -61,7 +61,7 @@ You have the following options to set up your embedding model:
 
 We recommend that you run the starter kit in a virtual environment. We also recommend using Python >= 3.10 and < 3.12.
 
-1. Install the python dependencies in your project environment.
+Install the python dependencies in your project environment.
 
     ```bash
     cd ai_starter_kit/function_calling
