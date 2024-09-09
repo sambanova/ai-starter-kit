@@ -30,7 +30,8 @@ Agents with LangGraph
 
 # Overview
 
-This AI Starter Kit is primarily intended to demonstrate agentic workflows.  For improved user experience, try the fast Llama 3 models in Samba-1 Turbo. The default is Llama 3 70B for a good compromise between model capability and throughput, however, the other variations could be tried as well.  Llama 3 8B for lower latency or 405B for maximum capability.  The kit includes:
+This AI Starter Kit is primarily intended to demonstrate agentic workflows.  For improved user experience, try the sncloud. The default is Llama 3 70B for a good compromise between model capability and throughput, however, the other variations could be tried as well.  Llama 3 8B for lower latency or 405B for maximum capability.  The kit includes:
+ - Compatibility with sncloud.
  -   A configurable SambaStudio connector. The connector generates answers from a deployed model.
  -   A configurable integration with a third-party vector database.
  -   An implementation and guide of a complex semantic search workflow using numerous chains via LangGraph.
@@ -58,33 +59,25 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the inference endpoint, configs and environment variables
+## Set up the models, environment variables and config file
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+### Set up the generative model
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-## Update the Embeddings API information
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-You have these options to specify the embedding API info:
+### Set up the embedding model
 
-* **Option 1: Use a CPU embedding model**
+You have the following options to set up your embedding model:
 
-    In the [config file](./config.yaml), set the variable `embedding_model:` to `"cpu"` 
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-* **Option 2: Set a SambaStudio embedding model**
-
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint. 
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
 # Deploy the starter kit GUI
 

@@ -22,12 +22,10 @@ class Guard:
 
     def __init__(
         self,
-        api: str = 'sambaverse',
+        api: str = 'sambastudio',
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
         coe: Optional[bool] = True,
-        sambaverse_url: Optional[str] = None,
-        sambaverse_api_key: Optional[str] = None,
         sambastudio_base_url: Optional[str] = None,
         sambastudio_base_uri: Optional[str] = None,
         sambastudio_project_id: Optional[str] = None,
@@ -40,12 +38,10 @@ class Guard:
         Initialize Guard class with specified LLM and guardrails.
 
         Parameters:
-        - api (str): The LLM API to use, either 'sambaverse' or 'sambastudio'. Default is 'sambaverse'.
+        - api (str): The LLM API to use, default is 'sambastudio'.
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is 'utils/guardrails/guardrails.yaml'.
         - coe (bool, optional): Whether the llama-guard model is in a SambaStudio CoE endpoint
-        - sambaverse_url (str, optional): Base URL for Sambaverse API.
-        - sambaverse_api_key (str, optional): API key for Sambaverse API.
         - sambastudio_base_url (str, optional): Base URL for SambaStudio API.
         - sambastudio_base_uri (str, optional): Base URI for SambaStudio API.
         - sambastudio_project_id (str, optional): Project ID for SambaStudio API.
@@ -72,9 +68,6 @@ class Guard:
             coe=coe,
             select_expert='Meta-Llama-Guard-2-8B',
             process_prompt=False,
-            sambaverse_url=sambaverse_url,
-            sambaverse_model_name='Meta/Meta-Llama-Guard-2-8B',
-            sambaverse_api_key=sambaverse_api_key,
             sambastudio_base_url=sambastudio_base_url,
             sambastudio_base_uri=sambastudio_base_uri,
             sambastudio_project_id=sambastudio_project_id,
@@ -189,7 +182,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--message', type=str, help='message to check')
     parser.add_argument('--role', type=str, help='role of the message')
-    parser.add_argument('--api', default='sambaverse', type=str, help='sambaverse or sambastudio')
+    parser.add_argument('--api', default='sambastudio', type=str, help='api to use')
     args = parser.parse_args()
     guardrails = Guard(api=args.api)
     print(guardrails.evaluate(args.message, args.role))

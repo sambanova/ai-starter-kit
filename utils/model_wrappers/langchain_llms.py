@@ -1066,7 +1066,7 @@ class SambaNovaFastAPI(LLM):
         # Streaming output
         response = http_session.post(
             self.fastapi_url,
-            headers={'Authorization': f'Basic {self.fastapi_api_key}', 'Content-Type': 'application/json'},
+            headers={'Authorization': f'Bearer {self.fastapi_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
@@ -1218,6 +1218,15 @@ class SambaNovaCloud(LLM):
     model: str = 'llama3-8b'
     """LLM model expert to use"""
 
+    temperature: float = 0.0
+    """model temperature"""
+
+    top_p: float = 0.0
+    """model top p"""
+
+    top_k: int = 1
+    """model top k"""
+
     stream_api: bool = True
     """use stream api"""
 
@@ -1236,7 +1245,14 @@ class SambaNovaCloud(LLM):
     @property
     def _identifying_params(self) -> Dict[str, Any]:
         """Get the identifying parameters."""
-        return {'model': self.model, 'max_tokens': self.max_tokens, 'stop': self.stop_tokens}
+        return {
+            'model': self.model,
+            'max_tokens': self.max_tokens,
+            'stop': self.stop_tokens,
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
+        }
 
     @property
     def _llm_type(self) -> str:
@@ -1284,13 +1300,16 @@ class SambaNovaCloud(LLM):
             'max_tokens': self.max_tokens,
             'stop': stop,
             'model': self.model,
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
             'stream': self.stream_api,
             'stream_options': self.stream_options,
         }
         # Streaming output
         response = http_session.post(
             self.sambanova_url,
-            headers={'Authorization': f'Basic {self.sambanova_api_key}', 'Content-Type': 'application/json'},
+            headers={'Authorization': f'Bearer {self.sambanova_api_key}', 'Content-Type': 'application/json'},
             json=data,
             stream=True,
         )
@@ -1321,6 +1340,10 @@ class SambaNovaCloud(LLM):
                 # check if the response is a final event in that case event data response is '[DONE]'
                 if chunk['data'] != '[DONE]':
                     data = json.loads(chunk['data'])
+                    if data.get('error'):
+                        raise RuntimeError(
+                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                        )
                     # check if the response is a final response with usage stats (not includes content)
                     if data.get('usage') is None:
                         # check is not "end of text" response

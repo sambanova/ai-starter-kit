@@ -4,7 +4,7 @@ langchain-core==0.2.25
 langchain==0.2.11
 langchain-experimental==0.0.60
 sseclient-py==1.8.0
-streamlit==1.36.0
+streamlit==1.38.0
 types-PyYAML==6.0.12.20240311
 matplotlib==3.8.0
 weave==0.51.1

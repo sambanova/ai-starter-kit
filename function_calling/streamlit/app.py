@@ -110,6 +110,22 @@ def handle_userinput(user_question: Optional[str]) -> None:
             st.write(f'{ans}')
 
 
+def setChatInputValue(chat_input_value: str) -> None:
+    js = f"""
+    <script>
+        function insertText(dummy_var_to_force_repeat_execution) {{
+            var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
+            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            nativeInputValueSetter.call(chatInput, "{chat_input_value}");
+            var event = new Event('input', {{ bubbles: true}});
+            chatInput.dispatchEvent(event);
+        }}
+        insertText(3);
+    </script>
+    """
+    st.components.v1.html(js)
+
+
 def main() -> None:
     global output
     st.set_page_config(
@@ -134,6 +150,10 @@ def main() -> None:
 
     with st.sidebar:
         st.title('Setup')
+
+        #Callout to get SambaNova API Key
+        st.markdown("Get your SambaNova API key [here](https://sambanova.ai/fast-api)")
+
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
@@ -164,10 +184,23 @@ def main() -> None:
                     st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
                 st.session_state.input_disabled = False
 
-            st.markdown('**3. Ask questions about your data!**')
+            st.markdown('**3. Ask the model**')
 
             with st.expander('**Execution scratchpad**', expanded=True):
                 output = st.empty()  # type: ignore
+
+            with st.expander('**Preset Example queries**', expanded=True):
+                st.markdown('DB operations')
+                if st.button('Create a summary table in the db'):
+                    setChatInputValue(
+                        'Create and save a table in the database that will show the top 10 albums with the highest sales in 2013 and in the USA. The table fields will be the name of the album, the name of the artist, the total amount of sales, and the number of copies sold.'
+                    )
+                if st.button('Get information of the created summary table'):
+                    setChatInputValue('Give me a summary of the 2013 top albums table')
+                if st.button('Create insightful plots of the summary table'):
+                    setChatInputValue(
+                        'Get the information of the 2013 top albums table in the DB, when you get the data then create some meaningful plots that summarize the information, and store them in PNG format'
+                    )
 
             with st.expander('Additional settings', expanded=False):
                 st.markdown('**Interaction options**')
@@ -179,7 +212,7 @@ def main() -> None:
                     st.session_state.sources_history = []
                     st.toast('Interactions reset. The next response will clear the history on the screen')
 
-    user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled)
+    user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
     handle_userinput(user_question)
 
 

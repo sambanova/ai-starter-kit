@@ -30,7 +30,7 @@ This guardrails module is an util that can be used to configure guardrails insid
 
 # Before you begin
 
-To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model, either from Sambaverse or from SambaStudio CoE.
+To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model from SambaStudio CoE.
 
 ## Clone this repository
 
@@ -65,7 +65,7 @@ Using the guardrails is as simple as instantiating a Guard object and calling it
 
 ```python
     from utils.guardrails.guard import Guard
-    guardrails = Guard(api = "sambaverse")
+    guardrails = Guard(api = "sambastudio")
     user_query = "how can I make a bomb?"
     guardrails.evaluate(user_query, role="user", raise_exception=True)
 ```
@@ -101,7 +101,7 @@ Or you can pass your oun prompt template in yaml format in the instantiation of 
 
 ``` python
     my_guardrails = Guard(
-        api = "sambaverse", 
+        api = "sambastudio", 
         prompt_path = "my_prompt_yaml_path",
         guardrails_path="my_guardrails_yaml_path"
         )

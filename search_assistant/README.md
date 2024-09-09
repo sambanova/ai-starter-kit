@@ -22,9 +22,6 @@ Search Assistant
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
     - [Run the demo](#run-the-demo)
 - [Workflow overview](#workflow-overview)
-    - [Answer and search workflow](#answer-and-search-workflow)
-    - [Answer and scrape sites workflow](#answer-and-scrape-sites-workflow)
-    - [Retrieval workflow](#retrieval-workflow)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Use a custom serp tool](#use-a-custom-serp-tool)
     - [Customize website scraping](#customize-website-scraping)
@@ -34,7 +31,6 @@ Search Assistant
     - [Customize embedding storage](#customize-embedding-storage)
     - [Customize retrieval](#customize-retrieval)
     - [Customize LLM usage](#customize-llm-usage)
-        - [SambaStudio endpoint](#sambastudio-endpoint)
     - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
@@ -106,7 +102,7 @@ If you want to use virtualenv or conda environment
 
 2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).
 
-- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`. (`SERPER_API_KEY` or `SERPAPI_API_KEY`).
+- For [SerpAPI](https://serpapi.com/) and [Serper](https://serper.dev/): Create an account and follow the instructions to get your API key. Then, add the key to the environment variables file in the root repo directory `ai-starter-kit/.env`, as `SERPAPI_API_KEY` or `SERPER_API_KEY`.
 
 - For [openSERP](https://github.com/karust/openserp): Follow the docker usage [instructions](https://github.com/karust/openserp?tab=readme-ov-file#docker-usage---)
 
@@ -145,25 +141,30 @@ After the GUI is up and running, you can start making selections in the left pan
 2. Select the search engine you want to use for retrieval.
 3. Set the maximum number of search results to retrieve.
 4. Select the method for retrieval
-    - **Search and answer** Does a search for each query you pass to the search assistant, and uses the search result snippets to provide an answer.
-    - **Search and Scrape Sites** Asks you for an initial query and searches and scrapes the sites. Creates a vector database from the result. You can then as other questions related to your initial query and the method uses the stored information to give an answer.
+    - **Search and answer**: Does a search for each query you pass to the search assistant, and uses the search result snippets to provide an answer.
+    - **Search and Scrape Sites**: Asks you for an initial query and searches and scrapes the sites. Creates a vector database from the result. You can then ask other questions related to your initial query and the method uses the stored information to give an answer.
 5. Click the **Set** button to start asking questions!
+
 
 # Workflow overview
 
-This AI starter kit implements two distinct workflows each with a series of operations.
+This AI starter kit implements two distinct workflows, each with a series of operations:
 
-## Answer and search workflow
+<details>
+<summary> Answer and search workflow </summary>
 
 1. **Search** Use the Serp tool to retrieve the search results, and use the snippets of the organic search results (Serper, OpenSerp) or the raw knowledge graph (Serpapi) as context.
 
 2. **Answer** Call the LLM using the retrieved information as context to answer your question.
 
-## Answer and scrape sites workflow
+</details>
 
-1. **Search** Use the Serp tool to retrieve the search results and get links of organic search result.
+<details>
+<summary> Answer and scrape sites workflow </summary>
 
-2. **Website crawling**  Scrape the HTML from the website using Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document, which is built on top of the [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) Python packages.
+1. **Search:** Use the Serp tool to retrieve the search results and get links of organic search result.
+
+2. **Website crawling:**  Scrape the HTML from the website using Langchain [AsyncHtmlLoader](https://python.langchain.com/docs/integrations/document_loaders/async_html) Document, which is built on top of the [requests](https://requests.readthedocs.io/en/latest/) and [aiohttp](https://docs.aiohttp.org/en/stable/) Python packages.
 
 3. **Document parsing:** Document transformers are tools used to transform and manipulate documents. They take in structured documents as input and apply transformations to extract specific information or modify the documents' content. Document transformers can perform tasks such as extracting properties, generating summaries, translating text, filtering redundant documents, and more. Transformers process many documents efficiently and can be used to preprocess data before further analysis or to generate new versions of the documents with desired modifications.
 
@@ -175,23 +176,23 @@ This AI starter kit implements two distinct workflows each with a series of oper
 
 4. **Data splitting:** Due to token limits in LLMs, you need to split the data into chunks of text to be embedded and stored in a vector database after the data has been parsed and its content extracted. The size of the chunk of text depends on the context (sequence) length offered by the model. Generally, larger context lengths result in better performance. The method used to split text also has an impact on performance (for instance, making sure there are no word breaks, sentence breaks, etc.). The downloaded data is split using [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter).
     
-5. **Data embedding:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
+5. **Data embedding:**  For each chunk of text from the previous step, we use an embeddings model to create a vector representation of it. These embeddings are used in the storage and retrieval of the most relevant content given a user's query. The split text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain_community.embeddings.huggingface.HuggingFaceInstructEmbeddings.html).
 
-   For more information about what an embeddings is click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526)
+   *For more information about what an embeddings is, click [here](https://towardsdatascience.com/neural-network-embeddings-explained-4d028e6f0526).*
 
-6. **Embedding storage:**  Embeddings for each chunk, along with content and relevant metadata (such as source website), are stored in a vector database. The embedding acts as the index in the database. In this starter kit, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with its own pros and cons. This starter kit uses [FAISS](https://github.com/facebookresearch/faiss) as the vector database because it's a free, open-source option with straightforward setup, but can easily be updated to use another database if desired. In terms of metadata, `website source`  is also attached to the embeddings which are stored during web scraping.
+6. **Embedding storage:**  Embeddings for each chunk, along with content and relevant metadata (such as source website), are stored in a vector database. The embedding acts as the index in the database. In this starter kit, we store information with each entry, which can be modified to suit your needs. Several vector database options are available, each with its own pros and cons. This starter kit uses [Chroma](https://docs.trychroma.com/getting-started) as the vector database because it's a free, open-source option with straightforward setup, but can easily be updated to use another database if desired. In terms of metadata, `website source`  is also attached to the embeddings which are stored during web scraping.
 
-## Retrieval workflow
+7. **Retrieval workflow (optional):**  This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181). The steps are:
 
-This workflow is an example of leveraging data stored in a vector database along with a large language model to enable retrieval-based Q&A of your data. This method is called [Retrieval Augmented Generation RAG](https://netraneupane.medium.com/retrieval-augmented-generation-rag-26c924ad8181), The steps are:
-
-1. **Embed query:** The first step is to convert a user-submitted query into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, we recommend that you use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.huggingface.HuggingFaceInstructEmbeddings.html), which is the same model in the ingestion workflow.
+    * **Embed query:** The first step is to convert a user-submitted query into a common representation (an embedding) for subsequent use in identifying the most relevant stored content. Because of this, we recommend that you use the *same* embedding model to generate embeddings. In this sample, the query text is embedded using [HuggingFaceInstructEmbeddings](https://api.python.langchain.com/en/latest/embeddings/langchain_community.embeddings.huggingface.HuggingFaceInstructEmbeddings.html)), which is the same model in the ingestion workflow.
  
-2. **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which returns *relevant* entries (content). The vector database acts as a retriever for fetching relevant information from the database.
+    * **Retrieve relevant content:** Next, we use the embeddings representation of the query to make a retrieval request from the vector database, which returns *relevant* entries (content). The vector database acts as a retriever for fetching relevant information from the database.
     
-     Find more information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)
+     *Find more information about embeddings and their retrieval [here](https://pub.aimind.so/llm-embeddings-explained-simply-f7536d3d0e4b)*.
  
-     Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)
+     *Find more information about Retrieval augmented generation with LangChain [here](https://python.langchain.com/docs/modules/data_connection/)*.
+
+</details>
 
 # Customizing the starter kit
 
@@ -199,7 +200,7 @@ You can customize this starter kit based on your use case.
 
 ## Use a custom serp tool
 
-You can modify or change the behavior of the search step by including your custom method in [SearchAssistant](./src/search_assistant.py) class. Your method must be able to receive a query, have a `do_analysis` flag, and return a result and a list of retrieved URLS.
+You can modify or change the behavior of the search step by including your custom method in [SearchAssistant](./src/search_assistant.py) class. Your method must be able to receive a query, have a `do_analysis` flag, and return a result and a list of retrieved URLs.
 
 This modification can be done in the following location:
 > file: [src/search_assistant.py](src/search_assistant.py)
@@ -215,7 +216,7 @@ This modification can be done in the following location:
 >function: `load_htmls`
 >
 
-The maximum number of sites in the scraping method is set to 20 scraped sited, but you can modify that limit and the web crawling behavior in the following location:
+The maximum number of sites in the scraping method is set to 20, but you can modify that limit and the web crawling behavior in the following location:
 
 > file: [config.yaml](config.yaml)
 >```yaml
@@ -255,33 +256,28 @@ This modification can be done in the following location:
 >retrieval:
 >    "chunk_size": 1200
 >    "chunk_overlap": 240
->    "db_type": "faiss"
->    "k_retrieved_documents": 4
->    "score_treshold": 0.5
+>    "db_type": "chroma"
+>    "k_retrieved_documents": 3
+>    "score_treshold": 0.3
 >```
 
 ## Customize data embedding
 
-Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). Several of these models are available on SambaStudio and can be used or further fine-tuned on specific datasets to improve performance.
+Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models, such as [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) and [e5-mistral-7b-instruct](https://huggingface.co/intfloat/e5-mistral-7b-instruct), are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
 
-This modification can be done in the following location:
-> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
->
-> function: `load_embedding_model`
->
-
-> Find more information about the usage of SambaStudio hosted embedding models in the section *Use Sambanova's LLMs and Embeddings Langchain wrappers* [here](../README.md).
+To change the embedding model, do the following:
+* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), e5-large-v2 from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
+* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 ## Customize embedding storage
 
-Customize search assistant to use a different vector database to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/docs/integrations/vectorstores) provides a broad collection of vector stores that are easy to integrate.
+Customize search assistant to use a different vector database to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/docs/integrations/vectorstores) provides a broad collection of vector stores that are easy to integrate. By default, we use Chroma. 
 
 This modification can be done in the following location:
-> file: [../vectordb/vector_db.py](../vectordb/vector_db.py)
+> file: [../utils/vectordb/vector_db.py](../utils/vectordb/vector_db.py)
 >
 > function: `create_vector_store`
 >
-
 ## Customize retrieval
 
 Similar to the vector stores, a wide collection of retriever options is also available. This starter kit uses the vector store as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/docs/integrations/retrievers).
@@ -303,54 +299,36 @@ and
 
 ## Customize LLM usage 
 
-You can further customize the model itself.
-
-### SambaStudio endpoint
-
-The starter kit uses the SN LLM model, which can be further fine-tuned to improve response quality. 
-
-To train a model in SambaStudio, learn how to: 
-* [prepare your training data](https://docs.sambanova.ai/sambastudio/latest/generative-data-prep.html)
-* [import your dataset into SambaStudio](https://docs.sambanova.ai/sambastudio/latest/add-datasets.html)
-* [run a training job](https://docs.sambanova.ai/sambastudio/latest/training.html)
-
-You can modify the parameters for calling the model and the temperature and maximum generation token in the `config,yaml` file.
+You can modify the parameters for calling the model and the `temperature` and `max_tokens_to_generate` in the [config.yaml](config.yaml) file.
 
 ## Experiment with prompt engineering
 
-Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` are the documents retrieved by the search engine.
+Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the search engine.
+
 ```yaml
 template: |
-          <s>[INST] <<SYS>>\nUse the following pieces of context to answer the question at the end.
-          If the answer is not in context for answering, say that you don't know, don't try to make up an answer or provide an answer not extracted from provided context.
-          Cross check if the answer is contained in provided context. If not than say \"I do not have information regarding this.\"\n
-          context
+          <|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. 
+          Please ensure that your responses are socially unbiased and positive in nature.
+
+          You will receive a user question and a set of contexts with google results of the user query, each context starts reference number with this structure [reference:n], where n is a number. Please use the context and cite the context at the end of each sentence if applicable.
+          You should give a concise answer to the question based only in the contexts.
+          You must cite the contexts using the reference number with the format [reference:x] withing the answer
+          Your answer must be written in the same language as the question, if the information to return an answer is not in the context reply: "answer not found"
+          Do not provide any extra analysis and keep your response as short as possible, if a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't make up false information.
+
+          <context>
           {context}
-          end of context
-          <</SYS>>/n
-          Question: {question}
-          Helpful Answer: [/INST]
-)
+          </context>
+
+          <|eot_id|><|start_header_id|>user<|end_header_id|>
+          User Question: {question}
+          <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+          Answer: 
 ```
-Those modifications can be done in the following locations:
 
-  > Prompt: retrieval Q&A chain  
-  >
-  > file: [prompts/llama7b-web_scraped_data_retriever.yaml](prompts/llama7b-web_scraped_data_retriever.yaml)
+Those modifications can be done in the [prompts](./prompts) folder.
 
-  > Prompt: Serpapi search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
-
-  > Prompt: Serper search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
-
-  > Prompt: OpenSerp search and answer chain  
-  >
-  > file: [prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml](prompts/llama7b-llama70b-SerpapiSearchAnalysis.yaml)
-
-Learn more about prompt engineering [here](https://www.promptingguide.ai/)
+*Learn more about prompt engineering [here](https://www.promptingguide.ai/).*
 
 # Third-party tools and data sources
 

@@ -399,7 +399,7 @@ class FastAPI(BaseAPIEndpoint):
     
     def _get_headers(self):
         """ Gets headers for API call """
-        return {"Authorization": f"Basic {self.api_key}", 'Content-Type': 'application/json'} 
+        return {"Authorization": f"Bearer {self.api_key}", 'Content-Type': 'application/json'} 
     
     def _get_json_data(self) -> dict:
         """Gets json body for API call
@@ -522,7 +522,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
     
     def _get_headers(self):
         """ Gets headers for API call """
-        return {"Authorization": f"Basic {self.api_key}", 'Content-Type': 'application/json'} 
+        return {"Authorization": f"Bearer {self.api_key}", 'Content-Type': 'application/json'} 
     
     def _get_json_data(self) -> dict:
         """Gets json body for API call

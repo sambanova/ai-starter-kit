@@ -28,7 +28,7 @@ retrieval:
     "score_threshold": 0.2
     "rerank": True
     "reranker": 'BAAI/bge-reranker-large'
-    "final_k_retrieved_documents": 10
+    "final_k_retrieved_documents": 3
     "n_tavily_results": 5
 
 codegen:
