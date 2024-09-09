@@ -1,7 +1,6 @@
-//Sambaverse usage
-const sambaverse_api_key = "your-sambaverse-api-key";
-const sambaverse_model_name = "Meta/Meta-Llama-3-8B-Instruct";
-const sambaverse_expert_name = "Meta-Llama-3-8B-Instruct";
+//SambaNova Cloud usage
+const sambanova_api_key = "your-SambaNovaCloud-api-key";
+const sambanova_model = "llama3-8b";
 
 //SambaStudio usage
 const sambastudio_base_url = "your-sambastudio-base-url";
@@ -9,7 +8,7 @@ const sambastudio_project_id = "your-sambastudio-project-id";
 const sambastudio_endpoint_id = "your-sambastudio-endpoint-id";
 const sambastudio_api_key = "your-sambastudio-api-key";
 const sambastudio_use_coe = true;
-const sambastudio_coe_expert_name = "Meta-Llama-3-8B-Instruct";
+const sambastudio_coe_expert_name = "Meta-Llama-3-70B-Instruct-4096";
 
 /**
  * Llama3 template structure
@@ -35,7 +34,7 @@ function templateLlama3Messages(msgs: ChatMessage[]): string {
 }
 
 /**
- * SambaNova endpoint handler
+ * sambaStudioEndpoint handler
  * 
  * This function is an asynchronous generator that handles Streaming API calls to a SambaNova endpoint.
  * 
@@ -51,7 +50,7 @@ function templateLlama3Messages(msgs: ChatMessage[]): string {
  * @param {Object} [extraHeaders] - Additional headers to include in the request
  * @returns {IterableIterator<string>} An iterable iterator yielding stream tokens
  */
-async function* endpointHandler(
+async function* sambaStudioEndpointHandler(
     url: string,
     key: string, 
     body: string, 
@@ -160,22 +159,98 @@ let SambaStudioModel = {
         }
       });
     }
-    yield* endpointHandler(url, sambastudio_api_key, body);
+    yield* sambaStudioEndpointHandler(url, sambastudio_api_key, body);
   }
 };
 
+
 /**
- * Sambaverse model
+ * sambaNovaCloudEndpoint handler
+ * 
+ * This function is an asynchronous generator that handles Streaming API calls to a SambaNova endpoint.
+ * 
+ * The function sends a POST request to the specified `url` with the provided `body` and `extraHeaders`.
+ * The function then reads the response body as a stream and decodes it as text.
+ * It splits the text into lines and yields each line as a JSON object.
+ * 
+ * The yielded objects contain a `result` property with a `responses` property, which contains a `stream_token` property.
+ * 
+ * @param {string} url - The URL of the SambaNova endpoint
+ * @param {string} key - The API key
+ * @param {string} body - The request body
+ * @param {Object} [extraHeaders] - Additional headers to include in the request
+ * @returns {IterableIterator<string>} An iterable iterator yielding stream tokens
  */
-let SambaverseModel = {
+async function* sambaNovaCloudEndpointHandler(
+  url: string,
+  key: string, 
+  body: string, 
+  extraHeaders: { [key: string]: string } | null = null
+) {
+  let headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${key}`,
+  };
+  if (extraHeaders !== null) {
+    headers = Object.assign({}, headers, extraHeaders);
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: body,
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+    console.error('API call failed with status:', response.status);
+    console.error('Response body:', responseBody);
+    throw new Error(`API call failed with status ${response.status}`);
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Failed to get reader from response body');
+  }
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let lines = buffer.split('\n');
+    buffer = lines.pop()!;
+    for (const line of lines) {
+      let str_line = line.trim();
+      if (str_line) {
+        if (str_line === "data: [DONE]"){
+          break;
+        }
+        else {
+          str_line = str_line.replace(/^data: /, '')
+          try {
+            const json_line = JSON.parse(str_line);
+            yield json_line.choices[0].delta.content;
+          } catch (error) {
+            console.error('failed to parse JSON: ', line)
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * SambaNova Cloud model
+ */
+let SambaNovaCloudModel = {
   options: {
-    title: "Sambaverse",
-    model: sambaverse_expert_name,
+    title: "SambaNovaCloud",
+    model: sambanova_model,
     contextLength: 2048,
     templateMessages: templateLlama3Messages,
   },
   /**
-   * Stream completion function for SambaVerse
+   * Stream completion function for SambaNovaCloud
    * 
    * @param {string} prompt - The prompt to generate text for
    * @param {CompletionOptions} options - Options for the completion
@@ -184,41 +259,35 @@ let SambaverseModel = {
     prompt: string,
     options: CompletionOptions,
   ) {
-    const url = 'https://sambaverse.sambanova.ai/api/predict';
+    const url = 'https://api.sambanova.ai/v1/chat/completions';
     const extraHeaders = {
-      "modelName": sambaverse_model_name,
     };
     const body = JSON.stringify({
-      instance: prompt,
-      params: {
-        select_expert: {
-          type: "string",
-          value: options.model
-        },
-        process_prompt: {
-          type: "bool",
-          value: "false"
-        },
-        max_tokens_to_generate: {
-          type: "int",
-          value: "1024"
+      messages:[  
+        {  
+            role: "user", 
+            content: prompt
         }
-      }
+      ], 
+      model: options.model,
+      stop: ["<|eot_id|>"],
+      stream: true,
+      max_tokens: 1024,
     });
-    yield* endpointHandler(url, sambaverse_api_key, body, extraHeaders);
+    yield* sambaNovaCloudEndpointHandler(url, sambanova_api_key, body, extraHeaders);
   },
 };
 
 /**
- * Modifies the given configuration by adding SambaStudioModel and SambaverseModel to the models array.
+ * Modifies the given configuration by adding SambaStudioModel and SambaNovaCloudModel to the models array.
  * 
  * @param {Config} config - The configuration object to be modified.
  * @returns {Config} The modified configuration object.
  */
 export function modifyConfig(config: Config): Config {
   config.models.push(SambaStudioModel)
-  config.models.push(SambaverseModel)
+  config.models.push(SambaNovaCloudModel)
   //config.tabAutocompleteModel=SambaStudioModel;
-  //config.tabAutocompleteModel=SambaverseModel;
-  return config;
+  //config.tabAutocompleteModel=SambaNovaCloudModel;
+  return config; 
 }
