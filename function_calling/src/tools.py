@@ -31,6 +31,11 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
+import sqlite3
+import time
+from sqlalchemy import create_engine, event
+from sqlalchemy.pool import QueuePool
+
 
 ## Get configs for tools
 def get_config_info(config_path: str) -> dict:
@@ -53,7 +58,8 @@ def get_config_info(config_path: str) -> dict:
 class GetTimeSchema(BaseModel):
     """Returns current date, current time or both."""
 
-    kind: Optional[str] = Field(description='kind of information to retrieve "date", "time" or "both"')
+    kind: Optional[str] = Field(
+        description='kind of information to retrieve "date", "time" or "both"')
 
 
 # definition using @tool decorator
@@ -83,7 +89,8 @@ class CalculatorSchema(BaseModel):
     """allow calculation of only basic operations: + - * and /
     with a string input expression"""
 
-    expression: str = Field(..., description="expression to calculate, example '12 * 3'")
+    expression: str = Field(
+        ..., description="expression to calculate, example '12 * 3'")
 
 
 # function to use in the tool
@@ -161,11 +168,9 @@ calculator = StructuredTool.from_function(
 
 # tool schema
 class ReplSchema(BaseModel):
-    (
-        'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. '
-        'If you want to see the output of a value, you should print it out with `print(...)`, '
-        'if you need a specific module you should import it.'
-    )
+    ('A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. '
+     'If you want to see the output of a value, you should print it out with `print(...)`, '
+     'if you need a specific module you should import it.')
 
     command: str = Field(..., description='python code to evaluate')
 
@@ -174,10 +179,10 @@ class ReplSchema(BaseModel):
 python_repl = PythonREPL()
 python_repl = Tool(
     name='python_repl',
-    description=(
-        'A Python shell. Use this to execute python commands. Input should be a valid python command. '
-        'If you want to see the output of a value, you should print it out with `print(...)`.'
-    ),
+    description=
+    ('A Python shell. Use this to execute python commands. Input should be a valid python command. '
+     'If you want to see the output of a value, you should print it out with `print(...)`.'
+     ),
     func=python_repl.run,
     args_schema=ReplSchema,
 )  # type: ignore
@@ -186,12 +191,12 @@ python_repl = Tool(
 ## SQL tool
 # tool schema
 class QueryDBSchema(BaseModel):
-    (
-        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
-        'Do not pass sql queries directly. Input must be a natural language question or instruction.'
-    )
+    ('A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
+     'Do not pass sql queries directly. Input must be a natural language question or instruction.'
+     )
 
-    query: str = Field(..., description='natural language question or instruction.')
+    query: str = Field(...,
+                       description='natural language question or instruction.')
 
 
 def sql_finder(text: str) -> str:
@@ -222,6 +227,31 @@ def sql_finder(text: str) -> str:
             raise Exception('No SQL code found in LLM generation')
 
 
+# Global engine variable
+db_engine = None
+
+
+def _initialize_db_engine(db_path):
+    global db_engine
+    if db_engine is None:
+        db_uri = f'sqlite:///{db_path}'
+        db_engine = create_engine(db_uri,
+                                  poolclass=QueuePool,
+                                  pool_size=10,
+                                  max_overflow=20,
+                                  connect_args={'check_same_thread': False})
+
+        @event.listens_for(db_engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA temp_store=MEMORY;")
+            cursor.close()
+
+    return db_engine
+
+
 @tool(args_schema=QueryDBSchema)
 def query_db(query: str) -> str:
     """query generation tool. Use this to generate sql queries and retrieve the results from a database.
@@ -236,7 +266,8 @@ def query_db(query: str) -> str:
         sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
     else:
         if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            sambanova_api_key = os.environ.get(
+                'SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
@@ -253,60 +284,81 @@ def query_db(query: str) -> str:
     )
 
     db_path = os.path.join(kit_dir, query_db_info['db']['path'])
-    db_uri = f'sqlite:///{db_path}'
-    db = SQLDatabase.from_uri(db_uri)
+    engine = _initialize_db_engine(db_path)
+
+    # Create a new SQLDatabase instance with the pooled engine
+    db = SQLDatabase(engine)
 
     prompt = PromptTemplate.from_template(
         """<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
-        
+
         {table_info}
-        
+
         Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
         Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
         Do not assume ids in tables when inserting new values let them null or use the max id + 1
         The queries must be formatted including backticks code symbols as follows:
         do not include comments in the query
-            
+
         ```sql
         query
         ```
-        
+
         Example format:
-        
+
         ```sql
         SELECT * FROM mainTable;
         ```
-        
+
         <|eot_id|><|start_header_id|>user<|end_header_id|>\
-            
+
         {input}
-        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""  # noqa E501
+        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+
+        # noqa E501
     )
 
-    # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
-    # and finally execute the sql finder method, retrieving only the filtered SQL query
     query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
 
     table_info = db.get_table_info()
 
     print(f'query_db: Calling query generation LLM with input: \n{query}\n')
 
-    query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
+    generated_query = query_generation_chain.invoke({
+        'input': query,
+        'table_info': table_info
+    })
 
-    print(f'query_db: query generation LLM filtered response: \n{query}\n')
+    print(
+        f'query_db: query generation LLM filtered response: \n{generated_query}\n'
+    )
 
-    queries = query.split(';')
+    queries = generated_query.split(';')
 
     query_executor = QuerySQLDataBaseTool(db=db)
 
     results = []
-    for query in queries:
-        if query.strip() != '':
-            print(f'query_db: executing query: \n{query}\n')
-            results.append(query_executor.invoke(query))
-            print(f'query_db: query result: \n{results[-1]}\n')
+    for single_query in queries:
+        if single_query.strip() != '':
+            print(f'query_db: executing query: \n{single_query}\n')
+            try:
+                results.append(query_executor.invoke(single_query))
+                print(f'query_db: query result: \n{results[-1]}\n')
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e):
+                    print(f"Database is locked. Retrying in 1 second...")
+                    time.sleep(1)
+                    results.append(query_executor.invoke(single_query))
+                    print(
+                        f'query_db: query result after retry: \n{results[-1]}\n'
+                    )
+                else:
+                    raise
 
-    result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
+    result = '\n'.join([
+        f'Query {q} executed with result {r}'
+        for q, r in zip(queries, results)
+    ])
     return result
 
 
@@ -317,13 +369,16 @@ def query_db(query: str) -> str:
 class TranslateSchema(BaseModel):
     """Returns translated input sentence to desired language"""
 
-    origin_language: str = Field(description='language of the original sentence')
-    final_language: str = Field(description='language to translate the sentence into')
+    origin_language: str = Field(
+        description='language of the original sentence')
+    final_language: str = Field(
+        description='language to translate the sentence into')
     input_sentence: str = Field(description='sentence to translate')
 
 
 @tool(args_schema=TranslateSchema)
-def translate(origin_language: str, final_language: str, input_sentence: str) -> str:
+def translate(origin_language: str, final_language: str,
+              input_sentence: str) -> str:
     """Returns translated input sentence to desired language
 
     Args:
@@ -341,7 +396,8 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
     else:
         if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            sambanova_api_key = os.environ.get(
+                'SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
@@ -357,7 +413,9 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         sambanova_api_key=sambanova_api_key,
     )
 
-    return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
+    return llm.invoke(
+        f'Translate from {origin_language} to {final_language}: {input_sentence}'
+    )
 
 
 ## RAG tool
@@ -367,7 +425,8 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
 class RAGSchema(BaseModel):
     """Returns information from a document knowledge base"""
 
-    query: str = Field(description='input question to solve using the knowledge base')
+    query: str = Field(
+        description='input question to solve using the knowledge base')
 
 
 @tool(args_schema=RAGSchema)
@@ -387,7 +446,8 @@ def rag(query: str) -> str:
         sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
     else:
         if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            sambanova_api_key = os.environ.get(
+                'SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
@@ -414,7 +474,10 @@ def rag(query: str) -> str:
     )
 
     # set vectorstore and retriever
-    vectorstore = vdb.load_vdb(os.path.join(kit_dir, rag_info['vector_db']['path']), embeddings, db_type='chroma')
+    vectorstore = vdb.load_vdb(os.path.join(kit_dir,
+                                            rag_info['vector_db']['path']),
+                               embeddings,
+                               db_type='chroma')
     retriever = vectorstore.as_retriever(
         search_type='similarity_score_threshold',
         search_kwargs={
@@ -434,8 +497,7 @@ def rag(query: str) -> str:
         'Question: {question} \n'
         'Context: {context} \n'
         '\n ------- \n'
-        'Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>'
-    )
+        'Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>')
     retrieval_qa_prompt = PromptTemplate.from_template(prompt)
     qa_chain = RetrievalQA.from_llm(
         llm=llm,
@@ -450,6 +512,7 @@ def rag(query: str) -> str:
     response = qa_chain.invoke({'question': query})
     answer = response['answer']
 
-    source_documents = set([doc.metadata['filename'] for doc in response['source_documents']])
+    source_documents = set(
+        [doc.metadata['filename'] for doc in response['source_documents']])
 
     return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'
