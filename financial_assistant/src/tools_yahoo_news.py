@@ -280,7 +280,10 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
     answer = response['answer']
 
     # Extract the urls from the QA response
-    url_list = [doc.metadata['url'] for doc in response['context']]
+    url_list = list()
+    for doc in response['context']:
+        if doc.metadata.get('url') is not None:
+            url_list.append(doc.metadata['url'])
 
     return answer, url_list
 

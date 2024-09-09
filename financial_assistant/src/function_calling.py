@@ -1,8 +1,6 @@
 import json
-import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
-import streamlit
 import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
@@ -13,6 +11,7 @@ from langchain_core.tools import StructuredTool, Tool
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.tools import time_llm
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_methods import get_sambanova_credentials
 from utils.model_wrappers.api_gateway import APIGateway
 
 
@@ -40,13 +39,10 @@ class FunctionCalling:
             TypeError: If `system_prompt` is not a string.
         """
         # Load the configs from the config file
-        llm_info, prod_mode_info = self.get_llm_config_info(config_path)
+        self.llm_info = self.get_llm_config_info(config_path)
 
-        # Set the production flag
-        self.prod_mode = prod_mode_info
-
-        # Set the llm information
-        self.llm_info = llm_info
+        # Check the LLM information
+        self.check_llm_info()
 
         # Set the LLM
         self.llm = self.set_llm()
@@ -71,7 +67,7 @@ class FunctionCalling:
         assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
-    def get_llm_config_info(self, config_path: str) -> Tuple[Any, Any]:
+    def get_llm_config_info(self, config_path: str) -> Any:
         """
         Loads the json config file.
 
@@ -93,44 +89,47 @@ class FunctionCalling:
         # Get the llm information
         llm_info = config['llm']
 
-        prod_mode_info = config['prod_mode']
+        return llm_info
 
-        return (llm_info, prod_mode_info)
+    def check_llm_info(self) -> None:
+        """Check the llm information."""
+
+        assert isinstance(self.llm_info, dict), TypeError('LLM information must be a dictionary.')
+        assert all(isinstance(key, str) for key in self.llm_info), TypeError('LLM information keys must be strings')
+
+        assert isinstance(self.llm_info['api'], str), TypeError('LLM `api` must be a string.')
+        assert isinstance(self.llm_info['coe'], bool), TypeError('LLM `coe` must be a boolean.')
+        assert isinstance(self.llm_info['do_sample'], bool), TypeError('LLM `do_sample` must be a boolean.')
+        assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError(
+            'LLM `max_tokens_to_generate` must be an integer.'
+        )
+        assert isinstance(self.llm_info['temperature'], float), TypeError('LLM `temperature` must be a float.')
+        assert isinstance(self.llm_info['select_expert'], str), TypeError('LLM `select_expert` must be a string.')
 
     def set_llm(self) -> LLM:
         """
         Set the LLM to use.
 
-        SambaVerse, SambaStudio, FastAPI endpoints are implemented.
-
         Returns:
             The LLM to use.
 
         Raises:
-            ValueError: If the LLM API is not one of `sambastudio`, `sambaverse`, or `fastapi`.
+            ValueError: If the LLM API is not one of `sncloud` or `sambastudio`.
         """
-        if self.llm_info['api'] in ['sambastudio', 'sambaverse', 'fastapi']:
+        if self.llm_info['api'] in ['sncloud', 'sambastudio']:
             # Check config parameters
             assert isinstance(self.llm_info['api'], str), ValueError(
-                'LLM API must be one of `sambastudio`, `sambaverse`, or `fastapi`.'
+                'LLM API must be either `sncloud` or `sambastudio`.'
             )
-            assert isinstance(self.llm_info['coe'], bool), TypeError('Sambaverse `coe` must be a boolean.')
+            assert isinstance(self.llm_info['coe'], bool), TypeError('`coe` must be a boolean.')
             assert isinstance(self.llm_info['do_sample'], bool), TypeError('`do_sample` must be a boolean.')
             assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError(
                 '`max_tokens_to_generate` must be an integer.'
             )
             assert isinstance(self.llm_info['select_expert'], str), TypeError('`select_expert` must be a string.')
-            assert isinstance(self.llm_info['sambaverse_model_name'], str | None), TypeError(
-                'Sambaverse `model_name` must be a string.'
-            )
 
-            # Get the LLM credentials following `prod_mode`
-            if self.prod_mode:
-                fastapi_url = streamlit.session_state.FASTAPI_URL
-                fastapi_api_key = streamlit.session_state.FASTAPI_API_KEY
-            else:
-                fastapi_url = os.environ.get('FASTAPI_URL') or streamlit.session_state.FASTAPI_URL
-                fastapi_api_key = os.environ.get('FASTAPI_API_KEY') or streamlit.session_state.FASTAPI_API_KEY
+            # Get the Sambanova API key
+            sambanova_api_key = get_sambanova_credentials()
 
             # Instantiate the LLM
             llm = APIGateway.load_llm(
@@ -142,13 +141,11 @@ class FunctionCalling:
                 temperature=self.llm_info['temperature'],
                 select_expert=self.llm_info['select_expert'],
                 process_prompt=False,
-                sambaverse_model_name=self.llm_info['sambaverse_model_name'],
-                fastapi_url=fastapi_url,
-                fastapi_api_key=fastapi_api_key,
+                sambanova_api_key=sambanova_api_key,
             )
         else:
             raise ValueError(
-                f"Invalid LLM API: {self.llm_info['api']}, only 'sambastudio' and 'sambaverse' are supported."
+                f'Invalid LLM API: {self.llm_info["api"]}. Only `sncloud` and `sambastudio` are supported.'
             )
         return llm
 

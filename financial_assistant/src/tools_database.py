@@ -27,6 +27,7 @@ from financial_assistant.src.tools import (
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_methods import get_sambanova_credentials
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
@@ -170,7 +171,7 @@ def query_stock_database(
     user_query: str,
     company_list: List[str] | str,
     method: str = 'text-to-SQL',
-) -> Any | Dict[str, str | List[str]]:
+) -> Any:
     """
     Tool for querying a SQL database containing information about stocks or companies.
 
@@ -216,7 +217,8 @@ def query_stock_database(
     if method == 'text-to-SQL':
         return query_stock_database_sql(user_query, symbol_list)
     elif method == 'PandasAI-SqliteConnector':
-        return query_stock_database_pandasai(user_query, symbol_list)
+        instructions_plot = '\nPlease display dates in any figures in ascending order, using only the year and month.'
+        return query_stock_database_pandasai(user_query + instructions_plot, symbol_list)
     else:
         raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}')
 
@@ -337,7 +339,8 @@ def sql_finder(text: str) -> Any:
             query = match.group(1)
             return query
         else:
-            raise Exception(f'No SQL code found in LLM generation from {text}.')
+            logger.warning(f'No explicit SQL code found in LLM generation from {text}.')
+            return text
 
 
 def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> Any:
@@ -450,6 +453,9 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         if elem < streamlit.session_state.fc.llm_info['max_tokens_to_generate']
     ]
 
+    # Get the Sambanova API key
+    sambanova_api_key = get_sambanova_credentials()
+
     # Call the LLM for each number of tokens to generate
     # Return the first valid response
     for item in max_tokens_to_generate_list:
@@ -464,7 +470,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
                 temperature=streamlit.session_state.fc.llm_info['temperature'],
                 select_expert=streamlit.session_state.fc.llm_info['select_expert'],
                 process_prompt=False,
-                sambaverse_model_name=streamlit.session_state.fc.llm_info['sambaverse_model_name'],
+                sambanova_api_key=sambanova_api_key,
             )
 
             # The chain

@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict, List, Optional
 
 import streamlit
@@ -18,11 +19,14 @@ def get_stock_database() -> None:
     streamlit.markdown('<h3> Create database </h3>', unsafe_allow_html=True)
 
     requested_companies = streamlit.text_input(
-        'Enter the named of the companies you want to retrieve.',
+        'Enter the names of the companies you want to retrieve.',
         key='create-database',
+        value='Meta',
     )
-    start_date = streamlit.date_input('Start Date')
-    end_date = streamlit.date_input('End Date')
+    start_date = streamlit.date_input(
+        'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
+    )
+    end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
 
     if streamlit.button('Create database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
@@ -36,11 +40,15 @@ def get_stock_database() -> None:
         '\nwhereas PandasAI-SqliteConnector will use pandasai to query the database.'
     )
     query_method = streamlit.selectbox(
-        'Select method:', ['text-to-SQL', 'PandasAI-SqliteConnector'], index=0, help=help_query_method
+        'Select method (for best results, try both):',
+        ['text-to-SQL', 'PandasAI-SqliteConnector'],
+        index=0,
+        help=help_query_method,
     )
     user_request = streamlit.text_input(
         'Enter your query.',
         key='query-database',
+        value='What is the research and development spending trend for Meta?',
     )
     if streamlit.button(label='Query database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):

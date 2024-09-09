@@ -241,21 +241,25 @@ def generate_pdf(
         summary_bar = streamlit.progress(0, text=progress_text)
 
         intermediate_summaries, intermediate_titles, final_summary, abstract = summarize_text(split_docs)
-        pdf.chapter_title('Abstract')
-        pdf.chapter_summary(abstract)
+        if len(abstract) > 0:
+            pdf.chapter_title('Abstract')
+            pdf.chapter_summary(abstract)
 
-        pdf.chapter_title('Summary')
-        pdf.chapter_summary(final_summary)
+        if len(final_summary) > 0:
+            pdf.chapter_title('Summary')
+            pdf.chapter_summary(final_summary)
 
         for idx, item in enumerate(content_list):
             time.sleep(0.01)
             summary_bar.progress(idx + 1, text=progress_text)
 
             # Add the section title
-            pdf.chapter_title(intermediate_titles[idx])
+            if len(intermediate_titles[idx]) > 0:
+                pdf.chapter_title(intermediate_titles[idx])
 
             # Add the section summary
-            pdf.chapter_summary(intermediate_summaries[idx])
+            if len(intermediate_summaries[idx]) > 0:
+                pdf.chapter_summary(intermediate_summaries[idx])
 
             # Add the section body
             if item['text'] is not None and item['text'] != EMPTY_TEXT_PLACEHOLDER and isinstance(item['text'], str):
@@ -308,15 +312,27 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
             - Abstract of the document.
     """
     # Extract intermediate titles and summaries for each document in the split docs
-    intermediate_results = [invoke_summary_map_chain(doc) for doc in split_docs]
+    intermediate_results = list()
+    for doc in split_docs:
+        try:
+            intermediate_results.append(invoke_summary_map_chain(doc))
+        except:
+            intermediate_results.append('')
+
     intermediate_summaries = [item.summary for item in intermediate_results]
     intermediate_titles = [item.title for item in intermediate_results]
 
     # Extract final summary from intermediate summaries
-    final_summary = invoke_reduction_chain(intermediate_summaries)
+    try:
+        final_summary = invoke_reduction_chain(intermediate_summaries)
+    except:
+        final_summary = ''
 
     # Extract abstract from the final summary
-    abstract = invoke_abstract_chain(final_summary)
+    try:
+        abstract = invoke_abstract_chain(final_summary)
+    except:
+        abstract = ''
 
     return intermediate_summaries, intermediate_titles, final_summary, abstract
 

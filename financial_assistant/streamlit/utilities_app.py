@@ -33,10 +33,10 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     Returns:
         A dictionary with the config information:
             - api_info: string containing API to use:
-                `fastapi`, `sambastudio` or `sambaverse`.
+                `sncloud` or `sambastudio`.
             - embedding_model_info:
                 String containing embedding model type to use,
-                `sambastudio` or `cpu`.
+                `cpu` or `sambastudio`.
             - llm_info: Dictionary containing LLM parameters.
             - retrieval_info:
                 Dictionary containing retrieval parameters.
@@ -342,6 +342,10 @@ def initialize_session(
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
+    # Initialize the production mode
+    if 'prod_mode' not in session_state:
+        session_state.prod_mode = prod_mode
+
     # Initialize credentials
     initialize_env_variables(prod_mode)
 
@@ -429,14 +433,20 @@ def submit_sec_edgar_details() -> None:
     """Add the SEC-EDGAR details to the session state."""
 
     key = 'sidebar-sec-edgar'
+    sec_edgar_help = """Must provide organization and email address
+        to comply with the SEC Edgar's downloading fair access
+        <a href="https://www.sec.gov/os/webmaster-faq#code-support" target="_blank">policy</a>.
+    """
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.markdown(sec_edgar_help, unsafe_allow_html=True)
     # Populate SEC-EDGAR credentials
     if streamlit.session_state.SEC_API_ORGANIZATION is None:
         streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-            'For SEC-EDGAR: "<your organization>"', None, key=key + '-organization'
+            'For SEC-EDGAR: <your organization>', None, key=key + '-organization'
         )
     if streamlit.session_state.SEC_API_EMAIL is None:
         streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-            'For SEC-EDGAR: "<name.surname@email_provider.com>"', None, key=key + '-email'
+            'For SEC-EDGAR: <user@email_provider.com>', None, key=key + '-email'
         )
     # Save button
     if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
@@ -446,8 +456,8 @@ def submit_sec_edgar_details() -> None:
                 and streamlit.session_state.SEC_API_EMAIL is not None
             ):
                 streamlit.success('SEC EDGAR details saved successfully!')
-            else:
-                streamlit.warning('Please enter both SEC_API_ORGANIZATION and SEC_API_KEY')
+        else:
+            streamlit.warning('Please enter organization and email.')
 
 
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:

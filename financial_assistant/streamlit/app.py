@@ -146,9 +146,6 @@ def main() -> None:
                 ],
             )
 
-            # Populate SEC-EDGAR credentials
-            submit_sec_edgar_details()
-
             # Add saved files
             streamlit.title('Saved Files')
 
@@ -196,7 +193,7 @@ def main() -> None:
 
             streamlit.write(
                 """
-                    Welcome to the Financial Insights application.
+                    Welcome to SambaNova Financial Assistant.
                     This app demonstrates the capabilities of large language models (LLMs)
                     in extracting and analyzing financial data using function calling, web scraping,
                     and retrieval-augmented generation (RAG).
@@ -227,7 +224,13 @@ def main() -> None:
 
         # Financial Filings Analysis page
         elif menu == 'Financial Filings Analysis':
-            include_financial_filings()
+            # Populate SEC-EDGAR credentials
+            submit_sec_edgar_details()
+            if (
+                streamlit.session_state.SEC_API_ORGANIZATION is not None
+                and streamlit.session_state.SEC_API_EMAIL is not None
+            ):
+                include_financial_filings()
 
         # Generate PDF Report page
         elif menu == 'Generate PDF Report':

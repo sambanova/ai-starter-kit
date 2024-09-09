@@ -73,6 +73,7 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
 
 def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
     """Load the embedding model following the config information."""
+
     if embedding_model_info['type'] == 'cpu':
         embeddings_cpu = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
         return embeddings_cpu
@@ -87,7 +88,7 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
     else:
         raise ValueError(
             f'`config.rag["embedding_model"]["type"]` can only be `cpu` or `sambastudio. '
-            'Got {embedding_model_info["type"]}.'
+            f'Got {embedding_model_info["type"]}.'
         )
 
 

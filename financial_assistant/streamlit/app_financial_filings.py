@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import streamlit
 
@@ -18,9 +18,13 @@ def include_financial_filings() -> None:
     )
 
     # User request
-    user_request = streamlit.text_input('Enter your query:', key='financial-filings')
+    user_request = streamlit.text_input(
+        'Enter your query:',
+        key='financial-filings',
+        value='Have there been changes in strategy, products, and research for Meta? Can you provide some examples?',
+    )
     # Company name
-    company_name = streamlit.text_input('Company name (optional if in the query already)')
+    company_name = streamlit.text_input('Company name (optional if in the query already)', value='Meta')
     # Define the range of years
     start_year = 2020
     end_year = 2024
@@ -67,7 +71,7 @@ def handle_financial_filings(
     filing_type: Optional[str] = '10-K',
     filing_quarter: Optional[int] = 0,
     selected_year: Optional[int] = 2023,
-) -> str:
+) -> Dict[str, str]:
     """
     Handle the user request for the financial filing data.
 
@@ -112,6 +116,6 @@ def handle_financial_filings(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, str), TypeError(f'Invalid LLM response: {response}.')
+    assert isinstance(response, dict), TypeError(f'Invalid LLM response: {response}.')
 
     return response

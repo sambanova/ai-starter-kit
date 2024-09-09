@@ -1,3 +1,4 @@
+import datetime
 import json
 from typing import Any, List, Optional, Tuple
 
@@ -23,8 +24,9 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<h3> Info retrieval </h3>', unsafe_allow_html=True)
 
     user_request = streamlit.text_input(
-        'Enter the info that you want to retrieve for given companies.',
+        'Enter the info that you want to retrieve for a given company.',
         key='stock-query',
+        value='What is the research and development spending trend for Meta?',
     )
 
     columns = streamlit.columns(3, vertical_alignment='center')
@@ -32,6 +34,7 @@ def get_stock_data_analysis() -> None:
         'Select Data Source:',
         sorted(
             [
+                'None',
                 'info',
                 'history',
                 'history_metadata',
@@ -62,7 +65,7 @@ def get_stock_data_analysis() -> None:
                 'news',
             ],
         ),
-        None,
+        index=9,
     )
 
     with open(YFINANCE_COLUMNS_JSON, 'r') as json_file:
@@ -98,11 +101,14 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
     user_request = streamlit.text_input(
-        'Enter the quantities that you want to plot for given companies\n'
-        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.'
+        'Enter the quantities that you want to plot for given companies. '
+        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.',
+        value='Meta close value',
     )
-    start_date = streamlit.date_input('Start Date')
-    end_date = streamlit.date_input('End Date')
+    start_date = streamlit.date_input(
+        'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
+    )
+    end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
 
     # Analyze stock data
     if streamlit.button('Analyze Historical Stock Data'):

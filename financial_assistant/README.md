@@ -49,56 +49,87 @@ You have to set up your environment before you can run or customize the starter 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
+
+```bash
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the inference endpoint, configs and environment variables
+## Set up the models, environment variables and config file
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Fast API or Sambaverse. Note that Sambaverse, although freely available to the public, is rate limited and will not have fast RDU optimized inference speeds.
+### Set up the generative model
 
-- If using **SambaNova Fast-API** Please follow the instructions [here](../README.md#use-sambanova-fast-api-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"fastapi"` and set the `select_expert` config depending on the model you want to use.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **Sambaverse** Please follow the instructions [here](../README.md#use-sambaverse-option-2) for getting your api key and setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambaverse"` and set the `sambaverse_model_name`, and `select_expert` config depending on the model you want to use.
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
+
+### Set up the embedding model
+
+You have the following options to set up your embedding model:
+
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
+
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
+
+## Windows requirements
+
+- If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. 
+We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
-## Deployment: Use a virtual environment (3.11 preferred)
+## Option 1: Use a virtual environment
 
 If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
-```
-cd ai_starter_kit/
-python3 -m venv financial_assistant_env
-source financial_assistant_env/bin/activate
-pip install --upgrade pip
-pip  install  -r  financial_assistant/requirements.txt
-```
+    ```bash
+    cd ai_starter_kit/enterprise_knowledge_retriever
+    python3 -m venv enterprise_knowledge_env
+    source enterprise_knowledge_env/bin/activate
+    pip  install  -r  requirements.txt
+    ```
 
 2. Run the following command:
-```
-cd financial_assistant/streamlit/
-streamlit run app.py --browser.gatherUsageStats false 
-```
 
-## Environment variables
-Please set up the following environment variables in your virtual environment or container before launching the app.
-These can be included in the project `.env` file.
+    > This kit can be deployed using either a simple LCECL implementation or a LangGraph implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
 
-For `FAST-API`:
-```
-FASTAPI_URL = "https://fast-api.snova.ai/v1/chat/completions"
-FASTAPI_API_KEY = "<your-fastapi-api-key>"
-```
+    - LCEL version
+
+        ```bash
+            streamlit run streamlit/app.py --browser.gatherUsageStats false 
+        ```
+
+    - LangGraph version
+
+        ```bash
+            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
+        ```
+
+After deploying the starter kit you see the following user interface:
+
+![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
+
+## Option 2: Deploy the starter kit in a Docker container 
+
+NOTE: If you are deploying the docker container in Windows be sure to open the docker desktop application. 
+
+To run the starter kit  with docker, run the following command:
+
+    docker-compose up --build
+
+You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
+
+Here's a short video demonstrating docker deployment:
+
+https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-961d-a4b369be5ec4
+
+## Further settings
 
 For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
 USER_AGENT: ```<Company Name> <Email Address>```
@@ -107,7 +138,7 @@ USER_AGENT: ```<Company Name> <Email Address>```
 SEC_API_ORGANIZATION="<your organization>"
 
 # Your email address
-SEC_API_EMAIL="<name.surname@email_provider.com>"
+SEC_API_EMAIL="<user@email_provider.com>"
 ```
 
 For `Weave` users:
