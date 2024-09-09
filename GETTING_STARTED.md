@@ -112,7 +112,6 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 
 - Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) for additional help
 - Find answers and post questions in the [SambaNova Community](https://community.sambanova.ai/latest)
-- Join our [SambaNova Discord](https://discord.gg/54bNAqRw) for discussions and support  
 - Let us know your most wanted features and challenges via the channels above
 - More inference models, longer context lengths, and embeddings models are coming soon!
 
