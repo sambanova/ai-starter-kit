@@ -14,7 +14,7 @@ sys.path.append("./src/llmperf")
 from transformers import AutoTokenizer
 from llmperf.models import RequestConfig
 from llmperf import common_metrics
-from utils import get_tokenizer
+from utils import get_tokenizer, SAMBANOVA_URL
 
 from dotenv import load_dotenv
 import warnings
@@ -509,7 +509,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
-        self.base_url = os.environ.get("SAMBANOVA_URL")
+        self.base_url = os.environ.get("SAMBANOVA_URL", SAMBANOVA_URL)
         self.api_key = os.environ.get("SAMBANOVA_API_KEY")
         
     def _get_url(self) -> str:
