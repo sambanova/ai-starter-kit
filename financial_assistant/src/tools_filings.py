@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas
 import requests
@@ -14,9 +14,10 @@ from langchain_core.tools import tool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
-from financial_insights.src.tools import get_logger
-from financial_insights.src.utilities_retrieval import get_qa_response
-from financial_insights.streamlit.constants import *
+from financial_assistant.src.retrieval import get_qa_response
+from financial_assistant.src.tools import coerce_str_to_list, get_logger
+from financial_assistant.src.tools_stocks import retrieve_symbol_list
+from financial_assistant.streamlit.constants import *
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -26,9 +27,8 @@ logger = get_logger()
 class SecEdgarFilingsInput(BaseModel):
     """Tool for retrieving a financial filing from SEC Edgar and then answering the original user question."""
 
-    user_question: str = Field(..., description='The user question.')
-    user_request: str = Field(description='The full retrieval request.')
-    ticker_symbol: str = Field(..., description='The company ticker symbol.')
+    user_question: str = Field(..., description='The original user question.')
+    company_list: List[str] | str = Field(..., description='The required companies.')
     filing_type: str = Field(..., description='The type of filing (either "10-K" or "10-Q").')
     filing_quarter: Optional[int] = Field(
         None, description='The quarter of the filing (1, 2, 3, or 4). Defaults to None for no quarter.'
@@ -39,30 +39,30 @@ class SecEdgarFilingsInput(BaseModel):
 @tool(args_schema=SecEdgarFilingsInput)
 def retrieve_filings(
     user_question: str,
-    user_request: str,
-    ticker_symbol: str,
+    company_list: List[str] | str,
     filing_type: str,
     filing_quarter: int,
     year: int,
-) -> str:
+) -> Dict[str, str]:
     """
     Tool for retrieving a financial filing from SEC Edgar and then answering the original user question.
 
     Args:
-        user_question: The user question.
-        user_request: The full retrieval request.
-        ticker_symbol: The company ticker symbol.
+        user_question: The original user question.
+        company_list: The required companies.
         filing_type: The type of filing (either `10-K` or `10-Q`).
         filing_quarter: The quarter of the filing (among 1, 2, 3, 4). Defaults to None for no quarter.
         year: The year of the filing.
 
     Returns:
-        A tuple of the following elements:
-            - The answer to the user question, preceded by the information about the retrieval:
+        A dictionary of the following elements:
+            - The keys are the company ticker symbols.
+            - The values are the answer to the user question by company,
+                preceded by the information about the retrieval:
                 `filing_type`, `filing_quarter`, `ticker_symbol`, and `report_date`.
 
     Raises:
-        TypeErrror: If `user_request`, `user_question`, `ticker_symbol`, or `filing_type` are not strings.
+        TypeErrror: If `user_question`, `ticker_symbol`, or `filing_type` are not strings.
         TypeError: If `filing_quarter` is not an integer for a `filing_type` of `10-Q`.
         ValueError: If `filing_quarter` is not in [1, 2, 3, 4] for a `filing_type` of `10-Q`.
         ValueError: If `filing_type` is not one of `10-K` or `10-Q`
@@ -73,9 +73,21 @@ def retrieve_filings(
     """
     # Checks the inputs
     assert isinstance(user_question, str), TypeError(f'User question must be a string. Got {type(user_question)}.')
-    assert isinstance(user_request, str), TypeError(f'User question must be a string. Got {type(user_request)}.')
-    assert isinstance(ticker_symbol, str), TypeError(f'Filing type must be a string. Got {type(ticker_symbol)}.')
     assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
+
+    assert isinstance(company_list, (list, str)), TypeError(
+        f'`company_list` must be of type list or string. Got {(type(company_list))}.'
+    )
+
+    # If `symbol_list` is a string, coerce it to a list of strings
+    company_list = coerce_str_to_list(company_list)
+
+    assert all([isinstance(name, str) for name in company_list]), TypeError(
+        '`company_names_list` must be a list of strings.'
+    )
+
+    # Retrieve the list of ticker symbols
+    symbol_list = retrieve_symbol_list(company_list)
 
     # Retrieve the filing text from SEC Edgar
     try:
@@ -109,42 +121,47 @@ def retrieve_filings(
     else:
         raise ValueError('The filing type must be either "10-K" or "10-Q".')
 
-    # Parse filings
-    filename, report_date = parse_filings(downloader, ticker_symbol, filing_type, filing_quarter, year, delta)
+    response_dict: Dict[str, str] = dict()
 
-    # Load the dataframe from the text file
-    try:
-        df = pandas.read_csv(streamlit.session_state.source_dir + f'{filename}' + '.csv')
-    except FileNotFoundError:
-        logger.error('No scraped data found.')
+    for symbol in symbol_list:
+        # Parse filings
+        filename, report_date = parse_filings(downloader, symbol, filing_type, filing_quarter, year, delta)
 
-    # Convert DataFrame rows into Document objects
-    documents = []
-    for _, row in df.iterrows():
-        document = Document(page_content=row['text'])
-        documents.append(document)
+        # Load the dataframe from the text file
+        try:
+            df = pandas.read_csv(streamlit.session_state.source_dir + f'{filename}' + '.csv')
+        except FileNotFoundError:
+            logger.error('No scraped data found.')
 
-    # Return the QA response
-    response = get_qa_response(user_question, documents)
+        # Convert DataFrame rows into Document objects
+        documents = list()
+        for _, row in df.iterrows():
+            document = Document(page_content=row['text'])
+            documents.append(document)
 
-    # Assert that response is indexable
-    assert isinstance(response, dict), 'QA response is not a dictionary.'
+        # Return the QA response
+        response = get_qa_response(user_question, documents)
 
-    # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
-    assert isinstance(report_date, datetime.datetime), 'The report date is not a of type `datetime.date`.'
-    query_dict = {
-        'filing_type': filing_type,
-        'filing_quarter': filing_quarter,
-        'ticker_symbol': ticker_symbol,
-        'report_date': report_date.date().year,
-    }
+        # Assert that response is indexable
+        assert isinstance(response, dict), 'QA response is not a dictionary.'
 
-    answer = (
-        'Filing type: {filing_type},\nFiling quarter: {filing_quarter},\n'
-        'Ticker symbol: {ticker_symbol},\nYear of filing: {report_date}'.format(**query_dict)
-    )
-    answer += '\n\n' + response['answer']
-    return answer
+        # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
+        assert isinstance(report_date, datetime.datetime), 'The report date is not a of type `datetime.date`.'
+        query_dict = {
+            'filing_type': filing_type,
+            'filing_quarter': filing_quarter,
+            'symbol': symbol,
+            'report_date': report_date.date().year,
+        }
+
+        answer = (
+            'Filing type: {filing_type},\nFiling quarter: {filing_quarter},\n'
+            'Ticker symbol: {symbol},\nYear of filing: {report_date}'.format(**query_dict)
+        )
+        answer += '\n\n' + response['answer']
+        response_dict[symbol] = answer
+
+    return response_dict
 
 
 def parse_filings(

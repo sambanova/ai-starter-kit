@@ -1,3 +1,5 @@
+import datetime
+import json
 from typing import Any, List, Optional, Tuple
 
 import pandas
@@ -5,9 +7,9 @@ import streamlit
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_insights.streamlit.constants import *
-from financial_insights.streamlit.utilities_app import save_historical_price_callback, save_output_callback
-from financial_insights.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import save_historical_price_callback, save_output_callback
+from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
 
 
 def get_stock_data_analysis() -> None:
@@ -22,13 +24,17 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<h3> Info retrieval </h3>', unsafe_allow_html=True)
 
     user_request = streamlit.text_input(
-        'Enter the info that you want to retrieve for given companies.',
+        'Enter the info that you want to retrieve for a given company.',
         key='stock-query',
+        value='What is the research and development spending trend for Meta?',
     )
-    dataframe_name = streamlit.selectbox(
+
+    columns = streamlit.columns(3, vertical_alignment='center')
+    dataframe_name = columns[0].selectbox(
         'Select Data Source:',
         sorted(
             [
+                'None',
                 'info',
                 'history',
                 'history_metadata',
@@ -59,7 +65,23 @@ def get_stock_data_analysis() -> None:
                 'news',
             ],
         ),
+        index=9,
     )
+
+    with open(YFINANCE_COLUMNS_JSON, 'r') as json_file:
+        dataframes_json = json.load(json_file)
+    columns[2].write('Show columns per dataframe')
+    columns[2].json(body=dataframes_json, expanded=False)
+
+    columns[1].markdown(
+        f'<span style="color:rgb{SAMBANOVA_ORANGE}">Show selected columns</span>',
+        unsafe_allow_html=True,
+    )
+    if dataframe_name is not None:
+        dataframe_columns = dataframes_json[dataframe_name]
+        columns[1].json(dataframe_columns, expanded=False)
+    else:
+        columns[1].write(None)
 
     if streamlit.button('Retrieve stock info'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
@@ -79,11 +101,14 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
     user_request = streamlit.text_input(
-        'Enter the quantities that you want to plot for given companies\n'
-        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.'
+        'Enter the quantities that you want to plot for given companies. '
+        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.',
+        value='Meta close value',
     )
-    start_date = streamlit.date_input('Start Date')
-    end_date = streamlit.date_input('End Date')
+    start_date = streamlit.date_input(
+        'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
+    )
+    end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
 
     # Analyze stock data
     if streamlit.button('Analyze Historical Stock Data'):
