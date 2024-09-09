@@ -206,23 +206,27 @@ You can further customize the starter kit based on the use case.
 
 ## Import Data
 
-Different packages are available to extract text from different file documents. They can be broadly categorized as
+Different packages are available to extract text from different file documents. They can be broadly categorized as:
 - OCR-based: [pytesseract](https://pypi.org/project/pytesseract/), [paddleOCR](https://pypi.org/project/paddleocr/), [unstructured](https://unstructured.io/)
 - Non-OCR based: [pymupdf](https://pypi.org/project/PyMuPDF/), [pypdf](https://pypi.org/project/pypdf/), [unstructured](https://unstructured.io/)
 Most of these packages have easy [integrations](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf) with the Langchain library.
 
 You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md).
 
-This enterprise knowledge retriever kit uses either PyMuPDF or a custom implementation of unstructured loader that is able to load files from the following extensions: `[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]`.
+This enterprise knowledge retriever kit uses either PyMuPDF or a custom implementation of the unstructured loader. This can be configured in the [config.yaml](./config.yaml) file:
 
+* If `pdf_only_mode` is set to True, then PyMuPDF is used as the data loader. Please note that in this case, only PDF documents are supported.
 
-* You can modify the loading method in the following location:
-```
-   file: src/document_retrieval
-   function: parse_doc
-```
+* If `pdf_only_mode` is set to False, then the unstructured loader is used, which works well with all file types. Please note that in this case, you need to install the following system dependencies if they are not already available on your system, for example, using `brew install` for Mac. Depending on what document types you're parsing, you may not need all of these:
 
-* You can also modify several parameters in the loading strategies changing the config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) se more [here](../utils/parsing/README.md)
+    * `libmagic-dev` (filetype detection)
+    * `poppler-utils` (images and PDFs)
+    * `tesseract-ocr` (images and PDFs)
+    * `qpdf` (PDFs)
+    * `libreoffice` (MS Office docs)
+    * `pandoc` (EPUBs)
+
+*You can also modify several parameters in the loading strategies by changing the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) file, see more [here](../utils/parsing/README.md)*.
 
 ## Split Data
 
