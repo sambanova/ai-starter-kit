@@ -70,6 +70,11 @@ print(response)
 
 ## Using SambaNova APIs with Langchain
 
+Install `langchain-openai`:
+```shell  
+pip install -U langchain-openai
+```
+
 Here's an example of using SambaNova's APIs with the Langchain library:
 
 ```python
@@ -85,7 +90,8 @@ llm = ChatOpenAI(
     model="llama3-70b",
 )
 
-llm('What is the capital of France?')
+response = llm.invoke('What is the capital of France?')
+print(response.content)
 ```
 
 This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance with SambaNova's APIs, specifying the API key, base URL, streaming option, and model. You can then use the `llm` object to generate completions by passing in prompts.
