@@ -213,7 +213,8 @@ Most of these packages have easy [integrations](https://python.langchain.com/doc
 
 You can find examples of the usage of these loaders in the [Data extraction starter kit](../data_extraction/README.md).
 
-This enterprise knowledge retriever kit includes a custom implementation of unstructured loader that isd able to load files from the following extensions: `[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]`
+This enterprise knowledge retriever kit uses either PyMuPDF or a custom implementation of unstructured loader that is able to load files from the following extensions: `[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]`.
+
 
 * You can modify the loading method in the following location:
 ```
