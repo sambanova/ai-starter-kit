@@ -254,10 +254,14 @@ class SambaNovaLLM:
         for i in range(MAX_RETRIES):
             try:
                 invoked_tools = chain_function_calling.invoke({'tools': self.tools_schemas, 'user_query': query})
+                assert invoked_tools is not None, f'Expected a tool to call.'
                 assert len(invoked_tools) == 1, f'Expected one tool, got {len(invoked_tools)}.'
                 break
             except:
                 continue
+
+        assert invoked_tools is not None, f'Expected a tool to call. Got None.'
+        assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
 
         invoked_tool = invoked_tools[0]
 
