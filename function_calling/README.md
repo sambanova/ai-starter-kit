@@ -51,27 +51,15 @@ The next step is to set up your environment variables to use one of the models a
 
 ### Set up the embedding model
 
-You have these options to specify the embedding API info:
+You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
-
-* **Option 2: Set a SambaStudio embedding model**
-
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your sambastudio endpoint
 
 ## Install dependencies
 
-We recommend that you run the starter kit in a virtual environment.
-
-NOTE: python 3.10 or higher is required to use this kit.
+We recommend that you run the starter kit in a virtual environment. We also recommend using Python >= 3.10 and < 3.12.
 
 1. Install the python dependencies in your project environment.
 
