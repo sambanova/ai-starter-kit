@@ -69,6 +69,7 @@ The next step is to set up your environment variables to use one of the inferenc
 You have the following options to set up your embedding model:
 
 * **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
+This will make use of `langchain_community.embeddings.sentence_transformer.SentenceTransformerEmbeddings`.
 
 * **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
 
@@ -80,52 +81,24 @@ You have the following options to set up your embedding model:
 
 We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
-## Option 1: Use a virtual environment
+## Use a virtual environment
 
 If you want to use virtualenv or conda environment:
 
 1. Install and update pip.
 
     ```bash
-    cd ai_starter_kit/enterprise_knowledge_retriever
-    python3 -m venv enterprise_knowledge_env
-    source enterprise_knowledge_env/bin/activate
+    cd ai_starter_kit/financial_assistant
+    python3 -m venv financial_assistant
+    source financial_assistant/bin/activate
     pip  install  -r  requirements.txt
     ```
 
 2. Run the following command:
 
-    > This kit can be deployed using either a simple LCECL implementation or a LangGraph implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
-
-    - LCEL version
-
-        ```bash
-            streamlit run streamlit/app.py --browser.gatherUsageStats false 
-        ```
-
-    - LangGraph version
-
-        ```bash
-            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
-        ```
-
-After deploying the starter kit you see the following user interface:
-
-![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
-
-## Option 2: Deploy the starter kit in a Docker container 
-
-NOTE: If you are deploying the docker container in Windows be sure to open the docker desktop application. 
-
-To run the starter kit  with docker, run the following command:
-
-    docker-compose up --build
-
-You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
-
-Here's a short video demonstrating docker deployment:
-
-https://github.com/sambanova/ai-starter-kit/assets/150964187/4f82e4aa-c9a9-45b4-961d-a4b369be5ec4
+    ```bash
+        streamlit run streamlit/app.py --browser.gatherUsageStats false 
+    ```
 
 ## Further settings
 
