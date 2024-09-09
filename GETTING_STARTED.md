@@ -23,8 +23,10 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 | Model | Context Length | Output Length | Dtype / Precision |
 |-------|----------------|---------------|-------|
-| Meta-Llama-3.1-8B-Instruct | 8192 | 1000 | BF16 |  
-| Meta-Llama-3.1-70B-Instruct | 8192 | 1000 | BF16 |
+| Meta-Llama-3.1-8B-Instruct | 4096 | 1000 | BF16 |  
+| Meta-Llama-3.1-8B-Instruct-8k | 8192 | 1000 | BF16 |  
+| Meta-Llama-3.1-70B-Instruct | 4096 | 1000 | BF16 |
+| Meta-Llama-3.1-70B-Instruct-8k | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
 
 ## Query the API
@@ -47,7 +49,7 @@ client = OpenAI(
     api_key=api_key,  
 )
 
-model = "llama3-405b"
+model = "Meta-Llama-3.1-405B-Instruct"
 prompt = "Tell me a joke about artificial intelligence."
 
 completion = client.chat.completions.create(
@@ -87,7 +89,7 @@ llm = ChatOpenAI(
     base_url="https://fast-api.snova.ai/v1/",  
     api_key=api_key,
     streaming=True,
-    model="llama3-70b",
+    model="Meta-Llama-3.1-70B-Instruct",
 )
 
 response = llm.invoke('What is the capital of France?')
