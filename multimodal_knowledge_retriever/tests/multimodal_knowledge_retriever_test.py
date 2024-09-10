@@ -70,9 +70,9 @@ class MKRTestCase(unittest.TestCase):
 
     # Add assertions
     def test_document_parsing(self):
-        self.assertTrue(len(self.text_docs) > 0, f"Parsed {len(self.text_docs)} chunks of text")
-        self.assertTrue(len(self.table_docs) > 0, f"Parsed {len(self.table_docs)} chunks of table text")
-        self.assertTrue(len(self.image_paths) > 0, f"Parsed {len(self.image_paths)} images")
+        self.assertTrue(len(self.text_docs) > 0, "There should be at least one parsed chunk of text")
+        self.assertTrue(len(self.table_docs) > 0, "There should be at least one parsed chunk of table text")
+        self.assertTrue(len(self.image_paths) > 0, "There should be at least one image")
 
     def test_vector_store_creation(self):
         self.assertIsNotNone(self.vectorstore, "Vector store could not be created")

@@ -16,15 +16,17 @@ This guide walks through setting up an API key, performing a few sample queries 
 2. Once logged in, navigate to the API section and generate a new key. 
 3. Set your API key as an environment variable:
    ```shell
-   export SAMBANOVA_API_KEY=<your-api-key-here>
+   export SAMBANOVA_API_KEY="your-api-key-here"
    ```
 
 ## Supported Models
 
 | Model | Context Length | Output Length | Dtype / Precision |
 |-------|----------------|---------------|-------|
-| Meta-Llama-3.1-8B-Instruct | 8192 | 1000 | BF16 |  
-| Meta-Llama-3.1-70B-Instruct | 8192 | 1000 | BF16 |
+| Meta-Llama-3.1-8B-Instruct | 4096 | 1000 | BF16 |  
+| Meta-Llama-3.1-8B-Instruct-8k | 8192 | 1000 | BF16 |  
+| Meta-Llama-3.1-70B-Instruct | 4096 | 1000 | BF16 |
+| Meta-Llama-3.1-70B-Instruct-8k | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
 
 ## Query the API
@@ -38,6 +40,8 @@ Perform a chat completion:
 
 ```python
 from openai import OpenAI
+import os
+
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 client = OpenAI(
@@ -45,7 +49,7 @@ client = OpenAI(
     api_key=api_key,  
 )
 
-model = "llama3-405b"
+model = "Meta-Llama-3.1-405B-Instruct"
 prompt = "Tell me a joke about artificial intelligence."
 
 completion = client.chat.completions.create(
@@ -68,6 +72,11 @@ print(response)
 
 ## Using SambaNova APIs with Langchain
 
+Install `langchain-openai`:
+```shell  
+pip install -U langchain-openai
+```
+
 Here's an example of using SambaNova's APIs with the Langchain library:
 
 ```python
@@ -80,10 +89,11 @@ llm = ChatOpenAI(
     base_url="https://fast-api.snova.ai/v1/",  
     api_key=api_key,
     streaming=True,
-    model="llama3-70b",
+    model="Meta-Llama-3.1-70B-Instruct",
 )
 
-llm('What is the capital of France?')
+response = llm.invoke('What is the capital of France?')
+print(response.content)
 ```
 
 This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance with SambaNova's APIs, specifying the API key, base URL, streaming option, and model. You can then use the `llm` object to generate completions by passing in prompts.
@@ -95,16 +105,15 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 | Application | Description | Demo | Source Code |
 |-------------|-------------|------|-------------|
 | Enterprise Knowledge Retrieval Chatbot | Build a retrieval-augmented generation (RAG) chatbot using your enterprise documents | [Live Demo](https://sambanova-ai-starter-kits-ekr.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/enterprise_knowledge_retriever/README.md) |
-| Conversational Search Assistant | Semantic search using search engine snippets | [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/search_assistant/README.md) |
+| Search Assistant | Semantic search using search engine snippets | [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/search_assistant/README.md) |
 | Financial Assistant | Agentic finance assistant built on our API | - | [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/financial_insights) |
-| Function Calling | Tools calling implementation and generic function calling module | - | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md) |
+| Function Calling | Tools calling implementation and generic function calling module | [Live Demo](https://sambanova-ai-starter-kits-function-calling.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md) |
 | Benchmarking Kit | Evaluates performance of multiple LLM models in SambaStudio | [Live Demo](https://sambanova-ai-starter-kits-benchmarking.replit.app/)  | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md) |
 
 ## Get Help
 
 - Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) for additional help
 - Find answers and post questions in the [SambaNova Community](https://community.sambanova.ai/latest)
-- Join our [SambaNova Discord](https://discord.gg/54bNAqRw) for discussions and support  
 - Let us know your most wanted features and challenges via the channels above
 - More inference models, longer context lengths, and embeddings models are coming soon!
 

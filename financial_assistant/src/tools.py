@@ -13,8 +13,8 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from financial_insights.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
-from financial_insights.streamlit.constants import *
+from financial_assistant.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
+from financial_assistant.streamlit.constants import *
 
 # Generic function type
 F = TypeVar('F', bound=Callable[..., Any])
@@ -94,11 +94,11 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     )
 
     # The chain
-    if '405b' in streamlit.session_state.fc.llm.model.lower():
-        conversational_chain = conversational_prompt | streamlit.session_state.fc.llm
+    if '405b' in streamlit.session_state.llm.llm.model.lower():
+        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm
         response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
     else:
-        conversational_chain = conversational_prompt | streamlit.session_state.fc.llm | conversational_parser
+        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm | conversational_parser
         # Get response from the LLM
         response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
 

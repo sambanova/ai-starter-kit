@@ -1,0 +1,20 @@
+prod_mode: False
+
+llm: 
+    "api": "sncloud" #  Set either `sambastudio` or `sncloud`
+    "temperature": 0.0
+    "do_sample": False
+    "max_tokens_to_generate": 1024
+    "coe": True # Set as true if using a CoE endpoint
+    "select_expert": "llama3-70b"
+
+
+rag:
+  embedding_model: 
+    "type": "cpu" # Either "sambastudio" or "cpu"
+    "batch_size": 1
+    "coe": True
+    "select_expert": "e5-mistral-7b-instruct" # Set if using "sambastudio" CoE embedding expert
+  retrieval:
+    "k_retrieved_documents": 5
+
