@@ -45,7 +45,7 @@ import os
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 client = OpenAI(
-    base_url="https://fast-api.snova.ai/v1/",
+    base_url="https://api.sambanova.ai/v1/",
     api_key=api_key,  
 )
 
@@ -86,7 +86,7 @@ from langchain_openai import ChatOpenAI
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 llm = ChatOpenAI(
-    base_url="https://fast-api.snova.ai/v1/",  
+    base_url="https://api.sambanova.ai/v1/",  
     api_key=api_key,
     streaming=True,
     model="Meta-Llama-3.1-70B-Instruct",
