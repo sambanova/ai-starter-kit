@@ -142,7 +142,7 @@ def include_pdf_report() -> None:
             streamlit.download_button(
                 label='Download Report',
                 data=pdf_handler,
-                file_name=streamlit.session_state.pdf_generation_directory + report_name,
+                file_name=report_name,
                 mime='application/pdf',
             )
         streamlit.write('PDF report generated successfully.')
