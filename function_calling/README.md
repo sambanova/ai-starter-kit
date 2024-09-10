@@ -15,8 +15,9 @@ This function calling kit is an example of tools calling implementation and a ge
 - [Function Calling kit](#function-calling-kit)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-        - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-        - [Update the Embedding API information](#update-the-embedding-api-information)
+    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
+        - [Set up the generative model](#set-up-the-generative-model)
+        - [Set up the embedding model](#set-up-the-embedding-model)
     - [Install dependencies](#install-dependencies)
 - [Use the Function Calling kit](#use-the-function-calling-kit)
     - [Quick start](#quick-start)
@@ -28,7 +29,7 @@ This function calling kit is an example of tools calling implementation and a ge
 
 # Before you begin
 
-To use this in your application you need an instruction model, we recommend to use the Meta Llama3 70B or Llama3 8B, from SambaStudio CoE.
+To use this in your application you need an instruction model, we recommend to use the Meta Llama3 70B or Llama3 8B. 
 
 ## Clone this repository
 
@@ -36,49 +37,38 @@ Clone the starter kit repo.
 ```
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
+## Set up the models, environment variables and config file
 
-### Set up the inference endpoint, configs and environment variables
+### Set up the generative model
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
 
-### Update the Embedding API information
+### Set up the embedding model
 
-You have these options to specify the embedding API info:
+You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
-
-* **Option 2: Set a SambaStudio embedding model**
-
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `coe` and `select_expert` according your sambastudio endpoint
-
-    > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your sambastudio endpoint
 
 ## Install dependencies
 
-We recommend that you run the starter kit in a virtual environment.
+We recommend that you run the starter kit in a virtual environment. We also recommend using Python >= 3.10 and < 3.12.
 
-NOTE: python 3.10 or higher is required to use this kit.
+Install the python dependencies in your project environment:
 
-1. Install the python dependencies in your project environment.
-
-    ```bash
-    cd ai_starter_kit/function_calling
-    python3 -m venv function_calling_env
-    source function_calling_env/bin/activate
-    pip  install  -r  requirements.txt
-    ```
+```bash
+cd ai_starter_kit/function_calling
+python3 -m venv function_calling_env
+source function_calling_env/bin/activate
+pip install -r requirements.txt
+```
 
 # Use the Function Calling kit 
 
@@ -131,14 +121,8 @@ On that page you will be able to select your function calling tools and the max 
 
 The example module can be further customized based on the use case.
 
-The complete tools generation, methods, prompting and parsing for implementing function calling, can be found and further customized for your specific use case following the [Guide notebook](function_calling_guide.ipynb)  
+The complete tools generation, methods, prompting and parsing for implementing function calling, can be found and further customized for your specific use case following the [Guide notebook](./notebooks/function_calling_guide.ipynb)  
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
-
-* python-dotenv (version 1.0.1)
-* langchain (version 0.2.11)
-* langchain-community (version 0.2.10)
-* langchain-experimental (version 0.0.6)
-* sseclient-py (version 1.8.0)
+All the packages/tools are listed in the `requirements.txt` file in the project directory. 
