@@ -113,7 +113,7 @@ def main():
         "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token."
     )
     st.markdown(
-        "**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated)"
+        "**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated - 1)"
     )
     st.markdown(
         "**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"
