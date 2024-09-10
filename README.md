@@ -11,7 +11,7 @@
 
 SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, you can obtain a free API key using [SambaNova FastAPI](https://sambanova.ai/fast-api). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
+To run these examples, you can obtain a free API key using [SambaNova Cloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Community" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -19,7 +19,7 @@ Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">
 
 The table belows lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities. 
 
-**Note**: For each kit, we specify whether it is compatible with SambaNova FastAPI, SambaStudio, or both.
+**Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
 
 <table style="width: 100%;">
 <thead>
@@ -37,7 +37,7 @@ The table belows lists the available kits, which are grouped into four categorie
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="40%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Data Ingestion & Preparation </td>  
 </tr>
 
@@ -66,21 +66,21 @@ The table belows lists the available kits, which are grouped into four categorie
 <td width="20%"><a href="prompt_engineering/README.md">Prompt Engineering</a></td>
 </td>
 <td width="40%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Model Development & Optimization </td> 
 </tr>
 
 <tr>
 <td width="20%"><a href="edgar_qna/README.md">EDGAR Q&A</a></td>
 <td width="40%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
 </tr>
 
@@ -94,14 +94,14 @@ The table belows lists the available kits, which are grouped into four categorie
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="40%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
 <td width="40%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
-<td width="20%">SambaNova FastAPI, SambaStudio</td>
+<td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
@@ -115,28 +115,28 @@ The table belows lists the available kits, which are grouped into four categorie
 <tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="40%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova FastAPI, SambaStudio</td>
+<td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a></td>
 <td width="40%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova FastAPI, SambaStudio</td>
+<td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
 <td width="40%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. </td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>    
 </tr>
 
@@ -149,7 +149,7 @@ The table belows lists the available kits, which are grouped into four categorie
 
 <tr>
 <td width="20%"><a href="CoE_jump_start/README.md">CoE jump start</a></td>
-<td width="40%">This kit demonstrates how to call <a href=https://coe-1.FastAPI.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using SambaStudio with a named expert, and using SambaStudio with routing.</td>
+<td width="40%">This kit demonstrates how to call <a href=https://coe-1.Cloud.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using SambaStudio with a named expert, and using SambaStudio with routing.</td>
 <td width="20%">SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>  
 </tr>
@@ -157,14 +157,14 @@ The table belows lists the available kits, which are grouped into four categorie
 <tr>
 <td width="20%"><a href="financial_assistant/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="40%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
-<td width="20%"> SambaNova FastAPI, SambaStudio</td>
+<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
@@ -175,16 +175,16 @@ The table belows lists the available kits, which are grouped into four categorie
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaNova FastAPI. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
 
-### Use SambaNova FastAPI (Option 1)
+### Use SambaNova Cloud (Option 1)
 
-For more information and to obtain your API key, visit the [SambaNova FastAPI webpage](https://sambanova.ai/fast-api).
+For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
 
-To integrate SambaNova FastAPI LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaNova FastAPI API key in the `.env` file, for example:
+- Enter the SambaNova Cloud API key in the `.env` file, for example:
   
 ```bash
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
@@ -211,7 +211,7 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 ## Setting your embedding models
 
-Currently, you can set your embedding models on CPU or SambaStudio. Note that embedding models are not available yet through SambaNova FastAPI, but they will be in future releases.
+Currently, you can set your embedding models on CPU or SambaStudio. Note that embedding models are not available yet through SambaNova Cloud, but they will be in future releases.
 
 ### Use CPU embedding (Option 1)
 
@@ -296,17 +296,17 @@ llm.invoke("your prompt")
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
-### Using SambaNova FastAPI LLMs
+### Using SambaNova Cloud LLMs
 
-1. Import our **SambaNovaFastAPI** langchain internal wrapper in your project and define your **SambaNovaFastAPI** LLM:
+1. Import our **SambaNovaCloud** langchain internal wrapper in your project and define your **SambaNovaCloud** LLM:
 
 
 ```python
-from util..model_wrappers.llms.langchain_llms import FastAPI
+from util..model_wrappers.llms.langchain_llms import SambaNovaCloud
 
 load_dotenv('.env')
 
-llm = FastAPI(model='llama3-70b')
+llm = SambaNovaCloud(model='llama3-70b')
 ```
 
 2. Use the model
