@@ -12,7 +12,7 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 ## Setting up SambaNova API Key
 
-1. Create an account on the [SambaNova Developer Portal](https://sambanova.ai/fast-api) to get an API key.
+1. Create an account on the [SambaNova Developer Portal](https://cloud.sambanova.ai/) to get an API key.
 2. Once logged in, navigate to the API section and generate a new key. 
 3. Set your API key as an environment variable:
    ```shell
