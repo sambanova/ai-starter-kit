@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+import time
 
 import weave
 import yaml
@@ -85,14 +86,14 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
+                    streamlit.success(r':orange[You have been logged out.]')
+                    time.sleep(2)
                     streamlit.rerun()
-        if prod_mode:
-            if (
-                not streamlit.session_state.cache_created
-                and not os.path.exists(streamlit.session_state.cache_dir)
-                and are_credentials_set()
-            ):
-                streamlit.session_state.cache_created = True
+
+        # Create the cache and its main subdirectories
+        if are_credentials_set() and not os.path.exists(streamlit.session_state.cache_dir):
+            if prod_mode:
+                # In production mode
                 subdirectories = [
                     streamlit.session_state.source_dir,
                     streamlit.session_state.pdf_sources_directory,
@@ -106,30 +107,40 @@ def main() -> None:
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
-        else:
-            # In dev mode
-            streamlit.session_state.cache_created = True
-            subdirectories = [
-                streamlit.session_state.source_dir,
-                streamlit.session_state.pdf_sources_directory,
-                streamlit.session_state.pdf_generation_directory,
-            ]
-            create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+            else:
+                # In development mode
+                subdirectories = [
+                    streamlit.session_state.source_dir,
+                    streamlit.session_state.pdf_sources_directory,
+                    streamlit.session_state.pdf_generation_directory,
+                ]
+                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
-        # Custom button to clear chat history
-        with stylable_container(
-            key='blue-button',
-            css_styles=get_blue_button_style(),
-        ):
-            time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
-            if (
-                streamlit.button('Exit App', help='This will delete the cache!')
-                or time_delta.seconds / 30 > EXIT_TIME_DELTA
+        # Custom button to exit the app in prod mode
+        # This will clear the chat history, delete the cache and clear the SambaNova credentials
+        if prod_mode:
+            with stylable_container(
+                key='blue-button',
+                css_styles=get_blue_button_style(),
             ):
-                if prod_mode:
+                time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
+                if (
+                    streamlit.button('Exit App', help='This will delete the cache!')
+                    or time_delta.seconds / 30 > EXIT_TIME_DELTA
+                ):
+                    # Crear the chat history
+                    streamlit.session_state.chat_history = list()
+                    # Delete the cache
                     clear_cache(delete=True)
-                    streamlit.write(r':red[You have been logged out.]')
-                return
+                    # Clear the SambaNova credentials
+                    save_credentials('', '', prod_mode)
+
+                    streamlit.success(r':green[The chat history has been cleared.]')
+                    streamlit.success(r':green[The cache has been deleted.]')
+                    streamlit.success(r':orange[You have been logged out.]')
+                    time.sleep(2)
+                    streamlit.rerun()
+                    return
 
         if are_credentials_set():
             # Navigation menu
@@ -167,20 +178,24 @@ def main() -> None:
                         pass
 
             # Set the default path
-            default_path = streamlit.session_state.cache_dir
+            cache_dir = streamlit.session_state.cache_dir
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
-                streamlit.session_state.current_path = default_path
+                streamlit.session_state.current_path = cache_dir
 
-            # Input to allow user to go back to a parent directory, up to the cache, but not beyond the cache
-            if streamlit.sidebar.button('⬅️ Back', key=f'back') and default_path in streamlit.session_state.current_path:
-                streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
+            if os.path.exists(cache_dir):
+                # Input to allow user to go back to a parent directory, up to the cache, but not beyond the cache
+                if (
+                    streamlit.sidebar.button('⬅️ Back', key=f'back')
+                    and cache_dir in streamlit.session_state.current_path
+                ):
+                    streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
 
-                # Display the current directory contents
-                display_directory_contents(streamlit.session_state.current_path, default_path)
-            else:
-                # Display the current directory contents
-                display_directory_contents(streamlit.session_state.current_path, default_path)
+                    # Display the current directory contents
+                    display_directory_contents(streamlit.session_state.current_path, cache_dir)
+                else:
+                    # Display the current directory contents
+                    display_directory_contents(streamlit.session_state.current_path, cache_dir)
 
     # Title of the main page
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
@@ -247,12 +262,12 @@ def main() -> None:
                 if streamlit.button('Clear Chat History'):
                     streamlit.session_state.chat_history = list()
                     # Log message
-                    streamlit.write(f'Cleared chat history.')
+                    streamlit.success(f'Cleared chat history.')
 
             # Add button to stream chat history
             if streamlit.button('Print Chat History'):
                 if len(streamlit.session_state.chat_history) == 0:
-                    streamlit.write('No chat history to show.')
+                    streamlit.warning('No chat history to show.')
                 else:
                     stream_chat_history()
 

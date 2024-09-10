@@ -272,7 +272,7 @@ def clear_directory(directory: str, delete_subdirectories: bool = False) -> None
 
     try:
         if not os.path.exists(directory):
-            streamlit.error(f'Directory does not exist: {directory}')
+            logger.warning(f'Directory does not exist: {directory}')
             return
 
         for item in os.listdir(directory):
@@ -284,9 +284,9 @@ def clear_directory(directory: str, delete_subdirectories: bool = False) -> None
                     if delete_subdirectories:
                         shutil.rmtree(item_path)
             except Exception as e:
-                streamlit.error(f'Error deleting {item_path}: {e}')
+                logger.warning(f'Error deleting {item_path}: {e}')
     except Exception as e:
-        streamlit.error(f'Error processing directory {directory}: {e}')
+        logger.warning(f'Error processing directory {directory}: {e}')
 
 
 def clear_cache(delete: bool = False) -> None:
@@ -295,7 +295,7 @@ def clear_cache(delete: bool = False) -> None:
     cache_dir = streamlit.session_state.cache_dir
 
     if not os.path.exists(cache_dir):
-        streamlit.error(f'Cache directory does not exist: {cache_dir}')
+        logger.warning(f'Cache directory does not exist: {Path(cache_dir).name}')
         return
 
     # Clear the cache directory
@@ -304,9 +304,9 @@ def clear_cache(delete: bool = False) -> None:
     if delete:
         try:
             shutil.rmtree(cache_dir)
-            streamlit.success(f'Successfully deleted cache directory: {Path(cache_dir).name}')
+            logger.info(f'Successfully deleted cache directory: {Path(cache_dir).name}')
         except Exception as e:
-            streamlit.error(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
+            logger.warning(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
 
         for root, dirs, _ in os.walk(cache_dir, topdown=False):
             for dir in dirs:
@@ -315,7 +315,7 @@ def clear_cache(delete: bool = False) -> None:
                 try:
                     os.rmdir(path)
                 except Exception as e:
-                    streamlit.error(f'Error deleting directory {path}: {e}')
+                    logger.warning(f'Error deleting directory {path}: {e}')
 
 
 def download_file(filename: str) -> None:
@@ -339,9 +339,9 @@ def download_file(filename: str) -> None:
         with open(filename, 'rb') as f:
             data = f.read()
         streamlit.sidebar.download_button(
-            label=f'{Path(filename).name}',
+            label=Path(filename).name,
             data=data,
-            file_name=filename,
+            file_name=Path(filename).name,
             mime=file_mime,
         )
     except Exception as e:
@@ -437,10 +437,6 @@ def initialize_session(
     # Launch time
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
-
-    # Cache creation
-    if 'cache_created' not in streamlit.session_state:
-        streamlit.session_state.cache_created = False
 
 
 def submit_sec_edgar_details() -> None:
