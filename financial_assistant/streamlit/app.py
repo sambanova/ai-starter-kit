@@ -86,7 +86,7 @@ def main() -> None:
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
                     save_credentials('', '', prod_mode)
-                    streamlit.write(r':red[You have been logged out.]')
+                    streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
                     streamlit.rerun()
 
@@ -135,9 +135,9 @@ def main() -> None:
                     # Clear the SambaNova credentials
                     save_credentials('', '', prod_mode)
 
-                    streamlit.write(r':green[The chat history has been cleared.]')
-                    streamlit.write(r':green[The cache has been deleted.]')
-                    streamlit.write(r':red[You have been logged out.]')
+                    streamlit.success(r':green[The chat history has been cleared.]')
+                    streamlit.success(r':green[The cache has been deleted.]')
+                    streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
                     streamlit.rerun()
                     return
@@ -262,12 +262,12 @@ def main() -> None:
                 if streamlit.button('Clear Chat History'):
                     streamlit.session_state.chat_history = list()
                     # Log message
-                    streamlit.write(f'Cleared chat history.')
+                    streamlit.success(f'Cleared chat history.')
 
             # Add button to stream chat history
             if streamlit.button('Print Chat History'):
                 if len(streamlit.session_state.chat_history) == 0:
-                    streamlit.write('No chat history to show.')
+                    streamlit.warning('No chat history to show.')
                 else:
                     stream_chat_history()
 
