@@ -103,7 +103,8 @@ If you want to use virtualenv or conda environment:
 ## Further settings
 
 For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
-USER_AGENT: ```<Company Name> <Email Address>```
+USER_AGENT: ```<Company Name> <Email Address>```.
+
 ```
 # Your organization
 SEC_API_ORGANIZATION="<your organization>"
