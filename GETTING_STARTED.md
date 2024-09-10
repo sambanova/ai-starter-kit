@@ -106,7 +106,7 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 |-------------|-------------|------|-------------|
 | Enterprise Knowledge Retrieval Chatbot | Build a retrieval-augmented generation (RAG) chatbot using your enterprise documents | [Live Demo](https://sambanova-ai-starter-kits-ekr.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/enterprise_knowledge_retriever/README.md) |
 | Search Assistant | Semantic search using search engine snippets | [Live Demo](https://sambanova-ai-starter-kits-search-assistant.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/search_assistant/README.md) |
-| Financial Assistant | Agentic finance assistant built on our API | - | [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/financial_insights) |
+| Financial Assistant | Agentic finance assistant built on our API | [Live Demo](https://sambanova-ai-starter-kits-financial-assistant.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/tree/main/financial_insights) |
 | Function Calling | Tools calling implementation and generic function calling module | [Live Demo](https://sambanova-ai-starter-kits-function-calling.replit.app/) | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/function_calling/README.md) |
 | Benchmarking Kit | Evaluates performance of multiple LLM models in SambaStudio | [Live Demo](https://sambanova-ai-starter-kits-benchmarking.replit.app/)  | [Source Code](https://github.com/sambanova/ai-starter-kit/blob/main/benchmarking/README.md) |
 
