@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 from langchain_core.callbacks import (
     CallbackManagerForLLMRun,
 )
-from langchain_core.language_models import BaseChatModel, generate_from_stream
+from langchain_core.language_models.chat_models import BaseChatModel, generate_from_stream
 from langchain_core.messages import (
     AIMessageChunk, BaseMessage, AIMessage, ChatMessage,
     HumanMessage, ToolMessage, SystemMessage
@@ -132,8 +132,62 @@ class SambaNovaCloud(BaseChatModel):
         return response_dict
 
 
-    def _handle_streaming_request(self):
-        pass
+    def _handle_streaming_request(self, messages_dicts: List[Dict], stop: Optional[List[str]] = None):
+        try:
+            import sseclient
+        except ImportError:
+            raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
+        data = {
+            'messages': messages_dicts,
+            'max_tokens': self.max_tokens,
+            'stop': stop,
+            'model': self.model,
+            'temperature': self.temperature,
+            'top_p': self.top_p,
+            'top_k': self.top_k,
+            "stream": True,
+            "stream_options": self.stream_options
+        }
+        http_session = requests.Session()
+        response = http_session.post(
+            self.base_url,
+            headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'},
+            json=data,
+            stream=True
+        )
+
+        client = sseclient.SSEClient(response)
+        close_conn = False
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f'Sambanova /complete call failed with status code ' f'{response.status_code}.' f'{response.text}.'
+            )
+
+        for event in client.events():
+            chunk = {
+                'event': event.event,
+                'data': event.data,
+                'status_code': response.status_code,
+            }
+
+            if chunk["event"] == "error_event" or chunk["status_code"] != 200:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                )
+
+            try:
+                # check if the response is a final event in that case event data response is '[DONE]'
+                if chunk['data'] != '[DONE]':
+                    data = json.loads(chunk['data'])
+                    if data.get('error'):
+                        raise RuntimeError(
+                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                        ) 
+                    yield data
+            except Exception as e:
+                raise Exception(f'Error getting content chunk raw streamed response: {chunk}')
+
 
     def _convert_message_to_dict(self, message: BaseMessage) -> Dict[str, Any]:
         if isinstance(message, ChatMessage):
@@ -222,26 +276,30 @@ class SambaNovaCloud(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
-        last_message = messages[-1]
-        tokens = last_message.content[: self.n]
-
-        for token in tokens:
-            chunk = ChatGenerationChunk(message=AIMessageChunk(content=token))
+        messages_dicts = self._create_message_dicts(messages)
+        finish_reason = None
+        count=0
+        for partial_response in self._handle_streaming_request(messages_dicts, stop):
+            count+=1
+            if len(partial_response["choices"])>0:
+                finish_reason = partial_response["choices"][0].get("finish_reason")
+                content = partial_response["choices"][0]["delta"]["content"]
+                id = partial_response["id"]
+                chunk = ChatGenerationChunk(message=AIMessageChunk(content=content, id=id,  additional_kwargs={}))
+            else:
+                content = ""
+                id = partial_response["id"]
+                metadata = {
+                    "finish_reason": finish_reason,
+                    "usage": partial_response.get("usage"),
+                    "model_name": partial_response["model"],
+                    "system_fingerprint": partial_response["system_fingerprint"],
+                    "created": partial_response["created"]
+                }
+                chunk = ChatGenerationChunk(message=AIMessageChunk(content=content, id=id, response_metadata=metadata,
+                                                                    additional_kwargs={}))
+            
 
             if run_manager:
-                # This is optional in newer versions of LangChain
-                # The on_llm_new_token will be called automatically
-                run_manager.on_llm_new_token(token, chunk=chunk)
-
+                run_manager.on_llm_new_token(chunk.text, chunk=chunk)
             yield chunk
-
-        # Let's add some other information (e.g., response metadata)
-        chunk = ChatGenerationChunk(
-            message=AIMessageChunk(content="", response_metadata={"time_in_sec": 3})
-        )
-        if run_manager:
-            # This is optional in newer versions of LangChain
-            # The on_llm_new_token will be called automatically
-            run_manager.on_llm_new_token(token, chunk=chunk)
-        yield chunk
-
