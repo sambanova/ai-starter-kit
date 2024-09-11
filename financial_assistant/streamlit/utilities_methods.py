@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.src.tools import get_conversational_response
+from financial_assistant.src.tools import get_conversational_response, get_logger
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
@@ -23,7 +23,6 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.streamlit.constants import *
-from financial_assistant.src.tools import get_logger
 
 logger = get_logger()
 
@@ -173,13 +172,17 @@ def stream_single_response(response: Any) -> None:
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             if isinstance(response, str):
-                # Remove any newline characters from the response
-                response = response.replace('\n', '')
+                # If images are not present in the response, treat it as text
                 if not response.endswith('.png'):
                     # Clean and write the response
                     markdown_response = escape_markdown(response)
                     streamlit.write(markdown_response)
+
+                # If images are present in the response, treat it as an image
                 else:
+                    # Remove any newline characters from the response
+                    response = response.replace('\n', '')
+
                     # Load the image after extracting the last path of the png file
                     image_path = response.split(' ')[-1].strip()
                     try:
@@ -187,9 +190,9 @@ def stream_single_response(response: Any) -> None:
                         # Display the image
                         streamlit.image(image, use_column_width=True)
                     except FileNotFoundError:
-                        logger.error(f"Image file not found: {image_path}")
+                        logger.error(f'Image file not found: {image_path}.')
                     except Exception as e:
-                        logger.error(f"Error displaying image: {image_path}. Error: {str(e)}")
+                        logger.error(f'Error displaying image: {image_path}. Error: {str(e)}.')
 
                 png_paths = extract_png_paths(response)
                 for path in png_paths:
@@ -203,9 +206,9 @@ def stream_single_response(response: Any) -> None:
                                 # Display the image
                                 streamlit.image(image, use_column_width=True)
                             except FileNotFoundError:
-                                logger.error(f"Image file not found: {relative_path}")
+                                logger.error(f'Image file not found: {relative_path}.')
                             except Exception as e:
-                                logger.error(f"Error displaying image: {relative_path}. Error: {str(e)}")
+                                logger.error(f'Error displaying image: {relative_path}. Error: {str(e)}.')
 
     # If response is a figure
     elif isinstance(response, Figure):
@@ -216,17 +219,26 @@ def stream_single_response(response: Any) -> None:
     elif isinstance(response, (pandas.Series, pandas.DataFrame)):
         streamlit.write(response.head())
 
+
 def extract_png_paths(sentence: str) -> List[str]:
     """Extract all png paths from a string."""
+
     png_pattern = r'\b\S+\.png\b'
     png_paths: List[str] = re.findall(png_pattern, sentence)
     return [path.strip() for path in png_paths]  # Strip any whitespace
 
+
 def extract_path_after(directory: str, path: str) -> Optional[str]:
     """Extract the relative path after a given directory."""
+
     # Normalize paths to avoid issues with different path representations
     norm_directory = os.path.normpath(directory)
-    norm_path = os.path.normpath(path.replace('\n', ''))  # Remove newline characters
+
+    # Remove any newline characters from the path
+    path = path.replace('\n', '')
+
+    # Normalize path
+    norm_path = os.path.normpath(path)
 
     # Find the directory in the path
     try:
@@ -244,7 +256,8 @@ def extract_path_after(directory: str, path: str) -> Optional[str]:
         return None
 
     # Return the substring from the character after the directory onwards
-    return norm_path[start_pos + 1:]
+    return norm_path[start_pos + 1 :]
+
 
 def escape_markdown(text: str) -> str:
     """
