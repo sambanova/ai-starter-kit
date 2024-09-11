@@ -180,7 +180,7 @@ def stream_single_response(response: Any) -> None:
                 # If images are present in the response,
                 # treat it as the combination of a possible text and a list of images
                 else:
-                    # Extract the list of images and the remaining text from response
+                    # Extract the list of images and any remaining text from response
                     png_paths, text = extract_png_paths(response)
 
                     # If there is text in the response, write it first
@@ -212,7 +212,7 @@ def stream_single_response(response: Any) -> None:
 
 
 def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
-    """Extract all png paths and any possible remaining text from a string."""
+    """Extract all png paths and any remaining text from a string."""
 
     # png image pattern
     png_pattern = re.compile(r'\/\b\S+\.png\b')
