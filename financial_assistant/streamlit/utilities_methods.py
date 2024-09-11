@@ -227,14 +227,14 @@ def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
     text = re.sub(png_pattern, '', sentence).strip()
 
     # Patterns for removing some combinations of special characters
-    column_space_regex = re.compile(r': , ')
-    final_column_space_regex = re.compile(r': \.')
+    colon_space_regex = re.compile(r': , ')
+    final_colon_space_regex = re.compile(r': \.')
 
-    # Replace column and period spaces
-    text = column_space_regex.sub(', ', text)
-    text = final_column_space_regex.sub('.', text)
+    # Replace colon and period spaces
+    text = colon_space_regex.sub(', ', text)
+    text = final_colon_space_regex.sub('.', text)
 
-    # Replace any final column with a period
+    # Replace any final colon with a period
     if text.endswith(':'):
         text = text[:-1] + '.'
 
