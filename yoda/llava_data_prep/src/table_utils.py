@@ -854,7 +854,7 @@ class TableAugmentor:
         )
 
         # Initialize the chain.
-        self.table_qa_chain = table_qa_prompt | self.llm | JsonOutputParser()
+        self.table_qa_chain = table_qa_prompt | self.llm | parser
 
     def init_llm(self) -> None:
         """
@@ -1014,7 +1014,7 @@ class TableAugmentor:
             self._write_appended_json(json_path=json_path,
                                       data=new_data)
 
-            qa_list: List[Dict[str, str]] = self.table_qa_chain.invoke(synth_table)["qa_list"]
+            qa_list = self.table_qa_chain.invoke(synth_table).qa_list
 
             # Gather qa table questions from the output list.
             for qa in qa_list:
@@ -1023,8 +1023,8 @@ class TableAugmentor:
                 "id": unique_uuid,
                 "image": f"{unique_uuid}.png",
                 "conversations": [
-                    {"from": "human", "value": qa["query"]},
-                    {"from": "gpt", "value": qa["answer"]}
+                    {"from": "human", "value": qa.query},
+                    {"from": "gpt", "value": qa.answer}
                     ]
                 }
 
