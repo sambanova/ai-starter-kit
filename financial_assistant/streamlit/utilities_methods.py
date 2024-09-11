@@ -234,7 +234,7 @@ def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
     text = column_space_regex.sub(', ', text)
     text = final_column_space_regex.sub('.', text)
 
-    # Replace any final colon with a period
+    # Replace any final column with a period
     if text.endswith(':'):
         text = text[:-1] + '.'
 
