@@ -23,6 +23,10 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.streamlit.constants import *
+from financial_assistant.src.tools import get_logger
+
+logger = get_logger()
+
 
 # tool mapping of available tools
 TOOLS = {
@@ -169,27 +173,39 @@ def stream_single_response(response: Any) -> None:
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             if isinstance(response, str):
+                # Remove any newline characters from the response
+                response = response.replace('\n', '')
                 if not response.endswith('.png'):
                     # Clean and write the response
                     markdown_response = escape_markdown(response)
                     streamlit.write(markdown_response)
                 else:
                     # Load the image after extracting the last path of the png file
-                    image = Image.open(response.split(' ')[-1])
-
-                    # Display the image
-                    streamlit.image(image, use_column_width=True)
+                    image_path = response.split(' ')[-1].strip()
+                    try:
+                        image = Image.open(image_path)
+                        # Display the image
+                        streamlit.image(image, use_column_width=True)
+                    except FileNotFoundError:
+                        logger.error(f"Image file not found: {image_path}")
+                    except Exception as e:
+                        logger.error(f"Error displaying image: {image_path}. Error: {str(e)}")
 
                 png_paths = extract_png_paths(response)
                 for path in png_paths:
                     if path != response:
                         # Extract the last part of the path
                         relative_path = extract_path_after('ai-starter-kit', path)
-                        assert isinstance(relative_path, str), 'Path should be a string'
-                        # Load the image
-                        image = Image.open(relative_path)
-                        # Display the image
-                        streamlit.image(image, use_column_width=True)
+                        if relative_path:
+                            try:
+                                # Load the image
+                                image = Image.open(relative_path)
+                                # Display the image
+                                streamlit.image(image, use_column_width=True)
+                            except FileNotFoundError:
+                                logger.error(f"Image file not found: {relative_path}")
+                            except Exception as e:
+                                logger.error(f"Error displaying image: {relative_path}. Error: {str(e)}")
 
     # If response is a figure
     elif isinstance(response, Figure):
@@ -200,22 +216,17 @@ def stream_single_response(response: Any) -> None:
     elif isinstance(response, (pandas.Series, pandas.DataFrame)):
         streamlit.write(response.head())
 
-
 def extract_png_paths(sentence: str) -> List[str]:
     """Extract all png paths from a string."""
-
     png_pattern = r'\b\S+\.png\b'
-    png_paths: List[str] = []
-    matches = re.findall(png_pattern, sentence)
-    return matches
-
+    png_paths: List[str] = re.findall(png_pattern, sentence)
+    return [path.strip() for path in png_paths]  # Strip any whitespace
 
 def extract_path_after(directory: str, path: str) -> Optional[str]:
     """Extract the relative path after a given directory."""
-
     # Normalize paths to avoid issues with different path representations
     norm_directory = os.path.normpath(directory)
-    norm_path = os.path.normpath(path)
+    norm_path = os.path.normpath(path.replace('\n', ''))  # Remove newline characters
 
     # Find the directory in the path
     try:
@@ -233,8 +244,7 @@ def extract_path_after(directory: str, path: str) -> Optional[str]:
         return None
 
     # Return the substring from the character after the directory onwards
-    return norm_path[start_pos + 1 :]
-
+    return norm_path[start_pos + 1:]
 
 def escape_markdown(text: str) -> str:
     """
