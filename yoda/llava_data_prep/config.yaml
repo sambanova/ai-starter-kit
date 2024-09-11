@@ -1,0 +1,15 @@
+llm: 
+    "api": "sncloud"
+    "temperature": 0.0
+    "do_sample": True
+    "temperature": 0.9
+    "streaming": True
+    "max_tokens_to_generate": 1200
+    "coe": False #set as true if using Sambastudio CoE endpoint
+    "select_expert": "llama3-70b" #set if using sncloud, SambaStudio CoE llm expert
+    #sncloud CoE expert name -> "llama3-405b"
+    "process_prompt": False
+
+prompts:
+    "table_modification": "yoda/prompts/llama3_1-modify-table.yaml"
+    "ocr_query_answer": "yoda/prompts/llama3_1-table-ocr.yaml"
