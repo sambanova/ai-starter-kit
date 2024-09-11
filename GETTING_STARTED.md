@@ -28,6 +28,7 @@ This guide walks through setting up an API key, performing a few sample queries 
 | Meta-Llama-3.1-70B-Instruct | 4096 | 1000 | BF16 |
 | Meta-Llama-3.1-70B-Instruct-8k | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
+| Meta-Llama-3.1-405B-Instruct-8k | 8192 | 1000 | BF16 |
 
 ## Query the API
 
