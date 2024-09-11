@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
+from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS
 from financial_assistant.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
 from financial_assistant.streamlit.constants import *
 
@@ -189,7 +190,10 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
         },
     )
 
-    return df.chat(user_query)
+    # Add the plot instructions to the user query
+    final_query = user_query + '\n' + PLOT_INSTRUCTIONS
+
+    return df.chat(final_query)
 
 
 @time_llm

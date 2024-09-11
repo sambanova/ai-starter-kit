@@ -1,9 +1,8 @@
 import json
-import os
 import re
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Any, Callable, Generator, List, Optional, Type
+from typing import Any, Callable, Generator, List, Optional, Tuple, Type
 
 import pandas
 import streamlit
@@ -13,7 +12,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.src.tools import get_conversational_response
+from financial_assistant.src.tools import get_conversational_response, get_logger
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
@@ -23,7 +22,6 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.streamlit.constants import *
-from financial_assistant.src.tools import get_logger
 
 logger = get_logger()
 
@@ -173,39 +171,35 @@ def stream_single_response(response: Any) -> None:
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             if isinstance(response, str):
-                # Remove any newline characters from the response
-                response = response.replace('\n', '')
-                if not response.endswith('.png'):
+                # If images are not present in the response, treat it as pure text
+                if '.png' not in response:
                     # Clean and write the response
                     markdown_response = escape_markdown(response)
                     streamlit.write(markdown_response)
-                else:
-                    # Load the image after extracting the last path of the png file
-                    image_path = response.split(' ')[-1].strip()
-                    try:
-                        image = Image.open(image_path)
-                        # Display the image
-                        streamlit.image(image, use_column_width=True)
-                    except FileNotFoundError:
-                        logger.error(f"Image file not found: {image_path}")
-                    except Exception as e:
-                        logger.error(f"Error displaying image: {image_path}. Error: {str(e)}")
 
-                png_paths = extract_png_paths(response)
-                for path in png_paths:
-                    if path != response:
-                        # Extract the last part of the path
-                        relative_path = extract_path_after('ai-starter-kit', path)
-                        if relative_path:
-                            try:
-                                # Load the image
-                                image = Image.open(relative_path)
-                                # Display the image
-                                streamlit.image(image, use_column_width=True)
-                            except FileNotFoundError:
-                                logger.error(f"Image file not found: {relative_path}")
-                            except Exception as e:
-                                logger.error(f"Error displaying image: {relative_path}. Error: {str(e)}")
+                # If images are present in the response,
+                # treat it as the combination of a possible text and a list of images
+                else:
+                    # Extract the list of images and any remaining text from response
+                    png_paths, text = extract_png_paths(response)
+
+                    # If there is text in the response, write it first
+                    if len(text) > 0:
+                        # Clean and write the response
+                        markdown_response = escape_markdown(text)
+                        streamlit.write(text)
+
+                    # Then, display each image
+                    for path in png_paths:
+                        try:
+                            # Load the image
+                            image = Image.open(path)
+                            # Display the image
+                            streamlit.image(image, use_column_width=True)
+                        except FileNotFoundError:
+                            logger.error(f'Image file not found: {path}.')
+                        except Exception as e:
+                            logger.error(f'Error displaying image: {path}. Error: {str(e)}.')
 
     # If response is a figure
     elif isinstance(response, Figure):
@@ -216,35 +210,36 @@ def stream_single_response(response: Any) -> None:
     elif isinstance(response, (pandas.Series, pandas.DataFrame)):
         streamlit.write(response.head())
 
-def extract_png_paths(sentence: str) -> List[str]:
-    """Extract all png paths from a string."""
-    png_pattern = r'\b\S+\.png\b'
+
+def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
+    """Extract all png paths and any remaining text from a string."""
+
+    # png image pattern
+    png_pattern = re.compile(r'\/\b\S+\.png\b')
+
+    # Extract all image absolute paths
     png_paths: List[str] = re.findall(png_pattern, sentence)
-    return [path.strip() for path in png_paths]  # Strip any whitespace
 
-def extract_path_after(directory: str, path: str) -> Optional[str]:
-    """Extract the relative path after a given directory."""
-    # Normalize paths to avoid issues with different path representations
-    norm_directory = os.path.normpath(directory)
-    norm_path = os.path.normpath(path.replace('\n', ''))  # Remove newline characters
+    # Extract the path list
+    path_list = [path.strip() for path in png_paths]
 
-    # Find the directory in the path
-    try:
-        index = norm_path.index(norm_directory)
-    except ValueError:
-        # The directory is not in the path
-        return None
+    # Extract any remaining text
+    text = re.sub(png_pattern, '', sentence).strip()
 
-    # Extracting the part after the directory
-    start_pos = index + len(norm_directory)
+    # Patterns for removing some combinations of special characters
+    colon_space_regex = re.compile(r': , ')
+    final_colon_space_regex = re.compile(r': \.')
 
-    # Ensure that the directory is found in the path at the end of a segment
-    if start_pos >= len(norm_path) or norm_path[start_pos] != os.sep:
-        # The directory is not in the path
-        return None
+    # Replace colon and period spaces
+    text = colon_space_regex.sub(', ', text)
+    text = final_colon_space_regex.sub('.', text)
 
-    # Return the substring from the character after the directory onwards
-    return norm_path[start_pos + 1:]
+    # Replace any final colon with a period
+    if text.endswith(':'):
+        text = text[:-1] + '.'
+
+    return path_list, text
+
 
 def escape_markdown(text: str) -> str:
     """

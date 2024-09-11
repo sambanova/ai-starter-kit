@@ -129,13 +129,12 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
             - The paths of any `png` figures.
     """
     report_content: List[Tuple[str, List[str] | None]] = list()
-    figure_regex = re.compile(r'financial_assistant/*[^\s]+\.png')
-    directory_regex = re.compile(rf'{repo_dir}/')
+    figure_regex = re.compile(r'\/\b\S+\.png\b')
     endline_regex = re.compile(r'\n\n')
     startline_regex = re.compile(r'^\n\n')
     selectd_tables_regex = re.compile(r'Table')
-    column_space_regex = re.compile(r': , ')
-    final_column_space_regex = re.compile(r': \.')
+    colon_space_regex = re.compile(r': , ')
+    final_colon_space_regex = re.compile(r': \.')
 
     for doc in documents:
         parts = doc.split('\n\n\n\n')
@@ -146,11 +145,10 @@ def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
                 # Remove figure paths from text
                 cleaned_part = figure_regex.sub('', part)
                 # Clean extra newline
-                cleaned_part = directory_regex.sub('', cleaned_part)
                 cleaned_part = endline_regex.sub('', cleaned_part)
                 cleaned_part = re.sub(selectd_tables_regex, '\nSelected SQL tables: Table', cleaned_part, count=1)
-                cleaned_part = column_space_regex.sub(', ', cleaned_part)
-                cleaned_part = final_column_space_regex.sub('.', cleaned_part)
+                cleaned_part = colon_space_regex.sub(', ', cleaned_part)
+                cleaned_part = final_colon_space_regex.sub('.', cleaned_part)
             else:
                 # Clean extra newline
                 cleaned_part = startline_regex.sub('', part)
