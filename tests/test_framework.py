@@ -49,6 +49,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'function_calling': 'python tests/fc_test.py',
     'web_crawled_data_retriever': 'python tests/web_crawling_test.py',
     'multimodal_knowledge_retriever': 'python tests/multimodal_knowledge_retriever_test.py',
+    'prompt_engineering': 'python tests/prompt_engineering_test.py',
     # 'search_assistant': 'python cli_test.py --query "test query"',
     'search_assistant': 'python tests/search_assistant_test.py',
     'benchmarking': './run_synthetic_dataset.sh' #This runs the benchmarking suite. 
