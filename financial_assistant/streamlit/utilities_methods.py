@@ -212,7 +212,7 @@ def stream_single_response(response: Any) -> None:
 
 
 def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
-    """Extract all png paths and possible remaining text from a string."""
+    """Extract all png paths and any possible remaining text from a string."""
 
     # png image pattern
     png_pattern = re.compile(r'\/\b\S+\.png\b')
@@ -220,15 +220,15 @@ def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
     # Extract all image absolute paths
     png_paths: List[str] = re.findall(png_pattern, sentence)
 
-    # Extract the remaining text
-    text = re.sub(png_pattern, '', sentence).strip()
-
     # Extract the path list
     path_list = [path.strip() for path in png_paths]
 
     # Patterns for removing some combinations of special characters
     column_space_regex = re.compile(r': , ')
     final_column_space_regex = re.compile(r': \.')
+
+    # Extract any remaining text
+    text = re.sub(png_pattern, '', sentence).strip()
 
     # Replace column and period spaces
     text = column_space_regex.sub(', ', text)
