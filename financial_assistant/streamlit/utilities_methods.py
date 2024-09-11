@@ -223,12 +223,12 @@ def extract_png_paths(sentence: str) -> Tuple[List[str], str]:
     # Extract the path list
     path_list = [path.strip() for path in png_paths]
 
+    # Extract any remaining text
+    text = re.sub(png_pattern, '', sentence).strip()
+
     # Patterns for removing some combinations of special characters
     column_space_regex = re.compile(r': , ')
     final_column_space_regex = re.compile(r': \.')
-
-    # Extract any remaining text
-    text = re.sub(png_pattern, '', sentence).strip()
 
     # Replace column and period spaces
     text = column_space_regex.sub(', ', text)
