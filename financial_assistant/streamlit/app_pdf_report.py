@@ -1,7 +1,7 @@
 import os
 import shutil
 from base64 import b64encode
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
@@ -132,20 +132,21 @@ def include_pdf_report() -> None:
             pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
 
             # Embed PDF to display it:
-            base64_pdf = b64encode(pdf_handler).decode('utf-8')
-            pdf_display = (
-                f'<embed src="data:application/pdf;base64,{base64_pdf}"'
-                ' width="700" height="400" type="application/pdf">'
-            )
-            streamlit.markdown(pdf_display, unsafe_allow_html=True)
-            # Add download button
-            streamlit.download_button(
-                label='Download Report',
-                data=pdf_handler,
-                file_name=report_name,
-                mime='application/pdf',
-            )
-        streamlit.write('PDF report generated successfully.')
+            if pdf_handler is not None:
+                base64_pdf = b64encode(pdf_handler).decode('utf-8')
+                pdf_display = (
+                    f'<embed src="data:application/pdf;base64,{base64_pdf}"'
+                    ' width="700" height="400" type="application/pdf">'
+                )
+                streamlit.markdown(pdf_display, unsafe_allow_html=True)
+                # Add download button
+                streamlit.download_button(
+                    label='Download Report',
+                    data=pdf_handler,
+                    file_name=report_name,
+                    mime='application/pdf',
+                )
+                streamlit.write('PDF report generated successfully.')
 
     # Use PDF report for RAG
     streamlit.markdown('<h2> Use PDF Report for RAG </h2>', unsafe_allow_html=True)
@@ -291,7 +292,7 @@ def handle_pdf_generation(
     report_name: str = 'financial_report',
     data_paths: Dict[str, str] = dict(),
     include_summary: bool = False,
-) -> bytes:
+) -> Optional[bytes]:
     """
     Generate a PDF report using the provided data paths.
 
@@ -320,10 +321,14 @@ def handle_pdf_generation(
     output_file = streamlit.session_state.pdf_generation_directory + report_name
 
     # Check that at least one data source is available
-    assert any([data_paths[key] for key in data_paths]), 'Select at least one data source.'
+    if not any([data_paths[key] for key in data_paths]):
+        streamlit.error('Select at least one data source.')
+        return None
 
     # Assert that at least one data source exists as a file
-    assert any([os.path.isfile(data_paths[key]) for key in data_paths]), 'No data source available.'
+    if not any([os.path.isfile(data_paths[key]) for key in data_paths]):
+        streamlit.error('No data source available.')
+        return None
 
     for source_file in data_paths.values():
         # Create the full path for the destination file

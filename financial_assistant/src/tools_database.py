@@ -16,7 +16,7 @@ from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
 from sqlalchemy import Inspector, create_engine
 
-from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS
+from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS_TEMPLATE
 from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
 from financial_assistant.src.llm import get_sambanova_credentials
 from financial_assistant.src.tools import (
@@ -220,7 +220,7 @@ def query_stock_database(
 
     elif method == 'PandasAI-SqliteConnector':
         # Add the plot instructions to the user query
-        final_query = user_query + '\n' + PLOT_INSTRUCTIONS + '\n' + TITLE_INSTRUCTIONS
+        final_query = user_query + '\n' + PLOT_INSTRUCTIONS + '\n' + TITLE_INSTRUCTIONS_TEMPLATE
 
         return query_stock_database_pandasai(final_query, symbol_list)
 
@@ -366,8 +366,10 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
 
         response[symbol] = list()
         for table in selected_tables:
+            # Insert table name in the prompt
+            final_query = user_query.format(table_name=table)
             # Append the response for the given company symbol
-            response[symbol].append(interrogate_table(streamlit.session_state.db_path, table, user_query))
+            response[symbol].append(interrogate_table(streamlit.session_state.db_path, table, final_query))
 
     return response
 
