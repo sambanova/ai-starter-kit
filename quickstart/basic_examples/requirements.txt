@@ -1,0 +1,7 @@
+langchain-community==0.2.10
+langchain-core==0.2.25
+langchain==0.2.11
+python-dotenv==1.0.0
+sseclient-py==1.8.0
+ipykernel==6.29.4
+notebook==7.2.1
