@@ -1018,8 +1018,15 @@ class TableAugmentor:
                                       data=new_data)
 
             # Create qa list from outputs of qa chain.
-            logging.info("Obtaining qa list from chain with Pydantic output parser")
-            qa_list = self.table_qa_chain.invoke(synth_table).qa_list
+            logging.info("Obtaining raw qa list from chain")
+            qa_list_raw = self.table_qa_chain.invoke(synth_table)
+
+            logging.info(f"raw qa_list: {qa_list_raw}")
+
+            logging.info("extracting list")
+            qa_list = qa_list_raw.qa_list
+
+            logging.info(f"qa_list generated: \n{qa_list}")
 
             # Gather qa table questions from the output list.
             logging.info("Iterating over qa list to save outputs.")
