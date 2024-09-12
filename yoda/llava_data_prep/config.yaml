@@ -1,13 +1,11 @@
 llm: 
-    "api": "sncloud"
-    "temperature": 0.0
+    "api": "sambastudio"
     "do_sample": True
-    "temperature": 0.9
-    "streaming": True
+    "temperature": 0.7
+    "streaming": False
     "max_tokens_to_generate": 1200
-    "coe": False #set as true if using Sambastudio CoE endpoint
-    "select_expert": "llama3-70b" #set if using sncloud, SambaStudio CoE llm expert
-    #sncloud CoE expert name -> "llama3-405b"
+    "coe": True #set as true if using Sambastudio CoE endpoint
+    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
     "process_prompt": False
 
 prompts:
