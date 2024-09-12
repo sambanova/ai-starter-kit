@@ -6,7 +6,7 @@ import cv2
 import glob
 import json
 from langchain_core.prompts import load_prompt, PromptTemplate
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser, PydanticOutputParser
+from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 import logging
 import numpy as np
@@ -981,17 +981,20 @@ class TableAugmentor:
             # Get the column definition for the table.
             columns: str = table['columns']
             # Modify the table entities and numbers with LLM.
+            logging.info("Modifying table with LLM")
             try:
                 new_table: str = self.modifying_chain.invoke(table["tsv_formatted"])
             except Exception as e:
                 logging.error(e)
             
             # Create a natural user prompt asking for table OCR using LLM.
+            logging.info("Creating OCR prompt with LLM")
             try:
                 table_ocr_prompt: str = self.table_ocr_chain.invoke(new_table)
             except Exception as e:
                 logging.error(e)
             # Convert the table to LaTeX format from modified tsv.
+            logging.info("Creating table QA with LLM")
             synth_table: str = table_tools.convert_tsv_to_latex(columns, new_table)
 
             # Generate the image of the table and save to appropriate
@@ -1014,23 +1017,30 @@ class TableAugmentor:
             self._write_appended_json(json_path=json_path,
                                       data=new_data)
 
+            # Create qa list from outputs of qa chain.
+            logging.info("Obtaining qa list from chain with Pydantic output parser")
             qa_list = self.table_qa_chain.invoke(synth_table).qa_list
 
             # Gather qa table questions from the output list.
-            for qa in qa_list:
-                # Gather payload for item in qa list.
-                new_data = {
-                "id": unique_uuid,
-                "image": f"{unique_uuid}.png",
-                "conversations": [
-                    {"from": "human", "value": qa.query},
-                    {"from": "gpt", "value": qa.answer}
-                    ]
-                }
+            logging.info("Iterating over qa list to save outputs.")
+            try:
+                for qa in qa_list:
+                    # Gather payload for item in qa list.
+                    new_data = {
+                    "id": unique_uuid,
+                    "image": f"{unique_uuid}.png",
+                    "conversations": [
+                        {"from": "human", "value": qa.query},
+                        {"from": "gpt", "value": qa.answer}
+                        ]
+                    }
+            except Exception as e:
+                logging.error(e)
 
                 # Append new data to json file.
                 self._write_appended_json(json_path=json_path,
                                       data=new_data)
+        logging.info("completed iteration")
 
 
 
