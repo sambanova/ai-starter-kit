@@ -21,14 +21,14 @@ def include_financial_filings() -> None:
     user_request = streamlit.text_input(
         label=f'Enter your query. :sparkles: :violet[{DEFAULT_RAG_QUERY}]',
         key='financial-filings',
-        placeholder=DEFAULT_RAG_QUERY,
+        placeholder='E.g. ' + DEFAULT_RAG_QUERY,
     )
 
     # Company name
     company_name = streamlit.text_input(
         label=f'Company name (optional if in the query already). :sparkles: :violet[{DEFAULT_COMPANY_NAME}]',
         key='company_name',
-        placeholder=DEFAULT_COMPANY_NAME,
+        placeholder='E.g. ' + DEFAULT_COMPANY_NAME,
     )
 
     # Define the range of years

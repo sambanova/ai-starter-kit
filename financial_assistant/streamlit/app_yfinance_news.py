@@ -19,7 +19,7 @@ def get_yfinance_news() -> None:
         label='Enter the yfinance news that you want to retrieve for given companies. '
         f':sparkles: :violet[{DEFAULT_RAG_QUERY}]',
         key='yahoo_news',
-        placeholder=DEFAULT_RAG_QUERY,
+        placeholder='E.g. ' + DEFAULT_RAG_QUERY,
     )
 
     # Retrieve news

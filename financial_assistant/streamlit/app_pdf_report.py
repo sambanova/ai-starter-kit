@@ -228,7 +228,7 @@ def include_pdf_report() -> None:
         user_request = streamlit.text_input(
             label=f'Ask a question about your financial report. :sparkles: :violet[{DEFAULT_PDF_RAG_QUERY}]',
             key='pdf-rag',
-            placeholder=DEFAULT_PDF_RAG_QUERY,
+            placeholder='E.g. ' + DEFAULT_PDF_RAG_QUERY,
         )
 
         # Use PDF reports for RAG

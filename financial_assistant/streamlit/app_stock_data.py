@@ -27,7 +27,7 @@ def get_stock_data_analysis() -> None:
         label='Enter the info that you want to retrieve for a given company. '
         f':sparkles: :violet[{DEFAULT_STOCK_QUERY}]',
         key='stock-query',
-        placeholder=DEFAULT_STOCK_QUERY,
+        placeholder='E.g. ' + DEFAULT_STOCK_QUERY,
     )
 
     columns = streamlit.columns(3, vertical_alignment='center')
@@ -109,7 +109,7 @@ def get_stock_data_analysis() -> None:
         'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits. '
         f':sparkles: :violet[{DEFAULT_HISTORICAL_STOCK_PRICE_QUERY}]',
         key='historical-stock-price-query',
-        placeholder=DEFAULT_HISTORICAL_STOCK_PRICE_QUERY,
+        placeholder='E.g. ' + DEFAULT_HISTORICAL_STOCK_PRICE_QUERY,
     )
     start_date = streamlit.date_input(
         'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'

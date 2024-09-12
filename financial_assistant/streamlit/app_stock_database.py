@@ -21,7 +21,7 @@ def get_stock_database() -> None:
     requested_companies = streamlit.text_input(
         label=f'Enter the names of the companies you want to retrieve. :sparkles: :violet[{DEFAULT_COMPANY_NAME}]',
         key='create-database',
-        placeholder=DEFAULT_COMPANY_NAME,
+        placeholder='E.g. ' + DEFAULT_COMPANY_NAME,
     )
     start_date = streamlit.date_input(
         'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
@@ -51,7 +51,7 @@ def get_stock_database() -> None:
     user_request = streamlit.text_input(
         label=f'Enter your query. :sparkles:  :violet[{DEFAULT_STOCK_QUERY}]',
         key='query-database',
-        placeholder=DEFAULT_STOCK_QUERY,
+        placeholder='E.g. ' + DEFAULT_STOCK_QUERY,
     )
     if streamlit.button(label='Query database'):
         if len(user_request) == 0:
