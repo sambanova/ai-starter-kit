@@ -16,9 +16,10 @@ def get_yfinance_news() -> None:
     )
 
     user_request = streamlit.text_input(
-        'Enter the yfinance news that you want to retrieve for given companies',
+        label='Enter the yfinance news that you want to retrieve for given companies. '
+        f':sparkles: :violet[{DEFAULT_RAG_QUERY}]',
         key='yahoo_news',
-        value='Have there been changes in strategy, products, and research for Meta? Can you provide some examples?',
+        placeholder=DEFAULT_RAG_QUERY,
     )
 
     # Retrieve news

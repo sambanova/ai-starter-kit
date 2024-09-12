@@ -24,9 +24,10 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<h3> Info retrieval </h3>', unsafe_allow_html=True)
 
     user_request = streamlit.text_input(
-        'Enter the info that you want to retrieve for a given company.',
+        label='Enter the info that you want to retrieve for a given company. '
+        f':sparkles: :violet[{DEFAULT_STOCK_QUERY}]',
         key='stock-query',
-        value='What is the research and development spending trend for Meta?',
+        placeholder=DEFAULT_STOCK_QUERY,
     )
 
     columns = streamlit.columns(3, vertical_alignment='center')
@@ -101,9 +102,11 @@ def get_stock_data_analysis() -> None:
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
     user_request = streamlit.text_input(
-        'Enter the quantities that you want to plot for given companies. '
-        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits.',
-        value='Meta close value',
+        label='Enter the quantities that you want to plot for given companies. '
+        'Suggested values: Open, High, Low, Close, Volume, Dividends, Stock Splits. '
+        f':sparkles: :violet[{DEFAULT_HISTORICAL_STOCK_PRICE_QUERY}]',
+        key='historical-stock-price-query',
+        placeholder=DEFAULT_HISTORICAL_STOCK_PRICE_QUERY,
     )
     start_date = streamlit.date_input(
         'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'

@@ -19,9 +19,9 @@ def get_stock_database() -> None:
     streamlit.markdown('<h3> Create database </h3>', unsafe_allow_html=True)
 
     requested_companies = streamlit.text_input(
-        'Enter the names of the companies you want to retrieve.',
+        label=f'Enter the names of the companies you want to retrieve. :sparkles: :violet[{DEFAULT_COMPANY_NAME}]',
         key='create-database',
-        value='Meta',
+        placeholder=DEFAULT_COMPANY_NAME,
     )
     start_date = streamlit.date_input(
         'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
@@ -46,9 +46,9 @@ def get_stock_database() -> None:
         help=help_query_method,
     )
     user_request = streamlit.text_input(
-        'Enter your query.',
+        label=f'Enter your query. :sparkles:  :violet[{DEFAULT_STOCK_QUERY}]',
         key='query-database',
-        value='What is the research and development spending trend for Meta?',
+        placeholder=DEFAULT_STOCK_QUERY,
     )
     if streamlit.button(label='Query database'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
