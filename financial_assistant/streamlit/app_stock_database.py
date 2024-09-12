@@ -29,8 +29,11 @@ def get_stock_database() -> None:
     end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
 
     if streamlit.button('Create database'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_string = handle_database_creation(requested_companies, start_date, end_date)
+        if len(requested_companies) == 0:
+            streamlit.error('Please enter at least one company.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                response_string = handle_database_creation(requested_companies, start_date, end_date)
 
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Query database </h3>', unsafe_allow_html=True)
@@ -51,19 +54,22 @@ def get_stock_database() -> None:
         placeholder=DEFAULT_STOCK_QUERY,
     )
     if streamlit.button(label='Query database'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_dict = handle_database_query(user_request, query_method)
+        if len(user_request) == 0:
+            streamlit.error('Please enter your query.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                response_dict = handle_database_query(user_request, query_method)
 
-            # Save the query and answer to the history text file
-            save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
+                # Save the query and answer to the history text file
+                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
-            # Save the query and answer to the database query text file
-            if streamlit.button(
-                'Save Query',
-                on_click=save_output_callback,
-                args=(response_dict, streamlit.session_state.db_query_path, user_request),
-            ):
-                pass
+                # Save the query and answer to the database query text file
+                if streamlit.button(
+                    'Save Query',
+                    on_click=save_output_callback,
+                    args=(response_dict, streamlit.session_state.db_query_path, user_request),
+                ):
+                    pass
 
 
 def handle_database_creation(

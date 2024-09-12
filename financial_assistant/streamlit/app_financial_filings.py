@@ -50,26 +50,29 @@ def include_financial_filings() -> None:
         filing_quarter = 0
 
     if streamlit.button('Analyze Filing'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            # Call the function to analyze the financial filing
-            answer = handle_financial_filings(
-                user_request,
-                company_name,
-                filing_type,
-                filing_quarter,
-                selected_year,
-            )
+        if len(user_request) == 0:
+            streamlit.error('Please enter your query.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                # Call the function to analyze the financial filing
+                answer = handle_financial_filings(
+                    user_request,
+                    company_name,
+                    filing_type,
+                    filing_quarter,
+                    selected_year,
+                )
 
-            # Save the query and answer to the history text file
-            save_output_callback(answer, streamlit.session_state.history_path, user_request)
+                # Save the query and answer to the history text file
+                save_output_callback(answer, streamlit.session_state.history_path, user_request)
 
-            # Save the query and answer to the filing text file
-            if streamlit.button(
-                'Save Answer',
-                on_click=save_output_callback,
-                args=(answer, streamlit.session_state.filings_path, user_request),
-            ):
-                pass
+                # Save the query and answer to the filing text file
+                if streamlit.button(
+                    'Save Answer',
+                    on_click=save_output_callback,
+                    args=(answer, streamlit.session_state.filings_path, user_request),
+                ):
+                    pass
 
 
 def handle_financial_filings(

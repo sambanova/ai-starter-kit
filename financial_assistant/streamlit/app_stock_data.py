@@ -85,19 +85,22 @@ def get_stock_data_analysis() -> None:
         columns[1].write(None)
 
     if streamlit.button('Retrieve stock info'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            response_dict = handle_stock_query(user_request, dataframe_name)
+        if len(user_request) == 0:
+            streamlit.error('Please enter your query.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                response_dict = handle_stock_query(user_request, dataframe_name)
 
-            # Save the output to the history file
-            save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
+                # Save the output to the history file
+                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
-            # Save the output to the stock query file
-            if streamlit.button(
-                'Save Answer',
-                on_click=save_output_callback,
-                args=(response_dict, streamlit.session_state.stock_query_path, user_request),
-            ):
-                pass
+                # Save the output to the stock query file
+                if streamlit.button(
+                    'Save Answer',
+                    on_click=save_output_callback,
+                    args=(response_dict, streamlit.session_state.stock_query_path, user_request),
+                ):
+                    pass
 
     streamlit.markdown('<br><br>', unsafe_allow_html=True)
     streamlit.markdown('<h3> Stock data history </h3>', unsafe_allow_html=True)
@@ -115,21 +118,32 @@ def get_stock_data_analysis() -> None:
 
     # Analyze stock data
     if streamlit.button('Analyze Historical Stock Data'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
+        if len(user_request) == 0:
+            streamlit.error('Please enter your query.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
-        # Save the output to the history file
-        save_historical_price_callback(
-            user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.history_path
-        )
+            # Save the output to the history file
+            save_historical_price_callback(
+                user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.history_path
+            )
 
-        # Save the output to the stock query file
-        if streamlit.button(
-            'Save Analysis',
-            on_click=save_historical_price_callback,
-            args=(user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.stock_query_path),
-        ):
-            pass
+            # Save the output to the stock query file
+            if streamlit.button(
+                'Save Analysis',
+                on_click=save_historical_price_callback,
+                args=(
+                    user_request,
+                    symbol_list,
+                    data,
+                    fig,
+                    start_date,
+                    end_date,
+                    streamlit.session_state.stock_query_path,
+                ),
+            ):
+                pass
 
 
 def handle_stock_query(

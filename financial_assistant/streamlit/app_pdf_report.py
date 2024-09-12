@@ -233,60 +233,63 @@ def include_pdf_report() -> None:
 
         # Use PDF reports for RAG
         if streamlit.button('Use report for RAG'):
-            if use_generated_pdf and not upload_your_pdf:
-                # Check file selection
-                if len(streamlit.session_state.selected_files) == 0:
-                    streamlit.error('No file has been selected.')
+            if len(user_request) == 0:
+                streamlit.error('Please enter your query.')
+            else:
+                if use_generated_pdf and not upload_your_pdf:
+                    # Check file selection
+                    if len(streamlit.session_state.selected_files) == 0:
+                        streamlit.error('No file has been selected.')
 
-                # Retrieve the list of selected files
-                selected_files = streamlit.session_state.selected_files
+                    # Retrieve the list of selected files
+                    selected_files = streamlit.session_state.selected_files
 
-                # Display the list of selected files
-                streamlit.write('Selected Files:', selected_files)
-                if len(selected_files) > 0:
-                    # Retrieve the answer
-                    answer = handle_pdf_rag(user_request, selected_files)
+                    # Display the list of selected files
+                    streamlit.write('Selected Files:', selected_files)
+                    if len(selected_files) > 0:
+                        # Retrieve the answer
+                        answer = handle_pdf_rag(user_request, selected_files)
 
-                    # Compose the query and answer string
-                    content = user_request + '\n\n' + answer
+                        # Compose the query and answer string
+                        content = user_request + '\n\n' + answer
 
-                    # Save the query and answer to the PDF RAG text file
-                    if streamlit.button(
-                        'Save Answer',
-                        on_click=save_output_callback,
-                        args=(content, streamlit.session_state.pdf_rag_path),
+                        # Save the query and answer to the PDF RAG text file
+                        if streamlit.button(
+                            'Save Answer',
+                            on_click=save_output_callback,
+                            args=(content, streamlit.session_state.pdf_rag_path),
+                        ):
+                            pass
+
+                elif upload_your_pdf and not use_generated_pdf:
+                    # Check file upload
+                    if len(streamlit.session_state.uploaded_files) == 0:
+                        streamlit.error('No file has been uploaded.')
+
+                    # Retrieve the list of uploaded files
+                    uploaded_file_names = streamlit.session_state.uploaded_files
+
+                    if (
+                        isinstance(uploaded_file_names, list)
+                        and len(uploaded_file_names) > 0
+                        and all(isinstance(item, str) for item in uploaded_file_names)
                     ):
-                        pass
+                        # Display the list of uploaded files
+                        streamlit.write('Uploaded Files:', uploaded_file_names)
 
-            elif upload_your_pdf and not use_generated_pdf:
-                # Check file upload
-                if len(streamlit.session_state.uploaded_files) == 0:
-                    streamlit.error('No file has been uploaded.')
+                        # Retrieve the answer
+                        answer = handle_pdf_rag(user_request, uploaded_file_names)
 
-                # Retrieve the list of uploaded files
-                uploaded_file_names = streamlit.session_state.uploaded_files
+                        # Compose the query and answer string
+                        content = user_request + '\n\n' + answer
 
-                if (
-                    isinstance(uploaded_file_names, list)
-                    and len(uploaded_file_names) > 0
-                    and all(isinstance(item, str) for item in uploaded_file_names)
-                ):
-                    # Display the list of uploaded files
-                    streamlit.write('Uploaded Files:', uploaded_file_names)
-
-                    # Retrieve the answer
-                    answer = handle_pdf_rag(user_request, uploaded_file_names)
-
-                    # Compose the query and answer string
-                    content = user_request + '\n\n' + answer
-
-                    # Save the query and answer to the PDF RAG text file
-                    if streamlit.button(
-                        'Save Answer',
-                        on_click=save_output_callback,
-                        args=(content, streamlit.session_state.pdf_rag_path),
-                    ):
-                        pass
+                        # Save the query and answer to the PDF RAG text file
+                        if streamlit.button(
+                            'Save Answer',
+                            on_click=save_output_callback,
+                            args=(content, streamlit.session_state.pdf_rag_path),
+                        ):
+                            pass
 
 
 def handle_pdf_generation(

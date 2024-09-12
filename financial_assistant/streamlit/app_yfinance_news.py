@@ -24,25 +24,28 @@ def get_yfinance_news() -> None:
 
     # Retrieve news
     if streamlit.button('Retrieve News'):
-        with streamlit.expander('**Execution scratchpad**', expanded=True):
-            if user_request is not None:
-                answer, url_list = handle_yfinance_news(user_request)
-            else:
-                raise ValueError('No input provided')
+        if len(user_request) == 0:
+            streamlit.error('Please enter your query.')
+        else:
+            with streamlit.expander('**Execution scratchpad**', expanded=True):
+                if user_request is not None:
+                    answer, url_list = handle_yfinance_news(user_request)
+                else:
+                    raise ValueError('No input provided')
 
-        if answer is not None:
-            content = answer + '\n\n'.join(url_list)
+            if answer is not None:
+                content = answer + '\n\n'.join(url_list)
 
-            # Save the query and answer to the history text file
-            save_output_callback(content, streamlit.session_state.history_path, user_request)
+                # Save the query and answer to the history text file
+                save_output_callback(content, streamlit.session_state.history_path, user_request)
 
-            # Save the query and answer to the Yahoo Finance News text file
-            if streamlit.button(
-                'Save Answer',
-                on_click=save_output_callback,
-                args=(content, streamlit.session_state.yfinance_news_path, user_request),
-            ):
-                pass
+                # Save the query and answer to the Yahoo Finance News text file
+                if streamlit.button(
+                    'Save Answer',
+                    on_click=save_output_callback,
+                    args=(content, streamlit.session_state.yfinance_news_path, user_request),
+                ):
+                    pass
 
 
 def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
