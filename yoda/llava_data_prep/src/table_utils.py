@@ -1034,13 +1034,13 @@ class TableAugmentor:
                         {"from": "gpt", "value": qa.answer}
                         ]
                     }
+
+                    # Append new data to json file.
+                    self._write_appended_json(json_path=json_path,
+                                        data=new_data)
             except Exception as e:
                 logging.error(e)
-
-                # Append new data to json file.
-                self._write_appended_json(json_path=json_path,
-                                      data=new_data)
-        logging.info("completed iteration")
+            logging.info("completed iteration")
 
 
 
