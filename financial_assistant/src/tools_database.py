@@ -466,6 +466,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
 
     # Call the LLM for each number of tokens to generate
     # Return the first valid response
+    table_names = list()
     for item in max_tokens_to_generate_list:
         try:
             # Instantiate the LLM
@@ -487,11 +488,17 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
             assert isinstance(response.table_names, list) and all(
                 [isinstance(elem, str) for elem in response.table_names]
             ), 'Invalid response'
-            return response.table_names
+            table_names = response.table_names
         except:
             pass
 
-    return list()
+    try:
+        assert len(table_names) > 0
+    except AssertionError:
+        streamlit.error('No relevant SQL tables found.')
+        streamlit.stop()
+
+    return table_names
 
 
 def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
