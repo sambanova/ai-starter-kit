@@ -144,7 +144,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
 - **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-- **Number of concurrent workers**: The number of concurrent workers. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
+- **Number of concurrent workers**: Number of parallel requests that can be processed at the same time by different concurrent worker processes. _Default_: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be set to a bit more than double the batch size that you are interested in testing.  For example, if testing the performance of batch size 16, set the number of workers to 33, which will insure that there is always one full batch waiting in the queue for the current batch that is processing.  The reason that the number is not only double (ex, 32) is because the first batch will always be Batch size one for dynamic batching.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
 3. Run the performance evaluation
@@ -286,7 +286,7 @@ This method can be ran from a terminal session. Users have this option if they w
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter then other sambastudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-workers**: Number of concurrent workers. _Default_: 1
+  - **num-workers**: Number of parallel requests that can be processed at the same time by different concurrent worker processes. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **input-file-path**: The location of the custom dataset that you want to evaluate with
   - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
@@ -307,7 +307,7 @@ sh run_custom_dataset.sh
 - The name of the output files will depend on the input file name, mode name, and number of workers. You should see files that follow a similar format to the following:
 
 ```
-<MODEL_NAME>_{FILE_NAME}_{NUM_CONCURRENT_WORKERS}_{MODE}
+<MODEL_NAME>_{FILE_NAME}_{NUM__WORKERS}_{MODE}
 ```
 - For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
   
@@ -332,7 +332,7 @@ sh run_custom_dataset.sh
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter then other sambastudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-workers**: Number of concurrent workers. _Default_: 1
+  - **num-workers**: Number of parallel requests that can be processed at the same time by different concurrent worker processes. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
