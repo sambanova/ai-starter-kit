@@ -73,6 +73,8 @@ def main() -> None:
     # Add sidebar
     with streamlit.sidebar:
         if not are_credentials_set():
+            # Get the SambaNova API Key
+            streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
             url, api_key = env_input_fields()
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)

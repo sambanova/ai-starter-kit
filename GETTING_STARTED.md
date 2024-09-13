@@ -28,6 +28,7 @@ This guide walks through setting up an API key, performing a few sample queries 
 | Meta-Llama-3.1-70B-Instruct | 4096 | 1000 | BF16 |
 | Meta-Llama-3.1-70B-Instruct-8k | 8192 | 1000 | BF16 |
 | Meta-Llama-3.1-405B-Instruct | 4096 | 1000 | BF16 |
+| Meta-Llama-3.1-405B-Instruct-8k | 8192 | 1000 | BF16 |
 
 ## Query the API
 
@@ -45,7 +46,7 @@ import os
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 client = OpenAI(
-    base_url="https://fast-api.snova.ai/v1/",
+    base_url="https://api.sambanova.ai/v1/",
     api_key=api_key,  
 )
 
@@ -86,7 +87,7 @@ from langchain_openai import ChatOpenAI
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
 llm = ChatOpenAI(
-    base_url="https://fast-api.snova.ai/v1/",  
+    base_url="https://api.sambanova.ai/v1/",  
     api_key=api_key,
     streaming=True,
     model="Meta-Llama-3.1-70B-Instruct",
