@@ -489,6 +489,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
                 [isinstance(elem, str) for elem in response.table_names]
             ), 'Invalid response'
             table_names = response.table_names
+            break
         except:
             pass
 
