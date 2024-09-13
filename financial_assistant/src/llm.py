@@ -260,7 +260,8 @@ class SambaNovaLLM:
             except:
                 continue
 
-        assert invoked_tools is not None, f'Expected a tool to call. Got None.'
+        if invoked_tools is None:
+            streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
         assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
 
         invoked_tool = invoked_tools[0]
