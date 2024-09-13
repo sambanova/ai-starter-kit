@@ -463,6 +463,9 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         if elem <= streamlit.session_state.llm.llm_info['max_tokens_to_generate']
     ]
 
+    # Sort the list in descending order
+    max_tokens_to_generate_list = sorted(max_tokens_to_generate_list, reverse=True)
+
     # Get the Sambanova API key
     sambanova_api_key = get_sambanova_credentials()
 
