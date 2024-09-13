@@ -539,7 +539,7 @@ def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = No
     if datetime_col is None:
         # Iterate through the DataFrame columns to find datetime columns
         for col in df.columns:
-            # Check if the column can be converted to datetime
+            # Check if the column is of any datetime dtype
             if (
                 pandas.api.types.is_datetime64_any_dtype(df[col])
                 or pandas.to_datetime(df[col], errors='coerce').notna().any()
@@ -553,13 +553,13 @@ def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = No
                     datetime_col = col
                     break
 
-    # If no datetime columns were found, log a message
+    # If no datetime columns were found, log a message and return the original dataframe
     if datetime_col is None:
         logger.info('No datetime columns found in the DataFrame.')
         return df
 
     # Convert the selected datetime column to datetime type
-    df[datetime_col] = pandas.to_datetime(df[datetime_col])
+    df[datetime_col] = pandas.to_datetime(df[datetime_col], errors='coerce')
 
     # Order the DataFrame by the datetime column
     df_sorted = df.sort_values(by=datetime_col).reset_index(drop=True)
