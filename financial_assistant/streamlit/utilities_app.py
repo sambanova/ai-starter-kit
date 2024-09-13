@@ -406,7 +406,7 @@ def initialize_session(
     # Initialize cache directory
     if prod_mode:
         if 'cache_dir' not in session_state:
-            session_state.cache_dir = CACHE_DIR[:-1] + '/cache' + f'_{session_state.session_id}/'
+            session_state.cache_dir = CACHE_DIR[:-1] + '_prod_mode' + '/cache' + f'_{session_state.session_id}/'
     else:
         if 'cache_dir' not in session_state:
             session_state.cache_dir = CACHE_DIR
