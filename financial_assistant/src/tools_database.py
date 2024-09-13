@@ -453,7 +453,9 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     )
 
     # Invoke the chain with the user query and the table summaries
-    max_tokens_to_generate_list = list({streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 256, 128})
+    max_tokens_to_generate_list = list(
+        {streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 512, 256, 128}
+    )
     # Bound the number of tokens to generate based on the config value
     max_tokens_to_generate_list = [
         elem
