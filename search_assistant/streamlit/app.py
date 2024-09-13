@@ -148,6 +148,13 @@ def main():
     with st.sidebar:
         st.title('**Setup**')
 
+        #Callout to get SambaNova API Key
+        st.markdown(
+            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
+        )
+
+        st.markdown("Get your SerpApi key [here]( https://serpapi.com)")
+
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials'):
