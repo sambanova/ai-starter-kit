@@ -152,7 +152,9 @@ def main() -> None:
         st.title('Setup')
 
         #Callout to get SambaNova API Key
-        st.markdown("Get your SambaNova API key [here](https://sambanova.ai/fast-api)")
+        st.markdown(
+            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
+        )
 
 
         if not are_credentials_set(additional_env_vars):
