@@ -153,6 +153,8 @@ def stream_complex_response(response: Any) -> Any:
             elif isinstance(value, list):
                 # If all values are strings
                 stream_single_response(', '.join([str(item) for item in value]) + '\n')
+            elif isinstance(value, (pandas.Series, pandas.DataFrame)):
+                stream_single_response(value)
 
     try:
         return json.dumps(response)
@@ -206,9 +208,12 @@ def stream_single_response(response: Any) -> None:
         # Display the image
         streamlit.pyplot(response)
 
-    # If response is a dataframe, display its head
+    # If response is a series or a dataframe, display its head
     elif isinstance(response, (pandas.Series, pandas.DataFrame)):
-        streamlit.write(response.head())
+        if len(response) <= 30:
+            streamlit.write(response)
+        else:
+            streamlit.write(response.head(30))
 
 
 def extract_png_paths(sentence: str) -> Tuple[List[str], str]:

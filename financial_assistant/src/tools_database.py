@@ -128,6 +128,7 @@ def store_company_dataframes_to_sqlite(
             # Build a table name using the company symbol and the dataframe purpose/type
             table_name = f'{company_base_name}_{df_name}'
             try:
+                # Convert the data to dataframe format
                 df = convert_data_to_frame(data, df_name)
             except:
                 logger.warning(f'Could not convert {df_name} to `pandas.DataFrame`.')

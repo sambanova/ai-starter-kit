@@ -16,7 +16,12 @@ from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS
-from financial_assistant.src.tools import coerce_str_to_list, convert_data_to_frame, extract_yfinance_data, time_llm
+from financial_assistant.src.tools import (
+    coerce_str_to_list,
+    convert_data_to_frame,
+    extract_yfinance_data,
+    time_llm,
+)
 from financial_assistant.streamlit.constants import *
 
 
@@ -129,6 +134,7 @@ def get_pandasai_answer_from_dataframe(user_query: str, symbol: str, dataframe_n
 
     # Extract the relevant dataframe from the yfinance data dictionary
     data = company_data_dict[dataframe_name]
+
     # Coerce the retrieved data to a `pandas.DataFrame`
     dataframe = convert_data_to_frame(data, dataframe_name)
 

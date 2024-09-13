@@ -78,7 +78,7 @@ def get_stock_data_analysis() -> None:
         f'<span style="color:rgb{SAMBANOVA_ORANGE}">Show selected columns</span>',
         unsafe_allow_html=True,
     )
-    if dataframe_name is not None:
+    if dataframe_name is not None and dataframe_name != 'None':
         dataframe_columns = dataframes_json[dataframe_name]
         columns[1].json(dataframe_columns, expanded=False)
     else:

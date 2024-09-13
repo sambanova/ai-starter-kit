@@ -351,6 +351,9 @@ def convert_data_to_frame(data: Any, df_name: str) -> pandas.DataFrame:
     else:
         raise TypeError(f'Data type {type(data)} not supported.')
 
+    # Sort the dataframe by date
+    df = sort_dataframe_by_date(df)
+
     return df
 
 
@@ -394,6 +397,7 @@ def convert_index_to_column(dataframe: pandas.DataFrame, column_name: Optional[s
     df_new = dataframe.reset_index()
     new_column_list = [column_name] + list(dataframe.columns)
     df_new.columns = new_column_list
+
     return df_new
 
 
@@ -511,3 +515,53 @@ def time_llm(func: F) -> Any:
         return result
 
     return wrapper
+
+
+def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = None) -> pandas.DataFrame:
+    """
+    Sort a pandas DataFrame by chronological dates.
+
+    This function checks if the `datetime` format is present in any of the DataFrame's columns.
+    If more than one column follows the datetime format, it prioritizes the column named 'Date'.
+    If 'Date' is not present, it takes the first occurrence among the columns.
+    The function then orders the rows by chronological dates from the earliest to the latest.
+
+    Args:
+        df: The input dataframe.
+        column_name (Optional): The name of the datetime column to sort by. Defaults to None.
+
+    Returns:
+        The dataframe ordered by the specified datetime column.
+    """
+    # Initialize the variable to store the name of the datetime column to sort by
+    datetime_col = column_name
+
+    if datetime_col is None:
+        # Iterate through the DataFrame columns to find datetime columns
+        for col in df.columns:
+            # Check if the column can be converted to datetime
+            if (
+                pandas.api.types.is_datetime64_any_dtype(df[col])
+                or pandas.to_datetime(df[col], errors='coerce').notna().any()
+            ):
+                # If the 'Date' column is found, select it
+                if col == 'Date':
+                    datetime_col = col
+                    break
+                # Otherwise, set the first datetime column found
+                elif datetime_col is None:
+                    datetime_col = col
+                    break
+
+    # If no datetime columns were found, log a message
+    if datetime_col is None:
+        logger.info('No datetime columns found in the DataFrame.')
+        return df
+
+    # Convert the selected datetime column to datetime type
+    df[datetime_col] = pandas.to_datetime(df[datetime_col])
+
+    # Order the DataFrame by the datetime column
+    df_sorted = df.sort_values(by=datetime_col).reset_index(drop=True)
+
+    return df_sorted
