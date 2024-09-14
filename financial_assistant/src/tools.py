@@ -93,14 +93,16 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
         partial_variables={'format_instructions': conversational_parser.get_format_instructions()},
     )
 
-    # The chain
-    if '405b' in streamlit.session_state.llm.llm.model.lower():
-        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm
-        response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
-    else:
+    try:
+        # The chain
         conversational_chain = conversational_prompt | streamlit.session_state.llm.llm | conversational_parser
         # Get response from the LLM
         response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
+    except:
+        # The chain without the output parser
+        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm
+        # Get response from the LLM
+        response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
 
     return response
 
