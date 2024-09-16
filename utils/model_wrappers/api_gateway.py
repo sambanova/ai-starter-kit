@@ -1,11 +1,12 @@
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Dict
 
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.llms import LLM
+from langchain_core.language_models.chat_models import BaseChatModel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -16,6 +17,7 @@ sys.path.append(repo_dir)
 from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
 from utils.model_wrappers.langchain_llms import SambaStudio
 from utils.model_wrappers.langchain_llms import SambaNovaCloud
+from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True
@@ -209,3 +211,50 @@ class APIGateway:
             raise ValueError(f"Invalid LLM API: {type}, only 'sncloud' and 'sambastudio' are supported.")
 
         return llm
+
+    @staticmethod
+    def load_chat(
+        model: str,
+        streaming: bool = False,
+        max_tokens: int = 1024,
+        temperature: Optional[float] = 0.0,
+        top_p: Optional[float] = None,
+        top_k: Optional[int] = None,
+        stream_options: Optional[Dict[str, bool]] = {"include_usage": True},
+        sambanova_url: Optional[str] = None,
+        sambanova_api_key: Optional[str] = None,
+    ) -> BaseChatModel:
+        """
+        Loads a langchain SambanovaCloud chat model given some parameters
+        Args:
+            model (str): The name of the model to use, e.g., llama3-8b.
+            streaming (bool): whether to use streaming method. Defaults to False.
+            max_tokens (int) : Optional max number of tokens to generate.
+            temperature (float) : Optional model temperature.
+            top_p (float) : Optional model top_p.
+            top_k (int) : Optional model top_k.
+            stream_options (dict) : stream options, include usage to get generation metrics
+
+            sambanova_url (str): Optional SambaNova Cloud URL",
+            sambanova_api_key (str): Optional SambaNovaCloud API key.
+
+        Returns:
+            langchain BaseChatModel
+        """
+
+        envs = {
+                'sambanova_url': sambanova_url,
+                'sambanova_api_key': sambanova_api_key,
+            }
+        envs = {k: v for k, v in envs.items() if v is not None}
+        model = ChatSambaNovaCloud(
+            **envs,
+            model= model,
+            streaming=streaming,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            stream_options=stream_options
+        )
+        return model
