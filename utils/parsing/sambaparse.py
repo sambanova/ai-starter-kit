@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from langchain.docstore.document import Document
 import shutil
 from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
@@ -302,6 +303,16 @@ class SambaParse:
         for file_path in file_paths:
             loader = PyMuPDFLoader(file_path)
             docs = loader.load()
+            
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                length_function=len,
+                separators=['\n\n', '\n', ' ', ''],
+                is_separator_regex=False,
+            )
+            
+            docs = splitter.split_documents(docs)
 
             for doc in docs:
                 text = doc.page_content
