@@ -22,7 +22,8 @@ retrieval:
     "final_k_retrieved_documents": 5
 
 pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
-prod_mode: False
+lite_parsing_mode: True # Set to true for lite pdf parsing mode (use PyMuPdf instead of Sambaparse)
+prod_mode: True
 
 prompts: 
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"

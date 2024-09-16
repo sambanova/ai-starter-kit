@@ -149,7 +149,9 @@ def main():
                     )
                 else:
                     docs = st.file_uploader(
-                        "Add files", accept_multiple_files=True, type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
+                        "Add files", 
+                        accept_multiple_files=True, 
+                        type=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".heic", ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"]
                     )
                 st.markdown("**2. Process your documents and create vector store**")
                 st.markdown(
@@ -160,9 +162,17 @@ def main():
                     with st.spinner("Processing"):
                         try:
                             text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                            if len(text_chunks) == 0:
+                                st.error(
+                                    "No able to get text from the documents. check your docs or try setting lite_parsing_mode to False"
+                                    )
                             embeddings = st.session_state.document_retrieval.load_embedding_model()
                             collection_name = default_collection if not prod_mode else None
-                            vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=None, collection_name=collection_name)
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(
+                                text_chunks, 
+                                embeddings, 
+                                output_db=None, 
+                                collection_name=collection_name)
                             st.session_state.vectorstore = vectorstore
                             st.session_state.document_retrieval.init_retriever(vectorstore)
                             st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
@@ -179,7 +189,12 @@ def main():
                             try:
                                 text_chunks = st.session_state.document_retrieval.parse_doc(docs)
                                 embeddings = st.session_state.document_retrieval.load_embedding_model()
-                                vectorstore = st.session_state.document_retrieval.create_vector_store(text_chunks, embeddings, output_db=save_location, collection_name=default_collection)
+                                vectorstore = st.session_state.document_retrieval.create_vector_store(
+                                    text_chunks,
+                                    embeddings, 
+                                    output_db=save_location, 
+                                    collection_name=default_collection
+                                    )
                                 st.session_state.vectorstore = vectorstore
                                 st.session_state.document_retrieval.init_retriever(vectorstore)
                                 st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
@@ -206,7 +221,10 @@ def main():
                                 try:
                                     embeddings = st.session_state.document_retrieval.load_embedding_model()
                                     collection_name = default_collection if not prod_mode else None
-                                    vectorstore = st.session_state.document_retrieval.load_vdb(db_path, embeddings, collection_name=collection_name)
+                                    vectorstore = st.session_state.document_retrieval.load_vdb(
+                                        db_path, embeddings,
+                                        collection_name=collection_name
+                                        )
                                     st.toast(f"Database loaded{'with collection ' + default_collection if not prod_mode else ''}")
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)

@@ -47,8 +47,6 @@ class SambaParse:
         Returns:
             Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
         """
-        if not self.config["partitioning"]["partition_by_api"]:
-            return self._run_ingest_pymupdf(input_path, additional_metadata)
 
         output_dir = self.config["processor"]["output_dir"]
 
@@ -441,7 +439,7 @@ def get_langchain_docs(texts: List[str], metadata_list: List[Dict]) -> List[Docu
 
 
 def parse_doc_universal(
-    doc: str, additional_metadata: Optional[Dict] = None, source_type: str = "local"
+    doc: str, additional_metadata: Optional[Dict] = None, source_type: str = "local", lite_mode: bool = False
 ) -> Tuple[List[str], List[Dict], List[Document]]:
     """
     Extract text, tables, images, and metadata from a document or a folder of documents.
@@ -451,6 +449,7 @@ def parse_doc_universal(
         additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
             Defaults to an empty dictionary.
         source_type (str, optional): The type of source to ingest. Defaults to 'local'.
+        lite_mode (bool, optional): Whether to use a lighter version (PyMupdf) for pdf parsing.
 
     Returns:
         Tuple[List[str], List[Dict], List[Document]]: A tuple containing:
@@ -470,7 +469,8 @@ def parse_doc_universal(
     wrapper = SambaParse(config_path)
 
     def process_file(file_path):
-        if file_path.lower().endswith('.pdf'):
+        if file_path.lower().endswith('.pdf') and lite_mode:
+            # Use PyMuPDF for PDF parsing (lighter version)
             return wrapper._run_ingest_pymupdf(file_path, additional_metadata)
         else:
             # Use the original method for non-PDF files

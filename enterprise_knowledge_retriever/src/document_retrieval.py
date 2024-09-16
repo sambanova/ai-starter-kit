@@ -133,6 +133,7 @@ class DocumentRetrieval:
         self.retrieval_info = config_info[3]
         self.prompts = config_info[4]
         self.prod_mode = config_info[5]
+        self.lite_parsing_mode = config_info[6]
         self.retriever = None
         self.llm = self.set_llm()
 
@@ -149,8 +150,9 @@ class DocumentRetrieval:
         retrieval_info = config['retrieval']
         prompts = config['prompts']
         prod_mode = config['prod_mode']
+        lite_parsing_mode = config['lite_parsing_mode']
 
-        return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, lite_parsing_mode
 
     def set_llm(self):
         if self.prod_mode:
@@ -212,7 +214,12 @@ class DocumentRetrieval:
                 f.write(doc.getvalue())
 
         # Pass in the temp folder for processing into the parse_doc_universal function
-        _, _, langchain_docs = parse_doc_universal(doc=temp_folder, additional_metadata=additional_metadata)
+        _, _, langchain_docs = parse_doc_universal(
+            doc=temp_folder,
+            additional_metadata=additional_metadata,
+            lite_mode=self.lite_parsing_mode
+            )
+        
         return langchain_docs
 
     def load_embedding_model(self):
