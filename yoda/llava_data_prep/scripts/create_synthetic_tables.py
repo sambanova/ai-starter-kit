@@ -33,7 +33,8 @@ def main() -> None:
 
     if not os.path.exists(LOGS_PATH):
         os.makedirs(LOGS_PATH, exist_ok=True)
-
+    
+    # TODO: add split flag and have both a train and validation json, or split based on split arg.  
     with open(os.path.join(kit_dir, "llava_data_prep", "table_templates/table_templates.json"), "r") as f:
         data = json.load(f)
      
