@@ -24,7 +24,7 @@ table_tools = TableTools()
 
 # columns: str = "\\begin{tabular}{| l c c |}\n\\hline\n"
 
-# synth_tables["AAPL_Country_Revenues"] = """\t*****Three Months\t
+# synth_tables["synth_table"] = """\t*****Three Months\t
 # \tDecember 31,\tDecember 25,
 # \t2022\t2021
 # Americas:*********\t\t
@@ -54,6 +54,10 @@ with open(os.path.join(kit_dir, "llava_data_prep", "table_templates/table_templa
 img_name = "test_table"
 data = table_tools.convert_tsv_to_latex(data["aapl"]["example7"]["columns"], 
                                         data["aapl"]["example7"]["tsv_formatted"])
+
+# Use below if iterating directly in the script.
+# data = table_tools.convert_tsv_to_latex(columns, 
+#                                         synth_tables["synth_table"])
 path = os.path.join(DATA_DIRECTORY, "tmp/images")
 
 table_tools.generate_images(folder_name=path,
