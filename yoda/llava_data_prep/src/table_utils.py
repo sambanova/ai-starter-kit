@@ -693,7 +693,7 @@ class TableTools:
             use_augmentations: Bool to enable image augmentations.
 
         Returns:
-            None.
+            None
         
         Raises:
             TypeError: If folder_name or data are not str.
@@ -862,10 +862,10 @@ class TableAugmentor:
         Use of Llama 3.1 70B and 405B highly recommeneded.
 
         Args:
-            None.
+            None
 
         Returns:
-            None.
+            None
         """
 
         llm = APIGateway.load_llm(
@@ -894,7 +894,7 @@ class TableAugmentor:
             data: The json payload to append.
 
         Returns:
-            None.
+            None
         
         Raises:
             TypeError: If json_path is not a str.
@@ -933,7 +933,7 @@ class TableAugmentor:
                 and the modified tsv format from the templates.
 
         Returns:
-            None.
+            None
 
         Raises:
             TypeError: If num_samples is not int.
