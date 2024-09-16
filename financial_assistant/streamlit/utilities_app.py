@@ -135,15 +135,22 @@ def save_output_callback(
     elif isinstance(response, dict):
         for key, value in response.items():
             with open(filename, 'a') as text_file:
-                if isinstance(value, str):
+                if isinstance(value, (str, float, int)):
                     save_simple_output(value + '\n', filename)
                 elif isinstance(value, list):
                     save_simple_output(', '.join([str(item) for item in value]) + '.' + '\n', filename)
+                elif isinstance(value, (pandas.Series, pandas.DataFrame)):
+                    save_simple_output(value, filename)
+                else:
+                    save_simple_output(value, filename)
 
     # If the response is a tuple, split it up and write each element individually
     elif isinstance(response, tuple):
         for elem in response:
             save_simple_output(response + '\n', filename)
+
+    elif isinstance(response, (pandas.Series, pandas.DataFrame0)):
+        save_simple_output(response, filename)
 
     else:
         raise ValueError('Invalid response type')
@@ -166,22 +173,32 @@ def save_simple_output(
     """
     # If the response is a string or number, write it directly into the text file
     if isinstance(response, (str, float, int)):
+        if isinstance(response, float):
+            response = round(response, 2)
         with open(filename, 'a') as text_file:
             text_file.write(str(response))
 
     # If the response is a Series or DataFrame, convert it to a dictionary and then dump it to a JSON file
     elif isinstance(response, (pandas.Series, pandas.DataFrame)):
-        # Write the dataframe to a CSV file
-        response_dict = response.to_dict()
+        # Convert the response to json
+        json_string = response.to_json(orient='records')
 
-        # Convert the dictionary into a string
-        stripped_string = dump_stripped_json(response_dict)
-
-        # Write the stripped string to a txt file
+        # Write the json string to a txt file
         with open(filename, 'a') as text_file:
-            text_file.write(stripped_string)
+            text_file.write(json_string)
     else:
-        raise ValueError('Invalid response type')
+        try:
+            # Write the dataframe to a CSV file
+            response_dict = response.to_dict()
+
+            # Convert the dictionary into a string
+            stripped_string = dump_stripped_json(response_dict)
+
+            # Write the stripped string to a txt file
+            with open(filename, 'a') as text_file:
+                text_file.write(stripped_string)
+        except:
+            streamlit.warning('Could not save the response.')
 
     # Spaces between elements or closing space
     with open(filename, 'a') as text_file:
@@ -389,7 +406,7 @@ def initialize_session(
     # Initialize cache directory
     if prod_mode:
         if 'cache_dir' not in session_state:
-            session_state.cache_dir = CACHE_DIR[:-1] + '/cache' + f'_{session_state.session_id}/'
+            session_state.cache_dir = CACHE_DIR[:-1] + '_prod_mode' + '/cache' + f'_{session_state.session_id}/'
     else:
         if 'cache_dir' not in session_state:
             session_state.cache_dir = CACHE_DIR

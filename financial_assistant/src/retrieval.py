@@ -2,17 +2,18 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit
 import yaml
-from langchain import hub
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
+from langchain_chroma import Chroma
 from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-from langchain_community.vectorstores import Chroma
 from langchain_core.embeddings import Embeddings
+from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
+from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
 from financial_assistant.src.tools import time_llm
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import _get_config_info
@@ -118,9 +119,13 @@ def get_vectorstore_retriever(
     embedding_model = load_embedding_model(embedding_model_info)
 
     # Instantiate the vectorstore with an explicit in-memory configuration
-    vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
+    try:
+        vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
+    except:
+        streamlit.error('Could not instantiate the vectorstore.')
+        streamlit.stop()
 
-    assert isinstance(vectorstore, Chroma), f'Could not retrieve the vectorstore.'
+    assert isinstance(vectorstore, Chroma), f'Could not instantiate the vectorstore.'
 
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
@@ -147,8 +152,11 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
     assert isinstance(
         retriever, VectorStoreRetriever
     ), f'`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. Got type {type(retriever)}.'
-    # See full prompt at https://smith.langchain.com/hub/langchain-ai/retrieval-qa-chat
-    retrieval_qa_chat_prompt = hub.pull('langchain-ai/retrieval-qa-chat')
+
+    # The Retrieval QA prompt
+    retrieval_qa_chat_prompt = PromptTemplate.from_template(
+        template=QA_RETRIEVAL_PROMPT_TEMPLATE,
+    )
 
     # Create a retrieval-based QA chain
     combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.llm.llm, retrieval_qa_chat_prompt)

@@ -11,9 +11,11 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
-from financial_assistant.src.tools import time_llm
+from financial_assistant.src.tools import get_logger, time_llm
 from financial_assistant.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
+
+logger = get_logger()
 
 
 class SambaNovaLLM:
@@ -260,7 +262,12 @@ class SambaNovaLLM:
             except:
                 continue
 
-        assert invoked_tools is not None, f'Expected a tool to call. Got None.'
+        try:
+            logger.info(invoked_tools[0])
+        except:
+            streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
+            streamlit.stop()
+
         assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
 
         invoked_tool = invoked_tools[0]
