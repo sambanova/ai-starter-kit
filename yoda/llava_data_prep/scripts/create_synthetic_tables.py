@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import argparse
 import pprint
@@ -13,8 +14,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-
-from yoda.llava_data_prep.table_templates.sec_edgar.AAPL import synth_tables
 
 pp = pprint.PrettyPrinter(width=80)
 
@@ -32,9 +31,19 @@ parser.add_argument("--split", type=str, help="Split", default="train", choices=
 
 def main() -> None:
 
-    print(LOGS_PATH)
     if not os.path.exists(LOGS_PATH):
         os.makedirs(LOGS_PATH, exist_ok=True)
+
+    with open(os.path.join(kit_dir, "llava_data_prep", "table_templates/table_templates.json"), "r") as f:
+        data = json.load(f)
+     
+    synth_tables = []
+
+    for company in data.keys():
+        for example in data[company].keys():
+            synth_tables.append(data[company][example])
+
+    synth_tables
 
     args = parser.parse_args()
     logger = logging.getLogger()
