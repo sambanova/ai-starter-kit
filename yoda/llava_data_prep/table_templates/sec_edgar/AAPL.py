@@ -1,7 +1,7 @@
 synth_tables = []
 
 # Template 1: AAPL_Revenue_simple_columns
-ex1 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
+example1 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
 
 "tsv_formatted": """\tThree Months Ended\t
 \tDecember 31,\tDecember 25
@@ -14,10 +14,10 @@ Services(3)\t***20,766\t***19,516
 *Total net sales\t**117,154\t**123,945
 """}
 
-synth_tables.append(ex1)
+synth_tables.append(example1)
 
 # Template 2: AAPL_cash_market_secs
-ex2 = {"columns": "\\begin{tabular}{| l c c c c c c c |}\n\\hline\n",
+example2 = {"columns": "\\begin{tabular}{| l c c c c c c c |}\n\\hline\n",
 
 "tsv_formatted": """\t\t\t\t\tCash and\tCurrent\tNon-Current
 \tAdjusted\tUnrealized\tUnrealized\tFair\tCash\tMarketable\tMarketable
@@ -46,10 +46,10 @@ Level 2:\t\t\t\t\t\t\t
 \\hline\t\t\t\t\t\t\t
 """}
 
-synth_tables.append(ex2)
+synth_tables.append(example2)
 
-# Template 3: AAPL_Country_Revenues
-ex3 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
+# Template 3: AAPL_Country_Revenues FIX
+example3 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
  
 "tsv_formatted": """\t*****Three Months\t
 \tDecember 31,\tDecember 25,
@@ -57,28 +57,28 @@ ex3 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
 Americas:*********\t\t
 *Net sales\t$**49,278\t$**51,496
 *Operating income\t$**17,864\t$**19,585
-\t\t\t
+\t\t
 Europe:*********\t\t
 *Net sales\t$**27,681\t$**29,749
 *Operating income\t$**10,017\t$**11,545
-\t\t\t
+\t\t
 Greater China:*********\t\t
 *Net sales\t$**23,905\t$**25,783
 *Operating income\t$**10,437\t$**11,183
-\t\t\t
+\t\t
 Japan:*********\t\t
 *Net sales\t$**6,755\t$**7,107
 *Operating income\t$**3,236\t$**3,349
-\t\t\t
+\t\t
 Rest of Asia Pacific:*********\t\t
 *Net sales\t$**9,535\t$**9,810
 *Operating income\t$**3,851\t$**3,995
 """}
 
-synth_tables.append(ex3)
+synth_tables.append(example3)
 
 # Template 4: AAPL_XML1
-ex4 = {"columns": "\\begin{tabular}{| >{\\color{blue}}l c c |}\n\\hline\n",
+example4 = {"columns": "\\begin{tabular}{| >{\\color{blue}}l c c |}\n\\hline\n",
  
  "tsv_formatted": """Diluted (in dollars per share)\t$*1.88\t$*2.10
 \\textbf{Shares used in computing earnings per share:}\t\t
@@ -92,10 +92,10 @@ Net sales\t20,766\t19,516
 Cost of sales\t*$*6,057\t*$*5,393
 """}
 
-synth_tables.append(ex4)
+synth_tables.append(example4)
 
 # Template 5: AAPL_Condensed_Consolidated_Balance_Sheets - Became too large, incomplete rows
-ex5 = {"columns": "\\begin{tabular}{| l c c c |}\n\\hline\n",
+example5 = {"columns": "\\begin{tabular}{| l c c c |}\n\\hline\n",
  
  "tsv_formatted": """\t\tApril 1,\tSeptember 24,
 \t\t2023\t2022
@@ -138,10 +138,10 @@ Non-current liabilities:***********\t\t\t
 ***Total liabilities***********\t\t*****270,002\t*****302,083
 """}
 
-synth_tables.append(ex5)
+synth_tables.append(example5)
 
 # Template AAPL_Condensed_Consolidated_Financial_Statements
-ex6 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
+example6 = {"columns": "\\begin{tabular}{| l c c |}\n\\hline\n",
 
 "tsv_formatted": """\\textbf{Inventories}\t\t
 \t\\textbf{April 1,}\t\\textbf{September 24,}
@@ -163,11 +163,11 @@ Accumulated deprecation and amorization**************\t****(69,668)\t****(72,340
 *Total property, plant, and equipment, net**********\t$****43,398\t$****42,117
 """}
 
-synth_tables.append(ex6)
+synth_tables.append(example6)
 
 # Template APPL_Products_and_Services_Performance
 
-ex7 = {"columns": "\\begin{tabular}{| l c c r c c r |}\n\\hline\n",
+example7 = {"columns": "\\begin{tabular}{| l c c r c c r |}\n\\hline\n",
  
 "tsv_formatted": """\\textbf{Products and Services Performance}\t\t\t\t\t\t
 \t\t\\textbf{Three Months Ended}\t\t\\textbf{Six Months Ended}\t\t
@@ -185,5 +185,5 @@ Net sales by category\t\t\t\t\t\t
 **Total new sales**\t$***94,836\t$***97,278\t*****(3)%\t$**211,990\t$**221,223\t*****(4)%
 """}
 
-synth_tables.append(ex7)
+synth_tables.append(example7)
 
