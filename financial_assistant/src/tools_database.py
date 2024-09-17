@@ -45,8 +45,8 @@ class DatabaseSchema(BaseModel):
 @tool(args_schema=DatabaseSchema)
 def create_stock_database(
     company_list: List[str] | str,
-    start_date: datetime.date = datetime.datetime.today().date() - datetime.timedelta(days=365),
-    end_date: datetime.date = datetime.datetime.today().date(),
+    start_date: datetime.date = DEFAULT_START_DATE,
+    end_date: datetime.date = DEFAULT_END_DATE,
 ) -> Dict[str, List[str]]:
     """
     Tool for creating a SQL database for a list of stocks or companies.
@@ -78,9 +78,7 @@ def create_stock_database(
     # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
-    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
-        'Start date must be before the end date.'
-    )
+    assert start_date <= end_date, ValueError('Start date must be before the end date.')
 
     # Extract yfinance data
     company_data_dict = dict()

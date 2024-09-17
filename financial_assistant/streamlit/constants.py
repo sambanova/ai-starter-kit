@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 
@@ -44,6 +45,8 @@ DEFAULT_RAG_QUERY = (
     'Have there been changes in strategy, products, and research for Meta? Can you provide some examples?'
 )
 DEFAULT_PDF_RAG_QUERY = "What conclusions can we draw about Meta's strategy?"
+DEFAULT_START_DATE = datetime.datetime.today().date() - datetime.timedelta(days=365)
+DEFAULT_END_DATE = datetime.datetime.today().date()
 
 # Unit tests
 TEST_DIR = os.path.join(kit_dir, 'tests/')

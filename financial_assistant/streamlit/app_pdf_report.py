@@ -11,7 +11,7 @@ from financial_assistant.src.tools import get_logger
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
 
 logger = get_logger()
 
@@ -424,8 +424,8 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['pdf_rag']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""

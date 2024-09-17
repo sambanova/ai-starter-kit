@@ -11,7 +11,6 @@ Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
-import datetime
 import logging
 import unittest
 from typing import Dict, List, Tuple, Type, TypeVar
@@ -19,15 +18,18 @@ from typing import Dict, List, Tuple, Type, TypeVar
 import pandas
 from matplotlib.figure import Figure
 
+from financial_assistant.src.llm import SambaNovaLLM
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 import streamlit
 
+from financial_assistant.src.tools_database import create_stock_database
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
-from financial_assistant.src.tools_database import create_stock_database, query_stock_database
+from financial_assistant.streamlit.app_stock_database import handle_database_creation
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import initialize_session
 
@@ -41,6 +43,9 @@ class FinancialAssistantTest(unittest.TestCase):
     def setUpClass(cls: Type[T]) -> None:
         # Initialize the session
         initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
+
+        # Initialize the LLM
+        streamlit.session_state.llm = SambaNovaLLM()
 
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""
@@ -68,6 +73,21 @@ class FinancialAssistantTest(unittest.TestCase):
         self.assertIsInstance(response[2], list)
         for item in response[2]:
             self.assertIsInstance(item, str)
+
+    def check_create_stock_database(self, response: Dict[str, List[str]]) -> None:
+        # Assert that the response is a dictionary
+        self.assertIsInstance(response, dict)
+
+        # Assert that the response contains the expected keys
+        self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+
+        # Assert that the response contains the expected values
+        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
+
+        # Assert that each value of the list of tables is a string that starts with the expected prefix
+        for table in response[DEFAULT_COMPANY_NAME.upper()]:
+            self.assertIsInstance(table, str)
+            self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
 
     def test_tools_stock_data(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -106,8 +126,8 @@ class FinancialAssistantTest(unittest.TestCase):
         response = get_historical_price(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
-                'start_date': datetime.datetime.today().date() - datetime.timedelta(days=365),
-                'end_date': datetime.datetime.today().date(),
+                'start_date': DEFAULT_START_DATE,
+                'end_date': DEFAULT_END_DATE,
             }
         )
 
@@ -123,8 +143,8 @@ class FinancialAssistantTest(unittest.TestCase):
         # Invoke the LLM to answer the user's query
         response = handle_stock_data_analysis(
             user_question=query,
-            start_date=datetime.datetime.today().date() - datetime.timedelta(days=365),
-            end_date=datetime.datetime.today().date(),
+            start_date=DEFAULT_START_DATE,
+            end_date=DEFAULT_END_DATE,
         )
 
         # Check the response
@@ -137,15 +157,25 @@ class FinancialAssistantTest(unittest.TestCase):
         response = create_stock_database(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
-                'start_date': datetime.datetime.today().date() - datetime.timedelta(days=365),
-                'end_date': datetime.datetime.today().date(),
+                'start_date': DEFAULT_START_DATE,
+                'end_date': DEFAULT_END_DATE,
             }
         )
 
         # Check the response
-        # self.check_create_stock_database(response)
+        self.check_create_stock_database(response)
 
-        print('The End.')
+    def test_handle_database_creation(self) -> None:
+        """Test for `handle_database_creation`, i.e. function calling for the tool `create_stock_database`."""
+
+        response = handle_database_creation(
+            requested_companies=DEFAULT_COMPANY_NAME,
+            start_date=DEFAULT_START_DATE,
+            end_date=DEFAULT_END_DATE,
+        )
+
+        # Check the response
+        self.check_create_stock_database(response)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import streamlit
 
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
 
 
 def include_financial_filings() -> None:
@@ -106,8 +106,8 @@ def handle_financial_filings(
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['retrieve_filings']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""

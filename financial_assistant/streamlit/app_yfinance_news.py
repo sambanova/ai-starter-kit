@@ -4,7 +4,7 @@ import streamlit
 
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
 
 
 def get_yfinance_news() -> None:
@@ -68,8 +68,8 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         'scrape_yahoo_finance_news',
     ]
 
-    # Attach the tools for the LLM to use
-    attach_tools(
+    # Set the tools for the LLM to use
+    set_llm_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
     )

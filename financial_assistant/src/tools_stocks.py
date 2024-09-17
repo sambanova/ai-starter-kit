@@ -1,5 +1,4 @@
 import datetime
-from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas
@@ -128,8 +127,8 @@ def get_pandasai_answer_from_dataframe(user_query: str, symbol: str, dataframe_n
     # Extract the relevant yfinance data
     company_data_dict = extract_yfinance_data(
         symbol,
-        start_date=datetime.datetime.today().date() - timedelta(days=365),
-        end_date=datetime.datetime.today().date(),
+        start_date=DEFAULT_START_DATE,
+        end_date=DEFAULT_END_DATE,
     )
 
     # Extract the relevant dataframe from the yfinance data dictionary
@@ -306,9 +305,7 @@ def get_historical_price(
     assert isinstance(company_list, (list, str)), TypeError(
         f'`company_list` must be of type list or string. Got {(type(company_list))}.'
     )
-    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
-        'Start date must be before the end date.'
-    )
+    assert start_date <= end_date, ValueError('Start date must be before the end date.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
     company_list = coerce_str_to_list(company_list)

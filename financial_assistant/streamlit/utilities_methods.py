@@ -58,12 +58,12 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
             output_func(stdout.getvalue())
 
 
-def attach_tools(
+def set_llm_tools(
     tools: Optional[List[str]] = None,
     default_tool: Optional[StructuredTool | Tool | Type[BaseModel]] = None,
 ) -> None:
     """
-    Attach the tools to the Streamlit session for the LLM to use.
+    Instantiate the LLM and set the tools for the LLM to use.
 
     Args:
         tools: list of tools to be used.
