@@ -9,3 +9,12 @@ secondaryColor='#3A8EBA'
 
 # Color used for almost all text
 textColor = 'e0e0e0'
+
+[global]
+# If True, will show a warning when you run a Streamlit-enabled script
+# via "python my_script.py".
+# Default: true
+showWarningOnDirectExecution = false
+
+[browser]
+gatherUsageStats = false

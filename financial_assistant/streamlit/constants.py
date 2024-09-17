@@ -37,9 +37,14 @@ YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')
 
 # Define default values for text inputs
 DEFAULT_COMPANY_NAME = 'Meta'
+DEFAULT_DATAFRAME_NAME = 'income_stmt'
 DEFAULT_STOCK_QUERY = 'What is the research and development spending trend for Meta?'
 DEFAULT_HISTORICAL_STOCK_PRICE_QUERY = 'Meta close value'
 DEFAULT_RAG_QUERY = (
     'Have there been changes in strategy, products, and research for Meta? Can you provide some examples?'
 )
 DEFAULT_PDF_RAG_QUERY = "What conclusions can we draw about Meta's strategy?"
+
+# Unit tests
+TEST_DIR = os.path.join(kit_dir, 'tests/')
+TEST_CACHE_DIR = os.path.join(TEST_DIR, 'cache/')
