@@ -420,3 +420,9 @@ We can see from the Gantt chart that the way they're being batched and processed
 # Third-party tools and data sources 
 
 All the packages/tools are listed in the `requirements.txt` file in the project directory.
+
+# TroubleShooting
+
+1. ModuleNotFoundError: No module named 'st_pages'
+
+If you come across this error, please restart your vscode or venv in order for the module to be found.

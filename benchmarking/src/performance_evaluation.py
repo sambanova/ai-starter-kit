@@ -23,6 +23,10 @@ from llmperf.models import RequestConfig, LLMResponse
 import llmperf.utils as utils
 from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 from dotenv import load_dotenv
+from streamlit.runtime.scriptrunner import add_script_run_ctx
+
+from time import sleep
+from stqdm import stqdm
 
 import logging
 
@@ -489,7 +493,10 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         threads = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        progress_bar = stqdm(total=total_request_count,
+                             desc="Running Requests",
+                             mininterval=1)
+        #progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         for request_config_batch in request_config_batches:
             thread = threading.Thread(
@@ -502,9 +509,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 ),
             )
             threads.append(thread)
+            add_script_run_ctx(thread) # Give Streamlit context to thread
             thread.start()
 
         for thread in threads:
+            add_script_run_ctx(thread)
             thread.join()
 
         if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
@@ -742,7 +751,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads = []
         llm_responses = []
-        progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        progress_bar = stqdm(total=total_request_count,
+                             desc="Running Requests",
+                             mininterval=1)
+        #progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
@@ -756,10 +768,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 ),
             )
             threads.append(thread)
+            add_script_run_ctx(thread) # Add Streamlit context to thread
             thread.start()
 
         # Wait for all threads to complete
         for thread in threads:
+            add_script_run_ctx(thread)
             thread.join()
 
         # Error handling
