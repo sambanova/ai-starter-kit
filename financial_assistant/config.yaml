@@ -14,7 +14,7 @@ rag:
     "type": "cpu" # Either "sambastudio" or "cpu"
     "batch_size": 1
     "coe": True
-    "select_expert": "e5-mistral-7b-instruct" # Set if using "sambastudio" CoE embedding expert
+    "select_expert": "e5-mistral-7B-instruct" # Set if using "sambastudio" CoE embedding expert
   retrieval:
     "k_retrieved_documents": 5
 

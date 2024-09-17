@@ -128,6 +128,7 @@ def store_company_dataframes_to_sqlite(
             # Build a table name using the company symbol and the dataframe purpose/type
             table_name = f'{company_base_name}_{df_name}'
             try:
+                # Convert the data to dataframe format
                 df = convert_data_to_frame(data, df_name)
             except:
                 logger.warning(f'Could not convert {df_name} to `pandas.DataFrame`.')
@@ -452,19 +453,25 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     )
 
     # Invoke the chain with the user query and the table summaries
-    max_tokens_to_generate_list = list({streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 256, 128})
+    max_tokens_to_generate_list = list(
+        {streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 512, 256, 128}
+    )
     # Bound the number of tokens to generate based on the config value
     max_tokens_to_generate_list = [
         elem
         for elem in max_tokens_to_generate_list
-        if elem < streamlit.session_state.llm.llm_info['max_tokens_to_generate']
+        if elem <= streamlit.session_state.llm.llm_info['max_tokens_to_generate']
     ]
+
+    # Sort the list in descending order
+    max_tokens_to_generate_list = sorted(max_tokens_to_generate_list, reverse=True)
 
     # Get the Sambanova API key
     sambanova_api_key = get_sambanova_credentials()
 
     # Call the LLM for each number of tokens to generate
     # Return the first valid response
+    table_names = list()
     for item in max_tokens_to_generate_list:
         try:
             # Instantiate the LLM
@@ -486,11 +493,18 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
             assert isinstance(response.table_names, list) and all(
                 [isinstance(elem, str) for elem in response.table_names]
             ), 'Invalid response'
-            return response.table_names
+            table_names = response.table_names
+            break
         except:
             pass
 
-    return list()
+    try:
+        assert len(table_names) > 0
+    except AssertionError:
+        streamlit.error('No relevant SQL tables found.')
+        streamlit.stop()
+
+    return table_names
 
 
 def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:

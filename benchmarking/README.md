@@ -419,11 +419,10 @@ We can see from the Gantt chart that the way they're being batched and processed
 
 # Third-party tools and data sources 
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
 
-- streamlit (version 1.37.0)
-- st-pages (version 0.5.0)
-- transformers (version 4.41.1)
-- python-dotenv (version 1.0.0)
-- Requests (version 2.31.0)
-- seaborn (version 0.12.2)
+# TroubleShooting
+
+1. ModuleNotFoundError: No module named 'st_pages'
+
+If you come across this error, please restart your vscode or venv in order for the module to be found.

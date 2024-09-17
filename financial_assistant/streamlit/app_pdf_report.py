@@ -111,7 +111,7 @@ def include_pdf_report() -> None:
         data_paths['history'] = streamlit.session_state.history_path
 
     # Add title name (optional)
-    title_name = streamlit.text_input('Title Name', 'Financial Report')
+    title_name = streamlit.text_input(label='Title Name', value='Financial Report')
 
     # Include summary for each section
     include_summary = streamlit.checkbox(
@@ -190,15 +190,14 @@ def include_pdf_report() -> None:
                 for idx, file in enumerate(files):
                     with cols[idx]:
                         if streamlit.button(
-                            file,
+                            label=f':green[{file}]' if file in streamlit.session_state.selected_files else file,
                             key=f'file-{idx}',
                             type='primary',
                             on_click=handle_click_selected_file,
                             args=(file,),
-                            disabled=True if file in streamlit.session_state.selected_files else False,
                         ):
                             pass
-                streamlit.write(f"Selected files: {', '.join(streamlit.session_state.selected_files)}")
+                streamlit.write(f"Selected files: :green[{', '.join(streamlit.session_state.selected_files)}]")
 
         elif upload_your_pdf and not use_generated_pdf:
             # Add a PDF document for RAG
@@ -220,71 +219,77 @@ def include_pdf_report() -> None:
                 # Store uploaded files
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file in uploaded_files:
-                    assert isinstance(file, UploadedFile), f'{file} is not instance of UploadedFile.'
+                    if not isinstance(file, UploadedFile):
+                        streamlit.error(f'{file} is not instance of UploadedFile.')
                     with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
                         f.write(file.getbuffer())
 
         # The user request
         user_request = streamlit.text_input(
-            'Enter the info that you want to retrieve for given companies.',
+            label=f'Ask a question about your financial report. :sparkles: :violet[{DEFAULT_PDF_RAG_QUERY}]',
             key='pdf-rag',
-            value="What conclusions can we draw about Meta's strategy?",
+            placeholder='E.g. ' + DEFAULT_PDF_RAG_QUERY,
         )
 
         # Use PDF reports for RAG
         if streamlit.button('Use report for RAG'):
-            if use_generated_pdf and not upload_your_pdf:
-                # Check file selection
-                assert len(streamlit.session_state.selected_files) > 0, 'No file has been selected.'
+            if len(user_request) == 0:
+                streamlit.error('Please enter your query.')
+            else:
+                if use_generated_pdf and not upload_your_pdf:
+                    # Check file selection
+                    if len(streamlit.session_state.selected_files) == 0:
+                        streamlit.error('No file has been selected.')
 
-                # Retrieve the list of selected files
-                selected_files = streamlit.session_state.selected_files
+                    # Retrieve the list of selected files
+                    selected_files = streamlit.session_state.selected_files
 
-                # Display the list of selected files
-                streamlit.write('Selected Files:', selected_files)
-                if len(selected_files) > 0:
-                    # Retrieve the answer
-                    answer = handle_pdf_rag(user_request, selected_files)
+                    # Display the list of selected files
+                    streamlit.write('Selected Files:', selected_files)
+                    if len(selected_files) > 0:
+                        # Retrieve the answer
+                        answer = handle_pdf_rag(user_request, selected_files)
 
-                    # Compose the query and answer string
-                    content = user_request + '\n\n' + answer
+                        # Compose the query and answer string
+                        content = user_request + '\n\n' + answer
 
-                    # Save the query and answer to the PDF RAG text file
-                    if streamlit.button(
-                        'Save Answer',
-                        on_click=save_output_callback,
-                        args=(content, streamlit.session_state.pdf_rag_path),
+                        # Save the query and answer to the PDF RAG text file
+                        if streamlit.button(
+                            'Save Answer',
+                            on_click=save_output_callback,
+                            args=(content, streamlit.session_state.pdf_rag_path),
+                        ):
+                            pass
+
+                elif upload_your_pdf and not use_generated_pdf:
+                    # Check file upload
+                    if len(streamlit.session_state.uploaded_files) == 0:
+                        streamlit.error('No file has been uploaded.')
+
+                    # Retrieve the list of uploaded files
+                    uploaded_file_names = streamlit.session_state.uploaded_files
+
+                    if (
+                        isinstance(uploaded_file_names, list)
+                        and len(uploaded_file_names) > 0
+                        and all(isinstance(item, str) for item in uploaded_file_names)
                     ):
-                        pass
+                        # Display the list of uploaded files
+                        streamlit.write('Uploaded Files:', uploaded_file_names)
 
-            elif upload_your_pdf and not use_generated_pdf:
-                # Check file upload
-                assert len(streamlit.session_state.uploaded_files), 'No file has been uploaded.'
+                        # Retrieve the answer
+                        answer = handle_pdf_rag(user_request, uploaded_file_names)
 
-                # Retrieve the list of uploaded files
-                uploaded_file_names = streamlit.session_state.uploaded_files
+                        # Compose the query and answer string
+                        content = user_request + '\n\n' + answer
 
-                if (
-                    isinstance(uploaded_file_names, list)
-                    and len(uploaded_file_names) > 0
-                    and all(isinstance(item, str) for item in uploaded_file_names)
-                ):
-                    # Display the list of uploaded files
-                    streamlit.write('Uploaded Files:', uploaded_file_names)
-
-                    # Retrieve the answer
-                    answer = handle_pdf_rag(user_request, uploaded_file_names)
-
-                    # Compose the query and answer string
-                    content = user_request + '\n\n' + answer
-
-                    # Save the query and answer to the PDF RAG text file
-                    if streamlit.button(
-                        'Save Answer',
-                        on_click=save_output_callback,
-                        args=(content, streamlit.session_state.pdf_rag_path),
-                    ):
-                        pass
+                        # Save the query and answer to the PDF RAG text file
+                        if streamlit.button(
+                            'Save Answer',
+                            on_click=save_output_callback,
+                            args=(content, streamlit.session_state.pdf_rag_path),
+                        ):
+                            pass
 
 
 def handle_pdf_generation(
@@ -392,7 +397,13 @@ def check_upload_your_pdf() -> None:
 # Function to handle button click
 def handle_click_selected_file(file: str) -> None:
     """Add selected file to the list of selected files."""
-    streamlit.session_state.selected_files.append(file)
+
+    if file not in streamlit.session_state.selected_files:
+        # Add file to the list of selected files
+        streamlit.session_state.selected_files.append(file)
+    else:
+        # Remove file from the list of selected files
+        streamlit.session_state.selected_files = [x for x in streamlit.session_state.selected_files if x != file]
     streamlit.session_state.selected_files = list(set(streamlit.session_state.selected_files))
 
 

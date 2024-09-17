@@ -163,12 +163,6 @@ For further examples, we encourage you to visit any of the following resources:
 - [Awesome chatgpt prompts](https://github.com/f/awesome-chatgpt-prompts)
 - [Smith - Langchain hub](https://smith.langchain.com/hub)
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
+# Third-party tools and data sources
 
-- streamlit (version 1.25.0)
-- langchain (version 0.2.25)
-- python-dotenv (version 1.0.0)
-- sseclient (version 1.8.0)
-- streamlit-extras (version 0.3.6)
-- pydantic (version 2.7.0)
-- pydantic_core (version 2.18.1)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

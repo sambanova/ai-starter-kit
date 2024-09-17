@@ -367,18 +367,4 @@ You can make modifications in the [prompts](./prompts) folder
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (version 1.32.0)
-- pydantic (version 2.7.0)
-- pydantic_core (version 2.18.1)
-- python-dotenv (version 1.0.1)
-- langchain (version 0.2.11)
-- langchain_community (version 0.2.10)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- streamlit-extras
-- sseclient-py (version 1.8.0)
-- unstructured_inference (version 0.7.29)
-- unstructured[pdf] (version 0.13.6)
-- chromadb (version 0.4.24)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

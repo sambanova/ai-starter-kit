@@ -225,6 +225,7 @@ enterprise_knowledge_retriever/output
 
 #financial_assistant
 financial_assistant/streamlit/cache/*
+financial_assistant/streamlit/cache_prod_mode/*
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload

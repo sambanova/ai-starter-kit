@@ -288,3 +288,7 @@ Sentence Transformers for the state-of-the-art models for generating embeddings.
 Chroma for the efficient vector database.
 Streamlit for the easy-to-use framework for creating data apps.
 Matplotlib and Seaborn for data visualization.
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
