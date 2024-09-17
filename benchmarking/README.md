@@ -427,3 +427,9 @@ All the packages/tools are listed in the requirements.txt file in the project di
 - python-dotenv (version 1.0.0)
 - Requests (version 2.31.0)
 - seaborn (version 0.12.2)
+
+# TroubleShooting
+
+1. ModuleNotFoundError: No module named 'st_pages'
+
+If you come across this error, please restart your vscode or venv in order for the module to be found.
