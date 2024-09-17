@@ -166,3 +166,7 @@ This project is licensed under the Apache 2.0 license. See the `LICENSE.md` file
 
 - Sentence Transformers and Hugging Face for their resources and pre-trained models.
 - Inspired by practices from [original embedding fine-tuning repository](https://github.com/run-llama/finetune-embedding/tree/main).
+
+# Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

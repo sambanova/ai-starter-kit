@@ -134,14 +134,4 @@ This starter kit has several distinct steps. Here's what each step does:
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- ipyplot (version 1.1.0 )
-- ftfy (version  4.0.11)
-- python-dotenv (version 1.0.1)
-- scikit-learn (version 1.4.1.post1)
-- chromadb (version 0.4.24)
-- matplotlib (version 3.8.3)
-- streamlit (version 1.32.0)
-- watchdog (version 4.0.0)
-- pillow (version 10.2.0)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

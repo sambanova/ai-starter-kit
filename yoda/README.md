@@ -231,24 +231,4 @@ python src/evaluate.py
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- scikit-learn  (version 1.4.1.post1)
-- jsonlines  (version 4.0.0)
-- transformers (version4.33)
-- wordcloud  (version 1.9.3)
-- sacrebleu  (version 2.4.0)
-- datasets  (version 2.18.0)
-- sqlitedict  (version 2.1.0)
-- accelerate  (version 0.27.2)
-- omegaconf  (version 2.3.0)
-- evaluate  (version 0.4.1)
-- pycountry  (version 23.12.11)
-- rouge_score  (version 0.1.2)
-- parallelformers  (version 1.2.7)
-- peft  (version 0.9.0)
-- plotly (version 5.18.0)
-- langchain (version 0.1.2)
-- pydantic (version1.10.13)
-- python-dotenv (version 1.0.0)
-- sseclient (version 0.0.27)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

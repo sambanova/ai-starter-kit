@@ -136,3 +136,7 @@ https://docs.ragas.io/en/stable/concepts/metrics/index.html
 ## Logging
 
 Results can be logged to Weights & Biases (wandb) by setting the log_wandb parameter in the configuration file.
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

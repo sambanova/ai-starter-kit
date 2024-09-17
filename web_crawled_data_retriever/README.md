@@ -348,14 +348,4 @@ Learn more about prompt engineering [here](https://www.promptingguide.ai/).
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (version 1.25.0)
-- langchain (version 0.2.11)
-- langchain_community (version 0.2.10)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- faiss-cpu (version 1.7.4)
-- python-dotenv (version 1.0.0)
-- beautifulsoup4 (version 4.12.3)
-- html2text (version 2020.1.16)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
