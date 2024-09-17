@@ -56,22 +56,22 @@ The next step is to set up your environment variables to use one of the inferenc
 
 The challenge in fine tuning models of any modality is obtaining high quality, relevant data for the target domain of interest.  In recent years, large language models (LLMs) have been released that have used massive training datasets with prompt completions that cover number of capabilities, including natural, human aligned completions, sturctured outputs, etc.  
 
-Now that were are working with multimodal, in this case image-text, models, we also need to curate instruction tuning data consisting of images and text.  To begin, we recommend iterating on the [generate tables](#./../scripts/generate_tables.py) script to get formatting correct for each table of interest.  Outputs are placed directly in: [synthetic_data/tmp/images](#./../../synthetic_data/tmp/images/) under the yoda folder by default.  You may use the [table_templates.json](#./../table_templates/table_templates.json) file directly and iterate there, or perhaps, more simply, uncomment the placeholder column and table template in the script directly and iterate in that file as needed.  All final templates should be added to [table_templates.json](#./../table_templates/table_templates.json) after iteration.  
+Now that were are working with multimodal, in this case image-text, models, we also need to curate instruction tuning data consisting of images and text.  To begin, we recommend iterating on the [generate tables](./scripts/generate_tables.py) script to get formatting correct for each table of interest.  Outputs are placed directly in: [synthetic_data/tmp/images](./../synthetic_data/tmp/images/) under the yoda folder by default.  You may use the [table_templates.json](./table_templates/table_templates.json) file directly and iterate there, or perhaps, more simply, uncomment the placeholder column and table template in the script directly and iterate in that file as needed.  All final templates should be added to [table_templates.json](#./../table_templates/table_templates.json) after iteration.  
 
-Once building the table templates is complete, proceed to running [create_synthetic_tables](#./../scripts/create_synthetic_tables.py) with flags listed in the [Scripts](#scripts) section.
+Once building the table templates is complete, proceed to running [create_synthetic_tables](./scripts/create_synthetic_tables.py) with flags listed in the [Scripts](#scripts) section.
 
 # Scripts
 
 ## Iteration for table formatting/templating
 
-[generate_tables.py](#./../scripts/generate_tables.py):  This is a utility script that be used to iterate on properly formatting tables as needed.  In particular, it allows users to test if their columns definitions and modified tsv formatted table provide the expected output correctly.  This script is only intended for testing and each table template should be eventually placed in [table_templates.json](#./../table_templates/table_templates.json).
+[generate_tables.py](./scripts/generate_tables.py):  This is a utility script that be used to iterate on properly formatting tables as needed.  In particular, it allows users to test if their columns definitions and modified tsv formatted table provide the expected output correctly.  This script is only intended for testing and each table template should be eventually placed in [table_templates.json](./table_templates/table_templates.json).
 
 ## Generate synthetic tables
 
-[create_synthetic_tables.py](#./../scripts/create_synthetic_tables.py): This script is used to generate synthetic tables, along with logging information for QC.  
+[create_synthetic_tables.py](./scripts/create_synthetic_tables.py): This script is used to generate synthetic tables, along with logging information for QC.  
 
 Flags:
- - --name: The name of the run.  A folder will be created as [logs](#./../logs/) and the name specified with the .log extension.  The logging is set to DEBUG level.
+ - --name: The name of the run.  A folder will be created as "logs" and the name specified with the .log extension.  The logging is set to DEBUG level.
  - --num-its: The number of iterations/synthetic tables to generate.  At present, only online inference is used with no concurrent requests used for batch generation.  
  - --split: Accepts choices of "train" or "val".  At present, this does not control much, other than the naming of the json file created with synthetic prompts data.  There is likely to be contamination until better splitting logic is implemented.
 
