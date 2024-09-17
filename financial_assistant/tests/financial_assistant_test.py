@@ -13,13 +13,13 @@ Returns:
 
 import logging
 import unittest
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Tuple
 
 import pandas
 from matplotlib.figure import Figure
 
 from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.streamlit.utilities_app import create_temp_dir_with_subdirs, delete_temp_dir
+from financial_assistant.streamlit.utilities_app import create_temp_dir_with_subdirs
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,18 +30,14 @@ import streamlit
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
-from financial_assistant.streamlit.app_stock_database import handle_database_creation
+from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import initialize_session
-
-# Create a generic variable that can be 'Parent', or any subclass.
-T = TypeVar('T', bound='FinancialAssistantTest')
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class FinancialAssistantTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls: Type[T]) -> None:
+    def setUp(self) -> None:
         # Initialize the session
         initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
 
@@ -55,6 +51,9 @@ class FinancialAssistantTest(unittest.TestCase):
             streamlit.session_state.pdf_generation_directory,
         ]
         create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+
+        # List of available methods for database query
+        self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
 
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""
@@ -194,6 +193,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_handle_database_creation(self) -> None:
         """Test for `handle_database_creation`, i.e. function calling for the tool `create_stock_database`."""
 
+        # Invoke the LLM to create the database
         response = handle_database_creation(
             requested_companies=DEFAULT_COMPANY_NAME,
             start_date=DEFAULT_START_DATE,
@@ -215,10 +215,7 @@ class FinancialAssistantTest(unittest.TestCase):
             }
         )
 
-        # List of available methods
-        method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
-
-        for method in method_list:
+        for method in self.method_list:
             # Invoke the tool to answer the user' query
             response = query_stock_database(
                 {
@@ -231,8 +228,22 @@ class FinancialAssistantTest(unittest.TestCase):
             # Check the response
             self.check_query_stock_database(response, method)
 
+    def test_handle_database_query(self) -> None:
+        """Test for `handle_database_query`, i.e. function calling for the tool `query_stock_database`."""
+
+        for method in self.method_list:
+            # Invoke the LLM to answer the user' query
+            response = handle_database_query(
+                user_question=DEFAULT_STOCK_QUERY,
+                query_method=method,
+            )
+
+            # Check the response
+            self.check_query_stock_database(response, method)
+
 
 if __name__ == '__main__':
     unittest.main()
 
     # delete_temp_dir(temp_dir=TEST_CACHE_DIR)
+    # HSL
