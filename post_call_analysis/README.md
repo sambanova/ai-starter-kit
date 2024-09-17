@@ -270,20 +270,4 @@ You can customize batch inference by modifying methods in the [analysis](./noteb
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the `requirements.txt` file in the project directory. Some of the main packages are listed below:
-
-- langchain (version 0.2.6)
-- python-dotenv (version 1.0.1)
-- requests (2.31.0)
-- unstructured (0.12.4)
-- sentence_transformers (2.2.2)
-- instructorembedding (1.0.1)
-- faiss-cpu (1.7.4)
-- streamlit (1.31.1)
-- streamlit-extras (0.3.6)
-- watchdog (4.0.0)
-- sseclient (0.0.27)
-- plotly (5.19.0)
-- nbformat (5.9.2)
-- librosa (0.10.1)
-- streamlit_javascript (0.1.5)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
