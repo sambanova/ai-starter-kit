@@ -9,7 +9,6 @@
 # Function Calling kit
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
-
 <!-- TOC -->
 
 - [Function Calling kit](#function-calling-kit)
@@ -21,10 +20,11 @@ This function calling kit is an example of tools calling implementation and a ge
     - [Install dependencies](#install-dependencies)
 - [Use the Function Calling kit](#use-the-function-calling-kit)
     - [Quick start](#quick-start)
-    - [Streamlit App](#streamlit-app)
+        - [Streamlit App](#streamlit-app)
     - [Customizing the Function Calling module](#customizing-the-function-calling-module)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 
+<!-- /TOC -->
 <!-- /TOC -->
 
 # Before you begin
@@ -70,15 +70,33 @@ source function_calling_env/bin/activate
 pip install -r requirements.txt
 ```
 
-# Use the Function Calling kit 
+# Use the Function Calling kit
 
 ## Quick start
+
+### Streamlit App
+
+We provide a simple GUI that allows you to interact with your function calling model
+
+To run it execute the following command 
+
+```bash
+    streamlit run streamlit/app.py --browser.gatherUsageStats false 
+```
+
+After deploying the starter kit GUI App you see the following user interface:
+
+![capture of function calling streamlit application](./docs/function_calling_app.png)
+
+On that page you will be able to select your function calling tools and the max number of iterations available for the model to answer your query.
+
+## Customizing the Function Calling module
 
 We provide a simple module for using the Function Calling LLM, for this you will need:
 
 1. Create your set of tools:
 
-    You should create a set of tools that you want the model to be able to use, those tools, should be langchain tools.
+    You can create a set of tools that you want the model to be able to use, those tools, should be langchain tools.
 
     We provide an example of different langchain integrated tools and implementation of custom tools in [src/tools.py](src/tools.py), and in the [step by step notebook](./notebooks/function_calling_guide.ipynb).
 
@@ -99,25 +117,6 @@ We provide a simple module for using the Function Calling LLM, for this you will
     ```
 
     we provide an [usage notebook](notebooks/usage.ipynb) that you can use as a guide for using the function calling module
-
-
-## Streamlit App
-
-We provide a simple GUI that allows you to interact with your function calling model
-
-To run it execute the following command 
-
-```bash
-    streamlit run streamlit/app.py --browser.gatherUsageStats false 
-```
-
-After deploying the starter kit GUI App you see the following user interface:
-
-![capture of function calling streamlit application](./docs/function_calling_app.png)
-
-On that page you will be able to select your function calling tools and the max number of iterations available for the model to answer your query.
-
-## Customizing the Function Calling module
 
 The example module can be further customized based on the use case.
 

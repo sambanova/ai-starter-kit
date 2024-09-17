@@ -1,3 +1,4 @@
-langchain
-langchain-community==0.2.0
-wandb
+langchain==0.2.16
+langchain-core==0.2.38
+langchain-community==0.2.16
+wandb==0.18.0
