@@ -27,8 +27,8 @@ def handle_user_input(user_question: str) -> None:
         # List of sources
         sources = set(
             [
-                f'{sd.metadata["filename"]} {" - Page "+str(sd.metadata.get("page_number")) \
-                            if sd.metadata.get("page_number")else " - "+sd.metadata["file_directory"].split("/")[-1]}'
+                f"""{sd.metadata["filename"]} {" - Page "+str(sd.metadata.get("page_number")) 
+                            if sd.metadata.get("page_number")else " - "+sd.metadata["file_directory"].split("/")[-1]}"""
                 for sd in response['source_documents']
             ]
         )

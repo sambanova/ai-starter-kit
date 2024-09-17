@@ -128,7 +128,7 @@ def main():
 
         llm_model = st.text_input(
             "Model Name",
-            value="llama3-405b",
+            value="llama3-8b",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
         st.session_state.llm = f"{llm_model}"
@@ -144,7 +144,7 @@ def main():
         )
 
         st.session_state.number_requests = st.number_input(
-            "Number of total requests", min_value=10, max_value=1000, value=32, step=1
+            "Number of total requests", min_value=10, max_value=1000, value=10, step=1
         )
 
         st.session_state.number_concurrent_workers = st.number_input(
