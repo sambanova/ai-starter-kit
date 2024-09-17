@@ -4,184 +4,322 @@ import yaml
 import random
 import time
 import os
+import logging
 
+class GeneralModelTestObject:
+    """
+    A class for managing and testing AI models using SNAPI.
+    """
 
-class GeneralModelTestObject():
     def __init__(self, project, chiparch):
+        """
+        Initialize the GeneralModelTestObject.
+
+        Args:
+            project (str): The project name.
+            chiparch (str): The chip architecture.
+        """
         self.project = project 
         self.arch = chiparch
-        self.forbiddenSweep = {'do_eval', 'evaluation_strategy', 'lr_schedule', 
-                               'save_optimizer_state', 'model_arch_type',
-                               'use_token_type_ids', 'truncate_pattern',
-                               'scheduler_type', 'normalize', 'use_lm_decoding',
-                               'use_number_transcriber', 'prediction_handler',
-                               'max_seq_length'}
-                            #    'debug_mode', 'dump_inputs', 'fix_rank_rdu_mapping'}
+        self.logger = logging.getLogger(__name__)
+        self.forbidden_sweep = {
+            'do_eval', 'evaluation_strategy', 'lr_schedule', 
+            'save_optimizer_state', 'model_arch_type',
+            'use_token_type_ids', 'truncate_pattern',
+            'scheduler_type', 'normalize', 'use_lm_decoding',
+            'use_number_transcriber', 'prediction_handler',
+            'max_seq_length'
+        }
 
-    def model_config_generation_prepare(self, configFile, sampleNum=1):
+    def load_config(self, config_file):
+        """
+        Load configuration from a YAML file.
 
-        resConfigDict = {}
-        
-        with open(configFile, 'r') as f:
-            configDict = yaml.safe_load(f)
+        Args:
+            config_file (str): Path to the configuration file.
 
-            try:
-                configDict.items()
-            except:
-                return resConfigDict
+        Returns:
+            dict: Loaded configuration.
+        """
+        try:
+            with open(config_file, 'r') as f:
+                return yaml.safe_load(f)
+        except FileNotFoundError:
+            self.logger.error(f"Configuration file not found: {config_file}")
+            return {}
+        except yaml.YAMLError as e:
+            self.logger.error(f"Error parsing configuration file: {e}")
+            return {}
+
+    def run_command(self, command, timeout=300):
+        """
+        Run a shell command with timeout and error handling.
+
+        Args:
+            command (str): The command to run.
+            timeout (int): Timeout in seconds.
+
+        Returns:
+            tuple: (success, output, error)
+        """
+        try:
+            result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, text=True)
+            return result.returncode == 0, result.stdout, result.stderr
+        except subprocess.TimeoutExpired:
+            self.logger.error(f"Command timed out after {timeout} seconds: {command}")
+            return False, "", "Timeout"
+        except Exception as e:
+            self.logger.error(f"Error running command: {command}\nError: {str(e)}")
+            return False, "", str(e)
+
+    def model_endpoint(self, modelName):
+        """
+        Create and check the status of a model endpoint.
+
+        Args:
+            modelName (str): Name of the model.
+
+        Returns:
+            tuple: (success, api_key, url)
+        """
+        ins = 1
+        jobname = f"{modelName.replace(' ','-').replace('_','-')}-{ins}ins-endpoint-{self.arch.lower()}".lower()
+
+        create_command = f"snapi endpoint create -p {self.project} -n {jobname} -m '{modelName}' -a {self.arch} -i {ins}"
+        success, output, error = self.run_command(create_command)
+
+        if not success:
+            self.logger.error(f"Failed to create endpoint for {modelName}: {error}")
+            return False, None, None
+
+        self.logger.info(f"Endpoint creation initiated for {modelName}")
+        time.sleep(5)  # Wait for 5 seconds before checking status
+
+        info_command = f"snapi endpoint info -p {self.project} -e {jobname}"
+        success, output, error = self.run_command(info_command)
+
+        if not success:
+            self.logger.error(f"Failed to get endpoint info for {modelName}: {error}")
+            return False, None, None
+
+        api_key = None
+        url = None
+        status = None
+
+        for line in output.splitlines():
+            if 'API Key' in line and 'Keys' not in line:
+                api_key = line.split(': ')[-1]
+            elif 'Status' in line:
+                status = line.split(': ')[-1]
+            elif 'URL' in line:
+                url = line.split(': ')[-1]
+
+        if status == 'Live':
+            return True, api_key, url
+        elif status == 'Failed':
+            self.logger.error(f"Endpoint creation failed for {modelName}")
+            return False, api_key, url
+        else:
+            self.logger.info(f"Endpoint status for {modelName}: {status}. Waiting for it to go live...")
+            return self._wait_for_endpoint(jobname, api_key, url)
+
+    def _wait_for_endpoint(self, jobname, api_key, url, max_attempts=18, wait_time=10):
+        """
+        Wait for an endpoint to become live.
+
+        Args:
+            jobname (str): Name of the job.
+            api_key (str): API key.
+            url (str): Endpoint URL.
+            max_attempts (int): Maximum number of status check attempts.
+            wait_time (int): Time to wait between attempts in seconds.
+
+        Returns:
+            tuple: (success, api_key, url)
+        """
+        command = f"snapi endpoint info -p {self.project} -e {jobname}"
+
+        for _ in range(max_attempts):
+            success, output, _ = self.run_command(command)
+            if success:
+                for line in output.splitlines():
+                    if 'Status' in line:
+                        status = line.split(': ')[-1]
+                        if status == 'Live':
+                            self.logger.info(f"Endpoint {jobname} is now live")
+                            return True, api_key, url
+                        elif status == 'Failed':
+                            self.logger.error(f"Endpoint {jobname} failed to go live")
+                            return False, api_key, url
             
-            for k, v in configDict.items():
-                try:
-                    subkeys = list(configDict[k].keys())
-                except:
-                    # TODO: STOP_SEQUENCE = None
-                    continue
-                if 'values' in subkeys:
-                    if sampleNum > 1:
-                        resConfigDict[k] = configDict[k]['values']
-                    else:
-                        resConfigDict[k] = [configDict[k]['values'][0]]
+            time.sleep(wait_time)
 
-                    if k == 'evaluation_strategy':
-                        resConfigDict[k] = ['steps']
-                elif len(subkeys) == 1:
-                    ##TODO: how to set correct range for a hyperparameter in model info list? 
-                    if 'ge' in subkeys:
-                        try:
-                            if configDict[k]['ge'] == '0' and 'step' not in k:
-                                resConfigDict[k] = [random.uniform(float(configDict[k]['ge']), 1.0) for _ in range(sampleNum)]
-                            else:
-                                resConfigDict[k] = [random.randrange(int(configDict[k]['ge']), int(configDict[k]['ge'])+2) for _ in range(sampleNum)]
-                        except:
-                            resConfigDict[k] = [random.randrange(float(configDict[k]['ge']), float(configDict[k]['ge'])+100.0) for _ in range(sampleNum)] 
-                    elif 'gt' in subkeys:
-                        try:
-                            resConfigDict[k] = [random.randrange(int(configDict[k]['gt'])+0, int(configDict[k]['gt'])+100) for _ in range(sampleNum)]
-                        except:
-                            resConfigDict[k] = [random.randrange(float(configDict[k]['gt'])+0.01, float(configDict[k]['gt'])+100.0) for _ in range(sampleNum)]
-                    if 'le' in subkeys:
-                        try:
-                            resConfigDict[k] = [random.randrange(0, int(configDict[k]['le'])) for _ in range(sampleNum)]
-                        except:
-                            resConfigDict[k] = [random.randrange(0, float(configDict[k]['le'])) for _ in range(sampleNum)]
-                    elif 'lt' in subkeys:
-                        try:
-                            resConfigDict[k] = [random.randrange(0, int(configDict[k]['lt'])) for _ in range(sampleNum)]
-                        except:
-                            resConfigDict[k] = [random.randrange(0, float(configDict[k]['lt'])) for _ in range(sampleNum)]     
-                elif len(subkeys) == 2:
-                    lowerbound = float(configDict[k][subkeys[0]])+ 1e-9
-                    upperbound = float(configDict[k][subkeys[1]])
+        self.logger.error(f"Endpoint {jobname} did not go live within the expected time")
+        return False, api_key, url
 
-                    if upperbound != '1':
-                        resConfigDict[k] = [int(random.uniform(lowerbound, upperbound)) for _ in range(sampleNum)]
-                    else:
-                        resConfigDict[k] = [random.uniform(lowerbound, upperbound) for _ in range(sampleNum)]
+    def model_config_generation_prepare(self, config_file, sample_num=1):
+        """
+        Prepare model configuration based on a config file.
 
-        return resConfigDict
-    
-    def model_config_generation(self, modelName, configFileList, sampleNum=1):
+        Args:
+            config_file (str): Path to the configuration file.
+            sample_num (int): Number of samples to generate for each parameter.
+
+        Returns:
+            dict: Prepared model configuration.
+        """
+        config_dict = self.load_config(config_file)
+        if not config_dict:
+            return {}
+
+        res_config_dict = {}
+
+        for k, v in config_dict.items():
+            if not isinstance(v, dict):
+                continue
+
+            if 'values' in v:
+                res_config_dict[k] = v['values'] if sample_num > 1 else [v['values'][0]]
+                if k == 'evaluation_strategy':
+                    res_config_dict[k] = ['steps']
+            elif len(v) == 1:
+                key, value = next(iter(v.items()))
+                if key in ['ge', 'gt', 'le', 'lt']:
+                    res_config_dict[k] = self._generate_random_values(key, value, sample_num, k)
+            elif len(v) == 2:
+                keys = list(v.keys())
+                lower_bound = float(v[keys[0]]) + 1e-9
+                upper_bound = float(v[keys[1]])
+                res_config_dict[k] = [
+                    int(random.uniform(lower_bound, upper_bound)) if upper_bound != 1 
+                    else random.uniform(lower_bound, upper_bound) 
+                    for _ in range(sample_num)
+                ]
+
+        return res_config_dict
+
+    def _generate_random_values(self, key, value, sample_num, param_name):
+        """
+        Generate random values based on the constraint key and value.
+
+        Args:
+            key (str): Constraint key ('ge', 'gt', 'le', 'lt').
+            value (str): Constraint value.
+            sample_num (int): Number of samples to generate.
+            param_name (str): Name of the parameter.
+
+        Returns:
+            list: Generated random values.
+        """
+        try:
+            value = float(value)
+            if key in ['ge', 'gt']:
+                upper = value + 100 if 'step' not in param_name else value + 2
+                return [random.uniform(value, upper) for _ in range(sample_num)]
+            elif key in ['le', 'lt']:
+                return [random.uniform(0, value) for _ in range(sample_num)]
+        except ValueError:
+            self.logger.warning(f"Invalid value for parameter {param_name}: {value}")
+            return [0] * sample_num
+
+    def model_config_generation(self, modelName, configFileList, sampleNum=1, artifacts_path='../../artifacts/hf/'):
+        """
+        Generate model configurations based on a list of config files.
+
+        Args:
+            modelName (str): Name of the model.
+            configFileList (list): List of configuration file paths.
+            sampleNum (int): Number of samples to generate for each parameter.
+
+        Returns:
+            tuple: (training_hf_l, inference_hf_l)
+        """
         training_hf_l = []
         inference_hf_l = []
 
-
-        if not configFileList or len(configFileList) == 0:
-            return
+        if not configFileList:
+            return training_hf_l, inference_hf_l
 
         for configFile in configFileList:
-            resConfigDict = self.model_config_generation_prepare(configFile, sampleNum=1)
+            resConfigDict = self.model_config_generation_prepare(configFile, sampleNum)
 
             key_l = list(resConfigDict.keys())
             hf_l = [v for k, v in resConfigDict.items()]
             hfcombo_l = list(itertools.product(*hf_l))
 
-            if 'train' in configFile:
-                testType = 'training'
-            elif 'predict' in configFile:
-                testType = 'inference'
+            testType = 'training' if 'train' in configFile else 'inference'
 
             for i, hfitem in enumerate(hfcombo_l):
                 modelName = modelName.replace(' ', '_')
-                filename = f"../../artifacts/hf/{modelName}_{testType}_testcase{i+1}.yaml"
-                # for i, v in enumerate(key_l):
-                #     if i < len(key_l) - 1:
-                #         filename += f"{v.replace('_','')}{hfitem[i]}_"
-                #     else:
-                #         filename += f"{v}{hfitem[i]}.yaml"
+                filename = f"{artifacts_path}/{modelName}_{testType}_testcase{i+1}.yaml"
 
                 if testType == 'training':
                     training_hf_l.append(filename)
                 elif testType == 'inference':
                     inference_hf_l.append(filename)
 
-                f = open(f"{filename}", "w")
-                for i, v in enumerate(key_l):
-                    f.write(f"{v}: {hfitem[i]}\n")
-                f.close()
+                with open(filename, "w") as f:
+                    for i, v in enumerate(key_l):
+                        f.write(f"{v}: {hfitem[i]}\n")
 
         return training_hf_l, inference_hf_l
 
-    def model_config_generation_new(self, modelName, configFileList, MODE='NORMAL'):
+    def model_config_generation_new(self, modelName, configFileList, MODE='NORMAL', artifacts_path='../../artifacts/hf/'):
+        """
+        Generate new model configurations based on a list of config files.
+
+        Args:
+            modelName (str): Name of the model.
+            configFileList (list): List of configuration file paths.
+            MODE (str): Mode of operation ('NORMAL', 'ND', 'CKPT').
+
+        Returns:
+            tuple: (training_hf_l, inference_hf_l)
+        """
         training_hf_l = []
         inference_hf_l = []
 
         modelName = modelName.replace(' ', '_')
 
-        if not configFileList or len(configFileList) == 0:
+        if not configFileList:
             return training_hf_l, inference_hf_l
 
         for configFile in configFileList:
             resConfigDict = {}
 
-            try:
-                f=open(configFile, 'r')
-            except:
+            config_dict = self.load_config(configFile)
+            if not config_dict:
                 continue
 
-            with open(configFile, 'r') as f:
-                configDict = yaml.safe_load(f)
-                print(configDict)
+            for k, v in config_dict.items():
+                if not isinstance(v, dict):
+                    continue
 
-                try:
-                    configDict.items()
-                except:
-                    return training_hf_l, inference_hf_l
-                
-                for k, v in configDict.items():
-                    
-                    try:
-                        subkeys = list(configDict[k].keys())
-                    except:
-                        # TODO: STOP_SEQUENCE = None
-                        continue
-                    if 'values' in subkeys and k not in self.forbiddenSweep:
-                        if k == 'vocab_size' and '300k' not in modelName and 'GPT' in modelName:
-                            resConfigDict[k] = ['50260']
-                        elif k == 'max_seq_length' and '8k' in modelName:
-                            resConfigDict[k] = ['8192']
-                        elif k == 'max_seq_length' and '2k' in modelName:
-                            resConfigDict[k] = ['2048']
-                        elif k == 'max_seq_length' and ('2k' not in modelName and '8k' not in modelName and 'Llama' not in modelName and 'Hubert' not in modelName and '1.5B' not in modelName and 'GPT_13B_Base_Model' not in modelName):
-                            resConfigDict[k] = ['2048']
-                        elif k == 'skip_checkpoint':
-                            resConfigDict[k] = ['true']
-                        else:
-                            if configDict[k]['values'] or len(configDict[k]['values']) > 0:
-                                resConfigDict[k] = configDict[k]['values']
+                if 'values' in v and k not in self.forbidden_sweep:
+                    if k == 'vocab_size' and '300k' not in modelName and 'GPT' in modelName:
+                        resConfigDict[k] = ['50260']
+                    elif k == 'max_seq_length' and '8k' in modelName:
+                        resConfigDict[k] = ['8192']
+                    elif k == 'max_seq_length' and '2k' in modelName:
+                        resConfigDict[k] = ['2048']
+                    elif k == 'max_seq_length' and ('2k' not in modelName and '8k' not in modelName and 'Llama' not in modelName and 'Hubert' not in modelName and '1.5B' not in modelName and 'GPT_13B_Base_Model' not in modelName):
+                        resConfigDict[k] = ['2048']
+                    elif k == 'skip_checkpoint':
+                        resConfigDict[k] = ['true']
+                    else:
+                        if v['values']:
+                            resConfigDict[k] = v['values']
 
             key_l = list(resConfigDict.keys())
             hf_l = [v for k, v in resConfigDict.items()]
             hfcombo_l = list(itertools.product(*hf_l))
 
-            if 'train' in configFile:
-                testType = 'training'
-            elif 'predict' in configFile:
-                testType = 'inference'
+            testType = 'training' if 'train' in configFile else 'inference'
 
             for i, hfitem in enumerate(hfcombo_l):
-                filename = f"../../artifacts/hf/{modelName}_{testType}"
+                filename = f"{artifacts_path}/{modelName}_{testType}"
 
-                if not key_l or len(key_l) == 0:
+                if not key_l:
                     filename += ".yaml"
                 else:
                     for i, v in enumerate(key_l):
@@ -195,612 +333,350 @@ class GeneralModelTestObject():
                 elif testType == 'inference':
                     inference_hf_l.append(filename)
 
-                f = open(f"{filename}", "w")
-
-                if not key_l or len(key_l) == 0:
-                    if 'train' in filename:
-                        if MODE == 'ND':
-                             f.write(f"num_iterations: 10\n")
-                             f.write(f"logging_steps: 1\n")
-                             f.write(f"do_eval: false\n")
-                             f.write(f"skip_checkpoint: true\n")
-                            #  f.write('''evaluation_strategy: "no"\n''')
-                        elif 'CKPT' in MODE:
-                             f.write(f"num_iterations: 10\n")
-                             f.write(f"logging_steps: 1\n")
-                             f.write(f"do_eval: false\n")
-                             if '1.5b' not in modelName.lower():
-                                f.write(f"skip_checkpoint: false\n")
-                             f.write(f"save_optimizer_state: true\n")
-                             f.write(f"save_steps: 10\n")
-                             f.write(f"evaluation_strategy: no\n")
-                        else:
-                            # the following models are very slow 300 iteration/sec, so just run 10 steps
-                            if 'llama-2-13b' in modelName.lower() or \
-                               'llama-2-7b-16k' in modelName.lower() or \
-                               'llama-2-7b-chat-16k' in modelName.lower():
-                                f.write(f"num_iterations: 10\n")
-                            else:
-                                f.write(f"num_iterations: 10\n")
-
-                    f.close()
-
-                else:
-                    for i, v in enumerate(key_l):
-                        if 'CKPT' not in MODE:
-                            f.write(f"{v}: {hfitem[i]}\n")
-                        if 'train' in filename and ('gpt' in filename.lower() or 'llama' in filename.lower()):
+                with open(filename, "w") as f:
+                    if not key_l:
+                        if 'train' in filename:
                             if MODE == 'ND':
-                                f.write(f"num_iterations: 10\n")
-                                f.write(f"logging_steps: 1\n")
-                                f.write(f"do_eval: false\n")
-                                f.write(f"skip_checkpoint: true\n")
-                                #  f.write('''evaluation_strategy: "no"\n''')
+                                f.write(f"num_iterations: 10\nlogging_steps: 1\ndo_eval: false\nskip_checkpoint: true\n")
                             elif 'CKPT' in MODE:
-                                f.write(f"num_iterations: 10\n")
-                                f.write(f"logging_steps: 1\n")
-                                f.write(f"do_eval: false\n")
+                                f.write(f"num_iterations: 10\nlogging_steps: 1\ndo_eval: false\n")
                                 if '1.5b' not in modelName.lower():
                                     f.write(f"skip_checkpoint: false\n")
-                                f.write(f"save_optimizer_state: true\n")
-                                f.write(f"save_steps: 10\n")
-                                f.write(f"evaluation_strategy: no\n")
+                                f.write(f"save_optimizer_state: true\nsave_steps: 10\nevaluation_strategy: no\n")
                             else:
-                                # the following models are very slow 300 iteration/sec, so just run 10 steps
-                                if 'llama-2-13b' in modelName.lower() or \
-                                'llama-2-7b-16k' in modelName.lower() or \
-                                'llama-2-7b-chat-16k' in modelName.lower():
+                                if any(model in modelName.lower() for model in ['llama-2-13b', 'llama-2-7b-16k', 'llama-2-7b-chat-16k']):
                                     f.write(f"num_iterations: 10\n")
                                 else:
                                     f.write(f"num_iterations: 10\n")
-                                f.write(f"skip_checkpoint: true\n")
-                    f.close()
+                    else:
+                        for i, v in enumerate(key_l):
+                            if 'CKPT' not in MODE:
+                                f.write(f"{v}: {hfitem[i]}\n")
+                            if 'train' in filename and ('gpt' in filename.lower() or 'llama' in filename.lower()):
+                                if MODE == 'ND':
+                                    f.write(f"num_iterations: 10\nlogging_steps: 1\ndo_eval: false\nskip_checkpoint: true\n")
+                                elif 'CKPT' in MODE:
+                                    f.write(f"num_iterations: 10\nlogging_steps: 1\ndo_eval: false\n")
+                                    if '1.5b' not in modelName.lower():
+                                        f.write(f"skip_checkpoint: false\n")
+                                    f.write(f"save_optimizer_state: true\nsave_steps: 10\nevaluation_strategy: no\n")
+                                else:
+                                    if any(model in modelName.lower() for model in ['llama-2-13b', 'llama-2-7b-16k', 'llama-2-7b-chat-16k']):
+                                        f.write(f"num_iterations: 10\n")
+                                    else:
+                                        f.write(f"num_iterations: 10\n")
+                                    f.write(f"skip_checkpoint: true\n")
 
         return training_hf_l, inference_hf_l
 
     def model_training(self, fileHandler, training_hf_l, modelName, dataName, RDU=1, SWEEP='N'):
-        
-        res = 'None'
+        """
+        Run model training jobs.
 
-        if len(training_hf_l) == 0 or SWEEP=='N':
-            if 'GPT' in modelName and ('8k' in modelName.lower() or '8192' in modelName.lower()) and '8k' not in dataName.lower():
-                print(self.project, modelName, 'Training', 'DataMismatch', dataName, SWEEP, 'None', command)
-                fileHandler.write(f"{self.project},{modelName},{modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName},Training,'DataMismatch',{dataName},{SWEEP},None,{command.replace(',',' ')}\n")
+        Args:
+            fileHandler: File handler for logging.
+            training_hf_l (list): List of training hyperparameter files.
+            modelName (str): Name of the model.
+            dataName (str): Name of the dataset.
+            RDU (int): Number of RDUs to use.
+            SWEEP (str): Sweep mode.
+
+        Returns:
+            fileHandler: Updated file handler.
+        """
+        if len(training_hf_l) == 0 or SWEEP == 'N':
+            if self._is_data_mismatch(modelName, dataName):
+                self._log_data_mismatch(fileHandler, modelName, dataName, SWEEP)
                 return fileHandler
-            
-            if 'GPT' in modelName and ('2k' in modelName.lower() or '2048' in modelName.lower()) and '8k' in dataName.lower():
-                print(self.project, modelName, 'Training', 'DataMismatch', dataName, SWEEP, 'None', command)
-                fileHandler.write(f"{self.project},{modelName},{modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName},Training,'DataMismatch',{dataName},{SWEEP},None,{command.replace(',',' ')}\n")
-                return fileHandler
 
-            command = "snapi job create " + \
-                        f"-p {self.project} " + \
-                        f"-j {modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName}_rdu{RDU} " + \
-                        f"-t train " + \
-                        f"-m '{modelName}' " + \
-                        f"-d {dataName} " + \
-                        f"-r {RDU} " + \
-                        f"-a {self.arch} " + \
-                        ''' -hp '{"num_iterations":"10", "skip_checkpoint": "true", "save_optimizer_state": "false"}' '''
-
-            res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = res.communicate()
-            
-            if error:
-                print("Error:", error.decode())
-
-            for line in output.decode().splitlines():
-                if 'Successfully created' in line:
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in line:
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    break
-            print(self.project, modelName, 'Training', res, dataName, SWEEP, 'None', command)
-            fileHandler.write(f"{self.project},{modelName},{modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName}_rdu{RDU},Training,{res},{dataName},{SWEEP},None,{command.replace(',',' ')}\n")
-            
+            command = self._build_training_command(modelName, dataName, RDU, SWEEP)
+            res = self._run_snapi_command(command)
+            self._log_training_result(fileHandler, modelName, res, dataName, SWEEP, RDU, command)
             return fileHandler
 
         for hf in training_hf_l:
-            # TODO: GPT 13B dataset confusion from Modelbox, just for now. Delete it.
-            if 'GPT' in hf and ('8k' in hf.lower() or '8192' in hf.lower()) and '8k' not in dataName.lower():
-                continue
-            if 'GPT' in hf and ('2k' in hf.lower() or '2048' in hf.lower()) and '8k' in dataName.lower():
+            if self._is_data_mismatch(modelName, dataName, hf):
                 continue
 
-            jobname = hf.split('.yaml')[0].split('../../artifacts/hf/')[-1] + f"_{dataName.replace(' ','').replace('_','')}_{RDU}rdu_sweep_{SWEEP}"
-
-            if SWEEP != 'N':
-                command = "snapi job create " + \
-                        f"-p {self.project} " + \
-                        f"-j {jobname} " + \
-                        f"-t train " + \
-                        f"-m '{modelName}' " + \
-                        f"-d {dataName} " + \
-                        f"-hf {hf} " + \
-                        f"-r {RDU} " + \
-                        f"-a {self.arch}"
-            else:
-                command = "snapi job create " + \
-                        f"-p {self.project} " + \
-                        f"-j {jobname} " + \
-                        f"-t train " + \
-                        f"-m '{modelName}' " + \
-                        f"-d {dataName} " + \
-                        f"-r {RDU} " + \
-                        f"-a {self.arch}"
-                                    
-            res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = res.communicate()
-            
-            if error:
-                print("Error:", error.decode())
-
-            for line in output.decode().splitlines():
-                if 'Successfully created' in line:
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in line:
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    break
-
-            print(self.project, modelName, 'Training', res, dataName, SWEEP, hf, command)
-            if SWEEP == 'N':
-                fileHandler.write(f"{self.project},{modelName},{jobname},Training,{res},{dataName},{SWEEP},None,{command}\n")
-            else:
-                fileHandler.write(f"{self.project},{modelName},{jobname},Training,{res},{dataName},{SWEEP},{hf},{command}\n")
+            jobname = self._generate_job_name(hf, dataName, RDU, SWEEP)
+            command = self._build_training_command(modelName, dataName, RDU, SWEEP, hf, jobname)
+            res = self._run_snapi_command(command)
+            self._log_training_result(fileHandler, modelName, res, dataName, SWEEP, RDU, command, hf, jobname)
 
         return fileHandler
+
+    def _is_data_mismatch(self, modelName, dataName, hf=None):
+        """Check if there's a mismatch between model and data."""
+        if 'GPT' in (hf or modelName):
+            if ('8k' in (hf or modelName).lower() or '8192' in (hf or modelName).lower()) and '8k' not in dataName.lower():
+                return True
+            if ('2k' in (hf or modelName).lower() or '2048' in (hf or modelName).lower()) and '8k' in dataName.lower():
+                return True
+        return False
+
+    def _log_data_mismatch(self, fileHandler, modelName, dataName, SWEEP):
+        """Log a data mismatch error."""
+        message = f"{self.project},{modelName},{modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName},Training,'DataMismatch',{dataName},{SWEEP},None,N/A\n"
+        fileHandler.write(message)
+        self.logger.warning(f"Data mismatch detected for {modelName} with {dataName}")
+
+    def _build_training_command(self, modelName, dataName, RDU, SWEEP, hf=None, jobname=None):
+        """Build the SNAPI command for training."""
+        command = f"snapi job create -p {self.project} "
+        command += f"-j {jobname or modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName}_rdu{RDU} "
+        command += f"-t train -m '{modelName}' -d {dataName} -r {RDU} -a {self.arch} "
+        if hf and SWEEP != 'N':
+            command += f"-hf {hf} "
+        else:
+            command += '''-hp '{"num_iterations":"10", "skip_checkpoint": "true", "save_optimizer_state": "false"}' '''
+        return command
+
+    def _run_snapi_command(self, command):
+        """Run a SNAPI command and return the result."""
+        success, output, error = self.run_command(command)
+        if not success:
+            self.logger.error(f"SNAPI command failed: {error}")
+            return 'Failed'
+        if 'Successfully created' in output:
+            return 'Succeed'
+        elif 'Duplicate job' in output:
+            return 'Duplicated'
+        else:
+            return 'Failed'
+
+    def _log_training_result(self, fileHandler, modelName, res, dataName, SWEEP, RDU, command, hf=None, jobname=None):
+        """Log the result of a training job."""
+        log_message = f"{self.project},{modelName},{jobname or modelName.replace(' ', '_')}_training_sweep_{SWEEP}_{dataName}_rdu{RDU},Training,{res},{dataName},{SWEEP},{hf or 'None'},{command}\n"
+        fileHandler.write(log_message)
+        self.logger.info(f"Training job result for {modelName}: {res}")
+
+    def _generate_job_name(self, hf, dataName, RDU, SWEEP):
+        """Generate a job name based on the hyperparameter file and other parameters."""
+        return f"{hf.split('.yaml')[0].split('../../artifacts/hf/')[-1]}_{dataName.replace(' ','').replace('_','')}_{RDU}rdu_sweep_{SWEEP}"
 
     def model_inference(self, fileHandler, inference_hf_l, modelName, dataName, SWEEP='N'):
+        """
+        Run model inference jobs.
 
-        res = 'None'
+        Args:
+            fileHandler: File handler for logging.
+            inference_hf_l (list): List of inference hyperparameter files.
+            modelName (str): Name of the model.
+            dataName (str): Name of the dataset.
+            SWEEP (str): Sweep mode.
 
+        Returns:
+            fileHandler: Updated file handler.
+        """
         if len(inference_hf_l) == 0 or SWEEP == 'N':
-            command = "snapi job create " + \
-                        f"-p {self.project} " + \
-                        f"-j {modelName.replace(' ', '_')}_inference_sweep_{SWEEP}_{dataName} " + \
-                        f"-t batch_predict " + \
-                        f"-m '{modelName}' " + \
-                        f"-d {dataName} " + \
-                        f"-a {self.arch}"
-            print("=======command: ", command)
-            res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = res.communicate()
-            
-            if error:
-                print("Error:", error.decode())
-
-            for line in output.decode().splitlines():
-                if 'Successfully created' in line:
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in line:
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    break
-            print("====job info: ", self.project, modelName, 'Inference', res, dataName, SWEEP, 'None', command)
-            fileHandler.write(f"{self.project},{modelName},{modelName.replace(' ', '_')}_inference_sweep_{SWEEP}_{dataName},Inference,{res},{dataName},{SWEEP},None,{command}\n")
+            command = self._build_inference_command(modelName, dataName)
+            res = self._run_snapi_command(command)
+            self._log_inference_result(fileHandler, modelName, res, dataName, SWEEP, command)
             return fileHandler
-        
+
         for hf in inference_hf_l:
-
-            jobname = hf.split('.yaml')[0].split('../../artifacts/hf/')[-1] + f"_{dataName.replace(' ','').replace('_','')}_sweep_{SWEEP}"
-
-            if os.stat(hf).st_size == 0:
-                command = "snapi job create " + \
-                        f"-p {self.project} " + \
-                        f"-j {jobname} " + \
-                        f"-t batch_predict " + \
-                        f"-m '{modelName}' " + \
-                        f"-d {dataName} " + \
-                        f"-a {self.arch}"
-            
-                res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = res.communicate()
-
-            else:
-                if SWEEP != 'N':
-                    command = "snapi job create " + \
-                            f"-p {self.project} " + \
-                            f"-j {jobname} " + \
-                            f"-t batch_predict " + \
-                            f"-m '{modelName}' " + \
-                            f"-d {dataName} " + \
-                            f"-hf {hf} " + \
-                            f"-a {self.arch}"
-                else:
-                    command = "snapi job create " + \
-                            f"-p {self.project} " + \
-                            f"-j {jobname} " + \
-                            f"-t batch_predict " + \
-                            f"-m '{modelName}' " + \
-                            f"-d {dataName} " + \
-                            f"-a {self.arch}"
-                
-                res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = res.communicate()
-            
-            if error:
-                print("Error:", error.decode())
-
-            for line in output.decode().splitlines():
-                if 'Successfully created' in line:
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in line:
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    break
-            print(self.project, modelName, 'Inference', res, dataName, SWEEP, hf, command)
-            if SWEEP == 'N':
-                fileHandler.write(f"{self.project},{modelName},{jobname},Inference,{res},{dataName},{SWEEP},None,{command}\n")
-            else:
-                fileHandler.write(f"{self.project},{modelName},{jobname},Inference,{res},{dataName},{SWEEP},{hf},{command}\n")
+            jobname = self._generate_inference_job_name(hf, dataName, SWEEP)
+            command = self._build_inference_command(modelName, dataName, SWEEP, hf, jobname)
+            res = self._run_snapi_command(command)
+            self._log_inference_result(fileHandler, modelName, res, dataName, SWEEP, command, hf, jobname)
 
         return fileHandler
-    
-    def model_endpoint(self, modelName):
-        ins = 1
-        jobname = f"{modelName.replace(' ','-').replace('_','-')}-{ins}ins-endpoint-{self.arch.lower()}".lower()
-        # #TODO: DELETE
-        # modelName = modelName.split('_')[0]
 
-        try:
-            command = "snapi endpoint create " + \
-                        f"-p {self.project} " + \
-                        f"-n {jobname} " + \
-                        f"-m '{modelName}' " + \
-                        f"-a {self.arch} " + \
-                        f"-i {ins} "
-            
-            print(command)
-            
-            res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = res.communicate()
-        except:
-            print("no model !!!!!!!!")
-            return False, None, None
+    def _build_inference_command(self, modelName, dataName, SWEEP='N', hf=None, jobname=None):
+        """Build the SNAPI command for inference."""
+        command = f"snapi job create -p {self.project} "
+        command += f"-j {jobname or modelName.replace(' ', '_')}_inference_sweep_{SWEEP}_{dataName} "
+        command += f"-t batch_predict -m '{modelName}' -d {dataName} -a {self.arch} "
+        if hf and SWEEP != 'N' and os.path.getsize(hf) > 0:
+            command += f"-hf {hf} "
+        return command
 
-        if error:
-            print("Error:", error.decode())
-        else:
-            for line in output.decode().splitlines():
-                if 'Successfully' in str(line):
-                    time.sleep(5)
-                else:
-                    return False, None, None
+    def _log_inference_result(self, fileHandler, modelName, res, dataName, SWEEP, command, hf=None, jobname=None):
+        """Log the result of an inference job."""
+        log_message = f"{self.project},{modelName},{jobname or modelName.replace(' ', '_')}_inference_sweep_{SWEEP}_{dataName},Inference,{res},{dataName},{SWEEP},{hf or 'None'},{command}\n"
+        fileHandler.write(log_message)
+        self.logger.info(f"Inference job result for {modelName}: {res}")
 
-        # check info of endpoint and extract info
-        command = f"snapi endpoint info -p {self.project} -e {jobname}"
+    def _generate_inference_job_name(self, hf, dataName, SWEEP):
+        """Generate a job name for inference based on the hyperparameter file and other parameters."""
+        return f"{hf.split('.yaml')[0].split('../../artifacts/hf/')[-1]}_{dataName.replace(' ','').replace('_','')}_sweep_{SWEEP}"
 
-        url = None
-        apikey = None
-        status = None
-
-        counter = 1
-
-        res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        output, error = res.communicate()
-
-        if error:
-            print("Error:", error.decode())
-        else:
-            for line in output.decode().splitlines():
-                if 'API Key' in str(line) and 'Keys' not in str(line):
-                    tmp = str(line).split(': ')
-                    apikey = tmp[-1]
-                elif 'Status' in str(line):
-                    tmp = str(line).split(': ')
-                    status = tmp[-1]
-                elif 'URL' in str(line):
-                    tmp = str(line).split(': ')
-                    url = tmp[-1]
-
-        if status == 'Live':
-            return True, apikey, url
-        elif status == 'Failed':
-            return False, apikey, url
-        else:
-            while status != 'Live' and status != 'Failed' and counter <= 90:
-                res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = res.communicate()
-                if error:
-                    print("Error:", error.decode())
-                else:
-                    for line in output.decode().splitlines():
-                        if 'Status' in str(line):
-                            tmp = str(line).split(': ')
-                            status = tmp[-1]
-                            break
-                    time.sleep(10)
-                    counter += 1
-
-            if counter == 91:
-                print(f"{jobname} is NOT alive.")
-                return False, apikey, url
-            else:
-                print(f"{jobname} is alive.")
-                return True, apikey, url
-            
     def model_ndscreening(self, fileHandler, training_hf_l, modelName, dataName, RDU=1, NUMRDU=8):
-        
-        res = 'None'
+        """
+        Run model screening jobs.
 
+        Args:
+            fileHandler: File handler for logging.
+            training_hf_l (list): List of training hyperparameter files.
+            modelName (str): Name of the model.
+            dataName (str): Name of the dataset.
+            RDU (int): Number of RDUs to use.
+            NUMRDU (int): Total number of RDUs available.
+
+        Returns:
+            tuple: (fileHandler, jobname_list)
+        """
         if len(training_hf_l) == 0:
-            print(f"There is no training hf for model {modelName}.")
+            self.logger.warning(f"No training hyperparameter files found for model {modelName}.")
             return None, None
-                
-        for hf in training_hf_l:
-            # TODO: GPT 13B dataset confusion from Modelbox, just for now. Delete it.
-            if 'GPT' in hf and ('8k' in hf.lower() or '8192' in hf.lower()) and '8k' not in dataName.lower():
-                continue
-            if 'GPT' in hf and ('2k' in hf.lower() or '2048' in hf.lower()) and '8k' in dataName.lower():
-                continue
-            
-            numtests = int(NUMRDU/RDU)
 
-            jobname_list = []
+        jobname_list = []
+        numtests = int(NUMRDU/RDU)
+
+        for hf in training_hf_l:
+            if self._is_data_mismatch(modelName, dataName, hf):
+                continue
 
             if ('8k' in hf or '8192' in hf) and 'GPT' in hf:
                 dataName = 'GPT_13B_8k_SS_Toy_Training_Dataset'
 
             for i in range(numtests):
-                jobname = hf.split('.yaml')[0].split('../../artifacts/hf/')[-1] + f"_{dataName.replace(' ','').replace('_','')}_{RDU}rdu_test_{i}"
-                
-                command = "snapi job create " + \
-                            f"-p {self.project} " + \
-                            f"-j {jobname} " + \
-                            f"-t train " + \
-                            f"-m '{modelName}' " + \
-                            f"-d {dataName} " + \
-                            f"-hf {hf} " + \
-                            f"-r {RDU} " + \
-                            f"-a {self.arch}"
-                
-                res = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = res.communicate()
+                jobname = self._generate_screening_job_name(hf, dataName, RDU, i)
+                command = self._build_screening_command(modelName, dataName, RDU, hf, jobname)
+                res = self._run_snapi_command(command)
+                self._log_screening_result(fileHandler, modelName, res, dataName, hf, command, jobname)
+                if res == 'Succeed':
+                    jobname_list.append(jobname)
 
-                if error:
-                    print("Error:", error.decode())
+        return fileHandler, jobname_list
 
-                for line in output.decode().splitlines():
-                    if 'Successfully created' in line:
-                        res = 'Succeed'
-                        jobname_list.append(jobname)
-                        break
-                    elif 'Duplicate job' in line:
-                        res = 'Duplicated'
-                        break
-                    else:
-                        res = 'Failed'
-                        break
+    def _generate_screening_job_name(self, hf, dataName, RDU, i):
+        """Generate a job name for screening based on the hyperparameter file and other parameters."""
+        return f"{hf.split('.yaml')[0].split('../../artifacts/hf/')[-1]}_{dataName.replace(' ','').replace('_','')}_{RDU}rdu_test_{i}"
 
-                print(self.project, modelName, 'Training', res, dataName, hf, command)
+    def _build_screening_command(self, modelName, dataName, RDU, hf, jobname):
+        """Build the SNAPI command for screening."""
+        return f"snapi job create -p {self.project} -j {jobname} -t train -m '{modelName}' -d {dataName} -hf {hf} -r {RDU} -a {self.arch}"
 
-                fileHandler.write(f"{self.project},{modelName},{jobname},Training,{res},{dataName},{hf},{command}\n")
+    def _log_screening_result(self, fileHandler, modelName, res, dataName, hf, command, jobname):
+        """Log the result of a screening job."""
+        log_message = f"{self.project},{modelName},{jobname},Training,{res},{dataName},{hf},{command}\n"
+        fileHandler.write(log_message)
+        self.logger.info(f"Screening job result for {modelName}: {res}")
 
-            return fileHandler, jobname_list
-        
     def model_loadckpt(self, hf, modelName, dataName, RDU=1):
-        
+        """
+        Load a checkpoint and run a training job.
+
+        Args:
+            hf (str): Hyperparameter file path.
+            modelName (str): Name of the model.
+            dataName (str): Name of the dataset.
+            RDU (int): Number of RDUs to use.
+
+        Returns:
+            str: Result of the job ('Success', 'Fail', 'InitTrainingFailed', or 'NoCKPT')
+        """
         if ('8k' in hf or '8192' in hf) and 'GPT' in hf:
             dataName = 'GPT_13B_8k_SS_Toy_Training_Dataset'
 
-        # launch training job
-        jobname = hf.split('.yaml')[0].split('../../artifacts/hf/')[-1] + f"_{dataName.replace(' ','').replace('_','')}_{RDU}rdu"
+        jobname = self._generate_loadckpt_job_name(hf, dataName, RDU)
+        command = self._build_loadckpt_command(modelName, dataName, RDU, hf, jobname)
         
-        command = "snapi job create " + \
-                    f"-p {self.project} " + \
-                    f"-j {jobname} " + \
-                    f"-t train " + \
-                    f"-m '{modelName}' " + \
-                    f"-d {dataName} " + \
-                    f"-hf {hf} " + \
-                    f"-r {RDU} " + \
-                    f"-a {self.arch}"
+        res = self._run_snapi_command(command)
+        if res != 'Succeed':
+            return 'InitTrainingFailed'
 
-        print("!!!!!!!!!!!!!!!", command)
+        self.logger.info(f"Initial training job created for {modelName}")
 
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        output, error = process.communicate()
-
-        if error:
-            print("Error:", error.decode())
-        else:
-            for line in output.decode().splitlines():
-                print(str(line))
-                if 'Successfully created' in str(line):
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in str(line):
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    return 'InitTrainingFailed'   
-
-        print(self.project, modelName, 'Training', res, dataName, hf, command)
-
-        # check training job until it's done
-        flag = 1
-        ckptflag = 1
-
-        if res == 'Succeed':
-            while flag:
-                command = f"snapi job info -p {self.project} -j {jobname}" 
-
-                process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = process.communicate()
-
-                if error:
-                    print("Error:", error.decode())
-                else:
-                    for line in output.decode().splitlines():
-                        if 'Status' in str(line):
-                            tmp = [i for i in str(line).split(' ') if i]
-                            
-                            if 'STOPPED' in tmp[2]:
-                                ckptflag = 0
-                                flag = 0
-                                break
-                            elif 'EXIT_WITH_0' not in tmp[2] and 'FAILED' not in tmp[2]:
-                                print(f"job current status: {tmp[2]}, please wait 2 more minutes before next check.")
-                                time.sleep(120)
-                                break
-                            elif 'FAILED' in tmp[2]:
-                                ckptflag = 0
-                                flag = 0
-                            elif 'EXIT_WITH_0' in tmp[2]:
-                                ckptflag = 1
-                                flag = 0
-        
-        # check checkpoint info
-        ckptid = None
-
-        if ckptflag == 1:
-            command = f"snapi checkpoint list -p {self.project} -j {jobname}"
-            
-            ckptid = None
-
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = process.communicate()
-
-            if error:
-                print("Error:", error.decode())
-            else:
-                for line in output.decode().splitlines():
-                    tmp = [i for i in str(line).split(' ') if i]
-                    ckptid = tmp[0]
-            print(ckptid)
-
-        # save ckpt to modelhub
-        if ckptid:
-            newmodel = f"test-{ckptid}"
-            command = f"snapi model add -m {ckptid} -n {newmodel} -p {self.project} -j {jobname} -t pretrained"
-
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = process.communicate()
-
-            if error:
-                print("Error:", error.decode())
-            else:
-                pass
-
-            if '70' in modelName.lower():
-                time.sleep(3000)
-            else:
-                time.sleep(1000)
-
-            # delete old job
-            command = f"snapi job delete -p {self.project} -j {jobname}"
-
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = process.communicate()
-
-            if error:
-                print("Error:", error.decode())
-            else:
-                pass
-
-            time.sleep(120)
-        else:
+        ckptid = self._wait_for_job_completion_and_get_checkpoint(jobname)
+        if not ckptid:
             return 'NoCKPT'
 
-        # start a new job with -l
-        command = "snapi job create " + \
-                    f"-p {self.project} " + \
-                    f"-j {jobname} " + \
-                    f"-t train " + \
-                    f"-m '{newmodel}' " + \
-                    f"-d {dataName} " + \
-                    f"-hf {hf} " + \
-                    f"-r {RDU} " + \
-                    f"-l " + \
-                    f"-a {self.arch}"
-        
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        output, error = process.communicate()
+        newmodel = f"test-{ckptid}"
+        self._save_checkpoint_to_modelhub(ckptid, newmodel, jobname)
 
-        if error:
-            print("Error:", error.decode())
-        else:
-            for line in output.decode().splitlines(): 
-                if 'Successfully created' in str(line):
-                    res = 'Succeed'
-                    break
-                elif 'Duplicate job' in str(line):
-                    res = 'Duplicated'
-                    break
-                else:
-                    res = 'Failed'
-                    break
+        self._delete_job(jobname)
 
-        # check training job until it's done
-        flag = 1
-        ckptflag = 1
+        # Start a new job with the loaded checkpoint
+        command = self._build_loadckpt_command(newmodel, dataName, RDU, hf, jobname, load_checkpoint=True)
+        res = self._run_snapi_command(command)
+        if res != 'Succeed':
+            return 'Fail'
 
-        runres = None
+        final_result = self._wait_for_job_completion(jobname)
 
-        if res == 'Succeed':
-            while flag:
-                command = f"snapi job info -p {self.project} -j {jobname}"
+        self._delete_job(jobname)
+        self._delete_model(newmodel)
 
-                process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-                output, error = process.communicate()
+        return final_result
 
-                if error:
-                    print("Error:", error.decode())
-                else:
-                    for line in output.decode().splitlines():     
-                        if 'Status' in str(line):
-                            tmp = [i for i in str(line).split(' ') if i]
-                            
-                            if 'STOPPED' in tmp[2]:
-                                ckptflag = 0
-                                flag = 0
-                                runres = 'STOPPED'
-                                break
-                            elif 'EXIT_WITH_0' not in tmp[2] and 'FAILED' not in tmp[2]:
-                                print(f"job current status: {tmp[2]}, please wait 2 more minutes before next check.")
-                                time.sleep(120)
-                                break
-                            elif 'FAILED' in tmp[2]:
-                                runres = 'Fail'
-                                flag = 0
-                            elif 'EXIT_WITH_0' in tmp[2]:
-                                runres = 'Success'
-                                flag = 0
-        
-        if runres == 'Success':
-            command = f"snapi job delete -p {self.project} -j {jobname}"
-            
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            output, error = process.communicate()
+    def _generate_loadckpt_job_name(self, hf, dataName, RDU):
+        """Generate a job name for checkpoint loading based on the hyperparameter file and other parameters."""
+        return f"{hf.split('.yaml')[0].split('../../artifacts/hf/')[-1]}_{dataName.replace(' ','').replace('_','')}_{RDU}rdu"
 
-            if error:
-                print("Error:", error.decode())
-            else:
-                pass
+    def _build_loadckpt_command(self, modelName, dataName, RDU, hf, jobname, load_checkpoint=False):
+        """Build the SNAPI command for checkpoint loading."""
+        command = f"snapi job create -p {self.project} -j {jobname} -t train -m '{modelName}' -d {dataName} -hf {hf} -r {RDU} -a {self.arch}"
+        if load_checkpoint:
+            command += " -l"
+        return command
 
-        command = f"snapi model remove -m {newmodel}"
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        output, error = process.communicate()
+    def _wait_for_job_completion_and_get_checkpoint(self, jobname):
+        """Wait for a job to complete and return the checkpoint ID if successful."""
+        while True:
+            status = self._get_job_status(jobname)
+            if status == 'STOPPED':
+                return None
+            elif status in ['EXIT_WITH_0', 'FAILED']:
+                break
+            time.sleep(120)
 
-        if error:
-            print("Error:", error.decode())
-        else:
-            pass
+        if status == 'EXIT_WITH_0':
+            return self._get_checkpoint_id(jobname)
+        return None
 
-        return runres
-    
+    def _get_job_status(self, jobname):
+        """Get the status of a job."""
+        command = f"snapi job info -p {self.project} -j {jobname}"
+        success, output, _ = self.run_command(command)
+        if success:
+            for line in output.splitlines():
+                if 'Status' in line:
+                    return line.split(': ')[-1].strip()
+        return None
+
+    def _get_checkpoint_id(self, jobname):
+        """Get the checkpoint ID for a completed job."""
+        command = f"snapi checkpoint list -p {self.project} -j {jobname}"
+        success, output, _ = self.run_command(command)
+        if success:
+            for line in output.splitlines():
+                parts = line.split()
+                if parts:
+                    return parts[0]
+        return None
+
+    def _save_checkpoint_to_modelhub(self, ckptid, newmodel, jobname):
+        """Save a checkpoint to the model hub."""
+        command = f"snapi model add -m {ckptid} -n {newmodel} -p {self.project} -j {jobname} -t pretrained"
+        self.run_command(command)
+        self.logger.info(f"Checkpoint {ckptid} saved as model {newmodel}")
+        time.sleep(1000 if '70' not in jobname.lower() else 3000)
+
+    def _delete_job(self, jobname):
+        """Delete a job."""
+        command = f"snapi job delete -p {self.project} -j {jobname}"
+        self.run_command(command)
+        self.logger.info(f"Job {jobname} deleted")
+        time.sleep(120)
+
+    def _delete_model(self, modelname):
+        """Delete a model."""
+        command = f"snapi model remove -m {modelname}"
+        self.run_command(command)
+        self.logger.info(f"Model {modelname} deleted")
+
+    def _wait_for_job_completion(self, jobname):
+        """Wait for a job to complete and return the final result."""
+        while True:
+            status = self._get_job_status(jobname)
+            if status == 'STOPPED':
+                return 'STOPPED'
+            elif status == 'FAILED':
+                return 'Fail'
+            elif status == 'EXIT_WITH_0':
+                return 'Success'
+            time.sleep(120)
+
+# End of GeneralModelTestObject class

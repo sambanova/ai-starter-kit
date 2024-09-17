@@ -1,0 +1,57 @@
+# SNAPI Configuration
+project: snapi_LLM_1
+chiparch: SN40L
+
+# Paths
+master_menu_path: ./data/csv/samba_turbo_byoc_menu.csv
+artifacts_path: ./artifacts/hf/
+
+# BYOC Settings
+byoc_source: LOCAL
+
+# Job Settings
+default_rdu: 1
+max_rdu: 8
+
+# Timeouts (in seconds)
+command_timeout: 300
+endpoint_creation_timeout: 1800
+job_completion_timeout: 3600
+
+# Logging
+log_file: byoc_process.log
+log_level: INFO
+
+# Model-specific settings
+models:
+  GPT_13B:
+    appname: GPT13B_App
+    modelarch: GPT
+    paracnt: 13b
+    sslen: 2048
+    vocabsize: 50260
+  Llama_7B:
+    appname: Llama7B_App
+    modelarch: Llama
+    paracnt: 7b
+    sslen: 4096
+    vocabsize: 32000
+
+# Dataset mappings
+datasets:
+  GPT_13B: GPT_13B_2k_SS_Toy_Training_Dataset
+  GPT_13B_8k: GPT_13B_8k_SS_Toy_Training_Dataset
+  Llama_7B: Llama_7B_Toy_Training_Dataset
+
+# Sweep settings
+sweep_modes:
+  - N
+  - Y
+
+# Benchmark settings
+benchmark_script_path: ./m2_run_GQ_turbo_coe.sh
+benchmark_prompt_dir: ./data/json
+benchmark_prompt_long_suffix: _qaLong_prompts.json
+benchmark_prompt_short_suffix: _qaShort_prompts.json
+benchmark_prompt_long_super_suffix: _qaLong_prompts_superbak.json
+benchmark_api_url: https://your-env-here.net/api/v2/predict/generic/stream
