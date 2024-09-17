@@ -13,12 +13,13 @@ Returns:
 
 import logging
 import unittest
-from typing import Dict, List, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Tuple, Type, TypeVar
 
 import pandas
 from matplotlib.figure import Figure
 
 from financial_assistant.src.llm import SambaNovaLLM
+from financial_assistant.streamlit.utilities_app import create_temp_dir_with_subdirs, delete_temp_dir
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 import streamlit
 
-from financial_assistant.src.tools_database import create_stock_database
+from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
 from financial_assistant.streamlit.app_stock_database import handle_database_creation
@@ -46,6 +47,14 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Initialize the LLM
         streamlit.session_state.llm = SambaNovaLLM()
+
+        # Create the cache and its main subdirectories
+        subdirectories = [
+            streamlit.session_state.source_dir,
+            streamlit.session_state.pdf_sources_directory,
+            streamlit.session_state.pdf_generation_directory,
+        ]
+        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""
@@ -75,6 +84,8 @@ class FinancialAssistantTest(unittest.TestCase):
             self.assertIsInstance(item, str)
 
     def check_create_stock_database(self, response: Dict[str, List[str]]) -> None:
+        """Check the response of the tool `create_stock_database`."""
+
         # Assert that the response is a dictionary
         self.assertIsInstance(response, dict)
 
@@ -88,6 +99,21 @@ class FinancialAssistantTest(unittest.TestCase):
         for table in response[DEFAULT_COMPANY_NAME.upper()]:
             self.assertIsInstance(table, str)
             self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
+
+    def check_query_stock_database(self, response: Any, method: str = 'text-to-SQL') -> None:
+        """Check the response of the tool `query_stock_database`."""
+
+        if method == 'text-to-SQL':
+            self.assertIsInstance(response, str)
+        elif method == 'PandasAI-SqliteConnector':
+            self.assertIsInstance(response, dict)
+            self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+            self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
+            for item in response[DEFAULT_COMPANY_NAME.upper()]:
+                self.assertIsInstance(item, str)
+                self.assertTrue(item.endswith('.png'))
+        else:
+            raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}.')
 
     def test_tools_stock_data(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -177,6 +203,36 @@ class FinancialAssistantTest(unittest.TestCase):
         # Check the response
         self.check_create_stock_database(response)
 
+    def test_query_stock_database(self) -> None:
+        """Test for the tool `query_stock_database`."""
+
+        # Create the database
+        create_stock_database(
+            {
+                'company_list': [DEFAULT_COMPANY_NAME],
+                'start_date': DEFAULT_START_DATE,
+                'end_date': DEFAULT_END_DATE,
+            }
+        )
+
+        # List of available methods
+        method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
+
+        for method in method_list:
+            # Invoke the tool to answer the user' query
+            response = query_stock_database(
+                {
+                    'user_query': DEFAULT_STOCK_QUERY,
+                    'company_list': [DEFAULT_COMPANY_NAME],
+                    'method': method,
+                }
+            )
+
+            # Check the response
+            self.check_query_stock_database(response, method)
+
 
 if __name__ == '__main__':
     unittest.main()
+
+    # delete_temp_dir(temp_dir=TEST_CACHE_DIR)
