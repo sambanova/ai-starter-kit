@@ -1,17 +1,20 @@
 import sys, os, yaml
+from typing import Union
 from keybert import KeyBERT, KeyLLM
 from keyphrase_vectorizers import KeyphraseTfidfVectorizer
 from custom_models import CustomEmbedder, CustomTextGeneration
 from keyLLM import CustomKeyLLM
 import torch
 import pickle
-
+from dotenv import load_dotenv
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(repo_dir)
 sys.path.append(kit_dir)
 sys.path.append(current_dir)
+
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 from utils.model_wrappers.api_gateway import APIGateway
 
@@ -146,7 +149,7 @@ class KeywordExtractor:
         # embed docs
         self.docs_embed = self.custom_embedder.embed(documents=self.docs)
 
-    def extract_first_values(self, data: list, return_list: bool=False) -> set | list:
+    def extract_first_values(self, data: list, return_list: bool=False) -> Union[set, list]:
         """
         Extract only the first set of keywords in each cluster, since each file in the same cluster has the same keywords. 
 
@@ -155,7 +158,7 @@ class KeywordExtractor:
             return_list (bool, optional): Format the results as list or set. Defaults to False (format as set).
 
         Returns:
-            set | list: The set/list of keywords in each cluster.
+            Union[set, list]: The set/list of keywords in each cluster.
         """
         if return_list:
             result = []
@@ -178,7 +181,7 @@ class KeywordExtractor:
     def extract_keywords(self, 
                          use_clusters: bool=True, 
                          use_vectorizer: bool=True, 
-                         keyphrase_ngram_range: tuple[int, int] = (1,1)) -> set | list:
+                         keyphrase_ngram_range: tuple[int, int] = (1,1)) -> Union[set, list]:
         """
         Extract keywords from docs.
 
@@ -192,7 +195,7 @@ class KeywordExtractor:
                                                                NOTE: This is not used if you passed a `vectorizer`. 
 
         Returns:
-            set | list: The top n keywords for the documents 
+            Union[set, list]: The top n keywords for the documents 
         """
         # retrieve keywords
         vectorizer = None
@@ -230,7 +233,7 @@ if __name__ == "__main__":
     docs = read_files(file_folder, extension=".txt")
     
     # 2. extract keywords
-    CONFIG_PATH = os.path.join(kit_dir,'config_test.yaml')
+    CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
     kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=True)
     kw_etr.docs_embedding()
     keywords = kw_etr.extract_keywords()
