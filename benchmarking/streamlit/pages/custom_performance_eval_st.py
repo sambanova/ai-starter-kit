@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
-from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
-import matplotlib.pyplot as plt
+from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary, plot_requests_gantt_chart
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.app import LLM_API_OPTIONS
@@ -166,37 +165,49 @@ def main():
                 results_df = _run_custom_performance_evaluation()
 
                 st.subheader("Performance metrics plots")
-                fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))
-                plot_client_vs_server_barplots(
-                    results_df,
-                    "batch_size_used",
-                    ["server_ttft_s", "client_ttft_s"],
-                    "Barplots for Server TTFT and Client TTFT per request",
-                    "seconds",
-                    ax[0],
+                st.plotly_chart(
+                    plot_client_vs_server_barplots(
+                        results_df,
+                        "batch_size_used",
+                        ["server_ttft_s", "client_ttft_s"],
+                        ["Server", "Client"],
+                        "Distribution of Time to First Token (TTFT) by batch size",
+                        "TTFT (s), per request",
+                        "Batch size",
+                    )
                 )
-                plot_client_vs_server_barplots(
-                    results_df,
-                    "batch_size_used",
-                    ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
-                    "Barplots for Server latency and Client latency",
-                    "seconds",
-                    ax[1],
+                st.plotly_chart(
+                    plot_client_vs_server_barplots(
+                        results_df,
+                        "batch_size_used",
+                        ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
+                        ["Server", "Client"],
+                        "Distribution of end-to-end latency by batch size",
+                        "Latency (s), per request",
+                        "Batch size",
+                    )
                 )
-                plot_client_vs_server_barplots(
-                    results_df,
-                    "batch_size_used",
-                    [
-                        "server_output_token_per_s_per_request",
-                        "client_output_token_per_s_per_request",
-                    ],
-                    "Barplots for Server token/s and Client token/s per request",
-                    "tokens/s",
-                    ax[2],
+                st.plotly_chart(
+                    plot_client_vs_server_barplots(
+                        results_df,
+                        "batch_size_used",
+                        [
+                            "server_output_token_per_s_per_request",
+                            "client_output_token_per_s_per_request",
+                        ],
+                        ["Server", "Client"],
+                        "Distribution of throughput by batch size",
+                        "Tokens per second, per request",
+                        "Batch size",
+                    )
                 )
                 # Compute total throughput per batch
-                plot_dataframe_summary(results_df, ax[3])
-                st.pyplot(fig)
+                st.plotly_chart(
+                    plot_dataframe_summary(results_df)
+                )
+                st.plotly_chart(
+                    plot_requests_gantt_chart(results_df)
+                )
 
             except Exception as e:
                 st.error(
