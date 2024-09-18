@@ -145,6 +145,47 @@ class MultimodalRetrieval:
         response = requests.post(endpoint_url, headers=headers, data=json.dumps(data))
         return response.json()['predictions'][0]['completion']
 
+    def multimodal_call(
+        self,
+        prompt: str,
+        image_path: str,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+    ):
+        if base_url is None:
+            base_url = os.environ.get('LVLM_BASE_URL')
+        if api_key is None:
+            api_key = os.environ.get('LVLM_API_KEY')
+        image_b64 = MultimodalRetrieval.image_to_base64(image_path)
+        data = {
+            "messages":[
+                {
+                    "role": "user",
+                    "content":[
+                        {
+                            "type": "text",
+                            "text": f"{prompt}"
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_b64}"
+                            }
+                        }
+                    ]
+                }
+            ],  
+            "model": "llava-v1.5-7b-4096-preview",
+            "temperature": self.lvlm_info['temperature'],
+            "max_tokens": self.lvlm_info['max_tokens_to_generate'],
+            "top_p": self.lvlm_info['top_p'],
+            "stream": False,
+            "stop": None
+        }
+        headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+        response = requests.post(base_url, headers=headers, data=json.dumps(data))
+        return response.json()["choices"][0]["message"]["content"]
+
     def set_llm(self) -> LLM:
         """
         Sets the sncloud, or sambastudio LLM based on the api_info attribute.
@@ -195,14 +236,14 @@ class MultimodalRetrieval:
         Returns:
         image_summaries (list[str]): A list of summaries of the input images
         """
-        prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llava.yaml'))
+        prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'multimodal.yaml'))#'llava.yaml'))
         instruction = 'Describe the image in detail. Be specific about graphs include name of axis,\
             labels, legends and important numerical information'
         formated_prompt = prompt_template.format(instruction=instruction)
 
         image_summaries = []
         for image_path in image_paths:
-            summary = self.llava_call(formated_prompt, image_path)
+            summary = self.multimodal_call(formated_prompt, image_path)#self.llava_call(formated_prompt, image_path)
             image_summaries.append(summary)
         return image_summaries
 
@@ -414,12 +455,12 @@ class MultimodalRetrieval:
         Returns:
         answers (list): A list of answers to the input query for each image.
         """
-        image_answer_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llava-qa.yaml'))
+        image_answer_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'multimodal-qa.yaml'))#'llava-qa.yaml'))
         image_answer_prompt = image_answer_prompt_template.format(question=query)
         answers = []
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
-            answers.append(self.llava_call(image_answer_prompt, image_path))
+            answers.append(self.multimodal_call(image_answer_prompt, image_path))#self.llava_call(image_answer_prompt, image_path))
         return answers
 
     def get_retrieval_chain(
