@@ -57,9 +57,9 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         llm_api=st.session_state.llm_api
     )
 
-    if st.session_state.llm_api == "sambastudio":
+    if st.session_state.llm_api == "SambaStudio":
         sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
-    elif st.session_state.llm_api == "sncloud":
+    elif st.session_state.llm_api == "SambaNova Cloud":
         sampling_params = {"max_tokens": st.session_state.max_tokens}
     else:
         sampling_params = {}
@@ -108,7 +108,7 @@ def main():
 
         st.text_input(
             "Model Name",
-            value="llama3-405b",
+            value="llama3-8b",
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )

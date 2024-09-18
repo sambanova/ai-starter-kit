@@ -16,7 +16,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-LLM_API_OPTIONS = ["sncloud", "sambastudio"]
+LLM_API_OPTIONS = ["SambaNova Cloud", "SambaStudio"]
 
 
 @st.cache_data

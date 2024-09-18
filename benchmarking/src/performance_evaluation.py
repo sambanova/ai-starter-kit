@@ -52,7 +52,7 @@ class BasePerformanceEvaluator(abc.ABC):
         results_dir: str,
         num_workers: int,
         user_metadata: Dict[str, Any] = {},
-        llm_api: str = "sambastudio",
+        llm_api: str = "SambaStudio",
         is_stream_mode: bool = True,
         timeout: int = 600,
     ):
@@ -840,7 +840,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            if self.llm_api == "sncloud":
+            if self.llm_api == "SambaNova Cloud":
                 updated_sampling_params = {
                     "max_tokens": output_token_count,
                 }

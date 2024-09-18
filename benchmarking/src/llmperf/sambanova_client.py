@@ -647,11 +647,11 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
     
     try:
        
-        if request_config.llm_api == "sncloud":
+        if request_config.llm_api == "SambaNova Cloud":
             sncloud_client = SambaNovaCloudAPI(request_config, tokenizer)
             metrics, generated_text = sncloud_client.compute_metrics(metrics)
         
-        elif request_config.llm_api == "sambastudio":
+        elif request_config.llm_api == "SambaStudio":
             sambastudio_client = SambaStudioAPI(request_config, tokenizer)
             metrics, generated_text = sambastudio_client.compute_metrics(metrics)
         
@@ -681,7 +681,7 @@ if __name__ == "__main__":
     env_vars = dict(os.environ)
 
     model = "llama3-405b"
-    llm_api = "sncloud"
+    llm_api = "SambaNova Cloud"
     tokenizer = get_tokenizer(model)
 
     prompt = "This is a test example, so tell me about anything"
