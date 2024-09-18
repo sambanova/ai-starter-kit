@@ -389,8 +389,6 @@ def main() -> None:
             st.markdown('**Reset chat**')
             st.markdown('**Note:** Resetting the chat will clear all conversation history')
             if st.button('Reset conversation'):
-                # reset create conversation chain
-                st.session_state.conversation = documentRetrieval.get_qa_retrieval_chain(st.session_state.vectorstore)
                 st.session_state.chat_history = []
                 st.toast('Conversation reset. The next response will clear the history on the screen')
 
