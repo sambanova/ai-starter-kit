@@ -126,3 +126,7 @@ WANDB_API_KEY = "<your-wandb-api-key>"
 Once you have finished using the app, you can exit the app by clicking on `Exit` at the top of the sidebar.
 This will clear the cache.
 Otherwise, the cache will be automatically cleared after a predefined time period.
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

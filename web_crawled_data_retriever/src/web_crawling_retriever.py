@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import urldefrag, urljoin, urlparse
 
 import nest_asyncio
@@ -35,7 +36,7 @@ class WebCrawlingRetrieval:
     Class for web crawling retrieval.
     """
 
-    def __init__(self, documents=None, config=None):
+    def __init__(self, documents: Optional[list] = None, config: Optional[List] = None) -> None:
         """
         Initialize the WebCrawlingRetrieval class.
 
@@ -56,7 +57,7 @@ class WebCrawlingRetrieval:
         self.extra_loaders = config_info[5]
         self.vectordb = VectorDb()
 
-    def _get_config_info(self, config_path=CONFIG_PATH):
+    def _get_config_info(self, config_path: Optional[str] = CONFIG_PATH) -> Tuple[str, str, Dict, Dict, Dict, List]:
         """
         Loads json config file
         Args:
@@ -67,7 +68,8 @@ class WebCrawlingRetrieval:
             llm_info (dict): Dictionary containing LLM parameters.
             retrieval_info (dict): Dictionary containing retrieval parameters
             web_crawling_params (dict): Dictionary containing web crawling parameters
-            extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available in base kit)
+            extra_loaders (list): list containing extra loader to use when doing web crawling
+            (only pdf available in base kit)
         """
         # Read config file
         with open(config_path, 'r') as yaml_file:
@@ -82,7 +84,7 @@ class WebCrawlingRetrieval:
         return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
 
     @staticmethod
-    def load_remote_pdf(url):
+    def load_remote_pdf(url: str) -> List:
         """
         Load PDF files from the given URL.
         Args:
@@ -95,7 +97,7 @@ class WebCrawlingRetrieval:
         return docs
 
     @staticmethod
-    def load_htmls(urls, extra_loaders=None):
+    def load_htmls(urls: List, extra_loaders: Optional[List] = None) -> List:
         """
         Load HTML documents from the given URLs.
         Args:
@@ -118,7 +120,7 @@ class WebCrawlingRetrieval:
         return docs
 
     @staticmethod
-    def link_filter(all_links, excluded_links):
+    def link_filter(all_links: List[str], excluded_links: List[str]) -> Set[str]:
         """
         Filters a list of links based on a list of excluded links.
         Args:
@@ -139,7 +141,7 @@ class WebCrawlingRetrieval:
         return filtered_links
 
     @staticmethod
-    def find_links(docs, excluded_links=None):
+    def find_links(docs: List, excluded_links: Optional[List] = None) -> Set[str]:
         """
         Find links in the given HTML documents, excluding specified links and not text content links.
         Args:
@@ -173,7 +175,7 @@ class WebCrawlingRetrieval:
         return all_links
 
     @staticmethod
-    def clean_docs(docs):
+    def clean_docs(docs: List) -> List:
         """
         Clean the given HTML documents by transforming them into plain text.
         Args:
@@ -185,13 +187,15 @@ class WebCrawlingRetrieval:
         docs = html2text_transformer.transform_documents(documents=docs)
         return docs
 
-    def web_crawl(self, urls, excluded_links=None, depth=1):
+    def web_crawl(self, urls: List, excluded_links: Optional[List] = None, depth: int = 1) -> Tuple[List, List]:
         """
-        Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth of exploration.
+        Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth
+        of exploration.
         Args:
             urls (list): A list of URLs to crawl.
             excluded_links (list, optional): A list of links to exclude from crawling. Defaults to None.
-            depth (int, optional): The depth of crawling, determining how many layers of internal links to explore. Defaults to 1
+            depth (int, optional): The depth of crawling, determining how many layers of internal links to explore.
+            Defaults to 1
         Returns:
             tuple: A tuple containing the langchain documents (list) and the scrapped URLs (list).
         """
@@ -237,7 +241,7 @@ class WebCrawlingRetrieval:
             process_prompt=False,
         )
 
-    def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
+    def create_load_vector_store(self, force_reload: bool = False, update: bool = False) -> None:
         """
         Create a vector store based on the given documents.
         Args:
@@ -277,7 +281,7 @@ class WebCrawlingRetrieval:
                 self.chunks, self.embeddings, self.retrieval_info['db_type'], None
             )
 
-    def create_and_save_local(self, input_directory, persist_directory, update=False):
+    def create_and_save_local(self, input_directory: str, persist_directory: str, update: bool = False) -> None:
         """
         Create a vector store based on the given documents.
         Args:
@@ -305,7 +309,7 @@ class WebCrawlingRetrieval:
                 self.chunks, self.embeddings, self.retrieval_info['db_type'], persist_directory
             )
 
-    def retrieval_qa_chain(self):
+    def retrieval_qa_chain(self) -> RetrievalQA:
         """
         Creates a RetrievalQA chain from LangChain chains.
 

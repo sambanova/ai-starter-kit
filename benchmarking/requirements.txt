@@ -20,3 +20,4 @@ ipykernel==6.29.4
 sentencepiece==0.2.0
 plotly==5.24.1
 nbformat==5.10.4
+stqdm==0.0.5

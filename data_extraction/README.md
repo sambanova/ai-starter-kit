@@ -149,3 +149,7 @@ The [notebooks](notebooks) folder has several data extraction recipes and pipeli
 - [src](src): Source code for some functionalities used in the notebooks.
 
 - [docker](docker): Docker file for the data extraction starter kit.
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

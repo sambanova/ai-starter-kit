@@ -1,6 +1,6 @@
-langchain==0.2.11
-langchain-core==0.2.25
-langchain-community==0.2.10
+langchain==0.2.16
+langchain-core==0.2.38
+langchain-community==0.2.16
 transformers==4.41.2
 datasets==2.20.0
 jupyter_client==8.6.0
