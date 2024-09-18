@@ -5,7 +5,6 @@ input_variables:
 name: null
 output_parser: null
 partial_variables: {}
-template: "You are a helpful assistant that gives helpful, detailed, and polite answers to the following question. \
-        \  given the previous image answer the following question: {question}\n If the answer is not in the image, say that you don't know."
+template: "given the previous image answer the following question: {question}\n If the answer is not in the image, say that you don't know."
 template_format: f-string
 validate_template: false
