@@ -59,81 +59,6 @@ class FinancialAssistantTest(unittest.TestCase):
         # List of available methods for database query
         self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
 
-    def check_get_stock_info(self, response: Dict[str, str]) -> None:
-        """Check the response of the tool `get_stock_info`."""
-
-        # Assert that the response is a dictionary
-        self.assertIsInstance(response, dict)
-        # Assert that the response contains the expected keys
-        self.assertIn(DEFAULT_COMPANY_NAME.upper(), response)
-        # Assert that the response is a string
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
-        # Assert that the response is a png file
-        self.assertTrue(response[DEFAULT_COMPANY_NAME.upper()].endswith('.png'))
-
-    def check_get_historical_price(self, response: Tuple[pandas.DataFrame, Figure, List[str]]) -> None:
-        """Check the response of the tool `get_historical_prices`."""
-
-        # Assert that the response is a tuple of three elements
-        self.assertIsInstance(response, tuple)
-        self.assertEqual(len(response), 3)
-        # Assert that the first element of the tuple is a `matplotlib.Figure`
-        self.assertIsInstance(response[0], Figure)
-        # Assert that the second element of the tuple is a `pandas.DataFrame
-        self.assertIsInstance(response[1], pandas.DataFrame)
-        # Assert that the third element of the tuple is a list of strings
-        self.assertIsInstance(response[2], list)
-        for item in response[2]:
-            self.assertIsInstance(item, str)
-
-    def check_create_stock_database(self, response: Dict[str, List[str]]) -> None:
-        """Check the response of the tool `create_stock_database`."""
-
-        # Assert that the response is a dictionary
-        self.assertIsInstance(response, dict)
-
-        # Assert that the response contains the expected keys
-        self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
-
-        # Assert that the response contains the expected values
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
-
-        # Assert that each value of the list of tables is a string that starts with the expected prefix
-        for table in response[DEFAULT_COMPANY_NAME.upper()]:
-            self.assertIsInstance(table, str)
-            self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
-
-    def check_query_stock_database(self, response: Any, method: str = 'text-to-SQL') -> None:
-        """Check the response of the tool `query_stock_database`."""
-
-        if method == 'text-to-SQL':
-            self.assertIsInstance(response, str)
-        elif method == 'PandasAI-SqliteConnector':
-            self.assertIsInstance(response, dict)
-            self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
-            self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
-            for item in response[DEFAULT_COMPANY_NAME.upper()]:
-                self.assertIsInstance(item, str)
-                self.assertTrue(item.endswith('.png'))
-        else:
-            raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}.')
-
-    def check_scrape_yahoo_finance_news(self, response: str, url_list: List[str]) -> None:
-        """Check the response of the tool `scrape_yahoo_finance_news`."""
-
-        self.assertIsInstance(response, str)
-        self.assertIsInstance(url_list, list)
-        for url in url_list:
-            self.assertIsInstance(url, str)
-            self.assertTrue(url.startswith('https://'))
-
-    def check_retrieve_filings(self, response: Dict[str, str]) -> None:
-        """Check the response of the tool `retrieve_filings`."""
-
-        self.assertIsInstance(response, dict)
-        self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
-
     def test_tools_stock_data(self) -> None:
         """Test for the tool `get_stock_info`."""
 
@@ -317,6 +242,81 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Check the response
         self.check_retrieve_filings(response)
+
+    def check_get_stock_info(self, response: Dict[str, str]) -> None:
+        """Check the response of the tool `get_stock_info`."""
+
+        # Assert that the response is a dictionary
+        self.assertIsInstance(response, dict)
+        # Assert that the response contains the expected keys
+        self.assertIn(DEFAULT_COMPANY_NAME.upper(), response)
+        # Assert that the response is a string
+        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
+        # Assert that the response is a png file
+        self.assertTrue(response[DEFAULT_COMPANY_NAME.upper()].endswith('.png'))
+
+    def check_get_historical_price(self, response: Tuple[pandas.DataFrame, Figure, List[str]]) -> None:
+        """Check the response of the tool `get_historical_prices`."""
+
+        # Assert that the response is a tuple of three elements
+        self.assertIsInstance(response, tuple)
+        self.assertEqual(len(response), 3)
+        # Assert that the first element of the tuple is a `matplotlib.Figure`
+        self.assertIsInstance(response[0], Figure)
+        # Assert that the second element of the tuple is a `pandas.DataFrame
+        self.assertIsInstance(response[1], pandas.DataFrame)
+        # Assert that the third element of the tuple is a list of strings
+        self.assertIsInstance(response[2], list)
+        for item in response[2]:
+            self.assertIsInstance(item, str)
+
+    def check_create_stock_database(self, response: Dict[str, List[str]]) -> None:
+        """Check the response of the tool `create_stock_database`."""
+
+        # Assert that the response is a dictionary
+        self.assertIsInstance(response, dict)
+
+        # Assert that the response contains the expected keys
+        self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+
+        # Assert that the response contains the expected values
+        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
+
+        # Assert that each value of the list of tables is a string that starts with the expected prefix
+        for table in response[DEFAULT_COMPANY_NAME.upper()]:
+            self.assertIsInstance(table, str)
+            self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
+
+    def check_query_stock_database(self, response: Any, method: str = 'text-to-SQL') -> None:
+        """Check the response of the tool `query_stock_database`."""
+
+        if method == 'text-to-SQL':
+            self.assertIsInstance(response, str)
+        elif method == 'PandasAI-SqliteConnector':
+            self.assertIsInstance(response, dict)
+            self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+            self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
+            for item in response[DEFAULT_COMPANY_NAME.upper()]:
+                self.assertIsInstance(item, str)
+                self.assertTrue(item.endswith('.png'))
+        else:
+            raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}.')
+
+    def check_scrape_yahoo_finance_news(self, response: str, url_list: List[str]) -> None:
+        """Check the response of the tool `scrape_yahoo_finance_news`."""
+
+        self.assertIsInstance(response, str)
+        self.assertIsInstance(url_list, list)
+        for url in url_list:
+            self.assertIsInstance(url, str)
+            self.assertTrue(url.startswith('https://'))
+
+    def check_retrieve_filings(self, response: Dict[str, str]) -> None:
+        """Check the response of the tool `retrieve_filings`."""
+
+        self.assertIsInstance(response, dict)
+        self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
 
 if __name__ == '__main__':
