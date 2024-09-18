@@ -9,6 +9,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import glob
+import ssl
 import time
 import uuid
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -29,6 +30,13 @@ from unstructured.partition.pdf import partition_pdf
 
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.model_wrappers.multimodal_models import SambastudioMultimodal
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
