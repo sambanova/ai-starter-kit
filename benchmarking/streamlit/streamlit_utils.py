@@ -150,7 +150,7 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame):
             y=requests,
             x=1000*df_user["client_end_to_end_latency_s"],
             base=[str(x) for x in df_user["start_time"]],
-            name="Response",
+            name="End-to-end latency",
             orientation="h",
             marker_color="#325c8c",
         )
