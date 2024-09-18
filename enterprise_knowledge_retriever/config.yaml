@@ -21,7 +21,7 @@ retrieval:
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
     "final_k_retrieved_documents": 5
 
-pdf_only_mode: True  # Set to true for PDF-only mode, false for all file types
+pdf_only_mode: True  # Set to true for PDF-only lite parsing mode (use PyMuPdf instead of Sambaparse)
 prod_mode: False
 
 prompts: 
