@@ -28,9 +28,13 @@ logger = logging.getLogger(__name__)
 import streamlit
 
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
+from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
+from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
+from financial_assistant.streamlit.app_financial_filings import handle_financial_filings
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
+from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import initialize_session
 
@@ -113,6 +117,22 @@ class FinancialAssistantTest(unittest.TestCase):
                 self.assertTrue(item.endswith('.png'))
         else:
             raise ValueError(f'`method` should be either `text-to-SQL` or `PandasAI-SqliteConnector`. Got {method}.')
+
+    def check_scrape_yahoo_finance_news(self, response: str, url_list: List[str]) -> None:
+        """Check the response of the tool `scrape_yahoo_finance_news`."""
+
+        self.assertIsInstance(response, str)
+        self.assertIsInstance(url_list, list)
+        for url in url_list:
+            self.assertIsInstance(url, str)
+            self.assertTrue(url.startswith('https://'))
+
+    def check_retrieve_filings(self, response: Dict[str, str]) -> None:
+        """Check the response of the tool `retrieve_filings`."""
+
+        self.assertIsInstance(response, dict)
+        self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
     def test_tools_stock_data(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -240,6 +260,63 @@ class FinancialAssistantTest(unittest.TestCase):
 
             # Check the response
             self.check_query_stock_database(response, method)
+
+    def test_scrape_yahoo_finance_news(self) -> None:
+        """Test for the tool `scrape_yahoo_finance_news`."""
+
+        # Invoke the tool to answer the user' query
+        response, url_list = scrape_yahoo_finance_news(
+            {
+                'company_list': [DEFAULT_COMPANY_NAME],
+                'user_query': DEFAULT_RAG_QUERY,
+            }
+        )
+
+        # Check the response
+        self.check_scrape_yahoo_finance_news(response, url_list)
+
+    def test_handle_yfinance_news(self) -> None:
+        """Test for `handle_yfinance_news`, i.e. function calling for the tool `scrape_yahoo_finance_news`."""
+
+        # Invoke the LLM to answer the user' query
+        response, url_list = handle_yfinance_news(
+            user_question=DEFAULT_RAG_QUERY,
+        )
+
+        # Check the response
+        self.check_scrape_yahoo_finance_news(response, url_list)
+
+    def test_retrieve_filings(self) -> None:
+        """Test for the tool `retrieve_filings`."""
+
+        # Invoke the tool to answer the user' query
+        response = retrieve_filings(
+            {
+                'user_question': DEFAULT_RAG_QUERY,
+                'company_list': [DEFAULT_COMPANY_NAME],
+                'filing_type': DEFAULT_FILING_TYPE,
+                'filing_quarter': DEFAULT_FILING_QUARTER,
+                'year': DEFAULT_FILING_YEAR,
+            }
+        )
+
+        # Check the response
+        self.check_retrieve_filings(response)
+
+    def test_handle_financial_filings(self) -> None:
+        """Test for `handle_financial_filings`, i.e. function calling for the tool `retrieve_filings`"""
+
+        # Invoke the LLM to answer the user' query
+        response = handle_financial_filings(
+            user_question=DEFAULT_RAG_QUERY,
+            company_name=DEFAULT_COMPANY_NAME,
+            filing_type=DEFAULT_FILING_TYPE,
+            filing_quarter=DEFAULT_FILING_QUARTER,
+            selected_year=DEFAULT_FILING_YEAR,
+        )
+
+        # Check the response
+        self.check_retrieve_filings(response)
 
 
 if __name__ == '__main__':

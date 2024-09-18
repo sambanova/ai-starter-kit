@@ -47,6 +47,9 @@ DEFAULT_RAG_QUERY = (
 DEFAULT_PDF_RAG_QUERY = "What conclusions can we draw about Meta's strategy?"
 DEFAULT_START_DATE = datetime.datetime.today().date() - datetime.timedelta(days=365)
 DEFAULT_END_DATE = datetime.datetime.today().date()
+DEFAULT_FILING_TYPE = '10-K'
+DEFAULT_FILING_QUARTER = 0
+DEFAULT_FILING_YEAR = datetime.datetime.today().date().year - 1
 
 # Unit tests
 TEST_DIR = os.path.join(kit_dir, 'tests/')
