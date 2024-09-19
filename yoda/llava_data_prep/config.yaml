@@ -1,13 +1,17 @@
 llm: 
-    "api": "sambastudio"
+    "api": "sncloud"
     "do_sample": True
     "temperature": 0.7
-    "streaming": False
+    "streaming": True
     "max_tokens_to_generate": 1200
-    "coe": True 
+    "coe": False 
     "select_expert": "Meta-Llama-3.1-70B-Instruct"
     "process_prompt": False
 
 prompts:
     "table_modification": "yoda/prompts/llama3_1-modify-table.yaml"
     "ocr_query_answer": "yoda/prompts/llama3_1-table-ocr.yaml"
+
+sec:
+    "company": "company"
+    "email": user.name@domain.com

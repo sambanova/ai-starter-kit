@@ -23,6 +23,7 @@ Table of Contents:
     - [Iteration for table formatting/templating](#iteration-for-table-formattingtemplating)
     - [Generate synthetic tables](#generate-synthetic-tables)
 - [Future work](#future-work)
+- [Current testing](#current-testing)
 
 # Overview
 
@@ -43,6 +44,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 ## Set up the models, environment variables and config file
 
 ### Set up the generative model
+
+**We should not use cloud for this workflow, but until 3.1 is on Studio with matching accuracy, then we have to for now**
+- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 The next step is to set up your environment variables to use one of the inference models available from SambaNova. If you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
@@ -75,6 +80,8 @@ Flags:
  - --num-its: The number of iterations/synthetic tables to generate.  At present, only online inference is used with no concurrent requests used for batch generation.  
  - --split: Accepts choices of "train" or "val".  At present, this does not control much, other than the naming of the json file created with synthetic prompts data.  There is likely to be contamination until better splitting logic is implemented.
 
+
+
 # Future work
 
 Future work will potentially include:
@@ -84,3 +91,16 @@ Future work will potentially include:
 - batch queueing for improved performance, depending on the model batch size and handling.
 - improved train/val split logic.
 - more templates as examples to start.
+
+# Current testing
+
+- Create virtual environment.
+- pip install yoda/llava_data_prep/requirements.txt
+- Note any system dependancies or issues installing the requirements.
+- Run yoda/llava_data_prep/notebooks/edgar_ingestion.ipynb and ensure it completes.  Check some of the outputs.
+- Run yoda/llava_data_prep/scripts/generate_tables.py and ensure yoda/synthetic_data/tmp/images/test_table.jpg is created.
+- Run:
+```bash
+python yoda/llava_data_prep/scripts/create_synthetic_tables.py --name test --num-its 4
+```
+and ensure yoda/llava_data_prep/test is created with a subfolder of synthetic images and yoda/llava_data_prep/test/annotations_train.json exists.
