@@ -169,7 +169,11 @@ class TableTools:
             results: Any = model.predict(filename)
             
             # Get bounding boxes
-            boxes: Any = results[0].boxes.xyxy.numpy(),
+            # boxes: Any = results[0].boxes.xyxy.numpy(),
+            conf: Any = results[0].boxes.conf
+            mask = conf >= threshold
+            boxes = results[0][mask].boxes.xyxy.numpy()
+
             
             # Load image.
             loaded_img: Image.Image = Image.open(filename)

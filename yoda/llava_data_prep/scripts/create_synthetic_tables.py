@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description="Test and log synthetic table creat
 
 parser.add_argument("--name", type=str, help="Name of run", default="llava_prep")
 parser.add_argument("--num-its", type=int, help="Number of iterations.", default=25)
-parser.add_argument("--split", type=str, help="Split", default="train", choices=["train", "val"])
+parser.add_argument("--split", type=str, help="Split", default="train", choices=["train", "val"]) # TODO: At test and logic
 
 def main() -> None:
 
