@@ -49,6 +49,7 @@ else:
     print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
