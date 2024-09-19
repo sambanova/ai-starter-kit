@@ -1,12 +1,13 @@
 """Wrapper around Sambanova multimodal APIs."""
 
-from typing import Dict
-import os
 import base64
-import json
-import requests
 import binascii
+import json
+import os
 from pathlib import Path
+from typing import Dict
+
+import requests
 
 
 class SambastudioMultimodal:
@@ -24,7 +25,7 @@ class SambastudioMultimodal:
         top_k: int = 1,
         stop: list = None,
         do_sample: bool = False,
-        ) -> None:
+    ) -> None:
         """
         Initialize the SambastudioMultimodal.
 
@@ -36,17 +37,17 @@ class SambastudioMultimodal:
         :param int top_k: model top k,
         :param list stop: list of token to stop generation when stop token is found
         :param bool do_sample: whether to do sample for model generation
-        """ 
+        """
         self.base_url = base_url
         if self.base_url is None:
-            self.base_url = os.getenv("LVLM_BASE_URL")
+            self.base_url = os.getenv('LVLM_BASE_URL')
         self.api_key = api_key
         if self.api_key is None:
-            self.api_key = os.getenv("LVLM_API_KEY")
+            self.api_key = os.getenv('LVLM_API_KEY')
         self.temperature = temperature
         self.max_tokens_to_generate = max_tokens_to_generate
-        self.top_p=top_p
-        self.top_k=top_k
+        self.top_p = top_p
+        self.top_k = top_k
         self.stop = stop
         if stop is None:
             self.stop = []
@@ -65,7 +66,7 @@ class SambastudioMultimodal:
             image_binary = image_file.read()
             base64_image = base64.b64encode(image_binary).decode()
             return base64_image
-        
+
     def _is_base64_encoded(self, image: str) -> bool:
         """
         Checks if a string is base64 encoded.
@@ -79,7 +80,7 @@ class SambastudioMultimodal:
             return True
         except (binascii.Error, TypeError):
             return False
-        
+
     def _is_file_path(self, image: str) -> bool:
         """
         Returns True if the path exists on the filesystem
@@ -93,7 +94,7 @@ class SambastudioMultimodal:
     def _process_generic_api_response(self, response: Dict) -> str:
         """
         Processes the generic API response and returns the resulting string.
-        
+
         :param dict response: The API response
         :return: The response text
         :rtype: str
@@ -101,36 +102,36 @@ class SambastudioMultimodal:
         try:
             generation = response['predictions'][0]['completion']
         except Exception as e:
-            raise(
+            raise (
                 "Error: The API response does not contain the 'predictions' key or the 'completion' value.",
-                f"raw response: {response}"
+                f'raw response: {response}',
             )
         return generation
-    
+
     def _process_openai_api_response(self, response: Dict) -> str:
         """
         Processes the generic API response and returns the resulting string.
-        
+
         :param dict response: The API response
         :return: The response text
         :rtype: str
         """
         try:
-            generation = response["choices"][0]["message"]["content"]
+            generation = response['choices'][0]['message']['content']
         except Exception as e:
-            raise(
+            raise (
                 "Error: The API response does not contain the 'choices' key or the 'message' 'content' values.",
-                f"raw response: {response}"
+                f'raw response: {response}',
             )
         return generation
-    
-    def _call_generic_api(self, prompt:str, image_b64:str) -> Dict:
-        """ 
+
+    def _call_generic_api(self, prompt: str, image_b64: str) -> Dict:
+        """
         Calls the Sambastudio multimodal generic endpoint to generate a response.
         :param str prompt: Prompt for the model to generate a response
         :param str image: Image to be used with the model
         :return: The request json response
-        :rtype: Dict 
+        :rtype: Dict
         """
         data = {
             'instances': [{'prompt': prompt, 'image_content': f'{image_b64}'}],
@@ -146,50 +147,48 @@ class SambastudioMultimodal:
         headers = {'Content-Type': 'application/json', 'key': self.api_key}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data))
         if response.status_code != 200:
-            raise RuntimeError(f"Sambastudio multimodal API call failed with status code {response.status_code}.\nDetails: {response.text}")
+            raise RuntimeError(
+                f'Sambastudio multimodal API call failed with status code {response.status_code}',
+                'Details: {response.text}'
+            )
         else:
             return response.json()
-        
-    def _call_openai_api(self, prompt:str, image_b64:str) -> Dict:
-        """ 
+
+    def _call_openai_api(self, prompt: str, image_b64: str) -> Dict:
+        """
         Calls the Sambastudio multimodal openai compatible endpoint to generate a response.
         :param str prompt: Prompt for the model to generate a response
         :param str image: Image to be used with the model
         :return: The request json response
-        :rtype: Dict 
+        :rtype: Dict
         """
         data = {
-            "messages":[
+            'messages': [
                 {
-                    "role": "user",
-                    "content":[
-                        {
-                            "type": "text",
-                            "text": f"{prompt}"
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_b64}"
-                            }
-                        }
-                    ]
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': f'{prompt}'},
+                        {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{image_b64}'}},
+                    ],
                 }
-            ],  
-            "model": "llava-v1.5-7b-4096-preview",
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens_to_generate,
-            "top_p": self.top_p,
-            "stream": False,
-            "stop": self.stop
+            ],
+            'model': 'llava-v1.5-7b-4096-preview',
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens_to_generate,
+            'top_p': self.top_p,
+            'stream': False,
+            'stop': self.stop,
         }
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data))
         if response.status_code != 200:
-            raise RuntimeError(f"Sambastudio multimodal API call failed with status code {response.status_code}.\nDetails: {response.text}")
+            raise RuntimeError(
+                f'Sambastudio multimodal API call failed with status code {response.status_code}.',
+                'Details: {response.text}'
+            )
         else:
             return response.json()
-        
+
     def invoke(self, prompt: str, image: str) -> str:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
@@ -204,13 +203,13 @@ class SambastudioMultimodal:
         elif self._is_file_path(image):
             base64_image = self.image_to_base64(image)
         else:
-            raise("image should be provided as a path or as a base64 encoded image")
-        
+            raise ('image should be provided as a path or as a base64 encoded image')
+
         # Call the appropriate API based on the host URL
-        if "openai" in self.base_url:
+        if 'openai' in self.base_url:
             response = self._call_openai_api(prompt, base64_image)
             generation = self._process_openai_api_response(response)
-        elif "generic" in self.base_url:
+        elif 'generic' in self.base_url:
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
             The assistant gives helpful, detailed, and polite answers to the humans question.\
             USER: <image>
@@ -220,8 +219,6 @@ class SambastudioMultimodal:
             generation = self._process_generic_api_response(response)
         else:
             raise ValueError(
-                f"Unsupported host URL: {self.base_url}",
-                "only Generic and open AI compatible APIs supported"
-                )
+                f'Unsupported host URL: {self.base_url}', 'only Generic and open AI compatible APIs supported'
+            )
         return generation
-     

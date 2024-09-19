@@ -12,7 +12,7 @@ import glob
 import ssl
 import time
 import uuid
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 import nltk
 import yaml
@@ -64,11 +64,11 @@ class MultimodalRetrieval:
         self.retrieval_info = config_info[4]
         self.llm = self.set_llm()
         self.lvlm = SambastudioMultimodal(
-            temperature=self.lvlm_info["temperature"],
-            max_tokens_to_generate=self.lvlm_info["max_tokens_to_generate"],
-            top_p=self.lvlm_info["top_p"],
-            top_k=self.lvlm_info["top_k"],
-            do_sample=self.lvlm_info["do_sample"],
+            temperature=self.lvlm_info['temperature'],
+            max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
+            top_p=self.lvlm_info['top_p'],
+            top_k=self.lvlm_info['top_k'],
+            do_sample=self.lvlm_info['do_sample'],
         )
 
     def get_config_info(self) -> Tuple[str, str, str, str]:
