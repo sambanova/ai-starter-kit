@@ -14,12 +14,17 @@ Returns:
 import logging
 import unittest
 from typing import Any, Dict, List, Tuple
+import os
 
 import pandas
 from matplotlib.figure import Figure
 
 from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.streamlit.utilities_app import create_temp_dir_with_subdirs
+from financial_assistant.streamlit.utilities_app import (
+    create_temp_dir_with_subdirs,
+    save_historical_price_callback,
+    save_output_callback,
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,14 +34,16 @@ import streamlit
 
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
+from financial_assistant.src.tools_pdf_generation import pdf_rag
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.streamlit.app_financial_filings import handle_financial_filings
+from financial_assistant.streamlit.app_pdf_report import handle_pdf_generation, handle_pdf_rag
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
 from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import initialize_session
+from financial_assistant.streamlit.utilities_app import initialize_session, delete_temp_dir
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
@@ -59,10 +66,10 @@ class FinancialAssistantTest(unittest.TestCase):
         # List of available methods for database query
         self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
 
-    def test_tools_stock_data(self) -> None:
+    def test_get_stock_info(self) -> None:
         """Test for the tool `get_stock_info`."""
 
-        # Invoke the tool to answer the user's query
+        # Invoke the tool to answer the user query
         response = get_stock_info.invoke(
             {
                 'user_query': DEFAULT_STOCK_QUERY,
@@ -83,11 +90,14 @@ class FinancialAssistantTest(unittest.TestCase):
         # The dataframe name
         dataframe_name = DEFAULT_DATAFRAME_NAME
 
-        # Invoke the LLM to answer the user's query
+        # Invoke the LLM to answer the user query
         response = handle_stock_query(query, dataframe_name)
 
         # Check the response
         self.check_get_stock_info(response)
+
+        # Save response to cache
+        save_output_callback(response, streamlit.session_state.stock_query_path, query)
 
     def test_get_historical_price(self) -> None:
         """Test for the tool `get_historical_price`."""
@@ -110,7 +120,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # The default user query
         query = DEFAULT_HISTORICAL_STOCK_PRICE_QUERY
 
-        # Invoke the LLM to answer the user's query
+        # Invoke the LLM to answer the user query
         response = handle_stock_data_analysis(
             user_question=query,
             start_date=DEFAULT_START_DATE,
@@ -119,6 +129,17 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Check the response
         self.check_get_historical_price(response)
+
+        # Save response to cache
+        save_historical_price_callback(
+            query,
+            response[2],
+            response[1],
+            response[0],
+            DEFAULT_START_DATE,
+            DEFAULT_END_DATE,
+            streamlit.session_state.stock_query_path,
+        )
 
     def test_create_stock_database(self) -> None:
         """Test for the tool `create_stock_database`."""
@@ -176,15 +197,21 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_handle_database_query(self) -> None:
         """Test for `handle_database_query`, i.e. function calling for the tool `query_stock_database`."""
 
+        # The user query
+        query = DEFAULT_STOCK_QUERY
+
         for method in self.method_list:
             # Invoke the LLM to answer the user' query
             response = handle_database_query(
-                user_question=DEFAULT_STOCK_QUERY,
+                user_question=query,
                 query_method=method,
             )
 
             # Check the response
             self.check_query_stock_database(response, method)
+
+            # Save response to cache
+            save_output_callback(response, streamlit.session_state.db_query_path, query)
 
     def test_scrape_yahoo_finance_news(self) -> None:
         """Test for the tool `scrape_yahoo_finance_news`."""
@@ -203,13 +230,20 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_handle_yfinance_news(self) -> None:
         """Test for `handle_yfinance_news`, i.e. function calling for the tool `scrape_yahoo_finance_news`."""
 
+        # The default user query
+        query = DEFAULT_RAG_QUERY
+
         # Invoke the LLM to answer the user' query
         response, url_list = handle_yfinance_news(
-            user_question=DEFAULT_RAG_QUERY,
+            user_question=query,
         )
 
         # Check the response
         self.check_scrape_yahoo_finance_news(response, url_list)
+
+        # Save response to cache
+        content = response + '\n\n'.join(url_list)
+        save_output_callback(content, streamlit.session_state.yfinance_news_path, query)
 
     def test_retrieve_filings(self) -> None:
         """Test for the tool `retrieve_filings`."""
@@ -231,6 +265,9 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_handle_financial_filings(self) -> None:
         """Test for `handle_financial_filings`, i.e. function calling for the tool `retrieve_filings`"""
 
+        # The user query
+        query = DEFAULT_RAG_QUERY
+
         # Invoke the LLM to answer the user' query
         response = handle_financial_filings(
             user_question=DEFAULT_RAG_QUERY,
@@ -242,6 +279,72 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Check the response
         self.check_retrieve_filings(response)
+
+        # Save response to cache
+        save_output_callback(response, streamlit.session_state.filings_path, query)
+
+    def test_handle_pdf_generation(self) -> None:
+        """Test the tool `handle_pdf_generation`."""
+
+        report_title = DEFAULT_PDF_TITLE
+        report_name = report_title.lower().replace(' ', '_') + '.pdf'
+
+        data_paths = dict()
+        data_paths['stock_query'] = streamlit.session_state.stock_query_path
+        data_paths['stock_database'] = streamlit.session_state.db_query_path
+        data_paths['yfinance_news'] = streamlit.session_state.yfinance_news_path
+        data_paths['filings'] = streamlit.session_state.filings_path
+
+        # Generate the PDF report
+        pdf_handler = handle_pdf_generation(report_title, report_name, data_paths, True)
+
+        # Check the PDF report output
+        self.assertIsInstance(pdf_handler, bytes)
+
+    def test_pdf_rag(self) -> None:
+        """Test the tool `pdf_rag`."""
+
+        report_title = DEFAULT_PDF_TITLE
+        report_name = report_title.lower().replace(' ', '_') + '.pdf'
+
+        # The user query
+        query = DEFAULT_PDF_RAG_QUERY
+
+        # The pdf files names
+        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_directory, report_name)]
+
+        # Invoke the tool to answer the user query
+        response = pdf_rag.invoke(
+            {
+                'user_query': query,
+                'pdf_files_names': pdf_files_names,
+            }
+        )
+
+        # Check the response
+        self.assertIsInstance(response, str)
+
+    def test_handle_pdf_rag(self) -> None:
+        """Test `handle_pdf_rag`, i.e. function calling for the tool `pdf_rag`."""
+
+        report_title = DEFAULT_PDF_TITLE
+        report_name = report_title.lower().replace(' ', '_') + '.pdf'
+
+        # The user query
+        query = DEFAULT_PDF_RAG_QUERY
+
+        # The pdf files names
+        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_directory, report_name)]
+
+        response = handle_pdf_rag(query, pdf_files_names)
+
+        # Check the response
+        self.assertIsInstance(response, str)
+
+    def test_delete_cache(self) -> None:
+        """Delete the cache directory and its subdirectories."""
+
+        delete_temp_dir(temp_dir=TEST_CACHE_DIR)
 
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""
@@ -319,8 +422,28 @@ class FinancialAssistantTest(unittest.TestCase):
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
 
-if __name__ == '__main__':
-    unittest.main()
+def suite() -> unittest.TestSuite:
+    suite = unittest.TestSuite()
+    suite.addTest(FinancialAssistantTest('test_get_stock_info'))
+    suite.addTest(FinancialAssistantTest('test_handle_stock_query'))
+    suite.addTest(FinancialAssistantTest('test_get_historical_price'))
+    suite.addTest(FinancialAssistantTest('test_handle_stock_data_analysis'))
+    suite.addTest(FinancialAssistantTest('test_create_stock_database'))
+    suite.addTest(FinancialAssistantTest('test_handle_database_creation'))
+    suite.addTest(FinancialAssistantTest('test_query_stock_database'))
+    suite.addTest(FinancialAssistantTest('test_handle_database_query'))
+    suite.addTest(FinancialAssistantTest('test_scrape_yahoo_finance_news'))
+    suite.addTest(FinancialAssistantTest('test_handle_yfinance_news'))
+    suite.addTest(FinancialAssistantTest('test_retrieve_filings'))
+    suite.addTest(FinancialAssistantTest('test_handle_financial_filings'))
+    suite.addTest(FinancialAssistantTest('test_handle_pdf_generation'))
+    suite.addTest(FinancialAssistantTest('test_pdf_rag'))
+    suite.addTest(FinancialAssistantTest('test_handle_pdf_rag'))
+    suite.addTest(FinancialAssistantTest('test_delete_cache'))
 
-    # delete_temp_dir(temp_dir=TEST_CACHE_DIR)
-    # HSL
+    return suite
+
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(suite())

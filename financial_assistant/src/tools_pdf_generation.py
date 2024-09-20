@@ -32,7 +32,7 @@ FONT = 'helvetica'
 class PDFReport(FPDF):  # type: ignore
     """Class for generating PDF reports."""
 
-    def header(self, title_name: str = 'Financial Report') -> None:
+    def header(self, title_name: str = DEFAULT_PDF_TITLE) -> None:
         """Overrides the FPDF header method."""
         self.set_text_color(SAMBANOVA_ORANGE)
 

@@ -111,7 +111,7 @@ def include_pdf_report() -> None:
         data_paths['history'] = streamlit.session_state.history_path
 
     # Add title name (optional)
-    title_name = streamlit.text_input(label='Title Name', value='Financial Report')
+    title_name = streamlit.text_input(label='Title Name', value=DEFAULT_PDF_TITLE)
 
     # Include summary for each section
     include_summary = streamlit.checkbox(
@@ -128,7 +128,7 @@ def include_pdf_report() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             report_name = title_name.lower().replace(' ', '_') + '.pdf'
 
-            # generate_pdf_report(data)
+            # Generate the PDF report
             pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
 
             # Embed PDF to display it:
@@ -293,7 +293,7 @@ def include_pdf_report() -> None:
 
 
 def handle_pdf_generation(
-    title_name: str = 'Financial Report',
+    title_name: str = DEFAULT_PDF_TITLE,
     report_name: str = 'financial_report',
     data_paths: Dict[str, str] = dict(),
     include_summary: bool = False,
