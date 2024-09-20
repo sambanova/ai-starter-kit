@@ -1,9 +1,10 @@
 """Wrapper around Sambanova multimodal APIs."""
+import os
+import re
 
 import base64
 import binascii
 import json
-import os
 from pathlib import Path
 from typing import Dict
 
@@ -19,6 +20,7 @@ class SambastudioMultimodal:
         self,
         base_url: str = None,
         api_key: str = None,
+        model: str = None,
         temperature: float = 0.01,
         max_tokens_to_generate: int = 1024,
         top_p: float = 0.01,
@@ -32,6 +34,7 @@ class SambastudioMultimodal:
         :param str base_url:  Base URL of the deployed Sambastudio multimodal endpoint,
         :param str api_key: pi_key the deployed Sambastudio multimodal endpoint ,
         :param float temperature: model temperature,
+        :param str model: model name,
         :param int max_tokens_to_generate: maximum number of tokens to generate,
         :param float top_p: model top k,
         :param int top_k: model top k,
@@ -45,6 +48,7 @@ class SambastudioMultimodal:
         if self.api_key is None:
             self.api_key = os.getenv('LVLM_API_KEY')
         self.temperature = temperature
+        self.model = model
         self.max_tokens_to_generate = max_tokens_to_generate
         self.top_p = top_p
         self.top_k = top_k
@@ -90,6 +94,20 @@ class SambastudioMultimodal:
         """
         path = Path(image)
         return path.exists()
+    
+    def _is_url(self, image: str) -> bool:
+        """
+        Returns True if the string is an url
+        
+        :param: str image: The string to check.
+        :return: True if the string is an url, False otherwise.
+        :rtype: bool
+        """
+        regex = re.compile(
+            r'^(https?://.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg))$', re.IGNORECASE
+        )
+
+        return re.match(regex, url) is not None
 
     def _process_generic_api_response(self, response: Dict) -> str:
         """
@@ -149,12 +167,12 @@ class SambastudioMultimodal:
         if response.status_code != 200:
             raise RuntimeError(
                 f'Sambastudio multimodal API call failed with status code {response.status_code}',
-                'Details: {response.text}'
+                f'Details: {response.text}'
             )
         else:
             return response.json()
 
-    def _call_openai_api(self, prompt: str, image_b64: str) -> Dict:
+    def _call_openai_api(self, prompt: str, image: str) -> Dict:
         """
         Calls the Sambastudio multimodal openai compatible endpoint to generate a response.
         :param str prompt: Prompt for the model to generate a response
@@ -162,17 +180,18 @@ class SambastudioMultimodal:
         :return: The request json response
         :rtype: Dict
         """
+        
         data = {
             'messages': [
                 {
                     'role': 'user',
                     'content': [
                         {'type': 'text', 'text': f'{prompt}'},
-                        {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{image_b64}'}},
+                        {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{image}'}},
                     ],
                 }
             ],
-            'model': 'llava-v1.5-7b-4096-preview',
+            'model': self.model,
             'temperature': self.temperature,
             'max_tokens': self.max_tokens_to_generate,
             'top_p': self.top_p,
@@ -184,7 +203,7 @@ class SambastudioMultimodal:
         if response.status_code != 200:
             raise RuntimeError(
                 f'Sambastudio multimodal API call failed with status code {response.status_code}.',
-                'Details: {response.text}'
+                f'Details: {response.text}'
             )
         else:
             return response.json()
@@ -199,23 +218,29 @@ class SambastudioMultimodal:
         :rtype: str
         """
         if self._is_base64_encoded(image):
-            base64_image = image
+            image = image
+            is_url = False
         elif self._is_file_path(image):
-            base64_image = self.image_to_base64(image)
+            image = self.image_to_base64(image)
+            is_url = False
+        elif self._is_url(image):
+            is_url = True
         else:
-            raise ('image should be provided as a path or as a base64 encoded image')
+            raise ('image should be provided as an url, a path or as a base64 encoded image')
 
         # Call the appropriate API based on the host URL
         if 'openai' in self.base_url:
-            response = self._call_openai_api(prompt, base64_image)
+            response = self._call_openai_api(prompt, image)
             generation = self._process_openai_api_response(response)
         elif 'generic' in self.base_url:
+            if is_url:
+                raise("image should be provided as a path or as a base64 encoded image for generic endpoint")
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
             The assistant gives helpful, detailed, and polite answers to the humans question.\
             USER: <image>
             {prompt}
             ASSISTANT:"""
-            response = self._call_generic_api(formatted_prompt, base64_image)
+            response = self._call_generic_api(formatted_prompt, image)
             generation = self._process_generic_api_response(response)
         else:
             raise ValueError(
