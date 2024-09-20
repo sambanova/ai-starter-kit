@@ -1,0 +1,10 @@
+_type: prompt
+input_types: {}
+input_variables:
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template: "given the previous image answer the following question: {question}\n If the answer is not in the image, say that you don't know."
+template_format: f-string
+validate_template: false
