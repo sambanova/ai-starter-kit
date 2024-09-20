@@ -10,8 +10,8 @@ from typing import Any, Dict
 import requests
 import sseclient
 
-sys.path.append("./src")
-sys.path.append("./src/llmperf")
+sys.path.append('./src')
+sys.path.append('./src/llmperf')
 
 import warnings
 
@@ -22,7 +22,7 @@ from transformers import AutoTokenizer
 
 from utils import SAMBANOVA_URL, get_tokenizer
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings('ignore')
 
 
 class BaseAPIEndpoint(abc.ABC):
@@ -178,32 +178,32 @@ class BaseAPIEndpoint(abc.ABC):
             dict: updated metrics dictionary
         """
 
-        metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get("prompt_tokens_count") or response_dict.get(
-            "prompt_tokens"
+        metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get('prompt_tokens_count') or response_dict.get(
+            'prompt_tokens'
         )
 
         metrics[common_metrics.NUM_OUTPUT_TOKENS_SERVER] = response_dict.get(
-            "completion_tokens_count"
-        ) or response_dict.get("completion_tokens")
+            'completion_tokens_count'
+        ) or response_dict.get('completion_tokens')
 
-        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = response_dict.get("total_tokens_count") or response_dict.get(
-            "total_tokens"
+        metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = response_dict.get('total_tokens_count') or response_dict.get(
+            'total_tokens'
         )
-        ttft_server = response_dict.get("time_to_first_token") or response_dict.get("time_to_first_response")
+        ttft_server = response_dict.get('time_to_first_token') or response_dict.get('time_to_first_response')
 
         metrics[common_metrics.TTFT_SERVER] = ttft_server
 
-        metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get("total_latency") or response_dict.get(
-            "model_execution_time"
+        metrics[common_metrics.E2E_LAT_SERVER] = response_dict.get('total_latency') or response_dict.get(
+            'model_execution_time'
         )
 
         metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER] = (
-            response_dict.get("completion_tokens_after_first_per_sec")
-            or response_dict.get("completion_tokens_per_sec_after_first_response")
-            or response_dict.get("throughput_after_first_token")
+            response_dict.get('completion_tokens_after_first_per_sec')
+            or response_dict.get('completion_tokens_per_sec_after_first_response')
+            or response_dict.get('throughput_after_first_token')
         )
 
-        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get("total_tokens_per_sec")
+        metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] = response_dict.get('total_tokens_per_sec')
         if (metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT_SERVER] is None) and (
             metrics[common_metrics.E2E_LAT_SERVER] is not None
         ):
@@ -211,7 +211,7 @@ class BaseAPIEndpoint(abc.ABC):
                 metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] / (metrics[common_metrics.E2E_LAT_SERVER])
             )
 
-        metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get("batch_size_used")
+        metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get('batch_size_used')
 
         return metrics
 
@@ -220,11 +220,11 @@ class SambaStudioAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
-        self.base_url = os.environ.get("SAMBASTUDIO_BASE_URL")
-        self.base_uri = os.environ.get("SAMBASTUDIO_BASE_URI")
-        self.project_id = os.environ.get("SAMBASTUDIO_PROJECT_ID")
-        self.endpoint_id = os.environ.get("SAMBASTUDIO_ENDPOINT_ID")
-        self.api_key = os.environ.get("SAMBASTUDIO_API_KEY")
+        self.base_url = os.environ.get('SAMBASTUDIO_BASE_URL')
+        self.base_uri = os.environ.get('SAMBASTUDIO_BASE_URI')
+        self.project_id = os.environ.get('SAMBASTUDIO_PROJECT_ID')
+        self.endpoint_id = os.environ.get('SAMBASTUDIO_ENDPOINT_ID')
+        self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -234,17 +234,17 @@ class SambaStudioAPI(BaseAPIEndpoint):
         """
 
         if self.request_config.is_stream_mode:
-            path = f"{self.base_uri}/stream/{self.project_id}/{self.endpoint_id}"
+            path = f'{self.base_uri}/stream/{self.project_id}/{self.endpoint_id}'
         else:
-            path = f"{self.base_uri}/{self.project_id}/{self.endpoint_id}"
+            path = f'{self.base_uri}/{self.project_id}/{self.endpoint_id}'
 
-        url = f"{self.base_url}/{path}"
+        url = f'{self.base_url}/{path}'
 
         return url
 
     def _get_headers(self) -> None:
         """Gets headers for API call"""
-        return {"key": self.api_key}
+        return {'key': self.api_key}
 
     def _get_json_data(self, url: str) -> dict:
         """Gets json body for API call
@@ -259,26 +259,26 @@ class SambaStudioAPI(BaseAPIEndpoint):
         sampling_params = self.request_config.sampling_params
 
         # Change params whether model is COE or not
-        if "COE" in self.request_config.model:
-            sampling_params["select_expert"] = self.request_config.model.split("/")[-1]
-            sampling_params["process_prompt"] = False
+        if 'COE' in self.request_config.model:
+            sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
+            sampling_params['process_prompt'] = False
 
         # build payload for api v2
-        if "/api/v2" in url.lower().strip():
+        if '/api/v2' in url.lower().strip():
             tuning_params = json.loads(json.dumps(sampling_params))
-            data = {"items": [{"id": "item1", "value": prompt}], "params": tuning_params}
+            data = {'items': [{'id': 'item1', 'value': prompt}], 'params': tuning_params}
         # support to build payload for api v1
         else:
             extended_sampling_params = {
-                k: {"type": type(v).__name__, "value": str(v)} for k, v in (sampling_params.items())
+                k: {'type': type(v).__name__, 'value': str(v)} for k, v in (sampling_params.items())
             }
             extended_sampling_params = json.dumps(extended_sampling_params)
 
             # Change request body whether API call is streaming or not
             if self.request_config.is_stream_mode:
-                data = {"instance": prompt, "params": json.loads(extended_sampling_params)}
+                data = {'instance': prompt, 'params': json.loads(extended_sampling_params)}
             else:
-                data = {"instances": [prompt], "params": json.loads(extended_sampling_params)}
+                data = {'instances': [prompt], 'params': json.loads(extended_sampling_params)}
 
         return data
 
@@ -302,12 +302,12 @@ class SambaStudioAPI(BaseAPIEndpoint):
         json_data = self._get_json_data(url)
 
         # Set variables
-        generated_text = ""
+        generated_text = ''
         chunks_received = []
         chunks_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S')
         start_time = chunk_start_time = time.monotonic()
 
         if self.request_config.is_stream_mode:
@@ -318,20 +318,20 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     response.raise_for_status()
 
                 # fetch generated text and metrics for api v2
-                if "/api/v2" in url.lower().strip():
+                if '/api/v2' in url.lower().strip():
                     for chunk_orig in response.iter_lines(chunk_size=None):
                         chunk = chunk_orig.strip()
                         data = json.loads(chunk)
 
-                        completion = data["result"]["items"][0]["value"]["is_last_response"]
+                        completion = data['result']['items'][0]['value']['is_last_response']
                         chunks_timings.append(time.monotonic() - chunk_start_time)
                         chunk_start_time = time.monotonic()
                         if completion is False:
-                            chunks_received.append(data["result"]["items"][0]["value"]["stream_token"])
+                            chunks_received.append(data['result']['items'][0]['value']['stream_token'])
                             continue
                         else:
-                            generated_text = data["result"]["items"][0]["value"]["completion"]
-                            response_dict = data["result"]["items"][0]["value"]
+                            generated_text = data['result']['items'][0]['value']['completion']
+                            response_dict = data['result']['items'][0]['value']
                         break
                 # support to fetch generated text and metrics for api v1
                 else:
@@ -339,22 +339,22 @@ class SambaStudioAPI(BaseAPIEndpoint):
                         chunk = chunk_orig.strip()
                         data = json.loads(chunk)
 
-                        completion = data["result"]["responses"][0]["is_last_response"]
+                        completion = data['result']['responses'][0]['is_last_response']
                         chunks_timings.append(time.monotonic() - chunk_start_time)
                         chunk_start_time = time.monotonic()
                         if completion is False:
-                            chunks_received.append(data["result"]["responses"][0]["stream_token"])
+                            chunks_received.append(data['result']['responses'][0]['stream_token'])
                             continue
                         else:
-                            generated_text = data["result"]["responses"][0]["completion"]
-                            response_dict = data["result"]["responses"][0]
+                            generated_text = data['result']['responses'][0]['completion']
+                            response_dict = data['result']['responses'][0]
                             break
         else:
             # TODO: support non-streaming mode
-            raise ValueError("Streaming mode required")
+            raise ValueError('Streaming mode required')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(chunks_received, chunks_timings, total_request_time)
 
@@ -380,8 +380,8 @@ class FastAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
-        self.base_url = os.environ.get("FASTAPI_URL")
-        self.api_key = os.environ.get("FASTAPI_API_KEY")
+        self.base_url = os.environ.get('FASTAPI_URL')
+        self.api_key = os.environ.get('FASTAPI_API_KEY')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -393,7 +393,7 @@ class FastAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        return {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
     def _get_json_data(self) -> dict:
         """Gets json body for API call
@@ -404,16 +404,16 @@ class FastAPI(BaseAPIEndpoint):
 
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
-        sampling_params["model"] = self.request_config.model
+        sampling_params['model'] = self.request_config.model
 
         if self.request_config.is_stream_mode:
-            sampling_params["stream"] = "true"
-            sampling_params["stream_options"] = {"include_usage": "true"}
+            sampling_params['stream'] = 'true'
+            sampling_params['stream_options'] = {'include_usage': 'true'}
         else:
             # TODO: support not streaming mode
-            raise ValueError("Streaming mode required")
+            raise ValueError('Streaming mode required')
 
-        data = {"messages": [{"role": "user", "content": prompt}]}
+        data = {'messages': [{'role': 'user', 'content': prompt}]}
         data.update(sampling_params)
 
         return data
@@ -435,12 +435,12 @@ class FastAPI(BaseAPIEndpoint):
         json_data = self._get_json_data()
 
         # Set variables
-        generated_text = ""
+        generated_text = ''
         events_received = []
         events_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S')
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
@@ -448,33 +448,33 @@ class FastAPI(BaseAPIEndpoint):
                 response.raise_for_status()
 
             client = sseclient.SSEClient(response)
-            generated_text = ""
+            generated_text = ''
 
             for event in client.events():
                 try:
                     # check streaming events before last stream returns DONE
-                    if event.data != "[DONE]":
+                    if event.data != '[DONE]':
                         data = json.loads(event.data)
                         # if events don't contain "usage" key, which only shows up in stream returning
                         # performance metrics
-                        if data.get("usage") is None:
+                        if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data["choices"][0]["finish_reason"] is None:
+                            if data['choices'][0]['finish_reason'] is None:
                                 # log s timings
                                 events_timings.append(time.monotonic() - event_start_time)
                                 event_start_time = time.monotonic()
                                 # concatenate streaming text pieces
-                                stream_content = data["choices"][0]["delta"]["content"]
+                                stream_content = data['choices'][0]['delta']['content']
                                 events_received.append(stream_content)
                                 generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
-                            response_dict = data["usage"]
+                            response_dict = data['usage']
                 except Exception as e:
-                    raise Exception(f"Error: {e} at streamed event: {event.data}")
+                    raise Exception(f'Error: {e} at streamed event: {event.data}')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
@@ -500,8 +500,8 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
-        self.base_url = os.environ.get("SAMBANOVA_URL", SAMBANOVA_URL)
-        self.api_key = os.environ.get("SAMBANOVA_API_KEY")
+        self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
+        self.api_key = os.environ.get('SAMBANOVA_API_KEY')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -513,7 +513,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        return {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
     def _get_json_data(self) -> dict:
         """Gets json body for API call
@@ -524,16 +524,16 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
-        sampling_params["model"] = self.request_config.model
+        sampling_params['model'] = self.request_config.model
 
         if self.request_config.is_stream_mode:
-            sampling_params["stream"] = True
-            sampling_params["stream_options"] = {"include_usage": "true"}
+            sampling_params['stream'] = True
+            sampling_params['stream_options'] = {'include_usage': 'true'}
         else:
             # TODO: support not streaming mode
-            raise ValueError("Streaming mode required")
+            raise ValueError('Streaming mode required')
 
-        data = {"messages": [{"role": "user", "content": prompt}]}
+        data = {'messages': [{'role': 'user', 'content': prompt}]}
         data.update(sampling_params)
 
         return data
@@ -555,12 +555,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         json_data = self._get_json_data()
 
         # Set variables
-        generated_text = ""
+        generated_text = ''
         events_received = []
         events_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S')
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
@@ -568,33 +568,33 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                 response.raise_for_status()
 
             client = sseclient.SSEClient(response)
-            generated_text = ""
+            generated_text = ''
 
             for event in client.events():
                 try:
                     # check streaming events before last stream returns DONE
-                    if event.data != "[DONE]":
+                    if event.data != '[DONE]':
                         data = json.loads(event.data)
                         # if events don't contain "usage" key, which only shows up in stream returning
                         # performance metrics
-                        if data.get("usage") is None:
+                        if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data["choices"][0]["finish_reason"] is None:
+                            if data['choices'][0]['finish_reason'] is None:
                                 # log s timings
                                 events_timings.append(time.monotonic() - event_start_time)
                                 event_start_time = time.monotonic()
                                 # concatenate streaming text pieces
-                                stream_content = data["choices"][0]["delta"]["content"]
+                                stream_content = data['choices'][0]['delta']['content']
                                 events_received.append(stream_content)
                                 generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
-                            response_dict = data["usage"]
+                            response_dict = data['usage']
                 except Exception as e:
-                    raise Exception(f"Error: {e} at streamed event: {event.data}")
+                    raise Exception(f'Error: {e} at streamed event: {event.data}')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S")
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
@@ -629,57 +629,57 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
         The request_config used to make the request. This is mainly for logging purposes.
     """
 
-    generated_text = ""
+    generated_text = ''
     metrics = {}
     metrics[common_metrics.ERROR_CODE] = None
-    metrics[common_metrics.ERROR_MSG] = ""
+    metrics[common_metrics.ERROR_MSG] = ''
 
     try:
-        if request_config.llm_api == "sncloud":
+        if request_config.llm_api == 'sncloud':
             sncloud_client = SambaNovaCloudAPI(request_config, tokenizer)
             metrics, generated_text = sncloud_client.compute_metrics(metrics)
 
-        elif request_config.llm_api == "sambastudio":
+        elif request_config.llm_api == 'sambastudio':
             sambastudio_client = SambaStudioAPI(request_config, tokenizer)
             metrics, generated_text = sambastudio_client.compute_metrics(metrics)
 
         else:
-            raise ValueError(f"llm_api parameter with value {request_config.llm_api} is not valid.")
+            raise ValueError(f'llm_api parameter with value {request_config.llm_api} is not valid.')
 
         return metrics, generated_text, request_config
 
     except Exception as e:
         error_code = getattr(
             e,
-            "code",
-            "Error while running LLM API calls. Check your model name, LLM API type, env variables and endpoint status",
+            'code',
+            'Error while running LLM API calls. Check your model name, LLM API type, env variables and endpoint status',
         )
         error_message = str(e)
         metrics[common_metrics.ERROR_MSG] = error_message
         metrics[common_metrics.ERROR_CODE] = error_code
 
-        return metrics, "", request_config
+        return metrics, '', request_config
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # The call of this python file is more for debugging purposes
 
     # load env variables
-    load_dotenv("../.env", override=True)
+    load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
-    model = "llama3-405b"
-    llm_api = "sncloud"
+    model = 'llama3-405b'
+    llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 
-    prompt = "This is a test example, so tell me about anything"
+    prompt = 'This is a test example, so tell me about anything'
     request_config = RequestConfig(
         prompt_tuple=(prompt, 10),
         model=model,
         llm_api=llm_api,
         sampling_params={
             # "do_sample": False,
-            "max_tokens_to_generate": 250,
+            'max_tokens_to_generate': 250,
             # "top_k": 40,
             # "top_p": 0.95,
             # "process_prompt": "False",
@@ -690,6 +690,6 @@ if __name__ == "__main__":
 
     metrics, generated_text, request_config = llm_request(request_config, tokenizer)
 
-    print(f"Metrics collected: {metrics}")
+    print(f'Metrics collected: {metrics}')
     # print(f'Completion text: {generated_text}')
-    print(f"Request config: {request_config}")
+    print(f'Request config: {request_config}')

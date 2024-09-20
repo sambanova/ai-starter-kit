@@ -3,8 +3,8 @@ import os  # for using env variables
 import sys  # for appending more paths
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
@@ -16,10 +16,10 @@ from dotenv import load_dotenv  # for loading env variables
 from src.llm_management import LLMManager
 
 # load env variables
-load_dotenv(os.path.join(repo_dir, ".env"))
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 logging.basicConfig(level=logging.INFO)
-logging.info("URL: https://localhost:8501")
+logging.info('URL: https://localhost:8501')
 
 
 @st.cache_data
@@ -51,9 +51,9 @@ def render_svg(svg_path: str) -> None:
     """
 
     # Render SVG file
-    with open(svg_path, "r") as file:
+    with open(svg_path, 'r') as file:
         svg = file.read()
-    b64 = base64.b64encode(svg.encode("utf-8")).decode("utf-8")
+    b64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
     html = r'<img src="data:image/svg+xml;base64,%s" width="60"/>' % b64
     st.write(html, unsafe_allow_html=True)
 
@@ -61,16 +61,16 @@ def render_svg(svg_path: str) -> None:
 def main() -> None:
     # Set up title
     st.set_page_config(
-        page_title="Prompt Engineering - SambaNova Starter Kits",
-        layout="centered",
-        initial_sidebar_state="auto",
-        menu_items={"Get help": "https://github.com/sambanova/ai-starter-kit/issues/new"},
+        page_title='Prompt Engineering - SambaNova Starter Kits',
+        layout='centered',
+        initial_sidebar_state='auto',
+        menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'},
     )  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:,
     col1, mid, col2 = st.columns([1, 1, 20])
     with col1:
-        render_svg(os.path.join(kit_dir, "docs/sambanova-ai.svg"))
+        render_svg(os.path.join(kit_dir, 'docs/sambanova-ai.svg'))
     with col2:
-        st.title("Prompt Engineering Starter Kit")
+        st.title('Prompt Engineering Starter Kit')
 
     # Instantiate LLMManager class
     llm_manager = LLMManager()
@@ -84,11 +84,11 @@ def main() -> None:
     model_name_candidates = [
         model_name
         for model_name in model_names
-        if model_name.lower() in llm_info["select_expert"].lower().replace("-", "")
+        if model_name.lower() in llm_info['select_expert'].lower().replace('-', '')
     ]
 
     if len(model_name_candidates) > 0:
-        llm_expert = llm_info["select_expert"]
+        llm_expert = llm_info['select_expert']
         selected_model_for_prompt = model_name_candidates[0]
     else:
         raise Exception("The llm expert specified doesn't match with the list of models provided in config.")
@@ -96,7 +96,7 @@ def main() -> None:
     # Set up model selection drop box
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.text_input("Model display", llm_expert, disabled=True)
+        st.text_input('Model display', llm_expert, disabled=True)
         st.write(
             f""":red[**Architecture:**]
             {model_info[selected_model_for_prompt]['Model Architecture']}  \n:red[**Prompting Tips:**]
@@ -106,7 +106,7 @@ def main() -> None:
     # Set up use case drop box
     with col2:
         selected_prompt_use_case = st.selectbox(
-            "Use Case for Sample Prompt",
+            'Use Case for Sample Prompt',
             prompt_use_cases,
             help="""
             \n:red[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including
@@ -133,26 +133,26 @@ def main() -> None:
     # Set up prompting area. Show prompt depending on the model selected and use case
     prompt_template = llm_manager.get_prompt_template(selected_model_for_prompt, selected_prompt_use_case)
     prompt = st.text_area(
-        "Prompt",
+        'Prompt',
         prompt_template,
         height=210,
     )
 
     # Process prompt and show the completion
-    if st.button("Send"):
-        response_content = ""
+    if st.button('Send'):
+        response_content = ''
         # Call endpoint and show the response content
-        if llm_info["api"] == "sambastudio":
+        if llm_info['api'] == 'sambastudio':
             response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
-        elif llm_info["api"] == "sncloud":
+        elif llm_info['api'] == 'sncloud':
             response_content = call_api(llm_manager, prompt, llm_expert)
             st.write(response_content)
         else:
             st.error('Please select a valid API in your config file "sncloud" or "sambastudio" ')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # run following method if you want to know how prompt yaml files were created.
     # create_prompt_yamls()
 

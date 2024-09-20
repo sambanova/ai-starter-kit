@@ -24,11 +24,11 @@ class ChatPerformanceEvaluator:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        if utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model.lower().replace("-", ""):
+        if utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model.lower().replace('-', ''):
             prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
             <|start_header_id|>assistant<|end_header_id|>"""
         else:
-            prompt_template = f"[INST]{prompt}[/INST]"
+            prompt_template = f'[INST]{prompt}[/INST]'
 
         tokenizer = utils.get_tokenizer(self.model)
 
@@ -42,7 +42,7 @@ class ChatPerformanceEvaluator:
         )
         output = llm_request(request_config, tokenizer)
 
-        if output[0]["error_code"]:
+        if output[0]['error_code']:
             raise Exception(
                 f"""Unexpected error happened when executing requests: {output[0]['error_code']}.
                   Additional message: {output[0]['error_msg']}"""
@@ -50,17 +50,17 @@ class ChatPerformanceEvaluator:
         return output
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # load env variables
-    load_dotenv("../.env", override=True)
+    load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
-    model_name = "llama3-405b"
-    llm_api = "sncloud"
+    model_name = 'llama3-405b'
+    llm_api = 'sncloud'
 
     params = {
         # "do_sample": False,
-        "max_tokens_to_generate": 1024,
+        'max_tokens_to_generate': 1024,
         # "temperature": 1,
         # "repetition_penalty":1.0,
         # "top_k":50,
@@ -68,5 +68,5 @@ if __name__ == "__main__":
     }
 
     handler = ChatPerformanceEvaluator(model_name, llm_api, params)
-    response = handler.generate(prompt="Tell me about SambaNova in one sentence")
+    response = handler.generate(prompt='Tell me about SambaNova in one sentence')
     print(response)

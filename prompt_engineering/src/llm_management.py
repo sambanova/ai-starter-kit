@@ -1,8 +1,8 @@
 import os  # for using env variables
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 from dataclasses import dataclass
 from typing import Tuple  # for type hint
@@ -14,7 +14,7 @@ from langchain_core.language_models.llms import LLM
 from utils.model_wrappers.api_gateway import APIGateway
 
 # define config path
-CONFIG_PATH = os.path.join(kit_dir, "config.yaml")
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 
 @dataclass(init=False)
@@ -33,11 +33,11 @@ class LLMManager:
         """Loads json config file"""
 
         # Read config file
-        with open(CONFIG_PATH, "r", encoding="utf-8") as file:
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as file:
             config = yaml.safe_load(file)
-        model_info = config["models"]
-        llm_info = config["llm"]
-        prompt_use_cases = config["use_cases"]
+        model_info = config['models']
+        llm_info = config['llm']
+        prompt_use_cases = config['use_cases']
 
         return llm_info, model_info, prompt_use_cases
 
@@ -51,11 +51,11 @@ class LLMManager:
             langchain embedding model
         """
         llm = APIGateway.load_llm(
-            type=self.llm_info["api"],
+            type=self.llm_info['api'],
             streaming=False,
-            coe=self.llm_info["coe"],
-            max_tokens_to_generate=self.llm_info["max_tokens_to_generate"],
-            temperature=self.llm_info["temperature"],
+            coe=self.llm_info['coe'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
             select_expert=model_expert,
         )
         return llm
@@ -73,7 +73,7 @@ class LLMManager:
 
         # Load prompt from the corresponding yaml file
         prompt_file_name = f"{model.lower()}-prompt_engineering-{prompt_use_case.lower().replace(' ','_')}_usecase.yaml"
-        prompt = load_prompt(f"./prompts/{prompt_file_name}")
+        prompt = load_prompt(f'./prompts/{prompt_file_name}')
 
         return prompt.template
 
@@ -82,22 +82,22 @@ class LLMManager:
 
         # Given a set of prompts based on the use case and model used
         prompts_templates = {
-            "General Assistant": {
-                "Llama2": """[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers
+            'General Assistant': {
+                'Llama2': """[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers
                 should not include any unsafe, unethical, or illegal content. If you don't understand the question or
                 don't know the answer, please don't share false information. <</SYS>>\n\nHow can I write better prompts
                 for large language models? [/INST]"""
             },
-            "Document Search": {
-                "Llama2": """[INST] <<SYS>> Use the following pieces of context to answer the question at the end. If
+            'Document Search': {
+                'Llama2': """[INST] <<SYS>> Use the following pieces of context to answer the question at the end. If
                 the answer is not in context for answering, say that you don't know, don't try to make up an answer or
                 provide an answer not extracted from provided context. <</SYS>>\nContext: Early Account Closure Fee $30
                 (if account is closed within 6 months of opening) \nReplacement of ATM Card $5 per card \nReplacement Of
                 Lost Passbook $15 per passbook \nQuestion: I lost my ATM card. How much will it cost to replace it?
                 [/INST]"""
             },
-            "Product Selection": {
-                "Llama2": """[INST] <<SYS>> You are an electrical engineer ai assistant.  You will be given context that
+            'Product Selection': {
+                'Llama2': """[INST] <<SYS>> You are an electrical engineer ai assistant.  You will be given context that
                 will help answer a question.  You will interpret the context for useful information that will answer
                 the question.  Provide concise, helpful, technical information (focusing on numerical information). 
                 <</SYS>> [/INST] \n    Here is the question and context: \n\n    question: 'what is the switching
@@ -115,14 +115,14 @@ class LLMManager:
                 Please do not infer anything if the question cannot be deduced from the context or make anything up; 
                 simply state you cannot find the information.\n\n    Sure, here is the answer to the question:[/INST]"""
             },
-            "Code Generation": {
-                "Llama2": """[INST] <<SYS>> You are a helpful code assistant. Generate a valid JSON object based on the
+            'Code Generation': {
+                'Llama2': """[INST] <<SYS>> You are a helpful code assistant. Generate a valid JSON object based on the
                 inpput. \nExample: name: John lastname: Smith address: #1 Samuel St. would be converted to:\n{\n
                 ""address"": ""#1 Samuel St."",\n""lastname"": ""Smith"",\n""name"": ""John""\n} <</SYS>>\n[INST] Input:
                 name: Ted lastname: Pot address: #1 Bisson St. [/INST]"""
             },
-            "Summarization": {
-                "Llama2": """[INST] <<SYS>> You are a helpful assistant. Your answers should not include any unsafe,
+            'Summarization': {
+                'Llama2': """[INST] <<SYS>> You are a helpful assistant. Your answers should not include any unsafe,
                 unethical, or illegal content. <</SYS>>\n\nSummarize the customer support call transcript below:\n\n
                 Customer: Hi, I'm having trouble accessing my account.\n\nSupport Agent: Sure, can you please provide
                 me with your account username?\n\nCustomer: It's 'example123'.\n\nSupport Agent: Thank you. I see
@@ -134,8 +134,8 @@ class LLMManager:
                 customer's issue, the steps taken by the support agent to resolve it, and the resolution outcome.
                 [/INST]"""
             },
-            "Question & Answering": {
-                "Llama2": """[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers
+            'Question & Answering': {
+                'Llama2': """[INST] <<SYS>> You are a helpful, respectful, positive, and honest assistant. Your answers
                 should not include any unsafe, unethical, or illegal content. If you don't understand the question or
                 don't know the answer, please don't share false information. <</SYS>>\n\nBased on the following excerpt
                 extraction from an Amazon revenue report, answer the question.\n\nExcerpt:\n\nTotal revenue for Q4 2023
@@ -145,8 +145,8 @@ class LLMManager:
                 $60 billion.\n\nQuestion:\n\nWhat was the percentage increase in total revenue for Amazon in Q4 2023
                 compared to the same period last year? [/INST]"""
             },
-            "Query decomposition": {
-                "Llama2": """[INST] <<SYS>> Decompose a complex query into a list of questions that can be addressed
+            'Query decomposition': {
+                'Llama2': """[INST] <<SYS>> Decompose a complex query into a list of questions that can be addressed
                 individually. Follow these rules: 1. Only use the information given in the query. 2. The output is in
                 JSON format. 3. No explanation or conclusions are necessary. <</SYS>>\n\nQuery example:\n\n'''Compare
                 the prices, security features, engines, and overall user experience of Ford Escape and Toyota Rav4.'''
@@ -168,4 +168,4 @@ class LLMManager:
                 prompt_file_name = f"""{model_key.lower().replace(' ','_')}-prompt_engineering-
                 {usecase_key.lower().replace(' ','_')}_usecase"""
                 prompt = PromptTemplate.from_template(prommpt_template)
-                prompt.save(f"./prompts/{prompt_file_name}.yaml")
+                prompt.save(f'./prompts/{prompt_file_name}.yaml')
