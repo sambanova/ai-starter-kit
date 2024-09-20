@@ -427,7 +427,7 @@ class FinancialAssistantTest(unittest.TestCase):
 
 
 def suite() -> unittest.TestSuite:
-    suite = unittest.TestSuite()
+    """Test suite to define the order of the test execution."""
 
     # List all the test cases here in order of execution
     suite_list = [
@@ -450,6 +450,7 @@ def suite() -> unittest.TestSuite:
     ]
 
     # Add all the tests to the suite
+    suite = unittest.TestSuite()
     for suite_item in suite_list:
         suite.addTest(FinancialAssistantTest(suite_item))
 
@@ -457,5 +458,11 @@ def suite() -> unittest.TestSuite:
 
 
 if __name__ == '__main__':
+    # The test runner
     runner = unittest.TextTestRunner()
-    runner.run(suite())
+
+    # The test suite
+    my_suite = suite()
+
+    # Run the tests
+    runner.run(my_suite)
