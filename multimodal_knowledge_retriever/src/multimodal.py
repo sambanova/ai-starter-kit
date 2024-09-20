@@ -64,6 +64,7 @@ class MultimodalRetrieval:
         self.retrieval_info = config_info[4]
         self.llm = self.set_llm()
         self.lvlm = SambastudioMultimodal(
+            model=self.lvlm_info['model'],
             temperature=self.lvlm_info['temperature'],
             max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
             top_p=self.lvlm_info['top_p'],
