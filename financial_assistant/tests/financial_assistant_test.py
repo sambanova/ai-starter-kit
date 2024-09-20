@@ -12,9 +12,9 @@ Returns:
 """
 
 import logging
+import os
 import unittest
 from typing import Any, Dict, List, Tuple
-import os
 
 import pandas
 from matplotlib.figure import Figure
@@ -43,7 +43,7 @@ from financial_assistant.streamlit.app_stock_data import handle_stock_data_analy
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
 from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import initialize_session, delete_temp_dir
+from financial_assistant.streamlit.utilities_app import delete_temp_dir, initialize_session
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
