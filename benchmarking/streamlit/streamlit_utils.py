@@ -48,6 +48,7 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame):
         var_name="Side type",
         value_name="Total throughput (tokens per second)",
     )
+    df_melted["Batch size"] = [str(x) for x in df_melted["Batch size"]]
     fig = px.bar(
         df_melted, 
         x="Batch size", 
@@ -89,21 +90,24 @@ def plot_client_vs_server_barplots(df_user: pd.DataFrame, x_col: str, y_cols: Li
         var_name='Metric', 
         value_name='Value',
     )
+    xgroups = [str(x) for x in sorted(pd.unique(df_melted[x_col]))]
+    df_melted[x_col] = [str(x) for x in df_melted[x_col]]
 
     fig = go.Figure()
-    for i in range(0, len(pd.unique(df_melted[x_col]))):
+    for i in xgroups:
+        showlegend = i == xgroups[0]
         fig.add_trace(go.Violin(
-            x=df_melted[x_col][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == pd.unique(df_melted[x_col])[i])],
-            y=df_melted["Value"][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == pd.unique(df_melted[x_col])[i])],
-            legendgroup=legend_labels[0], scalegroup=legend_labels[0], name=legend_labels[0],
+            x=df_melted[x_col][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == i)],
+            y=df_melted["Value"][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == i)],
+            legendgroup=legend_labels[0], showlegend=showlegend, scalegroup=i, name=legend_labels[0],
             side="negative",
             pointpos=-0.5,
             line_color="#325c8c",
         ))
         fig.add_trace(go.Violin(
-            x=df_melted[x_col][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == pd.unique(df_melted[x_col])[i])],
-            y=df_melted["Value"][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == pd.unique(df_melted[x_col])[i])],
-            legendgroup=legend_labels[1], scalegroup=legend_labels[1], name=legend_labels[1],
+            x=df_melted[x_col][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == i)],
+            y=df_melted["Value"][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == i)],
+            legendgroup=legend_labels[1], showlegend=showlegend, scalegroup=i, name=legend_labels[1],
             side="positive",
             pointpos=0.5,
             line_color="#ee7625",
@@ -113,14 +117,15 @@ def plot_client_vs_server_barplots(df_user: pd.DataFrame, x_col: str, y_cols: Li
         meanline_visible=True,
         points="all",
         jitter=0.05,
-        scalemode="count",
+        scalemode="width",
     )
     fig.update_layout(
         title_text=title_text,
         xaxis_title=xaxis_title,
         yaxis_title=yaxis_title,
         violinmode='overlay',
-        template="plotly_dark",)
+        template="plotly_dark",
+    )
     return fig
 
 def plot_requests_gantt_chart(df_user: pd.DataFrame):
