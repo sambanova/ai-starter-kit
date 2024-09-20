@@ -112,4 +112,5 @@ Future work will potentially include:
 ```bash
 python yoda/llava_data_prep/scripts/create_synthetic_tables.py --name test --num-its 4
 ```
-and ensure yoda/llava_data_prep/test is created with a subfolder of synthetic images and yoda/llava_data_prep/test/annotations_train.json exists.
+
+After running the above, ensure yoda/llava_data_prep/test is created with a subfolder of synthetic images and yoda/llava_data_prep/test/annotations_train.json exists.
