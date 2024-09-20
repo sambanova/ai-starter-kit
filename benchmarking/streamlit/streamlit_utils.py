@@ -162,9 +162,13 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame):
     )
     for i in range(0, len(df_user.index), 2):
         fig.add_hrect(y0=i+0.5, y1=i+1.5, line_width=0, fillcolor="grey", opacity=0.1)
-    fig.update_xaxes(type="date")
+    fig.update_xaxes(
+        type="date",
+        tickformat="%H:%M:%S",
+        hoverformat="%H:%M:%S.%2f",)
     fig.update_layout(
         title_text="LLM requests across time",
+        xaxis_title="Time stamp",
         yaxis_title="Request index",
         template="plotly_dark",
     )
