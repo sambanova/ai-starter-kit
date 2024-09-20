@@ -1,17 +1,17 @@
+import warnings
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
-import matplotlib.pyplot as plt
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.app import LLM_API_OPTIONS
 
-import warnings
-
 warnings.filterwarnings("ignore")
 
 
-def _initialize_sesion_variables():
+def _initialize_sesion_variables() -> None:
     # Initialize chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
@@ -55,7 +55,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
         save_response_texts=st.session_state.save_llm_responses,
-        llm_api=st.session_state.llm_api
+        llm_api=st.session_state.llm_api,
     )
 
     if st.session_state.llm_api == "sambastudio":
@@ -64,7 +64,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         sampling_params = {"max_tokens": st.session_state.max_tokens}
     else:
         sampling_params = {}
-        
+
     custom_performance_evaluator.run_benchmark(
         sampling_params=sampling_params,
     )
@@ -79,8 +79,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
     return valid_df
 
 
-def main():
-
+def main() -> None:
     st.set_page_config(
         page_title="AI Starter Kit",
         page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
@@ -90,12 +89,12 @@ def main():
 
     st.title(":orange[SambaNova] Custom Performance Evaluation")
     st.markdown(
-        "Here you can select a custom dataset that you want to benchmark performance with. Note that with models that support dynamic \
-            batching, you are limited to the number of cpus available on your machine to send concurrent requests."
+        "Here you can select a custom dataset that you want to benchmark performance with. Note that with models that \
+          support dynamic batching, you are limited to the number of cpus available on your machine to send concurrent \
+              requests."
     )
 
     with st.sidebar:
-
         ##################
         # File Selection #
         ##################
@@ -113,10 +112,8 @@ def main():
             key="llm",
             help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
         )
-        
-        st.session_state.llm_api = st.selectbox(
-            "API type", options=LLM_API_OPTIONS
-        )
+
+        st.session_state.llm_api = st.selectbox("API type", options=LLM_API_OPTIONS)
 
         st.number_input(
             "Num Concurrent Workers",
@@ -130,11 +127,11 @@ def main():
         st.number_input("Timeout", min_value=60, max_value=1800, value=600, step=1, key="timeout")
 
         st.toggle(
-            "Save LLM Responses", 
-            value=False, 
-            key="save_llm_responses", 
-            help="Toggle on if you want to save the llm responses to an output JSONL file"
-            )
+            "Save LLM Responses",
+            value=False,
+            key="save_llm_responses",
+            help="Toggle on if you want to save the llm responses to an output JSONL file",
+        )
 
         #####################
         # Tuning Parameters #
@@ -155,14 +152,12 @@ def main():
         job_submitted = st.sidebar.button("Run!")
 
     if job_submitted:
-
         st.toast(
-            "Performance evaluation in progress. This could take a while depending on the dataset size and max tokens setting."
+            """Performance evaluation in progress. This could take a while depending on the dataset size and max tokens
+              setting."""
         )
         with st.spinner("Processing"):
-
             try:
-
                 results_df = _run_custom_performance_evaluation()
 
                 st.subheader("Performance metrics plots")
@@ -199,9 +194,7 @@ def main():
                 st.pyplot(fig)
 
             except Exception as e:
-                st.error(
-                    f"Error: {e}."
-                )
+                st.error(f"Error: {e}.")
 
 
 if __name__ == "__main__":

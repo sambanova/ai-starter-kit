@@ -4,17 +4,16 @@ sys.path.append("../")
 sys.path.append("./src")
 sys.path.append("./streamlit")
 
-import pandas as pd
-from typing import List
-import streamlit as st
-from st_pages import Page, show_pages
-import matplotlib.pyplot as plt
+import warnings
 
-from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
+from dotenv import load_dotenv
+from st_pages import Page, show_pages
 from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
-from dotenv import load_dotenv
-import warnings
+from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
 
 warnings.filterwarnings("ignore")
 
@@ -22,7 +21,7 @@ LLM_API_OPTIONS = ["sncloud", "sambastudio"]
 
 
 @st.cache_data
-def _init():
+def _init() -> None:
     load_dotenv("../.env", override=True)
 
 
@@ -64,8 +63,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     return valid_df
 
 
-def _initialize_sesion_variables():
-
+def _initialize_sesion_variables() -> None:
     if "llm" not in st.session_state:
         st.session_state.llm = None
 
@@ -84,8 +82,7 @@ def _initialize_sesion_variables():
         st.session_state.llm_api = None
 
 
-def main():
-
+def main() -> None:
     st.set_page_config(
         page_title="AI Starter Kit",
         page_icon="https://sambanova.ai/hubfs/logotype_sambanova_orange.png",
@@ -107,20 +104,20 @@ def main():
 
     st.title(":orange[SambaNova] Synthetic Performance Evaluation")
     st.markdown(
-        "This performance evaluation assesses the following LLM's performance metrics using concurrent processes. _client represent the metrics computed from the client-side and _server represents the metrics computed from the server-side."
+        """This performance evaluation assesses the following LLM's performance metrics using concurrent processes.
+          _client represent the metrics computed from the client-side and _server represents the metrics computed
+          from the server-side."""
     )
     st.markdown(
-        "**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then generate the first output token."
+        """**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then
+          generate the first output token."""
     )
+    st.markdown("**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated - 1)")
     st.markdown(
-        "**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated - 1)"
+         """**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is
+          calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"""
     )
-    st.markdown(
-        "**Throughput:** Number of output tokens per second across all concurrency requests. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"
-    )
-    st.markdown(
-        "**Total Throughput:** Number of total output tokens per batch and per second"
-    )
+    st.markdown("**Total Throughput:** Number of total output tokens per batch and per second")
 
     with st.sidebar:
         st.title("Configuration")
@@ -151,29 +148,24 @@ def main():
             "Number of concurrent workers", min_value=1, max_value=100, value=1, step=1
         )
 
-        st.session_state.timeout = st.number_input(
-            "Timeout", min_value=60, max_value=1800, value=600, step=1
-        )
+        st.session_state.timeout = st.number_input("Timeout", min_value=60, max_value=1800, value=600, step=1)
 
         sidebar_option = st.sidebar.button("Run!")
 
     if sidebar_option:
-
         st.toast("Performance evaluation processing now. It should take few minutes.")
         with st.spinner("Processing"):
-
             try:
-
                 df_req_info = _run_performance_evaluation()
 
                 st.subheader("Performance metrics plots")
                 expected_output_tokens = st.session_state.output_tokens
-                generated_output_tokens = (
-                    df_req_info.server_number_output_tokens.unique()[0]
-                )
+                generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
                 if not pd.isnull(generated_output_tokens):
                     st.markdown(
-                        f"Difference between expected output tokens {expected_output_tokens} and generated output tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)} token(s)"
+                        f"""Difference between expected output tokens {expected_output_tokens} and generated output
+                          tokens {generated_output_tokens} is: {abs(expected_output_tokens-generated_output_tokens)}
+                          token(s)"""
                     )
 
                 fig, ax = plt.subplots(nrows=4, ncols=1, figsize=(8, 24))

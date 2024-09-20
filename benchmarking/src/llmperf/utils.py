@@ -1,12 +1,11 @@
 import json
 import time
 from collections.abc import Iterable
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Generator, Union
 
 from transformers import AutoTokenizer
 
-
-SAMBANOVA_URL="https://api.sambanova.ai/v1/chat/completions"
+SAMBANOVA_URL = "https://api.sambanova.ai/v1/chat/completions"
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 MODEL_TYPE_IDENTIFIER = {
     "mistral": "mistral",
@@ -25,7 +24,7 @@ class LLMPerfResults:
         self,
         name: str,
         metadata: Dict[str, Any] = None,
-    ):
+    ) -> None:
         self.name = name
         self.metadata = metadata or {}
         self.timestamp = int(time.time())
@@ -62,38 +61,34 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
 
     Returns:
         AutoTokenizer: generic HuggingFace tokenizer
-    """    
-    # Using NousrResearch for calling out model tokenizers without requesting access. 
+    """
+    # Using NousrResearch for calling out model tokenizers without requesting access.
     # Ref: https://huggingface.co/NousResearch
     # Ref: https://huggingface.co/TheBloke
     # Ref: https://huggingface.co/unsloth
     # Ref: https://huggingface.co/deepseek-ai
     # Ref: https://huggingface.co/upstage
     # Ref: https://huggingface.co/yanolja
-    
-    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower().replace("-",""):
+
+    if MODEL_TYPE_IDENTIFIER["mistral"] in model_name.lower().replace("-", ""):
         tokenizer = AutoTokenizer.from_pretrained("TheBloke/Mistral-7B-Instruct-v0.2-AWQ")
-    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower().replace("-",""):
+    elif MODEL_TYPE_IDENTIFIER["llama3"] in model_name.lower().replace("-", ""):
         tokenizer = AutoTokenizer.from_pretrained("unsloth/llama-3-8b-Instruct")
-    elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower().replace("-",""):
+    elif MODEL_TYPE_IDENTIFIER["deepseek"] in model_name.lower().replace("-", ""):
         if "coder" in model_name.lower():
-            tokenizer = AutoTokenizer.from_pretrained(
-                "deepseek-ai/deepseek-coder-1.3b-base"
-            )
+            tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/deepseek-coder-1.3b-base")
         else:
-            tokenizer = AutoTokenizer.from_pretrained(
-                "deepseek-ai/deepseek-llm-7b-base"
-            )
-    elif MODEL_TYPE_IDENTIFIER["solar"] in model_name.lower().replace("-",""):
+            tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/deepseek-llm-7b-base")
+    elif MODEL_TYPE_IDENTIFIER["solar"] in model_name.lower().replace("-", ""):
         tokenizer = AutoTokenizer.from_pretrained("upstage/SOLAR-10.7B-Instruct-v1.0")
-    elif MODEL_TYPE_IDENTIFIER["eeve"] in model_name.lower().replace("-",""):
+    elif MODEL_TYPE_IDENTIFIER["eeve"] in model_name.lower().replace("-", ""):
         tokenizer = AutoTokenizer.from_pretrained("yanolja/EEVE-Korean-10.8B-v1.0")
     else:
         tokenizer = AutoTokenizer.from_pretrained("NousResearch/Llama-2-7b-chat-hf")
     return tokenizer
 
 
-def flatten(item):
+def flatten(item: Union[Iterable, str]) -> Generator:
     """Flattens an iterable"""
     for sub_item in item:
         if isinstance(sub_item, Iterable) and not isinstance(sub_item, str):

@@ -1,15 +1,16 @@
 import os
+from typing import Any, Dict, Optional
 
-from llmperf.sambanova_client import llm_request
-from llmperf.models import RequestConfig
 import llmperf.utils as utils
-
 from dotenv import load_dotenv
+from llmperf.models import RequestConfig
+from llmperf.sambanova_client import llm_request
+
 
 class ChatPerformanceEvaluator:
     """Samba Studio COE handler that wraps SamabaNova LLM client to parse output"""
 
-    def __init__(self, model_name, llm_api, params):
+    def __init__(self, model_name: str, llm_api: str, params: Optional[Dict[str, Any]]) -> None:
         self.model = model_name
         self.llm_api = llm_api
         self.params = params
@@ -23,10 +24,9 @@ class ChatPerformanceEvaluator:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        if utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model.lower().replace("-",""):
-            prompt_template = (
-                f"<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-            )
+        if utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model.lower().replace("-", ""):
+            prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
+            <|start_header_id|>assistant<|end_header_id|>"""
         else:
             prompt_template = f"[INST]{prompt}[/INST]"
 
@@ -44,13 +44,13 @@ class ChatPerformanceEvaluator:
 
         if output[0]["error_code"]:
             raise Exception(
-                f"Unexpected error happened when executing requests: {output[0]['error_code']}. Additional message: {output[0]['error_msg']}"
+                f"""Unexpected error happened when executing requests: {output[0]['error_code']}.
+                  Additional message: {output[0]['error_msg']}"""
             )
         return output
 
 
 if __name__ == "__main__":
-
     # load env variables
     load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)

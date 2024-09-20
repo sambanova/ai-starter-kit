@@ -1,12 +1,13 @@
-import numpy as np
-from matplotlib.axes._axes import Axes
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
 from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.axes._axes import Axes
 
-def plot_dataframe_summary(df_req_info, ax):
+
+def plot_dataframe_summary(df_req_info: pd.DataFrame, ax: Axes) -> None:
     df_req_summary = (
         df_req_info.groupby("batch_size_used")[
             [
@@ -23,12 +24,10 @@ def plot_dataframe_summary(df_req_info, ax):
         }
     )
     df_req_summary["server_throughput_token_per_s"] = (
-        df_req_summary["server_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
+        df_req_summary["server_output_token_per_s_mean"] * df_req_summary["batch_size_used"]
     )
     df_req_summary["client_throughput_token_per_s"] = (
-        df_req_summary["client_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
+        df_req_summary["client_output_token_per_s_mean"] * df_req_summary["batch_size_used"]
     )
     df_melted = pd.melt(
         df_req_summary,
@@ -40,13 +39,12 @@ def plot_dataframe_summary(df_req_info, ax):
         var_name="Value Type",
         value_name="Value",
     )
-    sns.barplot(
-        x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax, estimator=np.median
-    ).set(
+    sns.barplot(x="batch_size_used", y="Value", hue="Value Type", data=df_melted, ax=ax, estimator=np.median).set(
         xlabel="Batch Size Used",
         ylabel="tokens/s",
         title="Total throughput per batch",
     )
+
 
 def plot_client_vs_server_barplots(
     df_user: pd.DataFrame,
@@ -70,9 +68,7 @@ def plot_client_vs_server_barplots(
         None
     """
     # Melt the DataFrame to have a long-form DataFrame suitable for Seaborn
-    df_melted = df_user.melt(
-        id_vars=[x_col], value_vars=y_cols, var_name="Metric", value_name="Value"
-    )
+    df_melted = df_user.melt(id_vars=[x_col], value_vars=y_cols, var_name="Metric", value_name="Value")
 
     # Create the plot
     if ax is None:
