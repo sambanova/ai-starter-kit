@@ -14,6 +14,7 @@ Table of Contents:
 <!-- TOC -->
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
+    - [Install LaTex](#install-latex)
     - [Clone this repository](#clone-this-repository)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Setup the generative model](#set-up-the-generative-model)
@@ -32,6 +33,14 @@ This is a starterkit to demonstrate and provide assistance with the creation of 
 # Before you begin
 
 You have to set up your environment before you can run or customize the starter kit.
+
+## Install LaTex
+
+FOr mac users, you will need a LaTex system dependency:
+
+```bash
+brew install --cask mactex
+```
 
 ## Clone this repository
 

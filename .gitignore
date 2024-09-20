@@ -264,3 +264,10 @@ wandb/
 utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
+
+# yoda llava_data_prep
+yoda/llava_data_prep/sec_data
+yoda/synthetic_data
+yoda/llava_data_prep/scripts/table.aux
+yoda/llava_data_prep/notebooks/yolov8n.pt
+yoda/llava_data_prep/test

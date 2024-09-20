@@ -21,13 +21,14 @@ CONFIG_PATH = os.path.join(kit_dir, "llava_data_prep", "config.yaml")
 PREP_PATH = os.path.join(kit_dir, "llava_data_prep")
 LOGS_PATH = os.path.join(kit_dir, "llava_data_prep", "logs")
 
-from yoda.llava_data_prep.src.table_utils import TableAugmentor
+from yoda.llava_data_prep.src.table_utils import TableAugmentor # type: ignore
 
 parser = argparse.ArgumentParser(description="Test and log synthetic table creation.")
 
 parser.add_argument("--name", type=str, help="Name of run", default="llava_prep")
 parser.add_argument("--num-its", type=int, help="Number of iterations.", default=25)
-parser.add_argument("--split", type=str, help="Split", default="train", choices=["train", "val"]) # TODO: At test and logic
+# TODO: At test and logic
+parser.add_argument("--split", type=str, help="Split", default="train", choices=["train", "val"])
 
 def main() -> None:
 
