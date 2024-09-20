@@ -13,6 +13,7 @@ Returns:
 
 import logging
 import os
+import time
 import unittest
 from typing import Any, Dict, List, Tuple
 
@@ -65,6 +66,9 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # List of available methods for database query
         self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
+
+        # Wait for the LLM to be ready
+        time.sleep(1)
 
     def test_get_stock_info(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -424,22 +428,30 @@ class FinancialAssistantTest(unittest.TestCase):
 
 def suite() -> unittest.TestSuite:
     suite = unittest.TestSuite()
-    suite.addTest(FinancialAssistantTest('test_get_stock_info'))
-    suite.addTest(FinancialAssistantTest('test_handle_stock_query'))
-    suite.addTest(FinancialAssistantTest('test_get_historical_price'))
-    suite.addTest(FinancialAssistantTest('test_handle_stock_data_analysis'))
-    suite.addTest(FinancialAssistantTest('test_create_stock_database'))
-    suite.addTest(FinancialAssistantTest('test_handle_database_creation'))
-    suite.addTest(FinancialAssistantTest('test_query_stock_database'))
-    suite.addTest(FinancialAssistantTest('test_handle_database_query'))
-    suite.addTest(FinancialAssistantTest('test_scrape_yahoo_finance_news'))
-    suite.addTest(FinancialAssistantTest('test_handle_yfinance_news'))
-    suite.addTest(FinancialAssistantTest('test_retrieve_filings'))
-    suite.addTest(FinancialAssistantTest('test_handle_financial_filings'))
-    suite.addTest(FinancialAssistantTest('test_handle_pdf_generation'))
-    suite.addTest(FinancialAssistantTest('test_pdf_rag'))
-    suite.addTest(FinancialAssistantTest('test_handle_pdf_rag'))
-    suite.addTest(FinancialAssistantTest('test_delete_cache'))
+
+    # List all the test cases here in order of execution
+    suite_list = [
+        'test_get_stock_info',
+        'test_handle_stock_query',
+        'test_get_historical_price',
+        'test_handle_stock_data_analysis',
+        'test_create_stock_database',
+        'test_handle_database_creation',
+        'test_query_stock_database',
+        'test_handle_database_query',
+        'test_scrape_yahoo_finance_news',
+        'test_handle_yfinance_news',
+        'test_retrieve_filings',
+        'test_handle_financial_filings',
+        'test_handle_pdf_generation',
+        'test_pdf_rag',
+        'test_handle_pdf_rag',
+        'test_delete_cache',
+    ]
+
+    # Add all the tests to the suite
+    for suite_item in suite_list:
+        suite.addTest(FinancialAssistantTest(suite_item))
 
     return suite
 
