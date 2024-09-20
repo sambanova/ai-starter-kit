@@ -370,7 +370,7 @@ def download_file(filename: str) -> None:
 def initialize_session(
     session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
     prod_mode: bool = False,
-    cache_dir: Optional[str] = None,
+    cache_dir: str = CACHE_DIR,
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
@@ -405,13 +405,9 @@ def initialize_session(
         session_state.llm = None
 
     # Initialize cache directory
-    if cache_dir is None:
-        if prod_mode:
-            if 'cache_dir' not in session_state:
-                session_state.cache_dir = CACHE_DIR[:-1] + '_prod_mode' + '/cache' + f'_{session_state.session_id}/'
-        else:
-            if 'cache_dir' not in session_state:
-                session_state.cache_dir = CACHE_DIR
+    if prod_mode:
+        if 'cache_dir' not in session_state:
+            session_state.cache_dir = cache_dir[:-1] + '_prod_mode' + '/cache' + f'_{session_state.session_id}/'
     else:
         if 'cache_dir' not in session_state:
             session_state.cache_dir = cache_dir
