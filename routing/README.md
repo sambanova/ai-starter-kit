@@ -74,12 +74,12 @@ NOTE: python 3.10 or higher is required to use this kit.
 
 Install the python dependencies in your project environment.
 
-    ```bash
-    cd ai_starter_kit/routing
-    python3 -m venv routing_env
-    source routing_env/bin/activate
-    pip  install  -r  requirements.txt
-    ```
+```bash
+cd ai_starter_kit/routing
+python3 -m venv routing_env
+source routing_env/bin/activate
+pip  install  -r  requirements.txt
+```
 
 ## Windows requirements
 
@@ -123,17 +123,22 @@ You can also use a LLM model to extract keywords by setting `use_llm=True` and `
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
  ```
-To change the LLM model or modify the parameters for calling the model, make changes to the [config file](./config.yaml).
-You can customize the prompt for the model in [prompts/keyword_extractor_prompt.yaml](prompts/keyword_extractor_prompt.yaml)
+To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
+
+The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](prompts/keyword_extractor_prompt.yaml)
 
 ## router
 1. Customize the LLM model
 
-To change the LLM model or modify the parameters for calling the model, make changes to the [config file](./config.yaml).
-You can customize the prompt for the model in [prompts/rag_routing_prompt_response_schema.yaml](prompts/rag_routing_prompt_response_schema.yaml)
-If you also use your own yaml file by placing the file under [prompts](prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
+To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
+The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](prompts/rag_routing_prompt_response_schema.yaml).
 
+You can also use your own yaml file by placing the file under [prompts](prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
+
+2. Customized the RAG pipeline
+
+The RAG pipeline uses functions in [document_retrieval.py](../enterprise_knowledge_retriever/src/document_retrieval.py). Please refer to [enterprise_knowledge_retriever](../enterprise_knowledge_retriever/README.md) for how to customize the RAG.
 
 # Third-party tools and data sources
 
