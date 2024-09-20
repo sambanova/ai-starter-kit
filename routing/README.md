@@ -107,15 +107,18 @@ You can further customize the starter kit based on the use case.
 
 ## keyword extractor
 1. Load and save to local
+
 You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractior.py](src/keyword_extractior.py)
 
 2. Customize the embedding model
+
 By default, the keywords are exrtacted using a BERT-based embedding model. To change the embedding model, do the following:
 
 * If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
 * If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 3. Customize the LLM model
+
 You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractior.py](src/keyword_extractior.py)
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
@@ -125,6 +128,7 @@ You can customize the prompt for the model in [prompts/keyword_extractor_prompt.
 
 ## router
 1. Customize the LLM model
+
 To change the LLM model or modify the parameters for calling the model, make changes to the [config file](./config.yaml).
 You can customize the prompt for the model in [prompts/rag_routing_prompt_response_schema.yaml](prompts/rag_routing_prompt_response_schema.yaml)
 If you also use your own yaml file by placing the file under [prompts](prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
