@@ -120,9 +120,11 @@ By default, the keywords are exrtacted using a BERT-based embedding model. To ch
 3. Customize the LLM model
 
 You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractior.py](src/keyword_extractior.py)
+
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
  ```
+ 
 To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
 The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](prompts/keyword_extractor_prompt.yaml)
@@ -136,7 +138,7 @@ The prompt for the model can be customized in [prompts/rag_routing_prompt_respon
 
 You can also use your own yaml file by placing the file under [prompts](prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
 
-2. Customized the RAG pipeline
+2. Customize the RAG pipeline
 
 The RAG pipeline uses functions in [document_retrieval.py](../enterprise_knowledge_retriever/src/document_retrieval.py). Please refer to [enterprise_knowledge_retriever](../enterprise_knowledge_retriever/README.md) for how to customize the RAG.
 
