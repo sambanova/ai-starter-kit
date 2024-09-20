@@ -4,6 +4,7 @@ from keybert import KeyBERT, KeyLLM
 from keyphrase_vectorizers import KeyphraseTfidfVectorizer
 from custom_models import CustomEmbedder, CustomTextGeneration
 from keyLLM import CustomKeyLLM
+from langchain_core.prompts import load_prompt
 import torch
 import pickle
 from dotenv import load_dotenv
@@ -122,9 +123,13 @@ class KeywordExtractor:
                     sambanova_api_key=sambanova_api_key,
             )
 
-    def create_kw_models(self) -> None:
+    def create_kw_models(self, use_llm_prompt: bool=False) -> None:
         """
         Create keword extractor using KeyBERT.
+
+        Args:
+            use_llm_prompt (bool, optional): If use customized prompt for llm. Defaults to False.
+                                             Only applied when self.use_llm=True 
 
         Raises:
             NotImplementedError: Not support use both bert and llm as keyword extractor.
@@ -139,7 +144,10 @@ class KeywordExtractor:
         elif self.use_bert:
             self.kw_llm_model = CustomKeyLLM(self.kw_bert_model)
         elif self.use_llm:
-            self.text_generator = CustomTextGeneration(self.llm)
+            llm_prompt = None
+            if use_llm_prompt:
+                llm_prompt = load_prompt(repo_dir + '/' + self.configs['prompts']['kw_etr_prompt']).template
+            self.text_generator = CustomTextGeneration(self.llm, llm_prompt)
             self.kw_llm_model = KeyLLM(self.text_generator)
 
     def docs_embedding(self) -> None:
