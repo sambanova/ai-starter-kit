@@ -10,3 +10,4 @@ sseclient-py==1.8.0
 instructorembedding==1.0.1
 sentence_transformers==2.2.2
 chromadb==0.5.5
+streamlit==1.36.0

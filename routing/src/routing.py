@@ -72,20 +72,18 @@ class Router:
             None
         """     
         # 1. load models
-        fastapi_url = os.environ.get("FASTAPI_URL")
-        fastapi_api_key = os.environ.get("FASTAPI_API_KEY")
+        sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         self.llm = APIGateway.load_llm(
                     type=self.configs["router"]["type"],
                     streaming=False,
-                    # coe=self.configs['router']["coe"],
+                    coe=self.configs['router']["coe"],
                     do_sample=self.configs['router']["do_sample"],
                     max_tokens_to_generate=self.configs['router']["max_tokens_to_generate"],
                     temperature=self.configs['router']["temperature"],
                     select_expert=self.configs['router']["select_expert"],
                     process_prompt=False,
-                    fastapi_url=fastapi_url,
-                    fastapi_api_key=fastapi_api_key
+                    sambanova_api_key=sambanova_api_key,
                 )
 
     def init_router(self) -> None:
@@ -141,26 +139,4 @@ class Router:
         results = self.router.invoke({'query': query})
         return results["datasource"]
 
-    def init_response_router(self) -> None:
-        response_router_prompt_template = load_prompt(os.path.join(repo_dir, self.configs['prompts']['ouput_router_prompt']))
-        response_router_response_schemas = [
-            ResponseSchema(name="reroute", description="true/false value that determines whether query needs to be rerouted")]
-
-        response_router_output_parser = StructuredOutputParser.from_response_schemas(response_router_response_schemas)
-        response_router_format_instructions = response_router_output_parser.get_format_instructions()
-
-        response_router_prompt = PromptTemplate(input_variables=["response"], template=response_router_prompt_template.template,
-                               partial_variables={"format_instructions": response_router_format_instructions})
-
-        self.response_router = response_router_prompt | self.llm | response_router_output_parser 
-
-    def check_response(self, query, response, datasource) -> str:
-        decision = self.response_router.invoke({"datasource": datasource,
-                                     "question": query,
-                                     "response": response})
-        reroute = str(decision["reroute"]).lower()
-        return reroute
-
-
-
-
+    
