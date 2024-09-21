@@ -3,7 +3,7 @@ from typing import Union
 from keybert import KeyBERT, KeyLLM
 from keyphrase_vectorizers import KeyphraseTfidfVectorizer
 from custom_models import CustomEmbedder, CustomTextGeneration
-from keyLLM import CustomKeyLLM
+from custom_keyLLM import CustomKeyLLM
 from langchain_core.prompts import load_prompt
 import torch
 import pickle
@@ -50,7 +50,8 @@ class KeywordExtractor:
     def __init__(self, configs: str, 
                  docs: list[str], 
                  use_bert: bool=True, 
-                 use_llm: bool=False) -> None:
+                 use_llm: bool=False,
+                 use_llm_prompt: bool=False) -> None:
         """_summary_
 
         Args:
@@ -58,13 +59,15 @@ class KeywordExtractor:
             docs (list[str]): The list of docs contents.
             use_bert (bool, optional): If use bert as keyword extractor. Defaults to True.
             use_llm (bool, optional): If use llm as keyword extractor. Defaults to False.
+            use_llm_prompt (bool, optional): If use customized prompt for llm. Defaults to False.
+                                             Only applied when self.use_llm=True 
         """
         self.configs = self.load_config(configs)
         self.docs = docs
         self.use_bert = use_bert
         self.use_llm = use_llm
         self.load_models()
-        self.create_kw_models()
+        self.create_kw_models(use_llm_prompt)
 
     def load_config(self, filename: str) -> dict:
         """
@@ -148,7 +151,7 @@ class KeywordExtractor:
             if use_llm_prompt:
                 llm_prompt = load_prompt(repo_dir + '/' + self.configs['prompts']['kw_etr_prompt']).template
             self.text_generator = CustomTextGeneration(self.llm, llm_prompt)
-            self.kw_llm_model = KeyLLM(self.text_generator)
+            self.kw_llm_model = CustomKeyLLM(self.text_generator)
 
     def docs_embedding(self) -> None:
         """
@@ -215,7 +218,8 @@ class KeywordExtractor:
             _, keywords = self.kw_llm_model.extract_keywords(docs=self.docs, embeddings=torch.as_tensor(self.docs_embed), threshold=.9,use_maxsum=True,nr_candidates=20, top_n=5, vectorizer=vectorizer, keyphrase_ngram_range=keyphrase_ngram_range)
             self.keywords = self.extract_first_values(keywords, return_list=False)
         elif use_clusters and self.use_llm:
-            _, self.keywords = self.kw_llm_model.extract_keywords(docs=self.docs, embeddings=torch.as_tensor(self.docs_embed), threshold=.9)
+            _, keywords = self.kw_llm_model.extract_keywords(docs=self.docs, embeddings=torch.as_tensor(self.docs_embed), threshold=.9)
+            self.keywords = list(set([item for sublist in keywords for item in sublist]))
         elif not use_clusters and self.use_bert:
             keywords = self.kw_bert_model.extract_keywords(docs[:1], keyphrase_ngram_range=keyphrase_ngram_range, use_maxsum=True,nr_candidates=20, top_n=5, vectorizer=vectorizer)
             self.keywords = self.extract_first_values(keywords, return_list=False)
@@ -245,7 +249,7 @@ if __name__ == "__main__":
     kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=True)
     kw_etr.docs_embedding()
     keywords = kw_etr.extract_keywords()
-
+    
     # 3. save keywords to local 
-    save_filepath="./keywords/keywords.pkl"
+    save_filepath="./keywords/keywords_llm.pkl"
     kw_etr.save_keywords(save_filepath)

@@ -85,7 +85,7 @@ class CustomKeyLLM:
             clusters = util.community_detection(embeddings, min_community_size=2, threshold=threshold)
             in_cluster = set([cluster for cluster_set in clusters for cluster in cluster_set])
             out_cluster = set(list(range(len(docs)))).difference(in_cluster)
-            
+
             # Extract keywords for all documents not in a cluster
             if out_cluster:
                 selected_docs = [docs[index] for index in out_cluster]

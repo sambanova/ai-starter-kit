@@ -19,18 +19,20 @@ class CustomEmbedder(BaseEmbedder):
         return np.array(embeddings)
     
 DEFAULT_PROMPT = """
-<s>[INST]
-You are a helpful assistant in retrieving kekwords in documents. 
-You have a list of documents. Please find the keywords that are present in the document and separate them with commas. 
-Please sort the keywords and return only the top 5 keywords.
-Make sure you to only return the keywords and say nothing else. For example, don't say: 
-"Here are the keywords present in the document"
-[/INST]
+    <|begin_of_text|><|start_header_id|>system<|end_header_id|> 
+    You are a helpful assistant in retrieving keywords in documents. 
+    You are tasked with analyzing a collection of documents and identifying the most relevant keywords. 
+    For each document, select the top 5 unique keywords that best summarize the main themes, topics, and concepts discussed. 
+    Consider words that appear frequently and capture the essence of the content. Ensure that the keywords are distinct from each other, avoiding repetition or overly similar terms. 
+    Provide the output as a single string of the top 5 unique keywords, separated by commas, without any bullet points or numbering. Make sure the keywords are precise, meaningful, and representative of the document's subject matter.
+    Make sure you to only return the keywords and say nothing else. For example, don't say: "Here are the keywords present in the document"
 
-Document:
-[DOCUMENTS]
-</s>
-"""
+    Documents:
+    [DOCUMENTS]
+    <|eot_id|><|start_header_id|>user<|end_header_id|>
+
+    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+    """
 
 class CustomTextGeneration(BaseLLM):
     def __init__(self, 
