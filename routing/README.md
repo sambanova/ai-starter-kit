@@ -70,7 +70,7 @@ You have the following options to set up your embedding model:
 
 We recommend that you run the starter kit in a virtual environment.
 
-NOTE: python 3.10 or higher is required to use this kit.
+NOTE: python 3.9 or higher is required to use this kit.
 
 Install the python dependencies in your project environment.
 
@@ -92,15 +92,17 @@ After you've set up the environment, you can use the starter kit. Follow these s
 
 1. Extract keywords from datasource:
 
-    You should create keywords from your documents and save them in the local.
+You should create keywords from your documents and save them in the local.
 
-    Place your documents in the "routing/data" folder, then run
-        ```bash
-        python keyword_extractior.py
-        ```
-    The class and main functions are in [src/keyword_extractior.py](src/keyword_extractior.py).
+Place your documents in the "routing/data" folder, then run
+
+```bash
+python keyword_extractior.py
+```
+
+The class and main functions are in [src/keyword_extractior.py](./src/keyword_extractior.py).
     
-2. Load keywords and pass it to the prompt. An example is in [routing.py](routing.py).
+2. Load keywords and pass it to the prompt. An example is in [notebook/RAG_with_router.ipynb](./notebook/RAG_with_router.ipynb).
 
 # Customizing the starter kit
 You can further customize the starter kit based on the use case.
@@ -108,18 +110,18 @@ You can further customize the starter kit based on the use case.
 ## keyword extractor
 1. Load and save to local
 
-You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractior.py](src/keyword_extractior.py)
+You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractior.py](./src/keyword_extractior.py)
 
 2. Customize the embedding model
 
 By default, the keywords are exrtacted using a BERT-based embedding model. To change the embedding model, do the following:
 
-* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
-* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
+* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](./config.yaml) file), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
+* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](./config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 3. Customize the LLM model
 
-You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractior.py](src/keyword_extractior.py)
+You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractior.py](./src/keyword_extractior.py)
 
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
@@ -127,16 +129,16 @@ You can also use a LLM model to extract keywords by setting `use_llm=True` and `
  
 To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
-The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](prompts/keyword_extractor_prompt.yaml)
+The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](./prompts/keyword_extractor_prompt.yaml)
 
 ## router
 1. Customize the LLM model
 
 To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
-The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](prompts/rag_routing_prompt_response_schema.yaml).
+The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](./prompts/rag_routing_prompt_response_schema.yaml).
 
-You can also use your own yaml file by placing the file under [prompts](prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
+You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
 
 2. Customize the RAG pipeline
 
