@@ -100,7 +100,7 @@ Place your documents in the "routing/data" folder, then run
 python keyword_extractior.py
 ```
 
-The class and main functions are in [src/keyword_extractior.py](./src/keyword_extractior.py).
+The class and main functions are in [src/keyword_extractor.py](./src/keyword_extractor.py).
     
 2. Load keywords and pass it to the prompt. An example is in [notebook/RAG_with_router.ipynb](./notebook/RAG_with_router.ipynb).
 
@@ -110,18 +110,18 @@ You can further customize the starter kit based on the use case.
 ## keyword extractor
 1. Load and save to local
 
-You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractior.py](./src/keyword_extractior.py)
+You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
 2. Customize the embedding model
 
 By default, the keywords are exrtacted using a BERT-based embedding model. To change the embedding model, do the following:
 
-* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](./config.yaml) file), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
-* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](./config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
+* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config file](./config.yaml)), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
+* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config file](./config.yaml)), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 3. Customize the LLM model
 
-You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractior.py](./src/keyword_extractior.py)
+You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
