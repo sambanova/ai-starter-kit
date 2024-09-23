@@ -312,7 +312,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         chunks_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S.%f")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = chunk_start_time = time.monotonic()
 
         if self.request_config.is_stream_mode:
@@ -359,7 +359,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             raise ValueError('Streaming mode required')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S.%f")  
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(chunks_received, chunks_timings, total_request_time)
 
@@ -446,7 +446,7 @@ class FastAPI(BaseAPIEndpoint):
         events_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S.%f")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
@@ -480,7 +480,7 @@ class FastAPI(BaseAPIEndpoint):
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S.%f")  
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
@@ -567,7 +567,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         events_timings = []
 
         # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime("%H:%M:%S.%f")
+        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
@@ -601,7 +601,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
 
         # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime("%H:%M:%S.%f")  
+        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 

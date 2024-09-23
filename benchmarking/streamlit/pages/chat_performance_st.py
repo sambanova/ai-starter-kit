@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.streamlit.app import LLM_API_OPTIONS, LLM_API_CODENAMES
+from benchmarking.streamlit.app import LLM_API_CODENAMES, LLM_API_OPTIONS
 
 warnings.filterwarnings('ignore')
 
@@ -138,13 +138,11 @@ def main() -> None:
             params = _get_params()
             api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
             if isinstance(llm_api_selected, str):
-              st.session_state.selected_llm = ChatPerformanceEvaluator(
-                  model_name=llm_selected,
-                  llm_api=api_dict[llm_api_selected],
-                  params=params
-              )
-              st.toast('LLM setup ready! 🙌 Start asking!')
-              st.session_state.chat_disabled = False
+                st.session_state.selected_llm = ChatPerformanceEvaluator(
+                    model_name=llm_selected, llm_api=api_dict[llm_api_selected], params=params
+                )
+                st.toast('LLM setup ready! 🙌 Start asking!')
+                st.session_state.chat_disabled = False
 
         # Chat with user
         user_prompt = st.chat_input('Ask me anything', disabled=st.session_state.chat_disabled)
