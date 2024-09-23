@@ -37,7 +37,6 @@ The Kit includes:
 # Before you begin
 
 You have to set up your environment before you can run or customize the starter kit. 
-<!-- To use this in your application you need an instruction model, we recommend to use the Mistral 7B Instruct or Meta Llama3 8B, either from Sambaverse or from SambaStudio CoE. For embedding model, we recommend to use intfloat/e5-large-v2. -->
 
 ## Clone this repository
 
@@ -90,19 +89,11 @@ pip  install  -r  requirements.txt
 
 After you've set up the environment, you can use the starter kit. Follow these steps:
 
-1. Extract keywords from datasource:
+1. Put your documents under the [data](./data/) folder.
 
-You should create keywords from your documents and save them in the local.
-
-Place your documents in the "routing/data" folder, then run
-
-```bash
-python keyword_extractior.py
-```
-
-The class and main functions are in [src/keyword_extractor.py](./src/keyword_extractor.py).
+2. Update the `keyword_path` under `documents` in the [config file](./config.yaml).
     
-2. Load keywords and pass it to the prompt. An example is in [notebook/RAG_with_router.ipynb](./notebook/RAG_with_router.ipynb).
+2. We provide an example to call the routing and connect it with a RAG pipeline in [notebook/RAG_with_router.ipynb](./notebook/RAG_with_router.ipynb).
 
 # Customizing the starter kit
 You can further customize the starter kit based on the use case.
@@ -112,14 +103,27 @@ You can further customize the starter kit based on the use case.
 
 You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
-2. Customize the embedding model
+2. Customize the keyword extractor method
+The [keyword extractor](./src/keyword_extractor.py) provides two methods to extract keywords:
+
+* Use the [KeyBert](https://github.com/MaartenGr/KeyBERT) library. It uses BERT-embeddings and cosine similarity to find the sub-phrases in a document that are the most similar to the document itself.
+
+* Use a generative language model. It uses prompt engineering to guide the LLM model to find keywords from documents.
+
+*  Keywords can be extracted more efficiently by finding similarities between documents. We assume that highly similar documents will have the same keywords, so we extract keywords from only one document in each cluster and assign the keywords to all documents in the same cluster. To enble this feature, please set `use_clusters=True` in the `extract_keyword` function in [routing.py](./src/routing.py).
+
+```bash
+self.keywords = kw_etr.extract_keywords(use_clusters=True)
+```
+
+3. Customize the embedding model
 
 By default, the keywords are exrtacted using a BERT-based embedding model. To change the embedding model, do the following:
 
 * If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config file](./config.yaml)), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
 * If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config file](./config.yaml)), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
-3. Customize the LLM model
+4. Customize the LLM model
 
 You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
@@ -130,6 +134,15 @@ You can also use a LLM model to extract keywords by setting `use_llm=True` and `
 To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
 The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](./prompts/keyword_extractor_prompt.yaml)
+
+5. Customize the keyphrase extraction
+The keyword extractor uses [KeyphraseVectorizers](https://github.com/TimSchopf/KeyphraseVectorizers) to extract keyphrase from documents. You can choose other keyphrase extration methods by changing the `vectorizer` in `extract_keywords` function in [keyword_extractor.py](./src/keyword_extractor.py).
+
+```bash
+if use_vectorizer:
+    vectorizer = KeyphraseTfidfVectorizer()
+    keyphrase_ngram_range = None
+```
 
 ## router
 1. Customize the LLM model
