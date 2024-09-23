@@ -8,7 +8,7 @@ import warnings
 
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.streamlit.app import LLM_API_OPTIONS
+from benchmarking.streamlit.app import LLM_API_OPTIONS, LLM_API_CODENAMES
 
 warnings.filterwarnings('ignore')
 
@@ -135,8 +135,11 @@ def main() -> None:
 
         if sidebar_run_option:
             params = _get_params()
+            api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
             st.session_state.selected_llm = ChatPerformanceEvaluator(
-                model_name=llm_selected, llm_api=llm_api_selected, params=params
+                model_name=llm_selected,
+                llm_api=api_dict[llm_api_selected],
+                params=params
             )
             st.toast('LLM setup ready! 🙌 Start asking!')
             st.session_state.chat_disabled = False
