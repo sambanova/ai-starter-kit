@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 from pydantic import BaseModel
 
 
@@ -27,13 +28,13 @@ class RequestConfig(BaseModel):
 
 class LLMResponse(BaseModel):
     """The response object created from a response from one of the SambaStudio LLM APIs
-    
+
     Args:
         metrics: Dictionary containing the throughput metrics from the endpoint
         response_text: The generated text from the LLM
         request_config: The associated request config
     """
-    
+
     metrics: Dict
     response_text: str
     request_config: RequestConfig

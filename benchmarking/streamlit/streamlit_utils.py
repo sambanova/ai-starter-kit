@@ -15,27 +15,25 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame):
         fig (go.Figure): The plotly figure container
     """   
     df_req_summary = (
-        df_req_info.groupby("batch_size_used")[
+        df_req_info.groupby('batch_size_used')[
             [
-                "server_output_token_per_s_per_request",
-                "client_output_token_per_s_per_request",
+                'server_output_token_per_s_per_request',
+                'client_output_token_per_s_per_request',
             ]
         ]
         .mean()
         .reset_index()
     ).rename(
         columns={
-            "server_output_token_per_s_per_request": "server_output_token_per_s_mean",
-            "client_output_token_per_s_per_request": "client_output_token_per_s_mean",
+            'server_output_token_per_s_per_request': 'server_output_token_per_s_mean',
+            'client_output_token_per_s_per_request': 'client_output_token_per_s_mean',
         }
     )
-    df_req_summary["server_throughput_token_per_s"] = (
-        df_req_summary["server_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
+    df_req_summary['server_throughput_token_per_s'] = (
+        df_req_summary['server_output_token_per_s_mean'] * df_req_summary['batch_size_used']
     )
-    df_req_summary["client_throughput_token_per_s"] = (
-        df_req_summary["client_output_token_per_s_mean"]
-        * df_req_summary["batch_size_used"]
+    df_req_summary['client_throughput_token_per_s'] = (
+        df_req_summary['client_output_token_per_s_mean'] * df_req_summary['batch_size_used']
     )
     df_req_summary.rename(columns={
         "batch_size_used": "Batch size",
