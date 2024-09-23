@@ -11,6 +11,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(current_dir)
 sys.path.append(repo_dir)
+from keyword_extractor import KeywordExtractor
 load_dotenv(os.path.join(kit_dir, '.env'))
 
 def read_keywords(filepath: str) -> Union[set, list]:
@@ -26,7 +27,31 @@ def read_keywords(filepath: str) -> Union[set, list]:
     with open(filepath, "rb") as file:
         keywords = pickle.load(file)
         return keywords
-    
+
+def read_files(directory: str, extension: str=".txt") -> list:
+    """
+    Read files from directory.
+
+    Args:
+        directory (str): The directory path that contains files.
+        extension (str, optional):The extension of the files. Defaults to ".txt".
+
+    Raises:
+        ValueError: Check if the directory exist.
+
+    Returns:
+        list: the list of file contents.
+    """
+    if not os.path.isdir(directory):
+        raise NotADirectoryError(f"The directory {directory} doesn't exist!")
+    file_contents = []
+    for filename in os.listdir(directory):
+        if filename.endswith(extension):
+            file_path = os.path.join(directory, filename)
+            with open(file_path, 'r', encoding='utf-8') as file:
+                file_contents.append(file.read())
+    return file_contents
+  
 class Router:
     def __init__(self, configs: str) -> None:
         """
@@ -40,6 +65,7 @@ class Router:
         """
         self.configs = self.load_config(configs)
         self.init_llm()
+        self.keywords = None
         self.init_router()
     
     def load_config(self, filename: str) -> dict:
@@ -102,8 +128,13 @@ class Router:
         # create prompt
         route_prompt = load_prompt(repo_dir + '/' + self.configs['prompts']['router_prompt'])
 
-        # load docs keywords 
-        self.keywords = read_keywords(repo_dir + '/' + self.configs['keywords'])
+        # load/extract keywords for docs  
+        keyword_filpath = os.path.join(repo_dir, self.configs['documents']['keyword_path'])
+        if os.path.isfile(keyword_filpath):
+            self.keywords = read_keywords(keyword_filpath)
+        else:
+            document_path = os.path.join(repo_dir, self.configs['documents']['document_folder'])
+            self.extract_keyword(document_path, save_filepath=keyword_filpath)
 
         # create output parser
         response_schemas = [
@@ -139,4 +170,27 @@ class Router:
         results = self.router.invoke({'query': query})
         return results["datasource"]
 
+    def extract_keyword(self, file_folder: str, extension: str=".txt", save_filepath: str = None) -> None:
+        """
+        Extract keywords from documents.
+
+        Args:
+            file_folder (str): The folder contains the documents
+            extension (str, optional): The extension of the files. Defaults to ".txt".
+            save_filepath (str, optional): The file path to save the keywords. Defaults to None.
+        """
+        # load docs
+        if os.path.isdir(file_folder):
+            docs = read_files(file_folder, extension=extension)
+        else:
+            raise NotADirectoryError(f'{file_folder} is not a directory.')
+        
+        # extract keywords
+        kw_etr = KeywordExtractor(configs=self.configs, docs=docs, use_bert=True)
+        kw_etr.docs_embedding()
+        self.keywords = kw_etr.extract_keywords(use_clusters=False)
+        
+        # save keywords to local 
+        if save_filepath:
+            kw_etr.save_keywords(save_filepath)
     

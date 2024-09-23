@@ -19,35 +19,11 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 from utils.model_wrappers.api_gateway import APIGateway
 
-def read_files(directory: str, extension=".txt") -> list:
-    """
-    Read files from directory.
-
-    Args:
-        directory (str): The directory path that contains files.
-        extension (str, optional):The extension of the files. Defaults to ".txt".
-
-    Raises:
-        ValueError: Check if the directory exist.
-
-    Returns:
-        list: the list of file contents.
-    """
-    if not os.path.isdir(directory):
-        raise ValueError(f"The directory {directory} doesn't exist!")
-    file_contents = []
-    for filename in os.listdir(directory):
-        if filename.endswith(extension):
-            file_path = os.path.join(directory, filename)
-            with open(file_path, 'r', encoding='utf-8') as file:
-                file_contents.append(file.read())
-    return file_contents
-
 class KeywordExtractor:
     """
     Extract keywords using KeyBert https://github.com/MaartenGr/keyBERT
     """
-    def __init__(self, configs: str, 
+    def __init__(self, configs: dict, 
                  docs: list[str], 
                  use_bert: bool=True, 
                  use_llm: bool=False,
@@ -55,38 +31,19 @@ class KeywordExtractor:
         """_summary_
 
         Args:
-            configs (str): The config file path.
+            configs (dict): The config dict.
             docs (list[str]): The list of docs contents.
             use_bert (bool, optional): If use bert as keyword extractor. Defaults to True.
             use_llm (bool, optional): If use llm as keyword extractor. Defaults to False.
             use_llm_prompt (bool, optional): If use customized prompt for llm. Defaults to False.
                                              Only applied when self.use_llm=True 
         """
-        self.configs = self.load_config(configs)
+        self.configs = configs
         self.docs = docs
         self.use_bert = use_bert
         self.use_llm = use_llm
         self.load_models()
         self.create_kw_models(use_llm_prompt)
-
-    def load_config(self, filename: str) -> dict:
-        """
-        Loads a YAML configuration file and returns its contents as a dictionary.
-
-        Args:
-            filename: The path to the YAML configuration file.
-
-        Returns:
-            A dictionary containing the configuration file's contents.
-        """
-
-        try:
-            with open(filename, 'r') as file:
-                return yaml.safe_load(file)
-        except FileNotFoundError:
-            raise FileNotFoundError(f'The YAML configuration file {filename} was not found.')
-        except yaml.YAMLError as e:
-            raise RuntimeError(f'Error parsing YAML file: {e}')
       
     def load_models(self) -> None:
         """
@@ -171,6 +128,8 @@ class KeywordExtractor:
         Returns:
             Union[set, list]: The set/list of keywords in each cluster.
         """
+        if isinstance(data[0], tuple):
+            data = [data]
         if return_list:
             result = []
             for sublist in data:
@@ -188,7 +147,7 @@ class KeywordExtractor:
                     first_value = next(iter(s))
                     result.add(first_value)    
         return result
- 
+    
     def extract_keywords(self, 
                          use_clusters: bool=True, 
                          use_vectorizer: bool=True, 
@@ -221,10 +180,11 @@ class KeywordExtractor:
             _, keywords = self.kw_llm_model.extract_keywords(docs=self.docs, embeddings=torch.as_tensor(self.docs_embed), threshold=.9)
             self.keywords = list(set([item for sublist in keywords for item in sublist]))
         elif not use_clusters and self.use_bert:
-            keywords = self.kw_bert_model.extract_keywords(docs[:1], keyphrase_ngram_range=keyphrase_ngram_range, use_maxsum=True,nr_candidates=20, top_n=5, vectorizer=vectorizer)
+            keywords = self.kw_bert_model.extract_keywords(docs=self.docs, keyphrase_ngram_range=keyphrase_ngram_range, use_maxsum=True,nr_candidates=20, top_n=5, vectorizer=vectorizer)
             self.keywords = self.extract_first_values(keywords, return_list=False)
         elif not use_clusters and self.use_llm:
-            self.keywords = self.text_generator.extract_keywords(docs=self.docs, threshold=.9)
+            keywords = self.text_generator.extract_keywords(self.docs)
+            self.keywords = list(set([item for sublist in keywords for item in sublist]))
         return self.keywords
 
     def save_keywords(self, save_filepath: str) -> None:
@@ -237,19 +197,3 @@ class KeywordExtractor:
         # save keywords
         with open(save_filepath, "wb") as file:
             pickle.dump(self.keywords, file)
-
-
-if __name__ == "__main__":
-    # 1. load docs
-    file_folder = kit_dir + "/data"
-    docs = read_files(file_folder, extension=".txt")
-    
-    # 2. extract keywords
-    CONFIG_PATH = os.path.join(kit_dir,'config.yaml')
-    kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=True)
-    kw_etr.docs_embedding()
-    keywords = kw_etr.extract_keywords()
-    
-    # 3. save keywords to local 
-    save_filepath="./keywords/keywords_llm.pkl"
-    kw_etr.save_keywords(save_filepath)

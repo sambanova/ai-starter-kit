@@ -44,6 +44,7 @@ class CustomTextGeneration(BaseLLM):
         self.model = model
         self.prompt = prompt if prompt is not None else DEFAULT_PROMPT
         self.verbose = verbose
+    
     def extract_keywords(self, documents: list[str], candidate_keywords: list[list[str]] = None) -> list:
         """ Extract topics
 

@@ -33,5 +33,6 @@ prompts:
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
     "kw_etr_prompt": "routing/prompts/keyword_extractor_prompt.yaml"
 
-keywords:
-    "routing/keywords/keywords.pkl"
+documents:
+    "document_folder": "routing/data"
+    "keyword_path": "routing/keywords/keywords.pkl"
