@@ -10,7 +10,7 @@ python src/evaluator.py \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
 --num-requests 16 \
---llm-api "sncloud"
+--llm-api sncloud
 
 # Notes:
 # 1. For CoE Models, make sure to include the prefix "COE/" before the expert name.

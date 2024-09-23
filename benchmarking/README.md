@@ -116,7 +116,7 @@ After you've deployed the GUI, you can use the starter kit. More details will co
 
 2. If the deployed LLM is a Composition of Experts (CoE), specify the desired expert in the corresponding text box and then set the configuration parameters. If the deployed LLM is not a CoE, simply set the configuration parameters.
 
-3. If the deployed LLM is a SambaNova Cloud endpoint, choose in the API type dropdown the `sncloud` option. 
+3. If the deployed LLM is a SambaNova Cloud endpoint, choose in the API type dropdown the `SambaNova Cloud` option. 
 
 4. After pressing the `Run` button, the program will perform inference on the data and product results in the middle of the screen. In the case of `Performance on Chat` functionality, users are able to interact with the LLM in a multi-turn chat interface.  
 
@@ -136,7 +136,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
-  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `sncloud` in the API type dropdown option.
+  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name.
 
 2. Set the configuration parameters
@@ -199,7 +199,7 @@ This option allows you to evaluate the performance of the selected LLM on your o
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
-  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `sncloud` in the API type dropdown option.
+  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
 4. Set the configuration and tuning parameters
@@ -243,7 +243,7 @@ This option allows you to measure performance during a multi-turn conversation w
     - The model name should mirror the name shown in studio, preceded with `COE/` - 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
-  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `sncloud` in the API type dropdown option.
+  - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
 2. Set the configuration parameters
@@ -284,7 +284,7 @@ This method can be ran from a terminal session. Users have this option if they w
 
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
-  - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter then other sambastudio model names.
+  - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-workers**: Number of concurrent workers. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
@@ -330,7 +330,7 @@ sh run_custom_dataset.sh
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
-  - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter then other sambastudio model names.
+  - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-workers**: Number of concurrent workers. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
