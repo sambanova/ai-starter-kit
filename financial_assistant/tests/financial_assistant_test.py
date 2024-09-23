@@ -40,8 +40,13 @@ from financial_assistant.streamlit.utilities_app import (
     save_output_callback,
 )
 
+# Instantiate the logger
 logger = get_logger()
+
+# Declare the type of the test class
 T = TypeVar('T', bound='FinancialAssistantTest')
+
+# Wait time for test retries in seconds
 RETRY_SLEEP_TIME = 30
 
 
@@ -54,6 +59,7 @@ class FinancialAssistantTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type[T]) -> None:
         """Records the start time of the tests."""
+
         cls.time_start = time.time()
 
     def setUp(self) -> None:
@@ -82,9 +88,10 @@ class FinancialAssistantTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls: Type[T]) -> None:
         """Calculates and logs the total time taken to run the tests."""
+
         cls.time_end = time.time()
         total_time = cls.time_end - cls.time_start
-        logger.info(f'Total execution time: {total_time:.2f} seconds')
+        logger.info(f'Total execution time: {total_time:.2f} seconds.')
 
     def test_get_stock_info(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -102,7 +109,7 @@ class FinancialAssistantTest(unittest.TestCase):
         self.check_get_stock_info(response)
 
     def test_handle_stock_query(self) -> None:
-        """Test for `handle_stock_query`, i.e. function calling for the tool `get_stock_info`"""
+        """Test for `handle_stock_query`, i.e. function calling for the tool `get_stock_info`."""
 
         # The default user query
         query = DEFAULT_STOCK_QUERY
@@ -122,7 +129,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_get_historical_price(self) -> None:
         """Test for the tool `get_historical_price`."""
 
-        # Invoke the tool to answer the user' query
+        # Invoke the tool to answer the user query
         response = get_historical_price.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
@@ -164,7 +171,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_create_stock_database(self) -> None:
         """Test for the tool `create_stock_database`."""
 
-        # Invoke the tool to answer the user' query
+        # Invoke the tool to answer the user query
         response = create_stock_database.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
@@ -202,7 +209,7 @@ class FinancialAssistantTest(unittest.TestCase):
         )
 
         for method in self.method_list:
-            # Invoke the tool to answer the user' query
+            # Invoke the tool to answer the user query
             response = query_stock_database.invoke(
                 {
                     'user_query': DEFAULT_STOCK_QUERY,
@@ -230,7 +237,7 @@ class FinancialAssistantTest(unittest.TestCase):
         query = DEFAULT_STOCK_QUERY
 
         for method in self.method_list:
-            # Invoke the LLM to answer the user' query
+            # Invoke the LLM to answer the user query
             response = handle_database_query(
                 user_question=query,
                 query_method=method,
@@ -245,7 +252,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_scrape_yahoo_finance_news(self) -> None:
         """Test for the tool `scrape_yahoo_finance_news`."""
 
-        # Invoke the tool to answer the user' query
+        # Invoke the tool to answer the user query
         response, url_list = scrape_yahoo_finance_news.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
@@ -262,7 +269,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # The default user query
         query = DEFAULT_RAG_QUERY
 
-        # Invoke the LLM to answer the user' query
+        # Invoke the LLM to answer the user query
         response, url_list = handle_yfinance_news(
             user_question=query,
         )
@@ -277,7 +284,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_retrieve_filings(self) -> None:
         """Test for the tool `retrieve_filings`."""
 
-        # Invoke the tool to answer the user' query
+        # Invoke the tool to answer the user query
         response = retrieve_filings.invoke(
             {
                 'user_question': DEFAULT_RAG_QUERY,
@@ -297,7 +304,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # The user query
         query = DEFAULT_RAG_QUERY
 
-        # Invoke the LLM to answer the user' query
+        # Invoke the LLM to answer the user query
         response = handle_financial_filings(
             user_question=DEFAULT_RAG_QUERY,
             company_name=DEFAULT_COMPANY_NAME,
@@ -365,6 +372,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # The pdf files names
         pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_directory, report_name)]
 
+        # Invoke the LLM to answer the user query
         response = handle_pdf_rag(query, pdf_files_names)
 
         # Check the response
@@ -393,10 +401,13 @@ class FinancialAssistantTest(unittest.TestCase):
         # Assert that the response is a tuple of three elements
         self.assertIsInstance(response, tuple)
         self.assertEqual(len(response), 3)
+
         # Assert that the first element of the tuple is a `matplotlib.Figure`
         self.assertIsInstance(response[0], Figure)
+
         # Assert that the second element of the tuple is a `pandas.DataFrame
         self.assertIsInstance(response[1], pandas.DataFrame)
+
         # Assert that the third element of the tuple is a list of strings
         self.assertIsInstance(response[2], list)
         for item in response[2]:
@@ -423,10 +434,17 @@ class FinancialAssistantTest(unittest.TestCase):
         """Check the response of the tool `query_stock_database`."""
 
         if method == 'text-to-SQL':
+            # Assert that the response is a string
             self.assertIsInstance(response, str)
+
         elif method == 'PandasAI-SqliteConnector':
+            # Assert that the response is a dictionary
             self.assertIsInstance(response, dict)
+
+            # Assert that the response contains the expected keys
             self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+
+            # Assert that the response contains the expected values
             self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
             for item in response[DEFAULT_COMPANY_NAME.upper()]:
                 self.assertIsInstance(item, str)
@@ -437,7 +455,10 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_scrape_yahoo_finance_news(self, response: str, url_list: List[str]) -> None:
         """Check the response of the tool `scrape_yahoo_finance_news`."""
 
+        # Assert that `response` is a string
         self.assertIsInstance(response, str)
+
+        # Assert that `url_list` is a list of strings that are all URLs
         self.assertIsInstance(url_list, list)
         for url in url_list:
             self.assertIsInstance(url, str)
@@ -446,8 +467,13 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_retrieve_filings(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `retrieve_filings`."""
 
+        # Assert that the response is a dictionary
         self.assertIsInstance(response, dict)
+
+        # Assert that the response contains the expected keys
         self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+
+        # Assert that the response contains the expected values
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
 
@@ -467,7 +493,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         self.results_list: List[Dict[str, Any]] = list()
         self.successes: List[unittest.TestCase] = list()
 
-        # Set the number of retries: 1 means run failed tests twice
+        # Set the number of retries: 1 means run failed or errored tests twice
         self.max_retry: int = 1
 
         # Initialize the global retry count
@@ -477,7 +503,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         """Initialize the retry count for the given test case."""
 
         if not hasattr(test, 'retry'):
-            setattr(test, 'retry', self.global_retry_count)
+            setattr(test, 'retry', self.max_retry)
 
     def _sleep(self) -> None:
         """Wait for the given number of seconds before continuing with the next test run."""
@@ -504,7 +530,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         self.results_list.append({'name': test._testMethodName, 'status': 'PASSED'})
 
         # Log the retry status for this test case
-        if getattr(test, 'retry', 0) < self.max_retry:
+        if getattr(test, 'retry', self.max_retry) < self.max_retry:
             logger.warning(f'Test {test._testMethodName} passed on retry.')
         else:
             logger.info(f'Test {test._testMethodName} passed on first attempt.')
@@ -623,6 +649,7 @@ def main() -> int:
         if 'message' in result:
             logger.warning(f"  Message: {result['message']}")
 
+    # Log the number of tests that passed and failed: successes, failures, and errors
     failed_tests = len(test_results.failures) + len(test_results.errors)
     logger.info(
         'Number of tests passed: '
@@ -630,6 +657,8 @@ def main() -> int:
         f'{test_results.testsRun- test_results.retry_count}'
     )
     logger.info(f'Number of successful tests: {len(test_results.successes)}')
+    logger.info(f'Number of failed tests: {len(test_results.failures)}')
+    logger.info(f'Number of errored tests: {len(test_results.errors)}')
 
     # Return the number of failed tests
     if failed_tests > 0:
