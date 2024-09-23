@@ -63,11 +63,11 @@ def main() -> None:
     parser.add_argument('--results-dir', type=str, required=True, help='The output directory to save the results to.')
 
     parser.add_argument(
-        '--llm-api',
-        type=str,
-        required=True,
-        default='sncloud',
-        help='The LLM API type. It could be either sambastudio or sncloud. Default value: sambastudio',
+        '--llm-api', 
+        type=str, 
+        required=True, 
+        default="sncloud",
+        help="The LLM API type. It could be either 'sambastudio' or 'sncloud'. Default value: 'sncloud'"
     )
 
     # Optional Common Arguments
