@@ -499,6 +499,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     try:
         assert len(table_names) > 0
     except AssertionError:
+        logger.error('No relevant SQL tables found.')
         streamlit.error('No relevant SQL tables found.')
         streamlit.stop()
 

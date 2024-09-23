@@ -3,9 +3,12 @@ from typing import Any, Dict, List, Optional
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+from financial_assistant.src.tools import get_logger
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_output_callback
 from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+
+logger = get_logger()
 
 
 def get_stock_database() -> None:
@@ -27,7 +30,8 @@ def get_stock_database() -> None:
 
     if streamlit.button('Create database'):
         if len(requested_companies) == 0:
-            streamlit.error('Please enter at least one company.')
+            logger.error('No company entered.')
+            streamlit.error('No company entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_string = handle_database_creation(requested_companies, start_date, end_date)
@@ -52,7 +56,8 @@ def get_stock_database() -> None:
     )
     if streamlit.button(label='Query database'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_database_query(user_request, query_method)

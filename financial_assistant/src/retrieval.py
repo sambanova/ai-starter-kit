@@ -6,7 +6,6 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
 from langchain_chroma import Chroma
-from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import PromptTemplate
@@ -14,10 +13,12 @@ from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
-from financial_assistant.src.tools import time_llm
+from financial_assistant.src.tools import get_logger, time_llm
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import _get_config_info
 from utils.model_wrappers.api_gateway import APIGateway
+
+logger = get_logger()
 
 
 def get_qa_response(user_request: str, documents: List[Document], session_id: Optional[str] = None) -> Any:
@@ -72,7 +73,7 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     return embedding_model_info, retrieval_info
 
 
-def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
+def load_embedding_model(embedding_model_info: Dict[str, Any]) -> SentenceTransformerEmbeddings | Embeddings:
     """Load the embedding model following the config information."""
 
     if embedding_model_info['type'] == 'cpu':
@@ -122,6 +123,7 @@ def get_vectorstore_retriever(
     try:
         vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
     except:
+        logger.error('Could not instantiate the vectorstore.')
         streamlit.error('Could not instantiate the vectorstore.')
         streamlit.stop()
 

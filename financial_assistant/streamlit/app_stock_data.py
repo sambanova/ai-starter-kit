@@ -6,9 +6,12 @@ import streamlit
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+from financial_assistant.src.tools import get_logger
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_historical_price_callback, save_output_callback
 from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+
+logger = get_logger()
 
 
 def get_stock_data_analysis() -> None:
@@ -85,7 +88,8 @@ def get_stock_data_analysis() -> None:
 
     if streamlit.button('Retrieve stock info'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_stock_query(user_request, dataframe_name)
@@ -116,7 +120,8 @@ def get_stock_data_analysis() -> None:
     # Analyze stock data
     if streamlit.button('Analyze Historical Stock Data'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)

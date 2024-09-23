@@ -1,8 +1,7 @@
 """
-Enterprise Knowledge Retriever (EKR) Test Script
+Financial Assistant Test Script.
 
-This script tests the functionality of the Dinancial Assistant using unittest.
-It parses documents using the SambaParse service, creates a vector store, and tests the question-answering capabilities.
+This script tests the functionality of the Financial Assistant starter kit using `unittest`.
 
 Usage:
     python tests/financial_assistant_test.py
@@ -11,28 +10,17 @@ Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
-import logging
 import os
 import time
 import unittest
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Type, TypeVar
 
 import pandas
+import streamlit
 from matplotlib.figure import Figure
 
 from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.streamlit.utilities_app import (
-    create_temp_dir_with_subdirs,
-    save_historical_price_callback,
-    save_output_callback,
-)
-
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-import streamlit
-
+from financial_assistant.src.tools import get_logger
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
@@ -44,12 +32,33 @@ from financial_assistant.streamlit.app_stock_data import handle_stock_data_analy
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
 from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import delete_temp_dir, initialize_session
+from financial_assistant.streamlit.utilities_app import (
+    create_temp_dir_with_subdirs,
+    delete_temp_dir,
+    initialize_session,
+    save_historical_price_callback,
+    save_output_callback,
+)
+
+logger = get_logger()
+T = TypeVar('T', bound='FinancialAssistantTest')
+RETRY_SLEEP_TIME = 30
 
 
-# Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class FinancialAssistantTest(unittest.TestCase):
+    """Test class for the Financial Assistant starter kit."""
+
+    time_start: float
+    time_end: float
+
+    @classmethod
+    def setUpClass(cls: Type[T]) -> None:
+        """Records the start time of the tests."""
+        cls.time_start = time.time()
+
     def setUp(self) -> None:
+        """Set up before every test."""
+
         # Initialize the session
         initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
 
@@ -69,6 +78,13 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Wait for the LLM to be ready
         time.sleep(1)
+
+    @classmethod
+    def tearDownClass(cls: Type[T]) -> None:
+        """Calculates and logs the total time taken to run the tests."""
+        cls.time_end = time.time()
+        total_time = cls.time_end - cls.time_start
+        logger.info(f'Total execution time: {total_time:.2f} seconds')
 
     def test_get_stock_info(self) -> None:
         """Test for the tool `get_stock_info`."""
@@ -107,7 +123,7 @@ class FinancialAssistantTest(unittest.TestCase):
         """Test for the tool `get_historical_price`."""
 
         # Invoke the tool to answer the user' query
-        response = get_historical_price(
+        response = get_historical_price.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
                 'start_date': DEFAULT_START_DATE,
@@ -149,7 +165,7 @@ class FinancialAssistantTest(unittest.TestCase):
         """Test for the tool `create_stock_database`."""
 
         # Invoke the tool to answer the user' query
-        response = create_stock_database(
+        response = create_stock_database.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
                 'start_date': DEFAULT_START_DATE,
@@ -177,7 +193,7 @@ class FinancialAssistantTest(unittest.TestCase):
         """Test for the tool `query_stock_database`."""
 
         # Create the database
-        create_stock_database(
+        create_stock_database.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
                 'start_date': DEFAULT_START_DATE,
@@ -187,7 +203,7 @@ class FinancialAssistantTest(unittest.TestCase):
 
         for method in self.method_list:
             # Invoke the tool to answer the user' query
-            response = query_stock_database(
+            response = query_stock_database.invoke(
                 {
                     'user_query': DEFAULT_STOCK_QUERY,
                     'company_list': [DEFAULT_COMPANY_NAME],
@@ -200,6 +216,15 @@ class FinancialAssistantTest(unittest.TestCase):
 
     def test_handle_database_query(self) -> None:
         """Test for `handle_database_query`, i.e. function calling for the tool `query_stock_database`."""
+
+        # Create the database
+        create_stock_database.invoke(
+            {
+                'company_list': [DEFAULT_COMPANY_NAME],
+                'start_date': DEFAULT_START_DATE,
+                'end_date': DEFAULT_END_DATE,
+            }
+        )
 
         # The user query
         query = DEFAULT_STOCK_QUERY
@@ -221,7 +246,7 @@ class FinancialAssistantTest(unittest.TestCase):
         """Test for the tool `scrape_yahoo_finance_news`."""
 
         # Invoke the tool to answer the user' query
-        response, url_list = scrape_yahoo_finance_news(
+        response, url_list = scrape_yahoo_finance_news.invoke(
             {
                 'company_list': [DEFAULT_COMPANY_NAME],
                 'user_query': DEFAULT_RAG_QUERY,
@@ -253,7 +278,7 @@ class FinancialAssistantTest(unittest.TestCase):
         """Test for the tool `retrieve_filings`."""
 
         # Invoke the tool to answer the user' query
-        response = retrieve_filings(
+        response = retrieve_filings.invoke(
             {
                 'user_question': DEFAULT_RAG_QUERY,
                 'company_list': [DEFAULT_COMPANY_NAME],
@@ -426,6 +451,125 @@ class FinancialAssistantTest(unittest.TestCase):
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
 
+class CustomTextTestResult(unittest.TextTestResult):
+    """Custom test result class to collect and log individual test results."""
+
+    max_retry: int = 1
+    retry_count: int = 0
+    successes: List[unittest.TestCase] = list()
+
+    def __init__(self, stream: Any, descriptions: bool, verbosity: int) -> None:
+        """Initializes the custom test result."""
+
+        super().__init__(stream, descriptions, verbosity)
+
+        # Initialize the list of test results and the list of successes
+        self.results_list: List[Dict[str, Any]] = list()
+        self.successes: List[unittest.TestCase] = list()
+
+        # Set the number of retries: 1 means run failed tests twice
+        self.max_retry: int = 1
+
+        # Initialize the global retry count
+        self.global_retry_count: int = 0
+
+    def _initialize_retry(self, test: unittest.TestCase) -> None:
+        """Initialize the retry count for the given test case."""
+
+        if not hasattr(test, 'retry'):
+            setattr(test, 'retry', self.global_retry_count)
+
+    def _sleep(self) -> None:
+        """Wait for the given number of seconds before continuing with the next test run."""
+
+        time.sleep(RETRY_SLEEP_TIME)
+
+    def startTest(self, test: unittest.TestCase) -> None:
+        """Start a test case."""
+
+        logger.info(f'Running test {test._testMethodName}.')
+        super().startTest(test)
+
+    def addSuccess(self, test: unittest.TestCase) -> None:
+        """Logs a passed test."""
+
+        # Initialize the retry count for this test case
+        self._initialize_retry(test)
+
+        # Add the test to the list of successful tests
+        super().addSuccess(test)
+
+        # Append to the list of successful tests
+        self.successes.append(test)
+        self.results_list.append({'name': test._testMethodName, 'status': 'PASSED'})
+
+        # Log the retry status for this test case
+        if getattr(test, 'retry', 0) < self.max_retry:
+            logger.warning(f'Test {test._testMethodName} passed on retry.')
+        else:
+            logger.info(f'Test {test._testMethodName} passed on first attempt.')
+
+    def addFailure(self, test: unittest.TestCase, err: Any) -> None:
+        """Logs a failed test."""
+
+        # Initialize the retry count for this test case
+        self._initialize_retry(test)
+
+        if getattr(test, 'retry', self.max_retry) > 0:
+            logger.warning(f'Retrying {test} after failure.')
+
+            # Wait
+            self._sleep()
+
+            # Retrieve the retry count for this test case
+            retry = getattr(test, 'retry')
+
+            # Decrease the retry count for this test case
+            setattr(test, 'retry', retry - 1)
+
+            # Increase the global retry count
+            self.global_retry_count += 1
+
+            # Run the test case again
+            test.run(self)
+        else:
+            # Add the test to the list of failed tests
+            super().addFailure(test, err)
+
+            # Append to the list of failed tests
+            self.results_list.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
+
+    def addError(self, test: unittest.TestCase, err: Any) -> None:
+        """Logs a test with errors."""
+
+        # Initialize the retry count for this test case
+        self._initialize_retry(test)
+
+        if getattr(test, 'retry', self.max_retry) > 0:
+            logger.warning(f'Retrying {test} after error.')
+
+            # Wait
+            self._sleep()
+
+            # Retrieve the retry count for this test case
+            retry = getattr(test, 'retry')
+
+            # Decrease the retry count for this test case
+            setattr(test, 'retry', retry - 1)
+
+            # Increase the global retry count
+            self.global_retry_count += 1
+
+            # Run the test case again
+            test.run(self)
+        else:
+            # Add the test to the list of errored tests
+            super().addError(test, err)
+
+            # Append to the list of errored tests
+            self.results_list.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
+
+
 def suite() -> unittest.TestSuite:
     """Test suite to define the order of the test execution."""
 
@@ -457,12 +601,45 @@ def suite() -> unittest.TestSuite:
     return suite
 
 
-if __name__ == '__main__':
+def main() -> int:
     # The test runner
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(resultclass=CustomTextTestResult)
 
     # The test suite
     my_suite = suite()
 
     # Run the tests
-    runner.run(my_suite)
+    test_results = runner.run(my_suite)
+
+    logger.info('Test Results:')
+
+    assert hasattr(test_results, 'test_results'), 'The test results does not have the attribute `test_results`.'
+    assert hasattr(test_results, 'retry_count'), 'The test results does not have the attribute `retry_count`.'
+    assert hasattr(test_results, 'successes'), 'The test results does not have the attribute `successes`.'
+
+    # Log results for each test
+    for result in test_results.test_results:
+        logger.info(f"{result['name']}: {result['status']}")
+        if 'message' in result:
+            logger.warning(f"  Message: {result['message']}")
+
+    failed_tests = len(test_results.failures) + len(test_results.errors)
+    logger.info(
+        'Number of tests passed: '
+        f'{test_results.testsRun - test_results.retry_count - failed_tests}/'
+        f'{test_results.testsRun- test_results.retry_count}'
+    )
+    logger.info(f'Number of successful tests: {len(test_results.successes)}')
+
+    # Return the number of failed tests
+    if failed_tests > 0:
+        logger.error(f'Number of failed tests: {failed_tests}')
+        return failed_tests
+    else:
+        logger.info('All tests passed successfully!')
+        return 0
+
+
+if __name__ == '__main__':
+    exit_status = main()
+    exit(exit_status)

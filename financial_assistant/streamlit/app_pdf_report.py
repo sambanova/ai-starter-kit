@@ -220,6 +220,7 @@ def include_pdf_report() -> None:
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file in uploaded_files:
                     if not isinstance(file, UploadedFile):
+                        logger.error(f'{file} is not instance of UploadedFile.')
                         streamlit.error(f'{file} is not instance of UploadedFile.')
                     with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
                         f.write(file.getbuffer())
@@ -234,11 +235,13 @@ def include_pdf_report() -> None:
         # Use PDF reports for RAG
         if streamlit.button('Use report for RAG'):
             if len(user_request) == 0:
-                streamlit.error('Please enter your query.')
+                logger.error('No query entered.')
+                streamlit.error('No query entered.')
             else:
                 if use_generated_pdf and not upload_your_pdf:
                     # Check file selection
                     if len(streamlit.session_state.selected_files) == 0:
+                        logger.error('No file has been selected.')
                         streamlit.error('No file has been selected.')
 
                     # Retrieve the list of selected files
@@ -264,6 +267,7 @@ def include_pdf_report() -> None:
                 elif upload_your_pdf and not use_generated_pdf:
                     # Check file upload
                     if len(streamlit.session_state.uploaded_files) == 0:
+                        logger.error('No file has been uploaded.')
                         streamlit.error('No file has been uploaded.')
 
                     # Retrieve the list of uploaded files
@@ -327,11 +331,13 @@ def handle_pdf_generation(
 
     # Check that at least one data source is available
     if not any([data_paths[key] for key in data_paths]):
-        streamlit.error('Select at least one data source.')
+        logger.error('No data source selected.')
+        streamlit.error('No data source selected.')
         return None
 
     # Assert that at least one data source exists as a file
     if not any([os.path.isfile(data_paths[key]) for key in data_paths]):
+        logger.error('No data source available.')
         streamlit.error('No data source available.')
         return None
 

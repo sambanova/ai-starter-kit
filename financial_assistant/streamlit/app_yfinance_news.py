@@ -2,9 +2,12 @@ from typing import List, Tuple
 
 import streamlit
 
+from financial_assistant.src.tools import get_logger
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_output_callback
 from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+
+logger = get_logger()
 
 
 def get_yfinance_news() -> None:
@@ -25,7 +28,8 @@ def get_yfinance_news() -> None:
     # Retrieve news
     if streamlit.button('Retrieve News'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 if user_request is not None:
