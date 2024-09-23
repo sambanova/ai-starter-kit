@@ -220,8 +220,8 @@ def include_pdf_report() -> None:
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file in uploaded_files:
                     if not isinstance(file, UploadedFile):
-                        logger.error(f'{file} is not instance of UploadedFile.')
-                        streamlit.error(f'{file} is not instance of UploadedFile.')
+                        logger.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
+                        streamlit.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
                     with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
                         f.write(file.getbuffer())
 
@@ -241,8 +241,8 @@ def include_pdf_report() -> None:
                 if use_generated_pdf and not upload_your_pdf:
                     # Check file selection
                     if len(streamlit.session_state.selected_files) == 0:
-                        logger.error('No file has been selected.')
-                        streamlit.error('No file has been selected.')
+                        logger.error('No file selected.')
+                        streamlit.error('No file selected.')
 
                     # Retrieve the list of selected files
                     selected_files = streamlit.session_state.selected_files
@@ -267,8 +267,8 @@ def include_pdf_report() -> None:
                 elif upload_your_pdf and not use_generated_pdf:
                     # Check file upload
                     if len(streamlit.session_state.uploaded_files) == 0:
-                        logger.error('No file has been uploaded.')
-                        streamlit.error('No file has been uploaded.')
+                        logger.error('No file uploaded.')
+                        streamlit.error('No file uploaded.')
 
                     # Retrieve the list of uploaded files
                     uploaded_file_names = streamlit.session_state.uploaded_files
