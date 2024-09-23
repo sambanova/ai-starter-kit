@@ -72,14 +72,21 @@ class SambastudioMultimodal:
             return base64_image
 
     def _is_base64_encoded(self, image: str) -> bool:
-        base64_string = image.strip()
+        """
+        Checks if a string is base64 encoded.
 
-        if len(base64_string) % 4 != 0:
+        :param: str image: The string to check.
+        :return: True if the string is base64 encoded, False otherwise.
+        :rtype: bool
+        """
+        image = image.strip()
+
+        if len(image) % 4 != 0:
             return False
 
         try:
             # Decode the base64 string
-            base64_bytes = base64.b64decode(base64_string, validate=True)
+            base64_bytes = base64.b64decode(image, validate=True)
 
             # Check if it starts with common image file headers
             if base64_bytes.startswith(b'\xff\xd8\xff'):  # JPEG
@@ -208,8 +215,10 @@ class SambastudioMultimodal:
             'max_tokens': self.max_tokens_to_generate,
             'top_p': self.top_p,
             'stream': False,
-            'stop': self.stop,
         }
+        if len (self.stop)>1:
+            data['stop'] = self.stop
+            
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data))
         if response.status_code != 200:
