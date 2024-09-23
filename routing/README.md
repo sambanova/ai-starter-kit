@@ -98,12 +98,8 @@ After you've set up the environment, you can use the starter kit. Follow these s
 # Customizing the starter kit
 You can further customize the starter kit based on the use case.
 
-## keyword extractor
-1. Load and save to local
+## Customize the keyword extractor method
 
-You can load documents from your local path and save keywords to your local path by changing the file_folder and save_filepath to your local path in [src/keyword_extractor.py](./src/keyword_extractor.py)
-
-2. Customize the keyword extractor method
 The [keyword extractor](./src/keyword_extractor.py) provides two methods to extract keywords:
 
 * Use the [KeyBert](https://github.com/MaartenGr/KeyBERT) library. It uses BERT-embeddings and cosine similarity to find the sub-phrases in a document that are the most similar to the document itself.
@@ -116,26 +112,31 @@ The [keyword extractor](./src/keyword_extractor.py) provides two methods to extr
 self.keywords = kw_etr.extract_keywords(use_clusters=True)
 ```
 
-3. Customize the embedding model
+## Customize the embedding model
 
 By default, the keywords are exrtacted using a BERT-based embedding model. To change the embedding model, do the following:
 
 * If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config file](./config.yaml)), [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
 * If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config file](./config.yaml)), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
-4. Customize the LLM model
+## Customize the LLM model and/or use it to extract keywords
 
-You can also use a LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
+To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
+
+The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](./prompts/rag_routing_prompt_response_schema.yaml).
+
+You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
+
+You can also use this LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
  ```
- 
-To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
 The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](./prompts/keyword_extractor_prompt.yaml)
 
-5. Customize the keyphrase extraction
+## Customize the keyphrase extraction
+
 The keyword extractor uses [KeyphraseVectorizers](https://github.com/TimSchopf/KeyphraseVectorizers) to extract keyphrase from documents. You can choose other keyphrase extration methods by changing the `vectorizer` in `extract_keywords` function in [keyword_extractor.py](./src/keyword_extractor.py).
 
 ```bash
@@ -144,16 +145,7 @@ if use_vectorizer:
     keyphrase_ngram_range = None
 ```
 
-## router
-1. Customize the LLM model
-
-To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
-
-The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](./prompts/rag_routing_prompt_response_schema.yaml).
-
-You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
-
-2. Customize the RAG pipeline
+## Customize the RAG pipeline
 
 The RAG pipeline uses functions in [document_retrieval.py](../enterprise_knowledge_retriever/src/document_retrieval.py). Please refer to [enterprise_knowledge_retriever](../enterprise_knowledge_retriever/README.md) for how to customize the RAG.
 
