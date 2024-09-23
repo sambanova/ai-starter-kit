@@ -4,9 +4,6 @@ base="dark"
 # Primary accent for interactive elements
 primaryColor='#EE7624'
 
-# Secondary color
-secondaryColor='#3A8EBA'
-
 # Color used for almost all text
 textColor = 'e0e0e0'
 

@@ -481,7 +481,7 @@ class CustomTextTestResult(unittest.TextTestResult):
     """Custom test result class to collect and log individual test results."""
 
     max_retry: int = 1
-    retry_count: int = 0
+    global_retry_count: int = 0
     successes: List[unittest.TestCase] = list()
 
     def __init__(self, stream: Any, descriptions: bool, verbosity: int) -> None:
@@ -542,7 +542,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         self._initialize_retry(test)
 
         if getattr(test, 'retry', self.max_retry) > 0:
-            logger.warning(f'Retrying {test} after failure.')
+            logger.warning(f'Retrying {test._testMethodName} after failure.')
 
             # Wait
             self._sleep()
@@ -572,7 +572,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         self._initialize_retry(test)
 
         if getattr(test, 'retry', self.max_retry) > 0:
-            logger.warning(f'Retrying {test} after error.')
+            logger.warning(f'Retrying {test._testMethodName} after error.')
 
             # Wait
             self._sleep()
@@ -639,12 +639,14 @@ def main() -> int:
 
     logger.info('Test Results:')
 
-    assert hasattr(test_results, 'test_results'), 'The test results does not have the attribute `test_results`.'
-    assert hasattr(test_results, 'retry_count'), 'The test results does not have the attribute `retry_count`.'
+    assert hasattr(test_results, 'results_list'), 'The test results does not have the attribute `results_list`.'
+    assert hasattr(
+        test_results, 'global_retry_count'
+    ), 'The test results does not have the attribute `global_retry_count`.'
     assert hasattr(test_results, 'successes'), 'The test results does not have the attribute `successes`.'
 
     # Log results for each test
-    for result in test_results.test_results:
+    for result in test_results.results_list:
         logger.info(f"{result['name']}: {result['status']}")
         if 'message' in result:
             logger.warning(f"  Message: {result['message']}")
@@ -653,8 +655,8 @@ def main() -> int:
     failed_tests = len(test_results.failures) + len(test_results.errors)
     logger.info(
         'Number of tests passed: '
-        f'{test_results.testsRun - test_results.retry_count - failed_tests}/'
-        f'{test_results.testsRun- test_results.retry_count}'
+        f'{test_results.testsRun - test_results.global_retry_count - failed_tests}/'
+        f'{test_results.testsRun- test_results.global_retry_count}'
     )
     logger.info(f'Number of successful tests: {len(test_results.successes)}')
     logger.info(f'Number of failed tests: {len(test_results.failures)}')
