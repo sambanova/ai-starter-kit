@@ -5,7 +5,7 @@ import sys
 import time
 from datetime import datetime
 from math import isclose
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import requests
 import sseclient
@@ -16,11 +16,11 @@ sys.path.append('./src/llmperf')
 import warnings
 
 from dotenv import load_dotenv
-from llmperf import common_metrics
-from llmperf.models import RequestConfig
 from transformers import AutoTokenizer
 
-from utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf import common_metrics
+from benchmarking.src.llmperf.models import RequestConfig
+from benchmarking.src.llmperf.utils import SAMBANOVA_URL, get_tokenizer
 
 warnings.filterwarnings('ignore')
 
@@ -39,7 +39,7 @@ class BaseAPIEndpoint(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _get_json_data(self, *args: Any, **kwargs: Any) -> Dict:
+    def _get_json_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         pass
 
     def _get_token_length(self, input_text: str) -> int:
@@ -53,7 +53,9 @@ class BaseAPIEndpoint(abc.ABC):
         """
         return len(self.tokenizer.encode(input_text))
 
-    def _calculate_tpot_from_streams_after_first(self, chunks_received: list, chunks_timings: list) -> float:
+    def _calculate_tpot_from_streams_after_first(
+        self, chunks_received: List[str], chunks_timings: List[int | float]
+    ) -> float:
         """Calculates Time per Output Token (TPOT) based on the streaming events coming after the first one.
         In general, the way to calculate this metric is: time_to_generate_tokens/number_of_tokens_generated
 
@@ -72,12 +74,12 @@ class BaseAPIEndpoint(abc.ABC):
         total_time_to_receive_tokens_after_first_chunk = sum(chunks_timings[1:])
 
         # Calculate tpot
-        tpot = total_time_to_receive_tokens_after_first_chunk / total_tokens_received_after_first_chunk
+        tpot = float(total_time_to_receive_tokens_after_first_chunk / total_tokens_received_after_first_chunk)
 
         return tpot
 
     def _calculate_ttft_from_streams(
-        self, chunks_received: list, chunks_timings: list, total_request_time: int
+        self, chunks_received: List[str], chunks_timings: List[int | float], total_request_time: int | float
     ) -> float:
         """Calculates Time to First Token (TTFT) based on the streaming events coming from the response.
         If there are enough streaming events, the formula to calculate ttft is:
@@ -109,11 +111,11 @@ class BaseAPIEndpoint(abc.ABC):
         self,
         prompt_len: int,
         num_output_tokens: int,
-        ttft: int,
-        total_request_time: int,
-        server_metrics: dict,
+        ttft: int | float,
+        total_request_time: int | float,
+        server_metrics: Dict[str, Any],
         number_chunks_recieved: int,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """Populates `metrics` dictionary with performance metrics calculated from client side
 
         Args:
@@ -167,7 +169,7 @@ class BaseAPIEndpoint(abc.ABC):
 
         return metrics
 
-    def _populate_server_metrics(self, response_dict: dict, metrics: dict) -> dict:
+    def _populate_server_metrics(self, response_dict: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Parse output data to metrics dictionary structure
 
         Args:
@@ -242,11 +244,12 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         return url
 
-    def _get_headers(self) -> None:
+    def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
+        assert isinstance(self.api_key, str), 'No API KEY provided'
         return {'key': self.api_key}
 
-    def _get_json_data(self, url: str) -> dict:
+    def _get_json_data(self, url: str) -> Dict[str, Any]:
         """Gets json body for API call
 
         Args:
@@ -257,6 +260,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
         """
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
+
+        assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
 
         # Change params whether model is COE or not
         if 'COE' in self.request_config.model:
@@ -272,17 +277,17 @@ class SambaStudioAPI(BaseAPIEndpoint):
             extended_sampling_params = {
                 k: {'type': type(v).__name__, 'value': str(v)} for k, v in (sampling_params.items())
             }
-            extended_sampling_params = json.dumps(extended_sampling_params)
+            extended_sampling_params_str = json.dumps(extended_sampling_params)
 
             # Change request body whether API call is streaming or not
             if self.request_config.is_stream_mode:
-                data = {'instance': prompt, 'params': json.loads(extended_sampling_params)}
+                data = {'instance': prompt, 'params': json.loads(extended_sampling_params_str)}
             else:
-                data = {'instances': [prompt], 'params': json.loads(extended_sampling_params)}
+                data = {'instances': [prompt], 'params': json.loads(extended_sampling_params_str)}
 
         return data
 
-    def compute_metrics(self, metrics: dict) -> tuple[dict, str]:
+    def compute_metrics(self, metrics: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         """Computes metrics for SambaStudio API endpoint
 
         Args:
@@ -380,8 +385,8 @@ class FastAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
-        self.base_url = os.environ.get('FASTAPI_URL')
-        self.api_key = os.environ.get('FASTAPI_API_KEY')
+        self.base_url = os.environ.get('FASTAPI_URL', '')
+        self.api_key = os.environ.get('FASTAPI_API_KEY', '')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -395,7 +400,7 @@ class FastAPI(BaseAPIEndpoint):
         """Gets headers for API call"""
         return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
-    def _get_json_data(self) -> dict:
+    def _get_json_data(self) -> Dict[str, Any]:
         """Gets json body for API call
 
         Returns:
@@ -404,6 +409,7 @@ class FastAPI(BaseAPIEndpoint):
 
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
+        assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
 
         if self.request_config.is_stream_mode:
@@ -418,7 +424,7 @@ class FastAPI(BaseAPIEndpoint):
 
         return data
 
-    def compute_metrics(self, metrics: dict) -> tuple[dict, str]:
+    def compute_metrics(self, metrics: Dict[str, Any]) -> tuple[Dict[str, Any], str]:
         """Computes metrics for FastAPI API endpoint
 
         Args:
@@ -515,7 +521,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         """Gets headers for API call"""
         return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
-    def _get_json_data(self) -> dict:
+    def _get_json_data(self) -> Dict[str, Any]:
         """Gets json body for API call
 
         Returns:
@@ -524,6 +530,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
+        assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
 
         if self.request_config.is_stream_mode:
@@ -538,7 +545,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         return data
 
-    def compute_metrics(self, metrics: dict) -> tuple[dict, str]:
+    def compute_metrics(self, metrics: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
         """Computes metrics for SambaNovaCloud endpoint
 
         Args:
@@ -616,7 +623,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         return metrics, generated_text
 
 
-def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tuple:
+def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tuple[Dict[str, Any], str, RequestConfig]:
     """Makes a single completion request to a LLM API
 
     Args:
@@ -630,7 +637,7 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> tupl
     """
 
     generated_text = ''
-    metrics = {}
+    metrics: Dict[str, Any] = {}
     metrics[common_metrics.ERROR_CODE] = None
     metrics[common_metrics.ERROR_MSG] = ''
 

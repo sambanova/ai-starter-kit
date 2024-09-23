@@ -3,10 +3,10 @@ import warnings
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
-from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.app import LLM_API_OPTIONS
+from benchmarking.streamlit.streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 warnings.filterwarnings('ignore')
 

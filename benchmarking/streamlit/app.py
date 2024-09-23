@@ -11,9 +11,9 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, show_pages
-from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+from benchmarking.streamlit.streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary
 
 warnings.filterwarnings('ignore')
 

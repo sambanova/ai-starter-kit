@@ -3,7 +3,8 @@ import json
 import os
 
 from dotenv import load_dotenv
-from performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
+
+from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
 
 
 def str2bool(value: str) -> bool:
@@ -131,7 +132,7 @@ def main() -> None:
 
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
-        evaluator = CustomPerformanceEvaluator(
+        custom_evaluator = CustomPerformanceEvaluator(
             model_name=args.model_name,
             results_dir=args.results_dir,
             num_workers=args.num_workers,
@@ -143,7 +144,7 @@ def main() -> None:
         )
 
         # Run performance evaluation
-        evaluator.run_benchmark(sampling_params=json.loads(args.sampling_params))
+        custom_evaluator.run_benchmark(sampling_params=json.loads(args.sampling_params))
 
     # Synthetic dataset evaluation path
     else:
@@ -172,7 +173,7 @@ def main() -> None:
 
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
-        evaluator = SyntheticPerformanceEvaluator(
+        synthetic_evaluator = SyntheticPerformanceEvaluator(
             model_name=args.model_name,
             results_dir=args.results_dir,
             num_workers=args.num_workers,
@@ -182,7 +183,7 @@ def main() -> None:
         )
 
         # Run performance evaluation
-        evaluator.run_benchmark(
+        synthetic_evaluator.run_benchmark(
             num_input_tokens=args.num_input_tokens,
             num_output_tokens=args.num_output_tokens,
             num_requests=args.num_requests,
