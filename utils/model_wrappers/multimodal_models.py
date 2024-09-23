@@ -72,17 +72,28 @@ class SambastudioMultimodal:
             return base64_image
 
     def _is_base64_encoded(self, image: str) -> bool:
-        """
-        Checks if a string is base64 encoded.
+        base64_string = image.strip()
 
-        :param: str image: The string to check.
-        :return: True if the string is base64 encoded, False otherwise.
-        :rtype: bool
-        """
+        if len(base64_string) % 4 != 0:
+            return False
+
         try:
-            base64.b64decode(self, image)
-            return True
-        except (binascii.Error, TypeError):
+            # Decode the base64 string
+            base64_bytes = base64.b64decode(base64_string, validate=True)
+
+            # Check if it starts with common image file headers
+            if base64_bytes.startswith(b'\xff\xd8\xff'):  # JPEG
+                return True
+            elif base64_bytes.startswith(b'\x89PNG\r\n\x1a\n'):  # PNG
+                return True
+            elif base64_bytes.startswith(b'GIF87a') or base64_bytes.startswith(b'GIF89a'):  # GIF
+                return True
+            elif base64_bytes.startswith(b'BM'):  # BMP
+                return True
+            else:
+                return False
+        except Exception as e:
+            #print(f"Exception: {e}")
             return False
 
     def _is_file_path(self, image: str) -> bool:
@@ -107,7 +118,7 @@ class SambastudioMultimodal:
             r'^(https?://.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg))$', re.IGNORECASE
         )
 
-        return re.match(regex, url) is not None
+        return re.match(regex, image) is not None
 
     def _process_generic_api_response(self, response: Dict) -> str:
         """
@@ -120,7 +131,7 @@ class SambastudioMultimodal:
         try:
             generation = response['predictions'][0]['completion']
         except Exception as e:
-            raise (
+            raise ValueError(
                 "Error: The API response does not contain the 'predictions' key or the 'completion' value.",
                 f'raw response: {response}',
             )
@@ -137,7 +148,7 @@ class SambastudioMultimodal:
         try:
             generation = response['choices'][0]['message']['content']
         except Exception as e:
-            raise (
+            raise RuntimeError(
                 "Error: The API response does not contain the 'choices' key or the 'message' 'content' values.",
                 f'raw response: {response}',
             )
@@ -180,14 +191,15 @@ class SambastudioMultimodal:
         :return: The request json response
         :rtype: Dict
         """
-        
+        if not self._is_url(image):
+            image=f'data:image/png;base64,{image}'
         data = {
             'messages': [
                 {
                     'role': 'user',
                     'content': [
                         {'type': 'text', 'text': f'{prompt}'},
-                        {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{image}'}},
+                        {'type': 'image_url', 'image_url': {'url': image}},
                     ],
                 }
             ],
@@ -226,7 +238,7 @@ class SambastudioMultimodal:
         elif self._is_url(image):
             is_url = True
         else:
-            raise ('image should be provided as an url, a path or as a base64 encoded image')
+            raise ValueError('image should be provided as an url, a path or as a base64 encoded image')
 
         # Call the appropriate API based on the host URL
         if 'openai' in self.base_url:
@@ -234,7 +246,7 @@ class SambastudioMultimodal:
             generation = self._process_openai_api_response(response)
         elif 'generic' in self.base_url:
             if is_url:
-                raise("image should be provided as a path or as a base64 encoded image for generic endpoint")
+                raise ValueError("image should be provided as a path or as a base64 encoded image for generic endpoint")
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
             The assistant gives helpful, detailed, and polite answers to the humans question.\
             USER: <image>
