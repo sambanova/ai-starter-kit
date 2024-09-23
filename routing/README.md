@@ -127,7 +127,7 @@ The prompt for the model can be customized in [prompts/rag_routing_prompt_respon
 
 You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
 
-You can also use this LLM model to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
+This LLM model can be applied to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
 
 ```bash
  kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
