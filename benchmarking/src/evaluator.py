@@ -4,8 +4,6 @@ import os
 
 from dotenv import load_dotenv
 
-from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
-
 
 def str2bool(value: str) -> bool:
     """Transform str to bool
@@ -30,6 +28,8 @@ def str2bool(value: str) -> bool:
 
 
 def main() -> None:
+    from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
+
     parser = argparse.ArgumentParser(
         description="""Run a token throughput and latency benchmark. You have the option of running in two different 
             modes - 'custom' or 'synthetic'.
@@ -192,7 +192,17 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    load_dotenv('../.env', override=True)
+    import os
+    import sys
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+    repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
+    sys.path.append(kit_dir)
+    sys.path.append(repo_dir)
+
+    load_dotenv(os.path.join(repo_dir, '.env'), override=True)
     env_vars = dict(os.environ)
 
     main()
