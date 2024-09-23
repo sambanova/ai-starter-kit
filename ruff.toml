@@ -1,3 +1,5 @@
+# Ruff configuration file
+
 # Set the maximum line length to 120
 line-length = 120
 
