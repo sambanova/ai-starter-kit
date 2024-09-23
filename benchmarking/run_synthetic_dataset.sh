@@ -10,7 +10,7 @@ python src/evaluator.py \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
 --num-requests 16 \
---llm-api "SambaNova Cloud"
+--llm-api sncloud
 
 # Notes:
 # 1. For CoE Models, make sure to include the prefix "COE/" before the expert name.
@@ -33,6 +33,6 @@ python src/evaluator.py \
 #          OR
 #      --model-name "Meta-Llama-3-8B-Instruct"
 #
-# 3. For SambaNovaCloud endpoints, change the llm-api parameter to "SambaNova Cloud" and use the model name directly.
+# 3. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
 #   For example:
 #      --model-name "llama3-8b"

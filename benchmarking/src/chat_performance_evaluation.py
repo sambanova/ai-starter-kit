@@ -56,7 +56,7 @@ if __name__ == "__main__":
     env_vars = dict(os.environ)
 
     model_name = "llama3-405b"
-    llm_api = "SambaNova Cloud"
+    llm_api = "sncloud"
 
     params = {
         # "do_sample": False,

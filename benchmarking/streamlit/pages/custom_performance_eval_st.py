@@ -3,7 +3,7 @@ import streamlit as st
 from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary, plot_requests_gantt_chart
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
-from benchmarking.streamlit.app import LLM_API_OPTIONS
+from benchmarking.streamlit.app import LLM_API_OPTIONS, LLM_API_CODENAMES
 
 import warnings
 
@@ -46,7 +46,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = "./data/results/llmperf"
-
+    api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
     custom_performance_evaluator = CustomPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
@@ -54,12 +54,12 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
         save_response_texts=st.session_state.save_llm_responses,
-        llm_api=st.session_state.llm_api
+        llm_api=api_dict[st.session_state.llm_api],
     )
 
-    if st.session_state.llm_api == "SambaStudio":
+    if api_dict[st.session_state.llm_api] == "sambastudio":
         sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
-    elif st.session_state.llm_api == "SambaNova Cloud":
+    elif api_dict[st.session_state.llm_api] == "sncloud":
         sampling_params = {"max_tokens": st.session_state.max_tokens}
     else:
         sampling_params = {}

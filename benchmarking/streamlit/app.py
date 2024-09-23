@@ -17,6 +17,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 LLM_API_OPTIONS = ["SambaNova Cloud", "SambaStudio"]
+LLM_API_CODENAMES = ["sncloud", "sambastudio"]
 
 
 @st.cache_data
@@ -35,12 +36,13 @@ def _run_performance_evaluation() -> pd.DataFrame:
     results_path = "./data/results/llmperf"
 
     # Call benchmarking process
+    api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
     performance_evaluator = SyntheticPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
         num_workers=st.session_state.number_concurrent_workers,
         timeout=st.session_state.timeout,
-        llm_api=st.session_state.llm_api,
+        llm_api=api_dict[st.session_state.llm_api],
     )
 
     performance_evaluator.run_benchmark(
