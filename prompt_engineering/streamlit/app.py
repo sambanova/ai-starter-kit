@@ -10,10 +10,12 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import base64  # for showing the SVG Sambanova icon
+from typing import Any
 
 import streamlit as st  # for gui elements, secrets management
 from dotenv import load_dotenv  # for loading env variables
-from src.llm_management import LLMManager
+
+from prompt_engineering.src.llm_management import LLMManager
 
 # load env variables
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -23,7 +25,7 @@ logging.info('URL: https://localhost:8501')
 
 
 @st.cache_data
-def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> str:
+def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> Any:
     """Calls the API endpoint. Uses an input prompt and returns a completion of it.
 
     Args:
@@ -32,7 +34,7 @@ def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> str:
         selected_model (str): selected model from Streamlit
 
     Returns:
-        str: completion of the input prompt
+        Completion of the input prompt
     """
 
     # Setting llm
@@ -131,6 +133,9 @@ def main() -> None:
         st.write(f":red[**Meta Tag Format:**]  \n {model_info[selected_model_for_prompt]['Meta Tag Format']}")
 
     # Set up prompting area. Show prompt depending on the model selected and use case
+    assert isinstance(
+        selected_prompt_use_case, str
+    ), f'`selected_prompt_use_case` must be a string. Got type {type(selected_prompt_use_case)}.'
     prompt_template = llm_manager.get_prompt_template(selected_model_for_prompt, selected_prompt_use_case)
     prompt = st.text_area(
         'Prompt',
