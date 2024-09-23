@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List
 import plotly.graph_objects as go
 import plotly.express as px
+import numpy as np
 
 def plot_dataframe_summary(df_req_info: pd.DataFrame):
     """
@@ -93,39 +94,82 @@ def plot_client_vs_server_barplots(df_user: pd.DataFrame, x_col: str, y_cols: Li
     xgroups = [str(x) for x in sorted(pd.unique(df_melted[x_col]))]
     df_melted[x_col] = [str(x) for x in df_melted[x_col]]
 
-    fig = go.Figure()
+    valsl = {}
+    valsr = {}
     for i in xgroups:
-        showlegend = i == xgroups[0]
-        fig.add_trace(go.Violin(
-            x=df_melted[x_col][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == i)],
-            y=df_melted["Value"][(df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == i)],
-            legendgroup=legend_labels[0], showlegend=showlegend, scalegroup=i, name=legend_labels[0],
-            side="negative",
-            pointpos=-0.5,
-            line_color="#325c8c",
-        ))
-        fig.add_trace(go.Violin(
-            x=df_melted[x_col][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == i)],
-            y=df_melted["Value"][(df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == i)],
-            legendgroup=legend_labels[1], showlegend=showlegend, scalegroup=i, name=legend_labels[1],
-            side="positive",
-            pointpos=0.5,
-            line_color="#ee7625",
-        ))
+        maskl = (df_melted["Metric"] == value_vars[0]) & (df_melted[x_col] == i)
+        valsl[i] = np.percentile(df_melted["Value"][maskl], [5, 50, 95])
+        maskr = (df_melted["Metric"] == value_vars[1]) & (df_melted[x_col] == i)
+        valsr[i] = np.percentile(df_melted["Value"][maskr], [5, 50, 95])
 
-    fig.update_traces(
-        meanline_visible=True,
-        points="all",
-        jitter=0.05,
-        scalemode="width",
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x = xgroups,
+            y = [0 for _ in xgroups],
+            base = [valsl[i][1] for i in xgroups],
+            customdata=[legend_labels[0] for _ in xgroups],
+            marker={"color":"#325c8c","line":{"color":"#325c8c", "width":2}},
+            offsetgroup=0,
+            legendgroup=legend_labels[0],
+            name=legend_labels[0],
+            showlegend=False,
+            hovertemplate="<extra></extra><b>%{customdata}</b> median: %{base:.2f}",
+        )
     )
+    fig.add_trace(
+        go.Bar(
+            x = xgroups,
+            y = [valsl[i][2] - valsl[i][0] for i in xgroups],
+            base = [valsl[i][0] for i in xgroups],
+            customdata = [valsl[i][2] for i in xgroups],
+            marker={"color":"#325c8c"},
+            opacity=0.5,
+            offsetgroup=0,
+            legendgroup=legend_labels[0],
+            name=legend_labels[0],
+            hovertemplate="<extra></extra>5–95 pctile range: %{base:.2f}–%{customdata:.2f}",
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x = xgroups,
+            y= [0 for _ in xgroups],
+            base = [valsr[i][1] for i in xgroups],
+            customdata=[legend_labels[1] for _ in xgroups],
+            marker={"color":"#ee7625","line":{"color":"#ee7625", "width":2}},
+            offsetgroup=1,
+            legendgroup=legend_labels[1],
+            name=legend_labels[1],
+            showlegend=False,
+            hovertemplate="<extra></extra><b>%{customdata}</b> median: %{base:.2f}",
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x = xgroups,
+            y = [valsr[i][2] - valsr[i][0] for i in xgroups],
+            base = [valsr[i][0] for i in xgroups],
+            customdata = [valsr[i][2] for i in xgroups],
+            marker={"color":"#ee7625"},
+            opacity=0.5,
+            offsetgroup=1,
+            legendgroup=legend_labels[1],
+            name=legend_labels[1],
+            hovertemplate="<extra></extra>5–95 pctile range: %{base:.2f}–%{customdata:.2f}",
+        )
+    )
+
     fig.update_layout(
         title_text=title_text,
         xaxis_title=xaxis_title,
         yaxis_title=yaxis_title,
-        violinmode='overlay',
+        barmode="group",
         template="plotly_dark",
+        hovermode="x unified",
     )
+
+    fig.update_xaxes(hoverformat="foo")
     return fig
 
 def plot_requests_gantt_chart(df_user: pd.DataFrame):
