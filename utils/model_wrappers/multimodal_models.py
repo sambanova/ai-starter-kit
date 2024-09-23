@@ -1,12 +1,12 @@
 """Wrapper around Sambanova multimodal APIs."""
+
 import os
 import re
 
 import base64
-import binascii
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Union
 
 import requests
 
@@ -100,7 +100,7 @@ class SambastudioMultimodal:
             else:
                 return False
         except Exception as e:
-            #print(f"Exception: {e}")
+            # print(f"Exception: {e}")
             return False
 
     def _is_file_path(self, image: str) -> bool:
@@ -112,18 +112,16 @@ class SambastudioMultimodal:
         """
         path = Path(image)
         return path.exists()
-    
+
     def _is_url(self, image: str) -> bool:
         """
         Returns True if the string is an url
-        
+
         :param: str image: The string to check.
         :return: True if the string is an url, False otherwise.
         :rtype: bool
         """
-        regex = re.compile(
-            r'^(https?://.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg))$', re.IGNORECASE
-        )
+        regex = re.compile(r'^(https?://.*\.(?:png|jpg|jpeg|gif|bmp|webp|svg))$', re.IGNORECASE)
 
         return re.match(regex, image) is not None
 
@@ -185,28 +183,26 @@ class SambastudioMultimodal:
         if response.status_code != 200:
             raise RuntimeError(
                 f'Sambastudio multimodal API call failed with status code {response.status_code}',
-                f'Details: {response.text}'
+                f'Details: {response.text}',
             )
         else:
             return response.json()
 
-    def _call_openai_api(self, prompt: str, image: str) -> Dict:
+    def _call_openai_api(self, prompt: str, images: List) -> Dict:
         """
         Calls the Sambastudio multimodal openai compatible endpoint to generate a response.
         :param str prompt: Prompt for the model to generate a response
-        :param str image: Image to be used with the model
+        :param list images: Images to be used with the model
         :return: The request json response
         :rtype: Dict
         """
-        if not self._is_url(image):
-            image=f'data:image/png;base64,{image}'
+
         data = {
             'messages': [
                 {
                     'role': 'user',
                     'content': [
                         {'type': 'text', 'text': f'{prompt}'},
-                        {'type': 'image_url', 'image_url': {'url': image}},
                     ],
                 }
             ],
@@ -216,52 +212,65 @@ class SambastudioMultimodal:
             'top_p': self.top_p,
             'stream': False,
         }
-        if len (self.stop)>1:
+        if len(self.stop) > 1:
             data['stop'] = self.stop
-            
+        for image in images:
+            if not self._is_url(image):
+                image = f'data:image/png;base64,{image}'
+            data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
+
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data))
         if response.status_code != 200:
             raise RuntimeError(
                 f'Sambastudio multimodal API call failed with status code {response.status_code}.',
-                f'Details: {response.text}'
+                f'Details: {response.text}',
             )
         else:
             return response.json()
 
-    def invoke(self, prompt: str, image: str) -> str:
+    def invoke(self, prompt: str = None, images: Union[str, List] = None) -> str:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
 
         :param str prompt: Prompt for the model to generate a response
-        :param str image: Image to be used with the model absolute path or base64 image
+        :param str, list images: Image or images to be used with the model url, absolute path or base64 image
         :return: The generated response
         :rtype: str
         """
-        if self._is_base64_encoded(image):
-            image = image
-            is_url = False
-        elif self._is_file_path(image):
-            image = self.image_to_base64(image)
-            is_url = False
-        elif self._is_url(image):
-            is_url = True
-        else:
-            raise ValueError('image should be provided as an url, a path or as a base64 encoded image')
+        # create a list of images in b64 or as URLs to be used with the model
+        if images is None:
+            images = []
+        if isinstance(images, str):
+            images = [images]
+        images_list = []
+        for image in images:
+            if self._is_base64_encoded(image):
+                image = image
+                images_list.append(image)
+            elif self._is_file_path(image):
+                images_list.append(self.image_to_base64(image))
+            elif self._is_url(image):
+                images_list.append(image)
+            else:
+                raise ValueError('images should be provided as an url, a path or as a base64 encoded image')
 
         # Call the appropriate API based on the host URL
         if 'openai' in self.base_url:
-            response = self._call_openai_api(prompt, image)
+            response = self._call_openai_api(prompt, images_list)
             generation = self._process_openai_api_response(response)
         elif 'generic' in self.base_url:
-            if is_url:
-                raise ValueError("image should be provided as a path or as a base64 encoded image for generic endpoint")
+            if len(images_list) > 1:
+                raise ValueError('only one image can be provided for generic endpoint')
+            if self._is_url(images_list[0]):
+                raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
+
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
             The assistant gives helpful, detailed, and polite answers to the humans question.\
             USER: <image>
             {prompt}
             ASSISTANT:"""
-            response = self._call_generic_api(formatted_prompt, image)
+            response = self._call_generic_api(formatted_prompt, images_list[0])
             generation = self._process_generic_api_response(response)
         else:
             raise ValueError(

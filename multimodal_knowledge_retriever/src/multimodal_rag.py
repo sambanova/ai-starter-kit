@@ -57,11 +57,10 @@ class MultimodalRetrieval:
         initialize MultimodalRetrieval object.
         """
         config_info = self.get_config_info()
-        self.api_info = config_info[0]
-        self.llm_info = config_info[1]
-        self.lvlm_info = config_info[2]
-        self.embedding_model_info = config_info[3]
-        self.retrieval_info = config_info[4]
+        self.llm_info = config_info[0]
+        self.lvlm_info = config_info[1]
+        self.embedding_model_info = config_info[2]
+        self.retrieval_info = config_info[3]
         self.llm = self.set_llm()
         self.lvlm = SambastudioMultimodal(
             model=self.lvlm_info['model'],
@@ -79,23 +78,22 @@ class MultimodalRetrieval:
         # Read config file
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
-        api_info = config['api']
         llm_info = config['llm']
         lvlm_info = config['lvlm']
         embedding_model_info = config['embedding_model']
         retrieval_info = config['retrieval']
 
-        return api_info, llm_info, lvlm_info, embedding_model_info, retrieval_info
+        return llm_info, lvlm_info, embedding_model_info, retrieval_info
 
     def set_llm(self) -> LLM:
         """
-        Sets the sncloud, or sambastudio LLM based on the api_info attribute.
+        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
         Returns:
         LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
         """
         llm = APIGateway.load_llm(
-            type=self.api_info,
+            type=self.llm_info['type'],
             streaming=True,
             coe=self.llm_info['coe'],
             do_sample=self.llm_info['do_sample'],
