@@ -239,7 +239,7 @@ class TableTools:
             # Create output folder if it doesn't exist.
             os.makedirs(output_folder, exist_ok=True)
 
-            image = Image.open(filename)
+            image: Image.Image = Image.open(filename)
 
             inputs = processor(images=image, return_tensors="pt")
             outputs = model(**inputs)
