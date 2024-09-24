@@ -163,7 +163,7 @@ class VectorDb():
     
     
 
-    def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str,
+    def create_vector_store(self, chunks: list, embeddings: Any, db_type: str,
                             output_db: Optional[str] = None, collection_name: Optional[str] = None):
         """Creates a vector store
 
@@ -247,7 +247,7 @@ class VectorDb():
 
         return vector_store
 
-    def update_vdb(self, chunks: list, embeddings, db_type: str, input_db: str = None,
+    def update_vdb(self, chunks: list, embeddings: Any, db_type: str, input_db: Optional[str] = None,
                    output_db: str = None):
 
         if db_type == "faiss":

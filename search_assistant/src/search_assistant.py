@@ -11,18 +11,22 @@ import weave
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain.docstore.document import Document
 from langchain.memory import ConversationSummaryMemory
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from langchain.prompts import load_prompt
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
+from langchain_core.language_models.llms import LLM
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
+
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from serpapi import GoogleSearch
 
@@ -53,7 +57,7 @@ class SearchAssistant:
     Class used to do generation over search query results and scraped sites
     """
 
-    def __init__(self, config=None) -> None:
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Initializes the search assistant with the given configuration parameters.
 
@@ -80,16 +84,18 @@ class SearchAssistant:
         self.llm_info = config_info[2]
         self.retrieval_info = config_info[3]
         self.web_crawling_params = config_info[4]
-        self.extra_loaders = config_info[5]
+        self.extra_loaders: List[str] = config_info[5]
         self.prod_mode = config_info[6]
-        self.documents = None
-        self.urls = None
+        self.documents: Sequence[Document]
+        self.urls: List[Any] = []
         self.llm = self.init_llm_model()
         self.vectordb = VectorDb()
-        self.qa_chain = None
-        self.memory = None
+        self.qa_chain: Optional[ConversationalRetrievalChain] = None
+        self.memory: Optional[ConversationSummaryMemory] = None
 
-    def _get_config_info(self, config_path):
+    def _get_config_info(
+        self, config_path: str
+    ) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], List[str], bool]:
         """
         Loads json config file
 
@@ -102,7 +108,8 @@ class SearchAssistant:
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
         web_crawling_params (dict): Dictionary containing web crawling parameters
-        extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available in base kit)
+        extra_loaders (list): list containing extra loader to use when doing web crawling (only pdf available
+        in base kit)
         prod_mode (bool): Boolean indicating whether the app is in production mode
         """
         with open(config_path, 'r') as yaml_file:
@@ -117,7 +124,7 @@ class SearchAssistant:
 
         return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders, prod_mode
 
-    def init_memory(self):
+    def init_memory(self) -> None:
         """
         Initialize conversation summary memory for the conversation
         """
@@ -125,7 +132,6 @@ class SearchAssistant:
 
         self.memory = ConversationSummaryMemory(
             llm=self.llm,
-            max_token_limit=100,
             buffer='The human and AI greet each other to start a conversation.',
             memory_key='chat_history',
             return_messages=True,
@@ -133,7 +139,7 @@ class SearchAssistant:
             prompt=summary_prompt,
         )
 
-    def init_llm_model(self) -> None:
+    def init_llm_model(self) -> LLM:
         """
         Initializes the LLM endpoint
 
@@ -161,7 +167,7 @@ class SearchAssistant:
         )
         return llm
 
-    def reformulate_query_with_history(self, query):
+    def reformulate_query_with_history(self, query: str) -> str:
         """
         Reformulates the query based on the conversation history.
 
@@ -176,13 +182,14 @@ class SearchAssistant:
         custom_condensed_question_prompt = load_prompt(
             os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_question.yaml')
         )
+        assert self.memory is not None
         history = self.memory.load_memory_variables({})
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         )
         return reformulated_query
 
-    def remove_links(self, text):
+    def remove_links(self, text: str) -> Any:
         """
         Removes all URLs from the given text.
 
@@ -195,7 +202,7 @@ class SearchAssistant:
         url_pattern = r'https?://\S+|www\.\S+'
         return re.sub(url_pattern, '', text)
 
-    def parse_serp_analysis_output(self, answer, links):
+    def parse_serp_analysis_output(self, answer: str, links: List[str]) -> str:
         """
         Parse the output of the SERP analysis prompt to replace the reference numbers with HTML links.
 
@@ -220,14 +227,16 @@ class SearchAssistant:
         do_analysis: bool = True,
         include_site_links: bool = False,
         conversational: bool = False,
-    ):
+    ) -> Tuple[str, List[str | None]]:
         """
-        A search engine using Serper API. Useful for when you need to answer questions about current events. Input should be a search query.
+        A search engine using Serper API. Useful for when you need to answer questions about current events. Input
+        should be a search query.
 
         Parameters:
         query (str): The query to search.
         limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
-        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to
+        True.
         include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
 
         Returns:
@@ -243,10 +252,10 @@ class SearchAssistant:
                 results = response.json().get('organic', [])
                 if len(results) > 0:
                     links = [r['link'] for r in results]
-                    context = []
+                    context_list = []
                     for i, result in enumerate(results):
-                        context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
-                    context = '\n\n'.join(context)
+                        context_list.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                    context = '\n\n'.join(context_list)
                     self.logger.info(f'Context found: {context}')
                     if include_site_links:
                         sitelinks = []
@@ -281,16 +290,18 @@ class SearchAssistant:
         query: str,
         limit: int = 5,
         do_analysis: bool = True,
-        engine='google',
+        engine: Optional[str] = 'google',
         conversational: bool = False,
-    ) -> str:
+    ) -> Tuple[str, List[Any]]:
         """
-        A search engine using OpenSerp local API. Useful for when you need to answer questions about current events. Input should be a search query.
+        A search engine using OpenSerp local API. Useful for when you need to answer questions about current events.
+        Input should be a search query.
 
         Parameters:
         query (str): The query to search.
         limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
-        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults
+        to True.
         include_site_links (bool, optional): Whether to include site links in the search results. Defaults to False.
         engine (str, optional): The search engine to use
 
@@ -308,10 +319,12 @@ class SearchAssistant:
                 results = response.json()
                 if len(results) > 0:
                     links = [r['url'] for r in results]
-                    context = []
+                    context_list = []
                     for i, result in enumerate(results):
-                        context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}')
-                    context = '\n\n'.join(context)
+                        context_list.append(
+                            f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}'
+                        )
+                    context = '\n\n'.join(context_list)
                     self.logger.info(f'Context found: {context}')
                 else:
                     context = 'Answer not found'
@@ -340,15 +353,17 @@ class SearchAssistant:
         query: str,
         limit: int = 1,
         do_analysis: bool = True,
-        engine='google',
-    ) -> str:
+        engine: Optional[str] = 'google',
+    ) -> Tuple[str, List[Any]]:
         """
-        A search engine using Serpapi API. Useful for when you need to answer questions about current events. Input should be a search query.
+        A search engine using Serpapi API. Useful for when you need to answer questions about current events. Input
+        should be a search query.
 
         Parameters:
         query (str): The query to search.
         limit (int, optional): The maximum number of search results to retrieve. Defaults to 5.
-        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults to True.
+        do_analysis (bool, optional): Whether to perform the LLM analysis directly on the search results. Defaults
+        to True.
         engine (str, optional): The search engine to use
 
         Returns:
@@ -373,10 +388,10 @@ class SearchAssistant:
             links = []
             if len(results) > 0:
                 links = [r['link'] for r in results]
-                context = []
+                context_list = []
                 for i, result in enumerate(results):
-                    context.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
-                context = '\n\n'.join(context)
+                    context_list.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                context = '\n\n'.join(context_list)
                 self.logger.info(f'Context found: {context}')
             else:
                 context = 'Answer not found'
@@ -395,7 +410,7 @@ class SearchAssistant:
         else:
             return context, links
 
-    def load_remote_pdf(self, url):
+    def load_remote_pdf(self, url: str) -> List[Document]:
         """
         Load PDF files from the given URL.
         Args:
@@ -407,7 +422,7 @@ class SearchAssistant:
         docs = loader.load()
         return docs
 
-    def load_htmls(self, urls, extra_loaders=None):
+    def load_htmls(self, urls: List[str], extra_loaders: Optional[List[str]] = None) -> List[Document]:
         """
         Load HTML documents from the given URLs.
         Args:
@@ -429,7 +444,7 @@ class SearchAssistant:
                 docs.extend(loader.load())
         return docs
 
-    def link_filter(self, all_links, excluded_links):
+    def link_filter(self, all_links: List[str], excluded_links: Set[str]) -> Set[str]:
         """
         Filters a list of links based on a list of excluded links.
         Args:
@@ -449,7 +464,7 @@ class SearchAssistant:
                 filtered_links.add(link)
         return filtered_links
 
-    def clean_docs(self, docs):
+    def clean_docs(self, docs: Sequence[Document]) -> Sequence[Document]:
         """
         Clean the given HTML documents by transforming them into plain text.
         Args:
@@ -461,13 +476,15 @@ class SearchAssistant:
         docs = html2text_transformer.transform_documents(documents=docs)
         return docs
 
-    def web_crawl(self, urls, excluded_links=None):
+    def web_crawl(self, urls: List[str], excluded_links: Optional[List[str]] = None) -> None:
         """
-        Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth of exploration.
+        Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth of
+        exploration.
         Args:
             urls (list): A list of URLs to crawl.
             excluded_links (list, optional): A list of links to exclude from crawling. Defaults to None.
-            depth (int, optional): The depth of crawling, determining how many layers of internal links to explore. Defaults to 1
+            depth (int, optional): The depth of crawling, determining how many layers of internal links to explore.
+            Defaults to 1
         Returns:
             tuple: A tuple containing the langchain documents (list) and the scrapped URLs (list).
         """
@@ -478,13 +495,14 @@ class SearchAssistant:
         scrapped_urls = []
 
         urls = [url for url in urls if not url.endswith(tuple(excluded_link_suffixes))]
-        urls = self.link_filter(urls, set(excluded_links))
-        print(f'{urls=}')
-        if len(urls) == 0:
+        unique_urls = self.link_filter(urls, set(excluded_links))
+        print(f'{unique_urls=}')
+        if len(unique_urls) == 0:
             raise ValueError(
-                'not sites to scrape after filtering links, check the excluded_links config or increase Max number of results to retrieve'
+                """not sites to scrape after filtering links, check the excluded_links config or increase Max number of
+                results to retrieve"""
             )
-        urls = list(urls)[: self.web_crawling_params['max_scraped_websites']]
+        urls = list(unique_urls)[: self.web_crawling_params['max_scraped_websites']]
 
         scraped_docs = self.load_htmls(urls, self.extra_loaders)
         scrapped_urls.extend(urls)
@@ -493,7 +511,9 @@ class SearchAssistant:
         self.documents = docs
         self.urls = scrapped_urls
 
-    def get_text_chunks_with_references(self, docs: list, chunk_size: int, chunk_overlap: int) -> list:
+    def get_text_chunks_with_references(
+        self, docs: Sequence[Document], chunk_size: int, chunk_overlap: int
+    ) -> List[Document]:
         """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
 
         Args:
@@ -517,7 +537,7 @@ class SearchAssistant:
 
         return chunks
 
-    def create_load_vector_store(self, force_reload: bool = False, update: bool = False):
+    def create_load_vector_store(self, force_reload: bool = False, update: bool = False) -> None:
         """
         Create a vector store based on the given documents.
         Args:
@@ -558,7 +578,12 @@ class SearchAssistant:
                 chunks, embeddings, self.retrieval_info['db_type'], None
             )
 
-    def create_and_save_local(self, input_directory=None, persist_directory=None, update=False):
+    def create_and_save_local(
+        self,
+        input_directory: Optional[str] = None,
+        persist_directory: Optional[str] = None,
+        update: Optional[bool] = False,
+    ) -> None:
         """
         Create a vector store based on the given documents.
         Args:
@@ -595,13 +620,13 @@ class SearchAssistant:
 
     def basic_call(
         self,
-        query,
-        reformulated_query=None,
-        search_method='serpapi',
-        max_results=5,
-        search_engine='google',
-        conversational=False,
-    ):
+        query: str,
+        reformulated_query: Optional[str] = None,
+        search_method: Optional[str] = 'serpapi',
+        max_results: int = 5,
+        search_engine: Optional[str] = 'google',
+        conversational: bool = False,
+    ) -> Dict[str, Any]:
         """
         Do a basic call to the llm using the query result snippets as context
         Args:
@@ -626,12 +651,12 @@ class SearchAssistant:
                 query=reformulated_query, limit=max_results, engine=search_engine, do_analysis=True
             )
 
-        if conversational:
+        if conversational and self.memory is not None:
             self.memory.save_context(inputs={'input': query}, outputs={'answer': answer})
 
         return {'answer': answer, 'sources': links}
 
-    def set_retrieval_qa_chain(self, conversational=False):
+    def set_retrieval_qa_chain(self, conversational: bool = False) -> None:
         """
         Set a retrieval chain for queries that use as retriever a previously created vectorstore
         """
@@ -672,7 +697,13 @@ class SearchAssistant:
                 prompt=retrieval_qa_prompt,
             )
 
-    def search_and_scrape(self, query, search_method='serpapi', max_results=5, search_engine='google'):
+    def search_and_scrape(
+        self,
+        query: str,
+        search_method: Optional[str] = 'serpapi',
+        max_results: int = 5,
+        search_engine: Optional[str] = 'google',
+    ) -> Optional[Dict[str, str]]:
         """
         Do a call to the serp tool, scrape the url results, and save the scraped data in a a vectorstore
         Args:
@@ -692,10 +723,11 @@ class SearchAssistant:
             # self.create_load_vector_store()
             self.create_and_save_local()
             self.set_retrieval_qa_chain(conversational=True)
+            return None
         else:
             return {'message': f"No links found for '{query}'. Try again"}
 
-    def get_relevant_queries(self, query):
+    def get_relevant_queries(self, query: str) -> Any:
         """
         Generates a list of related queries based on the input query.
 
@@ -713,7 +745,7 @@ class SearchAssistant:
         input_variables = {'question': query, 'format_instructions': list_format_instructions}
         return relevant_queries_chain.invoke(input_variables).get('related_queries', [])
 
-    def parse_retrieval_output(self, result):
+    def parse_retrieval_output(self, result: Dict[str, Any]) -> str:
         """
         Parses the output of the retrieval chain to map the original source numbers with the numbers in generation.
 
@@ -734,7 +766,7 @@ class SearchAssistant:
                 )
         return parsed_answer
 
-    def retrieval_call(self, query):
+    def retrieval_call(self, query: str) -> Any:
         """
         Do a call to the retriever chain
 
@@ -744,6 +776,7 @@ class SearchAssistant:
         Returns:
         result (str): The final Result to the user query
         """
+        assert self.qa_chain is not None
         result = self.qa_chain.invoke(query)
         result['answer'] = self.parse_retrieval_output(result)
         return result
