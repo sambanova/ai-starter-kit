@@ -29,7 +29,7 @@ retrieval:
     "final_k_retrieved_documents": 5
 
 prompts: 
-    "router_prompt": "router/prompts/rag_routing_prompt_response_schema.yaml"
+    "router_prompt": "router/prompts/rag_routing_prompt.yaml"
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
     "kw_etr_prompt": "router/prompts/keyword_extractor_prompt.yaml"
 

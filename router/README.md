@@ -123,7 +123,7 @@ By default, the keywords are exrtacted using a BERT-based embedding model. To ch
 
 To change the LLM model or modify the parameters for calling the model, make changes to the `router` in [config file](./config.yaml).
 
-The prompt for the model can be customized in [prompts/rag_routing_prompt_response_schema.yaml](./prompts/rag_routing_prompt_response_schema.yaml).
+The prompt for the model can be customized in [prompts/rag_routing_prompt.yaml](./prompts/rag_routing_prompt.yaml).
 
 You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
 
