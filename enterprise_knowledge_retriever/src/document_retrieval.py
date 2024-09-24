@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 import yaml
+import nltk
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
@@ -47,6 +48,8 @@ if wandb_api_key:
 else:
     print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
@@ -133,6 +136,7 @@ class DocumentRetrieval:
         self.retrieval_info = config_info[3]
         self.prompts = config_info[4]
         self.prod_mode = config_info[5]
+        self.pdf_only_mode = config_info[6]
         self.retriever = None
         self.llm = self.set_llm()
 
@@ -149,8 +153,9 @@ class DocumentRetrieval:
         retrieval_info = config['retrieval']
         prompts = config['prompts']
         prod_mode = config['prod_mode']
+        pdf_only_mode = config['pdf_only_mode']
 
-        return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode
+        return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
     def set_llm(self):
         if self.prod_mode:
@@ -212,7 +217,12 @@ class DocumentRetrieval:
                 f.write(doc.getvalue())
 
         # Pass in the temp folder for processing into the parse_doc_universal function
-        _, _, langchain_docs = parse_doc_universal(doc=temp_folder, additional_metadata=additional_metadata)
+        _, _, langchain_docs = parse_doc_universal(
+            doc=temp_folder,
+            additional_metadata=additional_metadata,
+            lite_mode=self.pdf_only_mode
+            )
+        
         return langchain_docs
 
     def load_embedding_model(self):
