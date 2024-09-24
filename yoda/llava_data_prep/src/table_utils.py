@@ -202,9 +202,9 @@ class TableTools:
                 
                 # If do_reshape, use cv2 for improved interpolation method for tables.
                 if self.do_reshape:
-                    cropped_table = np.array(cropped_table)
-                    cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
-                    cv2.imwrite(output_path, cropped_table, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                    cropped_table_array = np.array(cropped_table)
+                    cropped_table_array = cv2.resize(cropped_table_array, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table_array, [cv2.IMWRITE_PNG_COMPRESSION, 0])
                 else:
                     cropped_table.save(output_path, "JPEG")
 
@@ -276,9 +276,9 @@ class TableTools:
                 
                 # If do_reshape, use cv2 for improved interpolation method for tables.
                 if self.do_reshape:
-                    cropped_table = np.array(cropped_table)
-                    cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
-                    cv2.imwrite(output_path, cropped_table, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                    cropped_table_array = np.array(cropped_table)
+                    cropped_table_array = cv2.resize(cropped_table_array, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table_array, [cv2.IMWRITE_PNG_COMPRESSION, 0])
                 else:
                     cropped_table.save(output_path, "JPEG")
                 
