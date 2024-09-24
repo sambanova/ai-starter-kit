@@ -18,6 +18,8 @@ from pdf2image import convert_from_path
 import random
 import subprocess
 import time
+import torch
+from transformers import AutoImageProcessor, DeformableDetrForObjectDetection
 from typing import Any, Dict, List, Tuple
 from ultralyticsplus import YOLO # type: ignore
 import uuid
@@ -94,8 +96,8 @@ class TableTools:
                 raise FileNotFoundError(f"{data_directory} does not exist.")
 
             for filename in files:
-                logging.info(f"Converting {filename} to a folder of \
-                             images in the same location")
+                logging.info(f"Converting {filename} to a folder of " +
+                             "images in the same location")
 
                 # Convert pdf to images and save them in the images 
                 # subdirectory.
@@ -193,6 +195,53 @@ class TableTools:
                 cropped_table.save(output_path, "JPEG")
         logging.info(f"Cropped tables saved to {data_directory} \
                      in subdirectories.")
+        
+    def crop_tables_doclaynet(self, data_directory: str, threshold: float = 0.75, offset: int = 20) -> None:
+
+        processor = AutoImageProcessor.from_pretrained("Aryn/deformable-detr-DocLayNet")
+        model = DeformableDetrForObjectDetection.from_pretrained("Aryn/deformable-detr-DocLayNet")
+
+        # Get all files in directory recursively
+        try:
+            files: List[str] = glob.glob(data_directory + "**/**", recursive=True)
+            files = [file for file in files if file.endswith(".jpg")]
+        except FileNotFoundError:
+            logging.error(f"{data_directory} not found.")
+            raise FileNotFoundError(f"{data_directory} does not exist.")
+
+        # Iterate over all files and crop tables from them
+        for filename in files:
+            logging.info(f"Cropping tables from {filename}")
+            output_folder: str = filename.partition('images')[0] + "cropped_tables/"
+
+            # Create output folder if it doesn't exist.
+            os.makedirs(output_folder, exist_ok=True)
+
+            image = Image.open(filename)
+
+            inputs = processor(images=image, return_tensors="pt")
+            outputs = model(**inputs)
+
+            target_sizes = torch.tensor([image.size[::-1]])
+            results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, 
+                                                              threshold=threshold)[0]
+            
+            tables = [model.config.id2label[result.item()] == "Table" for result in results['labels']]
+            boxes = results['boxes'].tolist()
+
+            table_boxes = [sub for sub, bool in zip(boxes, tables) if bool]
+
+            for i, box in enumerate(table_boxes):
+                cropped_table: Image.Image = image.crop((box[0]-offset, 
+                                                box[1]-offset, 
+                                                box[2]+offset, 
+                                                box[3]+offset))
+                page_no: str = filename.partition('images')[-1].replace("/", "").replace(".jpg", "")
+                output_path: str = f"{output_folder}/{page_no}_table_{i}.jpg"
+                cropped_table.save(output_path, "JPEG")
+                
+        logging.info(f"Cropped tables saved to {data_directory} " +
+                     "in subdirectories.")
 
     def replace_special_to_latex(self, text: str) -> str:
         
