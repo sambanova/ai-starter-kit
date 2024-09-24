@@ -15,3 +15,9 @@ prompts:
 sec:
     "company": "company"
     "email": user.name@domain.com
+
+table_generation:
+    "do_reshape": True
+    "size":
+        - 336
+        - 336

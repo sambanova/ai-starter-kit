@@ -70,6 +70,13 @@ DOCUMENT_PREFIX = r'''\documentclass[8pt]{article}
 
 class TableTools:
 
+    def __init__(self, 
+                 do_reshape: bool = False, 
+                 size: Tuple[int,int] = (336,336)) -> None:
+
+        self.do_reshape = do_reshape
+        self.size = size
+
     def convert_pdf_to_images(self, data_directory: str) -> None:
             """
             This method converts a pdf file to a series of images of each page
@@ -192,9 +199,17 @@ class TableTools:
                                                 box[3]+offset))
                 page_no: str = filename.partition('images')[-1].replace("/", "").replace(".jpg", "")
                 output_path: str = f"{output_folder}/{page_no}_table_{i}.jpg"
-                cropped_table.save(output_path, "JPEG")
-        logging.info(f"Cropped tables saved to {data_directory} \
-                     in subdirectories.")
+                
+                # If do_reshape, use cv2 for improved interpolation method for tables.
+                if self.do_reshape:
+                    cropped_table = np.array(cropped_table)
+                    cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                else:
+                    cropped_table.save(output_path, "JPEG")
+
+        logging.info(f"Cropped tables saved to {data_directory} " +
+                     "in subdirectories.")
         
     def crop_tables_doclaynet(self, data_directory: str, threshold: float = 0.75, offset: int = 20) -> None:
 
@@ -258,7 +273,14 @@ class TableTools:
                                                 box[3]+offset))
                 page_no: str = filename.partition('images')[-1].replace("/", "").replace(".jpg", "")
                 output_path: str = f"{output_folder}/{page_no}_table_{i}.jpg"
-                cropped_table.save(output_path, "JPEG")
+                
+                # If do_reshape, use cv2 for improved interpolation method for tables.
+                if self.do_reshape:
+                    cropped_table = np.array(cropped_table)
+                    cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                else:
+                    cropped_table.save(output_path, "JPEG")
                 
         logging.info(f"Cropped tables saved to {data_directory} " +
                      "in subdirectories.")
@@ -671,21 +693,10 @@ class TableTools:
         height, width = gray_image.shape
         cropped_table = image[max(0, y-random.randint(10, 100)):min(y+h+random.randint(10, 100), height), 
                             max(0, x-random.randint(10, 100)):min(x+w+random.randint(10, 100), width)]
-        
-        keeptrying = True
-        counter = 0
-        while keeptrying:
-            try:
-                cv2.imwrite(image_path, cropped_table)
-                keeptrying = False
-            except Exception as e:
-                print(e)
-                time.sleep(0.5)
-                counter += 1
-                if counter >= 10:
-                    break
 
         logging.info(f"Writing image to: {image_path}.")
+        if self.do_reshape:
+            cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
         cv2.imwrite(image_path, cropped_table)
     
     # TODO: Provide control
@@ -843,11 +854,13 @@ class TableAugmentor:
 
         assert isinstance(config_path, str), TypeError(f"Expected str, got {type(config_path)}.")
         
-        self.llm_info, self.prompt_info = self.load_configs(config_path)
+        self.llm_info, self.prompt_info, self.table_info = self.load_configs(config_path)
         self.init_llm()
         self.init_table_modifying_chain()
         self.init_table_qa_chain()
         self.init_table_ocr_chain()
+        self.do_reshape = self.table_info["do_reshape"]
+        self.size = self.table_info["size"]
 
     def load_configs(self, config_path: str) -> Any:
         """
@@ -870,9 +883,9 @@ class TableAugmentor:
             logging.error(f"{config_path} not found.")
             raise FileNotFoundError(f"{config_path} does not exist.")
 
-        llm_info, prompt_info = config["llm"], config["prompts"]
+        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_generation"]
 
-        return llm_info, prompt_info
+        return llm_info, prompt_info, table_info
 
     def init_table_modifying_chain(self) -> None:
         """
@@ -1042,7 +1055,8 @@ class TableAugmentor:
             json.dump([], f)
         
         # Instantiate table tools object for later use.
-        table_tools = TableTools()
+        table_tools = TableTools(do_reshape=self.do_reshape,
+                                 size=self.size)
 
         # Generate synthetic data for specified number of
         # samples.
