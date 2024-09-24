@@ -23,6 +23,7 @@ from langchain_community.document_loaders import DirectoryLoader, UnstructuredUR
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
+from typing import Optional, Any
 
 vectordb_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(vectordb_dir, ".."))
@@ -163,7 +164,7 @@ class VectorDb():
     
 
     def create_vector_store(self, chunks: list, embeddings: HuggingFaceInstructEmbeddings, db_type: str,
-                            output_db: str = None, collection_name: str = None):
+                            output_db: Optional[str] = None, collection_name: Optional[str] = None):
         """Creates a vector store
 
         Args:
@@ -223,7 +224,7 @@ class VectorDb():
 
         return vector_store
 
-    def load_vdb(self, persist_directory, embedding_model, db_type="chroma", collection_name=None):
+    def load_vdb(self, persist_directory, embedding_model, db_type: str="chroma", collection_name: Optional[str] = None) -> Any:
         if db_type == "faiss":
             vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)
         elif db_type == "chroma":

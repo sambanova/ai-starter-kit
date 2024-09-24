@@ -1,6 +1,6 @@
 import netrc
 import os
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 import streamlit as st
 
@@ -66,7 +66,7 @@ def save_credentials(api_key, additional_vars=None, prod_mode=False) -> str:
     return 'Credentials saved successfully!'
 
 
-def get_wandb_key():
+def get_wandb_key() -> Optional[Any]:
     # Check for WANDB_API_KEY in environment variables
     env_wandb_api_key = os.getenv('WANDB_API_KEY')
 
