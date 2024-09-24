@@ -129,11 +129,11 @@ class Router:
         route_prompt = load_prompt(repo_dir + '/' + self.configs['prompts']['router_prompt'])
 
         # load/extract keywords for docs  
-        keyword_filpath = os.path.join(repo_dir, self.configs['documents']['keyword_path'])
+        keyword_filpath = os.path.join(repo_dir, self.configs['router']['keyword_path'])
         if os.path.isfile(keyword_filpath):
             self.keywords = read_keywords(keyword_filpath)
         else:
-            document_path = os.path.join(repo_dir, self.configs['documents']['document_folder'])
+            document_path = os.path.join(repo_dir, self.configs['router']['document_folder'])
             self.extract_keyword(document_path, save_filepath=keyword_filpath)
 
         # create output parser
@@ -186,9 +186,12 @@ class Router:
             raise NotADirectoryError(f'{file_folder} is not a directory.')
         
         # extract keywords
-        kw_etr = KeywordExtractor(configs=self.configs, docs=docs, use_bert=True)
+        kw_etr = KeywordExtractor(configs=self.configs, 
+                                  docs=docs, 
+                                  use_bert=self.configs['router']['use_bert'], 
+                                  use_llm=self.configs['router']['use_llm'])
         kw_etr.docs_embedding()
-        self.keywords = kw_etr.extract_keywords(use_clusters=False)
+        self.keywords = kw_etr.extract_keywords(self.configs['router']['use_clusters'])
         
         # save keywords to local 
         if save_filepath:

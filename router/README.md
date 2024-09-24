@@ -91,7 +91,7 @@ After you've set up the environment, you can use the starter kit. Follow these s
 
 1. Put your documents under the [data](./data/) folder.
 
-2. Update the `keyword_path` under `documents` in the [config file](./config.yaml).
+2. Update the `keyword_path` under `router` in the [config file](./config.yaml).
     
 2. We provide an example to call the router and connect it with a RAG pipeline in [notebook/RAG_with_router.ipynb](./notebook/RAG_with_router.ipynb).
 
@@ -106,11 +106,7 @@ The [keyword extractor](./src/keyword_extractor.py) provides two methods to extr
 
 * Use a generative language model. It uses prompt engineering to guide the LLM model to find keywords from documents.
 
-*  Keywords can be extracted more efficiently by finding similarities between documents. We assume that highly similar documents will have the same keywords, so we extract keywords from only one document in each cluster and assign the keywords to all documents in the same cluster. To enble this feature, please set `use_clusters=True` in the `extract_keyword` function in [router.py](./src/router.py).
-
-```bash
-self.keywords = kw_etr.extract_keywords(use_clusters=True)
-```
+*  Keywords can be extracted more efficiently by finding similarities between documents. We assume that highly similar documents will have the same keywords, so we extract keywords from only one document in each cluster and assign the keywords to all documents in the same cluster. To enble this feature, please set `use_clusters=True` under `router` in the [config file](./config.yaml).
 
 ## Customize the embedding model
 
@@ -127,11 +123,7 @@ The prompt for the model can be customized in [prompts/rag_routing_prompt.yaml](
 
 You can also use your own yaml file by placing the file under [prompts](./prompts) folder and changing the path of `router_prompt` in [config file](./config.yaml).
 
-This LLM model can be applied to extract keywords by setting `use_llm=True` and `use_bert=False` in [src/keyword_extractor.py](./src/keyword_extractor.py)
-
-```bash
- kw_etr = KeywordExtractor(configs=CONFIG_PATH, docs=docs, use_bert=False, use_llm=True)
- ```
+This LLM model can be applied to extract keywords by setting `use_llm=True` and `use_bert=False` in [config file](./config.yaml)
 
 The prompt for the model can be customized in [prompts/keyword_extractor_prompt.yaml](./prompts/keyword_extractor_prompt.yaml)
 
