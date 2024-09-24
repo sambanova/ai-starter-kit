@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -16,6 +17,7 @@ from typing import Callable, Dict, List, Tuple, Union
 
 import nltk
 import yaml
+import streamlit as st
 from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
@@ -46,6 +48,14 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
+# Configure the logger
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
+    format="%(asctime)s [%(levelname)s] - %(message)s",  # Define the log message format
+)
+
+# Create a logger object
+logger = logging.getLogger(__name__)
 
 class MultimodalRetrieval:
     """
@@ -61,15 +71,11 @@ class MultimodalRetrieval:
         self.lvlm_info = config_info[1]
         self.embedding_model_info = config_info[2]
         self.retrieval_info = config_info[3]
+        self.prod_mode = config_info[4]
         self.llm = self.set_llm()
-        self.lvlm = SambastudioMultimodal(
-            model=self.lvlm_info['model'],
-            temperature=self.lvlm_info['temperature'],
-            max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
-            top_p=self.lvlm_info['top_p'],
-            top_k=self.lvlm_info['top_k'],
-            do_sample=self.lvlm_info['do_sample'],
-        )
+        self.lvlm = self.set_lvlm()
+        self.collection_id = str(uuid.uuid4())
+        self.vector_collections = set()
 
     def get_config_info(self) -> Tuple[str, str, str, str]:
         """
@@ -82,8 +88,9 @@ class MultimodalRetrieval:
         lvlm_info = config['lvlm']
         embedding_model_info = config['embedding_model']
         retrieval_info = config['retrieval']
+        prod_mode = config['prod_mode']
 
-        return llm_info, lvlm_info, embedding_model_info, retrieval_info
+        return llm_info, lvlm_info, embedding_model_info, retrieval_info, prod_mode
 
     def set_llm(self) -> LLM:
         """
@@ -92,6 +99,15 @@ class MultimodalRetrieval:
         Returns:
         LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
         """
+        
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+        
         llm = APIGateway.load_llm(
             type=self.llm_info['type'],
             streaming=True,
@@ -101,9 +117,45 @@ class MultimodalRetrieval:
             temperature=self.llm_info['temperature'],
             select_expert=self.llm_info['select_expert'],
             process_prompt=False,
+            sambanova_api_key=sambanova_api_key,
         )
         return llm
+    
+    def set_lvlm(self) -> SambastudioMultimodal:
+        """
+        Sets the sncloud, or sambastudio LVLM based on the config attributes.
 
+        Returns:
+        LVLM: The SambaStudio Cloud or Sambastudio Langchain LVLM wrapper.
+        """
+        if self.prod_mode:
+            lvlm_base_url = st.session_state.LVLM_BASE_URL
+            lvlm_api_key = st.session_state.LVLM_API_KEY
+            
+        else:
+            if 'LVLM_API_KEY' in st.session_state:
+                lvlm_api_key = os.environ.get('LVLM_API_KEY') or st.session_state.LVLM_API_KEY
+            else:
+                lvlm_api_key = os.environ.get('LVLM_API_KEY')
+
+            if 'LVLM_BASE_URL' in st.session_state:
+                lvlm_base_url  = os.environ.get('LVLM_BASE_URL') or st.session_state.LVLM_BASE_URL
+            else:
+                lvlm_base_url  = os.environ.get('LVLM_BASE_URL')
+        
+        lvlm = SambastudioMultimodal(
+            base_url=lvlm_base_url,
+            api_key=lvlm_api_key,
+            model=self.lvlm_info['model'],
+            temperature=self.lvlm_info['temperature'],
+            max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
+            top_p=self.lvlm_info['top_p'],
+            top_k=self.lvlm_info['top_k'],
+            do_sample=self.lvlm_info['do_sample'],
+        )
+        
+        return lvlm
+            
     def extract_pdf(self, file_path: str) -> Tuple[List, str]:
         # Path to save images
         output_path = os.path.splitext(file_path)[0]
@@ -230,12 +282,16 @@ class MultimodalRetrieval:
             coe=self.embedding_model_info['coe'],
             select_expert=self.embedding_model_info['select_expert'],
         )
+        
+        collection_name = f"collection_{self.collection_id}"
+        logger.info(f'This is the collection name: {collection_name}')
 
         vectorstore = Chroma(
-            collection_name='summaries',
+            collection_name=collection_name,
             embedding_function=self.embeddings,
             client_settings=Settings(anonymized_telemetry=False),
         )
+        self.vector_collections.add(collection_name)
         store = InMemoryByteStore()
         id_key = 'doc_id'
 
