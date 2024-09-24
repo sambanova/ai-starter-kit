@@ -19,6 +19,7 @@ logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
+
 def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
@@ -75,25 +76,25 @@ def handle_user_input(user_question: str) -> None:
                         for image in image_source:
                             st.image(image)
 
-def initialize_multimodal_retrieval():
+
+def initialize_multimodal_retrieval() ->MultimodalRetrieval:
     if are_credentials_set():
         try:
             return MultimodalRetrieval()
         except Exception as e:
-            raise RuntimeError(e)
-            st.error(f"Failed to initialize MultimodalRetrieval: {str(e)}")
+            st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
             return None
     return None
 
+
 def main() -> None:
-    
     with open(CONFIG_PATH, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
-        
+
     prod_mode = config.get('prod_mode', False)
-    
-    initialize_env_variables(prod_mode, ['LVLM_BASE_URL','LVLM_API_KEY'])
-    
+
+    initialize_env_variables(prod_mode, ['LVLM_BASE_URL', 'LVLM_API_KEY'])
+
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
@@ -122,28 +123,26 @@ def main() -> None:
 
     with st.sidebar:
         st.title('Setup')
-        
-        st.markdown(
-            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
-        )
-        
+
+        st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
+
         if not are_credentials_set():
-            url, api_key = env_input_fields(['LVLM_BASE_URL','LVLM_API_KEY'])
-            if st.button("Save Credentials", key="save_credentials_sidebar"):
+            url, api_key = env_input_fields(['LVLM_BASE_URL', 'LVLM_API_KEY'])
+            if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
                 st.success(message)
-        
+
         else:
-            st.success("Credentials are set")
-            if st.button("Clear Credentials", key="clear_credentials"):
-                save_credentials("", "", prod_mode)
+            st.success('Credentials are set')
+            if st.button('Clear Credentials', key='clear_credentials'):
+                save_credentials('', '', prod_mode)
                 st.rerun()
-                
+
         if are_credentials_set():
             if st.session_state.multimodal_retriever is None:
                 st.session_state.multimodal_retriever = initialize_multimodal_retrieval()
-                
-        if st.session_state.multimodal_retriever is not None:    
+
+        if st.session_state.multimodal_retriever is not None:
             st.markdown('**1. Upload your files**')
             docs = st.file_uploader('Add your files', accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
             st.markdown('**2. Set ingestion steps**')
@@ -152,8 +151,8 @@ def main() -> None:
             st.markdown('**3. Set retrieval steps**')
             raw_image_retrieval = st.toggle('Answer over raw images', value=True)
             st.caption(
-                '**Note** If selected the kit will use raw images to generate the answers, if not, image summaries will be \
-                    used instead'
+                '**Note** If selected the kit will use raw images to generate the answers, \
+                if not, image summaries will be used instead'
             )
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')

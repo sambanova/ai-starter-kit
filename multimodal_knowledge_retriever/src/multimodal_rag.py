@@ -51,11 +51,12 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 # Configure the logger
 logging.basicConfig(
     level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
-    format="%(asctime)s [%(levelname)s] - %(message)s",  # Define the log message format
+    format='%(asctime)s [%(levelname)s] - %(message)s',  # Define the log message format
 )
 
 # Create a logger object
 logger = logging.getLogger(__name__)
+
 
 class MultimodalRetrieval:
     """
@@ -99,7 +100,7 @@ class MultimodalRetrieval:
         Returns:
         LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
         """
-        
+
         if self.prod_mode:
             sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
@@ -107,7 +108,7 @@ class MultimodalRetrieval:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
             else:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-        
+
         llm = APIGateway.load_llm(
             type=self.llm_info['type'],
             streaming=True,
@@ -120,7 +121,7 @@ class MultimodalRetrieval:
             sambanova_api_key=sambanova_api_key,
         )
         return llm
-    
+
     def set_lvlm(self) -> SambastudioMultimodal:
         """
         Sets the sncloud, or sambastudio LVLM based on the config attributes.
@@ -131,7 +132,7 @@ class MultimodalRetrieval:
         if self.prod_mode:
             lvlm_base_url = st.session_state.LVLM_BASE_URL
             lvlm_api_key = st.session_state.LVLM_API_KEY
-            
+
         else:
             if 'LVLM_API_KEY' in st.session_state:
                 lvlm_api_key = os.environ.get('LVLM_API_KEY') or st.session_state.LVLM_API_KEY
@@ -139,10 +140,10 @@ class MultimodalRetrieval:
                 lvlm_api_key = os.environ.get('LVLM_API_KEY')
 
             if 'LVLM_BASE_URL' in st.session_state:
-                lvlm_base_url  = os.environ.get('LVLM_BASE_URL') or st.session_state.LVLM_BASE_URL
+                lvlm_base_url = os.environ.get('LVLM_BASE_URL') or st.session_state.LVLM_BASE_URL
             else:
-                lvlm_base_url  = os.environ.get('LVLM_BASE_URL')
-        
+                lvlm_base_url = os.environ.get('LVLM_BASE_URL')
+
         lvlm = SambastudioMultimodal(
             base_url=lvlm_base_url,
             api_key=lvlm_api_key,
@@ -153,9 +154,9 @@ class MultimodalRetrieval:
             top_k=self.lvlm_info['top_k'],
             do_sample=self.lvlm_info['do_sample'],
         )
-        
+
         return lvlm
-            
+
     def extract_pdf(self, file_path: str) -> Tuple[List, str]:
         # Path to save images
         output_path = os.path.splitext(file_path)[0]
@@ -282,8 +283,8 @@ class MultimodalRetrieval:
             coe=self.embedding_model_info['coe'],
             select_expert=self.embedding_model_info['select_expert'],
         )
-        
-        collection_name = f"collection_{self.collection_id}"
+
+        collection_name = f'collection_{self.collection_id}'
         logger.info(f'This is the collection name: {collection_name}')
 
         vectorstore = Chroma(
