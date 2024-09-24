@@ -47,7 +47,7 @@ class LlaVaData:
         ds = load_dataset(dataset_name)
 
         logging.warning(f"This dataset is of length: {len(ds[split])} \
-                        and may take some time to process.")
+        and may take some time to process.")
 
         img_dir: str = os.path.join(output_dir, "data", "images")
         if split == "validation":
