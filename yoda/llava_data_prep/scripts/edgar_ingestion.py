@@ -8,8 +8,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from yoda.llava_data_prep.src.edgar_ingestion import SECTools
-from yoda.llava_data_prep.src.table_utils import TableTools
+from yoda.llava_data_prep.src.edgar_ingestion import SECTools # type: ignore
+from yoda.llava_data_prep.src.table_utils import TableTools # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'llava_data_prep', 'config.yaml')
 DATA_DIRECTORY = os.path.join(kit_dir, 'llava_data_prep', 'sec_data_yolo')
