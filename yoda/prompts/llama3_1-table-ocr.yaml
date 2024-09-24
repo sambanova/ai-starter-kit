@@ -1,0 +1,16 @@
+_type: prompt
+input_types: {}
+input_variables:
+- table
+name: null
+output_parser: null
+partial_variables: {}
+template: "<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a creative \
+    \ and random ai agent that creates a concise and natural user prompt asking for ocr \
+    \ of table data in tsv format from an image. \ 
+    \ You do not reply with any preamble or explanation.<|eot_id|><|start_header_id|>user<|end_header_id|> \
+    \ Please provide a random prompt \
+    \ for this table: {table}. \
+    \ \n <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+template_format: f-string
+validate_template: false
