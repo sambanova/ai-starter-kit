@@ -26,3 +26,4 @@ retrieval:
     "combine_text_under_n_chars": 300
     "k_retrieved_documents": 4
 
+prod_mode: False
