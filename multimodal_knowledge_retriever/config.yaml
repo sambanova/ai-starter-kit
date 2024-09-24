@@ -1,24 +1,24 @@
-api: "sncloud" # set either sncloud or sambastudio
+llm: 
+    "type": "sncloud" # set either sncloud or sambastudio
+    "temperature": 0.0
+    "do_sample": False
+    "max_tokens_to_generate": 1200
+    "coe": True #set as true if using Sambastudio CoE endpoint
+    "select_expert": "llama3-70b"  #set if using SambaNovaCloud or SambaStudio CoE llm expert
+
+lvlm:
+    "model": "llava-v1.5-7b"
+    "do_sample": false
+    "max_tokens_to_generate": 512 
+    "temperature": 1
+    "top_k": 50
+    "top_p": 1
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
     "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
     "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
-
-llm: 
-    "temperature": 0.0
-    "do_sample": False
-    "max_tokens_to_generate": 1200
-    "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "llama3-405b" #set if using SambaNovaCloud or SambaStudio CoE llm expert
-
-lvlm:
-    "do_sample": false
-    "max_tokens_to_generate": 512 
-    "temperature": 1
-    "top_k": 50
-    "top_p": 1
 
 retrieval:
     "max_characters": 800

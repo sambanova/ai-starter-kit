@@ -16,13 +16,14 @@ Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
+import logging
 import os
 import sys
-import logging
 import time
 import unittest
 from types import TracebackType
-from typing import List, Dict, Any, Type, Tuple
+from typing import Any, Dict, List, Tuple, Type
+
 from langchain_core.language_models.llms import LLM
 
 # Setup logging
@@ -36,8 +37,9 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from prompt_engineering.src.llm_management import LLMManager
 from dotenv import load_dotenv
+
+from prompt_engineering.src.llm_management import LLMManager
 
 # load env variables
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -113,9 +115,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addFailure(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
 
-    def addError(
-        self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]
-    ) -> None:
+    def addError(self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]) -> None:
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 

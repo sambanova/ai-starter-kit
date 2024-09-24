@@ -11,7 +11,7 @@ sys.path.append(repo_dir)
 
 import streamlit as st
 
-from multimodal_knowledge_retriever.src.multimodal import MultimodalRetrieval
+from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
