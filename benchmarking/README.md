@@ -67,7 +67,11 @@ The next step is to set up your environment variables to use one of the models a
 
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
+- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables. 
+**__Note__**: In case you're using a **SambaStudio Turbo** endpoint, please update the URI variable like the following to ensure the use of dynamic batch size functionality: 
+``` bash
+SAMBASTUDIO_BASE_URI="api/v2/predict/generic"
+```
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
