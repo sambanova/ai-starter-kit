@@ -126,19 +126,19 @@ def main() -> None:
 
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-        if not are_credentials_set():
-            url, api_key = env_input_fields(['LVLM_BASE_URL', 'LVLM_API_KEY'])
+        if not are_credentials_set(['LVLM_BASE_URL','LVLM_API_KEY']):
+            api_key, aditional_variables = env_input_fields(['LVLM_BASE_URL','LVLM_API_KEY'])
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)
+                message = save_credentials(api_key, aditional_variables, prod_mode)
                 st.success(message)
 
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', '', prod_mode)
+                save_credentials('', {}, prod_mode)
                 st.rerun()
 
-        if are_credentials_set():
+        if are_credentials_set(['LVLM_BASE_URL','LVLM_API_KEY']):
             if st.session_state.multimodal_retriever is None:
                 st.session_state.multimodal_retriever = initialize_multimodal_retrieval()
 
