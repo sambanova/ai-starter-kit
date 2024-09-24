@@ -1,6 +1,6 @@
 name: Python Checks
 on: 
-  push
+  push:
   pull_request:
     branches: [main]
 jobs:
