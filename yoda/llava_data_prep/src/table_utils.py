@@ -213,10 +213,8 @@ class TableTools:
 
         assert isinstance(data_directory, str), \
             TypeError(f"Expected str, got {type(data_directory)}")
-
         assert isinstance(threshold, float), \
             TypeError(f"Expected float, got {type(threshold)}")
-        
         assert isinstance(offset, int), \
             TypeError(f"Expected int, got {type(offset)}")
 
