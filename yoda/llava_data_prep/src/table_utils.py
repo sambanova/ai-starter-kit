@@ -19,7 +19,7 @@ import random
 import subprocess
 import time
 import torch
-from transformers import AutoImageProcessor, DeformableDetrForObjectDetection
+from transformers import AutoImageProcessor, DeformableDetrForObjectDetection # type: ignore
 from typing import Any, Dict, List, Tuple
 from ultralyticsplus import YOLO # type: ignore
 import uuid
@@ -172,7 +172,7 @@ class TableTools:
             
             # Get bounding boxes
             # boxes: Any = results[0].boxes.xyxy.numpy(),
-            conf: Any = results[0].boxes.conf
+            conf = results[0].boxes.conf
             mask = conf >= threshold
             boxes = results[0][mask].boxes.xyxy.numpy()
 
@@ -197,6 +197,28 @@ class TableTools:
                      in subdirectories.")
         
     def crop_tables_doclaynet(self, data_directory: str, threshold: float = 0.75, offset: int = 20) -> None:
+
+        """
+        This method crops tables from images using Deformable DETR DocLayNet (https://huggingface.co/Aryn/deformable-detr-DocLayNet)
+        Args:
+            data_directory: directory of images
+            threshold: the float value for confidence thresholding
+            offset: How much to pad the table detection when cropping.
+
+        Raises:
+            TypeError: if `data_directory` is not a string.
+            TypeError: if `threshold` is not a float.
+            TypeError: if `offset` is not an int.
+        """
+
+        assert isinstance(data_directory, str), \
+            TypeError(f"Expected str, got {type(data_directory)}")
+
+        assert isinstance(threshold, float), \
+            TypeError(f"Expected float, got {type(threshold)}")
+        
+        assert isinstance(offset, int), \
+            TypeError(f"Expected int, got {type(offset)}")
 
         processor = AutoImageProcessor.from_pretrained("Aryn/deformable-detr-DocLayNet")
         model = DeformableDetrForObjectDetection.from_pretrained("Aryn/deformable-detr-DocLayNet")
