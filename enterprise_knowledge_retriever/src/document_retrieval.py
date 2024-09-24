@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 import yaml
+import nltk
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
@@ -47,6 +48,8 @@ if wandb_api_key:
 else:
     print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""

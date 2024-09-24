@@ -105,11 +105,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 2. Update the multimodal model API information in the Starter Kit.
 
-    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
-   ```
-    LVLM_BASE_URL="https://api-stage.sambanova.net"
-    LVLM_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    LVLM_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+    ```bash
+    LVLM_BASE_URL="https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012"
     LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
@@ -118,10 +116,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+    Then in the [config file](./config.yaml) set the llm `type` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+    Then in the [config file](./config.yaml) set the llm `type` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
 ## Update the Embeddings API information
 
