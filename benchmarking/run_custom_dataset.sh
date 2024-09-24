@@ -5,9 +5,9 @@ python src/evaluator.py \
 --mode custom \
 --model-name "llama3-405b" \
 --results-dir "./data/results/llmperf" \
---num-workers 1 \
+--num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "<CUSTOM DATASET PATH HERE>" \
+--input-file-path "/Users/rodrigom/Desktop/aisk/benchmarking/custom_benchmark_test_data.jsonl" \
 --save-llm-responses False \
 --sampling-params '{"max_tokens": 256}' \
 --llm-api sncloud

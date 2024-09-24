@@ -144,7 +144,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
 - **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-- **Number of concurrent workers**: The number of concurrent workers. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
+- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
 3. Run the performance evaluation
@@ -204,7 +204,7 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 4. Set the configuration and tuning parameters
 
-- **Number of concurrent workers**: The number of concurrent workers. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
+- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 - **Max Output Tokens**: Maximum number of tokens to generate. *Default*: 256
 - **Save LLM Responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
@@ -286,7 +286,7 @@ This method can be ran from a terminal session. Users have this option if they w
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-workers**: Number of concurrent workers. _Default_: 1
+  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **input-file-path**: The location of the custom dataset that you want to evaluate with
   - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
@@ -304,10 +304,10 @@ sh run_custom_dataset.sh
 3. Analyze results
 
 - Results will be saved at the location specified in `results-dir`.
-- The name of the output files will depend on the input file name, mode name, and number of workers. You should see files that follow a similar format to the following:
+- The name of the output files will depend on the input file name, mode name, and number of concurrent requests. You should see files that follow a similar format to the following:
 
 ```
-<MODEL_NAME>_{FILE_NAME}_{NUM_CONCURRENT_WORKERS}_{MODE}
+<MODEL_NAME>_{FILE_NAME}_{NUM_CONCURRENT_REQUESTS}_{MODE}
 ```
 - For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
   
@@ -332,7 +332,7 @@ sh run_custom_dataset.sh
   - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-workers**: Number of concurrent workers. _Default_: 1
+  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
@@ -351,10 +351,10 @@ sh run_synthetic_dataset.sh
 3. Analyze results
 
 - Results will be saved at the location specified in `results-dir`.
-- The name of the output files will depend on the input file name, mode name, and number of workers. You should see files that follow a similar format to the following:
+- The name of the output files will depend on the input file name, mode name, and number of concurrent requests. You should see files that follow a similar format to the following:
 
 ```
-<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_WORKERS}_{MODE}
+<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_REQUESTS}_{MODE}
 ```
 
 - For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
@@ -377,7 +377,7 @@ sh run_synthetic_dataset.sh
 
 This kit also supports [SambaNova Studio models with Dynamic Batch Size](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), which improves the model performance significantly. 
 
-In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of workers > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of workers` equal or greater than that to test different batch sizes. 
+In order to use a batching model, first users need to set up the proper endpoint supporting this feature, please [look at this section](#set-up-the-account-and-config-file) for reference. Additionally, users need to specify `number of concurrent requests > 1`, either using [the streamlit app](#using-streamlit-app) or [the terminal](#using-terminal). Since the current maximum batch size is 16, it's recomended to choose a value for `number of concurrent requests` equal or greater than that to test different batch sizes. 
 
 Here are some examples with parameters for using an endpoint with and without dynamic batching size.
 
@@ -386,7 +386,7 @@ Here are some examples with parameters for using an endpoint with and without dy
 If the user wants to send 32 requests to be processed sequentially, here are the parameter values that can work as an example:
 - Parameters:
   - Number of requests: 32
-  - Number of concurrent workers: 1
+  - Number of concurrent requests: 1
 
 We can see in the following Gantt chart how the 32 requests are being executed one after the other. (SambaNova Cloud with LLama3-8b was used for this example)
 
@@ -394,27 +394,27 @@ We can see in the following Gantt chart how the 32 requests are being executed o
 
 **Batching setup:**
 
-If the user wants to send 60 requests to be processed in batch, it's important to consider the number of workers chosen.
+If the user wants to send 60 requests to be processed in batch, it's important to consider the number of concurrent requests chosen.
 
 For example:
 
 For the following parameter values:
 - Parameters:
   - Number of requests: 60
-  - Number of concurrent workers: 21
+  - Number of concurrent requests: 21
 
-We can see from the Gantt chart that the way they're being batched and processed is 1-16-4 requests, because there are 21 workers sending requests in parallel. This setup took ~ 4 mins 30 secs.
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-4 requests, because there are 21 concurrent requests sending requests in parallel. This setup took ~ 4 mins 30 secs.
 
-![sequential_requests](./imgs/gantt_chart_batched_calls_21_workers.png)
+![sequential_requests](./imgs/gantt_chart_batched_calls_21_concurrent_requests.png)
 
 Another example is the following:
 - Parameters:
   - Number of requests: 60
-  - Number of concurrent workers: 60
+  - Number of concurrent requests: 60
 
-We can see from the Gantt chart that the way they're being batched and processed is 1-16-16-16-8-1-1-1 requests, because there are 60 workers sending all requests in parallel. This setup took ~ 3 mins.
+We can see from the Gantt chart that the way they're being batched and processed is 1-16-16-16-8-1-1-1 requests, because there are 60 concurrent requests sending all requests in parallel. This setup took ~ 3 mins.
 
-![sequential_requests](./imgs/gantt_chart_batched_calls_60_workers.png)
+![sequential_requests](./imgs/gantt_chart_batched_calls_60_concurrent_requests.png)
 
 
 # Third-party tools and data sources 

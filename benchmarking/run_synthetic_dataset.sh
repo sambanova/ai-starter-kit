@@ -5,11 +5,11 @@ python src/evaluator.py \
 --mode synthetic \
 --model-name "llama3-405b" \
 --results-dir "./data/results/llmperf" \
---num-workers 1 \
+--num-concurrent-requests 5 \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
---num-requests 16 \
+--num-input-tokens 123 \
+--num-output-tokens 123 \
+--num-requests 5 \
 --llm-api sncloud
 
 # Notes:

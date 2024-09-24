@@ -51,7 +51,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
     custom_performance_evaluator = CustomPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
-        num_workers=st.session_state.number_concurrent_workers,
+        num_concurrent_requests=st.session_state.number_concurrent_requests,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
         save_response_texts=st.session_state.save_llm_responses,
@@ -70,7 +70,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
     )
 
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
-    df_user['concurrent_user'] = custom_performance_evaluator.num_workers
+    df_user['concurrent_user'] = custom_performance_evaluator.num_concurrent_requests
     valid_df = df_user[(df_user['error_code'] != '')]
 
     if valid_df['batch_size_used'].isnull().all():
@@ -118,12 +118,12 @@ def main() -> None:
         )
 
         st.number_input(
-            'Num Concurrent Workers',
+            'Num Concurrent Requests',
             min_value=1,
             max_value=100,
             value=1,
             step=1,
-            key='number_concurrent_workers',
+            key='number_concurrent_requests',
         )
 
         st.number_input('Timeout', min_value=60, max_value=1800, value=600, step=1, key='timeout')

@@ -685,7 +685,7 @@ if __name__ == '__main__':
             # "process_prompt": "False",
         },
         is_stream_mode=True,
-        num_concurrent_workers=1,
+        num_concurrent_requests=1,
     )
 
     metrics, generated_text, request_config = llm_request(request_config, tokenizer)
