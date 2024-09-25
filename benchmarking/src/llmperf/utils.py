@@ -1,7 +1,7 @@
 import json
 import time
 from collections.abc import Iterable
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from transformers import AutoTokenizer
 
@@ -23,14 +23,14 @@ class LLMPerfResults:
     def __init__(
         self,
         name: str,
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.name = name
         self.metadata = metadata or {}
         self.timestamp = int(time.time())
         self.metadata['timestamp'] = self.timestamp
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Updates and flattens dictionary
 
         Returns:
@@ -88,7 +88,7 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     return tokenizer
 
 
-def flatten(item: Union[Iterable, str]) -> Generator:
+def flatten(item: Union[Iterable[Union[str, Iterable[str]]], str]) -> Generator[str, None, None]:
     """Flattens an iterable"""
     for sub_item in item:
         if isinstance(sub_item, Iterable) and not isinstance(sub_item, str):
@@ -97,7 +97,7 @@ def flatten(item: Union[Iterable, str]) -> Generator:
             yield sub_item
 
 
-def flatten_dict(d: dict, parent_key: str = '', sep: str = '_') -> dict:
+def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '_') -> Dict[str, Any]:
     """Flattens dictionary
 
     Args:
@@ -108,7 +108,7 @@ def flatten_dict(d: dict, parent_key: str = '', sep: str = '_') -> dict:
     Returns:
         dict: output flat dictionary
     """
-    items = []
+    items: List[Tuple[str, Any]] = []
     for k, v in d.items():
         new_key = f'{parent_key}{sep}{k}' if parent_key else k
         if isinstance(v, dict):
