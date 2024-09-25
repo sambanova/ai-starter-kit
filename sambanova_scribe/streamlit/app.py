@@ -17,7 +17,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 load_dotenv(os.path.join(repo_dir, ".env"))
 
-from src.scribe import Scribe
+from src.scribe import Scribe, MAX_FILE_SIZE, FileSizeExceededError
 
 from utils.visual.env_utils import (
     env_input_fields,
@@ -74,6 +74,9 @@ def process_audio(input_method, audio_file, youtube_link):
             audio_file = BytesIO(f.read())
         audio_file.name = os.path.basename(audio_file_path)
         st.session_state.sambanova_scribe.delete_downloaded_file(audio_file_path)
+    elif input_method == "Upload audio file":
+        if audio_file.size > MAX_FILE_SIZE:
+            raise FileSizeExceededError(f"File size exceeds {MAX_FILE_SIZE/1024/1024:.2f} MB limit")
     return audio_file
 
 

@@ -20,6 +20,7 @@ load_dotenv(os.path.join(repo_dir, ".env"))
 
 
 CONFIG_PATH = os.path.join(kit_dir, "config.yaml")
+MAX_FILE_SIZE=25*1024*1024 # 25 MB in bytes
 
 class FileSizeExceededError(Exception):
     pass
@@ -89,7 +90,7 @@ class Scribe():
         )
         return transcript.text
     
-    def download_youtube_audio(self, url, output_path=None, max_filesize=25*1024*1024):  # 25 MB in bytes
+    def download_youtube_audio(self, url, output_path=None, max_filesize=MAX_FILE_SIZE):  
         if output_path is None:
             output_path = os.path.join(kit_dir, "data")
         downloaded_filename = None
