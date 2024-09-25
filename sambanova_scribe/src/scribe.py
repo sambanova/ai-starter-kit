@@ -8,6 +8,11 @@ import yaml
 from dotenv import load_dotenv
 import yt_dlp
 import streamlit as st
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.llms import LLM
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import load_prompt
+from utils.model_wrappers.api_gateway import APIGateway
 
 # Set up paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +38,7 @@ class Scribe():
         self.audio_model_info=config[1]
         self.prod_mode=config[2]
         self.client=self.set_client()
+        self.llm=self.set_llm()
     
     def get_config_info(self) -> Tuple[str, str, str]:
         """
@@ -66,7 +72,14 @@ class Scribe():
 
         return OpenAI(base_url=transcription_base_url, api_key=transcription_api_key)
     
-    def set_llm(self):
+    def set_llm(self) -> Union[LLM, BaseChatModel]:
+        """
+        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
+
+        Returns:
+        LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
+        """
+
         if self.prod_mode:
             sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
@@ -74,12 +87,25 @@ class Scribe():
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
             else:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-        # TODO add model
-        pass
+
+        llm = APIGateway.load_llm(
+            type=self.llm_info['type'],
+            streaming=False,
+            coe=self.llm_info['coe'],
+            do_sample=self.llm_info['do_sample'],
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            select_expert=self.llm_info['select_expert'],
+            process_prompt=False,
+            sambanova_api_key=sambanova_api_key,
+        )
+        return llm
     
-    def summarize(self, text):
-        # TODO add summarization method
-        pass
+    def summarize(self, text, num=5):
+        prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'summary.yaml'))
+        chain = prompt_template|self.llm|StrOutputParser()
+        summary = chain.invoke({"text": text, 'num': num})
+        return summary
     
     def transcribe_audio(self, audio_file):
         transcript = self.client.audio.transcriptions.create(

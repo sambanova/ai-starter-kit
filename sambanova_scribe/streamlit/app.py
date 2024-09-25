@@ -90,6 +90,8 @@ def main():
     
     if 'sambanova_scribe' not in st.session_state:
         st.session_state.sambanova_scribe = None
+    if 'transcription_text' not in st.session_state:
+        st.session_state.transcription_text = None
     
     st.title(":orange[SambaNova] Scribe")
     setup_sidebar()
@@ -114,6 +116,7 @@ def main():
                 submitted = st.form_submit_button("Transcribe")
 
                 if submitted:
+                    st.session_state.transcription_text = None
                     if (input_method == "Upload audio file" and not audio_file) or (
                         input_method == "YouTube link" and not youtube_link
                     ):
@@ -122,10 +125,16 @@ def main():
                         audio_file = process_audio(input_method, audio_file, youtube_link)
                         if audio_file:
                             st.write("Transcribing audio in background...")
-                            transcription_text = st.session_state.sambanova_scribe.transcribe_audio(audio_file)
-                            st.write("Transcription complete!")
-                            st.markdown(r"$\Large{\textsf{Transcription}}$")
-                            st.text_area("", transcription_text, height=300)
+                            st.session_state.transcription_text = st.session_state.sambanova_scribe.transcribe_audio(audio_file)
+                            st.toast("Transcription complete!")
+            if  st.session_state.transcription_text is not None:
+                st.markdown(r"$\Large{\textsf{Transcription}}$")
+                st.text_area("", st.session_state.transcription_text, height=150)
+                if st.button("Summarize"):
+                    summary = st.session_state.sambanova_scribe.summarize(st.session_state.transcription_text)
+                    st.toast("Summarization complete!")
+                    st.markdown(r"$\Large{\textsf{Bullet Point Summary:}}$")
+                    st.text_area("",f"{summary}", height=150)
 
         except Exception as e:
             st.error(str(e))
