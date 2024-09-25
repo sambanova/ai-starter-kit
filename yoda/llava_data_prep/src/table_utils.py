@@ -70,12 +70,44 @@ DOCUMENT_PREFIX = r'''\documentclass[8pt]{article}
 
 class TableTools:
 
-    def __init__(self, 
-                 do_reshape: bool = False, 
-                 size: Tuple[int,int] = (336,336)) -> None:
+    def __init__(self, config_path: str) -> None:
+        
+        self.llm_info, self.prompt_info, self.table_info = self.load_configs(config_path)
 
-        self.do_reshape = do_reshape
-        self.size = size
+        if self.table_info["model"] not in ["yolo", "doclaynet"]:
+            raise ValueError(f'Got {self.table_info["model"]}, must be of either ' +
+                             '["yolo", "doclaynet"]')
+
+        self.model = self.table_info["model"]
+        self.threshold = self.table_info["threshold"]
+        self.offset = self.table_info["offset"]
+        self.do_reshape = self.table_info["do_reshape"]
+        self.size = self.table_info["size"]
+
+    def load_configs(self, config_path: str) -> Any:
+        """
+        Loads a yaml config file and returns llm info.
+
+        Args:
+            config_path: Path to the config yaml file.
+
+        Returns:
+            A tuple of dictionaries containing the llm information.
+        """
+
+        assert isinstance(config_path, str), \
+            TypeError(f"Must be type str, but got {type(config_path)}.")
+
+        try:
+            with open(config_path, "r") as yaml_file:
+                config: dict = yaml.safe_load(yaml_file)
+        except FileNotFoundError:
+            logging.error(f"{config_path} not found.")
+            raise FileNotFoundError(f"{config_path} does not exist.")
+        
+        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_options"]
+
+        return llm_info, prompt_info, table_info
 
     def convert_pdf_to_images(self, data_directory: str) -> None:
             """
@@ -117,7 +149,7 @@ class TableTools:
                     output_path: str = f"{output_folder}/{img_name}"
                     image.save(output_path, 'JPEG')
 
-    def crop_tables(self,
+    def crop_tables_yolo(self,
                     data_directory: str, 
                     conf: float = 0.25,
                     iou: float = 0.45,
@@ -284,6 +316,28 @@ class TableTools:
                 
         logging.info(f"Cropped tables saved to {data_directory} " +
                      "in subdirectories.")
+    
+    # TODO: Handle differing options if both models are to be kept - experimental testing for now.
+    def crop_tables(self, data_directory: str) -> None:
+
+        """
+        This method crops tables using the chosen model.
+
+        Args:
+            data_directory: directory of images
+            threshold: the float value for confidence thresholding
+            offset: How much to pad the table detection when cropping.
+        """
+
+        model_map = {
+            "yolo": self.crop_tables_yolo,
+            "doclaynet": self.crop_tables_doclaynet
+        }
+
+        if self.model in model_map:
+            model_map[self.model](data_directory=data_directory,
+                                  threshold=self.threshold,
+                                  offset=self.offset)
 
     def replace_special_to_latex(self, text: str) -> str:
         
@@ -658,6 +712,7 @@ class TableTools:
         with open(tex_filepath, 'w') as f:
             f.write(latex_code)
 
+    # TODO: Decide to replace with detr model - yolo or doclaynet
     def _crop_synth_table(self, image_path: str) -> None:
 
         """
@@ -851,16 +906,13 @@ class QAList(BaseModel):
 class TableAugmentor:
 
     def __init__(self, config_path: str) -> None:
-
-        assert isinstance(config_path, str), TypeError(f"Expected str, got {type(config_path)}.")
         
+        self.config_path = config_path
         self.llm_info, self.prompt_info, self.table_info = self.load_configs(config_path)
         self.init_llm()
         self.init_table_modifying_chain()
         self.init_table_qa_chain()
         self.init_table_ocr_chain()
-        self.do_reshape = self.table_info["do_reshape"]
-        self.size = self.table_info["size"]
 
     def load_configs(self, config_path: str) -> Any:
         """
@@ -883,7 +935,7 @@ class TableAugmentor:
             logging.error(f"{config_path} not found.")
             raise FileNotFoundError(f"{config_path} does not exist.")
 
-        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_generation"]
+        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_options"]
 
         return llm_info, prompt_info, table_info
 
@@ -1055,8 +1107,7 @@ class TableAugmentor:
             json.dump([], f)
         
         # Instantiate table tools object for later use.
-        table_tools = TableTools(do_reshape=self.do_reshape,
-                                 size=self.size)
+        table_tools = TableTools(config_path=self.config_path)
 
         # Generate synthetic data for specified number of
         # samples.
