@@ -198,7 +198,7 @@ def main() -> None:
                             "client_output_token_per_s_per_request",
                         ],
                         ["Server", "Client"],
-                        "Distribution of throughput by batch size",
+                        "Distribution of output throughput by batch size",
                         "Tokens per second, per request",
                         "Batch size",
                     )

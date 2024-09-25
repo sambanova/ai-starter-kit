@@ -45,19 +45,19 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame):
         id_vars="Batch size",
         value_vars=["Server", "Client"],
         var_name="Side type",
-        value_name="Total throughput (tokens per second)",
+        value_name="Total output throughput (tokens per second)",
     )
     df_melted["Batch size"] = [str(x) for x in df_melted["Batch size"]]
     fig = px.bar(
         df_melted, 
         x="Batch size", 
-        y="Total throughput (tokens per second)", 
+        y="Total output throughput (tokens per second)", 
         color="Side type", 
         barmode="group",
         color_discrete_sequence=["#325c8c", "#ee7625"]
     )
     fig.update_layout(
-        title_text="Total throughput per batch size",
+        title_text="Total output throughput per batch size",
         template="plotly_dark",
     )
     return fig
