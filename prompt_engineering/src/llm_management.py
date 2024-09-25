@@ -5,7 +5,7 @@ kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 from dataclasses import dataclass
-from typing import Tuple  # for type hint
+from typing import Any, Dict, List, Tuple  # for type hint
 
 import yaml  # for loading prompt example config file
 from langchain.prompts import PromptTemplate, load_prompt  # for creating and loading prompting yaml files
@@ -29,7 +29,7 @@ class LLMManager:
         self.model_info = model_info
         self.prompt_use_cases = prompt_use_cases
 
-    def _get_config_info(self) -> Tuple[str, dict, list]:
+    def _get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], List[str]]:
         """Loads json config file"""
 
         # Read config file
@@ -60,20 +60,23 @@ class LLMManager:
         )
         return llm
 
-    def get_prompt_template(self, model: str, prompt_use_case: str) -> str:
-        """Reads a prompt template from an specified model and use case
+    def get_prompt_template(self, model: str, prompt_use_case: str) -> Any:
+        """
+        Reads a prompt template from an specified model and use case.
 
         Args:
-            model (str): model name
-            prompt_use_case (str): use case name
+            model: model name.
+            prompt_use_case: use case name.
 
         Returns:
-            str: prompt template associated to the model and use case selected
+            The prompt template associated to the model and use case selected.
         """
-
         # Load prompt from the corresponding yaml file
         prompt_file_name = f"{model.lower()}-prompt_engineering-{prompt_use_case.lower().replace(' ','_')}_usecase.yaml"
         prompt = load_prompt(f'./prompts/{prompt_file_name}')
+
+        # Check prompt template existance
+        assert hasattr(prompt, 'template'), 'The loaded prompt has no attribute template.'
 
         return prompt.template
 
