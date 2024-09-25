@@ -1,6 +1,7 @@
 import os
 import sys
-from typing import Tuple, Union
+from io import BytesIO
+from typing import Tuple, Union, Optional
 
 import streamlit as st
 import yaml
@@ -32,7 +33,7 @@ class FileSizeExceededError(Exception):
 
 
 class Scribe:
-    def __init__(self):
+    def __init__(self) -> None:
         config = self.get_config_info()
         self.llm_info = config[0]
         self.audio_model_info = config[1]
@@ -53,7 +54,7 @@ class Scribe:
 
         return llm_info, audio_model_info, prod_mode
 
-    def set_client(self):
+    def set_client(self) -> OpenAI:
         if self.prod_mode:
             transcription_base_url = st.session_state.TRANSCRIPTION_BASE_URL
             transcription_api_key = st.session_state.TRANSCRIPTION_API_KEY
@@ -104,13 +105,13 @@ class Scribe:
         )
         return llm
 
-    def summarize(self, text, num=5):
+    def summarize(self, text: str, num: int = 5) -> str:
         prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'summary.yaml'))
         chain = prompt_template | self.llm | StrOutputParser()
         summary = chain.invoke({'text': text, 'num': num})
         return summary
 
-    def transcribe_audio(self, audio_file):
+    def transcribe_audio(self, audio_file: BytesIO) -> str:
         transcript = self.client.audio.transcriptions.create(
             model=self.audio_model_info['model'],
             file=audio_file,
@@ -119,12 +120,12 @@ class Scribe:
         )
         return transcript.text
 
-    def download_youtube_audio(self, url, output_path=None, max_filesize=MAX_FILE_SIZE):
+    def download_youtube_audio(self, url: str, output_path=None, max_filesize: int = MAX_FILE_SIZE) -> Optional[str]:
         if output_path is None:
             output_path = os.path.join(kit_dir, 'data')
         downloaded_filename = None
 
-        def progress_hook(d):
+        def progress_hook(d: dict) -> None:
             nonlocal downloaded_filename
             if d['status'] == 'finished':
                 downloaded_filename = d['filename']
@@ -173,7 +174,7 @@ class Scribe:
 
         return None
 
-    def delete_downloaded_file(self, file_path):
+    def delete_downloaded_file(self, file_path: str) -> None:
         try:
             # Check if the file exists
             if os.path.exists(file_path):

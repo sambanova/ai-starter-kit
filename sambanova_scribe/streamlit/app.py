@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from io import BytesIO
+from typing import Tuple, Union, Optional
 
 import streamlit as st
 import yaml
@@ -31,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 
-def load_config():
+def load_config() -> dict:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
@@ -40,7 +41,7 @@ config = load_config()
 prod_mode = config.get('prod_mode', False)
 
 
-def setup_sidebar():
+def setup_sidebar() -> None:
     with st.sidebar:
         st.title('Setup')
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
@@ -63,7 +64,7 @@ def setup_sidebar():
                 st.session_state.sambanova_scribe = Scribe()
 
 
-def process_audio(input_method, audio_file, youtube_link):
+def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> BytesIO:
     if input_method == 'YouTube link':
         st.write('Downloading audio from YouTube link ....')
         audio_file_path = st.session_state.sambanova_scribe.download_youtube_audio(youtube_link)
@@ -81,7 +82,7 @@ def process_audio(input_method, audio_file, youtube_link):
     return audio_file
 
 
-def main():
+def main() -> None:
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
 
     st.set_page_config(
