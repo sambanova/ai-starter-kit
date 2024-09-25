@@ -1,10 +1,11 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
-import llmperf.utils as utils
 from dotenv import load_dotenv
-from llmperf.models import RequestConfig
-from llmperf.sambanova_client import llm_request
+
+import benchmarking.src.llmperf.utils as utils
+from benchmarking.src.llmperf.models import RequestConfig
+from benchmarking.src.llmperf.sambanova_client import llm_request
 
 
 class ChatPerformanceEvaluator:
@@ -15,7 +16,7 @@ class ChatPerformanceEvaluator:
         self.llm_api = llm_api
         self.params = params
 
-    def generate(self, prompt: str) -> tuple:
+    def generate(self, prompt: str) -> Tuple[Dict[str, Any], str, RequestConfig]:
         """Generates LLM output in a tuple. It wraps SambaNova LLM client.
 
         Args:
@@ -38,7 +39,7 @@ class ChatPerformanceEvaluator:
             llm_api=self.llm_api,
             sampling_params=self.params,
             is_stream_mode=True,
-            num_concurrent_requests=1,
+            num_concurrent_workers=1,
         )
         output = llm_request(request_config, tokenizer)
 
