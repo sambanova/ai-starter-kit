@@ -23,7 +23,7 @@ from langchain_community.document_loaders import DirectoryLoader, UnstructuredUR
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 vectordb_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(vectordb_dir, ".."))
@@ -164,7 +164,7 @@ class VectorDb():
     
 
     def create_vector_store(self, chunks: list, embeddings: Any, db_type: str,
-                            output_db: Optional[str] = None, collection_name: Optional[str] = None):
+                            output_db: Optional[str] = None, collection_name: Optional[str] = None) -> Any:
         """Creates a vector store
 
         Args:
@@ -247,8 +247,8 @@ class VectorDb():
 
         return vector_store
 
-    def update_vdb(self, chunks: list, embeddings: Any, db_type: str, input_db: Optional[str] = None,
-                   output_db: str = None):
+    def update_vdb(self, chunks: List[Any], embeddings: Any, db_type: str, input_db: Optional[str] = None,
+                   output_db: Optional[str] = None):
 
         if db_type == "faiss":
             vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)
@@ -268,21 +268,21 @@ class VectorDb():
 
     def create_vdb(
         self,
-        input_path,
-        chunk_size,
-        chunk_overlap,
-        db_type,
-        output_db=None,
-        recursive=False,
-        tokenizer=None,
-        load_txt=True,
-        load_pdf=False,
-        urls=None,
-        embedding_type="cpu",
-        batch_size= None,
-        coe = None,
-        select_expert = None
-    ):
+        input_path: str,
+        chunk_size: int,
+        chunk_overlap: int,
+        db_type: str,
+        output_db: Optional[str] = None,
+        recursive: Optional[bool] = False,
+        tokenizer: Optional[Any] = None,
+        load_txt: bool = True,
+        load_pdf: bool = False,
+        urls: Optional[List[str]] = None,
+        embedding_type: str = "cpu",
+        batch_size: Optional[int] = None,
+        coe: Optional[bool] = None,
+        select_expert: Optional[str] = None
+    ) -> Any:
 
         docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
 
