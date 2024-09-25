@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from io import BytesIO
-from typing import Tuple, Union, Optional
 
 import streamlit as st
 import yaml
@@ -33,6 +32,7 @@ logging.info('URL: http://localhost:8501')
 
 
 def load_config() -> dict:
+    """Load configuration from config.yaml."""
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
@@ -42,6 +42,7 @@ prod_mode = config.get('prod_mode', False)
 
 
 def setup_sidebar() -> None:
+    """Setup sidebar for Scribe application."""
     with st.sidebar:
         st.title('Setup')
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
@@ -65,6 +66,17 @@ def setup_sidebar() -> None:
 
 
 def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> BytesIO:
+    """
+    Process audio using Scribe.
+
+    Args:
+        input_method (str): The method used to input audio ('YouTube link' or 'Upload audio file').
+        audio_file (BytesIO): The audio file to process.
+        youtube_link (str): The YouTube link to download audio from.
+
+    Returns:
+        BytesIO: The processed audio file.
+    """
     if input_method == 'YouTube link':
         st.write('Downloading audio from YouTube link ....')
         audio_file_path = st.session_state.sambanova_scribe.download_youtube_audio(youtube_link)
@@ -83,6 +95,7 @@ def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> 
 
 
 def main() -> None:
+    """Main function for Scribe application."""
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
 
     st.set_page_config(

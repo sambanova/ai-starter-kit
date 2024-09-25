@@ -33,7 +33,12 @@ class FileSizeExceededError(Exception):
 
 
 class Scribe:
+    """Downloading, transcription and summarization class"""
+
     def __init__(self) -> None:
+        """
+        Create a new Scribe class
+        """
         config = self.get_config_info()
         self.llm_info = config[0]
         self.audio_model_info = config[1]
@@ -45,7 +50,6 @@ class Scribe:
         """
         Loads json config file
         """
-        # Read config file
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         llm_info = config['llm']
@@ -55,6 +59,12 @@ class Scribe:
         return llm_info, audio_model_info, prod_mode
 
     def set_client(self) -> OpenAI:
+        """
+        Sets the transcription client.
+
+        Returns:
+        client: The transcription client.
+        """
         if self.prod_mode:
             transcription_base_url = st.session_state.TRANSCRIPTION_BASE_URL
             transcription_api_key = st.session_state.TRANSCRIPTION_API_KEY
@@ -106,6 +116,16 @@ class Scribe:
         return llm
 
     def summarize(self, text: str, num: int = 5) -> str:
+        """
+        /Crete a bullet points summarY of the text input.
+
+        Args:
+            text (str): The text to summarize.
+            num (int, optional): The number of bullet points to generate. Defaults to 5.
+
+        Returns:
+            str: The bullet points summary of the text.
+        """
         prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'summary.yaml'))
         chain = prompt_template | self.llm | StrOutputParser()
         summary = chain.invoke({'text': text, 'num': num})
@@ -120,7 +140,20 @@ class Scribe:
         )
         return transcript.text
 
-    def download_youtube_audio(self, url: str, output_path=None, max_filesize: int = MAX_FILE_SIZE) -> Optional[str]:
+    def download_youtube_audio(
+        self, url: str, output_path: Optional[str] = None, max_filesize: int = MAX_FILE_SIZE
+    ) -> Optional[str]:
+        """
+        Downloads the audio from a YouTube URL and saves it to the specified output path.
+
+        Args:
+            url (str): The YouTube URL to download.
+            output_path (str, optional): The path to save the downloaded audio. Defaults to ./data.
+            max_filesize (int, optional): The maximum file size in bytes. Defaults to MAX_FILE_SIZE.
+
+        Returns:
+            str: The path of the downloaded audio if successful, otherwise None.
+        """
         if output_path is None:
             output_path = os.path.join(kit_dir, 'data')
         downloaded_filename = None
@@ -175,6 +208,12 @@ class Scribe:
         return None
 
     def delete_downloaded_file(self, file_path: str) -> None:
+        """
+        Deletes the specified file.
+
+        Args:
+            file_path (str): The path of the file to delete.
+        """
         try:
             # Check if the file exists
             if os.path.exists(file_path):
