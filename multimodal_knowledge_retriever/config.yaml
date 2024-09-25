@@ -7,7 +7,7 @@ llm:
     "select_expert": "llama3-70b"  #set if using SambaNovaCloud or SambaStudio CoE llm expert
 
 lvlm:
-    "model": "llava-v1.5-7b"
+    "model": "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo"
     "do_sample": false
     "max_tokens_to_generate": 512 
     "temperature": 1
