@@ -71,7 +71,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
 
     df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
     df_user['concurrent_user'] = custom_performance_evaluator.num_concurrent_requests
-    valid_df = df_user[(df_user['error_code'] != '')]
+    valid_df = df_user[df_user['error_code'].isnull()]
 
     if valid_df['batch_size_used'].isnull().all():
         valid_df['batch_size_used'] = 1
