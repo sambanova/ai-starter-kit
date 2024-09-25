@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -10,12 +11,14 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import streamlit as st
-
-from multimodal_knowledge_retriever.src.multimodal import MultimodalRetrieval
+from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
+from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 
 def handle_user_input(user_question: str) -> None:
     if user_question:
@@ -74,14 +77,31 @@ def handle_user_input(user_question: str) -> None:
                             st.image(image)
 
 
+def initialize_multimodal_retrieval() ->MultimodalRetrieval:
+    if are_credentials_set():
+        try:
+            return MultimodalRetrieval()
+        except Exception as e:
+            st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
+            return None
+    return None
+
+
 def main() -> None:
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        config = yaml.safe_load(yaml_file)
+
+    prod_mode = config.get('prod_mode', False)
+
+    initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
+
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
 
     if 'multimodal_retriever' not in st.session_state:
-        st.session_state.multimodal_retriever = MultimodalRetrieval()
+        st.session_state.multimodal_retriever = None
     if 'qa_chain' not in st.session_state:
         st.session_state.qa_chain = None
     if 'conversation' not in st.session_state:
@@ -103,31 +123,51 @@ def main() -> None:
 
     with st.sidebar:
         st.title('Setup')
-        st.markdown('**1. Upload your files**')
-        docs = st.file_uploader('Add your files', accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
-        st.markdown('**2. Set ingestion steps**')
-        table_summaries = st.toggle('summarize Tables', value=True)
-        text_summaries = st.toggle('summarize Text', value=False)
-        st.markdown('**3. Set retrieval steps**')
-        raw_image_retrieval = st.toggle('Answer over raw images', value=True)
-        st.caption(
-            '**Note** If selected the kit will use raw images to generate the answers, if not, image summaries will be \
-                used instead'
-        )
-        st.markdown('**4. Process your documents and create an in memory vector store**')
-        st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
-        if st.button('Process'):
-            if docs:
-                with st.spinner('Processing this could take a while...'):
-                    st.session_state.qa_chain = st.session_state.multimodal_retriever.st_ingest(
-                        docs, table_summaries, text_summaries, raw_image_retrieval
-                    )
-                    st.toast('Vector DB successfully created!')
-                    st.session_state.input_disabled = False
-                    st.rerun()
-            else:
-                st.error('You must provide at least one document', icon='🚨')
-        st.markdown('**3. Ask questions about your data!**')
+
+        st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
+
+        if not are_credentials_set(ADDITIONAL_ENV_VARS):
+            api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
+            if st.button('Save Credentials', key='save_credentials_sidebar'):
+                message = save_credentials(api_key, aditional_variables, prod_mode)
+                st.success(message)
+
+        else:
+            st.success('Credentials are set')
+            if st.button('Clear Credentials', key='clear_credentials'):
+                save_credentials('', {}, prod_mode)
+                st.rerun()
+
+        if are_credentials_set(ADDITIONAL_ENV_VARS):
+            if st.session_state.multimodal_retriever is None:
+                st.session_state.multimodal_retriever = initialize_multimodal_retrieval()
+
+        if st.session_state.multimodal_retriever is not None:
+            st.markdown('**1. Upload your files**')
+            docs = st.file_uploader('Add your files', accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
+            st.markdown('**2. Set ingestion steps**')
+            table_summaries = st.toggle('summarize Tables', value=True)
+            text_summaries = st.toggle('summarize Text', value=False)
+            st.markdown('**3. Set retrieval steps**')
+            raw_image_retrieval = st.toggle('Answer over raw images', value=True)
+            st.caption(
+                '**Note** If selected the kit will use raw images to generate the answers, \
+                if not, image summaries will be used instead'
+            )
+            st.markdown('**4. Process your documents and create an in memory vector store**')
+            st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
+            if st.button('Process'):
+                if docs:
+                    with st.spinner('Processing this could take a while...'):
+                        st.session_state.qa_chain = st.session_state.multimodal_retriever.st_ingest(
+                            docs, table_summaries, text_summaries, raw_image_retrieval
+                        )
+                        st.toast('Vector DB successfully created!')
+                        st.session_state.input_disabled = False
+                        st.rerun()
+                else:
+                    st.error('You must provide at least one document', icon='🚨')
+            st.markdown('**3. Ask questions about your data!**')
 
 
 if __name__ == '__main__':
