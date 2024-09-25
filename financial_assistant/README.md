@@ -83,18 +83,18 @@ This will make use of `langchain_community.embeddings.sentence_transformer.Sente
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
+We recommend that you run the starter kit in a virtual environment or use a container. We also require the use of Python versions `>= 3.10 and < 3.12`."
 
 ## Use a virtual environment
 
-If you want to use virtualenv or conda environment:
+If you want to use a Python virtual environment:
 
-1. Install and update pip.
+1. Install and update `pip`.
 
     ```bash
     cd ai_starter_kit/financial_assistant
-    python3 -m venv financial_assistant
-    source financial_assistant/bin/activate
+    python3 -m venv financial_assistant_venv
+    source financial_assistant_venv/bin/activate
     pip  install  -r  requirements.txt
     ```
 

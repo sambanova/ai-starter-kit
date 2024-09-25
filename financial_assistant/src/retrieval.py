@@ -94,9 +94,7 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> SentenceTransf
         )
 
 
-def get_vectorstore_retriever(
-    documents: List[Document],
-) -> Tuple[Chroma, VectorStoreRetriever]:
+def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, VectorStoreRetriever]:
     """
     Get the retriever for a given session id and documents.
 
@@ -121,7 +119,7 @@ def get_vectorstore_retriever(
 
     # Instantiate the vectorstore with an explicit in-memory configuration
     try:
-        vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
+        vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
         logger.error('Could not instantiate the vectorstore.')
         streamlit.error('Could not instantiate the vectorstore.')

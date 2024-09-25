@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import pandas
+import pandasai
 import schedule
 import streamlit
 import yaml
@@ -456,6 +457,17 @@ def initialize_session(
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
 
+    # Clear pandasai cache
+    if 'pandasai_cache' not in session_state:
+        session_state.pandasai_cache = os.path.join(os.getcwd(), 'cache')
+
+    # Delete pandasai cache
+    try:
+        pandasai.clear_cache()
+    except:
+        pass
+    delete_temp_dir(temp_dir=session_state.pandasai_cache, verbose=False)
+
 
 def submit_sec_edgar_details() -> None:
     """Add the SEC-EDGAR details to the session state."""
@@ -496,21 +508,23 @@ def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
         os.makedirs(subdir, exist_ok=True)
 
 
-def delete_temp_dir(temp_dir: str) -> None:
+def delete_temp_dir(temp_dir: str, verbose: bool = False) -> None:
     """Delete the temporary directory and its contents."""
 
     if os.path.exists(temp_dir):
         try:
             shutil.rmtree(temp_dir)
-            logger.info(f'Temporary directory {temp_dir} deleted.')
+            if verbose:
+                logger.info(f'Temporary directory {temp_dir} deleted.')
         except:
-            logger.warning(f'Could not delete temporary directory {temp_dir}.')
+            if verbose:
+                logger.warning(f'Could not delete temporary directory {temp_dir}.')
 
 
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
 
-    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, {'temp_dir': temp_dir, 'verbose': False}).tag(temp_dir)
 
     def run_scheduler() -> None:
         while schedule.get_jobs(temp_dir):

@@ -381,7 +381,7 @@ class FinancialAssistantTest(unittest.TestCase):
     def test_delete_cache(self) -> None:
         """Delete the cache directory and its subdirectories."""
 
-        delete_temp_dir(temp_dir=TEST_CACHE_DIR)
+        delete_temp_dir(temp_dir=TEST_CACHE_DIR, verbose=False)
 
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""

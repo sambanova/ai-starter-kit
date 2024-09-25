@@ -22,6 +22,7 @@ from financial_assistant.src.tools import (
     time_llm,
 )
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import delete_temp_dir
 
 
 class StockInfoSchema(BaseModel):
@@ -164,7 +165,13 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     assert isinstance(symbol, str), TypeError(f'The company symbol must be of type string. Got {(type(symbol))}.')
 
     # Instantiate a `pandasai.connectors.yahoo_finance.YahooFinanceConnector` object with the relevant symbol
-    yahoo_connector = YahooFinanceConnector(symbol)
+    yahoo_connector = YahooFinanceConnector(
+        symbol,
+        config={'enable_cache': False},
+    )
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     # Answer the user query by symbol
     return interrogate_dataframe_pandasai(yahoo_connector, user_query)
@@ -194,6 +201,9 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
             'enable_cache': False,
         },
     )
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS

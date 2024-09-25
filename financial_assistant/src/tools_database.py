@@ -29,6 +29,7 @@ from financial_assistant.src.tools import (
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import delete_temp_dir
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
@@ -391,6 +392,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
         config={
             'database': db_path,
             'table': table,
+            'enable_cache': False,
         }
     )
 
@@ -402,11 +404,15 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
             'open_charts': False,
             'save_charts': True,
             'save_charts_path': streamlit.session_state.db_query_figures_dir,
+            'enable_cache': False,
         },
     )
 
     # Interrogate the dataframe
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     return response
 
