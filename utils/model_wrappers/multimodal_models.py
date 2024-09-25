@@ -5,8 +5,9 @@ import re
 
 import base64
 import json
+import sseclient
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional, Iterator, Generator
 
 import requests
 
@@ -159,6 +160,51 @@ class SambastudioMultimodal:
             )
         return generation
 
+    def _process_openai_api_response_stream(self, response: requests.Response) -> Generator[Dict, None, None]:
+        """
+        Processes the generic API response and yields the resulting string.
+
+        :param response: The API response iterator
+        :yield: The response text
+        :rtype: str
+        """
+        client = sseclient.SSEClient(response)
+        for event in client.events():
+            chunk = {
+                "event": event.event,
+                "data": event.data,
+                "status_code": response.status_code,
+            }
+            if chunk["event"] == "error_event" or chunk["status_code"] != 200:
+                raise RuntimeError(
+                    f"Sambanova /complete call failed with status code "
+                    f"{chunk['status_code']}."
+                    f"{chunk}."
+                )
+            try:
+                # check if the response is a final event
+                # in that case event data response is '[DONE]'
+                if chunk["data"] != "[DONE]":
+                    if isinstance(chunk["data"], str):
+                        data = json.loads(chunk["data"])
+                    else:
+                        raise RuntimeError(
+                            f"Sambanova /complete call failed with status code "
+                            f"{chunk['status_code']}."
+                            f"{chunk}."
+                        )
+                    if data.get("error"):
+                        raise RuntimeError(
+                            f"Sambanova /complete call failed with status code "
+                            f"{chunk['status_code']}."
+                            f"{chunk}."
+                        )
+                    yield data["choices"][0]["delta"].get("content","")
+            except Exception:
+                raise Exception(
+                    f"Error getting content chunk raw streamed response: {chunk}"
+                )
+
     def _call_generic_api(self, prompt: str, image_b64: str) -> Dict:
         """
         Calls the Sambastudio multimodal generic endpoint to generate a response.
@@ -228,17 +274,55 @@ class SambastudioMultimodal:
             )
         else:
             return response.json()
-
-    def invoke(self, prompt: str = None, images: Union[str, List] = None) -> str:
+        
+    def _call_openai_api_stream(self, prompt: str, images: List) -> Iterator:
         """
-        Calls the Sambastudio multimodal endpoint to generate a response.
-
-        :param str prompt: Prompt for the model to generate a response
-        :param str, list images: Image or images to be used with the model url, absolute path or base64 image
-        :return: The generated response
-        :rtype: str
+        Calls the Sambastudio multimodal openai compatible endpoint to stream a response.
+        :param str prompt: Prompt for the model to stream a response
+        :param list images: Images to be used with the model
+        :return: The request json response
+        :rtype: Dict
         """
-        # create a list of images in b64 or as URLs to be used with the model
+
+        data = {
+            'messages': [
+                {
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': f'{prompt}'},
+                    ],
+                }
+            ],
+            'model': self.model,
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens_to_generate,
+            'top_p': self.top_p,
+            'stream': True,
+        }
+        if len(self.stop) > 1:
+            data['stop'] = self.stop
+        for image in images:
+            if not self._is_url(image):
+                image = f'data:image/png;base64,{image}'
+            data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
+
+        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+        response = requests.post(self.base_url, headers=headers, data=json.dumps(data), stream=True)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f'Sambastudio multimodal API call failed with status code {response.status_code}.',
+                f'Details: {response.text}',
+            )
+        else:
+            return response
+        
+    def _load_images(self, images: Union[str, List] = None) -> Optional[List]:
+        """
+        Loads the images into base64 format or url.
+
+        :param Union[str, List] images: Image or images to be used with the model url, absolute path or base64 image
+        :return: List of base64 encoded / URL images 
+        """
         if images is None:
             images = []
         if isinstance(images, str):
@@ -254,7 +338,18 @@ class SambastudioMultimodal:
                 images_list.append(image)
             else:
                 raise ValueError('images should be provided as an url, a path or as a base64 encoded image')
+        return images_list
+    
+    def invoke(self, prompt: str = None, images: Union[str, List] = None) -> str:
+        """
+        Calls the Sambastudio multimodal endpoint to generate a response.
 
+        :param str prompt: Prompt for the model to generate a response
+        :param str, list images: Image or images to be used with the model url, absolute path or base64 image
+        :return: The generated response
+        :rtype: str
+        """
+        images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
         if 'openai' in self.base_url:
             response = self._call_openai_api(prompt, images_list)
@@ -277,3 +372,36 @@ class SambastudioMultimodal:
                 f'Unsupported host URL: {self.base_url}', 'only Generic and open AI compatible APIs supported'
             )
         return generation
+    
+    def stream(self, prompt: str = None, images: Union[str, List] = None) -> Iterator:
+        """
+        Calls the Sambastudio multimodal endpoint to generate a response.
+
+        :param str prompt: Prompt for the model to generate a response
+        :param str, list images: Image or images to be used with the model url, absolute path or base64 image
+        :return: The generated response
+        :rtype: str
+        """
+        images_list = self._load_images(images)
+        # Call the appropriate API based on the host URL
+        if 'openai' in self.base_url:
+            response = self._call_openai_api_stream(prompt, images_list)
+            for chunk in self._process_openai_api_response_stream(response):
+                yield chunk
+        elif 'generic' in self.base_url:
+            if len(images_list) > 1:
+                raise ValueError('only one image can be provided for generic endpoint')
+            if self._is_url(images_list[0]):
+                raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
+
+            formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
+            The assistant gives helpful, detailed, and polite answers to the humans question.\
+            USER: <image>
+            {prompt}
+            ASSISTANT:"""
+            raise NotImplementedError("Streaming method not implemented for multimodal generic endpoints")
+        else:
+            raise ValueError(
+                f'Unsupported host URL: {self.base_url}', 'only Generic and open AI compatible APIs supported'
+            )
+    
