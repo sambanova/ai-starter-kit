@@ -195,6 +195,13 @@ def main() -> None:
                             )
                         st.session_state.qa_chain = qa_chain
                     st.toast("Models updated")
+            with st.expander('Additional settings', expanded=True):
+                st.markdown('**Reset chat**')
+                st.markdown('**Note:** Resetting the chat will clear all conversation history')
+                if st.button('Reset conversation'):
+                    st.session_state.chat_history = []
+                    st.session_state.sources_history = []
+                    st.toast('Conversation reset. The next response will clear the history on the screen')
 
 
 if __name__ == '__main__':
