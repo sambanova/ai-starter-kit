@@ -1,6 +1,15 @@
-import os
-import json
 import argparse
+import json
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 
 from dotenv import load_dotenv
 
@@ -29,7 +38,7 @@ def str2bool(value: str) -> bool:
 
 def main() -> None:
     from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
-        
+
     parser = argparse.ArgumentParser(
         description="""Run a token throughput and latency benchmark. You have the option of running in two different 
             modes - 'custom' or 'synthetic'.
@@ -56,13 +65,8 @@ def main() -> None:
     )
 
     # Required Common Argurments
-    parser.add_argument(
-        '--results-dir', 
-        type=str, 
-        required=True,
-        help="The output directory to save the results to."
-    )
-    
+    parser.add_argument('--results-dir', type=str, required=True, help='The output directory to save the results to.')
+
     parser.add_argument(
         '--llm-api',
         type=str,
@@ -117,12 +121,12 @@ def main() -> None:
     if args.mode == 'custom':
         # Custom dataset specific arguments
         parser.add_argument(
-            '--model-name', 
-            type=str, 
-            required=True, 
-            help="The name of the model to use for this performance evaluation."
+            '--model-name',
+            type=str,
+            required=True,
+            help='The name of the model to use for this performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--input-file-path',
             type=str,
@@ -156,15 +160,14 @@ def main() -> None:
 
     # Synthetic dataset evaluation path
     elif args.mode == 'synthetic':
-
         # Synthetic dataset specific arguments
         parser.add_argument(
-            '--model-names', 
-            type=str, 
-            required=True, 
-            help="The name of the models to use for this performance evaluation."
+            '--model-names',
+            type=str,
+            required=True,
+            help='The name of the models to use for this performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--num-input-tokens',
             type=int,
@@ -190,10 +193,10 @@ def main() -> None:
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
-        
-        # running perf eval for multiple coe models 
+
+        # running perf eval for multiple coe models
         for model_idx, model_name in enumerate(model_names):
-            user_metadata["model_idx"] = model_idx
+            user_metadata['model_idx'] = model_idx
             # set synthetic evaluator
             evaluator = SyntheticPerformanceEvaluator(
                 model_name=model_name,
@@ -201,7 +204,7 @@ def main() -> None:
                 num_workers=args.num_workers,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
-                llm_api=args.llm_api
+                llm_api=args.llm_api,
             )
 
             # Run performance evaluation
@@ -209,14 +212,15 @@ def main() -> None:
                 num_input_tokens=args.num_input_tokens,
                 num_output_tokens=args.num_output_tokens,
                 num_requests=args.num_requests,
-                sampling_params=json.loads(args.sampling_params)
+                sampling_params=json.loads(args.sampling_params),
             )
-    
+
     else:
         raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic'")
-    
-if __name__ == "__main__":
-    load_dotenv("../.env", override=True)
+
+
+if __name__ == '__main__':
+    load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
     main()
