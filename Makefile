@@ -9,6 +9,10 @@ endif
 PARSING_DIR := utils/parsing/unstructured-api
 PARSING_VENV := venv
 
+
+STREAMLIT_PORT := 8501
+
+
 # Set OS-specific variables and commands
 ifeq ($(DETECTED_OS),Windows)
     PYTHON := python
@@ -410,17 +414,20 @@ endif
 .PHONY: docker-build
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t ai-starter-kit .
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from ai-starter-kit \
+		-t ai-starter-kit .
 
 .PHONY: docker-run
 docker-run: docker-build
 	@echo "Running Docker container..."
-	docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 ai-starter-kit
 
 .PHONY: docker-shell
 docker-shell: docker-build
 	@echo "Opening a shell in the Docker container..."
-	docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 ai-starter-kit /bin/bash
 
 .PHONY: docker-run-kit
 docker-run-kit: docker-build
@@ -430,10 +437,17 @@ docker-run-kit: docker-build
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && streamlit run streamlit/app.py --browser.gatherUsageStats false"; \
+		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			-v $(PWD)/$(KIT):/app/$(KIT) \
+			ai-starter-kit /bin/bash -c \
+			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && $(COMMAND)"; \
+		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			-v $(PWD)/$(KIT):/app/$(KIT) \
+			ai-starter-kit /bin/bash -c \
+			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && $(COMMAND)"; \
 	fi
+
 
 # Set up test suite
 .PHONY: setup-test-suite

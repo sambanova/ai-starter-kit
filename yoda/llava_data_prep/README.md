@@ -36,7 +36,7 @@ You have to set up your environment before you can run or customize the starter 
 
 ## Install LaTex
 
-FOr mac users, you will need a LaTex system dependency:
+For mac users, you will need a LaTex system dependency:
 
 ```bash
 brew install --cask mactex
@@ -109,6 +109,12 @@ Future work will potentially include:
 - Run yoda/llava_data_prep/notebooks/edgar_ingestion.ipynb and ensure it completes.  Check some of the outputs.
 - Run yoda/llava_data_prep/scripts/generate_tables.py and ensure yoda/synthetic_data/tmp/images/test_table.jpg is created.
 - Run:
+
+```bash
+python python /llava_data_prep/scripts/ingest_edgar_data.py --name <name>
+```
+For the above, please test with various congiurations, which can be found in: [config.yaml](config.yaml)
+
 ```bash
 python yoda/llava_data_prep/scripts/create_synthetic_tables.py --name test --num-its 4
 ```
