@@ -1,6 +1,7 @@
-import argparse
-import json
 import os
+import json
+import argparse
+import pandas as pd
 
 from dotenv import load_dotenv
 
@@ -57,11 +58,12 @@ def main() -> None:
 
     # Required Common Argurments
     parser.add_argument(
-        '--model-name', type=str, required=True, help='The name of the model to use for this performance evaluation.'
+        '--results-dir', 
+        type=str, 
+        required=True,
+        help="The output directory to save the results to."
     )
-
-    parser.add_argument('--results-dir', type=str, required=True, help='The output directory to save the results to.')
-
+    
     parser.add_argument(
         '--llm-api',
         type=str,
@@ -116,6 +118,13 @@ def main() -> None:
     if args.mode == 'custom':
         # Custom dataset specific arguments
         parser.add_argument(
+            '--model-name', 
+            type=str, 
+            required=True, 
+            help="The name of the model to use for this performance evaluation."
+        )
+        
+        parser.add_argument(
             '--input-file-path',
             type=str,
             required=True,
@@ -147,8 +156,16 @@ def main() -> None:
         custom_evaluator.run_benchmark(sampling_params=json.loads(args.sampling_params))
 
     # Synthetic dataset evaluation path
-    else:
+    elif args.mode == 'synthetic':
+
         # Synthetic dataset specific arguments
+        parser.add_argument(
+            '--model-names', 
+            type=str, 
+            required=True, 
+            help="The name of the models to use for this performance evaluation."
+        )
+        
         parser.add_argument(
             '--num-input-tokens',
             type=int,
@@ -173,36 +190,34 @@ def main() -> None:
 
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
-        synthetic_evaluator = SyntheticPerformanceEvaluator(
-            model_name=args.model_name,
-            results_dir=args.results_dir,
-            num_workers=args.num_workers,
-            timeout=args.timeout,
-            user_metadata=user_metadata,
-            llm_api=args.llm_api,
-        )
+        model_names = args.model_names.strip().split()
+        
+        # running perf eval for multiple coe models 
+        for model_idx, model_name in enumerate(model_names):
+            user_metadata["model_idx"] = model_idx
+            # set synthetic evaluator
+            evaluator = SyntheticPerformanceEvaluator(
+                model_name=model_name,
+                results_dir=args.results_dir,
+                num_workers=args.num_workers,
+                timeout=args.timeout,
+                user_metadata=user_metadata,
+                llm_api=args.llm_api
+            )
 
-        # Run performance evaluation
-        synthetic_evaluator.run_benchmark(
-            num_input_tokens=args.num_input_tokens,
-            num_output_tokens=args.num_output_tokens,
-            num_requests=args.num_requests,
-            sampling_params=json.loads(args.sampling_params),
-        )
-
-
-if __name__ == '__main__':
-    import os
-    import sys
-
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-    repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-    sys.path.append(kit_dir)
-    sys.path.append(repo_dir)
-
-    load_dotenv(os.path.join(repo_dir, '.env'), override=True)
+            # Run performance evaluation
+            evaluator.run_benchmark(
+                num_input_tokens=args.num_input_tokens,
+                num_output_tokens=args.num_output_tokens,
+                num_requests=args.num_requests,
+                sampling_params=json.loads(args.sampling_params)
+            )
+    
+    else:
+        raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic'")
+    
+if __name__ == "__main__":
+    load_dotenv("../.env", override=True)
     env_vars = dict(os.environ)
 
     main()

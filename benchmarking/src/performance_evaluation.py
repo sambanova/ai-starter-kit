@@ -14,6 +14,7 @@ file_location = Path(__file__).parent.resolve()
 
 import logging
 
+import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
@@ -553,11 +554,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for data_point in self.dataset:
+        for request_idx, data_point in enumerate(self.dataset):
+
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
             prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
 
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
@@ -632,11 +635,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         generation_mode = ''
         if self.is_stream_mode:
-            generation_mode = 'stream'
-
-        output_file_name = (
-            f'{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}'
-        )
+            generation_mode  = "stream"
+        
+        output_file_name = f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
         return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
@@ -681,6 +682,79 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             self.save_results(filename, summary, individual_responses)
 
         return summary, individual_responses
+
+    def add_metric_after_key(self, metrics_dict: dict, new_key: str, new_value: float, after_key: str) -> dict:
+        """Adds a new metric (dict key and value) to a dict after an specific key
+
+        Args:
+            metrics_dict (dict): dictionary to add new metric
+            new_key (str): new key
+            new_value (float): new value for key
+            after_key (str): key for reference to add new key after
+
+        Returns:
+            dict: dictionary with new key and value added
+        """
+        
+        # Create a new dictionary
+        new_metrics_dict = {}
+        
+        for key, value in metrics_dict.items():
+            # Copy the key-value pair to the new dictionary
+            new_metrics_dict[key] = value
+            
+            # Check if this is the key after which to insert the new key-value pair
+            if key == after_key:
+                new_metrics_dict[new_key] = new_value
+        
+        return new_metrics_dict
+
+    def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
+        """Logic to calculate switching time. Based on the first request TTFT, 
+        if this value is significantly larger (more than 3 standard deviations) than the average TTFT of the rest requests,
+        then switching time will be the difference between first TTFT and average of the coming TTFTs.
+
+        Args:
+            llm_responses (list[LLMResponse]): list of LLMResponse objects
+
+        Returns:
+            list[LLMResponse]: list of LLMResponse objects including switching time
+        """
+        # collect necessary information for switching time calculation
+        responses_ttfts = []
+
+        for llm_response in llm_responses:
+            request_idx = llm_response.request_config.request_idx
+            start_time = llm_response.metrics["start_time"]
+            server_ttft_s = llm_response.metrics["server_ttft_s"]
+            responses_ttfts.append({"request_idx": request_idx, "start_time": start_time, "server_ttft_s": server_ttft_s})
+
+        df_responses = pd.DataFrame(responses_ttfts)
+        
+        # transforming str to date time for sorting
+        df_responses['start_time'] = pd.to_datetime(df_responses['start_time'])
+        df_responses = df_responses.sort_values(by=['start_time'])
+        
+        # initialize a column for the switching time
+        df_responses['server_switching_time'] = None
+
+        # calculate switching time
+        first_ttft = df_responses['server_ttft_s'].iloc[0]
+        mean_ttft = df_responses['server_ttft_s'].iloc[1:].mean()
+        std_ttft = df_responses['server_ttft_s'].iloc[1:].std()
+        std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
+
+        switching_time = first_ttft - mean_ttft
+        if switching_time > (mean_ttft + 3*std_ttft):
+            df_responses['server_switching_time'].iloc[0] = switching_time
+        
+        # assign switching time back to request object
+        for llm_response in llm_responses:
+            metrics = llm_response.metrics
+            server_switching_time = df_responses[df_responses["request_idx"] == llm_response.request_config.request_idx].server_switching_time.values[0]
+            llm_response.metrics = self.add_metric_after_key(metrics, new_key="server_switching_time", new_value=server_switching_time, after_key=common_metrics.TTFT_SERVER)
+        
+        return llm_responses
 
     def get_token_throughput_latencies(
         self,
@@ -770,8 +844,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Capture end time and notify user
         end_time = time.monotonic()
-        logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info("Tasks Executed!")
+        logger.info(
+            f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
+        )
+        
+        llm_responses = self.calculate_switching_time(llm_responses)
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
@@ -818,7 +896,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for _ in range(num_requests):
+        for request_idx in range(num_requests):
+
             # Build input prompt to be sent in LLM request
             prompt_tuple = self.build_prompt(input_token_count)
 
@@ -835,6 +914,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
             # Create request config object
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
