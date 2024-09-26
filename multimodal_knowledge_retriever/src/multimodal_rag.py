@@ -25,7 +25,6 @@ from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
 from langchain_community.vectorstores import Chroma
-from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import load_prompt
 from unstructured.partition.pdf import partition_pdf
@@ -73,10 +72,11 @@ class MultimodalRetrieval:
         self.embedding_model_info = config_info[2]
         self.retrieval_info = config_info[3]
         self.prod_mode = config_info[4]
-        self.llm = self.set_llm()
-        self.lvlm = self.set_lvlm()
+        self.set_llm()
+        self.set_lvlm()
         self.collection_id = str(uuid.uuid4())
         self.vector_collections = set()
+        self.retriever = None
 
     def get_config_info(self) -> Tuple[str, str, str, str]:
         """
@@ -93,12 +93,12 @@ class MultimodalRetrieval:
 
         return llm_info, lvlm_info, embedding_model_info, retrieval_info, prod_mode
 
-    def set_llm(self) -> LLM:
+    def set_llm(self, model: str = None) -> None:
         """
         Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
-        Returns:
-        LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
+        Parameters:
+        Model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
 
         if self.prod_mode:
@@ -109,25 +109,27 @@ class MultimodalRetrieval:
             else:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        llm = APIGateway.load_llm(
+        if model is None:
+            model = self.llm_info['select_expert']
+
+        self.llm = APIGateway.load_llm(
             type=self.llm_info['type'],
             streaming=True,
             coe=self.llm_info['coe'],
             do_sample=self.llm_info['do_sample'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            select_expert=model,
             process_prompt=False,
             sambanova_api_key=sambanova_api_key,
         )
-        return llm
 
-    def set_lvlm(self) -> SambastudioMultimodal:
+    def set_lvlm(self, model: str = None) -> None:
         """
         Sets the sncloud, or sambastudio LVLM based on the config attributes.
 
-        Returns:
-        LVLM: The SambaStudio Cloud or Sambastudio Langchain LVLM wrapper.
+        Parameters:
+        model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
         if self.prod_mode:
             lvlm_base_url = st.session_state.LVLM_BASE_URL
@@ -144,18 +146,19 @@ class MultimodalRetrieval:
             else:
                 lvlm_base_url = os.environ.get('LVLM_BASE_URL')
 
-        lvlm = SambastudioMultimodal(
+        if model is None:
+            model = self.lvlm_info['model']
+
+        self.lvlm = SambastudioMultimodal(
             base_url=lvlm_base_url,
             api_key=lvlm_api_key,
-            model=self.lvlm_info['model'],
+            model=model,
             temperature=self.lvlm_info['temperature'],
             max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
             top_p=self.lvlm_info['top_p'],
             top_k=self.lvlm_info['top_k'],
             do_sample=self.lvlm_info['do_sample'],
         )
-
-        return lvlm
 
     def extract_pdf(self, file_path: str) -> Tuple[List, str]:
         # Path to save images
@@ -418,8 +421,8 @@ class MultimodalRetrieval:
         return answers
 
     def get_retrieval_chain(
-        self, retriever: MultiVectorRetriever, image_retrieval_type: str = 'raw'
-    ) -> Tuple[Callable, Callable]:
+        self, retriever: MultiVectorRetriever = None, image_retrieval_type: str = 'raw'
+    ) -> Callable:
         """
         This function returns a retrieval chain.
 
@@ -432,6 +435,9 @@ class MultimodalRetrieval:
         retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
         prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-knowledge_retriever_custom_qa_prompt.yaml'))
+        if retriever is None:
+            retriever = self.retriever
+
         if image_retrieval_type == 'summary':
             retrieval_qa_summary_chain = RetrievalQA.from_llm(
                 llm=self.llm,
@@ -450,8 +456,8 @@ class MultimodalRetrieval:
                 image_answers = self.get_image_answers(image_docs, query)
                 text_contexts = [doc.page_content for doc in context_docs]
                 full_context = '\n\n'.join(image_answers) + '\n\n' + '\n\n'.join(text_contexts)
-                formated_prompt = prompt.format(context=full_context, question=query)
-                answer = self.llm.invoke(formated_prompt)
+                formatted_prompt = prompt.format(context=full_context, question=query)
+                answer = self.llm.invoke(formatted_prompt)
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
 
@@ -504,9 +510,9 @@ class MultimodalRetrieval:
                     file.write(image.read())
             image_paths.append(single_images_folder)
         text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
-        retriever = self.create_vectorstore()
-        retriever = self.vectorstore_ingest(
-            retriever,
+        self.retriever = self.create_vectorstore()
+        self.retriever = self.vectorstore_ingest(
+            self.retriever,
             text_docs,
             table_docs,
             image_paths,
@@ -514,7 +520,7 @@ class MultimodalRetrieval:
             summarize_tables=summarize_tables,
         )
         if raw_image_retrieval:
-            qa_chain = self.get_retrieval_chain(retriever, image_retrieval_type='raw')
+            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
         else:
-            qa_chain = self.get_retrieval_chain(retriever, image_retrieval_type='summary')
+            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
         return qa_chain

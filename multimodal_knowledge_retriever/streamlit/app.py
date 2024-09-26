@@ -19,6 +19,13 @@ logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
+LVLM_MODELS = [
+    'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
+    'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
+    'llava-v1.5-7b-4096-preview',
+]
+LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
+
 
 def handle_user_input(user_question: str) -> None:
     if user_question:
@@ -77,7 +84,7 @@ def handle_user_input(user_question: str) -> None:
                             st.image(image)
 
 
-def initialize_multimodal_retrieval() ->MultimodalRetrieval:
+def initialize_multimodal_retrieval() -> MultimodalRetrieval:
     if are_credentials_set():
         try:
             return MultimodalRetrieval()
@@ -167,7 +174,27 @@ def main() -> None:
                         st.rerun()
                 else:
                     st.error('You must provide at least one document', icon='🚨')
-            st.markdown('**3. Ask questions about your data!**')
+            st.markdown('**5. Ask questions about your data!**')
+            # hard setting of llm and lvlm (overwrites models from config.yaml)
+            if prod_mode:
+                st.markdown('**Optional Set a specific multimodal model and LLM**')
+                lvlm_model = st.selectbox('Select the multimodal model to use', LVLM_MODELS, 0)
+                llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
+                if st.button('set_model'):
+                    st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
+                    st.session_state.multimodal_retriever.set_llm(llm_model)
+                    # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
+                    if st.session_state.qa_chain is not None:
+                        if raw_image_retrieval:
+                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
+                                image_retrieval_type='raw'
+                            )
+                        else:
+                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
+                                image_retrieval_type='summary'
+                            )
+                        st.session_state.qa_chain = qa_chain
+                    st.toast("Models updated")
 
 
 if __name__ == '__main__':
