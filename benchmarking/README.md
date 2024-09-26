@@ -272,9 +272,6 @@ Users are able to ask anything and get a generated answer to their questions, as
 
 This method can be ran from a terminal session. Users have this option if they want to experiment using values that are beyond the limits specified in the Streamlit app parameters. You have two options for running the program from terminal:
 
-- Run with a custom dataset via `run_custom_dataset.sh`
-- Run with a synthetic dataset via `run_synthetic_dataset.sh`
-
 <details id="custom-dataset">
 <summary><strong>Custom Dataset</summary></strong>
 
