@@ -11,10 +11,11 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import streamlit as st
 from dotenv import load_dotenv
+from langchain.docstore.document import Document
 
 from web_crawled_data_retriever.src.web_crawling_retriever import WebCrawlingRetrieval
 
@@ -25,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 
-def get_config_info() -> Dict[str, Any]:
+def get_config_info() -> Any:
     """
     Loads json config file
     """
@@ -37,17 +38,13 @@ def get_config_info() -> Dict[str, Any]:
     return web_crawling_params
 
 
-def set_retrieval_qa_chain(documents: Optional[List] = None, config: Optional[Dict] = None, save: bool = False) -> Any:
-    if config is None:
-        config = {}
-    if documents is None:
-        documents = []
+def set_retrieval_qa_chain(documents: List[Document] = [], config: Dict[str, Any] = {}, save: bool = False) -> Any:
     web_crawling_retrieval = WebCrawlingRetrieval(documents, config)
     web_crawling_retrieval.init_llm_model()
     if save:
         web_crawling_retrieval.create_and_save_local(
             input_directory=config.get('input_directory', None),
-            persist_directory=config.get('persist_directory'),
+            persist_directory=config.get('persist_directory', None),
             update=config.get('update', False),
         )
     else:
@@ -146,8 +143,8 @@ def main() -> None:
             ),
         )
         # input text area for urls
-        if 'Select websites' in datasource or 'Add new' in datasource:
-            if 'Add new' in datasource:
+        if datasource is not None and ('Select websites' in datasource or 'Add new' in datasource):
+            if datasource is not None and 'Add new' in datasource:
                 st.session_state.db_path = st.text_input(
                     'Absolute path to your FAISS Vector DB folder',
                     placeholder='E.g., /Users/<username>/Downloads/<vectordb_folder>',
@@ -212,7 +209,9 @@ def main() -> None:
                 with st.spinner('Processing'):
                     # get pdf text
                     crawler = WebCrawlingRetrieval()
-                    st.session_state.docs, sources = crawler.web_crawl(st.session_state.base_urls_list, depth=depth)
+                    st.session_state.docs, sources = crawler.web_crawl(
+                        st.session_state.base_urls_list, depth=int(depth)
+                    )
                     st.session_state.full_urls_list = sources
                     st.rerun()
             with st.expander(f'{len(st.session_state.full_urls_list)} crawled URLs', expanded=False):
@@ -226,8 +225,10 @@ def main() -> None:
                     with st.spinner('Processing'):
                         # create conversation chain
                         st.session_state.db_path = None
-                        config = {'force_reload': True}
-                        st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
+                        config_conversation = {'force_reload': True}
+                        st.session_state.conversation = set_retrieval_qa_chain(
+                            st.session_state.docs, config=config_conversation
+                        )
                         # storing vector database in disk
                     st.session_state.input_disabled = False
                 st.markdown('[Optional] Save database for reuse')
@@ -249,26 +250,28 @@ def main() -> None:
                 st.markdown('Create database')
                 if st.button('Process'):
                     with st.spinner('Processing'):
-                        config = {'persist_directory': st.session_state.db_path, 'update': True}
-                        st.session_state.conversation = set_retrieval_qa_chain(st.session_state.docs, config=config)
+                        config_update = {'persist_directory': st.session_state.db_path, 'update': True}
+                        st.session_state.conversation = set_retrieval_qa_chain(
+                            st.session_state.docs, config=config_update
+                        )
                     st.session_state.input_disabled = False
                 st.markdown('[Optional] Save database with new scraped sites for reuse')
                 save_location = st.text_input('Save location', './data/my-vector-db').strip()
                 if st.button('Process and Save database'):
                     with st.spinner('Processing'):
-                        config = {
+                        config_save = {
                             'input_directory': st.session_state.db_path,
                             'persist_directory': save_location,
                             'update': True,
                         }
                         st.session_state.conversation = set_retrieval_qa_chain(
-                            st.session_state.docs, config=config, save=True
+                            st.session_state.docs, config=config_save, save=True
                         )
                         st.toast('Database with new sites saved in ' + save_location)
                     st.session_state.input_disabled = False
 
         # if vector database folder selected as datasource
-        elif 'Use existing' in datasource:
+        elif datasource is not None and 'Use existing' in datasource:
             st.session_state.db_path = st.text_input(
                 'Absolute path to your FAISS Vector DB folder',
                 placeholder='E.g., /Users/<username>/Downloads/<vectordb_folder>',
@@ -313,7 +316,8 @@ def main() -> None:
     user_question = st.chat_input(
         'Ask questions about data in provided sites', disabled=st.session_state.input_disabled
     )
-    handle_userinput(user_question)
+    if user_question is not None:
+        handle_userinput(user_question)
 
 
 if __name__ == '__main__':

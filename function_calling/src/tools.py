@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import streamlit as st
 import yaml
@@ -33,7 +33,7 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 ## Get configs for tools
-def get_config_info(config_path: str) -> dict:
+def get_config_info(config_path: str) -> Tuple[Dict[str, Any], bool]:
     """
     Loads json config file
     """
