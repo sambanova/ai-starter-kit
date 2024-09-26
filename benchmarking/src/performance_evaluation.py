@@ -6,7 +6,7 @@ import re
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -14,18 +14,19 @@ file_location = Path(__file__).parent.resolve()
 
 import logging
 
-import llmperf.utils as utils
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
-from llmperf import common_metrics
-from llmperf.models import LLMResponse, RequestConfig
-from llmperf.sambanova_client import llm_request
-from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 from stqdm import stqdm
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
+
+import benchmarking.src.llmperf.utils as utils
+from benchmarking.src.llmperf import common_metrics
+from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
+from benchmarking.src.llmperf.sambanova_client import llm_request
+from benchmarking.src.llmperf.utils import LLMPerfResults, flatten, get_tokenizer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -61,8 +62,8 @@ class BasePerformanceEvaluator(abc.ABC):
         self.tokenizer = get_tokenizer(self.model_name)
 
         # To be set upon saving of results
-        self.summary_file_path = None
-        self.individual_responses_file_path = None
+        self.summary_file_path: Optional[str] = None
+        self.individual_responses_file_path: Optional[str] = None
 
     def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
@@ -86,13 +87,21 @@ class BasePerformanceEvaluator(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def run_benchmark(self, sampling_params: Dict = {}, *args: Any, **kwargs: Any) -> None:
+    def run_benchmark(
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         pass
 
     @abc.abstractmethod
     def get_token_throughput_latencies(
         self, *args: Any, **kwargs: Any
-    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[dict[str, object], List[LLMResponse]]
+    ):
         pass
 
     @abc.abstractmethod
@@ -127,7 +136,7 @@ class BasePerformanceEvaluator(abc.ABC):
             tokens += [pad_token] * (target_token_count - token_count - 1)
 
         # Convert tokens back to text
-        adjusted_text = self.tokenizer.convert_tokens_to_string(tokens)
+        adjusted_text = str(self.tokenizer.convert_tokens_to_string(tokens))
 
         # Validate token count
         assert len(self.tokenizer.tokenize(adjusted_text)) == (target_token_count - 1), 'Token count mismatch!'
@@ -136,8 +145,8 @@ class BasePerformanceEvaluator(abc.ABC):
 
     def send_requests(
         self,
-        request_config_batch: list,
-        completed_requests: list,
+        request_config_batch: List[Any],
+        completed_requests: List[Any],
         progress_bar: tqdm,
         start_time: float,
     ) -> None:
@@ -166,8 +175,8 @@ class BasePerformanceEvaluator(abc.ABC):
     def build_metrics_summary(
         self,
         metrics: List[Dict[str, Any]],
-        start_time: time,
-        end_time: time,
+        start_time: float,
+        end_time: float,
     ) -> Dict[str, Any]:
         """Builds a summary of metrics from a list of dictionaries.
 
@@ -185,7 +194,7 @@ class BasePerformanceEvaluator(abc.ABC):
         Dict[str, Any]: A dictionary containing the summary metrics.
         """
         # Create empty metrics summary to be filled and returned
-        metrics_summary = {}
+        metrics_summary: Dict[str, Any] = {}
 
         # Create base df from metrics returned from request responses
         raw_df = pd.DataFrame(metrics)
@@ -274,7 +283,9 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse],
+        individual_responses: List[LLMResponse]
+        | List[Tuple[Dict[str, Any], str, RequestConfig]]
+        | Tuple[Dict[str, object], List[LLMResponse]],
     ) -> None:
         """Save the performance evaluation results to a file.
 
@@ -316,7 +327,9 @@ class BasePerformanceEvaluator(abc.ABC):
         try:
             self.individual_responses_file_path = f'{results_dir}/{individual_responses_filename}.json'
 
-            response_metrics = [response.metrics for response in individual_responses]
+            response_metrics = [
+                response.metrics for response in individual_responses if isinstance(response, LLMResponse)
+            ]
             with open(self.individual_responses_file_path, 'w') as f:
                 json.dump(response_metrics, f, indent=4)
         except Exception as e:
@@ -333,7 +346,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.save_response_texts = save_response_texts
 
     @staticmethod
-    def read_dataset(input_file_path: str) -> List[Dict]:
+    def read_dataset(input_file_path: str) -> List[Dict[str, Any]]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
 
         Args:
@@ -364,7 +377,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse],
+        individual_responses: List[LLMResponse]
+        | List[Tuple[Dict[str, Any], str, RequestConfig]]
+        | Tuple[Dict[str, object], List[LLMResponse]],
     ) -> None:
         """Save the performance evaluation results to a file, and completion texts if save_response_text condition is
         setup as True
@@ -392,17 +407,23 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 self.response_texts_file_path = f'{results_dir}/{response_texts_file_name}.jsonl'
                 with open(self.response_texts_file_path, 'w') as f:
                     for response in individual_responses:
-                        output_json = {
-                            'prompt': response.request_config.prompt_tuple[0],
-                            'completion': str(response.response_text),
-                        }
-                        f.write(json.dumps(output_json))
-                        f.write('\n')
+                        if isinstance(response, LLMResponse):
+                            output_json = {
+                                'prompt': response.request_config.prompt_tuple[0],
+                                'completion': str(response.response_text),
+                            }
+                            f.write(json.dumps(output_json))
+                            f.write('\n')
             except Exception as e:
                 logger.error('ERROR SAVING LLM OUTPUTS')
                 raise e
 
-    def run_benchmark(self, sampling_params: Dict[str, Any]) -> None:
+    def run_benchmark(
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
@@ -424,10 +445,14 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 summary,
                 individual_responses,
             )
+        return None
 
     def get_token_throughput_latencies(
         self, sampling_params: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[dict[str, object], List[LLMResponse]]
+    ):
         """This function is used to measure the token throughput and latencies.
 
         Args:
@@ -615,12 +640,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
-        self,
-        num_input_tokens: int,
-        num_output_tokens: int,
-        num_requests: int,
-        sampling_params: Dict[str, Any],
-    ) -> tuple:
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:
@@ -636,6 +660,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             summary (dict): structure with performance metrics and stats for the run
             individual_responses (tuple): list of performance metrics per request
         """
+        num_input_tokens = kwargs.get('num_input_tokens', 1000)
+        num_output_tokens = kwargs.get('num_output_tokens', 10)
+        num_requests = kwargs.get('num_requests', 1)
         if num_input_tokens < 40:
             raise ValueError(
                 'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
@@ -660,8 +687,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_input_tokens: int,
         num_output_tokens: int,
         num_requests: int,
-        sampling_params: dict,
-    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
+        sampling_params: Dict[str, Any],
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[Dict[str, object], list[LLMResponse]]
+    ):
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
         and the specified number of requests.
@@ -706,8 +736,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
         # completed requests respectively
-        threads = []
-        llm_responses = []
+        threads: List[threading.Thread] = []
+        llm_responses: List[LLMResponse] = []
         progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
         # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
@@ -767,7 +797,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_requests: int,
         input_token_count: int,
         output_token_count: int,
-        sampling_params: dict,
+        sampling_params: Dict[str, Any],
     ) -> List[RequestConfig]:
         """Builds a list of request configuration objects used to send requests to the LLM. It iterates through the
         specified number of requests, builds an input prompt for each request, updates the sampling parameters with

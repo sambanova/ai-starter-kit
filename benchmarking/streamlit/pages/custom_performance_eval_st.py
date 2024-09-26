@@ -1,12 +1,15 @@
 import warnings
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
-from streamlit_utils import plot_client_vs_server_barplots, plot_dataframe_summary, plot_requests_gantt_chart
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
-from benchmarking.streamlit.app import LLM_API_OPTIONS, LLM_API_CODENAMES
+from benchmarking.streamlit.app import LLM_API_CODENAMES, LLM_API_OPTIONS
+from benchmarking.streamlit.streamlit_utils import (
+    plot_client_vs_server_barplots,
+    plot_dataframe_summary,
+    plot_requests_gantt_chart,
+)
 
 warnings.filterwarnings('ignore')
 
@@ -46,7 +49,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         pd.DataFrame: valid dataframe containing benchmark results
     """
 
-    results_path = "./data/results/llmperf"
+    results_path = './data/results/llmperf'
     api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
     custom_performance_evaluator = CustomPerformanceEvaluator(
         model_name=st.session_state.llm,
@@ -58,10 +61,10 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         llm_api=api_dict[st.session_state.llm_api],
     )
 
-    if api_dict[st.session_state.llm_api] == "sambastudio":
-        sampling_params = {"max_tokens_to_generate": st.session_state.max_tokens}
-    elif api_dict[st.session_state.llm_api] == "sncloud":
-        sampling_params = {"max_tokens": st.session_state.max_tokens}
+    if api_dict[st.session_state.llm_api] == 'sambastudio':
+        sampling_params = {'max_tokens_to_generate': st.session_state.max_tokens}
+    elif api_dict[st.session_state.llm_api] == 'sncloud':
+        sampling_params = {'max_tokens': st.session_state.max_tokens}
     else:
         sampling_params = {}
 
@@ -107,15 +110,13 @@ def main() -> None:
         st.title('Configuration')
 
         st.text_input(
-            "Model Name",
-            value="llama3-8b",
-            key="llm",
-            help="Look at your model card in SambaStudio and introduce the same name of the model/expert here.",
+            'Model Name',
+            value='llama3-8b',
+            key='llm',
+            help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
         )
-        
-        st.session_state.llm_api = st.selectbox(
-            "API type", options=LLM_API_OPTIONS
-        )
+
+        st.session_state.llm_api = st.selectbox('API type', options=LLM_API_OPTIONS)
 
         st.number_input(
             'Num Concurrent Requests',
@@ -162,36 +163,36 @@ def main() -> None:
             try:
                 results_df = _run_custom_performance_evaluation()
 
-                st.subheader("Performance metrics plots")
+                st.subheader('Performance metrics plots')
                 st.plotly_chart(
                     plot_client_vs_server_barplots(
                         results_df,
-                        "batch_size_used",
-                        ["server_ttft_s", "client_ttft_s"],
-                        ["Server", "Client"],
-                        "Distribution of Time to First Token (TTFT) by batch size",
-                        "TTFT (s), per request",
-                        "Batch size",
+                        'batch_size_used',
+                        ['server_ttft_s', 'client_ttft_s'],
+                        ['Server', 'Client'],
+                        'Distribution of Time to First Token (TTFT) by batch size',
+                        'TTFT (s), per request',
+                        'Batch size',
                     )
                 )
                 st.plotly_chart(
                     plot_client_vs_server_barplots(
                         results_df,
-                        "batch_size_used",
-                        ["server_end_to_end_latency_s", "client_end_to_end_latency_s"],
-                        ["Server", "Client"],
-                        "Distribution of end-to-end latency by batch size",
-                        "Latency (s), per request",
-                        "Batch size",
+                        'batch_size_used',
+                        ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
+                        ['Server', 'Client'],
+                        'Distribution of end-to-end latency by batch size',
+                        'Latency (s), per request',
+                        'Batch size',
                     )
                 )
                 st.plotly_chart(
                     plot_client_vs_server_barplots(
                         results_df,
-                        "batch_size_used",
+                        'batch_size_used',
                         [
-                            "server_output_token_per_s_per_request",
-                            "client_output_token_per_s_per_request",
+                            'server_output_token_per_s_per_request',
+                            'client_output_token_per_s_per_request',
                         ],
                         ["Server", "Client"],
                         "Distribution of output throughput by batch size",
@@ -200,12 +201,8 @@ def main() -> None:
                     )
                 )
                 # Compute total throughput per batch
-                st.plotly_chart(
-                    plot_dataframe_summary(results_df)
-                )
-                st.plotly_chart(
-                    plot_requests_gantt_chart(results_df)
-                )
+                st.plotly_chart(plot_dataframe_summary(results_df))
+                st.plotly_chart(plot_requests_gantt_chart(results_df))
 
             except Exception as e:
                 st.error(f'Error: {e}.')

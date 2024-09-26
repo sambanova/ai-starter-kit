@@ -22,7 +22,7 @@ class RequestConfig(BaseModel):
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
     is_stream_mode: Optional[bool] = None
-    num_concurrent_requests: int = None
+    num_concurrent_requests: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -35,6 +35,6 @@ class LLMResponse(BaseModel):
         request_config: The associated request config
     """
 
-    metrics: Dict
+    metrics: Dict[str, Any]
     response_text: str
     request_config: RequestConfig

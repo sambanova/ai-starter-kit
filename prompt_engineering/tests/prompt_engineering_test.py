@@ -21,8 +21,7 @@ import os
 import sys
 import time
 import unittest
-from types import TracebackType
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Type
 
 from langchain_core.language_models.llms import LLM
 
@@ -49,6 +48,12 @@ MODEL_PROMPT = 'Llama3'
 
 
 class PETestCase(unittest.TestCase):
+    time_start: float
+    llm_manager: LLMManager
+    llm: Any
+    prompt_uses_cases: List[str]
+    prompts: List[str]
+
     @classmethod
     def setUpClass(cls: Type['PETestCase']) -> None:
         cls.time_start = time.time()
@@ -101,6 +106,8 @@ class PETestCase(unittest.TestCase):
 
 
 class CustomTextTestResult(unittest.TextTestResult):
+    test_results: List[Dict[str, Any]]
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.test_results: List[Dict[str, Any]] = []
@@ -109,13 +116,11 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addSuccess(test)
         self.test_results.append({'name': test._testMethodName, 'status': 'PASSED'})
 
-    def addFailure(
-        self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]
-    ) -> None:
+    def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
 
-    def addError(self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]) -> None:
+    def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
@@ -125,6 +130,7 @@ def main() -> int:
     test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
 
     logger.info('\nTest Results:')
+    assert hasattr(test_result, 'test_results')
     for result in test_result.test_results:
         logger.info(f"{result['name']}: {result['status']}")
         if 'message' in result:
