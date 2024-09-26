@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 import concurrent.futures
+from typing import Any, Dict, List, Tuple
 
 import yaml
 from langchain.chains import LLMChain, ReduceDocumentsChain
@@ -23,10 +24,11 @@ from langchain.output_parsers import CommaSeparatedListOutputParser, ResponseSch
 from langchain.prompts import load_prompt
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 
-from utils.vectordb.vector_db import VectorDb
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -36,17 +38,18 @@ llm_info = config['llm']
 retrieval_info = config['retrieval']
 embedding_model_info = config['embedding_model']
 model = APIGateway.load_llm(
-    type=llm_info["api"],
+    type=llm_info['api'],
     streaming=True,
-    coe=llm_info["coe"],
-    do_sample=llm_info["do_sample"],
-    max_tokens_to_generate=llm_info["max_tokens_to_generate"],
-    temperature=llm_info["temperature"],
-    select_expert=llm_info["select_expert"],
+    coe=llm_info['coe'],
+    do_sample=llm_info['do_sample'],
+    max_tokens_to_generate=llm_info['max_tokens_to_generate'],
+    temperature=llm_info['temperature'],
+    select_expert=llm_info['select_expert'],
     process_prompt=False,
 )
 
-def load_conversation(transcription, transcription_path):
+
+def load_conversation(transcription: str, transcription_path: str) -> List[Document]:
     """Load a conversation as langchain Document
 
     Args:
@@ -60,7 +63,7 @@ def load_conversation(transcription, transcription_path):
     return [doc]
 
 
-def reduce_call(conversation):
+def reduce_call(conversation: List[Document]) -> Any:
     """
     Reduce the conversation by applying the ReduceDocumentsChain.
 
@@ -88,7 +91,7 @@ def reduce_call(conversation):
     return new_document
 
 
-def get_summary(conversation, model=model):
+def get_summary(conversation: str, model: LLM = model) -> str:
     """
     Summarizes a conversation.
 
@@ -110,14 +113,15 @@ def get_summary(conversation, model=model):
     return summarization_response
 
 
-def classify_main_topic(conversation, classes, model=model):
+def classify_main_topic(conversation: str, classes: List[str], model: LLM = model) -> List[str]:
     """
     Classify the topic of a conversation.
 
     Args:
         conversation (str): The conversation to classify.
         classes (List[str]): The list of classes to classify the conversation into.
-        model (Langchain LLM Model, optional): The language model to use for classification. Defaults to a SambaStudio model.
+        model (Langchain LLM Model, optional): The language model to use for classification. Defaults to a SambaStudio
+        model.
 
     Returns:
         List[str]: The list of classes that the conversation was classified into.
@@ -137,7 +141,7 @@ def classify_main_topic(conversation, classes, model=model):
     return topic_classification_response
 
 
-def get_entities(conversation, entities, model=model):
+def get_entities(conversation: str, entities: List[str], model: LLM = model) -> Dict[str, Any]:
     """
     Extract entities from a conversation.
 
@@ -167,14 +171,15 @@ def get_entities(conversation, entities, model=model):
     return ner_response
 
 
-def get_sentiment(conversation, sentiments, model=model):
+def get_sentiment(conversation: str, sentiments: List[Any], model: LLM = model) -> str:
     """
     get the overall sentiment of the user in a conversation.
 
     Args:
         conversation (str): The conversation to analyse.
         setiments (list): Listo of posible sentioments to clasiffy
-        model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaStudio model.
+        model (Langchain LLM Model, optional): The language model to use for summarization. Defaults to a SambaStudio
+        model.
 
     Returns:
         str: The overall sentiment of the user.
@@ -194,7 +199,7 @@ def get_sentiment(conversation, sentiments, model=model):
     return sentiment_analysis_response[0]
 
 
-def get_nps(conversation, model=model):
+def get_nps(conversation: str, model: LLM = model) -> Dict[str, Any]:
     """get a prediction of a possible net promoter score for a given conversation
 
     Args:
@@ -220,7 +225,9 @@ def get_nps(conversation, model=model):
     return nps
 
 
-def get_call_quality_assessment(conversation, factual_result, procedures_result):
+def get_call_quality_assessment(
+    conversation: str, factual_result: Dict[str, Any], procedures_result: Dict[str, Any]
+) -> Tuple[float, Any, Any]:
     """
     Return the calculated quality assessment of the given conversation.
 
@@ -249,7 +256,7 @@ def get_call_quality_assessment(conversation, factual_result, procedures_result)
     return overall_score, nps['description'], nps['score']
 
 
-def set_retriever(documents_path, urls):
+def set_retriever(documents_path: str, urls: List[str]) -> Any:
     """
     Set up a Faiss vector database for document retrieval.
 
@@ -258,7 +265,7 @@ def set_retriever(documents_path, urls):
         urls (List[str]: The list of Urls to scrape and load)
 
     Returns:
-        langchain retirver: The Faiss retriever to be used whit lang chain retrieval chains.
+        langchain retriever: The Faiss retriever to be used whit lang chain retrieval chains.
     """
     print('setting retriever')
     vectordb = VectorDb()
@@ -282,7 +289,7 @@ def set_retriever(documents_path, urls):
     return retriever
 
 
-def factual_accuracy_analysis(conversation, retriever, model=model):
+def factual_accuracy_analysis(conversation: str, retriever: Any, model: LLM = model) -> Dict[str, Any]:
     """
     Analyse the factual accuracy of the given conversation.
 
@@ -324,7 +331,7 @@ def factual_accuracy_analysis(conversation, retriever, model=model):
     return factual_accuracy_analysis_response
 
 
-def procedural_accuracy_analysis(conversation, procedures_path, model=model):
+def procedural_accuracy_analysis(conversation: str, procedures_path: str, model: LLM = model) -> Dict[str, Any]:
     """
     Analyse the procedural accuracy of the given conversation.
 
@@ -367,7 +374,7 @@ def procedural_accuracy_analysis(conversation, procedures_path, model=model):
     return procedures_analysis_response
 
 
-def get_chunks(documents):
+def get_chunks(documents: List[Document]) -> List[Document]:
     """
     Split document in smaller documents.
 
@@ -382,8 +389,14 @@ def get_chunks(documents):
 
 
 def call_analysis_parallel(
-    conversation, documents_path, facts_urls, procedures_path, classes_list, entities_list, sentiment_list
-):
+    conversation: List[Document],
+    documents_path: str,
+    facts_urls: List[str],
+    procedures_path: str,
+    classes_list: List[str],
+    entities_list: List[str],
+    sentiment_list: List[str],
+) -> Dict[str, Any]:
     """
     Runs analysis steps in parallel.
 

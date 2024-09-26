@@ -3,7 +3,7 @@ import os
 import sys
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Callable, Generator, Optional
+from typing import Any, Callable, Generator, List, Optional
 
 import streamlit as st
 import yaml
@@ -15,8 +15,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from function_calling.src.function_calling import FunctionCallingLlm  # type: ignore
-from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate  # type: ignore
+from function_calling.src.function_calling import FunctionCallingLlm
+from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
@@ -34,7 +34,7 @@ TOOLS = {
 }
 
 
-def load_config():
+def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
@@ -45,7 +45,7 @@ additional_env_vars = config.get('additional_env_vars', None)
 
 
 @contextmanager
-def st_capture(output_func: Callable[[str], None]) -> Generator:
+def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]:
     """
     context manager to catch stdout and send it to an output streamlit element
 
@@ -64,10 +64,10 @@ def st_capture(output_func: Callable[[str], None]) -> Generator:
             return ret
 
         stdout.write = new_write  # type: ignore
-        yield
+        yield # type: ignore
 
 
-def set_fc_llm(tools: list) -> None:
+def set_fc_llm(tools: List[Any]) -> None:
     """
     Set the FunctionCallingLlm object with the selected tools
 
@@ -115,7 +115,10 @@ def setChatInputValue(chat_input_value: str) -> None:
     <script>
         function insertText(dummy_var_to_force_repeat_execution) {{
             var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                window.HTMLTextAreaElement.prototype,
+                "value"
+            ).set;
             nativeInputValueSetter.call(chatInput, "{chat_input_value}");
             var event = new Event('input', {{ bubbles: true}});
             chatInput.dispatchEvent(event);
@@ -151,11 +154,8 @@ def main() -> None:
     with st.sidebar:
         st.title('Setup')
 
-        #Callout to get SambaNova API Key
-        st.markdown(
-            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
-        )
-
+        # Callout to get SambaNova API Key
+        st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
@@ -195,13 +195,16 @@ def main() -> None:
                 st.markdown('DB operations')
                 if st.button('Create a summary table in the db'):
                     setChatInputValue(
-                        'Create and save a table in the database that will show the top 10 albums with the highest sales in 2013 and in the USA. The table fields will be the name of the album, the name of the artist, the total amount of sales, and the number of copies sold.'
+                        """Create and save a table in the database that will show the top 10 albums with the highest
+                        sales in 2013 and in the USA. The table fields will be the name of the album, the name of the
+                        artist, the total amount of sales, and the number of copies sold."""
                     )
                 if st.button('Get information of the created summary table'):
                     setChatInputValue('Give me a summary of the 2013 top albums table')
                 if st.button('Create insightful plots of the summary table'):
                     setChatInputValue(
-                        'Get the information of the 2013 top albums table in the DB, when you get the data then create some meaningful plots that summarize the information, and store them in PNG format'
+                        """Get the information of the 2013 top albums table in the DB, when you get the data then create
+                         some meaningful plots that summarize the information, and store them in PNG format"""
                     )
 
             with st.expander('Additional settings', expanded=False):
