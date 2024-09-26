@@ -13,7 +13,7 @@ import glob
 import ssl
 import time
 import uuid
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union, Optional
 
 import nltk
 import yaml
@@ -472,6 +472,7 @@ class MultimodalRetrieval:
         summarize_tables: bool = False,
         summarize_texts: bool = False,
         raw_image_retrieval: bool = True,
+        data_sub_folder: Optional[str] = None,
     ) -> Callable:
         """
         Ingests PDF files, images, and processes them to create a vectorstore and docstore.
@@ -483,6 +484,7 @@ class MultimodalRetrieval:
         summarize_texts (bool): A flag indicating whether to summarize text documents.
         raw_image_retrieval (bool): A flag indicating whether to retrieve answers based on raw images or in image
         summaries.
+        data_sub_folder (str): A string representing the subfolder where the data will be stored.
 
         Returns:
         qa_chain (function): A function that retrieves answers based on the specified retrieval type.
@@ -491,7 +493,9 @@ class MultimodalRetrieval:
         image_files = [file for file in files if file.name.endswith(('.jpg', '.jpeg', 'png'))]
         raw_elements = []
         image_paths = []
-        upload_folder = os.path.join(kit_dir, 'data', 'upload')
+        if data_sub_folder is None:
+            data_sub_folder = "upload"
+        upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
         for pdf in pdf_files:
