@@ -15,3 +15,18 @@ prompts:
 sec:
     "company": "company"
     "email": user.name@domain.com
+    "tickers":
+        - AAPL
+    "form_types":
+        - "10-K"
+    "end_date": "2024-01-01"
+    "start_date": "2023-01-01"
+
+table_options:
+    "model": "doclaynet" # "yolo" or "doclaynet"
+    "threshold": 0.75
+    "offset": 20
+    "do_reshape": True
+    "size":
+        - 336
+        - 336

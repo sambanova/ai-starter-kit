@@ -18,6 +18,8 @@ from pdf2image import convert_from_path
 import random
 import subprocess
 import time
+import torch
+from transformers import AutoImageProcessor, DeformableDetrForObjectDetection # type: ignore
 from typing import Any, Dict, List, Tuple
 from ultralyticsplus import YOLO # type: ignore
 import uuid
@@ -68,6 +70,45 @@ DOCUMENT_PREFIX = r'''\documentclass[8pt]{article}
 
 class TableTools:
 
+    def __init__(self, config_path: str) -> None:
+        
+        self.llm_info, self.prompt_info, self.table_info = self.load_configs(config_path)
+
+        if self.table_info["model"] not in ["yolo", "doclaynet"]:
+            raise ValueError(f'Got {self.table_info["model"]}, must be of either ' +
+                             '["yolo", "doclaynet"]')
+
+        self.model = self.table_info["model"]
+        self.threshold = self.table_info["threshold"]
+        self.offset = self.table_info["offset"]
+        self.do_reshape = self.table_info["do_reshape"]
+        self.size = self.table_info["size"]
+
+    def load_configs(self, config_path: str) -> Any:
+        """
+        Loads a yaml config file and returns llm info.
+
+        Args:
+            config_path: Path to the config yaml file.
+
+        Returns:
+            A tuple of dictionaries containing the llm information.
+        """
+
+        assert isinstance(config_path, str), \
+            TypeError(f"Must be type str, but got {type(config_path)}.")
+
+        try:
+            with open(config_path, "r") as yaml_file:
+                config: dict = yaml.safe_load(yaml_file)
+        except FileNotFoundError:
+            logging.error(f"{config_path} not found.")
+            raise FileNotFoundError(f"{config_path} does not exist.")
+        
+        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_options"]
+
+        return llm_info, prompt_info, table_info
+
     def convert_pdf_to_images(self, data_directory: str) -> None:
             """
             This method converts a pdf file to a series of images of each page
@@ -94,8 +135,8 @@ class TableTools:
                 raise FileNotFoundError(f"{data_directory} does not exist.")
 
             for filename in files:
-                logging.info(f"Converting {filename} to a folder of \
-                             images in the same location")
+                logging.info(f"Converting {filename} to a folder of " +
+                             "images in the same location")
 
                 # Convert pdf to images and save them in the images 
                 # subdirectory.
@@ -108,7 +149,7 @@ class TableTools:
                     output_path: str = f"{output_folder}/{img_name}"
                     image.save(output_path, 'JPEG')
 
-    def crop_tables(self,
+    def crop_tables_yolo(self,
                     data_directory: str, 
                     conf: float = 0.25,
                     iou: float = 0.45,
@@ -170,7 +211,7 @@ class TableTools:
             
             # Get bounding boxes
             # boxes: Any = results[0].boxes.xyxy.numpy(),
-            conf: Any = results[0].boxes.conf
+            conf = results[0].boxes.conf
             mask = conf >= threshold
             boxes = results[0][mask].boxes.xyxy.numpy()
 
@@ -190,9 +231,113 @@ class TableTools:
                                                 box[3]+offset))
                 page_no: str = filename.partition('images')[-1].replace("/", "").replace(".jpg", "")
                 output_path: str = f"{output_folder}/{page_no}_table_{i}.jpg"
-                cropped_table.save(output_path, "JPEG")
-        logging.info(f"Cropped tables saved to {data_directory} \
-                     in subdirectories.")
+                
+                # If do_reshape, use cv2 for improved interpolation method for tables.
+                if self.do_reshape:
+                    cropped_table_array = np.array(cropped_table)
+                    cropped_table_array = cv2.resize(cropped_table_array, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table_array, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                else:
+                    cropped_table.save(output_path, "JPEG")
+
+        logging.info(f"Cropped tables saved to {data_directory} " +
+                     "in subdirectories.")
+        
+    def crop_tables_doclaynet(self, data_directory: str, threshold: float = 0.75, offset: int = 20) -> None:
+
+        """
+        This method crops tables from images using Deformable DETR DocLayNet (https://huggingface.co/Aryn/deformable-detr-DocLayNet)
+        Args:
+            data_directory: directory of images
+            threshold: the float value for confidence thresholding
+            offset: How much to pad the table detection when cropping.
+
+        Raises:
+            TypeError: if `data_directory` is not a string.
+            TypeError: if `threshold` is not a float.
+            TypeError: if `offset` is not an int.
+        """
+
+        assert isinstance(data_directory, str), \
+            TypeError(f"Expected str, got {type(data_directory)}")
+        assert isinstance(threshold, float), \
+            TypeError(f"Expected float, got {type(threshold)}")
+        assert isinstance(offset, int), \
+            TypeError(f"Expected int, got {type(offset)}")
+
+        processor = AutoImageProcessor.from_pretrained("Aryn/deformable-detr-DocLayNet")
+        model = DeformableDetrForObjectDetection.from_pretrained("Aryn/deformable-detr-DocLayNet")
+
+        # Get all files in directory recursively
+        try:
+            files: List[str] = glob.glob(data_directory + "**/**", recursive=True)
+            files = [file for file in files if file.endswith(".jpg")]
+        except FileNotFoundError:
+            logging.error(f"{data_directory} not found.")
+            raise FileNotFoundError(f"{data_directory} does not exist.")
+
+        # Iterate over all files and crop tables from them
+        for filename in files:
+            logging.info(f"Cropping tables from {filename}")
+            output_folder: str = filename.partition('images')[0] + "cropped_tables/"
+
+            # Create output folder if it doesn't exist.
+            os.makedirs(output_folder, exist_ok=True)
+
+            image: Image.Image = Image.open(filename)
+
+            inputs = processor(images=image, return_tensors="pt")
+            outputs = model(**inputs)
+
+            target_sizes = torch.tensor([image.size[::-1]])
+            results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, 
+                                                              threshold=threshold)[0]
+            
+            tables = [model.config.id2label[result.item()] == "Table" for result in results['labels']]
+            boxes = results['boxes'].tolist()
+
+            table_boxes = [sub for sub, bool in zip(boxes, tables) if bool]
+
+            for i, box in enumerate(table_boxes):
+                cropped_table: Image.Image = image.crop((box[0]-offset, 
+                                                box[1]-offset, 
+                                                box[2]+offset, 
+                                                box[3]+offset))
+                page_no: str = filename.partition('images')[-1].replace("/", "").replace(".jpg", "")
+                output_path: str = f"{output_folder}/{page_no}_table_{i}.jpg"
+                
+                # If do_reshape, use cv2 for improved interpolation method for tables.
+                if self.do_reshape:
+                    cropped_table_array = np.array(cropped_table)
+                    cropped_table_array = cv2.resize(cropped_table_array, self.size, interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(output_path, cropped_table_array, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                else:
+                    cropped_table.save(output_path, "JPEG")
+                
+        logging.info(f"Cropped tables saved to {data_directory} " +
+                     "in subdirectories.")
+    
+    # TODO: Handle differing options if both models are to be kept - experimental testing for now.
+    def crop_tables(self, data_directory: str) -> None:
+
+        """
+        This method crops tables using the chosen model.
+
+        Args:
+            data_directory: directory of images
+            threshold: the float value for confidence thresholding
+            offset: How much to pad the table detection when cropping.
+        """
+
+        model_map = {
+            "yolo": self.crop_tables_yolo,
+            "doclaynet": self.crop_tables_doclaynet
+        }
+
+        if self.model in model_map:
+            model_map[self.model](data_directory=data_directory,
+                                  threshold=self.threshold,
+                                  offset=self.offset)
 
     def replace_special_to_latex(self, text: str) -> str:
         
@@ -567,6 +712,7 @@ class TableTools:
         with open(tex_filepath, 'w') as f:
             f.write(latex_code)
 
+    # TODO: Decide to replace with detr model - yolo or doclaynet
     def _crop_synth_table(self, image_path: str) -> None:
 
         """
@@ -602,21 +748,10 @@ class TableTools:
         height, width = gray_image.shape
         cropped_table = image[max(0, y-random.randint(10, 100)):min(y+h+random.randint(10, 100), height), 
                             max(0, x-random.randint(10, 100)):min(x+w+random.randint(10, 100), width)]
-        
-        keeptrying = True
-        counter = 0
-        while keeptrying:
-            try:
-                cv2.imwrite(image_path, cropped_table)
-                keeptrying = False
-            except Exception as e:
-                print(e)
-                time.sleep(0.5)
-                counter += 1
-                if counter >= 10:
-                    break
 
         logging.info(f"Writing image to: {image_path}.")
+        if self.do_reshape:
+            cropped_table = cv2.resize(cropped_table, self.size, interpolation=cv2.INTER_AREA)
         cv2.imwrite(image_path, cropped_table)
     
     # TODO: Provide control
@@ -771,10 +906,9 @@ class QAList(BaseModel):
 class TableAugmentor:
 
     def __init__(self, config_path: str) -> None:
-
-        assert isinstance(config_path, str), TypeError(f"Expected str, got {type(config_path)}.")
         
-        self.llm_info, self.prompt_info = self.load_configs(config_path)
+        self.config_path = config_path
+        self.llm_info, self.prompt_info, self.table_info = self.load_configs(config_path)
         self.init_llm()
         self.init_table_modifying_chain()
         self.init_table_qa_chain()
@@ -801,9 +935,9 @@ class TableAugmentor:
             logging.error(f"{config_path} not found.")
             raise FileNotFoundError(f"{config_path} does not exist.")
 
-        llm_info, prompt_info = config["llm"], config["prompts"]
+        llm_info, prompt_info, table_info = config["llm"], config["prompts"], config["table_options"]
 
-        return llm_info, prompt_info
+        return llm_info, prompt_info, table_info
 
     def init_table_modifying_chain(self) -> None:
         """
@@ -973,7 +1107,7 @@ class TableAugmentor:
             json.dump([], f)
         
         # Instantiate table tools object for later use.
-        table_tools = TableTools()
+        table_tools = TableTools(config_path=self.config_path)
 
         # Generate synthetic data for specified number of
         # samples.

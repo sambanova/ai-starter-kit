@@ -1,16 +1,16 @@
 import yaml
 import glob
-from typing import List, Dict
-from sec_edgar_downloader import Downloader
+from typing import Dict
 import pdfkit
+from sec_edgar_downloader import Downloader
 
 
 class SECTools:
 
     def __init__(self,
-                config: dict) -> None:
+                config_path: str) -> None:
         
-        self.configs = self.load_config(config)
+        self.configs = self.load_config(config_path)
 
 
     @staticmethod
@@ -33,26 +33,20 @@ class SECTools:
         except yaml.YAMLError as e:
             raise RuntimeError(f'Error parsing YAML file: {e}')
         
-    def download_filings(self, tickers: List[str],
-                        form_types: List[str],
-                        after: str,
-                        before: str,
-                        download_folder: str) -> None:
+    def download_filings(self, download_folder: str) -> None:
 
         dl = Downloader(company_name=self.configs["sec"]["company"],
                         email_address=self.configs["sec"]["email"],
                         download_folder=download_folder)
         
-        for ticker in tickers:
-            for form_type in form_types:
-
-                print(f"Downloading {form_type} filing for {ticker} from {after}, {before}")
+        for ticker in self.configs["sec"]["tickers"]:
+            for form_type in self.configs["sec"]["form_types"]:
 
                 dl.get(
                     form=form_type,
                     ticker_or_cik=ticker,
-                    after=after,
-                    before=before
+                    after=self.configs["sec"]["start_date"],
+                    before=self.configs["sec"]["end_date"]
                 )
 
     def _read_txt_file(self, filename: str) -> str:
