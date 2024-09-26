@@ -1,7 +1,6 @@
 import os
 import json
 import argparse
-import pandas as pd
 
 from dotenv import load_dotenv
 
@@ -30,7 +29,7 @@ def str2bool(value: str) -> bool:
 
 def main() -> None:
     from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
-
+        
     parser = argparse.ArgumentParser(
         description="""Run a token throughput and latency benchmark. You have the option of running in two different 
             modes - 'custom' or 'synthetic'.
