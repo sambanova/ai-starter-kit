@@ -182,6 +182,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
       - Timeout: 600
         
       Results:
+
       ![dynamic_batching_speed-ttft](./imgs/dynamic_batching_speed-ttft.png)
       ![dynamic_batching_speed-latency](./imgs/dynamic_batching_speed-latency.png)
       ![dynamic_batching_speed-output_throughput](./imgs/dynamic_batching_speed-output_throughput.png)
@@ -200,6 +201,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
       - Timeout: 600
 
       Results:
+
       ![high_input_output_tokens-ttft](./imgs/high_input_output_tokens-ttft.png)
       ![high_input_output_tokens-latency](./imgs/high_input_output_tokens-latency.png)
       ![high_input_output_tokens-output_throughput](./imgs/high_input_output_tokens-output_throughput.png)
@@ -218,6 +220,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
       - Timeout: 600
 
       Results:
+      
       ![running_multiple_concurrent_requests-ttft](./imgs/running_multiple_concurrent_requests-ttft.png)
       ![running_multiple_concurrent_requests-latency](./imgs/running_multiple_concurrent_requests-latency.png)
       ![running_multiple_concurrent_requests-output_throughput](./imgs/running_multiple_concurrent_requests-output_throughput.png)
