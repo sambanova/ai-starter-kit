@@ -97,9 +97,7 @@ def initialize_session(
     # Initialize cache directory
     if prod_mode:
         if 'cache_dir' not in session_state:
-            session_state.cache_dir = os.path.join(
-                cache_dir[:-1] + '_prod_mode', '/cache' + f'_{session_state.session_id}'
-            )
+            session_state.cache_dir = os.path.join(cache_dir[:-1] + '_prod_mode', f'cache_{session_state.session_id}')
     else:
         if 'cache_dir' not in session_state:
             session_state.cache_dir = cache_dir
