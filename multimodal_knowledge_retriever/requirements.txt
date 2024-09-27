@@ -1,6 +1,6 @@
 streamlit==1.32.0
-pydantic==2.7.0
-pydantic_core==2.18.1
+pydantic==2.9.2
+pydantic_core==2.23.4
 python-dotenv==1.0.1
 langchain==0.2.16
 langchain-core==0.2.38
