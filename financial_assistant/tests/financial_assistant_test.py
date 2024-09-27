@@ -20,6 +20,13 @@ import pandas
 import streamlit
 from matplotlib.figure import Figure
 
+# Main directories
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
 from financial_assistant.src.llm import SambaNovaLLM
 from financial_assistant.src.tools import get_logger
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
@@ -49,13 +56,6 @@ T = TypeVar('T', bound='FinancialAssistantTest')
 
 # Wait time for test retries in seconds
 RETRY_SLEEP_TIME = 30
-
-# Main directories
-current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-sys.path.append(kit_dir)
-sys.path.append(repo_dir)
 
 
 class FinancialAssistantTest(unittest.TestCase):
