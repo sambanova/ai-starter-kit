@@ -119,7 +119,11 @@ def stream_chat_history() -> None:
 def stream_response_object(response: Any) -> Any:
     """Stream the LLM response."""
 
-    if isinstance(response, (str, float, int, Figure, pandas.DataFrame)) or isinstance(response, list) or isinstance(response, dict):
+    if (
+        isinstance(response, (str, float, int, Figure, pandas.DataFrame))
+        or isinstance(response, list)
+        or isinstance(response, dict)
+    ):
         return stream_complex_response(response)
 
     elif isinstance(response, tuple):
