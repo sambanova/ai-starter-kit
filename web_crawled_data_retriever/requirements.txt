@@ -2,9 +2,9 @@ streamlit==1.38.0
 streamlit-extras==0.3.6
 pydantic==2.9.2
 pydantic_core==2.23.4
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-community==0.2.16
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 faiss-cpu==1.7.4
