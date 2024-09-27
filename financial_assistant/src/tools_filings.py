@@ -129,7 +129,7 @@ def retrieve_filings(
 
         # Load the dataframe from the text file
         try:
-            df = pandas.read_csv(streamlit.session_state.source_dir + f'{filename}' + '.csv')
+            df = pandas.read_csv(os.path.join(streamlit.session_state.source_dir, f'{filename}.csv'))
         except FileNotFoundError:
             logger.error('No scraped data found.')
 
@@ -238,7 +238,7 @@ def parse_filings(
                     f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"
                     + f'{ticker_symbol}_{report_date.date().year}'
                 )
-                df.to_csv(streamlit.session_state.source_dir + filename + '.csv', index=False)
+                df.to_csv(os.path.join(streamlit.session_state.source_dir, f'{filename}.csv'), index=False)
                 break
 
     # If neither the year nor the quarter match, raise an error

@@ -327,7 +327,7 @@ def handle_pdf_generation(
         clear_directory(streamlit.session_state.pdf_sources_directory)
 
     # Derive the output file name
-    output_file = streamlit.session_state.pdf_generation_directory + report_name
+    output_file = os.path.join(streamlit.session_state.pdf_generation_directory, report_name)
 
     # Check that at least one data source is available
     if not any([data_paths[key] for key in data_paths]):
