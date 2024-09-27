@@ -17,7 +17,8 @@ plotly==5.18.0
 langchain==0.2.16
 langchain-core==0.2.38
 langchain-community==0.2.16
-pydantic==1.10.13
+pydantic==2.9.2
+pydantic_core==2.23.4
 python-dotenv==1.0.0
 sseclient-py==1.8.0
 unstructured==0.15.0
