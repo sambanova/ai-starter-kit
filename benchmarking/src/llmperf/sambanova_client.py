@@ -320,7 +320,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
                 url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode
             ) as response:
                 if response.status_code != 200:
-                    response.raise_for_status()
+                    error_details = response.json().get('error', 'No additional error details provided.')
+                    raise Exception(f"Error: {response.status_code}, Details: {error_details}")
 
                 # fetch generated text and metrics for api v2
                 if '/api/v2' in url.lower().strip():
