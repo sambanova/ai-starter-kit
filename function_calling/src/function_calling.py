@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
 from langchain_core.language_models.llms import LLM
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.human import HumanMessage
@@ -17,6 +16,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
+from pydantic import BaseModel, Field
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))

@@ -1,11 +1,12 @@
 import logging
 import os
-import sys
 import shutil
+import sys
 import time
-import yaml
 import uuid
 from threading import Thread
+
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -16,8 +17,9 @@ sys.path.append(repo_dir)
 
 import schedule
 import streamlit as st
+
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
-from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
