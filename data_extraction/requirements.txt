@@ -1,7 +1,7 @@
 aiofiles==23.2.1
 aiohttp==3.8.5
 aiosignal==1.3.1
-annotated-types==0.5.0
+annotated-types==0.6.0
 anyio==3.7.1
 appnope==0.1.3
 asttokens==2.4.0
@@ -44,7 +44,6 @@ kiwisolver==1.4.5
 langchain==0.2.16
 langchain-core==0.2.38
 langchain-community==0.2.16
-langchain-text-splitters==0.2.2
 orjson==3.10.6
 looseversion==1.3.0
 lxml==4.9.3
@@ -72,8 +71,8 @@ prov==2.0.0
 psutil==5.9.5
 ptyprocess==0.7.0
 pure-eval==0.2.2
-pydantic==1.10.14
-pydantic_core==2.10.1
+pydantic==2.9.2
+pydantic-core==2.23.4
 pydot==1.4.2
 Pygments==2.16.1
 PyMuPDF==1.23.4
