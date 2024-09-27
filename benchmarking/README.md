@@ -22,7 +22,6 @@ Benchmarking
     - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Full Walkthrough](#full-walkthrough)
       - [Synthetic Performance Evaluation](#synthetic-performance-evaluation)
-        - <a href="#synthetic-performance-examples" onclick="openDetails('synthetic-performance-evaluation')">Examples</a> 
       - [Custom Performance Evaluation](#custom-performance-evaluation)
       - [Performance on Chat](#performance-on-chat)
   - [CLI Option](#cli-option)
@@ -167,9 +166,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
 
-  <details id="synthetic-performance-examples">
-  <summary><strong>Synthetic Performance common examples</strong></summary>
-
+5. Synthetic Performance common examples
   1. Dynamic batching speed  
 
       Parameters:
@@ -226,8 +223,6 @@ This option allows you to evaluate the performance of the selected LLM on synthe
       ![running_multiple_concurrent_requests-output_throughput](./imgs/running_multiple_concurrent_requests-output_throughput.png)
       ![running_multiple_concurrent_requests-total_output_throughput](./imgs/running_multiple_concurrent_requests-total_output_throughput.png)
       ![running_multiple_concurrent_requests-gantt](./imgs/running_multiple_concurrent_requests-gantt.png)
-
-  </details>
 
   </details>
 
