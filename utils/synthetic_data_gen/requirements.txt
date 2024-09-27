@@ -7,6 +7,8 @@ langchain-core == 0.2.38
 langchain-community == 0.2.16
 langchain-experimental == 0.0.60
 langchain-text-splitters == 0.2.2
+pydantic == 2.9.2 
+pydantic == core-2.23.4
 python-dotenv == 1.0.1
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
