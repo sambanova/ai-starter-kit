@@ -119,10 +119,7 @@ def stream_chat_history() -> None:
 def stream_response_object(response: Any) -> Any:
     """Stream the LLM response."""
 
-    if isinstance(response, (str, float, int, Figure, pandas.DataFrame)):
-        return stream_complex_response(response)
-
-    elif isinstance(response, list) or isinstance(response, dict):
+    if isinstance(response, (str, float, int, Figure, pandas.DataFrame)) or isinstance(response, list) or isinstance(response, dict):
         return stream_complex_response(response)
 
     elif isinstance(response, tuple):
@@ -142,17 +139,17 @@ def stream_complex_response(response: Any) -> Any:
 
     elif isinstance(response, list):
         for item in response:
-            stream_single_response(item + '\n')
+            stream_single_response(item)
 
     elif isinstance(response, dict):
         for key, value in response.items():
             if isinstance(value, (str, float, int)):
                 if isinstance(value, float):
                     value = round(value, 2)
-                stream_single_response(str(value) + '\n')
+                stream_single_response(str(value))
             elif isinstance(value, list):
                 # If all values are strings
-                stream_single_response(', '.join([str(item) for item in value]) + '\n')
+                stream_single_response(', '.join([str(item) for item in value]))
             elif isinstance(value, (pandas.Series, pandas.DataFrame)):
                 stream_single_response(value)
 
