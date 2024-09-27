@@ -22,6 +22,7 @@ Benchmarking
     - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Full Walkthrough](#full-walkthrough)
       - [Synthetic Performance Evaluation](#synthetic-performance-evaluation)
+        - <a href="#synthetic-performance-examples" onclick="openDetails('synthetic-performance-evaluation')">Examples</a> 
       - [Custom Performance Evaluation](#custom-performance-evaluation)
       - [Performance on Chat](#performance-on-chat)
   - [CLI Option](#cli-option)
@@ -165,7 +166,67 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     - ```Total output throughput per batch size```: This bar plot shows the median total tokens generated per second per batch in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see good agreement between the client and server-side metrics. This metric will calculate the same values as the previous metric for batch size = 1. However, for batch size > 1, it is estimated as the average of ```Output throughput by batch size * Batch size``` for each batch, to account for more generated tokens due to concurrent requests being served in batch mode.
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
-</details>
+
+  <details id="synthetic-performance-examples">
+  <summary><strong>Synthetic Performance common examples</strong></summary>
+
+  1. Dynamic batching speed  
+
+      Parameters:
+      - Model name: COE/Meta-Llama-3.1-70B-Instruct
+      - API type: SambaStudio
+      - Number of input tokens: 250
+      - Number of output tokens: 250
+      - Number of total requests: 80
+      - Number of concurrent requests: 20
+      - Timeout: 600
+        
+      Results:
+      ![dynamic_batching_speed-ttft](./imgs/dynamic_batching_speed-ttft.png)
+      ![dynamic_batching_speed-latency](./imgs/dynamic_batching_speed-latency.png)
+      ![dynamic_batching_speed-output_throughput](./imgs/dynamic_batching_speed-output_throughput.png)
+      ![dynamic_batching_speed-total_output_throughput](./imgs/dynamic_batching_speed-total_output_throughput.png)
+      ![dynamic_batching_speed-gantt](./imgs/dynamic_batching_speed-gantt.png)
+    
+  2. High input and ouput tokens
+
+      Parameters:
+      - Model name: COE/Meta-Llama-3.1-70B-Instruct
+      - API type: SambaStudio
+      - Number of input tokens: 2000
+      - Number of output tokens: 2000
+      - Number of total requests: 80
+      - Number of concurrent requests: 25
+      - Timeout: 600
+
+      Results:
+      ![high_input_output_tokens-ttft](./imgs/high_input_output_tokens-ttft.png)
+      ![high_input_output_tokens-latency](./imgs/high_input_output_tokens-latency.png)
+      ![high_input_output_tokens-output_throughput](./imgs/high_input_output_tokens-output_throughput.png)
+      ![high_input_output_tokens-total_output_throughput](./imgs/high_input_output_tokens-total_output_throughput.png)
+      ![high_input_output_tokens-gantt](./imgs/high_input_output_tokens-gantt.png)
+
+  3. Running multiple concurrent requests
+
+      Parameters:
+      - Model name: COE/Meta-Llama-3.1-70B-Instruct
+      - API type: SambaStudio
+      - Number of input tokens: 250
+      - Number of output tokens: 250
+      - Number of total requests: 1000
+      - Number of concurrent requests: 100
+      - Timeout: 600
+
+      Results:
+      ![running_multiple_concurrent_requests-ttft](./imgs/running_multiple_concurrent_requests-ttft.png)
+      ![running_multiple_concurrent_requests-latency](./imgs/running_multiple_concurrent_requests-latency.png)
+      ![running_multiple_concurrent_requests-output_throughput](./imgs/running_multiple_concurrent_requests-output_throughput.png)
+      ![running_multiple_concurrent_requests-total_output_throughput](./imgs/running_multiple_concurrent_requests-total_output_throughput.png)
+      ![running_multiple_concurrent_requests-gantt](./imgs/running_multiple_concurrent_requests-gantt.png)
+
+  </details>
+
+  </details>
 
 <details id="custom-performance-evaluation">
 <summary><strong>Custom Performance Evaluation</strong></summary>
@@ -380,3 +441,13 @@ All the packages/tools are listed in the `requirements.txt` file in the project 
 1. ModuleNotFoundError: No module named 'st_pages'
 
 If you come across this error, please restart your vscode or venv in order for the module to be found.
+
+<!-- JS scripts -->
+<script>
+function openDetails(id) {
+  const details = document.getElementById(id);
+  if (details && !details.open) {
+    details.open = true;  
+  }
+}
+</script>
