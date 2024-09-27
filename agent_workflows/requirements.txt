@@ -171,8 +171,8 @@ pyasn1_modules==0.4.0
 pycocotools==2.0.8
 pycountry==23.12.11
 pycparser==2.22
-pydantic==2.7.0
-pydantic_core==2.18.1
+pydantic==2.9.2 
+pydantic-core==2.23.4
 pydeck==0.9.1
 pyee==11.1.0
 Pygments==2.18.0
