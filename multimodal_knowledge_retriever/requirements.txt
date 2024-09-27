@@ -7,6 +7,7 @@ langchain-core==0.2.38
 langchain-community==0.2.16
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
+schedule==1.2.2
 streamlit-extras
 sseclient-py==1.8.0
 unstructured_inference==0.7.29

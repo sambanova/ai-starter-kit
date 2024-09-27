@@ -13,6 +13,7 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import concurrent.futures
+from typing import Any
 
 from search_assistant.src.search_assistant import SearchAssistant
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
@@ -23,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 
-def load_config():
+def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
@@ -33,7 +34,7 @@ prod_mode = config.get('prod_mode', False)
 additional_env_vars = config.get('additional_env_vars', None)
 
 
-def handle_user_input(user_question):
+def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
             if st.session_state.method == 'rag_query':
@@ -108,7 +109,7 @@ def handle_user_input(user_question):
                         )
 
 
-def main():
+def main() -> None:
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg',
@@ -148,12 +149,10 @@ def main():
     with st.sidebar:
         st.title('**Setup**')
 
-        #Callout to get SambaNova API Key
-        st.markdown(
-            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
-        )
+        # Callout to get SambaNova API Key
+        st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-        st.markdown("Get your SerpApi key [here]( https://serpapi.com)")
+        st.markdown('Get your SerpApi key [here]( https://serpapi.com)')
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
@@ -239,7 +238,8 @@ def main():
     user_question = st.chat_input(
         'Ask questions about data in provided sites', disabled=st.session_state.input_disabled
     )
-    handle_user_input(user_question)
+    if user_question is not None:
+        handle_user_input(user_question)
 
 
 if __name__ == '__main__':

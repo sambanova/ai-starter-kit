@@ -351,7 +351,7 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if 'openai' in self.base_url:
+        if 'v1/chat/completions' in self.base_url:
             response = self._call_openai_api(prompt, images_list)
             generation = self._process_openai_api_response(response)
         elif 'generic' in self.base_url:
@@ -384,7 +384,7 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if 'openai' in self.base_url:
+        if 'v1/chat/completions' in self.base_url:
             response = self._call_openai_api_stream(prompt, images_list)
             for chunk in self._process_openai_api_response_stream(response):
                 yield chunk

@@ -168,6 +168,13 @@ The table belows lists the available kits, which are grouped into four categorie
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
+<tr>
+<td width="20%"><a href="sambanova_scribe/README.md"> SambaNova Scribe</a></td>
+<td width="40%">Example implementation of a transcription and summarization workflow.</td>
+<td width="20%"> SambaNova Cloud</td>
+<td width="20%"> Advanced AI Capabilities </td>
+</tr>
+
 </tbody>
 </table>
 

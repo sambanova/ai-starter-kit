@@ -8,6 +8,7 @@ import yaml
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.docstore.document import Document
 from langchain.document_loaders import AsyncHtmlLoader
 from langchain.document_transformers import Html2TextTransformer
 from langchain.prompts import load_prompt
@@ -21,6 +22,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
+
+from typing import Any, Dict, List
 
 from utils.vectordb.vector_db import VectorDb
 
@@ -36,7 +39,7 @@ class WebCrawlingRetrieval:
     Class for web crawling retrieval.
     """
 
-    def __init__(self, documents: Optional[list] = None, config: Optional[List] = None) -> None:
+    def __init__(self, documents: Optional[List[Document]] = None, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize the WebCrawlingRetrieval class.
 
@@ -57,7 +60,9 @@ class WebCrawlingRetrieval:
         self.extra_loaders = config_info[5]
         self.vectordb = VectorDb()
 
-    def _get_config_info(self, config_path: Optional[str] = CONFIG_PATH) -> Tuple[str, str, Dict, Dict, Dict, List]:
+    def _get_config_info(
+        self, config_path: Optional[str] = CONFIG_PATH
+    ) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], List[str]]:
         """
         Loads json config file
         Args:
@@ -72,6 +77,7 @@ class WebCrawlingRetrieval:
             (only pdf available in base kit)
         """
         # Read config file
+        assert config_path is not None
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
         api_info = config['api']
@@ -84,7 +90,7 @@ class WebCrawlingRetrieval:
         return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders
 
     @staticmethod
-    def load_remote_pdf(url: str) -> List:
+    def load_remote_pdf(url: str) -> List[Document]:
         """
         Load PDF files from the given URL.
         Args:
@@ -97,7 +103,7 @@ class WebCrawlingRetrieval:
         return docs
 
     @staticmethod
-    def load_htmls(urls: List, extra_loaders: Optional[List] = None) -> List:
+    def load_htmls(urls: Set[str], extra_loaders: Optional[List[str]] = None) -> List[Document]:
         """
         Load HTML documents from the given URLs.
         Args:
@@ -120,7 +126,7 @@ class WebCrawlingRetrieval:
         return docs
 
     @staticmethod
-    def link_filter(all_links: List[str], excluded_links: List[str]) -> Set[str]:
+    def link_filter(all_links: Set[str], excluded_links: set[str]) -> Set[str]:
         """
         Filters a list of links based on a list of excluded links.
         Args:
@@ -141,7 +147,7 @@ class WebCrawlingRetrieval:
         return filtered_links
 
     @staticmethod
-    def find_links(docs: List, excluded_links: Optional[List] = None) -> Set[str]:
+    def find_links(docs: List[Document], excluded_links: Optional[List[str]] = None) -> Set[str]:
         """
         Find links in the given HTML documents, excluding specified links and not text content links.
         Args:
@@ -175,7 +181,7 @@ class WebCrawlingRetrieval:
         return all_links
 
     @staticmethod
-    def clean_docs(docs: List) -> List:
+    def clean_docs(docs: Any) -> Any:
         """
         Clean the given HTML documents by transforming them into plain text.
         Args:
@@ -187,7 +193,9 @@ class WebCrawlingRetrieval:
         docs = html2text_transformer.transform_documents(documents=docs)
         return docs
 
-    def web_crawl(self, urls: List, excluded_links: Optional[List] = None, depth: int = 1) -> Tuple[List, List]:
+    def web_crawl(
+        self, urls: Set[str], excluded_links: Optional[List[str]] = None, depth: int = 1
+    ) -> Tuple[List[Document], List[str]]:
         """
         Perform web crawling, retrieve and clean HTML documents from the given URLs, with specified depth
         of exploration.
@@ -206,12 +214,12 @@ class WebCrawlingRetrieval:
             depth > self.web_crawling_params['max_depth']
         ):  # Max depth change with precaution number of sites grow exponentially
             depth = self.web_crawling_params['max_depth']
-        scraped_urls = []
-        raw_docs = []
+        scraped_urls: List[Any] = []
+        raw_docs: List[Any] = []
         for _ in range(depth):
             if len(scraped_urls) + len(urls) >= self.web_crawling_params['max_scraped_websites']:
-                urls = list(urls)[: self.web_crawling_params['max_scraped_websites'] - len(scraped_urls)]
-                urls = set(urls)
+                list_urls = list(urls)[: self.web_crawling_params['max_scraped_websites'] - len(scraped_urls)]
+                urls = set(list_urls)
 
             scraped_docs = WebCrawlingRetrieval.load_htmls(urls, self.extra_loaders)
             scraped_urls.extend(urls)
@@ -263,6 +271,7 @@ class WebCrawlingRetrieval:
             )
 
         elif os.path.exists(persist_directory) and update:
+            assert self.documents is not None
             self.chunks = self.vectordb.get_text_chunks(
                 self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
             )
@@ -274,6 +283,7 @@ class WebCrawlingRetrieval:
             )
 
         else:
+            assert self.documents is not None
             self.chunks = self.vectordb.get_text_chunks(
                 self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
             )
@@ -281,7 +291,9 @@ class WebCrawlingRetrieval:
                 self.chunks, self.embeddings, self.retrieval_info['db_type'], None
             )
 
-    def create_and_save_local(self, input_directory: str, persist_directory: str, update: bool = False) -> None:
+    def create_and_save_local(
+        self, input_directory: str, persist_directory: Optional[str], update: bool = False
+    ) -> None:
         """
         Create a vector store based on the given documents.
         Args:
@@ -289,6 +301,7 @@ class WebCrawlingRetrieval:
             persist_directory: The directory to save the vectorstore.
             update (bool, optional): Whether to update the vector store. Defaults to False.
         """
+        assert self.documents is not None
         self.chunks = self.vectordb.get_text_chunks(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )

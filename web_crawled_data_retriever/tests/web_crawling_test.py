@@ -29,26 +29,23 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))  # absolute path to ai-s
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from types import TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Type
 
 from dotenv import load_dotenv
-from src.web_crawling_retriever import WebCrawlingRetrieval
+from langchain.docstore.document import Document
+
+from web_crawled_data_retriever.src.web_crawling_retriever import WebCrawlingRetrieval
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-def set_retrieval_qa_chain(documents: Optional[List] = None, config: Optional[Dict] = None, save: bool = False) -> Any:
-    if config is None:
-        config = {}
-    if documents is None:
-        documents = []
+def set_retrieval_qa_chain(documents: List[Document] = [], config: Dict[str, Any] = {}, save: bool = False) -> Any:
     web_crawling_retrieval = WebCrawlingRetrieval(documents, config)
     web_crawling_retrieval.init_llm_model()
     if save:
         web_crawling_retrieval.create_and_save_local(
             input_directory=config.get('input_directory', None),
-            persist_directory=config.get('persist_directory'),
+            persist_directory=config.get('persist_directory', None),
             update=config.get('update', False),
         )
     else:
@@ -60,14 +57,22 @@ def set_retrieval_qa_chain(documents: Optional[List] = None, config: Optional[Di
 
 
 # Scrap sites
-base_urls_list = [
-    'https://www.espn.com',
-    'https://lilianweng.github.io/posts/2023-06-23-agent/',
-    'https://sambanova.ai/',
-]
+base_urls_list = set(
+    [
+        'https://www.espn.com',
+        'https://lilianweng.github.io/posts/2023-06-23-agent/',
+        'https://sambanova.ai/',
+    ]
+)
 
 
 class WebCrawlingTestCase(unittest.TestCase):
+    time_start: float
+    crawler: WebCrawlingRetrieval
+    docs: List[Document]
+    sources: List[str]
+    conversation: Any
+
     @classmethod
     def setUpClass(cls: Type['WebCrawlingTestCase']) -> None:
         cls.time_start = time.time()
@@ -106,6 +111,8 @@ class WebCrawlingTestCase(unittest.TestCase):
 
 
 class CustomTextTestResult(unittest.TextTestResult):
+    test_results: List[Dict[str, Any]]
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.test_results: List[Dict[str, Any]] = []
@@ -114,13 +121,11 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addSuccess(test)
         self.test_results.append({'name': test._testMethodName, 'status': 'PASSED'})
 
-    def addFailure(
-        self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]
-    ) -> None:
+    def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
 
-    def addError(self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]) -> None:
+    def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
@@ -130,6 +135,7 @@ def main() -> int:
     test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
 
     logger.info('\nTest Results:')
+    assert hasattr(test_result, 'test_results')
     for result in test_result.test_results:
         logger.info(f"{result['name']}: {result['status']}")
         if 'message' in result:
