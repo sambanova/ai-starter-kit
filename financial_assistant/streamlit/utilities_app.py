@@ -211,17 +211,17 @@ def save_historical_price_callback(
 
     # Derive the filename
     suffix = f'stock_data_{"_".join(symbol_list)}_{start_date}_{end_date}'
-    suffix_csv = f'{suffix}.csv'
-    suffix_png = f'{suffix}.png'
+    path_csv = os.path.join(dir_name, f'{suffix}.csv')
+    path_png = os.path.join(dir_name, f'{suffix}.png')
 
     # Write the dataframe to a csv file
-    data.to_csv(os.path.join(dir_name, suffix_csv), index=True)
+    data.to_csv(path_csv, index=True)
 
     # Save the plots as png images
-    fig.savefig(os.path.join(dir_name, suffix_png), bbox_inches='tight')
+    fig.savefig(path_png, bbox_inches='tight')
 
     # Compose the content including the user query and the filename
-    content = '\n\n' + user_query + '\n\n' + f'{suffix_png}' + '\n\n'
+    content = '\n\n' + user_query + '\n\n' + f'{path_png}' + '\n\n'
 
     # Save the content path to a file
     if save_path is not None:
