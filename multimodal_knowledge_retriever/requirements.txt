@@ -5,6 +5,7 @@ python-dotenv==1.0.1
 langchain==0.3.1
 langchain-core==0.3.6
 langchain-community==0.3.1
+langchain-chroma == 1.1.4
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
 schedule==1.2.2
