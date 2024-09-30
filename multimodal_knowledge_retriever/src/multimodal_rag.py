@@ -1,6 +1,6 @@
+import logging
 import os
 import sys
-import logging
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -13,11 +13,11 @@ import glob
 import ssl
 import time
 import uuid
-from typing import Callable, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
-import yaml
 import streamlit as st
+import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
@@ -75,10 +75,10 @@ class MultimodalRetrieval:
         self.set_llm()
         self.set_lvlm()
         self.collection_id = str(uuid.uuid4())
-        self.vector_collections = set()
-        self.retriever = None
+        self.vector_collections: Set[Any] = set()
+        self.retriever: Optional[MultiVectorRetriever] = None
 
-    def get_config_info(self) -> Tuple[str, str, str, str]:
+    def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
         Loads json config file
         """
@@ -93,7 +93,7 @@ class MultimodalRetrieval:
 
         return llm_info, lvlm_info, embedding_model_info, retrieval_info, prod_mode
 
-    def set_llm(self, model: str = None) -> None:
+    def set_llm(self, model: Optional[str] = None) -> None:
         """
         Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
@@ -124,7 +124,7 @@ class MultimodalRetrieval:
             sambanova_api_key=sambanova_api_key,
         )
 
-    def set_lvlm(self, model: str = None) -> None:
+    def set_lvlm(self, model: Optional[str] = None) -> None:
         """
         Sets the sncloud, or sambastudio LVLM based on the config attributes.
 
@@ -160,7 +160,7 @@ class MultimodalRetrieval:
             do_sample=self.lvlm_info['do_sample'],
         )
 
-    def extract_pdf(self, file_path: str) -> Tuple[List, str]:
+    def extract_pdf(self, file_path: str) -> Tuple[List[Any], str]:
         # Path to save images
         output_path = os.path.splitext(file_path)[0]
         # Get elements
@@ -200,7 +200,7 @@ class MultimodalRetrieval:
             image_summaries.append(summary)
         return image_summaries
 
-    def summarize_texts(self, text_docs: List) -> List[str]:
+    def summarize_texts(self, text_docs: List[Document]) -> Any:
         """
         Summarizes text documents by calling the LLM wit summarize text prompt.
 
@@ -211,13 +211,13 @@ class MultimodalRetrieval:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
         text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-text_summary.yaml'))
-        text_summarize_chain = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
+        text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
             text_summaries = text_summarize_chain.batch(texts, {'max_concurrency': 1})
         return text_summaries
 
-    def summarize_tables(self, table_docs: List) -> List[str]:
+    def summarize_tables(self, table_docs: List[Document]) -> Any:
         """
         Summarizes table documents by calling the LLM wit summarize text prompt.
 
@@ -228,13 +228,15 @@ class MultimodalRetrieval:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
         table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-table_summary.yaml'))
-        table_summarize_chain = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
+        table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
             table_summaries = table_summarize_chain.batch(tables, {'max_concurrency': 1})
         return table_summaries
 
-    def process_raw_elements(self, raw_elements: List, images_paths: Union[List, str]) -> Tuple[List, List, List]:
+    def process_raw_elements(
+        self, raw_elements: List[str], images_paths: Union[List[str], str]
+    ) -> Tuple[List[Any], List[Any], List[Any]]:
         """
         This function categorizes raw elements (text, tables) convert them to
         a langchain documents, and create a list of each image path contained
@@ -252,10 +254,12 @@ class MultimodalRetrieval:
         categorized_elements = []
         for element in raw_elements:
             if 'unstructured.documents.elements.Table' in str(type(element)):
+                assert hasattr(element, 'metadata')
                 meta = element.metadata.to_dict()
                 meta['type'] = 'table'
                 categorized_elements.append(Document(page_content=element.metadata.text_as_html, metadata=meta))
             elif 'unstructured.documents.elements.CompositeElement' in str(type(element)):
+                assert hasattr(element, 'metadata')
                 meta = element.metadata.to_dict()
                 meta['type'] = 'text'
                 categorized_elements.append(Document(page_content=str(element), metadata=meta))
@@ -301,7 +305,7 @@ class MultimodalRetrieval:
 
         retriever = MultiVectorRetriever(
             vectorstore=vectorstore,
-            docstore=store,
+            docstore=store,  # type: ignore
             id_key=id_key,
             search_kwargs={'k': self.retrieval_info['k_retrieved_documents']},
         )
@@ -311,9 +315,9 @@ class MultimodalRetrieval:
     def vectorstore_ingest(
         self,
         retriever: MultiVectorRetriever,
-        text_docs: List,
-        table_docs: List,
-        image_paths: List,
+        text_docs: List[Document],
+        table_docs: List[Document],
+        image_paths: List[str],
         summarize_texts: bool = False,
         summarize_tables: bool = False,
     ) -> MultiVectorRetriever:
@@ -342,8 +346,8 @@ class MultimodalRetrieval:
                 retriever.vectorstore.add_documents(summary_texts)
             else:
                 texts = [i.page_content for i in text_docs]
-                texts = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(texts)]
-                retriever.vectorstore.add_documents(texts)
+                docs = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(texts)]
+                retriever.vectorstore.add_documents(docs)
             retriever.docstore.mset(list(zip(doc_ids, text_docs)))
 
         if table_docs:
@@ -356,8 +360,8 @@ class MultimodalRetrieval:
                 retriever.vectorstore.add_documents(summary_tables)
             else:
                 tables = [i.page_content for i in table_docs]
-                tables = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(tables)]
-                retriever.vectorstore.add_documents(tables)
+                docs = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(tables)]
+                retriever.vectorstore.add_documents(docs)
             retriever.docstore.mset(list(zip(table_ids, table_docs)))
 
         if image_paths:
@@ -383,7 +387,7 @@ class MultimodalRetrieval:
 
         return retriever
 
-    def get_retrieved_images_and_docs(self, retriever: MultiVectorRetriever, query: str) -> Tuple[List, List]:
+    def get_retrieved_images_and_docs(self, retriever: MultiVectorRetriever, query: str) -> Tuple[List[Any], List[Any]]:
         """
         Retrieves image and non-image documents from the vectorstore based on the query.
 
@@ -400,7 +404,7 @@ class MultimodalRetrieval:
         doc_results = [result for result in results if result.metadata['type'] != 'image']
         return image_results, doc_results
 
-    def get_image_answers(self, retrieved_image_docs: List, query: str) -> List:
+    def get_image_answers(self, retrieved_image_docs: List[Any], query: str) -> List[Any]:
         """
         This function uses LVLM to answer questions based in retrieved images.
 
@@ -421,8 +425,8 @@ class MultimodalRetrieval:
         return answers
 
     def get_retrieval_chain(
-        self, retriever: MultiVectorRetriever = None, image_retrieval_type: str = 'raw'
-    ) -> Callable:
+        self, retriever: Optional[MultiVectorRetriever] = None, image_retrieval_type: str = 'raw'
+    ) -> Any:
         """
         This function returns a retrieval chain.
 
@@ -451,7 +455,8 @@ class MultimodalRetrieval:
 
         if image_retrieval_type == 'raw':
 
-            def retrieval_qa_raw_chain(query: str) -> Dict:
+            def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
+                assert retriever is not None
                 image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
                 image_answers = self.get_image_answers(image_docs, query)
                 text_contexts = [doc.page_content for doc in context_docs]
@@ -468,12 +473,12 @@ class MultimodalRetrieval:
 
     def st_ingest(
         self,
-        files: List,
+        files: List[Any],
         summarize_tables: bool = False,
         summarize_texts: bool = False,
         raw_image_retrieval: bool = True,
         data_sub_folder: Optional[str] = None,
-    ) -> Callable:
+    ) -> Any:
         """
         Ingests PDF files, images, and processes them to create a vectorstore and docstore.
         Optionally, it can summarize text and table documents and retrieve answers based on raw or summarized images.
@@ -494,7 +499,7 @@ class MultimodalRetrieval:
         raw_elements = []
         image_paths = []
         if data_sub_folder is None:
-            data_sub_folder = "upload"
+            data_sub_folder = 'upload'
         upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
