@@ -1,6 +1,6 @@
 # Prompt prefix and postfix for llama chat model
-LLAMA_CHAT_PROMPT_PREFIX = "[INST] "
-LLAMA_CHAT_PROMPT_POSTFIX = " [\INST]"
+LLAMA_CHAT_PROMPT_PREFIX = '[INST] '
+LLAMA_CHAT_PROMPT_POSTFIX = ' [\INST]'
 
 QA_GEN_TEMPLATE = """
 
@@ -18,7 +18,8 @@ QA_GEN_TEMPLATE = """
     Generate the question-answer pairs below:
     """
 
-RAG_prompt_template = """[INST] Here is some relevant context that might assist in answering the SambaNova-related question.\n\n'
+RAG_prompt_template = """
+[INST] Here is some relevant context that might assist in answering the SambaNova-related question.\n\n'
 ```
 {context}
 ```

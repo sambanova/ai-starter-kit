@@ -10,6 +10,7 @@ sys.path.append(repo_dir)
 
 import argparse
 import json
+from typing import Any
 
 import numpy as np
 import yaml
@@ -49,7 +50,7 @@ llm_baseline = APIGateway.load_llm(
 )
 
 
-def parse_args():
+def parse_args() -> Any:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--config', default=os.path.join(kit_dir, 'sn_expert_conf.yaml'), type=str, help='Path to config file'
