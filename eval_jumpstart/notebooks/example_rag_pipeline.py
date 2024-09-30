@@ -1,9 +1,10 @@
-from typing import Dict
+from typing import Any, Dict
+
 from langchain.chains import RetrievalQA
-from langchain.llms.base import BaseLLM
 from langchain.embeddings.base import Embeddings
-from langchain_community.vectorstores import Chroma
+from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
+from langchain_community.vectorstores import Chroma
 
 
 class RAGPipeline:
@@ -14,14 +15,12 @@ class RAGPipeline:
         llm: BaseLLM,
         vector_db_location: str,
         embeddings: Embeddings,
-    ):
+    ) -> None:
         self.llm = llm
         self.embeddings = embeddings
-        self.vector_store = Chroma(
-            persist_directory=vector_db_location, embedding_function=embeddings
-        )
+        self.vector_store = Chroma(persist_directory=vector_db_location, embedding_function=embeddings)
 
-        print(f"This is the vector db {vector_db_location}")
+        print(f'This is the vector db {vector_db_location}')
 
         prompt_template = """
         <|begin_of_text|>
@@ -44,22 +43,20 @@ class RAGPipeline:
         assistant
         <|end_header_id|>"""
 
-        PROMPT = PromptTemplate(
-            template=prompt_template, input_variables=["context", "question"]
-        )
+        PROMPT = PromptTemplate(template=prompt_template, input_variables=['context', 'question'])
 
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=llm,
-            chain_type="stuff",
+            chain_type='stuff',
             retriever=self.vector_store.as_retriever(),
-            chain_type_kwargs={"prompt": PROMPT},
+            chain_type_kwargs={'prompt': PROMPT},
             return_source_documents=True,
         )
 
-    def generate(self, query: str) -> Dict:
+    def generate(self, query: str) -> Dict[str, Any]:
         docs = self.vector_store.similarity_search(query)
         print(docs)
         # print(docs[0].page_content)
         """Generate an answer for the given query"""
         response = self.qa_chain.invoke(query)
-        return {"answer": response}
+        return {'answer': response}
