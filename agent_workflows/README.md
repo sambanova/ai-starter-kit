@@ -90,7 +90,7 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
 ```
-cd ai_starter_kit/
+cd ai-starter-kit/
 python3 -m venv agent_env
 source agent_env
 pip install --upgrade pip
