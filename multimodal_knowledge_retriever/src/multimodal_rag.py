@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -8,15 +9,14 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-import base64
 import glob
-import json
+import ssl
 import time
 import uuid
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
-import requests
+import streamlit as st
 import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
@@ -24,13 +24,20 @@ from langchain.chains import RetrievalQA
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
-from langchain_community.vectorstores import Chroma
-from langchain_core.language_models.llms import LLM
+from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import load_prompt
 from unstructured.partition.pdf import partition_pdf
 
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.model_wrappers.multimodal_models import SambastudioMultimodal
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
@@ -39,6 +46,15 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+
+# Configure the logger
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
+    format='%(asctime)s [%(levelname)s] - %(message)s',  # Define the log message format
+)
+
+# Create a logger object
+logger = logging.getLogger(__name__)
 
 
 class MultimodalRetrieval:
@@ -51,120 +67,100 @@ class MultimodalRetrieval:
         initialize MultimodalRetrieval object.
         """
         config_info = self.get_config_info()
-        self.api_info = config_info[0]
-        self.llm_info = config_info[1]
-        self.lvlm_info = config_info[2]
-        self.embedding_model_info = config_info[3]
-        self.retrieval_info = config_info[4]
-        self.llm = self.set_llm()
+        self.llm_info = config_info[0]
+        self.lvlm_info = config_info[1]
+        self.embedding_model_info = config_info[2]
+        self.retrieval_info = config_info[3]
+        self.prod_mode = config_info[4]
+        self.set_llm()
+        self.set_lvlm()
+        self.collection_id = str(uuid.uuid4())
+        self.vector_collections: Set[Any] = set()
+        self.retriever: Optional[MultiVectorRetriever] = None
 
-    def get_config_info(self) -> Tuple[str, str, str, str]:
+    def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
         Loads json config file
         """
         # Read config file
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
-        api_info = config['api']
         llm_info = config['llm']
         lvlm_info = config['lvlm']
         embedding_model_info = config['embedding_model']
         retrieval_info = config['retrieval']
+        prod_mode = config['prod_mode']
 
-        return api_info, llm_info, lvlm_info, embedding_model_info, retrieval_info
+        return llm_info, lvlm_info, embedding_model_info, retrieval_info, prod_mode
 
-    @staticmethod
-    def image_to_base64(image_path: str) -> str:
+    def set_llm(self, model: Optional[str] = None) -> None:
         """
-        Converts an image file to a base64 encoded string.
+        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
         Parameters:
-        image_path (str): The path to the image file.
-
-        Returns:
-        str: The base64 encoded string representation of the image.
+        Model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
-        with open(image_path, 'rb') as image_file:
-            image_binary = image_file.read()
-            base64_image = base64.b64encode(image_binary).decode()
-            return base64_image
 
-    def llava_call(
-        self,
-        prompt: str,
-        image_path: str,
-        base_url: Optional[str] = None,
-        project_id: Optional[str] = None,
-        endpoint_id: Optional[str] = None,
-        api_key: Optional[str] = None,
-    ) -> str:
-        """
-        Makes a call to the LVLM API Smabastudio endpoint to get a completion for a given prompt and image.
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        Parameters:
-        prompt (str): The prompt to be send to the the LVLM. should follow the format "system_instruction USER:
-        <image>\n user message. ASSISTANT:
-        image_path (str): The path to the image to be used for the LLM.
-        base_url (str, optional): The base URL of the LVLM API endpoint. Defaults to the value of the environment
-        variable 'LVLM_BASE_URL'.
-        project_id (str, optional): The project ID for the LVLM API endpoint. Defaults to the value of the environment
-        variable 'LVLM_PROJECT_ID'.
-        endpoint_id (str, optional): The endpoint ID for the LVLM API endpoint. Defaults to the value of the environment
-        variable 'LVLM_ENDPOINT_ID'.
-        api_key (str, optional): The API key for the LVLM API endpoint. Defaults to the value of the environment
-        variable 'LVLM_API_KEY'.
+        if model is None:
+            model = self.llm_info['select_expert']
 
-        Returns:
-        str: The completion generated by the LLM API endpoint for the given prompt and image.
-        """
-        if base_url is None:
-            base_url = os.environ.get('LVLM_BASE_URL')
-        if project_id is None:
-            project_id = os.environ.get('LVLM_PROJECT_ID')
-        if endpoint_id is None:
-            endpoint_id = os.environ.get('LVLM_ENDPOINT_ID')
-        if api_key is None:
-            api_key = os.environ.get('LVLM_API_KEY')
-        endpoint_url = f'{base_url}/api/predict/generic/{project_id}/{endpoint_id}'
-        endpoint_key = api_key
-        # Define the data payload
-        image_b64 = MultimodalRetrieval.image_to_base64(image_path)
-        data = {
-            'instances': [{'prompt': prompt, 'image_content': f'{image_b64}'}],
-            'params': {
-                'do_sample': {'type': 'bool', 'value': str(self.lvlm_info['do_sample'])},
-                'max_tokens_to_generate': {'type': 'int', 'value': str(self.lvlm_info['max_tokens_to_generate'])},
-                'temperature': {'type': 'float', 'value': str(self.lvlm_info['temperature'])},
-                'top_k': {'type': 'int', 'value': str(self.lvlm_info['top_k'])},
-                'top_logprobs': {'type': 'int', 'value': '0'},
-                'top_p': {'type': 'float', 'value': str(self.lvlm_info['top_p'])},
-            },
-        }
-        # Define headers
-        headers = {'Content-Type': 'application/json', 'key': endpoint_key}
-        response = requests.post(endpoint_url, headers=headers, data=json.dumps(data))
-        return response.json()['predictions'][0]['completion']
-
-    def set_llm(self) -> LLM:
-        """
-        Sets the sncloud, or sambastudio LLM based on the api_info attribute.
-
-        Returns:
-        LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
-        """
-        llm = APIGateway.load_llm(
-            type=self.api_info,
+        self.llm = APIGateway.load_llm(
+            type=self.llm_info['type'],
             streaming=True,
             coe=self.llm_info['coe'],
             do_sample=self.llm_info['do_sample'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            select_expert=model,
             process_prompt=False,
+            sambanova_api_key=sambanova_api_key,
         )
-        return llm
 
-    def extract_pdf(self, file_path: str) -> Tuple[List, str]:
+    def set_lvlm(self, model: Optional[str] = None) -> None:
+        """
+        Sets the sncloud, or sambastudio LVLM based on the config attributes.
+
+        Parameters:
+        model (str): The name of the model to use for the LVLM (overwrites the param set in config).
+        """
+        if self.prod_mode:
+            lvlm_base_url = st.session_state.LVLM_BASE_URL
+            lvlm_api_key = st.session_state.LVLM_API_KEY
+
+        else:
+            if 'LVLM_API_KEY' in st.session_state:
+                lvlm_api_key = os.environ.get('LVLM_API_KEY') or st.session_state.LVLM_API_KEY
+            else:
+                lvlm_api_key = os.environ.get('LVLM_API_KEY')
+
+            if 'LVLM_BASE_URL' in st.session_state:
+                lvlm_base_url = os.environ.get('LVLM_BASE_URL') or st.session_state.LVLM_BASE_URL
+            else:
+                lvlm_base_url = os.environ.get('LVLM_BASE_URL')
+
+        if model is None:
+            model = self.lvlm_info['model']
+
+        self.lvlm = SambastudioMultimodal(
+            base_url=lvlm_base_url,
+            api_key=lvlm_api_key,
+            model=model,
+            temperature=self.lvlm_info['temperature'],
+            max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
+            top_p=self.lvlm_info['top_p'],
+            top_k=self.lvlm_info['top_k'],
+            do_sample=self.lvlm_info['do_sample'],
+        )
+
+    def extract_pdf(self, file_path: str) -> Tuple[List[Any], str]:
         # Path to save images
         output_path = os.path.splitext(file_path)[0]
         # Get elements
@@ -195,18 +191,16 @@ class MultimodalRetrieval:
         Returns:
         image_summaries (list[str]): A list of summaries of the input images
         """
-        prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llava.yaml'))
         instruction = 'Describe the image in detail. Be specific about graphs include name of axis,\
             labels, legends and important numerical information'
-        formated_prompt = prompt_template.format(instruction=instruction)
 
         image_summaries = []
         for image_path in image_paths:
-            summary = self.llava_call(formated_prompt, image_path)
+            summary = self.lvlm.invoke(instruction, image_path)
             image_summaries.append(summary)
         return image_summaries
 
-    def summarize_texts(self, text_docs: List) -> List[str]:
+    def summarize_texts(self, text_docs: List[Document]) -> Any:
         """
         Summarizes text documents by calling the LLM wit summarize text prompt.
 
@@ -217,13 +211,13 @@ class MultimodalRetrieval:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
         text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-text_summary.yaml'))
-        text_summarize_chain = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
+        text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
             text_summaries = text_summarize_chain.batch(texts, {'max_concurrency': 1})
         return text_summaries
 
-    def summarize_tables(self, table_docs: List) -> List[str]:
+    def summarize_tables(self, table_docs: List[Document]) -> Any:
         """
         Summarizes table documents by calling the LLM wit summarize text prompt.
 
@@ -234,13 +228,15 @@ class MultimodalRetrieval:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
         table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-table_summary.yaml'))
-        table_summarize_chain = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
+        table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
             table_summaries = table_summarize_chain.batch(tables, {'max_concurrency': 1})
         return table_summaries
 
-    def process_raw_elements(self, raw_elements: List, images_paths: Union[List, str]) -> Tuple[List, List, List]:
+    def process_raw_elements(
+        self, raw_elements: List[str], images_paths: Union[List[str], str]
+    ) -> Tuple[List[Any], List[Any], List[Any]]:
         """
         This function categorizes raw elements (text, tables) convert them to
         a langchain documents, and create a list of each image path contained
@@ -258,10 +254,12 @@ class MultimodalRetrieval:
         categorized_elements = []
         for element in raw_elements:
             if 'unstructured.documents.elements.Table' in str(type(element)):
+                assert hasattr(element, 'metadata')
                 meta = element.metadata.to_dict()
                 meta['type'] = 'table'
                 categorized_elements.append(Document(page_content=element.metadata.text_as_html, metadata=meta))
             elif 'unstructured.documents.elements.CompositeElement' in str(type(element)):
+                assert hasattr(element, 'metadata')
                 meta = element.metadata.to_dict()
                 meta['type'] = 'text'
                 categorized_elements.append(Document(page_content=str(element), metadata=meta))
@@ -293,17 +291,21 @@ class MultimodalRetrieval:
             select_expert=self.embedding_model_info['select_expert'],
         )
 
+        collection_name = f'collection_{self.collection_id}'
+        logger.info(f'This is the collection name: {collection_name}')
+
         vectorstore = Chroma(
-            collection_name='summaries',
+            collection_name=collection_name,
             embedding_function=self.embeddings,
             client_settings=Settings(anonymized_telemetry=False),
         )
+        self.vector_collections.add(collection_name)
         store = InMemoryByteStore()
         id_key = 'doc_id'
 
         retriever = MultiVectorRetriever(
             vectorstore=vectorstore,
-            docstore=store,
+            docstore=store,  # type: ignore
             id_key=id_key,
             search_kwargs={'k': self.retrieval_info['k_retrieved_documents']},
         )
@@ -313,9 +315,9 @@ class MultimodalRetrieval:
     def vectorstore_ingest(
         self,
         retriever: MultiVectorRetriever,
-        text_docs: List,
-        table_docs: List,
-        image_paths: List,
+        text_docs: List[Document],
+        table_docs: List[Document],
+        image_paths: List[str],
         summarize_texts: bool = False,
         summarize_tables: bool = False,
     ) -> MultiVectorRetriever:
@@ -344,8 +346,8 @@ class MultimodalRetrieval:
                 retriever.vectorstore.add_documents(summary_texts)
             else:
                 texts = [i.page_content for i in text_docs]
-                texts = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(texts)]
-                retriever.vectorstore.add_documents(texts)
+                docs = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(texts)]
+                retriever.vectorstore.add_documents(docs)
             retriever.docstore.mset(list(zip(doc_ids, text_docs)))
 
         if table_docs:
@@ -358,8 +360,8 @@ class MultimodalRetrieval:
                 retriever.vectorstore.add_documents(summary_tables)
             else:
                 tables = [i.page_content for i in table_docs]
-                tables = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(tables)]
-                retriever.vectorstore.add_documents(tables)
+                docs = [Document(page_content=s, metadata={id_key: doc_ids[i]}) for i, s in enumerate(tables)]
+                retriever.vectorstore.add_documents(docs)
             retriever.docstore.mset(list(zip(table_ids, table_docs)))
 
         if image_paths:
@@ -385,7 +387,7 @@ class MultimodalRetrieval:
 
         return retriever
 
-    def get_retrieved_images_and_docs(self, retriever: MultiVectorRetriever, query: str) -> Tuple[List, List]:
+    def get_retrieved_images_and_docs(self, retriever: MultiVectorRetriever, query: str) -> Tuple[List[Any], List[Any]]:
         """
         Retrieves image and non-image documents from the vectorstore based on the query.
 
@@ -402,7 +404,7 @@ class MultimodalRetrieval:
         doc_results = [result for result in results if result.metadata['type'] != 'image']
         return image_results, doc_results
 
-    def get_image_answers(self, retrieved_image_docs: List, query: str) -> List:
+    def get_image_answers(self, retrieved_image_docs: List[Any], query: str) -> List[Any]:
         """
         This function uses LVLM to answer questions based in retrieved images.
 
@@ -414,17 +416,17 @@ class MultimodalRetrieval:
         Returns:
         answers (list): A list of answers to the input query for each image.
         """
-        image_answer_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llava-qa.yaml'))
+        image_answer_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'multimodal-qa.yaml'))
         image_answer_prompt = image_answer_prompt_template.format(question=query)
         answers = []
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
-            answers.append(self.llava_call(image_answer_prompt, image_path))
+            answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
         return answers
 
     def get_retrieval_chain(
-        self, retriever: MultiVectorRetriever, image_retrieval_type: str = 'raw'
-    ) -> Tuple[Callable, Callable]:
+        self, retriever: Optional[MultiVectorRetriever] = None, image_retrieval_type: str = 'raw'
+    ) -> Any:
         """
         This function returns a retrieval chain.
 
@@ -437,6 +439,9 @@ class MultimodalRetrieval:
         retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
         prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-knowledge_retriever_custom_qa_prompt.yaml'))
+        if retriever is None:
+            retriever = self.retriever
+
         if image_retrieval_type == 'summary':
             retrieval_qa_summary_chain = RetrievalQA.from_llm(
                 llm=self.llm,
@@ -450,13 +455,14 @@ class MultimodalRetrieval:
 
         if image_retrieval_type == 'raw':
 
-            def retrieval_qa_raw_chain(query: str) -> Dict:
+            def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
+                assert retriever is not None
                 image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
                 image_answers = self.get_image_answers(image_docs, query)
                 text_contexts = [doc.page_content for doc in context_docs]
                 full_context = '\n\n'.join(image_answers) + '\n\n' + '\n\n'.join(text_contexts)
-                formated_prompt = prompt.format(context=full_context, question=query)
-                answer = self.llm.invoke(formated_prompt)
+                formatted_prompt = prompt.format(context=full_context, question=query)
+                answer = self.llm.invoke(formatted_prompt)
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
 
@@ -467,11 +473,12 @@ class MultimodalRetrieval:
 
     def st_ingest(
         self,
-        files: List,
+        files: List[Any],
         summarize_tables: bool = False,
         summarize_texts: bool = False,
         raw_image_retrieval: bool = True,
-    ) -> Callable:
+        data_sub_folder: Optional[str] = None,
+    ) -> Any:
         """
         Ingests PDF files, images, and processes them to create a vectorstore and docstore.
         Optionally, it can summarize text and table documents and retrieve answers based on raw or summarized images.
@@ -482,6 +489,7 @@ class MultimodalRetrieval:
         summarize_texts (bool): A flag indicating whether to summarize text documents.
         raw_image_retrieval (bool): A flag indicating whether to retrieve answers based on raw images or in image
         summaries.
+        data_sub_folder (str): A string representing the subfolder where the data will be stored.
 
         Returns:
         qa_chain (function): A function that retrieves answers based on the specified retrieval type.
@@ -490,7 +498,9 @@ class MultimodalRetrieval:
         image_files = [file for file in files if file.name.endswith(('.jpg', '.jpeg', 'png'))]
         raw_elements = []
         image_paths = []
-        upload_folder = os.path.join(kit_dir, 'data', 'upload')
+        if data_sub_folder is None:
+            data_sub_folder = 'upload'
+        upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
         for pdf in pdf_files:
@@ -509,9 +519,9 @@ class MultimodalRetrieval:
                     file.write(image.read())
             image_paths.append(single_images_folder)
         text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
-        retriever = self.create_vectorstore()
-        retriever = self.vectorstore_ingest(
-            retriever,
+        self.retriever = self.create_vectorstore()
+        self.retriever = self.vectorstore_ingest(
+            self.retriever,
             text_docs,
             table_docs,
             image_paths,
@@ -519,7 +529,7 @@ class MultimodalRetrieval:
             summarize_tables=summarize_tables,
         )
         if raw_image_retrieval:
-            qa_chain = self.get_retrieval_chain(retriever, image_retrieval_type='raw')
+            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
         else:
-            qa_chain = self.get_retrieval_chain(retriever, image_retrieval_type='summary')
+            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
         return qa_chain

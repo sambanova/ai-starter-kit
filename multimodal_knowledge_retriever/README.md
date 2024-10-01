@@ -105,11 +105,9 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 2. Update the multimodal model API information in the Starter Kit.
 
-    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL "https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
-   ```
-    LVLM_BASE_URL="https://api-stage.sambanova.net"
-    LVLM_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-    LVLM_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
+    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
+    ```bash
+    LVLM_BASE_URL="https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012"
     LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
     ```
 
@@ -118,10 +116,10 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+    Then in the [config file](./config.yaml) set the llm `type` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+    Then in the [config file](./config.yaml) set the llm `type` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
 
 ## Update the Embeddings API information
 
@@ -170,7 +168,7 @@ NOTE: python 3.10 or higher is required to run this kit.
 1. Install and update pip.
 
     ```bash
-      cd ai_starter_kit/multimodal_knowledge_retriever
+      cd ai-starter-kit/multimodal_knowledge_retriever
       python3 -m venv multimodal_knowledge_env
       source multimodal_knowledge_env/bin/activate
       pip  install  -r  requirements.txt
@@ -367,18 +365,4 @@ You can make modifications in the [prompts](./prompts) folder
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- streamlit (version 1.32.0)
-- pydantic (version 2.7.0)
-- pydantic_core (version 2.18.1)
-- python-dotenv (version 1.0.1)
-- langchain (version 0.2.11)
-- langchain_community (version 0.2.10)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- streamlit-extras
-- sseclient-py (version 1.8.0)
-- unstructured_inference (version 0.7.29)
-- unstructured[pdf] (version 0.13.6)
-- chromadb (version 0.4.24)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

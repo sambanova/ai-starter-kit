@@ -90,7 +90,7 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
 ```
-cd ai_starter_kit/
+cd ai-starter-kit/
 python3 -m venv agent_env
 source agent_env
 pip install --upgrade pip
@@ -145,20 +145,7 @@ Developers and users should iterate on the workflow they feel is most desirable.
 
 # Third-party tools and data sources
 
-
-- streamlit (version 1.37.0)
-- langchain (version 0.2.11)
-- langchain-community (version 0.2.10)
-- langgraph (version 0.1.6)
-- pyppeteer (version 2.0.0)
-- sentence_transformers (version 2.2.2)
-- InstructorEmbedding (version 1.0.1)
-- chromadb (version 0.5.5)
-- PyPDF2 (version 3.0.1)
-- unstructured_inference (version 0.7.27)
-- unstructured[pdf] (version 0.13.3)
-- PyMuPDF (version 1.23.4)
-- python-dotenv (version 1.0.1)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
 
 # Acknowledgements and References
 

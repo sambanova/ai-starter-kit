@@ -92,7 +92,7 @@ If you want to use a Python virtual environment:
 1. Install and update `pip`.
 
     ```bash
-    cd ai_starter_kit/financial_assistant
+    cd ai-starter-kit/financial_assistant
     python3 -m venv financial_assistant_venv
     source financial_assistant_venv/bin/activate
     pip  install  -r  requirements.txt
@@ -126,3 +126,7 @@ WANDB_API_KEY = "<your-wandb-api-key>"
 Once you have finished using the app, you can exit the app by clicking on `Exit` at the top of the sidebar.
 This will clear the cache.
 Otherwise, the cache will be automatically cleared after a predefined time period.
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

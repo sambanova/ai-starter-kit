@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 from pydantic import BaseModel
 
 
@@ -21,19 +22,19 @@ class RequestConfig(BaseModel):
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
     is_stream_mode: Optional[bool] = None
-    num_concurrent_workers: int = None
+    num_concurrent_workers: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
 class LLMResponse(BaseModel):
     """The response object created from a response from one of the SambaStudio LLM APIs
-    
+
     Args:
         metrics: Dictionary containing the throughput metrics from the endpoint
         response_text: The generated text from the LLM
         request_config: The associated request config
     """
-    
-    metrics: Dict
+
+    metrics: Dict[str, Any]
     response_text: str
     request_config: RequestConfig

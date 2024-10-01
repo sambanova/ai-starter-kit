@@ -137,7 +137,7 @@ Running from local install is the simplest option and includes a simple Streamli
 
 1. Update pip and install dependencies. We recomment that you use virtual env or `conda` environment for installation.
 ```bash
-cd ai_starter_kit/edgar_qna/
+cd ai-starter-kit/edgar_qna/
 python3 -m venv edgar_env
 source edgar_env/bin/activate
 pip  install  -r  requirements.txt
@@ -326,19 +326,4 @@ file: edgar_qna/prompts
 
 ## Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-- streamlit (version 1.25.0)
-- llama-hub (version 0.0.25)
-- langchain (version 0.2.11)
-- langchain_community (version 0.2.10)
-- llama-index (version 0.8.20)
-- sentence_transformers (version 2.2.2)
-- instructorembedding (version 1.0.1)
-- beautifulsoup4 (version 4.12.2)
-- chromadb (version 0.4.8)
-- qdrant-client (version 1.5.2)
-- fastapi (version 0.99.1)
-- unstructured (version 0.8.1)
-- sec-edgar-downloader (version 5.0.2)
-- python-xbrl (version 1.1.1)
-- sseclient (version 0.0.27)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

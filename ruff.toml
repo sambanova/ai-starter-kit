@@ -3,6 +3,8 @@
 # Set the maximum line length to 120
 line-length = 120
 
+extend-exclude = ["*.ipynb"]
+
 [lint]
 # Add the flake8-annotations rules
 select = ["ANN"]

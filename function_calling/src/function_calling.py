@@ -3,20 +3,20 @@ import os
 import re
 import sys
 from pprint import pprint
-from typing import List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
-from langchain_community.llms.sambanova import SambaStudio
+from langchain_core.language_models.llms import LLM
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
+from pydantic import BaseModel, Field
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -25,7 +25,6 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_llms import SambaNovaCloud
 from utils.visual.env_utils import get_wandb_key
 
 load_dotenv(os.path.join(repo_dir, '.env'))
@@ -111,7 +110,7 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def get_config_info(self, config_path: str) -> tuple[dict]:
+    def get_config_info(self, config_path: str) -> Tuple[Dict[str, Any], bool]:
         """
         Loads json config file
         """
@@ -123,7 +122,7 @@ class FunctionCallingLlm:
 
         return (llm_info, prod_mode)
 
-    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
+    def set_llm(self) -> LLM:
         """
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
@@ -151,9 +150,9 @@ class FunctionCallingLlm:
 
     def get_tools_schemas(
         self,
-        tools: Optional[Union[StructuredTool, Tool, list]] = None,
+        tools: Optional[Union[StructuredTool, Tool, List[Any]]] = None,
         default: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
-    ) -> list:
+    ) -> List[Dict[str, Any]]:
         """
         Get the tools schemas.
         Args:
@@ -198,7 +197,7 @@ class FunctionCallingLlm:
 
         return tools_schemas
 
-    def execute(self, invoked_tools: List[dict]) -> tuple[bool, List[str]]:
+    def execute(self, invoked_tools: List[Dict[str, Any]]) -> Tuple[bool, List[str]]:
         """
         Given a list of tool executions the llm return as required
         execute them given the name with the mane in tools_map and the input arguments
@@ -256,7 +255,7 @@ class FunctionCallingLlm:
             json_str = json.dumps(dummy_json_response)
         return json_str
 
-    def msgs_to_llama3_str(self, msgs: list) -> str:
+    def msgs_to_llama3_str(self, msgs: List[Any]) -> str:
         """
         convert a list of langchain messages with roles to expected LLmana 3 input
 
@@ -283,7 +282,7 @@ class FunctionCallingLlm:
                 raise ValueError(f'Invalid message type: {msg.type}')
         return '\n'.join(formatted_msgs)
 
-    def msgs_to_sncloud(self, msgs: list) -> list:
+    def msgs_to_sncloud(self, msgs: List[Any]) -> str:
         """
         convert a list of langchain messages with roles to expected FastCoE input
 

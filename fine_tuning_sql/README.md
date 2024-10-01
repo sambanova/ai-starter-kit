@@ -57,7 +57,7 @@ git clone --recurse-submodules  https://github.com/sambanova/ai-starter-kit.git
 We recommend that you run the starter kit in a virtual environment
 
 ```bash
-cd ai_starter_kit/
+cd ai-starter-kit/
 git submodule update --init.  
 cd fine_tuning_sql
 python3 -m venv fine_tuning_sql_env
@@ -104,13 +104,4 @@ The [Archerfix repository](https://github.com/archerfish-bench/benchmark) can be
 
 # Third-party tools and data sources
 
-All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
-
-- langchain (version 0.2.11)
-- langchain-community (version 0.2.10)
-- transformers (version 4.41.2)
-- datasets (version 2.20.0)
-- jupyter_client (version 8.6.0)
-- jupyter_core (version 5.7.1)
-- jupyterlab-widgets (version 3.0.9)
-- SQLAlchemy (version 2.0.30)
+All the packages/tools are listed in the `requirements.txt` file in the project directory.

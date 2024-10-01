@@ -3,7 +3,7 @@ import sys
 from typing import Any, Dict, List, TypedDict, Annotated
 import operator
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint import MemorySaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.graph.graph import CompiledGraph
 

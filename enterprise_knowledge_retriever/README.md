@@ -101,7 +101,7 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
     ```bash
-    cd ai_starter_kit/enterprise_knowledge_retriever
+    cd ai-starter-kit/enterprise_knowledge_retriever
     python3 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
@@ -219,7 +219,7 @@ This enterprise knowledge retriever kit uses either PyMuPDF or a custom implemen
 * If `pdf_only_mode` is set to False, then the unstructured loader is used, which works well with all file types. Please note that in this case, you need to install the following system dependencies if they are not already available on your system, for example, using `brew install` for Mac. Depending on what document types you're parsing, you may not need all of these:
 
     * `libmagic-dev` (filetype detection)
-    * `poppler-utils` (images and PDFs)
+    * `poppler` (images and PDFs)
     * `tesseract-ocr` (images and PDFs)
     * `qpdf` (PDFs)
     * `libreoffice` (MS Office docs)
