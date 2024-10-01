@@ -29,6 +29,7 @@ from financial_assistant.src.tools import (
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import delete_temp_dir
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
@@ -45,8 +46,8 @@ class DatabaseSchema(BaseModel):
 @tool(args_schema=DatabaseSchema)
 def create_stock_database(
     company_list: List[str] | str,
-    start_date: datetime.date = datetime.datetime.today().date() - datetime.timedelta(days=365),
-    end_date: datetime.date = datetime.datetime.today().date(),
+    start_date: datetime.date = DEFAULT_START_DATE,
+    end_date: datetime.date = DEFAULT_END_DATE,
 ) -> Dict[str, List[str]]:
     """
     Tool for creating a SQL database for a list of stocks or companies.
@@ -78,9 +79,7 @@ def create_stock_database(
     # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
-    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
-        'Start date must be before the end date.'
-    )
+    assert start_date <= end_date, ValueError('Start date must be before the end date.')
 
     # Extract yfinance data
     company_data_dict = dict()
@@ -393,6 +392,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
         config={
             'database': db_path,
             'table': table,
+            'enable_cache': False,
         }
     )
 
@@ -404,11 +404,15 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
             'open_charts': False,
             'save_charts': True,
             'save_charts_path': streamlit.session_state.db_query_figures_dir,
+            'enable_cache': False,
         },
     )
 
     # Interrogate the dataframe
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     return response
 
@@ -501,6 +505,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     try:
         assert len(table_names) > 0
     except AssertionError:
+        logger.error('No relevant SQL tables found.')
         streamlit.error('No relevant SQL tables found.')
         streamlit.stop()
 

@@ -1,4 +1,6 @@
-# Updated base-requirements.txt
+"""
+Updated base-requirements.txt.
+"""
 
 # Core dependencies
 langchain==0.3.1
@@ -19,7 +21,7 @@ torch==2.2.2
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
 transformers==4.41.2
-sentence_transformers==2.2.2
+sentence-transformers==2.2.2
 instructorembedding==1.0.1
 datasets==2.20.0
 evaluate==0.4.1
@@ -60,12 +62,15 @@ librosa==0.10.1
 
 # Text processing
 beautifulsoup4==4.12.3
+fpdf2==2.7.9
 html2text==2024.2.26
+pypdf==5.0.0
 unstructured[pdf]==0.14.9
 unstructured-client==0.18.0
 unstructured-inference==0.7.36
 
 # Miscellaneous
+schedule==1.2.2
 tqdm>=4.66.3
 watchdog==4.0.0
 pillow==10.2.0
@@ -73,9 +78,15 @@ pycountry==23.12.11
 omegaconf==2.3.0
 jsonlines==4.0.0
 
+# Data sources
+sec-downloader==0.11.1
+yfinance==0.2.43
+
 # Development tools
-black
 ipykernel==6.29.4
+mypy==1.11.2
+ruff==0.6.7
+
 
 # Schedule
 schedule==1.2.2

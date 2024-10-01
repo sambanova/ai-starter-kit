@@ -263,12 +263,17 @@ class SambaNovaLLM:
                 continue
 
         try:
-            logger.info(invoked_tools[0])
+            logger.info(f'Invoked tool: {invoked_tools[0]["name"]}')
+            assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
+
+            logger.info('Parameters:')
+            parameter_dict = invoked_tools[0]['parameters']
+            for parameter_key, parameter_value in parameter_dict.items():
+                logger.info(f'{parameter_key}: {parameter_value}')
         except:
+            logger.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
             streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
             streamlit.stop()
-
-        assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
 
         invoked_tool = invoked_tools[0]
 
