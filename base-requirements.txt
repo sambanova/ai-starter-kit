@@ -77,5 +77,8 @@ jsonlines==4.0.0
 black
 ipykernel==6.29.4
 
+# Schedule
+schedule==1.2.2
+
 #llm-eval
 weave==0.51.1
