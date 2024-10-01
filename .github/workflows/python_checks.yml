@@ -14,7 +14,6 @@ on:
   # Runs every Sunday at midnight UTC
   schedule:
     - cron: '0 0 * * 0'
-    - branches: main
 
 jobs:
   build:
