@@ -393,7 +393,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Abstract parser
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Abstract template
     abstract_template = """Write a concise summary of the following:
@@ -424,7 +424,7 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Reduce parser
-    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Reduce template
     reduce_template = """The following is set of summaries:
@@ -457,7 +457,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Map parser
-    map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore
+    map_parser = PydanticOutputParser(pydantic_object=Summary)
 
     # Map template
     map_template = """The following is a document:

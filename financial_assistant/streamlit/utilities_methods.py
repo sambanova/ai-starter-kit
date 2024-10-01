@@ -6,7 +6,7 @@ from typing import Any, Callable, Generator, List, Optional, Tuple, Type
 
 import pandas
 import streamlit
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from matplotlib.figure import Figure
 from PIL import Image

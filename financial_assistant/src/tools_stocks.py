@@ -249,7 +249,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The parser
-        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)  # type: ignore
+        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)
 
         # The prompt
         prompt_symbol = PromptTemplate(
