@@ -160,7 +160,7 @@ def main() -> None:
         st.session_state.show_sources = True
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
-    if 'session_temp_folder' not in st.session_state:
+    if 'session_temp_subfolder' not in st.session_state:
         if prod_mode:
             st.session_state.session_temp_subfolder = 'upload_' + str(uuid.uuid4())
         else:
