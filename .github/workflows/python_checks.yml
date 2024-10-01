@@ -1,9 +1,20 @@
 name: Python Checks
 
-on: 
+on:
+  # Runs at every push 
   push:
+
+  # Runs at every pull request
   pull_request:
+    branches: main
+
+  # Runs manually
   workflow_dispatch:
+
+  # Runs every Sunday at midnight UTC
+  schedule:
+    - cron: '0 0 * * 0'
+    - branch: main
 
 jobs:
   build:
@@ -29,7 +40,14 @@ jobs:
       - name: Run MyPy for the Financial Assistant
         run: mypy --explicit-package-bases financial_assistant
 
-      - name: Run Unit Tests for the Financial Assistant
+      - name: Run Unit Tests for the Financial Assistant at Pull Request
+        # Runs only at every pull request 
         if: github.event_name == 'pull_request'
         run: |
           python -m unittest discover financial_assistant/tests -k 'test_handle_stock_query'
+
+      - name: Run Unit Tests for the Financial Assistant Weekly
+        # Runs weekly
+        if: github.event_name == 'schedule'
+        run: |
+          python -m unittest discover financial_assistant/tests
