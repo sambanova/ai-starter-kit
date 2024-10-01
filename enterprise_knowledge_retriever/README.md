@@ -101,7 +101,7 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
     ```bash
-    cd ai_starter_kit/enterprise_knowledge_retriever
+    cd ai-starter-kit/enterprise_knowledge_retriever
     python3 -m venv enterprise_knowledge_env
     source enterprise_knowledge_env/bin/activate
     pip  install  -r  requirements.txt
