@@ -2,7 +2,7 @@ import os
 import sys
 from typing import TypedDict
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint import MemorySaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph.graph import CompiledGraph
 
 

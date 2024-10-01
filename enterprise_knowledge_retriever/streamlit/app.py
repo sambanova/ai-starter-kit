@@ -177,7 +177,7 @@ def main() -> None:
                 st.markdown('Create database')
                 if st.button('Process'):
                     with st.spinner('Processing'):
-                        try:
+                        #try:
                             text_chunks = st.session_state.document_retrieval.parse_doc(docs)
                             if len(text_chunks) == 0:
                                 st.error(
@@ -194,8 +194,8 @@ def main() -> None:
                             st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
-                        except Exception as e:
-                            st.error(f'An error occurred while processing: {str(e)}')
+                        #except Exception as e:
+                            #st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')

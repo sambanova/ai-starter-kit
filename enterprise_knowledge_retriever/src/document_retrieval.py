@@ -1,7 +1,7 @@
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import nltk
 import torch
@@ -9,10 +9,10 @@ import yaml
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
-from langchain.prompts import BasePromptTemplate, load_prompt
+from langchain.prompts import BasePromptTemplate, PromptTemplate, load_prompt
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
-from langchain_core.language_models import BaseLanguageModel
+from langchain_core.language_models import LanguageModelLike
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
@@ -61,8 +61,8 @@ class RetrievalQAChain(Chain):
 
     retriever: BaseRetriever
     rerank: bool = True
-    llm: BaseLanguageModel[Any]
-    qa_prompt: BasePromptTemplate[Any]
+    llm: LanguageModelLike
+    qa_prompt: PromptTemplate
     final_k_retrieved_documents: int = 3
 
     @property

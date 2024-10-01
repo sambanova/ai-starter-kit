@@ -92,7 +92,7 @@ If you want to use virtualenv or conda environment:
 1. Install and update pip.
 
     ```bash
-    cd ai_starter_kit/financial_assistant
+    cd ai-starter-kit/financial_assistant
     python3 -m venv financial_assistant
     source financial_assistant/bin/activate
     pip  install  -r  requirements.txt

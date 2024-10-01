@@ -11,8 +11,8 @@ from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_experimental.text_splitter import SemanticChunker
+from pydantic import BaseModel, Field
 
 logging.basicConfig(
     level=logging.INFO,

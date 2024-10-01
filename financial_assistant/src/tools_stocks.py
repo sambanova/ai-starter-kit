@@ -7,13 +7,13 @@ import streamlit
 import yfinance
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 from matplotlib import dates as mdates
 from matplotlib import pyplot
 from matplotlib.figure import Figure
 from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
+from pydantic import BaseModel, Field
 
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS
 from financial_assistant.src.tools import (

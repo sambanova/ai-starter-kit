@@ -1,10 +1,10 @@
 from typing import Any, List, Dict, Optional
 from typing_extensions import TypedDict
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from utils.rag.rag_components import RAGComponents  # type: ignore
 from utils.code_gen.codegen_components import CodeGenComponents  # type: ignore
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint import MemorySaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.graph.graph import CompiledGraph
 

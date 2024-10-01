@@ -137,7 +137,7 @@ Running from local install is the simplest option and includes a simple Streamli
 
 1. Update pip and install dependencies. We recomment that you use virtual env or `conda` environment for installation.
 ```bash
-cd ai_starter_kit/edgar_qna/
+cd ai-starter-kit/edgar_qna/
 python3 -m venv edgar_env
 source edgar_env/bin/activate
 pip  install  -r  requirements.txt
