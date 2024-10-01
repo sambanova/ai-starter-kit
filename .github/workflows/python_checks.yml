@@ -8,6 +8,11 @@ on:
   pull_request:
     branches: main
 
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
   # Runs manually
   workflow_dispatch:
 
@@ -41,7 +46,7 @@ jobs:
 
       - name: Run Unit Tests for the Financial Assistant at Pull Request
         # Runs only at every pull request 
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         run: |
           python -m unittest discover financial_assistant/tests -k 'test_handle_stock_query'
 
