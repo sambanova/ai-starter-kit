@@ -8,7 +8,7 @@ from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import StructuredTool, Tool
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.tools import get_logger, time_llm
