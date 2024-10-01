@@ -9,11 +9,11 @@ from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
 from pandasai import SmartDataframe
 from pandasai.connectors import SqliteConnector
+from pydantic import BaseModel, Field
 from sqlalchemy import Inspector, create_engine
 
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS_TEMPLATE

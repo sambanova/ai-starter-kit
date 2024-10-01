@@ -24,7 +24,7 @@ from langchain.chains import RetrievalQA
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import load_prompt
 from unstructured.partition.pdf import partition_pdf
