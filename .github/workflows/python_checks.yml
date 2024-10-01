@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip' # caching pip dependencies
+          cache: 'pip'
       
       - name: Install Dependencies
         run: |
@@ -23,11 +23,10 @@ jobs:
           pip install -r financial_assistant/requirements.txt
           pip install ruff mypy
 
-      # Update output format to enable automatic inline annotations.
-      - name: Run Ruff Financial Assistant
+      - name: Run Ruff for the Financial Assistant
         run: ruff check --output-format=github financial_assistant
       
-      - name: Run MyPy Financial Assistant
+      - name: Run MyPy for the Financial Assistant
         run: mypy --explicit-package-bases financial_assistant
 
       - name: Run Unit Tests for the Financial Assistant
