@@ -1,12 +1,14 @@
-import datetime
 from typing import Any, Dict, List, Optional
 
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+from financial_assistant.src.tools import get_logger
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+
+logger = get_logger()
 
 
 def get_stock_database() -> None:
@@ -23,14 +25,13 @@ def get_stock_database() -> None:
         key='create-database',
         placeholder='E.g. ' + DEFAULT_COMPANY_NAME,
     )
-    start_date = streamlit.date_input(
-        'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
-    )
-    end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
+    start_date = streamlit.date_input('Start Date', value=DEFAULT_START_DATE, key='start-date')
+    end_date = streamlit.date_input('End Date', value=DEFAULT_END_DATE, key='end-date')
 
     if streamlit.button('Create database'):
         if len(requested_companies) == 0:
-            streamlit.error('Please enter at least one company.')
+            logger.error('No company entered.')
+            streamlit.error('No company entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_string = handle_database_creation(requested_companies, start_date, end_date)
@@ -55,7 +56,8 @@ def get_stock_database() -> None:
     )
     if streamlit.button(label='Query database'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_database_query(user_request, query_method)
@@ -99,8 +101,8 @@ def handle_database_creation(
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['create_stock_database']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""
@@ -144,8 +146,8 @@ def handle_database_query(
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['query_stock_database']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""
