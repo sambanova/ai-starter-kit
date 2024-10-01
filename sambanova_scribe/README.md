@@ -101,7 +101,7 @@ We recommend that you run the starter kit in a virtual environment or use a cont
 1. Install and update pip.
 
 ```bash
-    cd ai_starter_kit/sambanova_scribe
+    cd ai-starter-kit/sambanova_scribe
     python3 -m venv sambanova_scribe_env
     source sambanova_scribe_env/bin/activate
     pip  install  -r  requirements.txt
