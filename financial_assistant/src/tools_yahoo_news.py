@@ -25,7 +25,7 @@ class YahooFinanceNewsInput(BaseModel):
     """Tool for searching financial news on Yahoo Finance through web scraping."""
 
     company_list: Optional[List[str] | str] = Field(
-        None, description='A list of companies to search, if applicable.', example=['Google', 'Microsoft']
+        None, description='A list of companies to search, if applicable.', examples=['Google', 'Microsoft']
     )
     user_query: str = Field(..., description='The original user query.')
 

@@ -435,7 +435,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     summary_text = get_table_summaries_from_symbols(symbol_list)
 
     # The output parser
-    parser = PydanticOutputParser(pydantic_object=TableNames)  # type: ignore
+    parser = PydanticOutputParser(pydantic_object=TableNames)
 
     # The prompt template
     prompt_template = (
