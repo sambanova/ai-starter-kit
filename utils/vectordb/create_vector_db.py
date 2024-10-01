@@ -21,7 +21,8 @@ import os
 from langchain.document_loaders import DirectoryLoader
 from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS, Chroma, Qdrant
+from langchain.vectorstores import FAISS, Qdrant
+from langchain_chroma import Chroma
 
 # Configure the logger
 logging.basicConfig(

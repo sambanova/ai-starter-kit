@@ -1,8 +1,9 @@
 python-dotenv==1.0.1
 requests==2.31.0
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-community==0.2.16
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
+langchain-chroma == 0.1.4
 unstructured[pdf]==0.12.4
 sentence_transformers==2.2.2
 instructorembedding==1.0.1

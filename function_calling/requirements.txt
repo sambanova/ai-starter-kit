@@ -1,8 +1,11 @@
 python-dotenv==1.0.1
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-community==0.2.16
-langchain-experimental==0.0.60
+pydantic==2.9.2 
+pydantic-core==2.23.4
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
+langchain-chroma == 0.1.4
+langchain-experimental==0.3.2
 sseclient-py==1.8.0
 streamlit==1.38.0
 types-PyYAML==6.0.12.20240311

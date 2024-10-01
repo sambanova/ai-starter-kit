@@ -1,7 +1,7 @@
 import os
 import sys
 from io import BytesIO
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 
 import streamlit as st
 import yaml
