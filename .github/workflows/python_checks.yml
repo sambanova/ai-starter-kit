@@ -29,3 +29,8 @@ jobs:
       
       - name: Run MyPy Financial Assistant
         run: mypy --explicit-package-bases financial_assistant
+
+      - name: Run Unit Tests for the Financial Assistant
+        if: github.event_name == 'pull_request'
+        run: |
+          python -m unittest discover financial_assistant/tests -k 'test_handle_stock_query'
