@@ -76,6 +76,12 @@ class FinancialAssistantTest(unittest.TestCase):
         # Initialize the session
         initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
 
+        # Initialize SEC EDGAR credentials
+        if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
+            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
+        if 'SEC_API_EMAIL' not in streamlit.session_state:
+            streamlit.session_state.SEC_API_EMAIL = f'user_{streamlit.session_state.session_id}@sambanova_cloud.com'
+
         # Initialize the LLM
         streamlit.session_state.llm = SambaNovaLLM()
 
