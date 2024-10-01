@@ -48,7 +48,7 @@ jobs:
       - name: Run Unit Tests for the Financial Assistant at Pull Request
         if: github.event_name == 'pull_request'
         run: |
-          python -m unittest discover -k 'test_handle_stock_query'
+          python -m unittest discover -s financial_assistant/tests -k 'test_handle_stock_query'
 
       # Runs weekly
       - name: Run Unit Tests for the Financial Assistant Weekly
