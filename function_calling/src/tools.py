@@ -252,7 +252,13 @@ def query_db(query: str) -> str:
         sambanova_api_key=sambanova_api_key,
     )
 
-    db_path = os.path.join(kit_dir, query_db_info['db']['path'])
+    if 'session_temp_db' in st.session_state:
+        if st.session_state.session_temp_db is not None:
+            db_path = st.session_state.session_temp_db
+        else:
+            db_path = os.path.join(kit_dir, query_db_info['db']['path'])
+    else:
+        db_path = os.path.join(kit_dir, query_db_info['db']['path'])
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 

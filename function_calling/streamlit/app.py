@@ -1,10 +1,15 @@
 import logging
 import os
+import shutil
 import sys
+import time
+import uuid
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
+from threading import Thread
 from typing import Any, Callable, Generator, List, Optional
 
+import schedule
 import streamlit as st
 import yaml
 
@@ -32,6 +37,7 @@ TOOLS = {
     'translate': translate,
     'rag': rag,
 }
+EXIT_TIME_DELTA = 30
 
 
 def load_config() -> Any:
@@ -41,6 +47,7 @@ def load_config() -> Any:
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
+db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
 
 
@@ -64,7 +71,57 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]
             return ret
 
         stdout.write = new_write  # type: ignore
-        yield # type: ignore
+        yield  # type: ignore
+
+
+def delete_temp_dir(temp_dir: str) -> None:
+    """
+    Delete the temporary directory and its contents.
+
+    Args:
+        temp_dir (str): The path of the temporary directory.
+    """
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            logging.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logging.info(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """
+    Schedule the deletion of the temporary directory after a delay.
+
+    Args:
+        temp_dir (str): The path of the temporary directory.
+        delay_minutes (int): The delay in minutes after which the temporary directory should be deleted.
+    """
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
+def create_temp_db(out_path: str) -> None:
+    """
+    Create a temporary database at the specified path.
+
+    Args:
+        out_path (str): The path where the temporary database will be created.
+    """
+    logging.info(f'creating temp db in {out_path}')
+    directory = os.path.dirname(out_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    shutil.copy2(os.path.join(kit_dir, db_path), out_path)
 
 
 def set_fc_llm(tools: List[Any]) -> None:
@@ -75,6 +132,12 @@ def set_fc_llm(tools: List[Any]) -> None:
         tools (list): list of tools to be used
     """
     set_tools = [TOOLS[name] for name in tools]
+    if query_db in set_tools:
+        if prod_mode:
+            create_temp_db(st.session_state.session_temp_db)
+            schedule_temp_dir_deletion(os.path.dirname(st.session_state.session_temp_db), EXIT_TIME_DELTA)
+            st.toast("""your session will be active for the next 30 minutes, after this time tmp db will be deleted""")
+
     st.session_state.fc = FunctionCallingLlm(set_tools)
 
 
@@ -148,6 +211,11 @@ def main() -> None:
         st.session_state.max_iterations = 5
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
+    if 'session_temp_db' not in st.session_state:
+        if prod_mode:
+            st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
+        else:
+            st.session_state.session_temp_db = None
 
     st.title(':orange[SambaNova] Function Calling Assistant')
 
