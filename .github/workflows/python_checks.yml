@@ -1,9 +1,6 @@
 name: Python Checks
 
 on:
-  # Runs at every push 
-  push:
-
   # Runs at every pull request
   pull_request:
     branches: main
