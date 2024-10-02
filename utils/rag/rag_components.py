@@ -1,14 +1,16 @@
 import os
 import sys
 from typing import Any, Dict, List, Optional, Type
-from utils.rag.base_components import BaseComponents  # type: ignore
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
-from langchain_core.documents.base import Document
-from langchain.vectorstores import Chroma
+
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
-from langchain_core.prompts import load_prompt
+from langchain.vectorstores import Chroma
+from langchain_core.documents.base import Document
 from langchain_core.embeddings import Embeddings
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts import load_prompt
 from langchain_core.vectorstores import VectorStore
+
+from utils.rag.base_components import BaseComponents  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -18,7 +20,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.logging_utils import log_method # type: ignore
+from utils.logging_utils import log_method  # type: ignore
 
 
 class RAGComponents(BaseComponents):
@@ -35,8 +37,7 @@ class RAGComponents(BaseComponents):
     """
 
     def __init__(
-        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, 
-        examples: Optional[Dict[str, str]] = None
+        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, examples: Optional[Dict[str, str]] = None
     ) -> None:
         """
         Initializes the RAG components.
@@ -829,7 +830,7 @@ class RAGComponents(BaseComponents):
             answers_str: str = '\n\n'.join(a for a in answers)
         else:
             answers_str = answers
-            
+
         original_question: str = state['original_question']
 
         print('---ANSWERING---')

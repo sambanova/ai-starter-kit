@@ -1,10 +1,10 @@
 import os
 import sys
 from typing import List, TypedDict
-from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph.graph import CompiledGraph
 
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
+from langgraph.graph.graph import CompiledGraph
 
 current_dir = os.getcwd()
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -13,8 +13,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.rag.rag_components import RAGComponents  # type: ignore
 from utils.code_gen.codegen_components import CodeGenComponents  # type: ignore
+from utils.rag.rag_components import RAGComponents  # type: ignore
 from utils.search.search_components import SearchComponents  # type: ignore
 
 
@@ -27,9 +27,10 @@ class SearchGraphState(TypedDict):
         generation: The current generation from a LLM agent in the pipeline.
         documents: A list of documents after retrieving from the vectorstore.
         answers: A list of answers that have been accumulated from the app.
-        original_question: The original question being searched, which may need to bre retrieved/used after 
+        original_question: The original question being searched, which may need to bre retrieved/used after
         query reformulation or subquery decomposition..
     """
+
     question: str
     generation: str
     documents: List[str]
@@ -53,7 +54,7 @@ class TavilySearchTeam(RAGComponents, CodeGenComponents, SearchComponents):
         workflow: StateGraph = StateGraph(SearchGraphState)
 
         # Define the nodes
-        
+
         workflow.add_node('search', self.tavily_web_search)
         workflow.add_node('grade_documents', self.grade_documents)
         workflow.add_node('generate', self.rag_generate)

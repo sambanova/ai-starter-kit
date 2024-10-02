@@ -1,11 +1,12 @@
+import operator
 import os
 import sys
-from typing import Any, Dict, List, TypedDict, Annotated
-import operator
-from langgraph.graph import END, StateGraph
+from typing import Annotated, Any, Dict, List, TypedDict
+
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph import END, StateGraph
 from langgraph.graph.graph import CompiledGraph
+from langgraph.graph.state import CompiledStateGraph
 
 current_dir = os.getcwd()
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -14,8 +15,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.rag.base_components import BaseComponents  # type: ignore
 from utils.agents.supervisor import SupervisorComponents  # type: ignore
+from utils.rag.base_components import BaseComponents  # type: ignore
 
 
 class SuperState(TypedDict):

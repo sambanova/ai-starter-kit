@@ -1,11 +1,13 @@
 import os
+import re
 import sys
-from typing import List, Any, Dict
-from utils.rag.base_components import BaseComponents  # type: ignore
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+from typing import Any, Dict, List
+
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import load_prompt
 from langchain_experimental.utilities import PythonREPL
-import re
+
+from utils.rag.base_components import BaseComponents  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -14,7 +16,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.logging_utils import log_method # type: ignore
+from utils.logging_utils import log_method  # type: ignore
+
 
 class CodeGenComponents(BaseComponents):
     def python_parser(self, text: str) -> str:

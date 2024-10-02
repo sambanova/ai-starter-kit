@@ -1,13 +1,14 @@
 import os
 import sys
 from typing import Any, Dict, Optional
-from utils.rag.base_components import BaseComponents  # type: ignore
-from langchain_core.output_parsers import StrOutputParser
+
 from langchain.vectorstores import Chroma
 from langchain_community.vectorstores import Chroma
-from langchain_core.prompts import load_prompt
 from langchain_core.embeddings import Embeddings
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import load_prompt
 
+from utils.rag.base_components import BaseComponents  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
