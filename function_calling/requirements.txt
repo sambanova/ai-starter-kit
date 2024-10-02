@@ -15,3 +15,4 @@ InstructorEmbedding==1.0.1
 transformers==4.44.1
 sentence-transformers==2.2.2 
 chromadb==0.5.0
+schedule==1.2.2
