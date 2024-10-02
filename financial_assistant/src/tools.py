@@ -10,8 +10,8 @@ import streamlit
 import yfinance
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 from financial_assistant.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
 from financial_assistant.streamlit.constants import *
@@ -81,7 +81,7 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
     """
 
     # The output parser
-    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)  # type: ignore
+    conversational_parser = PydanticOutputParser(pydantic_object=ConversationalResponse)
 
     # Convert object to string
     response_string = json.dumps(response_object)

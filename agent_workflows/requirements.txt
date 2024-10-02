@@ -89,14 +89,15 @@ jupyter_client==8.6.2
 jupyter_core==5.7.2
 kiwisolver==1.4.5
 kubernetes==30.1.0
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-community==0.2.16
-langchain-experimental==0.0.60
-langchain-text-splitters==0.2.2
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
+langchain-experimental==0.3.2
+langchain-text-splitters==0.3.0
+langchain-chroma == 0.1.4
 langdetect==1.0.9
-langgraph==0.1.6
-langsmith==0.1.98
+langgraph==0.2.28
+langsmith==0.1.129
 layoutparser==0.3.4
 lazy_loader==0.4
 librosa==0.10.1
@@ -171,8 +172,8 @@ pyasn1_modules==0.4.0
 pycocotools==2.0.8
 pycountry==23.12.11
 pycparser==2.22
-pydantic==2.7.0
-pydantic_core==2.18.1
+pydantic==2.9.2 
+pydantic-core==2.23.4
 pydeck==0.9.1
 pyee==11.1.0
 Pygments==2.18.0

@@ -168,7 +168,7 @@ NOTE: python 3.10 or higher is required to run this kit.
 1. Install and update pip.
 
     ```bash
-      cd ai_starter_kit/multimodal_knowledge_retriever
+      cd ai-starter-kit/multimodal_knowledge_retriever
       python3 -m venv multimodal_knowledge_env
       source multimodal_knowledge_env/bin/activate
       pip  install  -r  requirements.txt

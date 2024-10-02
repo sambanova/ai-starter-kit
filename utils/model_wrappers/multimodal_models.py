@@ -199,7 +199,8 @@ class SambastudioMultimodal:
                             f"{chunk['status_code']}."
                             f"{chunk}."
                         )
-                    yield data["choices"][0]["delta"].get("content","")
+                    if len(data["choices"])>0:
+                        yield data["choices"][0]["delta"].get("content","")
             except Exception:
                 raise Exception(
                     f"Error getting content chunk raw streamed response: {chunk}"
