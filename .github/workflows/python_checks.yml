@@ -38,8 +38,6 @@ jobs:
 
       # Ruff
       - name: Run Ruff for the Financial Assistant
-        with: # Set the secret as an input
-        SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: ruff check --output-format=github financial_assistant
       
       # MyPy
@@ -48,6 +46,8 @@ jobs:
 
       # Runs only at every pull request for the Financial Assistant
       - name: Run Unit Tests for the Financial Assistant at Pull Request
+        with: # Set the secret as an input
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         if: github.event_name == 'pull_request'
         run: |
           python -m unittest financial_assistant/tests/github_pull_request_test.py
