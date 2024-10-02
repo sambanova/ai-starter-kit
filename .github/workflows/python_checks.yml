@@ -38,6 +38,8 @@ jobs:
 
       # Ruff
       - name: Run Ruff for the Financial Assistant
+        with: # Set the secret as an input
+        SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: ruff check --output-format=github financial_assistant
       
       # MyPy
