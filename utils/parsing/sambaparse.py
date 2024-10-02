@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class SambaParse:
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str) -> None:
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
 
@@ -43,7 +43,8 @@ class SambaParse:
             additional_metadata (Optional[Dict]): Additional metadata to include in the processed documents.
 
         Returns:
-            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and
+            LangChain documents.
         """
 
         output_dir = self.config['processor']['output_dir']
@@ -143,7 +144,8 @@ class SambaParse:
 
         if self.config['partitioning']['partition_by_api']:
             api_key = os.getenv('UNSTRUCTURED_API_KEY')
-            partition_endpoint_url = f"{self.config['partitioning']['partition_endpoint']}:{self.config['partitioning']['unstructured_port']}"
+            partition_endpoint_url = f"""{self.config['partitioning']['partition_endpoint']}:
+            {self.config['partitioning']['unstructured_port']}"""
             if api_key:
                 command.extend(['--partition-by-api', '--api-key', api_key])
                 command.extend(['--partition-endpoint', partition_endpoint_url])
@@ -159,7 +161,8 @@ class SambaParse:
                     ]
                 )
             logger.warning(
-                "You've chosen the high-resolution partitioning strategy. Grab a cup of coffee or tea while you wait, as this may take some time due to OCR and table detection."
+                """You've chosen the high-resolution partitioning strategy. Grab a cup of coffee or tea while you wait,
+                 as this may take some time due to OCR and table detection."""
             )
 
         if self.config['chunking']['enabled']:
@@ -261,7 +264,8 @@ class SambaParse:
             additional_metadata (Optional[Dict]): Additional metadata to include in the processed documents.
 
         Returns:
-            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+            Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and
+            LangChain documents.
         """
         if not input_path:
             raise ValueError('Input path is required for PyMuPDF processing.')
@@ -327,12 +331,12 @@ def convert_to_string(value: Union[List, Tuple, Dict, Any]) -> str:
 def additional_processing(
     directory: str,
     extend_metadata: bool,
-    additional_metadata: Optional[Dict],
+    additional_metadata: Optional[Dict[str, Any]],
     replace_table_text: bool,
     table_text_key: str,
     return_langchain_docs: bool,
     convert_metadata_keys_to_string: bool,
-):
+) -> Tuple[List[str], List[Dict[str, Any]], List[Document]]:
     """
     Performs additional processing on the extracted documents.
 
@@ -346,7 +350,8 @@ def additional_processing(
         convert_metadata_keys_to_string (bool): Whether to convert non-string metadata keys to string.
 
     Returns:
-        Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain documents.
+        Tuple[List[str], List[Dict], List[Document]]: A tuple containing the extracted texts, metadata, and LangChain
+        documents.
     """
     if os.path.isfile(directory):
         file_paths = [directory]
@@ -435,7 +440,7 @@ def parse_doc_universal(
 
     wrapper = SambaParse(config_path)
 
-    def process_file(file_path):
+    def process_file(file_path: str) -> Any:
         if file_path.lower().endswith('.pdf') and lite_mode:
             # Use PyMuPDF for PDF parsing (lighter version)
             return wrapper._run_ingest_pymupdf(file_path, additional_metadata)
