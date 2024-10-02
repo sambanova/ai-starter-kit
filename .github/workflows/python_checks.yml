@@ -16,7 +16,7 @@ on:
   # Runs manually via Run Workflow in GitHub Actions
   workflow_dispatch:
 
-  # Runs every Sunday at midnight UTC
+  # Runs every Monday at 12:00 UTC
   schedule:
     - cron: '0 12 * * 1'
 
