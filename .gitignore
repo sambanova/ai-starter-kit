@@ -213,22 +213,35 @@ image_search/data
 =======
 #edgar data
 edgar_qna/data
+=======
 
 utils/parsing/output
 utils/parsing/confluence-ingest-output
 utils/parsing/unstructured-api/parsing_service.pid
+
 =======
+
 #enterprise knowledge retriever data
 enterprise_knowledge_retriever/data
 enterprise_knowledge_retriever/app/output
 enterprise_knowledge_retriever/output
 
+=======
+
 #financial_assistant
 financial_assistant/streamlit/cache/*
 financial_assistant/streamlit/cache_prod_mode/*
+financial_assistant/tests/cache/*
+
+=======
 
 #multimodal upload
 multimodal_knowledge_retriever/data/upload*
+
+=======
+
+# fucntion calling
+function_calling/data/tmp*
 
 =======
 #web crawled retriever data

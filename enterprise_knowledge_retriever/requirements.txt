@@ -1,10 +1,11 @@
 streamlit==1.36.0
-pydantic==2.7.0
-pydantic_core==2.18.1
+pydantic==2.9.2
+pydantic_core==2.23.4
 
-langchain==0.2.16
-langchain-core==0.2.38
-langchain-community==0.2.16
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
+langchain-chroma == 0.1.4
 
 sentence_transformers==2.2.2
 instructorembedding==1.0.1
@@ -18,7 +19,7 @@ sseclient-py==1.8.0
 # unstructured_pytesseract==0.3.12
 # pytesseract==0.3.10
 chromadb==0.5.3
-langgraph==0.0.55
+langgraph==0.2.28
 openpyxl==3.1.4
 psutil==6.0.0
 pillow_heif==0.16.0

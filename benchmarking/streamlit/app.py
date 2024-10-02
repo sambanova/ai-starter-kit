@@ -46,6 +46,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
         num_concurrent_requests=st.session_state.number_concurrent_requests,
         timeout=st.session_state.timeout,
         llm_api=api_dict[st.session_state.llm_api],
+        user_metadata={'model_idx': 0},
     )
 
     performance_evaluator.run_benchmark(

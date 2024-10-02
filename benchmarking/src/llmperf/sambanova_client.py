@@ -560,6 +560,7 @@ if __name__ == '__main__':
 
     prompt = 'This is a test example, so tell me about anything'
     request_config = RequestConfig(
+        request_idx=1,
         prompt_tuple=(prompt, 10),
         model=model,
         llm_api=llm_api,

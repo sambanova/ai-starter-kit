@@ -57,7 +57,7 @@ git clone --recurse-submodules  https://github.com/sambanova/ai-starter-kit.git
 We recommend that you run the starter kit in a virtual environment
 
 ```bash
-cd ai_starter_kit/
+cd ai-starter-kit/
 git submodule update --init.  
 cd fine_tuning_sql
 python3 -m venv fine_tuning_sql_env

@@ -1,11 +1,15 @@
 import logging
 import os
-import sys
 import shutil
+import sys
 import time
-import yaml
 import uuid
 from threading import Thread
+from typing import Optional
+
+import yaml
+
+import yaml
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -16,8 +20,9 @@ sys.path.append(repo_dir)
 
 import schedule
 import streamlit as st
+
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
-from utils.visual.env_utils import env_input_fields, initialize_env_variables, are_credentials_set, save_credentials
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
@@ -35,6 +40,7 @@ LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Me
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
+
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
 
@@ -45,6 +51,7 @@ def delete_temp_dir(temp_dir: str) -> None:
         except:
             logging.info(f'Could not delete temporary directory {temp_dir}.')
 
+
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
 
@@ -54,9 +61,10 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
         while schedule.get_jobs(temp_dir):
             schedule.run_pending()
             time.sleep(1)
-            
+
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
+
 
 def handle_user_input(user_question: str) -> None:
     if user_question:
@@ -115,7 +123,7 @@ def handle_user_input(user_question: str) -> None:
                             st.image(image)
 
 
-def initialize_multimodal_retrieval() -> MultimodalRetrieval:
+def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
     if are_credentials_set():
         try:
             return MultimodalRetrieval()
@@ -154,15 +162,16 @@ def main() -> None:
         st.session_state.show_sources = True
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
-    if 'session_temp_folder' not in st.session_state:
+    if 'session_temp_subfolder' not in st.session_state:
         if prod_mode:
-            st.session_state.session_temp_subfolder = "upload_"+str(uuid.uuid4())
+            st.session_state.session_temp_subfolder = 'upload_' + str(uuid.uuid4())
         else:
             st.session_state.session_temp_subfolder = None
 
     st.title(':orange[SambaNova] Multimodal Assistant')
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
-    handle_user_input(user_question)
+    if user_question is not None:
+        handle_user_input(user_question)
 
     with st.sidebar:
         st.title('Setup')
@@ -174,7 +183,7 @@ def main() -> None:
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, aditional_variables, prod_mode)
                 st.rerun()
-                st.success(message)     
+                st.success(message)
 
         else:
             st.success('Credentials are set')
@@ -217,17 +226,26 @@ def main() -> None:
                                 image_retrieval_type='summary'
                             )
                         st.session_state.qa_chain = qa_chain
-                    st.toast("Models updated")
+                    st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
             if st.button('Process'):
                 if docs:
-                    with st.spinner('Processing this could take a while...'): 
+                    with st.spinner('Processing this could take a while...'):
                         if prod_mode:
-                            schedule_temp_dir_deletion(os.path.join(kit_dir, 'data', st.session_state.session_temp_subfolder), EXIT_TIME_DELTA)
-                            st.toast("your session will be active for the next 30 minutes, after this time files and vectorstores will be deleted")
+                            schedule_temp_dir_deletion(
+                                os.path.join(kit_dir, 'data', st.session_state.session_temp_subfolder), EXIT_TIME_DELTA
+                            )
+                            st.toast(
+                                """your session will be active for the next 30 minutes, after this time files and
+                                 vectorstores will be deleted"""
+                            )
                         st.session_state.qa_chain = st.session_state.multimodal_retriever.st_ingest(
-                            docs, table_summaries, text_summaries, raw_image_retrieval, st.session_state.session_temp_subfolder
+                            docs,
+                            table_summaries,
+                            text_summaries,
+                            raw_image_retrieval,
+                            st.session_state.session_temp_subfolder,
                         )
                         st.toast('Vector DB successfully created!')
                         st.session_state.input_disabled = False
