@@ -44,14 +44,16 @@ jobs:
       - name: Run MyPy for the Financial Assistant
         run: mypy --explicit-package-bases financial_assistant
 
-      # # Runs only at every pull request 
-      # - name: Run Unit Tests for the Financial Assistant at Pull Request
-      #   if: github.event_name == 'pull_request'
-      #   run: |
-      #     python -m unittest financial_assistant.tests.financial_assistant_test.FinancialAssistantTest.test_handle_stock_query
+      # Runs only at every pull request for the Financial Assistant
+      - name: Run Unit Tests for the Financial Assistant at Pull Request
+        if: github.event_name == 'pull_request'
+        run: |
+          python -m unittest financial_assistant.tests.github_pull_request_test.py
 
-      # # Runs weekly
-      # - name: Run Unit Tests for the Financial Assistant Weekly
-      #   if: github.event_name == 'schedule'
-      #   run: |
-      #     python -m unittest discover financial_assistant/tests
+      
+
+      # Runs weekly
+      - name: Run Unit Tests for the Financial Assistant Weekly
+        if: github.event_name == 'schedule'
+        run: |
+          python -m unittest financial_assistant.tests.financial_assistant_test.py

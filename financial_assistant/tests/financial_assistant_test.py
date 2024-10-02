@@ -14,7 +14,7 @@ import os
 import sys
 import time
 import unittest
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Optional
 
 import pandas
 import streamlit
@@ -613,7 +613,7 @@ class CustomTextTestResult(unittest.TextTestResult):
             self.results_list.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
 
-def suite() -> unittest.TestSuite:
+def main_suite() -> unittest.TestSuite:
     """Test suite to define the order of the test execution."""
 
     # List all the test cases here in order of execution
@@ -644,15 +644,21 @@ def suite() -> unittest.TestSuite:
     return suite
 
 
-def main() -> int:
+def main(suite: Optional[unittest.TestSuite] = None) -> int:
+    """Main program to run a test suite."""
+
+    if suite is not None:
+        assert isinstance(suite, unittest.TestSuite), TypeError(
+            f'`suite` must be of type `unittest.TestSuite`. Got type {type(suite)}.'
+        )
+    else:
+        suite = main_suite()
+
     # The test runner
     runner = unittest.TextTestRunner(resultclass=CustomTextTestResult)
 
-    # The test suite
-    my_suite = suite()
-
     # Run the tests
-    test_results = runner.run(my_suite)
+    test_results = runner.run(suite)
 
     logger.info('Test Results:')
 
