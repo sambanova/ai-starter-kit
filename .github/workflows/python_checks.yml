@@ -50,10 +50,10 @@ jobs:
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
-          python -m unittest financial_assistant/tests/github_pull_request_test.py
+          python financial_assistant/tests/github_pull_request_test.py
 
       # Runs weekly
       - name: Run Unit Tests for the Financial Assistant Weekly
         if: github.event_name == 'schedule'
         run: |
-          python -m unittest financial_assistant/tests/financial_assistant_test.py
+          python financial_assistant/tests/financial_assistant_test.py
