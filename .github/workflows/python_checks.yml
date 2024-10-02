@@ -46,13 +46,11 @@ jobs:
 
       # Runs only at every pull request for the Financial Assistant
       - name: Run Unit Tests for the Financial Assistant at Pull Request
-        with: # Set the secret as an input
-          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         if: github.event_name == 'pull_request'
         run: |
           python -m unittest financial_assistant/tests/github_pull_request_test.py
-
-      
+        with: # Set the secret as an input
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
 
       # Runs weekly
       - name: Run Unit Tests for the Financial Assistant Weekly
