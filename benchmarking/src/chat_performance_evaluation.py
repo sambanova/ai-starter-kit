@@ -34,6 +34,7 @@ class ChatPerformanceEvaluator:
         tokenizer = utils.get_tokenizer(self.model)
 
         request_config = RequestConfig(
+            request_idx=1,
             prompt_tuple=(prompt_template, 10),
             model=self.model,
             llm_api=self.llm_api,
