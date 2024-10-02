@@ -32,7 +32,9 @@ CLI_COMMAND_TIMEOUT = 180  # 3 minutes
 
 # List of starter kits to test
 STARTER_KITS: List[str] = [
+    'benchmarking',
     'enterprise_knowledge_retriever',
+    'financial_assistant',
     'function_calling',
     'search_assistant',
     'benchmarking',
@@ -45,11 +47,12 @@ STARTER_KITS: List[str] = [
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
+    'benchmarking': './run_synthetic_dataset.sh',
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
-    'post_call_analysis': 'python tests/pca_test.py',
+    'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
-    'web_crawled_data_retriever': 'python tests/web_crawling_test.py',
     'multimodal_knowledge_retriever': 'python tests/multimodal_knowledge_retriever_test.py',
+    'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     # 'search_assistant': 'python cli_test.py --query "test query"',
     'search_assistant': 'python tests/search_assistant_test.py',

@@ -1,6 +1,7 @@
 import os
 import re
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit
@@ -32,7 +33,7 @@ FONT = 'helvetica'
 class PDFReport(FPDF):  # type: ignore
     """Class for generating PDF reports."""
 
-    def header(self, title_name: str = 'Financial Report') -> None:
+    def header(self, title_name: str = DEFAULT_PDF_TITLE) -> None:
         """Overrides the FPDF header method."""
         self.set_text_color(SAMBANOVA_ORANGE)
 
@@ -109,12 +110,59 @@ class PDFReport(FPDF):  # type: ignore
 
 def read_txt_files(directory: str) -> List[str]:
     """Reads all the text files from a directory."""
-    texts = []
-    for filename in os.listdir(directory):
+
+    # Target list of text files, used to order the different sources
+    target_list = [
+        Path(streamlit.session_state.stock_query_path).name,
+        Path(streamlit.session_state.db_query_path).name,
+        Path(streamlit.session_state.yfinance_news_path).name,
+        Path(streamlit.session_state.filings_path).name,
+    ]
+
+    # Sort the files of the list following the order of the target list
+    sources_list = reorder_list(input_list=os.listdir(directory), target_list=target_list)
+
+    # Extract the text files from the directory
+    txt_files_list = list()
+    for filename in sources_list:
         if filename.endswith('.txt'):
             with open(os.path.join(directory, filename), 'r') as file:
-                texts.append(file.read())
-    return texts
+                txt_files_list.append(file.read())
+
+    return txt_files_list
+
+
+def reorder_list(input_list: List[str], target_list: List[str]) -> List[str]:
+    """
+    Reorders the elements of the second list to match the order of the elements in the target list.
+
+    This function also works if the second list is a subset of the target list.
+    Any extra elements that are present in the second list, but not in the target list,
+    will be appended to the end in their original order.
+
+    Args:
+        input_list: The list to be reordered.
+        target_list: The list whose order should be followed.
+
+    Returns:
+        The reordered list following the order of the target list.
+    """
+    # Create a dictionary to map each element to its index in the target_list
+    order = {element: index for index, element in enumerate(target_list)}
+
+    # Elements in input_list that are also in target_list
+    common_elements = [element for element in input_list if element in order]
+
+    # Sort common elements based on their order in target_list
+    common_elements_sorted = sorted(common_elements, key=lambda x: order[x])
+
+    # Elements in input_list that are not in target_list
+    extra_elements = [element for element in input_list if element not in order]
+
+    # Concatenate sorted common elements with extra elements
+    reordered_list = common_elements_sorted + extra_elements
+
+    return reordered_list
 
 
 def parse_documents(documents: List[str]) -> List[Tuple[str, Any]]:
@@ -345,7 +393,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Abstract parser
-    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Abstract template
     abstract_template = """Write a concise summary of the following:
@@ -376,7 +424,7 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Reduce parser
-    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)  # type: ignore
+    reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
     # Reduce template
     reduce_template = """The following is set of summaries:
@@ -409,7 +457,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     llm = streamlit.session_state.llm.llm
 
     # Map parser
-    map_parser = PydanticOutputParser(pydantic_object=Summary)  # type: ignore
+    map_parser = PydanticOutputParser(pydantic_object=Summary)
 
     # Map template
     map_template = """The following is a document:

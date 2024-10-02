@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import pandas
+import pandasai
 import schedule
 import streamlit
 import yaml
@@ -56,6 +57,138 @@ def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
     return config
 
 
+def initialize_session(
+    session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
+    prod_mode: bool = False,
+    cache_dir: str = CACHE_DIR,
+) -> None:
+    """Initialize the Streamlit `session_state`."""
+
+    # Initialize the session id
+    if 'session_id' not in session_state:
+        session_state.session_id = str(uuid4())
+
+    # Initialize the production mode
+    if 'prod_mode' not in session_state:
+        session_state.prod_mode = prod_mode
+
+    # Initialize credentials
+    initialize_env_variables(prod_mode)
+
+    # Initialize SEC EDGAR credentials
+    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
+        if prod_mode:
+            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
+        else:
+            streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
+    if 'SEC_API_EMAIL' not in streamlit.session_state:
+        if prod_mode:
+            streamlit.session_state.SEC_API_EMAIL = f'user_{session_state.session_id}@sambanova_cloud.com'
+        else:
+            streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
+
+    # Initialize the chat history
+    if 'chat_history' not in session_state:
+        session_state.chat_history = list()
+    # Initialize function calling
+    if 'llm' not in session_state:
+        session_state.llm = None
+
+    # Initialize cache directory
+    if prod_mode:
+        if 'cache_dir' not in session_state:
+            session_state.cache_dir = os.path.join(cache_dir[:-1] + '_prod_mode', f'cache_{session_state.session_id}')
+    else:
+        if 'cache_dir' not in session_state:
+            session_state.cache_dir = cache_dir
+
+    # Main cache directories
+    if 'history_path' not in session_state:
+        session_state.history_path = os.path.join(session_state.cache_dir, 'chat_history.txt')
+    if 'pdf_generation_directory' not in session_state:
+        session_state.pdf_generation_directory = os.path.join(streamlit.session_state.cache_dir, 'pdf_generation')
+    if 'stock_query_path' not in session_state:
+        session_state.stock_query_path = os.path.join(streamlit.session_state.cache_dir, 'stock_query.txt')
+    if 'db_query_path' not in session_state:
+        session_state.db_query_path = os.path.join(streamlit.session_state.cache_dir, 'db_query.txt')
+    if 'yfinance_news_path' not in session_state:
+        session_state.yfinance_news_path = os.path.join(streamlit.session_state.cache_dir, 'yfinance_news.txt')
+    if 'filings_path' not in session_state:
+        session_state.filings_path = os.path.join(streamlit.session_state.cache_dir, 'filings.txt')
+    if 'pdf_rag_path' not in session_state:
+        session_state.pdf_rag_path = os.path.join(streamlit.session_state.cache_dir, 'pdf_rag.txt')
+    if 'web_scraping_path' not in session_state:
+        session_state.web_scraping_path = os.path.join(streamlit.session_state.cache_dir, 'web_scraping.csv')
+    if 'llm_class_logger_path' not in session_state:
+        session_state.llm_class_logger_path = os.path.join(streamlit.session_state.cache_dir, 'llm_calls_logger.txt')
+
+    # Main source directories
+    if 'source_dir' not in session_state:
+        session_state.source_dir = os.path.join(streamlit.session_state.cache_dir, 'sources')
+    if 'db_path' not in session_state:
+        session_state.db_path = os.path.join(session_state.source_dir, 'stock_database.db')
+    if 'yfinance_news_txt_path' not in session_state:
+        session_state.yfinance_news_txt_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.txt')
+    if 'yfinance_news_csv_path' not in session_state:
+        session_state.yfinance_news_csv_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.csv')
+    if 'pdf_sources_directory' not in session_state:
+        session_state.pdf_sources_directory = os.path.join(session_state.source_dir, 'pdf_sources')
+
+    # Main figures directories
+    if 'stock_query_figures_dir' not in session_state:
+        session_state.stock_query_figures_dir = os.path.join(session_state.cache_dir, 'stock_query_figures')
+    if 'history_figures_dir' not in session_state:
+        session_state.history_figures_dir = os.path.join(session_state.cache_dir, 'history_figures')
+    if 'db_query_figures_dir' not in session_state:
+        session_state.db_query_figures_dir = os.path.join(session_state.cache_dir, 'db_query_figures')
+
+    # Launch time
+    if 'launch_time' not in session_state:
+        session_state.launch_time = datetime.datetime.now()
+
+    # Clear pandasai cache
+    if 'pandasai_cache' not in session_state:
+        session_state.pandasai_cache = os.path.join(os.getcwd(), 'cache')
+
+    # Delete pandasai cache
+    try:
+        pandasai.clear_cache()
+    except:
+        pass
+    delete_temp_dir(temp_dir=session_state.pandasai_cache, verbose=False)
+
+
+def submit_sec_edgar_details() -> None:
+    """Add the SEC-EDGAR details to the session state."""
+
+    key = 'sidebar-sec-edgar'
+    sec_edgar_help = """Must provide organization and email address
+        to comply with the SEC Edgar's downloading fair access
+        <a href="https://www.sec.gov/os/webmaster-faq#code-support" target="_blank">policy</a>.
+    """
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.markdown(sec_edgar_help, unsafe_allow_html=True)
+    # Populate SEC-EDGAR credentials
+    if streamlit.session_state.SEC_API_ORGANIZATION is None:
+        streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
+            'For SEC-EDGAR: <your organization>', None, key=key + '-organization'
+        )
+    if streamlit.session_state.SEC_API_EMAIL is None:
+        streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
+            'For SEC-EDGAR: <user@email_provider.com>', None, key=key + '-email'
+        )
+    # Save button
+    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+        if streamlit.button('Save SEC EDGAR details', key=key + '-button'):
+            if (
+                streamlit.session_state.SEC_API_ORGANIZATION is not None
+                and streamlit.session_state.SEC_API_EMAIL is not None
+            ):
+                streamlit.success('SEC EDGAR details saved successfully!')
+        else:
+            streamlit.warning('Please enter organization and email.')
+
+
 def save_historical_price_callback(
     user_query: str,
     symbol_list: List[str],
@@ -75,16 +208,18 @@ def save_historical_price_callback(
         os.makedirs(dir_name)
 
     # Derive the filename
-    filename = dir_name + f"stock_data_{'_'.join(symbol_list)}_{start_date}_{end_date}"
+    suffix = f'stock_data_{"_".join(symbol_list)}_{start_date}_{end_date}'
+    path_csv = os.path.join(dir_name, f'{suffix}.csv')
+    path_png = os.path.join(dir_name, f'{suffix}.png')
 
     # Write the dataframe to a csv file
-    data.to_csv(filename + '.csv', index=True)
+    data.to_csv(path_csv, index=True)
 
-    # Save the plots
-    fig.savefig(f'{filename}.png', bbox_inches='tight')
+    # Save the plots as png images
+    fig.savefig(path_png, bbox_inches='tight')
 
     # Compose the content including the user query and the filename
-    content = '\n\n' + user_query + '\n\n' + f'{filename}.png' + '\n\n'
+    content = '\n\n' + user_query + '\n\n' + f'{path_png}' + '\n\n'
 
     # Save the content path to a file
     if save_path is not None:
@@ -97,6 +232,7 @@ def save_output_callback(
     user_request: Optional[str] = None,
 ) -> None:
     """Save the output callback for streamlit button."""
+
     # Check the inputs
     assert isinstance(response, (str, list, dict, tuple, pandas.Series, pandas.DataFrame)), TypeError(
         f'Response must be a string, a list, a dictionary, a tuple. a series, or a dataframe. Got type {type(response)}'
@@ -285,7 +421,7 @@ def display_directory_contents(path: str, default_path: str) -> None:
 
 
 def clear_directory(directory: str, delete_subdirectories: bool = False) -> None:
-    """Delete all files in the given directory."""
+    """Delete all files and optionally subdirectories in the given directory."""
 
     try:
         if not os.path.exists(directory):
@@ -298,6 +434,8 @@ def clear_directory(directory: str, delete_subdirectories: bool = False) -> None
                 if os.path.isfile(item_path):
                     os.unlink(item_path)
                 elif os.path.isdir(item_path):
+                    # Recurse into subdirectory
+                    clear_directory(item_path, delete_subdirectories)
                     if delete_subdirectories:
                         shutil.rmtree(item_path)
             except Exception as e:
@@ -306,33 +444,30 @@ def clear_directory(directory: str, delete_subdirectories: bool = False) -> None
         logger.warning(f'Error processing directory {directory}: {e}')
 
 
-def clear_cache(delete: bool = False) -> None:
+def clear_cache(delete: bool = False, verbose: bool = False) -> None:
     """Clear and/or delete the cache."""
 
-    cache_dir = streamlit.session_state.cache_dir
+    try:
+        cache_dir = streamlit.session_state.cache_dir
 
-    if not os.path.exists(cache_dir):
-        logger.warning(f'Cache directory does not exist: {Path(cache_dir).name}')
-        return
+        if not os.path.exists(cache_dir):
+            if verbose:
+                logger.warning(f'Cache directory does not exist: {Path(cache_dir).name}')
+            return
 
-    # Clear the cache directory
-    clear_directory(cache_dir, delete)
+        # Clear the cache directory recursively
+        clear_directory(cache_dir, delete)
+
+    except Exception as e:
+        logger.warning(f'Error clearing cache directory {Path(cache_dir).name}: {e}')
 
     if delete:
         try:
             shutil.rmtree(cache_dir)
-            logger.info(f'Successfully deleted cache directory: {Path(cache_dir).name}')
+            if verbose:
+                logger.info(f'Successfully deleted cache directory: {Path(cache_dir).name}')
         except Exception as e:
             logger.warning(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
-
-        for root, dirs, _ in os.walk(cache_dir, topdown=False):
-            for dir in dirs:
-                path = os.path.join(root, dir)
-                clear_directory(path, delete)
-                try:
-                    os.rmdir(path)
-                except Exception as e:
-                    logger.warning(f'Error deleting directory {path}: {e}')
 
 
 def download_file(filename: str) -> None:
@@ -367,126 +502,6 @@ def download_file(filename: str) -> None:
         logger.warning('File not found', str(e))
 
 
-def initialize_session(
-    session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
-    prod_mode: bool = False,
-) -> None:
-    """Initialize the Streamlit `session_state`."""
-
-    # Initialize the session id
-    if 'session_id' not in session_state:
-        session_state.session_id = str(uuid4())
-
-    # Initialize the production mode
-    if 'prod_mode' not in session_state:
-        session_state.prod_mode = prod_mode
-
-    # Initialize credentials
-    initialize_env_variables(prod_mode)
-
-    # Initialize SEC EDGAR credentials
-    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
-        if prod_mode:
-            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
-        else:
-            streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
-    if 'SEC_API_EMAIL' not in streamlit.session_state:
-        if prod_mode:
-            streamlit.session_state.SEC_API_EMAIL = f'user_{session_state.session_id}@sambanova_cloud.com'
-        else:
-            streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
-
-    # Initialize the chat history
-    if 'chat_history' not in session_state:
-        session_state.chat_history = list()
-    # Initialize function calling
-    if 'fc' not in session_state:
-        session_state.llm = None
-
-    # Initialize cache directory
-    if prod_mode:
-        if 'cache_dir' not in session_state:
-            session_state.cache_dir = CACHE_DIR[:-1] + '_prod_mode' + '/cache' + f'_{session_state.session_id}/'
-    else:
-        if 'cache_dir' not in session_state:
-            session_state.cache_dir = CACHE_DIR
-
-    # Main cache directories
-    if 'history_path' not in session_state:
-        session_state.history_path = os.path.join(session_state.cache_dir, 'chat_history.txt')
-    if 'pdf_generation_directory' not in session_state:
-        session_state.pdf_generation_directory = os.path.join(streamlit.session_state.cache_dir, 'pdf_generation/')
-    if 'stock_query_path' not in session_state:
-        session_state.stock_query_path = os.path.join(streamlit.session_state.cache_dir, 'stock_query.txt')
-    if 'db_query_path' not in session_state:
-        session_state.db_query_path = os.path.join(streamlit.session_state.cache_dir, 'db_query.txt')
-    if 'yfinance_news_path' not in session_state:
-        session_state.yfinance_news_path = os.path.join(streamlit.session_state.cache_dir, 'yfinance_news.txt')
-    if 'filings_path' not in session_state:
-        session_state.filings_path = os.path.join(streamlit.session_state.cache_dir, 'filings.txt')
-    if 'pdf_rag_path' not in session_state:
-        session_state.pdf_rag_path = os.path.join(streamlit.session_state.cache_dir, 'pdf_rag.txt')
-    if 'web_scraping_path' not in session_state:
-        session_state.web_scraping_path = os.path.join(streamlit.session_state.cache_dir, 'web_scraping.csv')
-    if 'llm_class_logger_path' not in session_state:
-        session_state.llm_class_logger_path = os.path.join(streamlit.session_state.cache_dir, 'llm_calls_logger.txt')
-
-    # Main source directories
-    if 'source_dir' not in session_state:
-        session_state.source_dir = os.path.join(streamlit.session_state.cache_dir, 'sources/')
-    if 'db_path' not in session_state:
-        session_state.db_path = os.path.join(session_state.source_dir, 'stock_database.db')
-    if 'yfinance_news_txt_path' not in session_state:
-        session_state.yfinance_news_txt_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.txt')
-    if 'yfinance_news_csv_path' not in session_state:
-        session_state.yfinance_news_csv_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.csv')
-    if 'pdf_sources_directory' not in session_state:
-        session_state.pdf_sources_directory = os.path.join(session_state.source_dir, 'pdf_sources/')
-
-    # Main figures directories
-    if 'stock_query_figures_dir' not in session_state:
-        session_state.stock_query_figures_dir = os.path.join(session_state.cache_dir, 'stock_query_figures/')
-    if 'history_figures_dir' not in session_state:
-        session_state.history_figures_dir = os.path.join(session_state.cache_dir, 'history_figures/')
-    if 'db_query_figures_dir' not in session_state:
-        session_state.db_query_figures_dir = os.path.join(session_state.cache_dir, 'db_query_figures/')
-
-    # Launch time
-    if 'launch_time' not in session_state:
-        session_state.launch_time = datetime.datetime.now()
-
-
-def submit_sec_edgar_details() -> None:
-    """Add the SEC-EDGAR details to the session state."""
-
-    key = 'sidebar-sec-edgar'
-    sec_edgar_help = """Must provide organization and email address
-        to comply with the SEC Edgar's downloading fair access
-        <a href="https://www.sec.gov/os/webmaster-faq#code-support" target="_blank">policy</a>.
-    """
-    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
-        streamlit.markdown(sec_edgar_help, unsafe_allow_html=True)
-    # Populate SEC-EDGAR credentials
-    if streamlit.session_state.SEC_API_ORGANIZATION is None:
-        streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
-            'For SEC-EDGAR: <your organization>', None, key=key + '-organization'
-        )
-    if streamlit.session_state.SEC_API_EMAIL is None:
-        streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
-            'For SEC-EDGAR: <user@email_provider.com>', None, key=key + '-email'
-        )
-    # Save button
-    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
-        if streamlit.button('Save SEC EDGAR details', key=key + '-button'):
-            if (
-                streamlit.session_state.SEC_API_ORGANIZATION is not None
-                and streamlit.session_state.SEC_API_EMAIL is not None
-            ):
-                streamlit.success('SEC EDGAR details saved successfully!')
-        else:
-            streamlit.warning('Please enter organization and email.')
-
-
 def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
     """Create a temporary directory with specified subdirectories."""
 
@@ -495,21 +510,23 @@ def create_temp_dir_with_subdirs(dir: str, subdirs: List[str] = []) -> None:
         os.makedirs(subdir, exist_ok=True)
 
 
-def delete_temp_dir(temp_dir: str) -> None:
+def delete_temp_dir(temp_dir: str, verbose: bool = False) -> None:
     """Delete the temporary directory and its contents."""
 
     if os.path.exists(temp_dir):
         try:
             shutil.rmtree(temp_dir)
-            logger.info(f'Temporary directory {temp_dir} deleted.')
+            if verbose:
+                logger.info(f'Temporary directory {temp_dir} deleted.')
         except:
-            logger.warning(f'Could not delete temporary directory {temp_dir}.')
+            if verbose:
+                logger.warning(f'Could not delete temporary directory {temp_dir}.')
 
 
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
 
-    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir=temp_dir, verbose=False).tag(temp_dir)
 
     def run_scheduler() -> None:
         while schedule.get_jobs(temp_dir):
@@ -518,6 +535,28 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
+
+
+def delete_all_subdirectories(directory: str, exclude: List[str], verbose: bool = False) -> None:
+    """
+    Delete all subdirectories in the given directory, excluding specified directories.
+
+    Args:
+        directory: The parent directory whose subdirectories need to be deleted.
+        exclude: A list of subdirectory names to exclude from deletion.
+        verbose: Whether to print log messages.
+    """
+    for root, dirs, files in os.walk(directory):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            if dir_path not in exclude and os.path.isdir(dir_path):
+                try:
+                    shutil.rmtree(dir_path)
+                    if verbose:
+                        logger.info(f'Successfully deleted directory: {Path(dir_path).name}.')
+                except:
+                    if verbose:
+                        logger.warning(f'Could not delete directory {Path(dir_path).name}.')
 
 
 def set_css_styles() -> None:

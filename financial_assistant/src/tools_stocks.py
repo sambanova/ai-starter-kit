@@ -1,5 +1,4 @@
 import datetime
-from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas
@@ -23,6 +22,7 @@ from financial_assistant.src.tools import (
     time_llm,
 )
 from financial_assistant.streamlit.constants import *
+from financial_assistant.streamlit.utilities_app import delete_temp_dir
 
 
 class StockInfoSchema(BaseModel):
@@ -128,8 +128,8 @@ def get_pandasai_answer_from_dataframe(user_query: str, symbol: str, dataframe_n
     # Extract the relevant yfinance data
     company_data_dict = extract_yfinance_data(
         symbol,
-        start_date=datetime.datetime.today().date() - timedelta(days=365),
-        end_date=datetime.datetime.today().date(),
+        start_date=DEFAULT_START_DATE,
+        end_date=DEFAULT_END_DATE,
     )
 
     # Extract the relevant dataframe from the yfinance data dictionary
@@ -165,7 +165,13 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     assert isinstance(symbol, str), TypeError(f'The company symbol must be of type string. Got {(type(symbol))}.')
 
     # Instantiate a `pandasai.connectors.yahoo_finance.YahooFinanceConnector` object with the relevant symbol
-    yahoo_connector = YahooFinanceConnector(symbol)
+    yahoo_connector = YahooFinanceConnector(
+        symbol,
+        config={'enable_cache': False},
+    )
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     # Answer the user query by symbol
     return interrogate_dataframe_pandasai(yahoo_connector, user_query)
@@ -195,6 +201,9 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
             'enable_cache': False,
         },
     )
+
+    # Delete the pandasai cache
+    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS
@@ -240,7 +249,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The parser
-        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)  # type: ignore
+        parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)
 
         # The prompt
         prompt_symbol = PromptTemplate(
@@ -306,9 +315,7 @@ def get_historical_price(
     assert isinstance(company_list, (list, str)), TypeError(
         f'`company_list` must be of type list or string. Got {(type(company_list))}.'
     )
-    assert start_date <= end_date or (end_date - datetime.timedelta(days=365)) >= start_date, ValueError(
-        'Start date must be before the end date.'
-    )
+    assert start_date <= end_date, ValueError('Start date must be before the end date.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
     company_list = coerce_str_to_list(company_list)
