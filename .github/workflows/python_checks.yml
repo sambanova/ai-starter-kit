@@ -39,7 +39,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r financial_assistant/requirements.txt
           pip install ruff mypy
-          pip install -e .
 
       # Ruff
       - name: Run Ruff for the Financial Assistant
