@@ -6,7 +6,6 @@ from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.documents.base import Document
 from langchain.vectorstores import Chroma
 from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
-from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import load_prompt
 from langchain_core.embeddings import Embeddings
 from langchain_core.vectorstores import VectorStore

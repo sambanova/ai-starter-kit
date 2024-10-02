@@ -1,7 +1,5 @@
-import datetime
 import json
 from collections import OrderedDict
-from datetime import timedelta
 
 from financial_assistant.src.tools import convert_data_to_frame, extract_yfinance_data
 from financial_assistant.streamlit.constants import *
@@ -13,8 +11,8 @@ def save_yfinance_columns_to_json(symbol: str = 'GOOG') -> None:
     # Extract yfinance data
     company_data_dict = extract_yfinance_data(
         'GOOG',
-        start_date=datetime.datetime.today().date() - timedelta(days=365),
-        end_date=datetime.datetime.today().date(),
+        start_date=DEFAULT_START_DATE,
+        end_date=DEFAULT_END_DATE,
     )
 
     # Dictionary to hold dataframe columns

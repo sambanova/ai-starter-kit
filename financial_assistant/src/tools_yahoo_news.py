@@ -8,8 +8,8 @@ import yfinance
 from bs4 import BeautifulSoup
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list, get_logger
@@ -25,7 +25,7 @@ class YahooFinanceNewsInput(BaseModel):
     """Tool for searching financial news on Yahoo Finance through web scraping."""
 
     company_list: Optional[List[str] | str] = Field(
-        None, description='A list of companies to search, if applicable.', example=['Google', 'Microsoft']
+        None, description='A list of companies to search, if applicable.', examples=['Google', 'Microsoft']
     )
     user_query: str = Field(..., description='The original user query.')
 
