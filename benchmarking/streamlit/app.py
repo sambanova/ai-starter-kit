@@ -60,7 +60,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     # Read generated json and output formatted results
     df_user = pd.read_json(performance_evaluator.individual_responses_file_path)
     df_user['concurrent_user'] = st.session_state.number_concurrent_workers
-    valid_df = df_user[(df_user['error_code'] != '')]
+    valid_df = df_user[df_user['error_code'].isnull()]
 
     # For non-batching endpoints, batch_size_used will be 1
     if valid_df['batch_size_used'].isnull().all():
