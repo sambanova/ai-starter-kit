@@ -7,11 +7,7 @@ def suite_github_pull_request() -> unittest.TestSuite:
     """Test suite for GitHub actions on `pull_request`."""
 
     # List all the test cases here in order of execution
-    suite_list = [
-        'test_handle_database_creation',
-        'test_handle_database_query',
-        'test_handle_financial_filings',
-    ]
+    suite_list = ['test_handle_stock_query']
 
     # Add all the tests to the suite
     suite = unittest.TestSuite()
