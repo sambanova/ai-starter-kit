@@ -33,14 +33,15 @@ class Guard:
         sambastudio_api_key: Optional[str] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize Guard class with specified LLM and guardrails.
 
         Parameters:
         - api (str): The LLM API to use, default is 'sambastudio'.
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
-        - guardrails_path (str, optional): Path to the guardrails YAML file. Default is 'utils/guardrails/guardrails.yaml'.
+        - guardrails_path (str, optional): Path to the guardrails YAML file. Default is
+         'utils/guardrails/guardrails.yaml'.
         - coe (bool, optional): Whether the llama-guard model is in a SambaStudio CoE endpoint
         - sambastudio_base_url (str, optional): Base URL for SambaStudio API.
         - sambastudio_base_uri (str, optional): Base URI for SambaStudio API.
@@ -85,7 +86,8 @@ class Guard:
         - path (str): The path to the YAML file containing the guardrails.
 
         Returns:
-        - guardrails (dict): A dictionary of guardrails, where the keys are the guardrail IDs and the values are dictionaries containing the guardrail name and details.
+        - guardrails (dict): A dictionary of guardrails, where the keys are the guardrail IDs and the values are
+         dictionaries containing the guardrail name and details.
         - guardrails_str (str): A formatted string containing the names and descriptions of the enabled guardrails.
         """
         with open(path, 'r') as yaml_file:
@@ -109,19 +111,25 @@ class Guard:
         Evaluate a message or a conversation against the guardrails.
 
         Parameters:
-        - input_query (Union[List[Dict], str]): The message or conversation to evaluate. It can be a string with the message or a list of dictionaries representing a conversation.
+        - input_query (Union[List[Dict], str]): The message or conversation to evaluate. It can be a string with the
+         message or a list of dictionaries representing a conversation.
             Example conversation input
             [
              {"message_id":0,"role":"user", "content":"this is an user message"},
              {"message_id":1,"role":"assistant","content":"this is an assistant response"},
             ]
         - role (str): The role of the message to analyse. It can be either 'user' or 'assistant'.
-        - error_message (str, optional): The error message to be displayed when the message violates the guardrails. If not provided, a default message "The message violate guardrails" will be used.
-        - return_guardrail_type (bool, optional): If True, the function will return the violated guardrail types. If False, it will only return the error message. Default is True.
-        - raise_exception (bool, optional): If True, the function will raise a ValueError with the error message when the message violates the guardrails. If False, it will return the error message without raising the exception.. Default is False.
+        - error_message (str, optional): The error message to be displayed when the message violates the guardrails.
+         If not provided, a default message "The message violate guardrails" will be used.
+        - return_guardrail_type (bool, optional): If True, the function will return the violated guardrail types.
+         If False, it will only return the error message. Default is True.
+        - raise_exception (bool, optional): If True, the function will raise a ValueError with the error message when
+         the message violates the guardrails. If False, it will return the error message without raising the exception.
+         Default is False.
 
         Returns:
-        - Union[str, List[str]]: The result of the evaluation. If the message violates the guardrails, it will return the error message with the violated guardrail types based on the return_guardrail_type parameter.
+        - Union[str, List[str]]: The result of the evaluation. If the message violates the guardrails, it will return
+         the error message with the violated guardrail types based on the return_guardrail_type parameter.
         If the message passes the guardrails, it will return the input message or conversation.
 
         Raises:

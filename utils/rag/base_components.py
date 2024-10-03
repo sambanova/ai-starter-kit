@@ -1,18 +1,18 @@
+import base64
 import os
 import sys
-import yaml  # type: ignore
-import torch
-import base64
-import nest_asyncio  # type: ignore
 from typing import Any, List
+
+import nest_asyncio  # type: ignore
+import torch
+import yaml  # type: ignore
+from IPython.display import HTML, display
+from langchain_core.documents.base import Document
 from langchain_core.output_parsers import StrOutputParser
-from transformers import AutoModelForSequenceClassification, AutoTokenizer  # type: ignore
-from IPython.display import display, HTML
 from langchain_core.prompts import load_prompt
 from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod
-
-from langchain_core.documents.base import Document
 from langgraph.graph.state import CompiledStateGraph
+from transformers import AutoModelForSequenceClassification, AutoTokenizer  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -21,8 +21,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from utils.logging_utils import log_method  # type: ignore
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.logging_utils import log_method # type: ignore
 
 
 class BaseComponents:
@@ -61,13 +61,13 @@ class BaseComponents:
         """
 
         self.llm = APIGateway.load_llm(
-            type=self.configs["api"],
+            type=self.configs['api'],
             streaming=True,
-            coe=self.configs['llm']["coe"],
-            do_sample=self.configs['llm']["do_sample"],
-            max_tokens_to_generate=self.configs['llm']["max_tokens_to_generate"],
-            temperature=self.configs['llm']["temperature"],
-            select_expert=self.configs['llm']["select_expert"],
+            coe=self.configs['llm']['coe'],
+            do_sample=self.configs['llm']['do_sample'],
+            max_tokens_to_generate=self.configs['llm']['max_tokens_to_generate'],
+            temperature=self.configs['llm']['temperature'],
+            select_expert=self.configs['llm']['select_expert'],
             process_prompt=False,
         )
 
@@ -99,11 +99,11 @@ class BaseComponents:
         """
 
         self.embeddings = APIGateway.load_embedding_model(
-            type=self.configs['embedding_model']["type"],
-            batch_size=self.configs['embedding_model']["batch_size"],
-            coe=self.configs['embedding_model']["coe"],
-            select_expert=self.configs['embedding_model']["select_expert"]
-            ) 
+            type=self.configs['embedding_model']['type'],
+            batch_size=self.configs['embedding_model']['batch_size'],
+            coe=self.configs['embedding_model']['coe'],
+            select_expert=self.configs['embedding_model']['select_expert'],
+        )
 
     def _display_image(self, image_bytes: bytes, width: int = 512) -> None:
         """
