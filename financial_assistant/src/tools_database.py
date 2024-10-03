@@ -65,7 +65,7 @@ def create_stock_database(
         ValueError: If `start_date` is greater than or equal to `end_date`.
     """
     # Check inputs
-    if not (company_list, (list, str)):
+    if not isinstance(company_list, (list, str)):
         raise TypeError(f'`company_list` must be a list or a string. Got type{(type(company_list))}.')
 
     # If `company_list` is a string, coerce it to a list of strings
@@ -191,10 +191,10 @@ def query_stock_database(
         ValueError: If `method` is not one of `text-to-SQL` or `PandasAI-SqliteConnector`.
     """
     # Checks the inputs
-    if not (user_query, str):
+    if not isinstance(user_query, str):
         raise TypeError(f'`symbol_list` must be of type str. Got {(type(user_query))}')
 
-    if not (company_list, (list, str)):
+    if not isinstance(company_list, (list, str)):
         raise TypeError(f'`symbol_list` must be a list or a string. Got type {type(company_list)}.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
@@ -209,7 +209,7 @@ def query_stock_database(
     if not all([isinstance(name, str) for name in symbol_list]):
         raise TypeError('`symbol_list` must be a list of strings.')
 
-    if not (method, str):
+    if not isinstance(method, str):
         raise TypeError(f'method must be of type str. Got {type(method)}')
 
     if method == 'text-to-SQL':

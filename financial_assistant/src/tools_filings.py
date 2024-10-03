@@ -74,12 +74,12 @@ def retrieve_filings(
         TypeError: is the extracted report date is not of type `datetime.datetime`.
     """
     # Checks the inputs
-    if not (user_question, str):
+    if not isinstance(user_question, str):
         raise TypeError(f'User question must be a string. Got {type(user_question)}.')
-    if not (filing_type, str):
+    if not isinstance(filing_type, str):
         raise TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
 
-    if not (company_list, (list, str)):
+    if not isinstance(company_list, (list, str)):
         raise TypeError(f'`company_list` must be of type list or string. Got {(type(company_list))}.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
@@ -106,7 +106,7 @@ def retrieve_filings(
     # Quarterly filing retrieval
     if filing_type == '10-Q':
         if filing_quarter is not None:
-            if not (filing_quarter, int):
+            if not isinstance(filing_quarter, int):
                 raise TypeError('The quarter must be an integer.')
             if filing_quarter not in [
                 1,
@@ -147,7 +147,7 @@ def retrieve_filings(
         response = get_qa_response(user_question, documents)
 
         # Ensure that response is indexable
-        if not (response, dict):
+        if not isinstance(response, dict):
             raise Exception('QA response is not a dictionary.')
 
         # Return the filing type, filing quarter, the ticker symbol, and the year of the filing

@@ -648,7 +648,7 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
     """Main program to run a test suite."""
 
     if suite is not None:
-        if not (suite, unittest.TestSuite):
+        if not isinstance(suite, unittest.TestSuite):
             raise TypeError(f'`suite` must be of type `unittest.TestSuite`. Got type {type(suite)}.')
     else:
         suite = main_suite()
