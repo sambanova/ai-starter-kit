@@ -89,7 +89,7 @@ class SambastudioMultimodal:
             else:
                 raise ValueError(f"Unable to retrieve image from URL status code {response.status_code}")
         except Exception as e:
-            raise ValueError(f"Cant encode image to b64 from provided url: {e}")
+            raise ValueError(f"Can't encode image to b64 from provided url: {e}")
 
 
     def _is_base64_encoded(self, image: str) -> bool:
@@ -285,7 +285,7 @@ class SambastudioMultimodal:
             if not self._is_url(image):
                 image = f'data:image/jpeg;base64,{image}'
             else:
-                # temporal conversion until ERL is supported directly by API
+                # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
                 
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
@@ -330,7 +330,7 @@ class SambastudioMultimodal:
             if not self._is_url(image):
                 image = f'data:image/jpeg;base64,{image}'
             else:
-                # temporal conversion until ERL is supported directly by API
+                # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
@@ -386,7 +386,7 @@ class SambastudioMultimodal:
             if len(images_list) > 1:
                 raise ValueError('only one image can be provided for generic endpoint')
             if self._is_url(images_list[0]):
-                # temporal conversion until ERL is supported directly by API
+                # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(images_list[0])}'
                 #raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
             else:
