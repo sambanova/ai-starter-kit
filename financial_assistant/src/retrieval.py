@@ -34,13 +34,14 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
         Answer to the user request.
 
     Raises:
-        TypeError: If user request is not string or documents are not list of strings.
+        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain.schema.Document`.
     """
-    assert isinstance(user_request, str), TypeError('user_request must be a string.')
-    assert isinstance(documents, list), TypeError(f'documents must be a list of strings. Got {type(documents)}.')
-    assert all(isinstance(doc, Document) for doc in documents), TypeError(
-        f'All documents must be of type `langchain.schema.Document`.'
-    )
+    if not isinstance(user_request, str):
+        raise TypeError('user_request must be a string.')
+    if not isinstance(documents, list):
+        raise TypeError(f'documents must be a list of strings. Got {type(documents)}.')
+    if not all(isinstance(doc, Document) for doc in documents):
+        raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry and the current `session_id`
     vectorstore, retriever = get_vectorstore_retriever(documents)
@@ -107,6 +108,9 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
 
     Returns:
         A tuple with the vectorstore registry and the current session id.
+
+    Raisese:
+        Exception: If a vectorstore and a retriever cannot be instantiated.
     """
     # Load config
     config = _get_config_info(CONFIG_PATH)
@@ -125,7 +129,8 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
         streamlit.error('Could not instantiate the vectorstore.')
         streamlit.stop()
 
-    assert isinstance(vectorstore, Chroma), f'Could not instantiate the vectorstore.'
+    if not isinstance(vectorstore, Chroma):
+        raise Exception('Could not instantiate the vectorstore.')
 
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
@@ -134,7 +139,8 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
         },
     )
 
-    assert isinstance(retriever, VectorStoreRetriever), f'Could not retrieve the retriever.'
+    if not isinstance(retriever, VectorStoreRetriever):
+        raise Exception(f'Could not retrieve the retriever.')
 
     return vectorstore, retriever
 
@@ -148,10 +154,15 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
 
     Returns:
         A retrieval QA chain using the provided retriever.
+
+    Raises:
+        TypeError: If `retriever` is not of type `langchain_core.vectorstores.base.VectorStoreRetriever`.
     """
-    assert isinstance(
-        retriever, VectorStoreRetriever
-    ), f'`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. Got type {type(retriever)}.'
+    if not isinstance(retriever, VectorStoreRetriever):
+        raise TypeError(
+            '`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. '
+            f'Got type {type(retriever)}.'
+        )
 
     # The Retrieval QA prompt
     retrieval_qa_chat_prompt = PromptTemplate.from_template(

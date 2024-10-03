@@ -61,25 +61,24 @@ def create_stock_database(
         A dictionary with company symbols as keys and a list of SQL table names as values.
 
     Raises:
-        TypeError: If the input is not a list or string.
+        TypeError: If `company_list` is not a list or string or a string.
         ValueError: If `start_date` is greater than or equal to `end_date`.
     """
     # Check inputs
-    assert isinstance(company_list, (list, str)), TypeError(
-        f'`company_list` must be a list or a string. Got type{(type(company_list))}.'
-    )
+    if not (company_list, (list, str)):
+        raise TypeError(f'`company_list` must be a list or a string. Got type{(type(company_list))}.')
 
     # If `company_list` is a string, coerce it to a list of strings
     company_list = coerce_str_to_list(company_list)
 
-    assert all([isinstance(name, str) for name in company_list]), TypeError(
-        '`company_names_list` must be a list of strings.'
-    )
+    if not all([isinstance(name, str) for name in company_list]):
+        raise TypeError('`company_names_list` must be a list of strings.')
 
     # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
-    assert start_date <= end_date, ValueError('Start date must be before the end date.')
+    if start_date >= end_date:
+        raise ValueError('Start date must be before the end date.')
 
     # Extract yfinance data
     company_data_dict = dict()
@@ -186,34 +185,32 @@ def query_stock_database(
         The result of the query.
 
     Raises:
-        TypeError: If `user_query`, `company_list` and `method` are not strings.
+        TypeError: If `user_query` and `method` are not strings.
+        TypeError: If `company_list` is not a list of strings or a string.
+        TypeError: If `symbol_list` is an empty string.
         ValueError: If `method` is not one of `text-to-SQL` or `PandasAI-SqliteConnector`.
-        Exception: If `symbol_list` is an empty string.
     """
     # Checks the inputs
-    assert isinstance(user_query, str), TypeError(f'`symbol_list` must be of type str. Got {(type(user_query))}')
+    if not (user_query, str):
+        raise TypeError(f'`symbol_list` must be of type str. Got {(type(user_query))}')
 
-    assert isinstance(company_list, (list, str)), TypeError(
-        f'`symbol_list` must be a list or a string. Got type {type(company_list)}.'
-    )
+    if not (company_list, (list, str)):
+        raise TypeError(f'`symbol_list` must be a list or a string. Got type {type(company_list)}.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
     company_list = coerce_str_to_list(company_list)
 
-    assert all([isinstance(name, str) for name in company_list]), TypeError(
-        '`company_names_list` must be a list of strings.'
-    )
+    if not all([isinstance(name, str) for name in company_list]):
+        raise TypeError('`company_names_list` must be a list of strings.')
 
     # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
 
-    assert all([isinstance(name, str) for name in symbol_list]), TypeError('`symbol_list` must be a list of strings.')
+    if not all([isinstance(name, str) for name in symbol_list]):
+        raise TypeError('`symbol_list` must be a list of strings.')
 
-    assert isinstance(method, str), TypeError(f'method must be of type str. Got {type(method)}')
-    assert method in [
-        'text-to-SQL',
-        'PandasAI-SqliteConnector',
-    ], ValueError(f'Invalid method {method}')
+    if not (method, str):
+        raise TypeError(f'method must be of type str. Got {type(method)}')
 
     if method == 'text-to-SQL':
         return query_stock_database_sql(user_query, symbol_list)
@@ -434,6 +431,9 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
 
     Returns:
         List of SQL tables that are relevant for the user query.
+
+    Raises:
+        Exception: If the LLM response does not provide any table names as a list of strings.
     """
     # Get a text symmary of the SQL tables that are relevant for each company symbol
     summary_text = get_table_summaries_from_symbols(symbol_list)
@@ -494,17 +494,16 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
             # The chain
             chain = prompt | llm | parser
             response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
-            assert isinstance(response.table_names, list) and all(
-                [isinstance(elem, str) for elem in response.table_names]
-            ), 'Invalid response'
+            if not (
+                isinstance(response.table_names, list) and all([isinstance(elem, str) for elem in response.table_names])
+            ):
+                raise Exception('Invalid response')
             table_names = response.table_names
             break
         except:
             pass
 
-    try:
-        assert len(table_names) > 0
-    except AssertionError:
+    if len(table_names) == 0:
         logger.error('No relevant SQL tables found.')
         streamlit.error('No relevant SQL tables found.')
         streamlit.stop()
@@ -534,7 +533,8 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
     tables_names = inspector.get_table_names()
 
     # Check that there are SQL tables
-    assert len(tables_names) > 0, 'No SQL tables found.'
+    if len(tables_names) == 0:
+        raise Exception('No SQL tables found.')
 
     table_summaries = dict()
     for table in tables_names:

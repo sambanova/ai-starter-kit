@@ -122,12 +122,15 @@ def extract_yfinance_data(
         A dictionary containing the data of the company extracted from Yahoo Finance.
 
     Raises:
-        TypeError: If `symbol` is not a string or `start_date` and `end_date` are not of type datetime.date.
+        TypeError: If `symbol` is not a string or `start_date` and `end_date` are not of type `datetime.date`.
     """
     # Check inputs
-    assert isinstance(symbol, str), TypeError('Symbol must be a string.')
-    assert isinstance(start_date, datetime.date), TypeError('Start date must be of type datetime.date.')
-    assert isinstance(end_date, datetime.date), TypeError('End date must be of type datetime.date.')
+    if not isinstance(symbol, str):
+        raise TypeError('Symbol must be a string.')
+    if not isinstance(start_date, datetime.date):
+        raise TypeError('Start date must be of type datetime.date.')
+    if not isinstance(end_date, datetime.date):
+        raise TypeError('End date must be of type datetime.date.')
 
     # Extract the data from Yahoo Finance for the given ticker symbol
 
@@ -384,13 +387,13 @@ def convert_index_to_column(dataframe: pandas.DataFrame, column_name: Optional[s
 
     Raises:
         TypeError: If `dataframe` is not of type `pandas.DataFrame`
-            or `column_name` is not of type string.
+            or `column_name` is not of type `string`.
     """
     # Check inputs
-    assert isinstance(dataframe, pandas.DataFrame), TypeError(
-        f'Input must be a Pandas DataFrame. Got {type(dataframe)}.'
-    )
-    assert isinstance(column_name, str), TypeError(f'Column name must be a string. Got {type(column_name)}.')
+    if not isinstance(dataframe, pandas.DataFrame):
+        raise TypeError(f'Input must be a Pandas DataFrame. Got {type(dataframe)}.')
+    if not isinstance(column_name, str):
+        raise TypeError(f'Column name must be a string. Got {type(column_name)}.')
 
     # Determine the column name
     if column_name is None:
