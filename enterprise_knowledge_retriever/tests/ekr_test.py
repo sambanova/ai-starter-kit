@@ -19,6 +19,7 @@ import sys
 import time
 import unittest
 from typing import Any, Dict, List, Type
+import yaml
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -44,7 +45,6 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
 
-import yaml
 with open(CONFIG_PATH, 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 pdf_only_mode = config['pdf_only_mode']
