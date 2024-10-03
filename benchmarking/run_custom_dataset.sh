@@ -5,7 +5,7 @@ python src/evaluator.py \
 --mode custom \
 --model-name "llama3-405b" \
 --results-dir "./data/results/llmperf" \
---num-workers 1 \
+--num-concurrent-requests 1 \
 --timeout 600 \
 --input-file-path "<CUSTOM DATASET PATH HERE>" \
 --save-llm-responses False \

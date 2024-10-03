@@ -5,7 +5,7 @@ python src/evaluator.py \
 --mode synthetic \
 --model-names "llama3-8b llama3-70b	llama3-405b" \
 --results-dir "./data/results/llmperf" \
---num-workers 1 \
+--num-concurrent-requests 1 \
 --timeout 600 \
 --num-input-tokens 1000 \
 --num-output-tokens 1000 \
