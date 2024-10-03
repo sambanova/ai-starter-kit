@@ -71,6 +71,26 @@ class SambastudioMultimodal:
             image_binary = image_file.read()
             base64_image = base64.b64encode(image_binary).decode()
             return base64_image
+        
+    def url_to_b64(self, url:str) -> str:
+        """
+        Converts an image from a URL to a base64 encoded string.
+
+        :param str url: The URL of the image.
+        :return: The base64 encoded string representation of the image.
+        :rtype: str
+        """
+        response = requests.get(url)
+        try:
+            if response.status_code == 200:
+                image_binary = response.content
+                base64_image = base64.b64encode(image_binary).decode()
+                return base64_image
+            else:
+                raise ValueError(f"Unable to retrieve image from URL status code {response.status_code}")
+        except Exception as e:
+            raise ValueError(f"Cant encode image to b64 from provided url: {e}")
+
 
     def _is_base64_encoded(self, image: str) -> bool:
         """
@@ -263,7 +283,11 @@ class SambastudioMultimodal:
             data['stop'] = self.stop
         for image in images:
             if not self._is_url(image):
-                image = f'data:image/png;base64,{image}'
+                image = f'data:image/jpeg;base64,{image}'
+            else:
+                # temporal conversion until ERL is supported directly by API
+                image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
+                
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
@@ -304,7 +328,10 @@ class SambastudioMultimodal:
             data['stop'] = self.stop
         for image in images:
             if not self._is_url(image):
-                image = f'data:image/png;base64,{image}'
+                image = f'data:image/jpeg;base64,{image}'
+            else:
+                # temporal conversion until ERL is supported directly by API
+                image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
@@ -359,14 +386,17 @@ class SambastudioMultimodal:
             if len(images_list) > 1:
                 raise ValueError('only one image can be provided for generic endpoint')
             if self._is_url(images_list[0]):
-                raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
-
+                # temporal conversion until ERL is supported directly by API
+                image = f'data:image/jpeg;base64,{self.url_to_b64(images_list[0])}'
+                #raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
+            else:
+                image = images_list[0]
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
             The assistant gives helpful, detailed, and polite answers to the humans question.\
             USER: <image>
             {prompt}
             ASSISTANT:"""
-            response = self._call_generic_api(formatted_prompt, images_list[0])
+            response = self._call_generic_api(formatted_prompt, image)
             generation = self._process_generic_api_response(response)
         else:
             raise ValueError(
