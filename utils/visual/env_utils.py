@@ -1,6 +1,6 @@
 import netrc
 import os
-from typing import List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit as st
 
@@ -25,7 +25,7 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
                 st.session_state[var] = ''
 
 
-def set_env_variables(api_key, additional_vars=None, prod_mode=False):
+def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> None:
     st.session_state.SAMBANOVA_API_KEY = api_key
     if additional_vars:
         for key, value in additional_vars.items():
@@ -38,7 +38,7 @@ def set_env_variables(api_key, additional_vars=None, prod_mode=False):
                 os.environ[key] = value
 
 
-def env_input_fields(additional_env_vars=None) -> Tuple[str, str]:
+def env_input_fields(additional_env_vars: Optional[List[str]] = None) -> Tuple[str, str]:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -51,7 +51,7 @@ def env_input_fields(additional_env_vars=None) -> Tuple[str, str]:
     return api_key, additional_vars
 
 
-def are_credentials_set(additional_env_vars=None) -> bool:
+def are_credentials_set(additional_env_vars: Optional[List[str]] = None) -> bool:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -61,7 +61,7 @@ def are_credentials_set(additional_env_vars=None) -> bool:
     return base_creds_set and additional_creds_set
 
 
-def save_credentials(api_key, additional_vars=None, prod_mode=False) -> str:
+def save_credentials(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> str:
     set_env_variables(api_key, additional_vars, prod_mode)
     return 'Credentials saved successfully!'
 

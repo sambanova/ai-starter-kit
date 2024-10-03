@@ -18,7 +18,7 @@ class SSEndpointHandler:
     :param str host_url: Base URL of the DaaS API service
     """
 
-    def __init__(self, host_url: str, api_base_uri: str):
+    def __init__(self, host_url: str, api_base_uri: str) -> None:
         """
         Initialize the SSEndpointHandler.
 

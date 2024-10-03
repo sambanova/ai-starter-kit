@@ -168,6 +168,13 @@ The table belows lists the available kits, which are grouped into four categorie
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
+<tr>
+<td width="20%"><a href="google_integration/README.md"> SambaCloud - Google Integration</a></td>
+<td width="40%">App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces.</td>
+<td width="20%"> SambaNova Cloud</td>
+<td width="20%"> Advanced AI Capabilities </td>
+</tr>
+
 </tbody>
 </table>
 

@@ -1,15 +1,15 @@
+import gzip
 import io
 import os
-import time
-import gzip
 import shutil
+import tempfile
+import time
 from pathlib import Path
 from typing import List, Optional
-import tempfile
 
+import pandas as pd
 import pytest
 import requests
-import pandas as pd
 
 API_URL = "http://localhost:8000/general/v0/general"
 # NOTE(rniko): Skip inference tests if we're running on an emulated architecture
