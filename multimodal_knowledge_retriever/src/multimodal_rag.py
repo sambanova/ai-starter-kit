@@ -210,7 +210,7 @@ class MultimodalRetrieval:
         Returns:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
-        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-text_summary.yaml'))
+        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-text_summary.yaml'))
         text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
@@ -227,7 +227,7 @@ class MultimodalRetrieval:
         Returns:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
-        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-table_summary.yaml'))
+        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-table_summary.yaml'))
         table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
@@ -438,7 +438,7 @@ class MultimodalRetrieval:
         retrieval_qa_raw_chain (function): A function that retrieves answers based on raw image retrieval.
         retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-knowledge_retriever_custom_qa_prompt.yaml'))
+        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
