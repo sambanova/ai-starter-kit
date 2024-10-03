@@ -47,7 +47,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         model_name: str,
         results_dir: str,
-        num_workers: int,
+        num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sambastudio',
         is_stream_mode: bool = True,
@@ -55,7 +55,7 @@ class BasePerformanceEvaluator(abc.ABC):
     ) -> None:
         self.model_name = model_name
         self.results_dir = results_dir
-        self.num_workers = num_workers
+        self.num_concurrent_requests = num_concurrent_requests
         self.user_metadata = user_metadata
         self.llm_api = llm_api
         self.is_stream_mode = is_stream_mode
@@ -272,7 +272,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
         logger.info(f'Number Of Completed Requests: {num_completed_requests}')
-        logger.info(f'Number Of Concurrent Workers: {self.num_workers}')
+        logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
         logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
@@ -371,7 +371,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}'
+        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -478,13 +478,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get batch size details
         total_request_count = len(request_configs)
-        requests_per_thread = total_request_count // self.num_workers
-        remainder = total_request_count % self.num_workers
+        requests_per_thread = total_request_count // self.num_concurrent_requests
+        remainder = total_request_count % self.num_concurrent_requests
 
         request_config_batches = []
         idx = 0
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
@@ -529,7 +529,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         metadata = {
             'model': self.model_name,
-            'num_concurrent_workers': self.num_workers,
+            'num_concurrent_requests': self.num_concurrent_requests,
             'results': results,
             'request_count': len(self.dataset),
             'sampling_params': sampling_params,
@@ -541,7 +541,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and
         builds a RequestConfig object for each data point. The RequestConfig object contains the necessary information
         to send a request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint,
-        generation mode, and number of concurrent workers. The method returns a list of these RequestConfig objects.
+        generation mode, and number of concurrent requests. The method returns a list of these RequestConfig objects.
 
         Args:
             sampling_params (Dict[str, Any]): A dictionary of sampling parameters to be passed into the RequestConfig
@@ -565,7 +565,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
@@ -637,7 +637,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
+            f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
 
@@ -789,7 +789,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         Returns:
             metadata (dict): A dictionary containing the results of the benchmark,
-                            including the model name, number of concurrent workers,
+                            including the model name, number of concurrent requests,
                             results, number of input tokens, number of output tokens,
                             and additional sampling parameters.
             completed_requests (list): A list of completed requests.
@@ -805,16 +805,16 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = (total_request_count) // self.num_workers
-        remainder = (total_request_count) % self.num_workers
+        requests_per_thread = (total_request_count) // self.num_concurrent_requests
+        remainder = (total_request_count) % self.num_concurrent_requests
 
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
         idx = 0
 
-        # Create batches of requests for each worker
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
+        # Create batches of requests for each concurrent request
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx += num_requests_for_thread
             request_config_batches.append(request_config_batch)
@@ -870,7 +870,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Construct metadata payload to be returned
         metadata = {
             'model': self.model_name,
-            'num_concurrent_workers': self.num_workers,
+            'num_concurrent_requests': self.num_concurrent_requests,
             'results': results,
             'num_input_tokens': num_input_tokens,
             'num_output_tokens': num_output_tokens,
@@ -899,7 +899,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         Returns:
             List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling
-            parameters, LLM API, generation mode, and number of concurrent workers.
+            parameters, LLM API, generation mode, and number of concurrent requests.
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
@@ -928,7 +928,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
