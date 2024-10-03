@@ -1,9 +1,11 @@
 import logging
 import os
 import sys
-
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 import yaml
+import shutil
+from typing import List, Optional
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -23,9 +25,6 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
-import shutil
-from streamlit.runtime.uploaded_file_manager import UploadedFile
-from typing import List, Optional
 def save_files_user(docs: List[UploadedFile]) -> str:
         """
         Save all user uploaded files in Streamlit to the tmp dir with their file names
