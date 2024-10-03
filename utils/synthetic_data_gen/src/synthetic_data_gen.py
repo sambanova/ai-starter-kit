@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import sys
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -221,8 +221,13 @@ class SyntheticDataGen:
         self.remove_repeated_lines_in_place(out_file)
 
     def generate_qa_pairs(
-        self, context: str, amount: int = 5, include_context=True, include_thoughts=True, include_references=True
-    ) -> dict:
+        self,
+        context: str,
+        amount: int = 5,
+        include_context: bool = True,
+        include_thoughts: bool = True,
+        include_references: bool = True,
+    ) -> Dict[str, Any]:
         """
         Generate question answer (context, thought, references) pairs for a given context using the LLM.
 

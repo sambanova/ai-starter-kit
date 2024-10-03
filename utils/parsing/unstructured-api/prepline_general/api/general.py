@@ -53,7 +53,9 @@ def is_compatible_response_type(media_type: str, response_type: type) -> bool:
     return (
         False
         if media_type == "application/json" and response_type not in [dict, list]
-        else False if media_type == "text/csv" and response_type != str else True
+        else False
+        if media_type == "text/csv" and response_type != str
+        else True
     )
 
 
@@ -822,7 +824,7 @@ def general_partition(
             )
 
     def join_responses(
-        responses: Sequence[str | List[Dict[str, Any]] | PlainTextResponse]
+        responses: Sequence[str | List[Dict[str, Any]] | PlainTextResponse],
     ) -> List[str | List[Dict[str, Any]]] | PlainTextResponse:
         """Consolidate partitionings from multiple documents into single response payload."""
         if form_params.output_format != "text/csv":
