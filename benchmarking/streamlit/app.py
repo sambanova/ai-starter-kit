@@ -30,11 +30,10 @@ def _init() -> None:
 
 
 def _run_performance_evaluation() -> pd.DataFrame:
-    """Runs the performance evaluation process for different number of workers that will run in parallel.
-    Each worker will run num_requests_per_worker requests.
+    """Runs the performance evaluation process for different number of concurrent requests that will run in parallel.
 
     Returns:
-        pd.DataFrame: Dataframe with metrics for each number of workers.
+        pd.DataFrame: Dataframe with metrics for each number of concurrent requests.
     """
 
     results_path = './data/results/llmperf'
@@ -44,7 +43,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     performance_evaluator = SyntheticPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
-        num_workers=st.session_state.number_concurrent_workers,
+        num_concurrent_requests=st.session_state.number_concurrent_requests,
         timeout=st.session_state.timeout,
         llm_api=api_dict[st.session_state.llm_api],
         user_metadata={'model_idx': 0},
@@ -59,7 +58,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
 
     # Read generated json and output formatted results
     df_user = pd.read_json(performance_evaluator.individual_responses_file_path)
-    df_user['concurrent_user'] = st.session_state.number_concurrent_workers
+    df_user['concurrent_requests'] = st.session_state.number_concurrent_requests
     valid_df = df_user[df_user['error_code'].isnull()]
 
     # For non-batching endpoints, batch_size_used will be 1
@@ -80,8 +79,8 @@ def _initialize_session_variables() -> None:
         st.session_state.output_tokens = None
     if 'number_requests' not in st.session_state:
         st.session_state.number_requests = None
-    if 'number_concurrent_workers' not in st.session_state:
-        st.session_state.number_concurrent_workers = None
+    if 'number_concurrent_requests' not in st.session_state:
+        st.session_state.number_concurrent_requests = None
     if 'timeout' not in st.session_state:
         st.session_state.timeout = None
     if 'llm_api' not in st.session_state:
@@ -150,8 +149,8 @@ def main() -> None:
             'Number of total requests', min_value=10, max_value=1000, value=10, step=1
         )
 
-        st.session_state.number_concurrent_workers = st.number_input(
-            'Number of concurrent workers', min_value=1, max_value=100, value=1, step=1
+        st.session_state.number_concurrent_requests = st.number_input(
+            'Number of concurrent requests', min_value=1, max_value=100, value=1, step=1
         )
 
         st.session_state.timeout = st.number_input('Timeout', min_value=60, max_value=1800, value=600, step=1)
@@ -204,10 +203,10 @@ def main() -> None:
                             'server_output_token_per_s_per_request',
                             'client_output_token_per_s_per_request',
                         ],
-                        ['Server', 'Client'],
-                        'Distribution of throughput by batch size',
-                        'Tokens per second, per request',
-                        'Batch size',
+                        ["Server", "Client"],
+                        "Distribution of output throughput by batch size",
+                        "Tokens per second, per request",
+                        "Batch size",
                     )
                 )
                 # Compute total throughput per batch

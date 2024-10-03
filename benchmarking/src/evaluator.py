@@ -77,10 +77,10 @@ def main() -> None:
 
     # Optional Common Arguments
     parser.add_argument(
-        '--num-workers',
+        '--num-concurrent-requests',
         type=int,
         default=10,
-        help='The number of concurrent workers used to send requests. (default: %(default)s)',
+        help='The number of concurrent requests used to send requests. (default: %(default)s)',
     )
 
     parser.add_argument(
@@ -147,7 +147,7 @@ def main() -> None:
         custom_evaluator = CustomPerformanceEvaluator(
             model_name=args.model_name,
             results_dir=args.results_dir,
-            num_workers=args.num_workers,
+            num_concurrent_requests=args.num_concurrent_requests,
             timeout=args.timeout,
             user_metadata=user_metadata,
             input_file_path=args.input_file_path,
@@ -201,7 +201,7 @@ def main() -> None:
             evaluator = SyntheticPerformanceEvaluator(
                 model_name=model_name,
                 results_dir=args.results_dir,
-                num_workers=args.num_workers,
+                num_concurrent_requests=args.num_concurrent_requests,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
                 llm_api=args.llm_api,
