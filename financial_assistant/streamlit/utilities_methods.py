@@ -6,10 +6,10 @@ from typing import Any, Callable, Generator, List, Optional, Tuple, Type
 
 import pandas
 import streamlit
-from pydantic import BaseModel
 from langchain_core.tools import StructuredTool, Tool
 from matplotlib.figure import Figure
 from PIL import Image
+from pydantic import BaseModel
 
 from financial_assistant.src.llm import SambaNovaLLM
 from financial_assistant.src.tools import get_conversational_response, get_logger
