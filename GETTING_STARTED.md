@@ -21,7 +21,7 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 ## Supported Models
 
-Access Meta’s Llama 3.2 and 3.1 family of models at full precision via the SambaNova Cloud API!
+Access Meta’s Llama 3.2 and 3.1 family of models at **full precision** via the SambaNova Cloud API!
 
 | Model | Context Length |
 |-------|----------------|
