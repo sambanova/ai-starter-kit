@@ -51,20 +51,27 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame) -> Figure:
         id_vars='Batch size',
         value_vars=['Server', 'Client'],
         var_name='Side type',
-        value_name='Total throughput (tokens per second)',
+        value_name='Total output throughput (tokens per second)',
     )
+    
+    df_melted['Total output throughput (tokens per second)'] = df_melted['Total output throughput (tokens per second)'].round(2)
+    
     df_melted['Batch size'] = [str(x) for x in df_melted['Batch size']]
     fig = px.bar(
         df_melted,
         x='Batch size',
-        y='Total throughput (tokens per second)',
+        y='Total output throughput (tokens per second)',
         color='Side type',
         barmode='group',
         color_discrete_sequence=['#325c8c', '#ee7625'],
+        text='Total output throughput (tokens per second)',
     )
+    
+    fig.update_traces(textposition='outside')  # Set text position outside bars
+
     fig.update_layout(
-        title_text='Total throughput per batch size',
-        template='plotly_dark',
+        title_text="Total output throughput per batch size",
+        template="plotly_dark",
     )
     return fig
 
@@ -114,7 +121,7 @@ def plot_client_vs_server_barplots(
         go.Bar(
             x=xgroups,
             y=[0 for _ in xgroups],
-            base=[valsl[i][1] for i in xgroups],
+            base=[round(valsl[i][1],2) for i in xgroups],
             customdata=[legend_labels[0] for _ in xgroups],
             marker={'color': '#325c8c', 'line': {'color': '#325c8c', 'width': 2}},
             offsetgroup=0,
@@ -122,6 +129,8 @@ def plot_client_vs_server_barplots(
             name=legend_labels[0],
             showlegend=False,
             hovertemplate='<extra></extra><b>%{customdata}</b> median: %{base:.2f}',
+            text=[round(valsl[i][1],2) for i in xgroups],
+            textposition='outside',
         )
     )
     fig.add_trace(
@@ -142,7 +151,7 @@ def plot_client_vs_server_barplots(
         go.Bar(
             x=xgroups,
             y=[0 for _ in xgroups],
-            base=[valsr[i][1] for i in xgroups],
+            base=[round(valsr[i][1],2) for i in xgroups],
             customdata=[legend_labels[1] for _ in xgroups],
             marker={'color': '#ee7625', 'line': {'color': '#ee7625', 'width': 2}},
             offsetgroup=1,
@@ -150,6 +159,8 @@ def plot_client_vs_server_barplots(
             name=legend_labels[1],
             showlegend=False,
             hovertemplate='<extra></extra><b>%{customdata}</b> median: %{base:.2f}',
+            text=[round(valsr[i][1],2) for i in xgroups],  
+            textposition='outside'
         )
     )
     fig.add_trace(

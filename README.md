@@ -127,13 +127,6 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="agent_workflows/README.md">Agents with Langraph</a></td>
-<td width="40%"> This kit demonstrates two types of agentic pipelines using LangGraph and SambaNova Systems APIs. One pipeline consists of a complex, Corrective RAG with Codegen. The other agentic pipeline, Corrective Rag Team, demonstrates how to orchestrate agents or teams of agents via a pipeline supervisor. </td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Advanced AI Capabilities </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
@@ -171,6 +164,13 @@ The table belows lists the available kits, which are grouped into four categorie
 <tr>
 <td width="20%"><a href="sambanova_scribe/README.md"> SambaNova Scribe</a></td>
 <td width="40%">Example implementation of a transcription and summarization workflow.</td>
+<td width="20%"> SambaNova Cloud</td>
+<td width="20%"> Advanced AI Capabilities </td>
+</tr>
+
+<tr>
+<td width="20%"><a href="google_integration/README.md"> SambaCloud - Google Integration</a></td>
+<td width="40%">App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces.</td>
 <td width="20%"> SambaNova Cloud</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>

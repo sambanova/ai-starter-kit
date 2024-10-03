@@ -14,6 +14,7 @@ file_location = Path(__file__).parent.resolve()
 
 import logging
 
+import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
@@ -46,7 +47,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         model_name: str,
         results_dir: str,
-        num_workers: int,
+        num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sambastudio',
         is_stream_mode: bool = True,
@@ -54,7 +55,7 @@ class BasePerformanceEvaluator(abc.ABC):
     ) -> None:
         self.model_name = model_name
         self.results_dir = results_dir
-        self.num_workers = num_workers
+        self.num_concurrent_requests = num_concurrent_requests
         self.user_metadata = user_metadata
         self.llm_api = llm_api
         self.is_stream_mode = is_stream_mode
@@ -271,7 +272,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
         logger.info(f'Number Of Completed Requests: {num_completed_requests}')
-        logger.info(f'Number Of Concurrent Workers: {self.num_workers}')
+        logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
         logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
@@ -370,7 +371,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}'
+        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -477,13 +478,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get batch size details
         total_request_count = len(request_configs)
-        requests_per_thread = total_request_count // self.num_workers
-        remainder = total_request_count % self.num_workers
+        requests_per_thread = total_request_count // self.num_concurrent_requests
+        remainder = total_request_count % self.num_concurrent_requests
 
         request_config_batches = []
         idx = 0
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
@@ -528,7 +529,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         metadata = {
             'model': self.model_name,
-            'num_concurrent_workers': self.num_workers,
+            'num_concurrent_requests': self.num_concurrent_requests,
             'results': results,
             'request_count': len(self.dataset),
             'sampling_params': sampling_params,
@@ -540,7 +541,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and
         builds a RequestConfig object for each data point. The RequestConfig object contains the necessary information
         to send a request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint,
-        generation mode, and number of concurrent workers. The method returns a list of these RequestConfig objects.
+        generation mode, and number of concurrent requests. The method returns a list of these RequestConfig objects.
 
         Args:
             sampling_params (Dict[str, Any]): A dictionary of sampling parameters to be passed into the RequestConfig
@@ -553,17 +554,18 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for data_point in self.dataset:
+        for request_idx, data_point in enumerate(self.dataset):
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
             prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
 
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
@@ -635,7 +637,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f'{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}'
+            f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
 
@@ -682,6 +684,89 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return summary, individual_responses
 
+    def add_metric_after_key(self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str) -> Dict[str, Any]:
+        """Adds a new metric (dict key and value) to a dict after an specific key
+
+        Args:
+            metrics_dict (dict): dictionary to add new metric
+            new_key (str): new key
+            new_value (float): new value for key
+            after_key (str): key for reference to add new key after
+
+        Returns:
+            dict: dictionary with new key and value added
+        """
+
+        # Create a new dictionary
+        new_metrics_dict = {}
+
+        for key, value in metrics_dict.items():
+            # Copy the key-value pair to the new dictionary
+            new_metrics_dict[key] = value
+
+            # Check if this is the key after which to insert the new key-value pair
+            if key == after_key:
+                new_metrics_dict[new_key] = new_value
+
+        return new_metrics_dict
+
+    def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
+        """Logic to calculate switching time. Based on the first request TTFT,
+        if this value is significantly larger (more than 3 standard deviations) than the average TTFT 
+        of the rest requests, then switching time will be the difference between first TTFT 
+        and average of the coming TTFTs.
+
+        Args:
+            llm_responses (list[LLMResponse]): list of LLMResponse objects
+
+        Returns:
+            list[LLMResponse]: list of LLMResponse objects including switching time
+        """
+        # collect necessary information for switching time calculation
+        responses_ttfts = []
+
+        for llm_response in llm_responses:
+            request_idx = llm_response.request_config.request_idx
+            start_time = llm_response.metrics['start_time']
+            server_ttft_s = llm_response.metrics['server_ttft_s']
+            responses_ttfts.append(
+                {'request_idx': request_idx, 'start_time': start_time, 'server_ttft_s': server_ttft_s}
+            )
+
+        df_responses = pd.DataFrame(responses_ttfts)
+
+        # transforming str to date time for sorting
+        df_responses['start_time'] = pd.to_datetime(df_responses['start_time'])
+        df_responses = df_responses.sort_values(by=['start_time'])
+
+        # initialize a column for the switching time
+        df_responses['server_switching_time'] = None
+
+        # calculate switching time
+        first_ttft = df_responses['server_ttft_s'].iloc[0]
+        mean_ttft = df_responses['server_ttft_s'].iloc[1:].mean()
+        std_ttft = df_responses['server_ttft_s'].iloc[1:].std()
+        std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
+
+        switching_time = first_ttft - mean_ttft
+        if switching_time > (mean_ttft + 3 * std_ttft):
+            df_responses['server_switching_time'].iloc[0] = switching_time
+
+        # assign switching time back to request object
+        for llm_response in llm_responses:
+            metrics = llm_response.metrics
+            server_switching_time = df_responses[
+                df_responses['request_idx'] == llm_response.request_config.request_idx
+            ].server_switching_time.values[0]
+            llm_response.metrics = self.add_metric_after_key(
+                metrics,
+                new_key='server_switching_time',
+                new_value=server_switching_time,
+                after_key=common_metrics.TTFT_SERVER,
+            )
+
+        return llm_responses
+
     def get_token_throughput_latencies(
         self,
         num_input_tokens: int,
@@ -704,7 +789,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         Returns:
             metadata (dict): A dictionary containing the results of the benchmark,
-                            including the model name, number of concurrent workers,
+                            including the model name, number of concurrent requests,
                             results, number of input tokens, number of output tokens,
                             and additional sampling parameters.
             completed_requests (list): A list of completed requests.
@@ -720,16 +805,16 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = (total_request_count) // self.num_workers
-        remainder = (total_request_count) % self.num_workers
+        requests_per_thread = (total_request_count) // self.num_concurrent_requests
+        remainder = (total_request_count) % self.num_concurrent_requests
 
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
         idx = 0
 
-        # Create batches of requests for each worker
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (1 if worker < remainder else 0)
+        # Create batches of requests for each concurrent request
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx += num_requests_for_thread
             request_config_batches.append(request_config_batch)
@@ -773,6 +858,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         logger.info('Tasks Executed!')
         logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
 
+        llm_responses = self.calculate_switching_time(llm_responses)
+
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
             metrics=[response.metrics for response in llm_responses],
@@ -783,7 +870,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Construct metadata payload to be returned
         metadata = {
             'model': self.model_name,
-            'num_concurrent_workers': self.num_workers,
+            'num_concurrent_requests': self.num_concurrent_requests,
             'results': results,
             'num_input_tokens': num_input_tokens,
             'num_output_tokens': num_output_tokens,
@@ -812,13 +899,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         Returns:
             List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling
-            parameters, LLM API, generation mode, and number of concurrent workers.
+            parameters, LLM API, generation mode, and number of concurrent requests.
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for _ in range(num_requests):
+        for request_idx in range(num_requests):
             # Build input prompt to be sent in LLM request
             prompt_tuple = self.build_prompt(input_token_count)
 
@@ -835,12 +922,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
             # Create request config object
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
