@@ -203,10 +203,10 @@ def main() -> None:
                             'server_output_token_per_s_per_request',
                             'client_output_token_per_s_per_request',
                         ],
-                        ["Server", "Client"],
-                        "Distribution of output throughput by batch size",
-                        "Tokens per second, per request",
-                        "Batch size",
+                        ['Server', 'Client'],
+                        'Distribution of output throughput by batch size',
+                        'Tokens per second, per request',
+                        'Batch size',
                     )
                 )
                 # Compute total throughput per batch

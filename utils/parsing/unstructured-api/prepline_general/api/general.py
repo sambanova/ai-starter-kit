@@ -443,13 +443,13 @@ def pipeline_api(
                 request=request,
                 pdf_pages=pdf.pages,
                 coordinates=coordinates,
-                **partition_kwargs,  # type: ignore # pyright: ignore[reportGeneralTypeIssues]
+                **partition_kwargs,
             )
         elif hi_res_model_name and hi_res_model_name in CHIPPER_MODEL_TYPES:
             with ChipperMemoryProtection():
-                elements = partition(**partition_kwargs)  # type: ignore # pyright: ignore[reportGeneralTypeIssues]
+                elements = partition(**partition_kwargs)
         else:
-            elements = partition(**partition_kwargs)  # type: ignore # pyright: ignore[reportGeneralTypeIssues]
+            elements = partition(**partition_kwargs)
 
     except OSError as e:
         if isinstance(e.args[0], str) and (

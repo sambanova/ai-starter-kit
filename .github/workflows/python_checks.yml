@@ -37,23 +37,25 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r financial_assistant/requirements.txt
+          pip install -r base-requirements.txt
           pip install ruff mypy
 
       # Ruff
-      - name: Run Ruff for the Financial Assistant
-        run: ruff check --output-format=github financial_assistant
+      - name: Ruff
+        run: |
+          ruff check --output-format=github .
+          ruff check --select I --output-format=github .
       
       # MyPy
-      - name: Run MyPy for the Financial Assistant
-        run: mypy --explicit-package-bases financial_assistant
+      - name: MyPy
+        run: mypy --explicit-package-bases .
 
       # Set PYTHONPATH
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # Runs only at every pull request for the Financial Assistant
-      - name: Run Unit Tests for the Financial Assistant at Pull Request
+      # Runs only at every pull request commit for the Financial Assistant
+      - name: Run Unit Tests at Pull Request
         if: github.event_name == 'pull_request'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
@@ -61,7 +63,7 @@ jobs:
           python financial_assistant/tests/github_pull_request_test.py
 
       # Runs weekly
-      - name: Run Unit Tests for the Financial Assistant Weekly
+      - name: Run Unit Tests Weekly
         if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
