@@ -110,9 +110,9 @@ If you want to use virtualenv or conda environment:
 2. Run the following command:
 
 
-        ```bash
-            streamlit run streamlit/app.py --browser.gatherUsageStats false 
-        ```
+   ```bash
+   streamlit run streamlit/app.py --browser.gatherUsageStats false 
+   ```
 
 
 After deploying the starter kit you see the following user interface:
