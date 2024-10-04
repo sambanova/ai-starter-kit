@@ -105,8 +105,7 @@ async def patched_get_form(
 
 
 # Replace the private method with our wrapper
-Request._get_form = patched_get_form  # type: ignore[assignment]
-
+Request._get_form = patched_get_form
 
 # Filter out /healthcheck noise
 class HealthCheckFilter(logging.Filter):

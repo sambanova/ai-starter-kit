@@ -637,7 +637,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
+            f'{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
         )
         return self.sanitize_file_prefix(output_file_name)
 
@@ -684,7 +685,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return summary, individual_responses
 
-    def add_metric_after_key(self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str) -> Dict[str, Any]:
+    def add_metric_after_key(
+        self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str
+    ) -> Dict[str, Any]:
         """Adds a new metric (dict key and value) to a dict after an specific key
 
         Args:
@@ -712,8 +715,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
     def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
         """Logic to calculate switching time. Based on the first request TTFT,
-        if this value is significantly larger (more than 3 standard deviations) than the average TTFT 
-        of the rest requests, then switching time will be the difference between first TTFT 
+        if this value is significantly larger (more than 3 standard deviations) than the average TTFT
+        of the rest requests, then switching time will be the difference between first TTFT
         and average of the coming TTFTs.
 
         Args:

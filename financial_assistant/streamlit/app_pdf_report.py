@@ -335,7 +335,7 @@ def handle_pdf_generation(
         streamlit.error('No data source selected.')
         return None
 
-    # Assert that at least one data source exists as a file
+    # Ensure that at least one data source exists as a file
     if not any([os.path.isfile(data_paths[key]) for key in data_paths]):
         logger.error('No data source available.')
         streamlit.error('No data source available.')
@@ -425,7 +425,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
         The LLM response using RAG from the selected or uploaded files.
 
     Raises;
-        TypeError: If the LLM response does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['pdf_rag']
@@ -445,6 +445,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, str), TypeError(f'Invalid response: {response}.')
+    if not isinstance(response, str):
+        raise TypeError(f'Invalid response: {response}.')
 
     return response

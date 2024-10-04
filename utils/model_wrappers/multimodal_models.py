@@ -70,8 +70,8 @@ class SambastudioMultimodal:
             image_binary = image_file.read()
             base64_image = base64.b64encode(image_binary).decode()
             return base64_image
-        
-    def url_to_b64(self, url:str) -> str:
+
+    def url_to_b64(self, url: str) -> str:
         """
         Converts an image from a URL to a base64 encoded string.
 
@@ -86,10 +86,9 @@ class SambastudioMultimodal:
                 base64_image = base64.b64encode(image_binary).decode()
                 return base64_image
             else:
-                raise ValueError(f"Unable to retrieve image from URL status code {response.status_code}")
+                raise ValueError(f'Unable to retrieve image from URL status code {response.status_code}')
         except Exception as e:
             raise ValueError(f"Can't encode image to b64 from provided url: {e}")
-
 
     def _is_base64_encoded(self, image: str) -> bool:
         """
@@ -278,7 +277,7 @@ class SambastudioMultimodal:
             else:
                 # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
-                
+
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
         headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
@@ -379,7 +378,9 @@ class SambastudioMultimodal:
             if self._is_url(images_list[0]):
                 # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(images_list[0])}'
-                #raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
+                # raise ValueError(
+                #   'image should be provided as a path or as a base64 encoded image for generic endpoint'
+                # )
             else:
                 image = images_list[0]
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.

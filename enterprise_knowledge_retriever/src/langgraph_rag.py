@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from langgraph.graph import END, StateGraph
 from typing_extensions import TypedDict
 
-from utils.rag.rag_components import RAGComponents
+from utils.rag.rag_components import RAGComponents  # type: ignore
 
 
 class RAGGraphState(TypedDict):
@@ -14,7 +14,7 @@ class RAGGraphState(TypedDict):
     original_question: str
 
 
-class RAG(RAGComponents):
+class RAG(RAGComponents):  # type: ignore
     def __init__(self, config_path: str, embeddings: Any, vectorstore: Any) -> None:
         super().__init__(configs=config_path, embeddings=embeddings, vectorstore=vectorstore)
         self.app: Optional[Any] = None
