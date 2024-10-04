@@ -1,7 +1,7 @@
 audio_model:
     "temperature": 0.0
     "language": "en"
-    "model": "whisper-large-v3"
+    "model": "whisper-1"
 
 llm: 
     "type": "sncloud" #  set either sambastudio or sncloud

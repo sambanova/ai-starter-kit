@@ -24,6 +24,12 @@ def update_config(kit_name: str) -> None:
             embedding_model['batch_size'] = 32
             embedding_model['coe'] = False
 
+    # Update audio_model parameter
+    if 'audio_model' in config:
+        audio_model = config['audio_model']
+        if isinstance(audio_model, dict):
+            audio_model['model'] = 'whisper-1'
+
     with open(config_path, 'w') as file:
         yaml.dump(config, file)
 
