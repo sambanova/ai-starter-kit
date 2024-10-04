@@ -272,7 +272,7 @@ class SambaStudio(LLM):
     )
 
     @classmethod
-    def is_lc_serializable(cls: Type[SambaStudio]) -> bool:
+    def is_lc_serializable(cls: Type[TypeVarSambaStudio]) -> bool:
         return True
 
     @property
