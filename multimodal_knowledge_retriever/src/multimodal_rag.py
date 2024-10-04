@@ -218,7 +218,7 @@ class MultimodalRetrieval:
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
-        print(f"\n####\nHISTORY: {history}\n####\n")
+        logger.info(f"HISTORY: {history}")
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         )
@@ -234,7 +234,7 @@ class MultimodalRetrieval:
         Returns:
         image_summaries (list[str]): A list of summaries of the input images
         """
-        instruction = 'Describe the image in detail. Be specific about graphs include name of axis,\
+        instruction = 'Describe this image in detail. Be specific about graphs include name of axis,\
             labels, legends and important numerical information'
 
         image_summaries = []
@@ -515,16 +515,16 @@ class MultimodalRetrieval:
         """
         Calls the retrieval chain with the provided query.
         """
-        print(f"\nUSER QUERY: {query}\n")
+        logger.info(f"USER QUERY: {query}")
         if self.conversational:
             reformulated_query = self.reformulate_query_with_history(query)
-            print(f"\nREFORMULATED QUERY: {reformulated_query}\n")
+            logger.info(f"REFORMULATED QUERY: {reformulated_query}")
             generation = self.qa_chain(reformulated_query)
             self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
-            print(f"\nFINAL ANSWER: {generation['answer']}\n")
+            logger.info(f"FINAL ANSWER: {generation}")
         else:
             generation = self.qa_chain(query)
-        return self.qa_chain(query)
+        return generation
             
 
     def st_ingest(

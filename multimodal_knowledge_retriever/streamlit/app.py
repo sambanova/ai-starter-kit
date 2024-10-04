@@ -31,6 +31,8 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 # Available models in dropdown menu
 LVLM_MODELS = [
+    'Llama-3.2-11B-Vision-Instruct',
+    "llama-3.2-11b-vision-preview",
     'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
     'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
     'llava-v1.5-7b-4096-preview',
