@@ -14,8 +14,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.logging_utils import log_method  # type: ignore
-from utils.rag.base_components import BaseComponents  # type: ignore
+from utils.logging_utils import log_method
+from utils.rag.base_components import BaseComponents
 
 
 class SearchComponents(BaseComponents):

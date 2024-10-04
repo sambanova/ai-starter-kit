@@ -3,14 +3,14 @@
 # Set the maximum line length to 120
 line-length = 120
 
-extend-exclude = ["*.ipynb"]
+extend-exclude = ["*.ipynb", "utils/parsing/unstructured-api"]
 
 [lint]
 # Add the flake8-annotations rules
 select = ["ANN"]
 
 # Exclude checks that function arguments are annotated with a more specific type than Any
-ignore = ["ANN401", "ANN101"]
+ignore = ["ANN101", "ANN102", "ANN401"]
 
 # Add the `line-too-long` and the `unused-import` rules to the enforced rule set
 extend-select = ["E501", "F401"]

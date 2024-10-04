@@ -179,14 +179,14 @@ def main() -> None:
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
             api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(api_key, aditional_variables, prod_mode)
+                message = save_credentials(api_key, aditional_variables, prod_mode)  # type: ignore
                 st.rerun()
                 st.success(message)
 
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)
+                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)  # type: ignore
                 st.rerun()
 
         if are_credentials_set(ADDITIONAL_ENV_VARS):

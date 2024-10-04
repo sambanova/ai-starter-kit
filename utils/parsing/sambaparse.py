@@ -144,7 +144,10 @@ class SambaParse:
 
         if self.config['partitioning']['partition_by_api']:
             api_key = os.getenv('UNSTRUCTURED_API_KEY')
-            partition_endpoint_url = f"{self.config['partitioning']['partition_endpoint']}:{self.config['partitioning']['unstructured_port']}"  # type: ignore # noqa: E501
+            partition_endpoint_url = (
+                f'{self.config["partitioning"]["partition_endpoint"]}:'
+                f'{self.config["partitioning"]["unstructured_port"]}'
+            )
             if api_key:
                 command.extend(['--partition-by-api', '--api-key', api_key])
                 command.extend(['--partition-endpoint', partition_endpoint_url])
