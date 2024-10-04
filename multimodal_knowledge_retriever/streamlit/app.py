@@ -69,8 +69,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
-            # TODO avoud use of the qa chan and modify for call
-            response = st.session_state.qa_chain(user_question)
+            response =  st.session_state.multimodal_retriever.call(user_question)
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response['answer'])
 
@@ -149,8 +148,6 @@ def main() -> None:
 
     if 'multimodal_retriever' not in st.session_state:
         st.session_state.multimodal_retriever = None
-    if 'qa_chain' not in st.session_state:
-        st.session_state.qa_chain = None
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if 'chat_history' not in st.session_state:
@@ -217,16 +214,15 @@ def main() -> None:
                     st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
                     st.session_state.multimodal_retriever.set_llm(llm_model)
                     # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
-                    if st.session_state.qa_chain is not None:
+                    if st.session_state.multimodal_retriever.qa_chain is not None:
                         if raw_image_retrieval:
-                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
+                            st.session_state.multimodal_retriever.set_retrieval_chain(
                                 image_retrieval_type='raw'
                             )
                         else:
-                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
+                            st.session_state.multimodal_retriever.set_retrieval_chain(
                                 image_retrieval_type='summary'
                             )
-                        st.session_state.qa_chain = qa_chain
                     st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
@@ -241,7 +237,7 @@ def main() -> None:
                                 """your session will be active for the next 30 minutes, after this time files and
                                  vectorstores will be deleted"""
                             )
-                        st.session_state.qa_chain = st.session_state.multimodal_retriever.st_ingest(
+                        st.session_state.multimodal_retriever.st_ingest(
                             docs,
                             table_summaries,
                             text_summaries,

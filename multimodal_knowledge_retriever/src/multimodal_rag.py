@@ -82,6 +82,7 @@ class MultimodalRetrieval:
         self.memory: Optional[ConversationSummaryMemory] = None
         if self.conversational:
             self.init_memory()
+        self.qa_chain = None
             
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
@@ -467,19 +468,17 @@ class MultimodalRetrieval:
             answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
         return answers
 
-    def get_retrieval_chain(
+    def set_retrieval_chain(
         self, retriever: Optional[MultiVectorRetriever] = None, image_retrieval_type: str = 'raw'
-    ) -> Any:
+    ) -> None:
         """
-        This function returns a retrieval chain.
+        This function sets a retrieval_qa_raw_chain function that retrieves answers based on raw image retrieval or a
+        retrieval_qa_summary_chain function that retrieves answers based on summary image retrieval.a retrieval chain.
 
         Parameters:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         image_retrieval_type (str): The type of image retrieval. It can be either "raw" or "summary".
 
-        Returns:
-        retrieval_qa_raw_chain (function): A function that retrieves answers based on raw image retrieval.
-        retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
         
         prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
@@ -495,9 +494,9 @@ class MultimodalRetrieval:
                 output_key='answer',
             )
             retrieval_qa_summary_chain.combine_documents_chain.llm_chain.prompt = prompt
-            return retrieval_qa_summary_chain.invoke
+            self.qa_chain = retrieval_qa_summary_chain.invoke
 
-        if image_retrieval_type == 'raw':
+        elif image_retrieval_type == 'raw':
             def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
                 assert retriever is not None
                 image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
@@ -508,19 +507,21 @@ class MultimodalRetrieval:
                 answer = self.llm.invoke(formatted_prompt)
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
-            #TODO sets sel qa chain
-            return retrieval_qa_raw_chain
+            self.qa_chain = retrieval_qa_raw_chain
 
         else:
             raise ValueError('Invalid value for image_retrieval_type: {}'.format(image_retrieval_type))
 
-    def call(self, query):
+    def call(self, query: str) -> str:
         """
         Calls the retrieval chain with the provided query.
         """
         if self.conversational:
             #TODO call here the retrieval chain
-            pass
+            return self.qa_chain(query)
+        else:
+            return self.qa_chain(query)
+            
 
     def st_ingest(
         self,
@@ -541,9 +542,6 @@ class MultimodalRetrieval:
         raw_image_retrieval (bool): A flag indicating whether to retrieve answers based on raw images or in image
         summaries.
         data_sub_folder (str): A string representing the subfolder where the data will be stored.
-
-        Returns:
-        qa_chain (function): A function that retrieves answers based on the specified retrieval type.
         """
         pdf_files = [file for file in files if file.name.endswith(('.pdf'))]
         image_files = [file for file in files if file.name.endswith(('.jpg', '.jpeg', 'png'))]
@@ -579,9 +577,7 @@ class MultimodalRetrieval:
             summarize_texts=summarize_texts,
             summarize_tables=summarize_tables,
         )
-        #TODO sets qa chain
         if raw_image_retrieval:
-            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
+            self.set_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
         else:
-            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
-        return qa_chain
+            self.set_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
