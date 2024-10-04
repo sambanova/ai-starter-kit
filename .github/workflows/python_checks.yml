@@ -41,13 +41,13 @@ jobs:
           pip install ruff mypy
 
       # Ruff
-      - name: Run Ruff for the Financial Assistant
+      - name: Ruff
         run: |
           ruff check --output-format=github .
           ruff check --select I --output-format=github .
       
       # MyPy
-      - name: Run MyPy for the Financial Assistant
+      - name: MyPy
         run: mypy --explicit-package-bases .
 
       # Set PYTHONPATH
@@ -55,7 +55,7 @@ jobs:
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       # Runs only at every pull request for the Financial Assistant
-      - name: Run Unit Tests for the Financial Assistant at Pull Request
+      - name: Run Unit Tests at Pull Request
         if: github.event_name == 'pull_request'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
@@ -63,7 +63,7 @@ jobs:
           python financial_assistant/tests/github_pull_request_test.py
 
       # Runs weekly
-      - name: Run Unit Tests for the Financial Assistant Weekly
+      - name: Run Unit Tests Weekly
         if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
