@@ -80,8 +80,6 @@ class MultimodalRetrieval:
         self.retriever: Optional[MultiVectorRetriever] = None
         self.conversational = conversational
         self.memory: Optional[ConversationSummaryMemory] = None
-        if self.conversational:
-            self.init_memory()
         self.qa_chain = None
             
 
@@ -220,6 +218,7 @@ class MultimodalRetrieval:
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
+        print(f"\n####\nHISTORY: {history}\n####\n")
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         )
@@ -516,11 +515,16 @@ class MultimodalRetrieval:
         """
         Calls the retrieval chain with the provided query.
         """
+        print(f"\nUSER QUERY: {query}\n")
         if self.conversational:
-            #TODO call here the retrieval chain
-            return self.qa_chain(query)
+            reformulated_query = self.reformulate_query_with_history(query)
+            print(f"\nREFORMULATED QUERY: {reformulated_query}\n")
+            generation = self.qa_chain(reformulated_query)
+            self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
+            print(f"\nFINAL ANSWER: {generation['answer']}\n")
         else:
-            return self.qa_chain(query)
+            generation = self.qa_chain(query)
+        return self.qa_chain(query)
             
 
     def st_ingest(
