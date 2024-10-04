@@ -437,17 +437,17 @@ docker-run-kit: docker-build
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
 			ai-starter-kit /bin/bash -c \
 			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
 			ai-starter-kit /bin/bash -c \
 			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && $(COMMAND)"; \
 	fi
-
+	@echo "Container $(KIT)_container started in detached mode."
 
 # Set up test suite
 .PHONY: setup-test-suite
