@@ -78,7 +78,7 @@ def main() -> None:
             streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
             url, api_key = env_input_fields()
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode) # type: ignore
+                message = save_credentials(url, api_key, prod_mode)  # type: ignore
                 streamlit.success(message)
                 streamlit.rerun()
         else:
@@ -88,7 +88,7 @@ def main() -> None:
                 css_styles=get_blue_button_style(),
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
-                    save_credentials('', '', prod_mode) # type: ignore
+                    save_credentials('', '', prod_mode)  # type: ignore
                     streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
                     streamlit.rerun()
@@ -133,7 +133,7 @@ def main() -> None:
                     # Delete the cache
                     clear_cache(delete=True)
                     # Clear the SambaNova credentials
-                    save_credentials('', '', prod_mode) # type: ignore
+                    save_credentials('', '', prod_mode)  # type: ignore
 
                     streamlit.success(r':green[The chat history has been cleared.]')
                     streamlit.success(r':green[The cache has been deleted.]')

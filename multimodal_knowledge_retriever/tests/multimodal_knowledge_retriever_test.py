@@ -82,7 +82,8 @@ class MKRTestCase(unittest.TestCase):
 
     @classmethod
     def create_retrieval_chain(cls: Type['MKRTestCase']) -> Any:
-        return cls.multimodal_retriever.get_retrieval_chain(cls.vectorstore, image_retrieval_type='summary')
+        cls.multimodal_retriever.set_retrieval_chain(cls.vectorstore, image_retrieval_type='summary')
+        return cls.multimodal_retriever.qa_chain
 
     # Add assertions
     def test_document_parsing(self) -> None:

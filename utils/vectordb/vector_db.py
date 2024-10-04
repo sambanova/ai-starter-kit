@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Define the script's usage example
 USAGE_EXAMPLE = """
 Example usage:
@@ -264,7 +266,7 @@ class VectorDb:
         db_type: str,
         input_db: Optional[str] = None,
         output_db: Optional[str] = None,
-    ) -> None:
+    ) -> VectorDb:
         if db_type == 'faiss':
             vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)
             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)

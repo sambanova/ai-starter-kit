@@ -157,7 +157,7 @@ def main() -> None:
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials'):
-                message = save_credentials(api_key, additional_vars, prod_mode)
+                message = save_credentials(api_key, additional_vars, prod_mode)  # type: ignore
                 st.success(message)
                 st.rerun()
         else:

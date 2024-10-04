@@ -91,12 +91,14 @@ def handle_database_creation(
         A dictionary with company symbols as keys and a list of SQL table names as values.
 
     Raises:
-        TypeError: If the LLM response does not conform to the return type.
+        TypeError: If `requested_companies` is a string.
+        ValueError: If `requested_companies` is an empty string.
+        Exception: If the LLM response does not conform to the expected return type.
     """
-    assert isinstance(
-        requested_companies, str
-    ), f'`requested_companies` should be a string. Got type {type(requested_companies)}.'
-    assert len(requested_companies) > 0, 'No companies selected.'
+    if not isinstance(requested_companies, str):
+        raise TypeError(f'`requested_companies` should be a string. Got type {type(requested_companies)}.')
+    if len(requested_companies) == 0:
+        raise ValueError('No companies selected.')
 
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['create_stock_database']
@@ -116,11 +118,12 @@ def handle_database_creation(
     response = handle_userinput(requested_companies, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, dict), f'`response` should be of type `dict`. Got {type(response)}.'
-    assert all(isinstance(key, str) for key in response.keys()), f'`response.keys()` should be of type `str`.'
-    assert all(
-        isinstance(value, str) for value in list(response.values())[0]
-    ), f'`response.values()` should be of type `str`.'
+    if not isinstance(response, dict):
+        raise Exception(f'`response` should be of type `dict`. Got {type(response)}.')
+    if not all(isinstance(key, str) for key in response.keys()):
+        raise Exception(f'`response.keys()` should be of type `str`.')
+    if not all(isinstance(value, str) for value in list(response.values())[0]):
+        raise Exception(f'`response.values()` should be of type `str`.')
 
     return response
 
@@ -136,12 +139,13 @@ def handle_database_query(
         user_question (str): The user's question or input.
 
     Raises:
-        AssertionError: If `query_method` is not one of the permitted methods.
+        ValueError: If `query_method` is not one of the permitted methods.
     """
     if user_question is None:
         return None
 
-    assert query_method in ['text-to-SQL', 'PandasAI-SqliteConnector'], f'Invalid query method {query_method}'
+    if query_method not in ['text-to-SQL', 'PandasAI-SqliteConnector']:
+        raise ValueError(f'Invalid query method {query_method}')
 
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['query_stock_database']

@@ -39,7 +39,6 @@ from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
 
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
 
