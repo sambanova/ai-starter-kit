@@ -1,7 +1,7 @@
 """Langchain Wrapper around Sambanova LLM APIs."""
 
 import json
-from typing import Any, Dict, Generator, Iterator, List, Optional, Union, Type, TypeVar
+from typing import Any, Dict, Generator, Iterator, List, Optional, Type, TypeVar, Union
 
 import requests
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
