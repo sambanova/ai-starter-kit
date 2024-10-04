@@ -14,7 +14,7 @@ import os
 import sys
 import time
 import unittest
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
 import streamlit
@@ -51,9 +51,6 @@ from financial_assistant.streamlit.utilities_app import (
 # Instantiate the logger
 logger = get_logger()
 
-# Declare the type of the test class
-T = TypeVar('T', bound='FinancialAssistantTest')
-
 # Wait time for test retries in seconds
 RETRY_SLEEP_TIME = 30
 
@@ -65,7 +62,7 @@ class FinancialAssistantTest(unittest.TestCase):
     time_end: float
 
     @classmethod
-    def setUpClass(cls: Type[T]) -> None:
+    def setUpClass(cls) -> None:
         """Records the start time of the tests."""
 
         cls.time_start = time.time()
@@ -103,7 +100,7 @@ class FinancialAssistantTest(unittest.TestCase):
         time.sleep(1)
 
     @classmethod
-    def tearDownClass(cls: Type[T]) -> None:
+    def tearDownClass(cls) -> None:
         """Calculates and logs the total time taken to run the tests."""
 
         cls.time_end = time.time()
