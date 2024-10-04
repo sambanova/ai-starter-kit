@@ -465,6 +465,7 @@ class MultimodalRetrieval:
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
             answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
+        logger.info(f"PARTIAL ANSWERS FROM IMAGES: {answers}")
         return answers
 
     def set_retrieval_chain(
@@ -521,7 +522,7 @@ class MultimodalRetrieval:
             logger.info(f"REFORMULATED QUERY: {reformulated_query}")
             generation = self.qa_chain(reformulated_query)
             self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
-            logger.info(f"FINAL ANSWER: {generation}")
+            logger.info(f"FINAL ANSWER: {generation['answer']}")
         else:
             generation = self.qa_chain(query)
         return generation
