@@ -70,21 +70,23 @@ def retrieve_filings(
         Exception: If a matching document for the given `filing_type`, `ticker_symbol`, and `year` is not available.
         Exception: If a matching document for the given `filing_type`, `ticker_symbol`, `filing_quarter`, and `year`
             is not available.
+        Exception: If the LLM response is not a dictionary.
+        TypeError: is the extracted report date is not of type `datetime.datetime`.
     """
     # Checks the inputs
-    assert isinstance(user_question, str), TypeError(f'User question must be a string. Got {type(user_question)}.')
-    assert isinstance(filing_type, str), TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
+    if not isinstance(user_question, str):
+        raise TypeError(f'User question must be a string. Got {type(user_question)}.')
+    if not isinstance(filing_type, str):
+        raise TypeError(f'Filing type must be a string. Got {type(filing_type)}.')
 
-    assert isinstance(company_list, (list, str)), TypeError(
-        f'`company_list` must be of type list or string. Got {(type(company_list))}.'
-    )
+    if not isinstance(company_list, (list, str)):
+        raise TypeError(f'`company_list` must be of type list or string. Got {(type(company_list))}.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
     company_list = coerce_str_to_list(company_list)
 
-    assert all([isinstance(name, str) for name in company_list]), TypeError(
-        '`company_names_list` must be a list of strings.'
-    )
+    if not all([isinstance(name, str) for name in company_list]):
+        raise TypeError('`company_names_list` must be a list of strings.')
 
     # Retrieve the list of ticker symbols
     symbol_list = retrieve_symbol_list(company_list)
@@ -104,13 +106,15 @@ def retrieve_filings(
     # Quarterly filing retrieval
     if filing_type == '10-Q':
         if filing_quarter is not None:
-            assert isinstance(filing_quarter, int), TypeError('The quarter must be an integer.')
-            assert filing_quarter in [
+            if not isinstance(filing_quarter, int):
+                raise TypeError('The quarter must be an integer.')
+            if filing_quarter not in [
                 1,
                 2,
                 3,
                 4,
-            ], 'The quarter must be between 1 and 4.'
+            ]:
+                raise ValueError('The quarter must be between 1 and 4.')
             delta = (current_year - year + 1) * 3
         else:
             raise ValueError('The quarter must be provided for 10-Q filing.')
@@ -142,11 +146,13 @@ def retrieve_filings(
         # Return the QA response
         response = get_qa_response(user_question, documents)
 
-        # Assert that response is indexable
-        assert isinstance(response, dict), 'QA response is not a dictionary.'
+        # Ensure that response is indexable
+        if not isinstance(response, dict):
+            raise Exception('QA response is not a dictionary.')
 
         # Return the filing type, filing quarter, the ticker symbol, and the year of the filing
-        assert isinstance(report_date, datetime.datetime), 'The report date is not a of type `datetime.date`.'
+        if not isinstance(report_date, datetime.datetime):
+            raise TypeError(f'The report date is not a of type `datetime.date`. Got type {type(report_date)}')
         query_dict = {
             'filing_type': filing_type,
             'filing_quarter': filing_quarter,

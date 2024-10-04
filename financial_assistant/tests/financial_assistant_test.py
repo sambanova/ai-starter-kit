@@ -14,7 +14,7 @@ import os
 import sys
 import time
 import unittest
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 import pandas
 import streamlit
@@ -403,29 +403,29 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_get_stock_info(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `get_stock_info`."""
 
-        # Assert that the response is a dictionary
+        # Ensure that the response is a dictionary
         self.assertIsInstance(response, dict)
-        # Assert that the response contains the expected keys
+        # Ensure that the response contains the expected keys
         self.assertIn(DEFAULT_COMPANY_NAME.upper(), response)
-        # Assert that the response is a string
+        # Ensure that the response is a string
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
-        # Assert that the response is a png file
+        # Ensure that the response is a png file
         self.assertTrue(response[DEFAULT_COMPANY_NAME.upper()].endswith('.png'))
 
     def check_get_historical_price(self, response: Tuple[pandas.DataFrame, Figure, List[str]]) -> None:
         """Check the response of the tool `get_historical_prices`."""
 
-        # Assert that the response is a tuple of three elements
+        # Ensure that the response is a tuple of three elements
         self.assertIsInstance(response, tuple)
         self.assertEqual(len(response), 3)
 
-        # Assert that the first element of the tuple is a `matplotlib.Figure`
+        # Ensure that the first element of the tuple is a `matplotlib.Figure`
         self.assertIsInstance(response[0], Figure)
 
-        # Assert that the second element of the tuple is a `pandas.DataFrame
+        # Ensure that the second element of the tuple is a `pandas.DataFrame
         self.assertIsInstance(response[1], pandas.DataFrame)
 
-        # Assert that the third element of the tuple is a list of strings
+        # Ensure that the third element of the tuple is a list of strings
         self.assertIsInstance(response[2], list)
         for item in response[2]:
             self.assertIsInstance(item, str)
@@ -433,16 +433,16 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_create_stock_database(self, response: Dict[str, List[str]]) -> None:
         """Check the response of the tool `create_stock_database`."""
 
-        # Assert that the response is a dictionary
+        # Ensure that the response is a dictionary
         self.assertIsInstance(response, dict)
 
-        # Assert that the response contains the expected keys
+        # Ensure that the response contains the expected keys
         self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
 
-        # Assert that the response contains the expected values
+        # Ensure that the response contains the expected values
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
 
-        # Assert that each value of the list of tables is a string that starts with the expected prefix
+        # Ensure that each value of the list of tables is a string that starts with the expected prefix
         for table in response[DEFAULT_COMPANY_NAME.upper()]:
             self.assertIsInstance(table, str)
             self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
@@ -451,17 +451,17 @@ class FinancialAssistantTest(unittest.TestCase):
         """Check the response of the tool `query_stock_database`."""
 
         if method == 'text-to-SQL':
-            # Assert that the response is a string
+            # Ensure that the response is a string
             self.assertIsInstance(response, str)
 
         elif method == 'PandasAI-SqliteConnector':
-            # Assert that the response is a dictionary
+            # Ensure that the response is a dictionary
             self.assertIsInstance(response, dict)
 
-            # Assert that the response contains the expected keys
+            # Ensure that the response contains the expected keys
             self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
 
-            # Assert that the response contains the expected values
+            # Ensure that the response contains the expected values
             self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
             for item in response[DEFAULT_COMPANY_NAME.upper()]:
                 self.assertIsInstance(item, str)
@@ -472,10 +472,10 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_scrape_yahoo_finance_news(self, response: str, url_list: List[str]) -> None:
         """Check the response of the tool `scrape_yahoo_finance_news`."""
 
-        # Assert that `response` is a string
+        # Ensure that `response` is a string
         self.assertIsInstance(response, str)
 
-        # Assert that `url_list` is a list of strings that are all URLs
+        # Ensure that `url_list` is a list of strings that are all URLs
         self.assertIsInstance(url_list, list)
         for url in url_list:
             self.assertIsInstance(url, str)
@@ -484,13 +484,13 @@ class FinancialAssistantTest(unittest.TestCase):
     def check_retrieve_filings(self, response: Dict[str, str]) -> None:
         """Check the response of the tool `retrieve_filings`."""
 
-        # Assert that the response is a dictionary
+        # Ensure that the response is a dictionary
         self.assertIsInstance(response, dict)
 
-        # Assert that the response contains the expected keys
+        # Ensure that the response contains the expected keys
         self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
 
-        # Assert that the response contains the expected values
+        # Ensure that the response contains the expected values
         self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
 
 
@@ -613,7 +613,7 @@ class CustomTextTestResult(unittest.TextTestResult):
             self.results_list.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
 
-def suite() -> unittest.TestSuite:
+def main_suite() -> unittest.TestSuite:
     """Test suite to define the order of the test execution."""
 
     # List all the test cases here in order of execution
@@ -644,23 +644,29 @@ def suite() -> unittest.TestSuite:
     return suite
 
 
-def main() -> int:
+def main(suite: Optional[unittest.TestSuite] = None) -> int:
+    """Main program to run a test suite."""
+
+    if suite is not None:
+        if not isinstance(suite, unittest.TestSuite):
+            raise TypeError(f'`suite` must be of type `unittest.TestSuite`. Got type {type(suite)}.')
+    else:
+        suite = main_suite()
+
     # The test runner
     runner = unittest.TextTestRunner(resultclass=CustomTextTestResult)
 
-    # The test suite
-    my_suite = suite()
-
     # Run the tests
-    test_results = runner.run(my_suite)
+    test_results = runner.run(suite)
 
     logger.info('Test Results:')
 
-    assert hasattr(test_results, 'results_list'), 'The test results does not have the attribute `results_list`.'
-    assert hasattr(
-        test_results, 'global_retry_count'
-    ), 'The test results does not have the attribute `global_retry_count`.'
-    assert hasattr(test_results, 'successes'), 'The test results does not have the attribute `successes`.'
+    if not hasattr(test_results, 'results_list'):
+        raise Exception('The test results does not have the attribute `results_list`.')
+    if not hasattr(test_results, 'global_retry_count'):
+        raise Exception('The test results does not have the attribute `global_retry_count`.')
+    if not hasattr(test_results, 'successes'):
+        raise Exception('The test results does not have the attribute `successes`.')
 
     # Log results for each test
     for result in test_results.results_list:
@@ -672,10 +678,10 @@ def main() -> int:
     failed_tests = len(test_results.failures) + len(test_results.errors)
     logger.info(
         'Number of tests passed: '
-        f'{test_results.testsRun - test_results.global_retry_count - failed_tests}/'
-        f'{test_results.testsRun- test_results.global_retry_count}'
+        f'{test_results.testsRun - test_results.global_retry_count - failed_tests}/'  # type: ignore
+        f'{test_results.testsRun- test_results.global_retry_count}'  # type: ignore
     )
-    logger.info(f'Number of successful tests: {len(test_results.successes)}')
+    logger.info(f'Number of successful tests: {len(test_results.successes)}')  # type: ignore
     logger.info(f'Number of failed tests: {len(test_results.failures)}')
     logger.info(f'Number of errored tests: {len(test_results.errors)}')
 
