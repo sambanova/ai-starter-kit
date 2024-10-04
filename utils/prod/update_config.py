@@ -1,8 +1,9 @@
-import yaml
-import sys
 import os
 import re
-from typing import Dict, Any
+import sys
+from typing import Any, Dict
+
+import yaml
 
 def update_config(kit_name: str) -> None:
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
