@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from langgraph.graph import END, StateGraph
 from typing_extensions import TypedDict
 
-from utils.rag.rag_components import RAGComponents
+from utils.rag.rag_components import RAGComponents  # type: ignore
 
 
 class RAGGraphState(TypedDict):
