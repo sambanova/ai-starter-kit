@@ -13,7 +13,7 @@ import glob
 import ssl
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
 import streamlit as st
@@ -21,6 +21,7 @@ import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.memory import ConversationSummaryMemory
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
@@ -62,7 +63,7 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, conversational: bool = False) -> None:
         """
         initialize MultimodalRetrieval object.
         """
@@ -77,6 +78,9 @@ class MultimodalRetrieval:
         self.collection_id = str(uuid.uuid4())
         self.vector_collections: Set[Any] = set()
         self.retriever: Optional[MultiVectorRetriever] = None
+        self.conversational = conversational
+        self.memory: Optional[ConversationSummaryMemory] = None
+        self.qa_chain: Optional[Callable[[Any], Dict[str, Any]]] = None
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
@@ -181,6 +185,44 @@ class MultimodalRetrieval:
 
         return raw_pdf_elements, output_path
 
+    def init_memory(self) -> None:
+        """
+        Initialize conversation summary memory for the conversation
+        """
+        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-conversation-summary.yaml'))
+
+        self.memory = ConversationSummaryMemory(
+            llm=self.llm,
+            buffer='The human and AI greet each other to start a conversation.',
+            memory_key='chat_history',
+            return_messages=True,
+            output_key='answer',
+            prompt=summary_prompt,
+        )
+
+    def reformulate_query_with_history(self, query: str) -> str:
+        """
+        Reformulates the query based on the conversation history.
+
+        Args:
+        query (str): The current query to reformulate.
+
+        Returns:
+        str: The reformulated query.
+        """
+        if self.memory is None:
+            self.init_memory()
+        custom_condensed_question_prompt = load_prompt(
+            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_query.yaml')
+        )
+        assert self.memory is not None
+        history = self.memory.load_memory_variables({})
+        logger.info(f'HISTORY: {history}')
+        reformulated_query = self.llm.invoke(
+            custom_condensed_question_prompt.format(chat_history=history, question=query)
+        )
+        return reformulated_query
+
     def summarize_images(self, image_paths: List[str]) -> List[str]:
         """
         Summarizes images by calling the LLM API with a specific prompt.
@@ -191,7 +233,7 @@ class MultimodalRetrieval:
         Returns:
         image_summaries (list[str]): A list of summaries of the input images
         """
-        instruction = 'Describe the image in detail. Be specific about graphs include name of axis,\
+        instruction = 'Describe this image in detail. Be specific about graphs include name of axis,\
             labels, legends and important numerical information'
 
         image_summaries = []
@@ -210,7 +252,7 @@ class MultimodalRetrieval:
         Returns:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
-        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-text_summary.yaml'))
+        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-text_summary.yaml'))
         text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
@@ -227,7 +269,7 @@ class MultimodalRetrieval:
         Returns:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
-        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-table_summary.yaml'))
+        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-table_summary.yaml'))
         table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
@@ -422,23 +464,23 @@ class MultimodalRetrieval:
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
             answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
+        logger.info(f'PARTIAL ANSWERS FROM IMAGES: {answers}')
         return answers
 
-    def get_retrieval_chain(
+    def set_retrieval_chain(
         self, retriever: Optional[MultiVectorRetriever] = None, image_retrieval_type: str = 'raw'
-    ) -> Any:
+    ) -> None:
         """
-        This function returns a retrieval chain.
+        This function sets a retrieval_qa_raw_chain function that retrieves answers based on raw image retrieval or a
+        retrieval_qa_summary_chain function that retrieves answers based on summary image retrieval.a retrieval chain.
 
         Parameters:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         image_retrieval_type (str): The type of image retrieval. It can be either "raw" or "summary".
 
-        Returns:
-        retrieval_qa_raw_chain (function): A function that retrieves answers based on raw image retrieval.
-        retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama70b-knowledge_retriever_custom_qa_prompt.yaml'))
+
+        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
@@ -451,9 +493,9 @@ class MultimodalRetrieval:
                 output_key='answer',
             )
             retrieval_qa_summary_chain.combine_documents_chain.llm_chain.prompt = prompt
-            return retrieval_qa_summary_chain.invoke
+            self.qa_chain = retrieval_qa_summary_chain.invoke
 
-        if image_retrieval_type == 'raw':
+        elif image_retrieval_type == 'raw':
 
             def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
                 assert retriever is not None
@@ -466,10 +508,27 @@ class MultimodalRetrieval:
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
 
-            return retrieval_qa_raw_chain
+            self.qa_chain = retrieval_qa_raw_chain
 
         else:
             raise ValueError('Invalid value for image_retrieval_type: {}'.format(image_retrieval_type))
+
+    def call(self, query: str) -> Dict[str, Any]:
+        """
+        Calls the retrieval chain with the provided query.
+        """
+        assert self.qa_chain is not None
+        logger.info(f'USER QUERY: {query}')
+        if self.conversational:
+            reformulated_query = self.reformulate_query_with_history(query)
+            assert self.memory is not None
+            logger.info(f'REFORMULATED QUERY: {reformulated_query}')
+            generation = self.qa_chain(reformulated_query)
+            self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
+            logger.info(f"FINAL ANSWER: {generation['answer']}")
+        else:
+            generation = self.qa_chain(query)
+        return generation
 
     def st_ingest(
         self,
@@ -490,9 +549,6 @@ class MultimodalRetrieval:
         raw_image_retrieval (bool): A flag indicating whether to retrieve answers based on raw images or in image
         summaries.
         data_sub_folder (str): A string representing the subfolder where the data will be stored.
-
-        Returns:
-        qa_chain (function): A function that retrieves answers based on the specified retrieval type.
         """
         pdf_files = [file for file in files if file.name.endswith(('.pdf'))]
         image_files = [file for file in files if file.name.endswith(('.jpg', '.jpeg', 'png'))]
@@ -529,7 +585,6 @@ class MultimodalRetrieval:
             summarize_tables=summarize_tables,
         )
         if raw_image_retrieval:
-            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
+            self.set_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
         else:
-            qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
-        return qa_chain
+            self.set_retrieval_chain(retriever=self.retriever, image_retrieval_type='summary')
