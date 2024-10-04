@@ -7,7 +7,7 @@ from typing import Dict, Any
 def update_config(kit_name: str) -> None:
     kit_path = os.path.join(kit_name)
     config_path = os.path.join(kit_path, 'config.yaml')
-    makefile_path = os.path.join(kit_path, 'Makefile')
+    makefile_path = 'Makefile'  # Makefile is at the repo root level
 
     # Update config.yaml
     with open(config_path, 'r') as file:
