@@ -488,13 +488,36 @@ else
 	@find . -type d -name '__pycache__' -delete
 endif
 
-# Format code using black
+# Format code using Ruff
 .PHONY: format
 format:
-	@echo "Formatting code..."
+	@echo "Formatting code using Ruff ..."
 	@. $(VENV_PATH)/bin/activate && \
-	black . && \
+	ruff format $(or $(module), .) && \
 	deactivate
+
+# Lint and type-check code using Ruff and MyPy
+.PHONY: lint
+lint:
+	@echo "Linting and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff check --fix $(or $(module), .) && \
+	ruff check --fix --select I $(or $(module), .) && \
+	mypy --explicit-package-bases $(or $(module), .) && \
+	deactivate
+
+
+# Format, lint, and type-check code using Ruff and MyPy
+.PHONY: format-lint
+format-lint:
+	@echo "Formatting, linting, and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff format $(or $(module), .) && \
+	ruff check --fix $(or $(module), .) && \
+	ruff check --fix --select I $(or $(module), .) && \
+	mypy --explicit-package-bases $(or $(module), .) && \
+	deactivate
+
 
 .PHONY: help
 help:
