@@ -1,17 +1,24 @@
 name: Python Checks
 
 on:
+  # Runs at every push on main
+  push:
+    branches: main
+
   # Runs at every pull request
   pull_request:
-    branches: main
-    types: [opened, edited, synchronize, review_requested, reopened]
+    types: [opened, synchronize, review_requested, reopened]
 
-  # Runs manually
+  # Runs at every pull request review
+  pull_request_review:
+    types: submitted
+
+  # Runs manually via Run Workflow in GitHub Actions
   workflow_dispatch:
 
-  # Runs every Sunday at midnight UTC
+  # Runs every Monday at 12:00 UTC
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 12 * * 1'
 
 jobs:
   build:
@@ -41,14 +48,22 @@ jobs:
       - name: Run MyPy for the Financial Assistant
         run: mypy --explicit-package-bases financial_assistant
 
-      # # Runs only at every pull request 
-      # - name: Run Unit Tests for the Financial Assistant at Pull Request
-      #   if: github.event_name == 'pull_request'
-      #   run: |
-      #     python -m unittest financial_assistant.tests.financial_assistant_test.FinancialAssistantTest.test_handle_stock_query
+      # Set PYTHONPATH
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # # Runs weekly
-      # - name: Run Unit Tests for the Financial Assistant Weekly
-      #   if: github.event_name == 'schedule'
-      #   run: |
-      #     python -m unittest discover financial_assistant/tests
+      # Runs only at every pull request for the Financial Assistant
+      - name: Run Unit Tests for the Financial Assistant at Pull Request
+        if: github.event_name == 'pull_request'
+        env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+        run: |
+          python financial_assistant/tests/github_pull_request_test.py
+
+      # Runs weekly
+      - name: Run Unit Tests for the Financial Assistant Weekly
+        if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
+        env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+        run: |
+          python financial_assistant/tests/financial_assistant_test.py

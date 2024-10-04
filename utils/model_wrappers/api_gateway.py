@@ -1,12 +1,12 @@
 import logging
 import os
 import sys
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
-from langchain_core.language_models.llms import LLM
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.llms import LLM
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -14,10 +14,9 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
-from utils.model_wrappers.langchain_llms import SambaStudio
-from utils.model_wrappers.langchain_llms import SambaNovaCloud
 from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
+from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
+from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True

@@ -206,10 +206,11 @@ def handle_stock_data_analysis(
 
     Raises:
         ValueError: If `start_date` and `end_date` are both None.
-        TypeError: If `response` does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Check inputs
-    assert start_date is not None or end_date is not None, ValueError('Start date or end date must be provided.')
+    if start_date is None and end_date is None:
+        raise ValueError('Start date or end date must be provided.')
 
     if user_question is None:
         return None
@@ -235,13 +236,14 @@ def handle_stock_data_analysis(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert (
-        isinstance(response, tuple)
-        and len(response) == 3
-        and isinstance(response[0], Figure)
-        and isinstance(response[1], pandas.DataFrame)
-        and isinstance(response[2], list)
-        and all([isinstance(i, str) for i in response[2]])
-    ), TypeError(f'Invalid response: {response}.')
+    if (
+        not isinstance(response, tuple)
+        or len(response) != 3
+        or not isinstance(response[0], Figure)
+        or not isinstance(response[1], pandas.DataFrame)
+        or not isinstance(response[2], list)
+        or not all([isinstance(i, str) for i in response[2]])
+    ):
+        raise Exception(f'Invalid response: {response}.')
 
     return response

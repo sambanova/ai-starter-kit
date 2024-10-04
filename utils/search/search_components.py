@@ -1,20 +1,22 @@
 import os
 import sys
 from typing import Any, Dict, List, Optional
-from langchain_community.tools.tavily_search import TavilySearchResults
+
 from langchain.schema import Document
 from langchain.vectorstores import Chroma
+from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.embeddings import Embeddings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, ".."))
-repo_dir = os.path.abspath(os.path.join(kit_dir, ".."))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.rag.base_components import BaseComponents # type: ignore
-from utils.logging_utils import log_method # type: ignore
+from utils.logging_utils import log_method  # type: ignore
+from utils.rag.base_components import BaseComponents  # type: ignore
+
 
 class SearchComponents(BaseComponents):
     """
@@ -30,11 +32,8 @@ class SearchComponents(BaseComponents):
     """
 
     def __init__(
-        self, 
-        configs: str, 
-        embeddings: Embeddings, 
-        vectorstore: Chroma, 
-        examples: Optional[Dict[Any, Any]] = None) -> None:
+        self, configs: str, embeddings: Embeddings, vectorstore: Chroma, examples: Optional[Dict[Any, Any]] = None
+    ) -> None:
         """
         Initializes the RAG components.
 
@@ -44,14 +43,14 @@ class SearchComponents(BaseComponents):
             vectorstore: The vector store object.
             examples: The examples dictionary. Defaults to None.
         """
-        
+
         self.qa_chain = None
         self.vectorstore = vectorstore
         self.embeddings = embeddings
         self.examples: Optional[Dict] = examples
-        
+
         self.configs: Dict = self.load_config(configs)
-        self.prompts_paths: Dict = self.configs["prompts"]
+        self.prompts_paths: Dict = self.configs['prompts']
 
     @log_method
     def tavily_web_search(self, state: dict) -> dict:
@@ -65,40 +64,40 @@ class SearchComponents(BaseComponents):
             The state dictionary with appended web results to documents
         """
 
-        web_search_tool = TavilySearchResults(max_results=self.configs["retrieval"]["n_tavily_results"])
+        web_search_tool = TavilySearchResults(max_results=self.configs['retrieval']['n_tavily_results'])
 
-        print("---WEB SEARCH---")
-        question: str = state["original_question"]
+        print('---WEB SEARCH---')
+        question: str = state['original_question']
         # Case in which the user asks for search prior to any
         if not question:
-            question = state["question"]
-        search_strins =  ["search", "internet", "web"]
+            question = state['question']
+        search_strins = ['search', 'internet', 'web']
         for string in search_strins:
-            if string in state["question"].lower():
-                question = state["question"]
-        documents: List[Document] = state["documents"]
+            if string in state['question'].lower():
+                question = state['question']
+        documents: List[Document] = state['documents']
         print(question)
 
         # Web search
-        docs = web_search_tool.invoke({"query": question})
+        docs = web_search_tool.invoke({'query': question})
         try:
-            web_results: str = "\n".join([d["content"] for d in docs])
-        except: 
+            web_results: str = '\n'.join([d['content'] for d in docs])
+        except:
             web_results = docs
         try:
-            sources: list = [d["url"] for d in docs]
-        except: 
-            sources = [""]
-            
-        doc_web_results: Document = Document(page_content=web_results, metadata={"filename": sources})
+            sources: list = [d['url'] for d in docs]
+        except:
+            sources = ['']
+
+        doc_web_results: Document = Document(page_content=web_results, metadata={'filename': sources})
         if documents is not None:
             documents.append(doc_web_results)
         else:
             documents = [doc_web_results]
 
         print(documents)
-        return {"documents": documents, "question": question}
-    
+        return {'documents': documents, 'question': question}
+
     @log_method
     def final_answer_search(self, state: dict) -> dict:
         """
