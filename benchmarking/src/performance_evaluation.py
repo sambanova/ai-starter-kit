@@ -684,7 +684,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return summary, individual_responses
 
-    def add_metric_after_key(self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str) -> Dict[str, Any]:
+    def add_metric_after_key(
+        self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str
+    ) -> Dict[str, Any]:
         """Adds a new metric (dict key and value) to a dict after an specific key
 
         Args:
@@ -712,8 +714,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
     def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
         """Logic to calculate switching time. Based on the first request TTFT,
-        if this value is significantly larger (more than 3 standard deviations) than the average TTFT 
-        of the rest requests, then switching time will be the difference between first TTFT 
+        if this value is significantly larger (more than 3 standard deviations) than the average TTFT
+        of the rest requests, then switching time will be the difference between first TTFT
         and average of the coming TTFTs.
 
         Args:
@@ -739,7 +741,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # transforming str to date time for sorting
         df_valid_responses['start_time'] = pd.to_datetime(df_valid_responses['start_time'])
         df_valid_responses = df_valid_responses.sort_values(by=['start_time'])
-        
+
         # initialize a column for the switching time
         df_valid_responses['server_switching_time'] = None
 
@@ -751,7 +753,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         switching_time = first_ttft - mean_ttft
         outlier_switching_time = None
-        
+
         if switching_time > (mean_ttft + 3 * std_ttft):
             outlier_switching_time = switching_time
             df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
@@ -759,12 +761,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # assign switching time back to request object
         for llm_response in llm_responses:
             metrics = llm_response.metrics
-            
+
             if llm_response.request_config.request_idx == df_valid_responses.head(1)['request_idx'].values[0]:
                 server_switching_time = df_valid_responses.head(1)['server_switching_time'].values[0]
             else:
                 server_switching_time = None
-            
+
             llm_response.metrics = self.add_metric_after_key(
                 metrics,
                 new_key='server_switching_time',
@@ -852,16 +854,33 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         for thread in threads:
             add_script_run_ctx(thread)
             thread.join()
-            
+
         # Error handling
         error_codes = [llm_response.metrics['error_code'] for llm_response in llm_responses]
-        
+
         if not any([pd.isnull(error_code) for error_code in error_codes]):
-            unique_error_codes = list(set([llm_response.metrics['error_code'] for llm_response in llm_responses if not pd.isnull(llm_response.metrics['error_code'])]))
-            unique_error_msgs = list(set([llm_response.metrics['error_msg'] for llm_response in llm_responses if not pd.isnull(llm_response.metrics['error_code'])]))
-            newline = '\n'
+            unique_error_codes = list(
+                set(
+                    [
+                        llm_response.metrics['error_code']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            unique_error_msgs = list(
+                set(
+                    [
+                        llm_response.metrics['error_msg']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests: {f'{newline}-'.join(unique_error_codes)}{newline}Additional messages: {f'{newline}-'.join(unique_error_msgs)}"""
+                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""+
+                f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
             )
 
         # Capture end time and notify user
