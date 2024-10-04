@@ -233,6 +233,8 @@ class APIGateway:
         model_kwargs: Optional[Dict[str, Any]] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
+        sambastudio_url:  Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None
     ) -> BaseChatModel:
         """
         Loads a langchain Sambanova chat model given some parameters
@@ -256,21 +258,19 @@ class APIGateway:
 
             sambanova_url (str): Optional SambaNova Cloud URL",
             sambanova_api_key (str): Optional SambaNovaCloud API key.
+            sambastudio_url (str): Optional SambaStudio URL",
+            sambastudio_api_key (str): Optional SambaStudio API key.
 
         Returns:
             langchain BaseChatModel
         """
 
-        envs = {
-            'sambanova_url': sambanova_url,
-            'sambanova_api_key': sambanova_api_key,
-        }
-            'sambanova_url': sambanova_url,
-            'sambanova_api_key': sambanova_api_key,
-        }
-        envs = {k: v for k, v in envs.items() if v is not None}
-
         if type == 'sambastudio':
+            envs = {
+            'sambastudio_url': sambastudio_url,
+            'sambastudio_api_key': sambastudio_api_key,
+            }
+            envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaStudio(
                 **env,
                 model=model,
@@ -288,6 +288,11 @@ class APIGateway:
             )
 
         elif type == 'sncloud':
+            envs = {
+            'sambanova_url': sambanova_url,
+            'sambanova_api_key': sambanova_api_key,
+            }
+            envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaNovaCloud(
                 **envs,
                 model= model,
