@@ -234,11 +234,15 @@ def save_output_callback(
     """Save the output callback for streamlit button."""
 
     # Check the inputs
-    assert isinstance(response, (str, list, dict, tuple, pandas.Series, pandas.DataFrame)), TypeError(
-        f'Response must be a string, a list, a dictionary, a tuple. a series, or a dataframe. Got type {type(response)}'
-    )
-    assert isinstance(save_path, str), TypeError('Save path must be a string.')
-    assert isinstance(user_request, (str, type(None))), TypeError('User request must be a string.')
+    if not isinstance(response, (str, list, dict, tuple, pandas.Series, pandas.DataFrame)):
+        raise TypeError(
+            'Response must be a string, a list, a dictionary, a tuple. a series, or a dataframe. '
+            f'Got type {type(response)}'
+        )
+    if not isinstance(save_path, str):
+        raise TypeError('Save path must be a string.')
+    if not isinstance(user_request, (str, type(None))):
+        raise TypeError('User request must be a string.')
 
     # Specify the filename
     filename = save_path

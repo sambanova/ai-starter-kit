@@ -1,15 +1,14 @@
 """Wrapper around Sambanova multimodal APIs."""
 
-import os
-import re
-
 import base64
 import json
-import sseclient
+import os
+import re
 from pathlib import Path
-from typing import Dict, List, Union, Optional, Iterator, Generator
+from typing import Dict, Generator, Iterator, List, Optional, Union
 
 import requests
+import sseclient
 
 
 class SambastudioMultimodal:
@@ -191,40 +190,32 @@ class SambastudioMultimodal:
         client = sseclient.SSEClient(response)
         for event in client.events():
             chunk = {
-                "event": event.event,
-                "data": event.data,
-                "status_code": response.status_code,
+                'event': event.event,
+                'data': event.data,
+                'status_code': response.status_code,
             }
-            if chunk["event"] == "error_event" or chunk["status_code"] != 200:
+            if chunk['event'] == 'error_event' or chunk['status_code'] != 200:
                 raise RuntimeError(
-                    f"Sambanova /complete call failed with status code "
-                    f"{chunk['status_code']}."
-                    f"{chunk}."
+                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                 )
             try:
                 # check if the response is a final event
                 # in that case event data response is '[DONE]'
-                if chunk["data"] != "[DONE]":
-                    if isinstance(chunk["data"], str):
-                        data = json.loads(chunk["data"])
+                if chunk['data'] != '[DONE]':
+                    if isinstance(chunk['data'], str):
+                        data = json.loads(chunk['data'])
                     else:
                         raise RuntimeError(
-                            f"Sambanova /complete call failed with status code "
-                            f"{chunk['status_code']}."
-                            f"{chunk}."
+                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                         )
-                    if data.get("error"):
+                    if data.get('error'):
                         raise RuntimeError(
-                            f"Sambanova /complete call failed with status code "
-                            f"{chunk['status_code']}."
-                            f"{chunk}."
+                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
                         )
-                    if len(data["choices"])>0:
-                        yield data["choices"][0]["delta"].get("content","")
+                    if len(data['choices']) > 0:
+                        yield data['choices'][0]['delta'].get('content', '')
             except Exception:
-                raise Exception(
-                    f"Error getting content chunk raw streamed response: {chunk}"
-                )
+                raise Exception(f'Error getting content chunk raw streamed response: {chunk}')
 
     def _call_generic_api(self, prompt: str, image_b64: str) -> Dict:
         """
@@ -299,7 +290,7 @@ class SambastudioMultimodal:
             )
         else:
             return response.json()
-        
+
     def _call_openai_api_stream(self, prompt: str, images: List) -> Iterator:
         """
         Calls the Sambastudio multimodal openai compatible endpoint to stream a response.
@@ -343,13 +334,13 @@ class SambastudioMultimodal:
             )
         else:
             return response
-        
+
     def _load_images(self, images: Union[str, List] = None) -> Optional[List]:
         """
         Loads the images into base64 format or url.
 
         :param Union[str, List] images: Image or images to be used with the model url, absolute path or base64 image
-        :return: List of base64 encoded / URL images 
+        :return: List of base64 encoded / URL images
         """
         if images is None:
             images = []
@@ -367,7 +358,7 @@ class SambastudioMultimodal:
             else:
                 raise ValueError('images should be provided as an url, a path or as a base64 encoded image')
         return images_list
-    
+
     def invoke(self, prompt: str = None, images: Union[str, List] = None) -> str:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
@@ -403,7 +394,7 @@ class SambastudioMultimodal:
                 f'Unsupported host URL: {self.base_url}', 'only Generic and open AI compatible APIs supported'
             )
         return generation
-    
+
     def stream(self, prompt: str = None, images: Union[str, List] = None) -> Iterator:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
@@ -430,9 +421,8 @@ class SambastudioMultimodal:
             USER: <image>
             {prompt}
             ASSISTANT:"""
-            raise NotImplementedError("Streaming method not implemented for multimodal generic endpoints")
+            raise NotImplementedError('Streaming method not implemented for multimodal generic endpoints')
         else:
             raise ValueError(
                 f'Unsupported host URL: {self.base_url}', 'only Generic and open AI compatible APIs supported'
             )
-    

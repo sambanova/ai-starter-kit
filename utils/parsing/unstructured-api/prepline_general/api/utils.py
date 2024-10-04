@@ -1,5 +1,5 @@
 import json
-from typing import TypeVar, Union, List, Optional, Generic, get_origin, get_args, Type, Any, Tuple
+from typing import Any, Generic, List, Tuple, TypeVar, Union, get_args, get_origin
 
 T = TypeVar("T")
 E = TypeVar("E")

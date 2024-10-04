@@ -65,7 +65,7 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
             2. A list of links to articles that have been used for retrieval to answer the user query.
 
     Raises:
-        TypeError: If the LLM response does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = [
@@ -91,12 +91,13 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert (
-        isinstance(response, tuple)
-        and len(response) == 2
-        and isinstance(response[0], str)
-        and isinstance(response[1], list)
-        and all(isinstance(item, str) for item in response[1])
-    ), TypeError(f'Invalid response: {response}.')
+    if (
+        not isinstance(response, tuple)
+        or len(response) != 2
+        or not isinstance(response[0], str)
+        or not isinstance(response[1], list)
+        or not all(isinstance(item, str) for item in response[1])
+    ):
+        raise Exception(f'Invalid response: {response}.')
 
     return response
