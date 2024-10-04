@@ -103,7 +103,7 @@ class FinancialAssistantTest(unittest.TestCase):
         time.sleep(1)
 
     @classmethod
-    def tearDownClass(cls: Type[T]) -> None:
+    def tearDownClass(cls: Type[TypeVarFinancialAssistantTest]) -> None:
         """Calculates and logs the total time taken to run the tests."""
 
         cls.time_end = time.time()

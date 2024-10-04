@@ -14,7 +14,7 @@ class RAGGraphState(TypedDict):
     original_question: str
 
 
-class RAG(RAGComponents):
+class RAG(RAGComponents):  # type: ignore
     def __init__(self, config_path: str, embeddings: Any, vectorstore: Any) -> None:
         super().__init__(configs=config_path, embeddings=embeddings, vectorstore=vectorstore)
         self.app: Optional[Any] = None

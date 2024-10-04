@@ -3,16 +3,16 @@ import os
 import sys
 from typing import Any, List
 
-import nest_asyncio  # type: ignore
+import nest_asyncio
 import torch
-import yaml  # type: ignore
+import yaml
 from IPython.display import HTML, display
 from langchain_core.documents.base import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import load_prompt
 from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod
 from langgraph.graph.state import CompiledStateGraph
-from transformers import AutoModelForSequenceClassification, AutoTokenizer  # type: ignore
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -21,7 +21,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.logging_utils import log_method  # type: ignore
+from utils.logging_utils import log_method
 from utils.model_wrappers.api_gateway import APIGateway
 
 
@@ -163,7 +163,7 @@ class BaseComponents:
         """
 
         base_llm_prompt: Any = load_prompt(repo_dir + '/' + self.configs['prompts']['base_llm_prompt'])
-        self.base_llm_chain = base_llm_prompt | self.llm | StrOutputParser()  # type: ignore
+        self.base_llm_chain = base_llm_prompt | self.llm | StrOutputParser()
 
     def rerank_docs(self, query: str, docs: List[Document], final_k: int) -> List[Document]:
         """
