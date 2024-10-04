@@ -151,7 +151,7 @@ class ChatSambaNovaCloud(BaseChatModel):
         populate_by_name = True
 
     @classmethod
-    def is_lc_serializable(cls: Type[ChatSambaNovaCloud]) -> bool:
+    def is_lc_serializable(cls: Type[TypeVarChatSambaNovaCloud]) -> bool:
         """Return whether this model can be serialized by Langchain."""
         return False
 
