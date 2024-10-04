@@ -42,7 +42,9 @@ jobs:
 
       # Ruff
       - name: Run Ruff for the Financial Assistant
-        run: ruff check --output-format=github .
+        run: |
+          ruff check --output-format=github .
+          ruff check --select I --output-format=github .
       
       # MyPy
       - name: Run MyPy for the Financial Assistant
