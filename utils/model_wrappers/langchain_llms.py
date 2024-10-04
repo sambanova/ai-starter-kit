@@ -1,7 +1,7 @@
 """Langchain Wrapper around Sambanova LLM APIs."""
 
 import json
-from typing import Any, Dict, Generator, Iterator, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generator, Iterator, List, Optional, Union
 
 import requests
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
@@ -203,10 +203,6 @@ class SSEndpointHandler:
             yield chunk
 
 
-# Declare the type of the SambaStudio class
-TypeVarSambaStudio = TypeVar('TypeVarSambaStudio', bound='SambaNovaCloud')
-
-
 class SambaStudio(LLM):
     """
     SambaStudio large language models.
@@ -272,7 +268,7 @@ class SambaStudio(LLM):
     )
 
     @classmethod
-    def is_lc_serializable(cls: Type[TypeVarSambaStudio]) -> bool:
+    def is_lc_serializable(cls) -> bool:
         return True
 
     @property
@@ -526,10 +522,6 @@ class SambaStudio(LLM):
             raise ValueError(f'Error raised by the inference endpoint: {e}') from e
 
 
-# Declare the type of the SambaNovaCloud class
-TypeVarSambaNovaCloud = TypeVar('TypeVarSambaNovaCloud', bound='SambaNovaCloud')
-
-
 class SambaNovaCloud(LLM):
     """
     SambaNova Cloud large language models.
@@ -587,7 +579,7 @@ class SambaNovaCloud(LLM):
     )
 
     @classmethod
-    def is_lc_serializable(cls: Type[TypeVarSambaNovaCloud]) -> bool:
+    def is_lc_serializable(cls) -> bool:
         return True
 
     @property

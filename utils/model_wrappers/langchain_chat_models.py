@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Iterator, List, Optional, Type, TypeVar
+from typing import Any, Dict, Iterator, List, Optional
 
 import requests
 from langchain_core.callbacks import (
@@ -21,9 +21,6 @@ from langchain_core.messages import (
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
 from pydantic import Field, SecretStr
-
-# Declare the type of the ChatSambaNovaCloud class
-TypeVarChatSambaNovaCloud = TypeVar('TypeVarChatSambaNovaCloud', bound='SambaNovaCloud')
 
 
 class ChatSambaNovaCloud(BaseChatModel):
@@ -151,7 +148,7 @@ class ChatSambaNovaCloud(BaseChatModel):
         populate_by_name = True
 
     @classmethod
-    def is_lc_serializable(cls: Type[TypeVarChatSambaNovaCloud]) -> bool:
+    def is_lc_serializable(cls) -> bool:
         """Return whether this model can be serialized by Langchain."""
         return False
 
