@@ -30,7 +30,7 @@ ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-3.2-11B-Vision-Instruct',
-    "llama-3.2-11b-vision-preview",
+    'llama-3.2-11b-vision-preview',
     'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
     'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
     'llava-v1.5-7b-4096-preview',
@@ -69,7 +69,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
-            response =  st.session_state.multimodal_retriever.call(user_question)
+            response = st.session_state.multimodal_retriever.call(user_question)
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response['answer'])
 
@@ -179,14 +179,14 @@ def main() -> None:
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
             api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(api_key, aditional_variables, prod_mode)
+                message = save_credentials(api_key, aditional_variables, prod_mode) #type: ignore
                 st.rerun()
                 st.success(message)
 
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)
+                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode) #type: ignore
                 st.rerun()
 
         if are_credentials_set(ADDITIONAL_ENV_VARS):
@@ -216,13 +216,9 @@ def main() -> None:
                     # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
                     if st.session_state.multimodal_retriever.qa_chain is not None:
                         if raw_image_retrieval:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(
-                                image_retrieval_type='raw'
-                            )
+                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
                         else:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(
-                                image_retrieval_type='summary'
-                            )
+                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
                     st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
@@ -242,7 +238,7 @@ def main() -> None:
                             table_summaries,
                             text_summaries,
                             raw_image_retrieval,
-                            st.session_state.session_temp_subfolder
+                            st.session_state.session_temp_subfolder,
                         )
                         st.toast('Vector DB successfully created!')
                         st.session_state.input_disabled = False

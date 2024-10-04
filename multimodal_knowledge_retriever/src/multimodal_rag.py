@@ -13,7 +13,7 @@ import glob
 import ssl
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
 import streamlit as st
@@ -63,7 +63,7 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self, conversational:bool = False) -> None:
+    def __init__(self, conversational: bool = False) -> None:
         """
         initialize MultimodalRetrieval object.
         """
@@ -80,8 +80,7 @@ class MultimodalRetrieval:
         self.retriever: Optional[MultiVectorRetriever] = None
         self.conversational = conversational
         self.memory: Optional[ConversationSummaryMemory] = None
-        self.qa_chain = None
-            
+        self.qa_chain: Optional[Callable[[Any], Dict[str, Any]]] = None
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
@@ -185,7 +184,7 @@ class MultimodalRetrieval:
         )
 
         return raw_pdf_elements, output_path
-    
+
     def init_memory(self) -> None:
         """
         Initialize conversation summary memory for the conversation
@@ -200,7 +199,7 @@ class MultimodalRetrieval:
             output_key='answer',
             prompt=summary_prompt,
         )
-        
+
     def reformulate_query_with_history(self, query: str) -> str:
         """
         Reformulates the query based on the conversation history.
@@ -218,7 +217,7 @@ class MultimodalRetrieval:
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
-        logger.info(f"HISTORY: {history}")
+        logger.info(f'HISTORY: {history}')
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         )
@@ -465,7 +464,7 @@ class MultimodalRetrieval:
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
             answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
-        logger.info(f"PARTIAL ANSWERS FROM IMAGES: {answers}")
+        logger.info(f'PARTIAL ANSWERS FROM IMAGES: {answers}')
         return answers
 
     def set_retrieval_chain(
@@ -480,12 +479,12 @@ class MultimodalRetrieval:
         image_retrieval_type (str): The type of image retrieval. It can be either "raw" or "summary".
 
         """
-        
+
         prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
-        if image_retrieval_type == 'summary':          
+        if image_retrieval_type == 'summary':
             retrieval_qa_summary_chain = RetrievalQA.from_llm(
                 llm=self.llm,
                 retriever=retriever,
@@ -497,6 +496,7 @@ class MultimodalRetrieval:
             self.qa_chain = retrieval_qa_summary_chain.invoke
 
         elif image_retrieval_type == 'raw':
+
             def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
                 assert retriever is not None
                 image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
@@ -507,26 +507,28 @@ class MultimodalRetrieval:
                 answer = self.llm.invoke(formatted_prompt)
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
+
             self.qa_chain = retrieval_qa_raw_chain
 
         else:
             raise ValueError('Invalid value for image_retrieval_type: {}'.format(image_retrieval_type))
 
-    def call(self, query: str) -> str:
+    def call(self, query: str) -> Dict[str, Any]:
         """
         Calls the retrieval chain with the provided query.
         """
-        logger.info(f"USER QUERY: {query}")
+        assert self.qa_chain is not None
+        logger.info(f'USER QUERY: {query}')
         if self.conversational:
             reformulated_query = self.reformulate_query_with_history(query)
-            logger.info(f"REFORMULATED QUERY: {reformulated_query}")
+            assert self.memory is not None
+            logger.info(f'REFORMULATED QUERY: {reformulated_query}')
             generation = self.qa_chain(reformulated_query)
             self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
             logger.info(f"FINAL ANSWER: {generation['answer']}")
         else:
             generation = self.qa_chain(query)
         return generation
-            
 
     def st_ingest(
         self,
