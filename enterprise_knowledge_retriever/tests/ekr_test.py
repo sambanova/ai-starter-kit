@@ -19,6 +19,7 @@ import sys
 import time
 import unittest
 from typing import Any, Dict, List, Type
+
 import yaml
 
 # Setup logging
@@ -49,6 +50,7 @@ with open(CONFIG_PATH, 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 pdf_only_mode = config['pdf_only_mode']
 
+
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class EKRTestCase(unittest.TestCase):
     time_start: float
@@ -71,7 +73,9 @@ class EKRTestCase(unittest.TestCase):
 
     @classmethod
     def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
-        _, _, text_chunks = parse_doc_universal(doc=TEST_DATA_PATH, additional_metadata=cls.additional_metadata, lite_mode=pdf_only_mode)
+        _, _, text_chunks = parse_doc_universal(
+            doc=TEST_DATA_PATH, additional_metadata=cls.additional_metadata, lite_mode=pdf_only_mode
+        )
         logger.info(f'Number of chunks: {len(text_chunks)}')
         return text_chunks
 
