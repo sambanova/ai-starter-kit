@@ -21,6 +21,7 @@ import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
+from langchain.memory import ConversationSummaryMemory
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
@@ -62,7 +63,7 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, conversational:bool = False) -> None:
         """
         initialize MultimodalRetrieval object.
         """
@@ -77,6 +78,11 @@ class MultimodalRetrieval:
         self.collection_id = str(uuid.uuid4())
         self.vector_collections: Set[Any] = set()
         self.retriever: Optional[MultiVectorRetriever] = None
+        self.conversational = conversational
+        self.memory: Optional[ConversationSummaryMemory] = None
+        if self.conversational:
+            self.init_memory()
+            
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
@@ -180,6 +186,43 @@ class MultimodalRetrieval:
         )
 
         return raw_pdf_elements, output_path
+    
+    def init_memory(self) -> None:
+        """
+        Initialize conversation summary memory for the conversation
+        """
+        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-conversation-summary.yaml'))
+
+        self.memory = ConversationSummaryMemory(
+            llm=self.llm,
+            buffer='The human and AI greet each other to start a conversation.',
+            memory_key='chat_history',
+            return_messages=True,
+            output_key='answer',
+            prompt=summary_prompt,
+        )
+        
+    def reformulate_query_with_history(self, query: str) -> str:
+        """
+        Reformulates the query based on the conversation history.
+
+        Args:
+        query (str): The current query to reformulate.
+
+        Returns:
+        str: The reformulated query.
+        """
+        if self.memory is None:
+            self.init_memory()
+        custom_condensed_question_prompt = load_prompt(
+            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_query.yaml')
+        )
+        assert self.memory is not None
+        history = self.memory.load_memory_variables({})
+        reformulated_query = self.llm.invoke(
+            custom_condensed_question_prompt.format(chat_history=history, question=query)
+        )
+        return reformulated_query
 
     def summarize_images(self, image_paths: List[str]) -> List[str]:
         """
@@ -438,11 +481,12 @@ class MultimodalRetrieval:
         retrieval_qa_raw_chain (function): A function that retrieves answers based on raw image retrieval.
         retrieval_qa_summary_chain (function): A function that retrieves answers based on summary image retrieval.
         """
+        
         prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
-        if image_retrieval_type == 'summary':
+        if image_retrieval_type == 'summary':          
             retrieval_qa_summary_chain = RetrievalQA.from_llm(
                 llm=self.llm,
                 retriever=retriever,
@@ -454,7 +498,6 @@ class MultimodalRetrieval:
             return retrieval_qa_summary_chain.invoke
 
         if image_retrieval_type == 'raw':
-
             def retrieval_qa_raw_chain(query: str) -> Dict[str, Any]:
                 assert retriever is not None
                 image_docs, context_docs = self.get_retrieved_images_and_docs(retriever, query)
@@ -465,11 +508,19 @@ class MultimodalRetrieval:
                 answer = self.llm.invoke(formatted_prompt)
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
-
+            #TODO sets sel qa chain
             return retrieval_qa_raw_chain
 
         else:
             raise ValueError('Invalid value for image_retrieval_type: {}'.format(image_retrieval_type))
+
+    def call(self, query):
+        """
+        Calls the retrieval chain with the provided query.
+        """
+        if self.conversational:
+            #TODO call here the retrieval chain
+            pass
 
     def st_ingest(
         self,
@@ -528,6 +579,7 @@ class MultimodalRetrieval:
             summarize_texts=summarize_texts,
             summarize_tables=summarize_tables,
         )
+        #TODO sets qa chain
         if raw_image_retrieval:
             qa_chain = self.get_retrieval_chain(retriever=self.retriever, image_retrieval_type='raw')
         else:

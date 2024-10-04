@@ -69,6 +69,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
+            # TODO avoud use of the qa chan and modify for call
             response = st.session_state.qa_chain(user_question)
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response['answer'])
@@ -126,7 +127,7 @@ def handle_user_input(user_question: str) -> None:
 def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
     if are_credentials_set():
         try:
-            return MultimodalRetrieval()
+            return MultimodalRetrieval(conversational=True)
         except Exception as e:
             st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
             return None
@@ -245,7 +246,7 @@ def main() -> None:
                             table_summaries,
                             text_summaries,
                             raw_image_retrieval,
-                            st.session_state.session_temp_subfolder,
+                            st.session_state.session_temp_subfolder
                         )
                         st.toast('Vector DB successfully created!')
                         st.session_state.input_disabled = False
@@ -259,6 +260,7 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
 
 
