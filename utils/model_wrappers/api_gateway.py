@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
