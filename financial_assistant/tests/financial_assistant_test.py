@@ -52,7 +52,7 @@ from financial_assistant.streamlit.utilities_app import (
 logger = get_logger()
 
 # Declare the type of the test class
-T = TypeVar('T', bound='FinancialAssistantTest')
+TypeVarFinancialAssistantTest = TypeVar('TypeVarFinancialAssistantTest', bound='FinancialAssistantTest')
 
 # Wait time for test retries in seconds
 RETRY_SLEEP_TIME = 30
@@ -65,7 +65,7 @@ class FinancialAssistantTest(unittest.TestCase):
     time_end: float
 
     @classmethod
-    def setUpClass(cls: Type[T]) -> None:
+    def setUpClass(cls: Type[TypeVarFinancialAssistantTest]) -> None:
         """Records the start time of the tests."""
 
         cls.time_start = time.time()

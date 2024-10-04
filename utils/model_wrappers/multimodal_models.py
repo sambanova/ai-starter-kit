@@ -378,7 +378,9 @@ class SambastudioMultimodal:
             if self._is_url(images_list[0]):
                 # temporal conversion until URL is supported directly by API
                 image = f'data:image/jpeg;base64,{self.url_to_b64(images_list[0])}'
-                # raise ValueError('image should be provided as a path or as a base64 encoded image for generic endpoint')
+                # raise ValueError(
+                #   'image should be provided as a path or as a base64 encoded image for generic endpoint'
+                # )
             else:
                 image = images_list[0]
             formatted_prompt = f"""A chat between a curious human and an artificial intelligence assistant.
