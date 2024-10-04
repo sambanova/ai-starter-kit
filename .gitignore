@@ -289,4 +289,4 @@ yoda/llava_data_prep/scripts/yolov8n.pt
 
 #Deployment 
 kits_to_deploy.json
-deploy_kit.sh
+deploy_kits.sh
