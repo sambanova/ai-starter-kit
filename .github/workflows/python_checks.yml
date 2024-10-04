@@ -32,7 +32,11 @@ jobs:
         with:
           python-version: "3.11"
           cache: 'pip'
-      
+          
+      # Set PYTHONPATH
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
       # Dependencies
       - name: Install Dependencies
         run: |
@@ -47,10 +51,6 @@ jobs:
       # MyPy
       - name: Run MyPy for the Financial Assistant
         run: mypy --explicit-package-bases .
-
-      # Set PYTHONPATH
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       # Runs only at every pull request for the Financial Assistant
       - name: Run Unit Tests for the Financial Assistant at Pull Request
