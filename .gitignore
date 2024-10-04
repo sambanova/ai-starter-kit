@@ -286,3 +286,7 @@ yoda/llava_data_prep/scripts/table.aux
 yoda/llava_data_prep/notebooks/yolov8n.pt
 yoda/llava_data_prep/test
 yoda/llava_data_prep/scripts/yolov8n.pt
+
+#Deployment 
+kits_to_deploy.json
+deploy_kit.sh
