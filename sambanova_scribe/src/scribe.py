@@ -1,7 +1,7 @@
 import os
 import sys
 from io import BytesIO
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import streamlit as st
 import yaml
@@ -46,7 +46,7 @@ class Scribe:
         self.client = self.set_client()
         self.llm = self.set_llm()
 
-    def get_config_info(self) -> Tuple[str, str, str]:
+    def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], bool]:
         """
         Loads json config file
         """
@@ -158,7 +158,7 @@ class Scribe:
             output_path = os.path.join(kit_dir, 'data')
         downloaded_filename = None
 
-        def progress_hook(d: dict) -> None:
+        def progress_hook(d: Dict[str, Any]) -> None:
             nonlocal downloaded_filename
             if d['status'] == 'finished':
                 downloaded_filename = d['filename']

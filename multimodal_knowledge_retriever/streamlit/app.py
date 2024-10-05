@@ -29,6 +29,8 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 # Available models in dropdown menu
 LVLM_MODELS = [
+    'Llama-3.2-11B-Vision-Instruct',
+    'llama-3.2-11b-vision-preview',
     'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
     'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
     'llava-v1.5-7b-4096-preview',
@@ -68,7 +70,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 def handle_user_input(user_question: str) -> None:
     if user_question:
         with st.spinner('Processing...'):
-            response = st.session_state.qa_chain(user_question)
+            response = st.session_state.multimodal_retriever.call(user_question)
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response['answer'])
 
@@ -125,7 +127,7 @@ def handle_user_input(user_question: str) -> None:
 def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
     if are_credentials_set():
         try:
-            return MultimodalRetrieval()
+            return MultimodalRetrieval(conversational=True)
         except Exception as e:
             st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
             return None
@@ -147,8 +149,6 @@ def main() -> None:
 
     if 'multimodal_retriever' not in st.session_state:
         st.session_state.multimodal_retriever = None
-    if 'qa_chain' not in st.session_state:
-        st.session_state.qa_chain = None
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if 'chat_history' not in st.session_state:
@@ -180,14 +180,14 @@ def main() -> None:
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
             api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(api_key, aditional_variables, prod_mode)
+                message = save_credentials(api_key, aditional_variables, prod_mode)  # type: ignore
                 st.rerun()
                 st.success(message)
 
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)
+                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)  # type: ignore
                 st.rerun()
 
         if are_credentials_set(ADDITIONAL_ENV_VARS):
@@ -215,16 +215,11 @@ def main() -> None:
                     st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
                     st.session_state.multimodal_retriever.set_llm(llm_model)
                     # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
-                    if st.session_state.qa_chain is not None:
+                    if st.session_state.multimodal_retriever.qa_chain is not None:
                         if raw_image_retrieval:
-                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
-                                image_retrieval_type='raw'
-                            )
+                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
                         else:
-                            qa_chain = st.session_state.multimodal_retriever.get_retrieval_chain(
-                                image_retrieval_type='summary'
-                            )
-                        st.session_state.qa_chain = qa_chain
+                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
                     st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
@@ -239,7 +234,7 @@ def main() -> None:
                                 """your session will be active for the next 30 minutes, after this time files and
                                  vectorstores will be deleted"""
                             )
-                        st.session_state.qa_chain = st.session_state.multimodal_retriever.st_ingest(
+                        st.session_state.multimodal_retriever.st_ingest(
                             docs,
                             table_summaries,
                             text_summaries,
@@ -258,6 +253,7 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
 
 

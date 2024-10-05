@@ -212,7 +212,7 @@ class SecFiling:
         custom_qa_prompt = load_prompt(os.path.join(kit_dir, 'prompts/edgar_multiturn-custom_qa_prompt.yaml'))
 
         memory = ConversationSummaryMemory(
-            llm=self.llm,  # type: ignore
+            llm=self.llm,
             buffer='The human and AI greet each other to start a conversation.',
             output_key='answer',
             memory_key='chat_history',

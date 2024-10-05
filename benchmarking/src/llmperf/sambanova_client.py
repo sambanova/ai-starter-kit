@@ -321,7 +321,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             ) as response:
                 if response.status_code != 200:
                     error_details = response.json().get('error', 'No additional error details provided.')
-                    raise Exception(f"Error: {response.status_code}, Details: {error_details}")
+                    raise Exception(f'Error: {response.status_code}, Details: {error_details}')
 
                 # fetch generated text and metrics for api v2
                 if '/api/v2' in url.lower().strip():
@@ -380,6 +380,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         )
 
         return metrics, generated_text
+
 
 class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:

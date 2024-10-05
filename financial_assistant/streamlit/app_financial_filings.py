@@ -105,7 +105,7 @@ def handle_financial_filings(
                 `filing_type`, `filing_quarter`, `ticker_symbol`, and `report_date`.
 
     Raises:
-        TypeError: If the LLM response does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['retrieve_filings']
@@ -130,6 +130,7 @@ def handle_financial_filings(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, dict), TypeError(f'Invalid LLM response: {response}.')
+    if not isinstance(response, dict):
+        raise TypeError(f'Invalid LLM response: {response}.')
 
     return response
