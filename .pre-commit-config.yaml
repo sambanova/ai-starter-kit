@@ -9,11 +9,3 @@ repos:
       args: [--config=ruff.toml, --fix]
     # Run the formatter.
     - id: ruff-format
-
-- repo: local
-  hooks:
-  - id: mypy
-    name: Custom MyPy
-    entry: ./run_mypy.sh
-    language: system
-    files: \.py$
