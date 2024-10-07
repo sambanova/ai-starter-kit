@@ -182,14 +182,12 @@ class DocumentRetrieval:
         )
         return llm
 
-    def parse_doc(
-        self, doc_folder: str, additional_metadata: Optional[Dict[str, Any]] = None
-    ) -> List[Document]:
+    def parse_doc(self, doc_folder: str, additional_metadata: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
         Parse specified documents and return a list of LangChain documents.
 
         Args:
-            doc_folder (str): Path to the documents. 
+            doc_folder (str): Path to the documents.
             additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
                 Defaults to an empty dictionary.
 

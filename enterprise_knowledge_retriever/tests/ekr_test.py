@@ -42,6 +42,7 @@ from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrie
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
 
+
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class EKRTestCase(unittest.TestCase):
     time_start: float
@@ -64,7 +65,7 @@ class EKRTestCase(unittest.TestCase):
 
     @classmethod
     def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
-        text_chunks =cls.document_retrieval.parse_doc(doc_folder=TEST_DATA_PATH)
+        text_chunks = cls.document_retrieval.parse_doc(doc_folder=TEST_DATA_PATH)
         logger.info(f'Number of chunks: {len(text_chunks)}')
         return text_chunks
 
