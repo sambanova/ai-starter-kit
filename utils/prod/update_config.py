@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import yaml
 
+
 def update_config(kit_name: str) -> None:
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     kit_path = os.path.join(root_dir, kit_name)
@@ -42,10 +43,7 @@ def update_config(kit_name: str) -> None:
 
         # Replace the STREAMLIT_PORT variable value
         new_makefile_content = re.sub(
-            r'^(STREAMLIT_PORT\s*:=\s*)\d+',
-            r'\g<1>443',
-            makefile_content,
-            flags=re.MULTILINE
+            r'^(STREAMLIT_PORT\s*:=\s*)\d+', r'\g<1>443', makefile_content, flags=re.MULTILINE
         )
 
         with open(makefile_path, 'w') as file:
@@ -53,6 +51,7 @@ def update_config(kit_name: str) -> None:
         print(f'Updated STREAMLIT_PORT to 443 in {makefile_path}')
     else:
         print(f'Makefile not found at {makefile_path}. Skipping STREAMLIT_PORT update.')
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
