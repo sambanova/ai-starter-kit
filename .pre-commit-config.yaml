@@ -1,0 +1,19 @@
+repos:
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.6.9
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [--config=ruff.toml, --fix]
+    # Run the formatter.
+    - id: ruff-format
+
+- repo: local
+  hooks:
+  -   id: mypy
+      name: Custom MyPy
+      entry: ./run_mypy.sh
+      language: system
+      files: \.py$
