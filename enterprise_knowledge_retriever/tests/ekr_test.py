@@ -20,8 +20,6 @@ import time
 import unittest
 from typing import Any, Dict, List, Type
 
-import yaml
-
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -40,15 +38,9 @@ from langchain.docstore.document import Document
 from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
-from utils.parsing.sambaparse import parse_doc_universal
 
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
-
-with open(CONFIG_PATH, 'r') as yaml_file:
-    config = yaml.safe_load(yaml_file)
-pdf_only_mode = config['pdf_only_mode']
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
@@ -73,9 +65,7 @@ class EKRTestCase(unittest.TestCase):
 
     @classmethod
     def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
-        _, _, text_chunks = parse_doc_universal(
-            doc=TEST_DATA_PATH, additional_metadata=cls.additional_metadata, lite_mode=pdf_only_mode
-        )
+        text_chunks = cls.document_retrieval.parse_doc(doc_folder=TEST_DATA_PATH)
         logger.info(f'Number of chunks: {len(text_chunks)}')
         return text_chunks
 
