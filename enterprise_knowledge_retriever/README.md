@@ -45,7 +45,7 @@ This AI Starter Kit is an example of a semantic search workflow. You send your P
 
 - A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
-- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/) or [LangGraph](https://langchain-ai.github.io/langgraph/#why-langgraph).
+- An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/).
 - Prompt construction strategies.
 
 This sample is ready-to-use. We provide:
@@ -109,19 +109,11 @@ If you want to use virtualenv or conda environment:
 
 2. Run the following command:
 
-    > This kit can be deployed using either a simple LCECL implementation or a LangGraph implementation, both of which produce identical results. This demonstrates the flexibility of the kit and showcases how to leverage these two approaches in Rag applications.
 
-    - LCEL version
+   ```bash
+   streamlit run streamlit/app.py --browser.gatherUsageStats false 
+   ```
 
-        ```bash
-            streamlit run streamlit/app.py --browser.gatherUsageStats false 
-        ```
-
-    - LangGraph version
-
-        ```bash
-            streamlit run streamlit/langgraph_app.py --browser.gatherUsageStats false 
-        ```
 
 After deploying the starter kit you see the following user interface:
 
@@ -267,7 +259,7 @@ There, you will be able to select the final number of retrieved documents and de
 * If `rerank` is set to `False`, then no reranker is used, and `final_k_retrieved_documents` represents the number of retrieved documents by the retriever. 
 * If `rerank` is set to `True`, `k_retrieved_documents` first represent the number of documents retrieved by the retriever, and `final_k_retrieved_documents` represents the final number of documents after reranking. 
 
-The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file for the LCEL implementation, or the `retrieve()` function in the [utils/rag/rag_components.py](../utils/rag/rag_components.py) file for the LangGraph implementation. 
+The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file.
 
 ## Customize the LLM
 
