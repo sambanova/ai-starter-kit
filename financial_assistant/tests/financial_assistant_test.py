@@ -4,12 +4,14 @@ Financial Assistant Test Script.
 This script tests the functionality of the Financial Assistant starter kit using `unittest`.
 
 Usage:
-    python tests/financial_assistant_test.py
+    python3 financial_assistant/tests/financial_assistant_test.py
+    python3 financial_assistant/tests/financial_assistant_test.py --suite suite_name
 
 Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
+import argparse
 import os
 import sys
 import time
@@ -641,6 +643,27 @@ def main_suite() -> unittest.TestSuite:
     return suite
 
 
+def suite_github_pull_request() -> unittest.TestSuite:
+    """Test suite for GitHub actions on `pull_request`."""
+
+    # List all the test cases here in order of execution
+    suite_list = ['test_handle_stock_query']
+
+    # Add all the tests to the suite
+    suite = unittest.TestSuite()
+    for suite_item in suite_list:
+        suite.addTest(FinancialAssistantTest(suite_item))
+
+    return suite
+
+
+# Suite registry for the tests
+suite_registry = {
+    'main': main_suite(),
+    'github_pull_request': suite_github_pull_request(),
+}
+
+
 def main(suite: Optional[unittest.TestSuite] = None) -> int:
     """Main program to run a test suite."""
 
@@ -692,5 +715,14 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
 
 
 if __name__ == '__main__':
-    exit_status = main()
+    parser = argparse.ArgumentParser(description='Add a test suite for `financial_assistant`.')
+    parser.add_argument('--suite', default='main', type=str, help='Suite for the tests.')
+
+    args = parser.parse_args()
+    try:
+        suite = suite_registry[args.suite]
+    except KeyError as e:
+        suite = suite_registry['main']
+
+    exit_status = main(suite)
     exit(exit_status)
