@@ -12,8 +12,8 @@ repos:
 
 - repo: local
   hooks:
-  -   id: mypy
-      name: Custom MyPy
-      entry: ./run_mypy.sh
-      language: system
-      files: \.py$
+  - id: mypy
+    name: Custom MyPy
+    entry: ./run_mypy.sh
+    language: system
+    files: \.py$
