@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Define the script's usage example
 USAGE_EXAMPLE = """
 Example usage:

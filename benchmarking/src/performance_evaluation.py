@@ -880,8 +880,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             )
             nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""+
-                f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
+                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""
+                + f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
             )
 
         # Capture end time and notify user
