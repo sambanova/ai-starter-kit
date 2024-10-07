@@ -56,7 +56,7 @@ jobs:
 
       # Runs only at every pull request commit for the Financial Assistant
       - name: Run Unit Tests at Pull Request
-        if: github.event_name == 'pull_request' && github.event_name != 'pull_request_review'
+        if: github.event_name == 'pull_request'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
