@@ -499,15 +499,21 @@ def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
 
     Returns:
         The answer to the user query, generated using RAG.
+
+    Raises:
+        TypeError: If the inputs are not of the expected type.
     """
     # Check inputs
-    assert isinstance(user_query, str), 'The user query must be a string.'
-    assert isinstance(pdf_files_names, (list, str)), 'The PDF files must be a list of paths or a path string.'
+    if not isinstance(user_query, str):
+        raise TypeError('The user query must be a string.')
+    if not isinstance(pdf_files_names, (list, str)):
+        raise TypeError('The PDF files must be a list of paths or a path string.')
 
     # If `symbol_list` is a string, coerce it to a list of strings
     pdf_files_names = coerce_str_to_list(pdf_files_names)
 
-    assert all(isinstance(file, str) for file in pdf_files_names), 'The PDF files must be a list of path strings.'
+    if not all(isinstance(file, str) for file in pdf_files_names):
+        raise TypeError('The PDF files must be a list of path strings.')
 
     # Load PDF files
     documents = []

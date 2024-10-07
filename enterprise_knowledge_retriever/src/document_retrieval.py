@@ -1,7 +1,7 @@
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import nltk
 import torch
@@ -9,7 +9,7 @@ import yaml
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
-from langchain.prompts import BasePromptTemplate, PromptTemplate, load_prompt
+from langchain.prompts import PromptTemplate, load_prompt
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import LanguageModelLike

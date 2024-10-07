@@ -5,7 +5,7 @@ langchain-chroma==0.1.4
 langchain-community==0.3.1
 langchain-core==0.3.6
 mypy==1.11.2
-pandasai==2.2.14
+pandasai==2.2.15
 pydantic==2.9.2
 pypdf==5.0.0
 python-dotenv==1.0.1

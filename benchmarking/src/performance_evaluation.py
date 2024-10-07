@@ -637,7 +637,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f"{self.user_metadata['model_idx']}_{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
+            f'{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
         )
         return self.sanitize_file_prefix(output_file_name)
 

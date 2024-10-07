@@ -112,13 +112,13 @@ def main() -> None:
         if not are_credentials_set():
             url, api_key = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)
+                message = save_credentials(url, api_key, prod_mode)  # type: ignore
                 st.success(message)
                 st.rerun()
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', '', prod_mode)
+                save_credentials('', '', prod_mode)  # type: ignore
                 st.rerun()
 
         if are_credentials_set():
@@ -177,25 +177,25 @@ def main() -> None:
                 st.markdown('Create database')
                 if st.button('Process'):
                     with st.spinner('Processing'):
-                        #try:
-                            text_chunks = st.session_state.document_retrieval.parse_doc(docs)
-                            if len(text_chunks) == 0:
-                                st.error(
-                                    """No able to get text from the documents. check your docs or try setting
+                        # try:
+                        text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                        if len(text_chunks) == 0:
+                            st.error(
+                                """No able to get text from the documents. check your docs or try setting
                                      pdf_only_mode to False"""
-                                )
-                            embeddings = st.session_state.document_retrieval.load_embedding_model()
-                            collection_name = default_collection if not prod_mode else None
-                            vectorstore = st.session_state.document_retrieval.create_vector_store(
-                                text_chunks, embeddings, output_db=None, collection_name=collection_name
                             )
-                            st.session_state.vectorstore = vectorstore
-                            st.session_state.document_retrieval.init_retriever(vectorstore)
-                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                            st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
-                            st.session_state.input_disabled = False
-                        #except Exception as e:
-                            #st.error(f'An error occurred while processing: {str(e)}')
+                        embeddings = st.session_state.document_retrieval.load_embedding_model()
+                        collection_name = default_collection if not prod_mode else None
+                        vectorstore = st.session_state.document_retrieval.create_vector_store(
+                            text_chunks, embeddings, output_db=None, collection_name=collection_name
+                        )
+                        st.session_state.vectorstore = vectorstore
+                        st.session_state.document_retrieval.init_retriever(vectorstore)
+                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                        st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
+                        st.session_state.input_disabled = False
+                    # except Exception as e:
+                    # st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')
