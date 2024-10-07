@@ -43,6 +43,10 @@ class CorpusLoader:
         """
         Initializes the CorpusLoader with a directory and validation ratio.
         """
+
+        if not os.path.exists(directory):
+            raise NotADirectoryError(f'{directory} does not exist')
+
         self.directory = directory
         self.val_ratio = val_ratio
         self.train_files, self.val_files = self.split_train_val()
@@ -54,7 +58,11 @@ class CorpusLoader:
         Returns:
             Tuple containing lists of training and validation file paths.
         """
+        
         pdf_files = glob.glob(f'{self.directory}/*.pdf')
+        if not len(pdf_files) > 1:
+            raise ValueError("Must have more than 1 file.")
+        logging.info(f'found {pdf_files}.')
         random.shuffle(pdf_files)
         split_index = int(len(pdf_files) * (1 - self.val_ratio))
         return pdf_files[:split_index], pdf_files[split_index:]
@@ -69,6 +77,10 @@ class CorpusLoader:
         Returns:
             Dictionary with node IDs as keys and document content as values.
         """
+
+        if not files:
+            raise ValueError(f'files is an empty list.')
+
         logging.info(f'Loading {len(files)} documents...')
         reader = SimpleDirectoryReader(input_files=files)
         docs = reader.load_data()

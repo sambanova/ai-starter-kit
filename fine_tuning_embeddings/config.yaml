@@ -1,6 +1,9 @@
-api: "sambastudio"
-
 llm: 
-    "temperature": 0.1
-    "max_tokens_to_generate": 1024
-    "select_expert": "Mistral-7B-Instruct-v0.2"
+    "api": "sambastudio"
+    "do_sample": False
+    "temperature": 0.01
+    "streaming": False
+    "max_tokens_to_generate": 1200
+    "coe": True 
+    "select_expert": "Meta-Llama-3-70B-Instruct-8192"
+    "process_prompt": False
