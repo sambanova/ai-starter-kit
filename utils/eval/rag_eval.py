@@ -206,7 +206,7 @@ class RAGEvaluator:
 
             for llm_name, pipeline in answer_generation_pipelines:
                 answers = []
-                contexts = []
+                contexts: List[Any] = []
                 for _, row in eval_df.iloc[:num_samples].iterrows():
                     query = row[self.config.eval_dataset_question_col]
                     logging.info(f'Generating answer for query: {query}')
@@ -397,7 +397,7 @@ class RAGEvaluator:
             # Log the bar chart for the current metric
             run.log(
                 {
-                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar(
+                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar( # type: ignore
                         table,
                         'Evaluation Model',
                         'Value',

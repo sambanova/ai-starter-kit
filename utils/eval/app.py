@@ -166,7 +166,7 @@ def main() -> None:
 
     if st.sidebar.button('Save Configuration'):
         for key, value in st.session_state.items():
-            update_config(config, key, value)
+            update_config(config, key, value) # type: ignore
         save_config(config, config_path)
         st.sidebar.success('Configuration saved!')
 
@@ -190,7 +190,7 @@ def main() -> None:
         else:
             # Update the configuration based on user input
             for key, value in st.session_state.items():
-                update_config(config, key, value)
+                update_config(config, key, value) # type: ignore
 
             # Save the updated config to a temporary file
             with NamedTemporaryFile(delete=False, mode='w', suffix='.yaml') as tmp_config_file:
