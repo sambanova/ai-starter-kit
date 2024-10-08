@@ -64,7 +64,7 @@ jobs:
 
       # Runs weekly and pre-merge
       - name: Run Unit Tests Weekly and Pre-Merge
-        if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
+        if: github.event_name == 'schedule' || github.event_name == 'pull_request_review' || github.event_name =='workflow_dispatch'
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
