@@ -35,7 +35,7 @@ class ChatPerformanceEvaluator:
         tokenizer = llmperf_utils.get_tokenizer(self.model)
 
         api_variables = set_api_variables()
-        
+
         request_config = RequestConfig(
             request_idx=1,
             prompt_tuple=(prompt_template, 10),

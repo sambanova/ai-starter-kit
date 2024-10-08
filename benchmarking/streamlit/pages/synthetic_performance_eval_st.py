@@ -1,4 +1,3 @@
-
 # current_dir = os.path.dirname(os.path.abspath('..'))
 # kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 # repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
@@ -12,17 +11,16 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 from st_pages import hide_pages
-from typing import Any, Dict, List
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
     APP_PAGES,
     LLM_API_OPTIONS,
     find_pages_to_hide,
-    set_api_variables,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    set_api_variables,
 )
 
 warnings.filterwarnings('ignore')
@@ -54,7 +52,8 @@ def _initialize_session_variables() -> None:
     if 'prod_mode' not in st.session_state:
         st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
-        st.session_state.setup_complete = None    
+        st.session_state.setup_complete = None
+
 
 def _run_performance_evaluation() -> pd.DataFrame:
     """Runs the performance evaluation process for different number of concurrent requests that will run in parallel.
@@ -64,7 +63,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     """
 
     results_path = './data/results/llmperf'
-    
+
     api_variables = set_api_variables()
 
     # Call benchmarking process
@@ -74,7 +73,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
         num_concurrent_requests=st.session_state.number_concurrent_requests,
         timeout=st.session_state.timeout,
         llm_api=st.session_state.llm_api,
-        api_variables = api_variables,
+        api_variables=api_variables,
         user_metadata={'model_idx': 0},
     )
 
@@ -96,14 +95,14 @@ def _run_performance_evaluation() -> pd.DataFrame:
 
     return valid_df
 
-def main() -> None:
 
+def main() -> None:
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
         hide_pages(pages_to_hide)
     else:
-        hide_pages(APP_PAGES['setup']['page_label'])
+        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Synthetic Performance Evaluation')
     st.markdown(
@@ -135,11 +134,25 @@ def main() -> None:
 
         if st.session_state.prod_mode:
             if st.session_state.llm_api == 'sncloud':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0, disabled=True)
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=0,
+                    disabled=True,
+                )
             elif st.session_state.llm_api == 'sambastudio':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=1, disabled=True) 
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=1,
+                    disabled=True,
+                )
         else:
-            st.session_state.llm_api = st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0)     
+            st.session_state.llm_api = st.selectbox(
+                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+            )
 
         st.session_state.input_tokens = st.number_input(
             'Number of input tokens', min_value=50, max_value=2000, value=1000, step=1
@@ -231,14 +244,14 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     _init()
     _initialize_session_variables()
-    
+
     if st.session_state.prod_mode:
         if st.session_state.setup_complete:
             main()
         else:
-            st.switch_page("./app.py")
-    else: 
+            st.switch_page('./app.py')
+    else:
         main()

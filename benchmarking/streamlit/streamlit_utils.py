@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -8,32 +8,39 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
-APP_PAGES = {'synthetic_eval': {'file_path': 'streamlit/pages/synthetic_performance_eval_st.py', 'page_label': 'Synthetic Performance Evaluation'}, 
-             'custom_eval': {'file_path': 'streamlit/pages/custom_performance_eval_st.py', 'page_label': 'Custom Performance Evaluation'}, 
-             'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
-             'setup': {'file_path': 'streamlit/app.py', 'page_label': 'Setup'}}
+APP_PAGES = {
+    'synthetic_eval': {
+        'file_path': 'streamlit/pages/synthetic_performance_eval_st.py',
+        'page_label': 'Synthetic Performance Evaluation',
+    },
+    'custom_eval': {
+        'file_path': 'streamlit/pages/custom_performance_eval_st.py',
+        'page_label': 'Custom Performance Evaluation',
+    },
+    'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
+    'setup': {'file_path': 'streamlit/app.py', 'page_label': 'Setup'},
+}
+
 
 def find_pages_to_hide() -> List[str]:
     pages_to_show = st.session_state.pages_to_show
     pages_to_hide = []
-    
+
     for page_k, page_v in APP_PAGES.items():
         if page_k != 'setup':
             if page_k not in pages_to_show:
                 pages_to_hide.append(page_v['page_label'])
-                
+
     return pages_to_hide
 
+
 def set_api_variables() -> Dict[str, Any]:
-    
     if st.session_state.prod_mode:
         # SambaNova Cloud
-        if st.session_state.llm_api == "sncloud":
-            api_variables = {
-                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY
-            }
+        if st.session_state.llm_api == 'sncloud':
+            api_variables = {'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY}
         # SambaStudio
-        elif st.session_state.llm_api == "sambastudio":
+        elif st.session_state.llm_api == 'sambastudio':
             api_variables = {
                 'SAMBASTUDIO_BASE_URL': st.session_state.SAMBASTUDIO_BASE_URL,
                 'SAMBASTUDIO_BASE_URI': st.session_state.SAMBASTUDIO_BASE_URI,
@@ -41,12 +48,13 @@ def set_api_variables() -> Dict[str, Any]:
                 'SAMBASTUDIO_ENDPOINT_ID': st.session_state.SAMBASTUDIO_ENDPOINT_ID,
                 'SAMBASTUDIO_API_KEY': st.session_state.SAMBASTUDIO_API_KEY,
             }
-        else: 
-            raise Exception("Only sncloud and sambastudio supported.")
+        else:
+            raise Exception('Only sncloud and sambastudio supported.')
     else:
         api_variables = {}
-        
+
     return api_variables
+
 
 def plot_dataframe_summary(df_req_info: pd.DataFrame) -> Figure:
     """

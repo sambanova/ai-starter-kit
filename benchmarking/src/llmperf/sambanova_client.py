@@ -19,8 +19,8 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.models import RequestConfig
 from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.models import RequestConfig
 
 warnings.filterwarnings('ignore')
 
@@ -179,7 +179,7 @@ class BaseAPIEndpoint(abc.ABC):
         Returns:
             dict: updated metrics dictionary
         """
-        
+
         metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get('prompt_tokens_count') or response_dict.get(
             'prompt_tokens'
         )

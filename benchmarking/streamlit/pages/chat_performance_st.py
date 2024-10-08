@@ -5,16 +5,13 @@ import streamlit as st
 sys.path.append('../')
 
 import warnings
-from st_pages import Page, show_pages, hide_pages
 from typing import Any, Dict
+
+from st_pages import hide_pages
 
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.streamlit.streamlit_utils import (
-    LLM_API_OPTIONS, 
-    APP_PAGES, 
-    find_pages_to_hide
-)
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, LLM_API_OPTIONS, find_pages_to_hide
 
 warnings.filterwarnings('ignore')
 
@@ -72,7 +69,7 @@ def _initialize_sesion_variables() -> None:
     if 'prod_mode' not in st.session_state:
         st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
-        st.session_state.setup_complete = None 
+        st.session_state.setup_complete = None
 
     # Initialize llm params
     # if "do_sample" not in st.session_state:
@@ -90,13 +87,12 @@ def _initialize_sesion_variables() -> None:
 
 
 def main() -> None:
-
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
         hide_pages(pages_to_hide)
     else:
-        hide_pages(APP_PAGES['setup']['page_label'])
+        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Chat Performance Evaluation')
     st.markdown(
@@ -117,12 +113,26 @@ def main() -> None:
         llm_selected = f'{llm_model}'
         if st.session_state.prod_mode:
             if st.session_state.llm_api == 'sncloud':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0, disabled=True)
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=0,
+                    disabled=True,
+                )
             elif st.session_state.llm_api == 'sambastudio':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=1, disabled=True) 
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=1,
+                    disabled=True,
+                )
         else:
-            st.session_state.llm_api = st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0)    
-        
+            st.session_state.llm_api = st.selectbox(
+                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+            )
+
         # st.session_state.do_sample = st.toggle("Do Sample")
         st.session_state.max_tokens_to_generate = st.number_input(
             'Max tokens to generate', min_value=50, max_value=2048, value=250, step=1
@@ -147,7 +157,7 @@ def main() -> None:
                 st.session_state.perf_metrics_history = []
 
                 st.toast('Conversation reset. The next response will clear the history on the screen')
-                
+
         if st.session_state.prod_mode:
             if st.button('Back to Setup'):
                 st.session_state.setup_complete = False
@@ -224,13 +234,13 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     _initialize_sesion_variables()
-    
+
     if st.session_state.prod_mode:
         if st.session_state.setup_complete:
             main()
         else:
-            st.switch_page("./app.py")
-    else: 
+            st.switch_page('./app.py')
+    else:
         main()

@@ -25,9 +25,9 @@ from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
 from benchmarking.src.llmperf import common_metrics
+from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten, get_tokenizer
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
-from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten, get_tokenizer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,7 +50,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
-        api_variables: Dict[str, Any] = {},  
+        api_variables: Dict[str, Any] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
     ) -> None:
@@ -168,9 +168,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
             # Create response object containing metrics, generated text, and corresponding request config
             response_object = LLMResponse(
-                metrics=req_metrics,
-                response_text=response_text,
-                request_config=request_config
+                metrics=req_metrics, response_text=response_text, request_config=request_config
             )
             completed_requests.extend([response_object])
             progress_bar.update(1)
@@ -513,7 +511,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         for thread in threads:
             add_script_run_ctx(thread)
             thread.join()
-            
+
         if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
             raise Exception(
                 f"""Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}.
@@ -566,7 +564,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
-                api_variables = self.api_variables,
+                api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
                 num_concurrent_requests=self.num_concurrent_requests,
             )

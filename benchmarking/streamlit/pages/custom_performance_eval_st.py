@@ -2,17 +2,17 @@ import warnings
 
 import pandas as pd
 import streamlit as st
-from st_pages import Page, show_pages, hide_pages
+from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
-from benchmarking.streamlit.streamlit_utils import LLM_API_OPTIONS
 from benchmarking.streamlit.streamlit_utils import (
     APP_PAGES,
+    LLM_API_OPTIONS,
     find_pages_to_hide,
-    set_api_variables,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    set_api_variables,
 )
 
 warnings.filterwarnings('ignore')
@@ -68,7 +68,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         input_file_path=st.session_state.file_path,
         save_response_texts=st.session_state.save_llm_responses,
         llm_api=st.session_state.llm_api,
-        api_variables=api_variables
+        api_variables=api_variables,
     )
 
     if st.session_state.llm_api == 'sambastudio':
@@ -93,13 +93,12 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
 
 
 def main() -> None:
-
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
         hide_pages(pages_to_hide)
     else:
-        hide_pages(APP_PAGES['setup']['page_label'])
+        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Custom Performance Evaluation')
     st.markdown(
@@ -129,11 +128,25 @@ def main() -> None:
 
         if st.session_state.prod_mode:
             if st.session_state.llm_api == 'sncloud':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0, disabled=True)
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=0,
+                    disabled=True,
+                )
             elif st.session_state.llm_api == 'sambastudio':
-                st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=1, disabled=True) 
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=1,
+                    disabled=True,
+                )
         else:
-            st.session_state.llm_api = st.selectbox('API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0)
+            st.session_state.llm_api = st.selectbox(
+                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+            )
 
         st.number_input(
             'Num Concurrent Requests',
@@ -170,11 +183,11 @@ def main() -> None:
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
         job_submitted = st.sidebar.button('Run!')
-        
+
         if st.session_state.prod_mode:
-            if st.button("Back to Setup"):
+            if st.button('Back to Setup'):
                 st.session_state.setup_complete = False
-                st.switch_page("app.py")
+                st.switch_page('app.py')
 
     if job_submitted:
         st.toast(
@@ -235,13 +248,13 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     _initialize_sesion_variables()
-    
+
     if st.session_state.prod_mode:
         if st.session_state.setup_complete:
             main()
         else:
-            st.switch_page("./app.py")
-    else: 
+            st.switch_page('./app.py')
+    else:
         main()
