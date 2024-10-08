@@ -54,7 +54,7 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # Runs only at every pull request commit
+      # Runs at every pull request commit
       - name: Run Unit Tests at Pull Request
         if: github.event_name == 'pull_request'
         env:
