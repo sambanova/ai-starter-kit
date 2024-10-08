@@ -272,7 +272,7 @@ class APIGateway:
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaStudio(
-                **env,
+                **envs,
                 model=model,
                 streaming=streaming,
                 max_tokens=max_tokens,
