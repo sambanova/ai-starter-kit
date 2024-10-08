@@ -5,9 +5,9 @@ import os
 import sys
 import shutil
 import time
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Tuple, Type
 import unittest
-import yaml
+import yaml # type: ignore
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -22,8 +22,8 @@ logger.info(f'repo_dir: {repo_dir}')
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway
-from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely
+from utils.model_wrappers.api_gateway import APIGateway # type: ignore
+from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 DATA_DIRECTORY = os.path.join(kit_dir, 'sample_data')
@@ -41,13 +41,13 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
     train_corpus: Dict[str, str]
     val_corpus: Dict[str, str]
     query_generator: QueryGenerator
-    llm: LangChainLLM
+    langchain_llm: LangChainLLM
     train_queries: Dict[str, str]
     train_relevant_docs: Dict[str, List[str]]
     val_queries: Dict[str, str]
     val_relevant_docs: Dict[str, List[str]]
-    train_dataset: Dict[str, Any]
-    val_dataset: Dict[str, Any]
+    train_dataset: Dict[str, object]
+    val_dataset: Dict[str, object]
     
 
     @classmethod
@@ -81,12 +81,12 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
             select_expert=llm_info['select_expert'],
             process_prompt=False,
         )
-        langchain_llm: LangChainLLM = LangChainLLM(llm=llm)
+        langchain_llm = LangChainLLM(llm=llm)
 
         return langchain_llm
     
     @classmethod
-    def create_dataset(cls: Type['GenerateEmbeddingDataTestCase']) -> Dict[str, Any]:
+    def create_dataset(cls: Type['GenerateEmbeddingDataTestCase']) -> Tuple[Dict[str, object], Dict[str, object]]:
 
         train_dataset = {'queries': cls.train_queries, 
                          'corpus': cls.train_corpus, 
