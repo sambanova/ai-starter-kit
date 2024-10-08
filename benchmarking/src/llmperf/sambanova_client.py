@@ -539,7 +539,8 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
         error_code = getattr(
             e,
             'code',
-            'Error while running LLM API calls. Check your model name, LLM API type, env variables and endpoint status',
+            """Error while running LLM API requests. 
+            Check your model name, LLM API type, env variables and endpoint status.""",
         )
         error_message = str(e)
         metrics[common_metrics.ERROR_MSG] = error_message
