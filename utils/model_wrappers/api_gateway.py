@@ -109,10 +109,7 @@ class APIGateway:
         repetition_penalty: Optional[float] = None,
         stop_sequences: Optional[str] = None,
         process_prompt: Optional[bool] = False,
-        sambastudio_base_url: Optional[str] = None,
-        sambastudio_base_uri: Optional[str] = None,
-        sambastudio_project_id: Optional[str] = None,
-        sambastudio_endpoint_id: Optional[str] = None,
+        sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
@@ -133,10 +130,7 @@ class APIGateway:
             stop_sequences (str) : Optional model stop sequences.
             process_prompt (bool) : Optional default to false.
 
-            sambastudio_base_url (str): Optional SambaStudio environment URL".
-            sambastudio_base_uri (str): Optional SambaStudio-base-URI".
-            sambastudio_project_id (str): Optional SambaStudio project ID.
-            sambastudio_endpoint_id (str): Optional SambaStudio endpoint ID.
+            sambastudio_url (str): Optional SambaStudio environment URL".
             sambastudio_api_token (str): Optional SambaStudio endpoint API key.
 
             sambanova_url (str): Optional SambaNova Cloud URL",
@@ -148,19 +142,16 @@ class APIGateway:
 
         if type == 'sambastudio':
             envs = {
-                'sambastudio_base_url': sambastudio_base_url,
-                'sambastudio_base_uri': sambastudio_base_uri,
-                'sambastudio_project_id': sambastudio_project_id,
-                'sambastudio_endpoint_id': sambastudio_endpoint_id,
+                'sambastudio_url': sambastudio_url,
                 'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             if coe:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens_to_generate': max_tokens_to_generate,
+                    'max_tokens': max_tokens_to_generate,
                     'temperature': temperature,
-                    'select_expert': select_expert,
+                    'model': select_expert,
                     'top_p': top_p,
                     'top_k': top_k,
                     'repetition_penalty': repetition_penalty,
@@ -177,7 +168,7 @@ class APIGateway:
             else:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens_to_generate': max_tokens_to_generate,
+                    'max_tokens': max_tokens_to_generate,
                     'temperature': temperature,
                     'top_p': top_p,
                     'top_k': top_k,
