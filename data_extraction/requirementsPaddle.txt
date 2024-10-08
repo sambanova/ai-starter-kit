@@ -130,3 +130,5 @@ scikit-learn==1.4.0
 sentencepiece==0.1.99 
 sentence_transformers==2.2.2 
 sseclient-py==1.8.0
+ruff==0.6.7
+mypy==1.11.2

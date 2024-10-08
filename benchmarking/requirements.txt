@@ -22,3 +22,5 @@ sentencepiece==0.2.0
 plotly==5.24.1
 nbformat==5.10.4
 stqdm==0.0.5
+ruff==0.6.7
+mypy==1.11.2

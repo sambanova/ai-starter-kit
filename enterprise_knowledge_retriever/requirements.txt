@@ -26,6 +26,8 @@ pillow_heif==0.16.0
 ipython==8.26.0
 PyMuPDF==1.23.4
 PyMuPDFb==1.23.3
+ruff==0.6.7
+mypy==1.11.2
 
 #LLM Eval
 weave==0.51.1

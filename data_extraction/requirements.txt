@@ -127,3 +127,5 @@ sseclient-py==1.8.0
 
 #Addn Code Formatting
 black
+ruff==0.6.7
+mypy==1.11.2
