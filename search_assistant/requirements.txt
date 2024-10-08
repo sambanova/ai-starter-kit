@@ -17,5 +17,7 @@ unstructured[pdf]==0.12.4
 fake-useragent==1.5.1
 watchdog==4.0.0
 chromadb==0.5.3
+ruff==0.6.7
+mypy==1.11.2
 #llm-eval
 weave==0.51.1

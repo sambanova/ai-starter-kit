@@ -63,3 +63,5 @@ urllib3==2.2.3
 watchdog==4.0.2
 websockets==13.1
 yt-dlp==2024.8.6
+ruff==0.6.7
+mypy==1.11.2

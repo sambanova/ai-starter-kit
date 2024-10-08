@@ -16,3 +16,5 @@ nest_asyncio==1.6.0
 fake-useragent==1.5.1
 unstructured[pdf]==0.12.4
 sseclient-py==1.8.0
+ruff==0.6.7
+mypy==1.11.2

@@ -16,3 +16,5 @@ transformers==4.44.1
 sentence-transformers==2.2.2 
 chromadb==0.5.0
 schedule==1.2.2
+ruff==0.6.7
+mypy==1.11.2

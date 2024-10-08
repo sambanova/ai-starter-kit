@@ -7,3 +7,5 @@ matplotlib == 3.6.3
 streamlit == 1.32.0
 watchdog == 4.0.0
 pillow == 10.2.0
+ruff==0.6.7
+mypy==1.11.2

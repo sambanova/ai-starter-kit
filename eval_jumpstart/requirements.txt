@@ -2,3 +2,5 @@ langchain==0.3.1
 langchain-core==0.3.6
 langchain-community==0.3.1
 wandb==0.18.0
+ruff==0.6.7
+mypy==1.11.2

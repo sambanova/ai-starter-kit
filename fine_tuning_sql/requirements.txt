@@ -8,3 +8,5 @@ jupyter_core==5.7.1
 jupyterlab-widgets==3.0.9
 SQLAlchemy==2.0.30
 python-dotenv==1.0.1
+ruff==0.6.7
+mypy==1.11.2
