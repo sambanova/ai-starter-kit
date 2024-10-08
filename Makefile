@@ -437,17 +437,17 @@ docker-run-kit: docker-build
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
 			ai-starter-kit /bin/bash -c \
 			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
 			ai-starter-kit /bin/bash -c \
 			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && $(COMMAND)"; \
 	fi
-
+	@echo "Container $(KIT)_container started in detached mode."
 
 # Set up test suite
 .PHONY: setup-test-suite
@@ -488,13 +488,42 @@ else
 	@find . -type d -name '__pycache__' -delete
 endif
 
-# Format code using black
+# Extract all command-line arguments except the target itself
+get_args = $(filter-out $@,$(MAKECMDGOALS))
+
+# Format code using Ruff
 .PHONY: format
 format:
-	@echo "Formatting code..."
+	@echo "Formatting code using Ruff ..."
 	@. $(VENV_PATH)/bin/activate && \
-	black . && \
+	ruff format $(or $(module), $(call get_args), .) && \
 	deactivate
+
+# Lint and type-check code using Ruff and MyPy
+.PHONY: lint
+lint:
+	@echo "Linting and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff check --fix $(or $(module), $(call get_args), .) && \
+	ruff check --fix --select I $(or $(module), $(call get_args), .)&& \
+	mypy --explicit-package-bases $(or $(module), $(call get_args), .) && \
+	deactivate
+
+
+# Format, lint, and type-check code using Ruff and MyPy
+.PHONY: format-lint
+format-lint:
+	@echo "Formatting, linting, and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff format $(or $(module), $(call get_args), .) && \
+	ruff check --fix $(or $(module), $(call get_args), .) && \
+	ruff check --fix --select I $(or $(module), $(call get_args), .) && \
+	mypy --explicit-package-bases $(or $(module), $(call get_args), .) && \
+	deactivate
+
+# Universal match for arguments passed directly
+%:
+	@:
 
 .PHONY: help
 help:
@@ -523,4 +552,6 @@ help:
 	@echo "  clean-test-suite       : Clean up the test suite environment"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"
-	@echo "  help                   : Show this help message"
+	@echo "  make format [args]     : Format code using Ruff"
+	@echo "  make lint [args]       : Lint and type-check code using Ruff & MyPy"
+	@echo "  make format-lint [args]: Format, lint, and type-check code using Ruff & MyPy"

@@ -44,7 +44,7 @@ class ChatPerformanceEvaluator:
             api_variables=api_variables,
             sampling_params=self.params,
             is_stream_mode=True,
-            num_concurrent_workers=1,
+            num_concurrent_workers=1,  # type: ignore
         )
         output = llm_request(request_config, tokenizer)
 

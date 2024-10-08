@@ -5,6 +5,6 @@ input_variables:
 name: null
 output_parser: null
 partial_variables: {}
-template: "given the previous image answer the following question: {question}\n If the answer is not in the image, say that you don't know."
+template: "answer the following question: {question} \n if answer is not contained in the image only say \"answer not in context\""
 template_format: f-string
 validate_template: false

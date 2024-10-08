@@ -1,12 +1,12 @@
 import logging
 import os
 import sys
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
-from langchain_core.language_models.llms import LLM
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.llms import LLM
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -14,10 +14,9 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
-from utils.model_wrappers.langchain_llms import SambaStudio
-from utils.model_wrappers.langchain_llms import SambaNovaCloud
 from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud
+from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
+from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True
@@ -220,7 +219,7 @@ class APIGateway:
         temperature: Optional[float] = 0.0,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
-        stream_options: Optional[Dict[str, bool]] = {"include_usage": True},
+        stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
     ) -> BaseChatModel:
@@ -243,18 +242,18 @@ class APIGateway:
         """
 
         envs = {
-                'sambanova_url': sambanova_url,
-                'sambanova_api_key': sambanova_api_key,
-            }
+            'sambanova_url': sambanova_url,
+            'sambanova_api_key': sambanova_api_key,
+        }
         envs = {k: v for k, v in envs.items() if v is not None}
         model = ChatSambaNovaCloud(
             **envs,
-            model= model,
+            model=model,
             streaming=streaming,
             max_tokens=max_tokens,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
-            stream_options=stream_options
+            stream_options=stream_options,
         )
         return model

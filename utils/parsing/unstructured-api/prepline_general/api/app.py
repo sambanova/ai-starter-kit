@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Request, status, HTTPException
-from fastapi.datastructures import FormData
-from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyHeader
 import logging
 import os
+
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.datastructures import FormData
+from fastapi.responses import JSONResponse
 
 from .general import router as general_router
 from .openapi import set_custom_openapi
@@ -105,8 +105,7 @@ async def patched_get_form(
 
 
 # Replace the private method with our wrapper
-Request._get_form = patched_get_form  # type: ignore[assignment]
-
+Request._get_form = patched_get_form
 
 # Filter out /healthcheck noise
 class HealthCheckFilter(logging.Filter):

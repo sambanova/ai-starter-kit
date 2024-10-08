@@ -1,5 +1,5 @@
 import json
-from typing import TypeVar, Union, List, Optional, Generic, get_origin, get_args, Type, Any, Tuple
+from typing import Any, Generic, List, Tuple, TypeVar, Union, get_args, get_origin
 
 T = TypeVar("T")
 E = TypeVar("E")
@@ -100,7 +100,7 @@ class SmartValueParser(Generic[T]):
         Returns:
             tuple[type, type | None]: class and container class of the type hint
         """
-        type_info = self.__orig_class__.__args__[0]  # type: ignore
+        type_info = self.__orig_class__.__args__[0]
         origin_class = get_origin(type_info)
         if origin_class is None:
             # it's a basic type like int or bool - return it and no container class

@@ -38,9 +38,7 @@ from langchain.docstore.document import Document
 from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
-from utils.parsing.sambaparse import parse_doc_universal
 
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
 
@@ -67,7 +65,7 @@ class EKRTestCase(unittest.TestCase):
 
     @classmethod
     def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
-        _, _, text_chunks = parse_doc_universal(doc=TEST_DATA_PATH, additional_metadata=cls.additional_metadata)
+        text_chunks = cls.document_retrieval.parse_doc(doc_folder=TEST_DATA_PATH)
         logger.info(f'Number of chunks: {len(text_chunks)}')
         return text_chunks
 
