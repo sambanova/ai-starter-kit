@@ -20,7 +20,7 @@ from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.models import RequestConfig
-from benchmarking.src.llmperf.utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
 
 warnings.filterwarnings('ignore')
 
@@ -179,7 +179,7 @@ class BaseAPIEndpoint(abc.ABC):
         Returns:
             dict: updated metrics dictionary
         """
-
+        
         metrics[common_metrics.NUM_INPUT_TOKENS_SERVER] = response_dict.get('prompt_tokens_count') or response_dict.get(
             'prompt_tokens'
         )
@@ -222,11 +222,18 @@ class SambaStudioAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
-        self.base_url = os.environ.get('SAMBASTUDIO_BASE_URL')
-        self.base_uri = os.environ.get('SAMBASTUDIO_BASE_URI')
-        self.project_id = os.environ.get('SAMBASTUDIO_PROJECT_ID')
-        self.endpoint_id = os.environ.get('SAMBASTUDIO_ENDPOINT_ID')
-        self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
+        if self.request_config.api_variables:
+            self.base_url = self.request_config.api_variables['SAMBASTUDIO_BASE_URL']
+            self.base_uri = self.request_config.api_variables['SAMBASTUDIO_BASE_URI']
+            self.project_id = self.request_config.api_variables['SAMBASTUDIO_PROJECT_ID']
+            self.endpoint_id = self.request_config.api_variables['SAMBASTUDIO_ENDPOINT_ID']
+            self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
+        else:
+            self.base_url = os.environ.get('SAMBASTUDIO_BASE_URL')
+            self.base_uri = os.environ.get('SAMBASTUDIO_BASE_URI')
+            self.project_id = os.environ.get('SAMBASTUDIO_PROJECT_ID')
+            self.endpoint_id = os.environ.get('SAMBASTUDIO_ENDPOINT_ID')
+            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -385,8 +392,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
-        self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
-        self.api_key = os.environ.get('SAMBANOVA_API_KEY')
+        if self.request_config.api_variables:
+            self.base_url = SAMBANOVA_URL
+            self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
+        else:
+            self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
+            self.api_key = os.environ.get('SAMBANOVA_API_KEY')
 
     def _get_url(self) -> str:
         """Builds url for API call
@@ -452,7 +463,6 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-
             client = sseclient.SSEClient(response)
             generated_text = ''
 
