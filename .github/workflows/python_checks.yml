@@ -54,7 +54,7 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # Runs only at every pull request commit for the Financial Assistant
+      # Runs only at every pull request commit
       - name: Run Unit Tests at Pull Request
         if: github.event_name == 'pull_request'
         env:
@@ -62,7 +62,7 @@ jobs:
         run: |
           python3 financial_assistant/tests/github_pull_request_test.py --suite github_pull_request
 
-      # Runs weekly
+      # Runs weekly and pre-merge
       - name: Run Unit Tests Weekly and Pre-Merge
         if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
         env:
