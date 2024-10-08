@@ -1,0 +1,5 @@
+prod_mode: True # available values: True or False
+pages_to_show: # available values: synthetic_eval, custom_eval, chat_eval
+  - synthetic_eval
+  - custom_eval
+  - chat_eval
