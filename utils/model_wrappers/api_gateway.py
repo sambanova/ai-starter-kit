@@ -213,7 +213,7 @@ class APIGateway:
         top_k: Optional[int] = None,
         do_sample: Optional[bool] = False,
         process_prompt: Optional[bool] = False,
-        stream_options: Optional[Dict[str, bool]] = {"include_usage": True},
+        stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
         special_tokens: Optional[Dict[str, str]] = {
             'start': '<|begin_of_text|>',
             'start_role': '<|begin_of_text|><|start_header_id|>{role}<|end_header_id|>',
@@ -223,8 +223,8 @@ class APIGateway:
         model_kwargs: Optional[Dict[str, Any]] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
-        sambastudio_url:  Optional[str] = None,
-        sambastudio_api_key: Optional[str] = None
+        sambastudio_url: Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None,
     ) -> BaseChatModel:
         """
         Loads a langchain Sambanova chat model given some parameters
@@ -239,9 +239,9 @@ class APIGateway:
             do_sample (bool): whether to do sampling
             process_prompt (bool): whether process prompt (for CoE generic v1 and v2 endpoints)
             stream_options (dict): stream options, include usage to get generation metrics
-            special_tokens (dict): start, start_role, end_role and end special tokens 
-            (set for CoE generic v1 and v2 endpoints when process prompt set to false 
-            or for StandAlone v1 and v2 endpoints) 
+            special_tokens (dict): start, start_role, end_role and end special tokens
+            (set for CoE generic v1 and v2 endpoints when process prompt set to false
+            or for StandAlone v1 and v2 endpoints)
             default to llama3 special tokens
             model_kwargs (dict): Key word arguments to pass to the model.
 
@@ -257,8 +257,8 @@ class APIGateway:
 
         if type == 'sambastudio':
             envs = {
-            'sambastudio_url': sambastudio_url,
-            'sambastudio_api_key': sambastudio_api_key,
+                'sambastudio_url': sambastudio_url,
+                'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaStudio(
@@ -273,25 +273,24 @@ class APIGateway:
                 process_prompt=process_prompt,
                 stream_options=stream_options,
                 special_tokens=special_tokens,
-                model_kwargs=model_kwargs
-
+                model_kwargs=model_kwargs,
             )
 
         elif type == 'sncloud':
             envs = {
-            'sambanova_url': sambanova_url,
-            'sambanova_api_key': sambanova_api_key,
+                'sambanova_url': sambanova_url,
+                'sambanova_api_key': sambanova_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaNovaCloud(
                 **envs,
-                model= model,
+                model=model,
                 streaming=streaming,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
-                stream_options=stream_options
+                stream_options=stream_options,
             )
 
         else:

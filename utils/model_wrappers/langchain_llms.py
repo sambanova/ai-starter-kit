@@ -102,16 +102,16 @@ class SambaStudio(LLM):
 
     """
 
-    sambastudio_url: str = Field(default="")
+    sambastudio_url: str = Field(default='')
     """SambaStudio Url"""
 
-    sambastudio_api_key: SecretStr = Field(default="")
+    sambastudio_api_key: SecretStr = Field(default='')
     """SambaStudio api key"""
 
-    base_url: str = Field(default="", exclude=True)
+    base_url: str = Field(default='', exclude=True)
     """SambaStudio non streaming URL"""
 
-    streaming_url: str = Field(default="", exclude=True)
+    streaming_url: str = Field(default='', exclude=True)
     """SambaStudio streaming URL"""
 
     streaming: bool = Field(default=False)
@@ -131,8 +131,8 @@ class SambaStudio(LLM):
     @property
     def lc_secrets(self) -> Dict[str, str]:
         return {
-            "sambastudio_url": "sambastudio_url",
-            "sambastudio_api_key": "sambastudio_api_key",
+            'sambastudio_url': 'sambastudio_url',
+            'sambastudio_api_key': 'sambastudio_api_key',
         }
 
     @property
@@ -142,25 +142,21 @@ class SambaStudio(LLM):
         This information is used by the LangChain callback system, which
         is used for tracing purposes make it possible to monitor LLMs.
         """
-        return {"streaming": self.streaming, **{"model_kwargs": self.model_kwargs}}
+        return {'streaming': self.streaming, **{'model_kwargs': self.model_kwargs}}
 
     @property
     def _llm_type(self) -> str:
         """Return type of llm."""
-        return "sambastudio-llm"
+        return 'sambastudio-llm'
 
     def __init__(self, **kwargs: Any) -> None:
         """init and validate environment variables"""
-        kwargs["sambastudio_url"] = get_from_dict_or_env(
-            kwargs, "sambastudio_url", "SAMBASTUDIO_URL"
-        )
+        kwargs['sambastudio_url'] = get_from_dict_or_env(kwargs, 'sambastudio_url', 'SAMBASTUDIO_URL')
 
-        kwargs["sambastudio_api_key"] = convert_to_secret_str(
-            get_from_dict_or_env(kwargs, "sambastudio_api_key", "SAMBASTUDIO_API_KEY")
+        kwargs['sambastudio_api_key'] = convert_to_secret_str(
+            get_from_dict_or_env(kwargs, 'sambastudio_api_key', 'SAMBASTUDIO_API_KEY')
         )
-        kwargs["base_url"], kwargs["streaming_url"] = self._get_sambastudio_urls(
-            kwargs["sambastudio_url"]
-        )
+        kwargs['base_url'], kwargs['streaming_url'] = self._get_sambastudio_urls(kwargs['sambastudio_url'])
         super().__init__(**kwargs)
 
     def _get_sambastudio_urls(self, url: str) -> Tuple[str, str]:
@@ -174,19 +170,19 @@ class SambaStudio(LLM):
             base_url: string with url to do non streaming calls
             streaming_url: string with url to do streaming calls
         """
-        if "openai" in url:
+        if 'openai' in url:
             base_url = url
             stream_url = url
         else:
-            if "stream" in url:
-                base_url = url.replace("stream/", "")
+            if 'stream' in url:
+                base_url = url.replace('stream/', '')
                 stream_url = url
             else:
                 base_url = url
-                if "generic" in url:
-                    stream_url = "generic/stream".join(url.split("generic"))
+                if 'generic' in url:
+                    stream_url = 'generic/stream'.join(url.split('generic'))
                 else:
-                    raise ValueError("Unsupported URL")
+                    raise ValueError('Unsupported URL')
         return base_url, stream_url
 
     def _get_tuning_params(self, stop: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -208,48 +204,38 @@ class SambaStudio(LLM):
 
         # handle the case where stop sequences are send in the invocation
         # and stop sequences has been also set in the model parameters
-        _stop_sequences = _model_kwargs.get("stop_sequences", []) + stop
+        _stop_sequences = _model_kwargs.get('stop_sequences', []) + stop
         if len(_stop_sequences) > 0:
-            _model_kwargs["stop_sequences"] = _stop_sequences
+            _model_kwargs['stop_sequences'] = _stop_sequences
 
         # set the parameters structure depending of the API
-        if "openai" in self.sambastudio_url:
-            if "select_expert" in _model_kwargs.keys():
-                _model_kwargs["model"] = _model_kwargs.pop("select_expert")
-            if "max_tokens_to_generate" in _model_kwargs.keys():
-                _model_kwargs["max_tokens"] = _model_kwargs.pop(
-                    "max_tokens_to_generate"
-                )
-            if "process_prompt" in _model_kwargs.keys():
-                _model_kwargs.pop("process_prompt")
+        if 'openai' in self.sambastudio_url:
+            if 'select_expert' in _model_kwargs.keys():
+                _model_kwargs['model'] = _model_kwargs.pop('select_expert')
+            if 'max_tokens_to_generate' in _model_kwargs.keys():
+                _model_kwargs['max_tokens'] = _model_kwargs.pop('max_tokens_to_generate')
+            if 'process_prompt' in _model_kwargs.keys():
+                _model_kwargs.pop('process_prompt')
             tuning_params = _model_kwargs
 
-        elif "api/v2/predict/generic" in self.sambastudio_url:
-            if "model" in _model_kwargs.keys():
-                _model_kwargs["select_expert"] = _model_kwargs.pop("model")
-            if "max_tokens" in _model_kwargs.keys():
-                _model_kwargs["max_tokens_to_generate"] = _model_kwargs.pop(
-                    "max_tokens"
-                )
+        elif 'api/v2/predict/generic' in self.sambastudio_url:
+            if 'model' in _model_kwargs.keys():
+                _model_kwargs['select_expert'] = _model_kwargs.pop('model')
+            if 'max_tokens' in _model_kwargs.keys():
+                _model_kwargs['max_tokens_to_generate'] = _model_kwargs.pop('max_tokens')
             tuning_params = _model_kwargs
 
-        elif "api/predict/generic" in self.sambastudio_url:
-            if "model" in _model_kwargs.keys():
-                _model_kwargs["select_expert"] = _model_kwargs.pop("model")
-            if "max_tokens" in _model_kwargs.keys():
-                _model_kwargs["max_tokens_to_generate"] = _model_kwargs.pop(
-                    "max_tokens"
-                )
+        elif 'api/predict/generic' in self.sambastudio_url:
+            if 'model' in _model_kwargs.keys():
+                _model_kwargs['select_expert'] = _model_kwargs.pop('model')
+            if 'max_tokens' in _model_kwargs.keys():
+                _model_kwargs['max_tokens_to_generate'] = _model_kwargs.pop('max_tokens')
 
-            tuning_params = {
-                k: {"type": type(v).__name__, "value": str(v)}
-                for k, v in (_model_kwargs.items())
-            }
+            tuning_params = {k: {'type': type(v).__name__, 'value': str(v)} for k, v in (_model_kwargs.items())}
 
         else:
             raise ValueError(
-                f"Unsupported URL{self.sambastudio_url}"
-                "only openai, generic v1 and generic v2 APIs are supported"
+                f'Unsupported URL{self.sambastudio_url}' 'only openai, generic v1 and generic v2 APIs are supported'
             )
 
         return tuning_params
@@ -278,46 +264,43 @@ class SambaStudio(LLM):
         params = self._get_tuning_params(stop)
 
         # create request payload for openAI v1 API
-        if "openai" in self.sambastudio_url:
-            messages_dict = [{"role": "user", "content": prompt[0]}]
-            data = {"messages": messages_dict, "stream": streaming, **params}
+        if 'openai' in self.sambastudio_url:
+            messages_dict = [{'role': 'user', 'content': prompt[0]}]
+            data = {'messages': messages_dict, 'stream': streaming, **params}
             data = {key: value for key, value in data.items() if value is not None}
             headers = {
-                "Authorization": f"Bearer "
-                f"{self.sambastudio_api_key.get_secret_value()}",
-                "Content-Type": "application/json",
+                'Authorization': f'Bearer ' f'{self.sambastudio_api_key.get_secret_value()}',
+                'Content-Type': 'application/json',
             }
 
         # create request payload for generic v1 API
-        elif "api/v2/predict/generic" in self.sambastudio_url:
-            if params.get("process_prompt", False):
+        elif 'api/v2/predict/generic' in self.sambastudio_url:
+            if params.get('process_prompt', False):
                 prompt = json.dumps(
                     {
-                        "conversation_id": "sambaverse-conversation-id",
-                        "messages": [
-                            {"message_id": None, "role": "user", "content": prompt[0]}
-                        ],
+                        'conversation_id': 'sambaverse-conversation-id',
+                        'messages': [{'message_id': None, 'role': 'user', 'content': prompt[0]}],
                     }
                 )
             else:
                 prompt = prompt[0]
-            items = [{"id": "item0", "value": prompt}]
+            items = [{'id': 'item0', 'value': prompt}]
             params = {key: value for key, value in params.items() if value is not None}
-            data = {"items": items, "params": params}
-            headers = {"key": self.sambastudio_api_key.get_secret_value()}
+            data = {'items': items, 'params': params}
+            headers = {'key': self.sambastudio_api_key.get_secret_value()}
 
         # create request payload for generic v1 API
-        elif "api/predict/generic" in self.sambastudio_url:
-            if params.get("process_prompt", False):
-                if params["process_prompt"].get("value") == "True":
+        elif 'api/predict/generic' in self.sambastudio_url:
+            if params.get('process_prompt', False):
+                if params['process_prompt'].get('value') == 'True':
                     prompt = json.dumps(
                         {
-                            "conversation_id": "sambaverse-conversation-id",
-                            "messages": [
+                            'conversation_id': 'sambaverse-conversation-id',
+                            'messages': [
                                 {
-                                    "message_id": None,
-                                    "role": "user",
-                                    "content": prompt[0],
+                                    'message_id': None,
+                                    'role': 'user',
+                                    'content': prompt[0],
                                 }
                             ],
                         }
@@ -327,32 +310,25 @@ class SambaStudio(LLM):
             else:
                 prompt = prompt[0]
             if streaming:
-                data = {"instance": prompt, "params": params}
+                data = {'instance': prompt, 'params': params}
             else:
-                data = {"instances": [prompt], "params": params}
-            headers = {"key": self.sambastudio_api_key.get_secret_value()}
+                data = {'instances': [prompt], 'params': params}
+            headers = {'key': self.sambastudio_api_key.get_secret_value()}
 
         else:
             raise ValueError(
-                f"Unsupported URL{self.sambastudio_url}"
-                "only openai, generic v1 and generic v2 APIs are supported"
+                f'Unsupported URL{self.sambastudio_url}' 'only openai, generic v1 and generic v2 APIs are supported'
             )
 
         # make the request to SambaStudio API
         http_session = requests.Session()
         if streaming:
-            response = http_session.post(
-                self.streaming_url, headers=headers, json=data, stream=True
-            )
+            response = http_session.post(self.streaming_url, headers=headers, json=data, stream=True)
         else:
-            response = http_session.post(
-                self.base_url, headers=headers, json=data, stream=False
-            )
+            response = http_session.post(self.base_url, headers=headers, json=data, stream=False)
         if response.status_code != 200:
             raise RuntimeError(
-                f"Sambanova / complete call failed with status code "
-                f"{response.status_code}."
-                f"{response.text}."
+                f'Sambanova / complete call failed with status code ' f'{response.status_code}.' f'{response.text}.'
             )
         return response
 
@@ -372,23 +348,21 @@ class SambaStudio(LLM):
             response_dict = response.json()
         except Exception as e:
             raise RuntimeError(
-                f"Sambanova /complete call failed couldn't get JSON response {e}"
-                f"response: {response.text}"
+                f"Sambanova /complete call failed couldn't get JSON response {e}" f'response: {response.text}'
             )
 
         # process response payload for openai compatible API
-        if "openai" in self.sambastudio_url:
-            completion = response_dict["choices"][0]["message"]["content"]
+        if 'openai' in self.sambastudio_url:
+            completion = response_dict['choices'][0]['message']['content']
         # process response payload for generic v2 API
-        elif "api/v2/predict/generic" in self.sambastudio_url:
-            completion = response_dict["items"][0]["value"]["completion"]
+        elif 'api/v2/predict/generic' in self.sambastudio_url:
+            completion = response_dict['items'][0]['value']['completion']
         # process response payload for generic v1 API
-        elif "api/predict/generic" in self.sambastudio_url:
-            completion = response_dict["predictions"][0]["completion"]
+        elif 'api/predict/generic' in self.sambastudio_url:
+            completion = response_dict['predictions'][0]['completion']
         else:
             raise ValueError(
-                f"Unsupported URL{self.sambastudio_url}"
-                "only openai, generic v1 and generic v2 APIs are supported"
+                f'Unsupported URL{self.sambastudio_url}' 'only openai, generic v1 and generic v2 APIs are supported'
             )
         return completion
 
@@ -406,85 +380,70 @@ class SambaStudio(LLM):
         try:
             import sseclient
         except ImportError:
-            raise ImportError(
-                "could not import sseclient library"
-                "Please install it with `pip install sseclient-py`."
-            )
+            raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
 
         # process response payload for openai compatible API
-        if "openai" in self.sambastudio_url:
+        if 'openai' in self.sambastudio_url:
             client = sseclient.SSEClient(response)
             for event in client.events():
-                if event.event == "error_event":
+                if event.event == 'error_event':
                     raise RuntimeError(
-                        f"Sambanova /complete call failed with status code "
-                        f"{response.status_code}."
-                        f"{event.data}."
+                        f'Sambanova /complete call failed with status code ' f'{response.status_code}.' f'{event.data}.'
                     )
                 try:
                     # check if the response is not a final event ("[DONE]")
-                    if event.data != "[DONE]":
+                    if event.data != '[DONE]':
                         if isinstance(event.data, str):
                             data = json.loads(event.data)
                         else:
                             raise RuntimeError(
-                                f"Sambanova /complete call failed with status code "
-                                f"{response.status_code}."
-                                f"{event.data}."
+                                f'Sambanova /complete call failed with status code '
+                                f'{response.status_code}.'
+                                f'{event.data}.'
                             )
-                        if data.get("error"):
+                        if data.get('error'):
                             raise RuntimeError(
-                                f"Sambanova /complete call failed with status code "
-                                f"{response.status_code}."
-                                f"{event.data}."
+                                f'Sambanova /complete call failed with status code '
+                                f'{response.status_code}.'
+                                f'{event.data}.'
                             )
-                        if len(data["choices"]) > 0:
-                            content = data["choices"][0]["delta"]["content"]
+                        if len(data['choices']) > 0:
+                            content = data['choices'][0]['delta']['content']
                         else:
-                            content = ""
+                            content = ''
                         generated_chunk = GenerationChunk(text=content)
                         yield generated_chunk
 
                 except Exception as e:
-                    raise RuntimeError(
-                        f"Error getting content chunk raw streamed response: {e}"
-                        f"data: {event.data}"
-                    )
+                    raise RuntimeError(f'Error getting content chunk raw streamed response: {e}' f'data: {event.data}')
 
         # process response payload for generic v2 API
-        elif "api/v2/predict/generic" in self.sambastudio_url:
+        elif 'api/v2/predict/generic' in self.sambastudio_url:
             for line in response.iter_lines():
                 try:
                     data = json.loads(line)
-                    content = data["result"]["items"][0]["value"]["stream_token"]
+                    content = data['result']['items'][0]['value']['stream_token']
                     generated_chunk = GenerationChunk(text=content)
                     yield generated_chunk
 
                 except Exception as e:
-                    raise RuntimeError(
-                        f"Error getting content chunk raw streamed response: {e}"
-                        f"line: {line}"
-                    )
+                    raise RuntimeError(f'Error getting content chunk raw streamed response: {e}' f'line: {line}')
 
         # process response payload for generic v1 API
-        elif "api/predict/generic" in self.sambastudio_url:
+        elif 'api/predict/generic' in self.sambastudio_url:
             for line in response.iter_lines():
                 try:
                     data = json.loads(line)
-                    content = data["result"]["responses"][0]["stream_token"]
+                    content = data['result']['responses'][0]['stream_token']
                     generated_chunk = GenerationChunk(text=content)
                     yield generated_chunk
 
                 except Exception as e:
-                    raise RuntimeError(
-                        f"Error getting content chunk raw streamed response: {e}"
-                        f"line: {line}"
-                    )
+                    raise RuntimeError(f'Error getting content chunk raw streamed response: {e}' f'line: {line}')
 
         else:
             raise ValueError(
-                f"Unsupported URL{self.sambastudio_url}"
-                "only openai, generic v1 and generic v2 APIs are supported"
+                f'Unsupported URL{self.sambastudio_url}' 'only openai, generic v1 and generic v2 APIs are supported'
             )
 
     def _stream(
@@ -526,10 +485,8 @@ class SambaStudio(LLM):
             result: string with model generation
         """
         if self.streaming:
-            completion = ""
-            for chunk in self._stream(
-                prompt=prompt, stop=stop, run_manager=run_manager, **kwargs
-            ):
+            completion = ''
+            for chunk in self._stream(prompt=prompt, stop=stop, run_manager=run_manager, **kwargs):
                 completion += chunk.text
 
             return completion
@@ -645,7 +602,7 @@ class SambaNovaCloud(LLM):
         except ImportError:
             raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
         try:
-            formatted_prompt = json.loads(prompt) # type: ignore
+            formatted_prompt = json.loads(prompt)  # type: ignore
         except:
             formatted_prompt = [{'role': 'user', 'content': prompt}]
 
@@ -728,7 +685,7 @@ class SambaNovaCloud(LLM):
             The string generated by the model.
         """
         try:
-            for chunk in self._handle_nlp_predict_stream(prompt, stop): # type: ignore
+            for chunk in self._handle_nlp_predict_stream(prompt, stop):  # type: ignore
                 if run_manager:
                     run_manager.on_llm_new_token(chunk.text)
                 yield chunk
