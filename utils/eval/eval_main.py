@@ -81,7 +81,7 @@ class SambaStudioLLM(DeepEvalBaseLLM):
             <|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|>
             <|start_header_id|>machine-readable JSON<|end_header_id|>\n\n"""
         )
-        chain = {'prompt': RunnablePassthrough()} | template | model
+        chain: Any = {'prompt': RunnablePassthrough()} | template | model
         return chain.invoke(prompt)
 
     async def a_generate(self, prompt: str) -> str:
