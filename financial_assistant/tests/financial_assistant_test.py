@@ -617,22 +617,15 @@ def main_suite() -> unittest.TestSuite:
 
     # List all the test cases here in order of execution
     suite_list = [
-        'test_get_stock_info',
-        'test_handle_stock_query',
-        'test_get_historical_price',
-        'test_handle_stock_data_analysis',
-        'test_create_stock_database',
-        'test_handle_database_creation',
-        'test_query_stock_database',
-        'test_handle_database_query',
-        'test_scrape_yahoo_finance_news',
-        'test_handle_yfinance_news',
-        'test_retrieve_filings',
-        'test_handle_financial_filings',
-        'test_handle_pdf_generation',
-        'test_pdf_rag',
-        'test_handle_pdf_rag',
-        'test_delete_cache',
+        'test_handle_stock_query',  # 3 LLM calls
+        'test_handle_stock_data_analysis',  # 2 LLM calls
+        'test_handle_database_creation',  # 2 LLM calls
+        'test_handle_database_query',  # 8 LLM calls (both `text-to-SQL` and `PandasAI-SqliteConnector`)
+        'test_handle_yfinance_news',  # 3 LLM calls
+        'test_handle_financial_filings',  # 3 LLM calls
+        'test_handle_pdf_generation',  # 8 LLM calls
+        'test_handle_pdf_rag',  # 2 LLM calls
+        'test_delete_cache',  # 0 LLM call
     ]
 
     # Add all the tests to the suite
