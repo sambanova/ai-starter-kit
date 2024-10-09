@@ -56,6 +56,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     # 'search_assistant': 'python cli_test.py --query "test query"',
     'search_assistant': 'python tests/search_assistant_test.py',
+    'image_search': 'python tests/image_search_test.py',
     'benchmarking': './run_synthetic_dataset.sh',  # This runs the benchmarking suite.
 }
 
