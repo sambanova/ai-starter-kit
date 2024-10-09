@@ -101,8 +101,10 @@ class APIGateway:
         streaming: bool = False,
         coe: bool = False,
         do_sample: Optional[bool] = None,
+        max_tokens: Optional[int] = None,
         max_tokens_to_generate: Optional[int] = None,
         temperature: Optional[float] = None,
+        model: Optional[str] = None,
         select_expert: Optional[str] = None,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
@@ -121,9 +123,11 @@ class APIGateway:
             coe (bool): whether to use coe model. Defaults to False.
 
             do_sample (bool) : Optional whether to do sample.
-            max_tokens_to_generate (int) : Optional max number of tokens to generate.
+            max_tokens (int) : Optional max number of tokens to generate.
+            max_tokens_to_generate (int) : Optional alias for max_tokens.
             temperature (float) : Optional model temperature.
-            select_expert (str) : Optional expert to use when using CoE models.
+            model (str) : Optional expert to use when using CoE models.
+            select_expert (str) : Optional alias for model.
             top_p (float) : Optional model top_p.
             top_k (int) : Optional model top_k.
             repetition_penalty (float) : Optional model repetition penalty.
@@ -149,9 +153,9 @@ class APIGateway:
             if coe:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens': max_tokens_to_generate,
+                    'max_tokens': max_tokens or max_tokens_to_generate,
                     'temperature': temperature,
-                    'model': select_expert,
+                    'model': model or select_expert,
                     'top_p': top_p,
                     'top_k': top_k,
                     'repetition_penalty': repetition_penalty,
@@ -168,7 +172,7 @@ class APIGateway:
             else:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens': max_tokens_to_generate,
+                    'max_tokens': max_tokens or max_tokens_to_generate,
                     'temperature': temperature,
                     'top_p': top_p,
                     'top_k': top_k,
@@ -190,8 +194,8 @@ class APIGateway:
             envs = {k: v for k, v in envs.items() if v is not None}
             llm = SambaNovaCloud(
                 **envs,
-                max_tokens=max_tokens_to_generate,
-                model=select_expert,
+                max_tokens=max_tokens or max_tokens_to_generate,
+                model=model or select_expert,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
