@@ -78,7 +78,7 @@ def main() -> None:
             streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
             url, api_key = env_input_fields()
             if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)  # type: ignore
+                message = save_credentials(url, api_key, prod_mode)
                 streamlit.success(message)
                 streamlit.rerun()
         else:

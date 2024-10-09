@@ -38,7 +38,7 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
                 os.environ[key] = value
 
 
-def env_input_fields(additional_env_vars: Optional[List[str]] = None) -> Tuple[str, str]:
+def env_input_fields(additional_env_vars: Optional[List[str]] = None) -> Tuple[Any, Dict[str, Any]]:
     if additional_env_vars is None:
         additional_env_vars = []
 
