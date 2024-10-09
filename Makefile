@@ -53,6 +53,12 @@ all:
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
+# Create a virtual environment and install dependencies
+.PHONY: init
+init: 
+	@make venv
+	@make install
+
 # Repl.it specific targets for kit installation
 .PHONY: replit-kit
 replit-kit:
