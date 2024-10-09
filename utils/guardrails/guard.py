@@ -1,6 +1,6 @@
 import argparse
 import os
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -103,10 +103,10 @@ class Guard:
         self,
         input_query: Union[List[Dict], str],
         role: str,
-        error_message: str = None,
+        error_message: Optional[str] = None,
         return_guardrail_type: bool = True,
         raise_exception: bool = False,
-    ) -> Union[str, List[str]]:
+    ) -> Union[str, List[str], List[Dict[Any, Any]]]:
         """
         Evaluate a message or a conversation against the guardrails.
 
