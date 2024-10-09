@@ -6,11 +6,11 @@ import re
 import subprocess
 import sys
 import time
+import unittest
 from datetime import datetime
-from typing import Any, Dict, List, Type, ClassVar, Optional
+from typing import Any, ClassVar, Dict, List, Optional, Type
 
 import requests
-import unittest
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
