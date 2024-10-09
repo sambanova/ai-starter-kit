@@ -1,3 +1,14 @@
+"""
+Test framework for AI Starter Kit.
+
+This module provides a unittest-based framework for testing various starter kits
+in both local and Docker environments. It includes functionality to set up the
+testing environment, run Streamlit applications, and validate their operation.
+It also includes placeholders for CLI/script tests.
+
+If you are running .sh files as CLI tests, ensure you have made them executable.
+"""
+
 import argparse
 import csv
 import logging
@@ -8,7 +19,7 @@ import sys
 import time
 import unittest
 from datetime import datetime
-from typing import Any, ClassVar, Dict, List, Optional, Type
+from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import requests
 
@@ -70,13 +81,18 @@ class TestResult:
         self.date = date  # Added date attribute
 
 
+class CsvWriter(Protocol):
+    def writerow(self, row: List[Any]) -> None: ...
+    def writerows(self, rows: List[List[Any]]) -> None: ...
+
+
 class StarterKitTest(unittest.TestCase):
     root_dir: ClassVar[str]
     env: ClassVar[str]
     run_streamlit: ClassVar[bool]
     run_cli: ClassVar[bool]
     is_docker: ClassVar[bool]
-    csv_writer: ClassVar[Optional[csv.writer]]
+    csv_writer: ClassVar[Optional[CsvWriter]]
     csv_file: ClassVar[Optional[Any]]
 
     @classmethod
@@ -111,7 +127,7 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
-        if cls.csv_writer:
+        if cls.csv_writer and cls.csv_file:
             cls.csv_writer.writerow(
                 [
                     result.kit,
@@ -212,6 +228,10 @@ class StarterKitTest(unittest.TestCase):
             process = subprocess.Popen(
                 cli_command, shell=True, cwd=kit_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
             )
+
+            if process.stdout is None:
+                logging.error("Process stdout is None")
+                return
 
             output_lines = []
             while True:
