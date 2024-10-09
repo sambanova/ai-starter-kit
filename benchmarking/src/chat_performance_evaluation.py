@@ -3,9 +3,10 @@ from typing import Any, Dict, Optional, Tuple
 
 from dotenv import load_dotenv
 
-import benchmarking.src.llmperf.utils as utils
+import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
 from benchmarking.src.llmperf.models import RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
+from benchmarking.streamlit.streamlit_utils import set_api_variables
 
 
 class ChatPerformanceEvaluator:
@@ -25,19 +26,22 @@ class ChatPerformanceEvaluator:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        if utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model.lower().replace('-', ''):
+        if llmperf_utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model.lower().replace('-', ''):
             prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
             <|start_header_id|>assistant<|end_header_id|>"""
         else:
             prompt_template = f'[INST]{prompt}[/INST]'
 
-        tokenizer = utils.get_tokenizer(self.model)
+        tokenizer = llmperf_utils.get_tokenizer(self.model)
+
+        api_variables = set_api_variables()
 
         request_config = RequestConfig(
             request_idx=1,
             prompt_tuple=(prompt_template, 10),
             model=self.model,
             llm_api=self.llm_api,
+            api_variables=api_variables,
             sampling_params=self.params,
             is_stream_mode=True,
             num_concurrent_workers=1,  # type: ignore

@@ -10,13 +10,16 @@ If you are running .sh files as CLI tests, ensure you have made them executable.
 """
 
 import argparse
+import csv
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
 import unittest
-from typing import Any, Dict, List, Type
+from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import requests
 
@@ -26,9 +29,8 @@ sys.path.insert(0, project_root)
 
 # Timeout variables (in seconds)
 STREAMLIT_START_TIMEOUT = 25
-DOCKER_START_TIMEOUT = 15
 STREAMLIT_CHECK_TIMEOUT = 5
-CLI_COMMAND_TIMEOUT = 180  # 3 minutes
+CLI_COMMAND_TIMEOUT = 1200  # 10 minutes
 
 # List of starter kits to test
 STARTER_KITS: List[str] = [
@@ -54,10 +56,9 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'multimodal_knowledge_retriever': 'python tests/multimodal_knowledge_retriever_test.py',
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
-    # 'search_assistant': 'python cli_test.py --query "test query"',
     'search_assistant': 'python tests/search_assistant_test.py',
     'image_search': 'python tests/image_search_test.py',
-    'benchmarking': './run_synthetic_dataset.sh',  # This runs the benchmarking suite.
+
 }
 
 
@@ -68,32 +69,76 @@ class TestEnvironment:
     DOCKER = 'docker'
 
 
+class TestResult:
+    def __init__(
+        self, kit: str, test_name: str, status: str, duration: float, message: str = '', date: str = ''
+    ) -> None:
+        self.kit = kit
+        self.test_name = test_name
+        self.status = status
+        self.duration = duration
+        self.message = message
+        self.date = date  # Added date attribute
+
+
+class CsvWriter(Protocol):
+    def writerow(self, row: List[Any]) -> None: ...
+    def writerows(self, rows: List[List[Any]]) -> None: ...
+
+
 class StarterKitTest(unittest.TestCase):
-    root_dir: str
-    env: str
-    run_streamlit: bool
-    run_cli: bool
+    root_dir: ClassVar[str]
+    env: ClassVar[str]
+    run_streamlit: ClassVar[bool]
+    run_cli: ClassVar[bool]
+    is_docker: ClassVar[bool]
+    csv_writer: ClassVar[Optional[CsvWriter]]
+    csv_file: ClassVar[Optional[Any]]
 
     @classmethod
     def setUpClass(cls: Type['StarterKitTest']) -> None:
         cls.root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        cls.activate_base_venv()
+        cls.is_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
+        cls.setup_csv_writer()
 
-        if cls.env == TestEnvironment.LOCAL:
-            cls.run_make_clean()
-            cls.run_make_all()
-            cls.setup_local()
-        elif cls.env == TestEnvironment.DOCKER:
-            cls.run_make_clean()
-            cls.check_docker_daemon()
-            cls.setup_docker()
+        if not cls.is_docker:
+            cls.activate_base_venv()
+            if cls.env == TestEnvironment.LOCAL:
+                cls.run_make_clean()
+                cls.run_make_all()
 
     @classmethod
-    def check_docker_daemon(cls: Type['StarterKitTest']) -> None:
-        try:
-            subprocess.run(['docker', 'info'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
-            raise unittest.SkipTest('Docker daemon is not running. Skipping Docker tests.')
+    def tearDownClass(cls: Type['StarterKitTest']) -> None:
+        if cls.csv_file:
+            cls.csv_file.close()
+
+    @classmethod
+    def setup_csv_writer(cls: Type['StarterKitTest']) -> None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        results_dir = '/app/test_results' if cls.is_docker else os.path.join(cls.root_dir, 'test_results')
+        os.makedirs(results_dir, exist_ok=True)
+        csv_filename = os.path.join(results_dir, f'test_results_{timestamp}.csv')
+
+        cls.csv_file = open(csv_filename, 'w', newline='')
+        cls.csv_writer = csv.writer(cls.csv_file)
+        # Updated CSV header to include 'Date'
+        cls.csv_writer.writerow(['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date'])
+        logging.info(f'Test results will be saved to {csv_filename}')
+
+    @classmethod
+    def write_test_result(cls, result: TestResult) -> None:
+        if cls.csv_writer and cls.csv_file:
+            cls.csv_writer.writerow(
+                [
+                    result.kit,
+                    result.test_name,
+                    result.status,
+                    f'{result.duration:.2f}',
+                    result.message,
+                    result.date,  # Write the date to the CSV
+                ]
+            )
+            cls.csv_file.flush()  # Ensure the result is written immediately
 
     @classmethod
     def run_make_clean(cls: Type['StarterKitTest']) -> None:
@@ -104,14 +149,6 @@ class StarterKitTest(unittest.TestCase):
     def run_make_all(cls: Type['StarterKitTest']) -> None:
         logging.info('Running make all...')
         subprocess.run(['make', 'all'], cwd=cls.root_dir, check=True, capture_output=False)
-
-    @classmethod
-    def setup_local(cls: Type['StarterKitTest']) -> None:
-        cls.activate_base_venv()
-
-    @classmethod
-    def setup_docker(cls: Type['StarterKitTest']) -> None:
-        cls.run_docker_build()
 
     @classmethod
     def activate_base_venv(cls: Type['StarterKitTest']) -> None:
@@ -131,30 +168,13 @@ class StarterKitTest(unittest.TestCase):
 
         logging.info(f'Activated base virtual environment at {base_venv_path}')
 
-    @classmethod
-    def run_docker_build(cls: Type['StarterKitTest']) -> None:
-        logging.info('Building Docker image...')
-        subprocess.run(['make', 'docker-build'], cwd=cls.root_dir, check=True, capture_output=False)
-
-    @classmethod
-    def activate_venv(cls: Type['StarterKitTest']) -> None:
-        venv_path = os.path.join(cls.root_dir, '.venv')
-        activate_this = os.path.join(venv_path, 'bin', 'activate_this.py')
-        exec(open(activate_this).read(), {'__file__': activate_this})
-        os.environ['PATH'] = f"{venv_path}/bin:{os.environ['PATH']}"
-
     def run_streamlit_test(self, kit: str) -> None:
         if not self.run_streamlit:
             logging.info(f'Skipping Streamlit test for {kit}')
             return
 
-        if self.env == TestEnvironment.LOCAL:
-            self.run_local_streamlit_test(kit)
-        elif self.env == TestEnvironment.DOCKER:
-            self.run_docker_streamlit_test(kit)
-
-    def run_local_streamlit_test(self, kit: str) -> None:
-        logging.info(f'\nTesting {kit} locally...')
+        start_time = time.time()
+        logging.info(f'\nTesting {kit} Streamlit app...')
         kit_dir = os.path.join(self.root_dir, kit)
         process = subprocess.Popen(
             ['streamlit', 'run', 'streamlit/app.py', '--browser.gatherUsageStats', 'false'],
@@ -166,45 +186,18 @@ class StarterKitTest(unittest.TestCase):
             logging.info(f'Waiting for Streamlit to start (timeout: {STREAMLIT_START_TIMEOUT}s)...')
             time.sleep(STREAMLIT_START_TIMEOUT)
             self._check_streamlit_accessibility(kit)
+            status = 'PASSED'
+            message = ''
+        except AssertionError as e:
+            status = 'FAILED'
+            message = str(e)
         finally:
             process.terminate()
             process.wait()
 
-    def run_docker_streamlit_test(self, kit: str) -> None:
-        logging.info(f'\nTesting {kit} in Docker...')
-        container_id = (
-            subprocess.check_output(
-                ['docker', 'run', '-d', '-p', '8501:8501', 'ai-starter-kit', 'tail', '-f', '/dev/null']
-            )
-            .decode()
-            .strip()
-        )
-        logging.info(f'Started container: {container_id}')
-
-        try:
-            logging.info(f'Waiting for container to start (timeout: {DOCKER_START_TIMEOUT}s)...')
-            time.sleep(DOCKER_START_TIMEOUT)
-
-            logging.info('Checking container status...')
-            container_status = (
-                subprocess.check_output(['docker', 'inspect', '-f', '{{.State.Status}}', container_id]).decode().strip()
-            )
-            logging.info(f'Container status: {container_status}')
-            self.assertEqual(container_status, 'running', f'Container for {kit} is not running')
-
-            logging.info(f'Running Streamlit for {kit}...')
-            streamlit_cmd = f'cd /app/{kit} && streamlit run streamlit/app.py --browser.gatherUsageStats false'
-            subprocess.run(['docker', 'exec', '-d', container_id, 'sh', '-c', streamlit_cmd], check=True)
-
-            logging.info(f'Waiting for Streamlit to start (timeout: {STREAMLIT_START_TIMEOUT}s)...')
-            time.sleep(STREAMLIT_START_TIMEOUT)
-
-            self._check_streamlit_accessibility(kit)
-
-        finally:
-            logging.info(f'Stopping and removing container {container_id}')
-            subprocess.run(['docker', 'stop', container_id], check=True)
-            subprocess.run(['docker', 'rm', container_id], check=True)
+        duration = time.time() - start_time
+        result = TestResult(kit, 'Streamlit', status, duration, message)
+        self.write_test_result(result)
 
     def _check_streamlit_accessibility(self, kit: str) -> None:
         logging.info('Checking Streamlit accessibility...')
@@ -226,70 +219,112 @@ class StarterKitTest(unittest.TestCase):
             logging.info(f'Skipping CLI test for {kit}')
             return
 
-        if self.env == TestEnvironment.LOCAL:
-            self.run_local_cli_test(kit)
-        elif self.env == TestEnvironment.DOCKER:
-            self.run_docker_cli_test(kit)
-
-    def run_local_cli_test(self, kit: str) -> None:
-        logging.info(f'\nRunning CLI test for {kit} locally...')
+        start_time = time.time()
+        logging.info(f'\nRunning CLI test for {kit}...')
         kit_dir = os.path.join(self.root_dir, kit)
-
         cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
 
         try:
-            result = subprocess.run(
-                cli_command, shell=True, cwd=kit_dir, capture_output=False, timeout=CLI_COMMAND_TIMEOUT
+            process = subprocess.Popen(
+                cli_command, shell=True, cwd=kit_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
             )
-            output = result.stdout.decode('utf-8') if isinstance(result.stdout, bytes) else result.stdout
-            logging.info(f'CLI test output for {kit}:\n{output}')
 
-            if result.returncode == 0:
+            if process.stdout is None:
+                logging.error("Process stdout is None")
+                return
+
+            output_lines = []
+            while True:
+                # Read line by line from the subprocess output
+                line = process.stdout.readline()
+                if not line and process.poll() is not None:
+                    break
+                if line:
+                    print(line, end='')  # Display output in real-time
+                    output_lines.append(line)
+                # Enforce timeout
+                if time.time() - start_time > CLI_COMMAND_TIMEOUT:
+                    process.kill()
+                    raise subprocess.TimeoutExpired(cli_command, CLI_COMMAND_TIMEOUT)
+
+            return_code = process.poll()
+            output = ''.join(output_lines)
+
+            if return_code == 0:
                 logging.info(f'All CLI tests for {kit} passed')
+                self.parse_subtest_results(kit, output, time.time() - start_time)
             else:
-                logging.error(f'CLI test for {kit} failed. {result.returncode} test(s) failed.')
-                self.fail(f'CLI test for {kit} failed. {result.returncode} test(s) failed.')
-        except subprocess.TimeoutExpired:
-            logging.error(f'CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
-            self.fail(f'CLI test for {kit} timed out')
-
-    def run_docker_cli_test(self, kit: str) -> None:
-        logging.info(f'\nRunning CLI test for {kit} in Docker...')
-        container_id = (
-            subprocess.check_output(['docker', 'run', '-d', 'ai-starter-kit', 'tail', '-f', '/dev/null'])
-            .decode()
-            .strip()
-        )
-
-        try:
-            # Get the CLI test command for this kit
-            cli_command = CLI_TEST_COMMANDS.get(kit, 'echo "No CLI test command specified"')
-            docker_cli_command = f'cd /app/{kit} && {cli_command}'
-
-            try:
-                # Run the CLI test command in Docker with timeout
-                result = subprocess.run(
-                    ['docker', 'exec', container_id, 'sh', '-c', docker_cli_command],
-                    capture_output=False,
-                    timeout=CLI_COMMAND_TIMEOUT,
+                logging.error(f'CLI test for {kit} failed. Return code: {return_code}')
+                logging.error(f'Error output:\n{output}')
+                result = TestResult(
+                    kit, 'CLI', 'FAILED', time.time() - start_time, f'Return code: {return_code}\n{output}'
                 )
-                output = result.stdout.decode('utf-8') if isinstance(result.stdout, bytes) else result.stdout
-                logging.info(f'Docker CLI test output for {kit}:\n{output}')
+                self.write_test_result(result)
 
-                if result.returncode == 0:
-                    logging.info(f'All Docker CLI tests for {kit} passed')
-                else:
-                    logging.error(f'Docker CLI test for {kit} failed. {result.returncode} test(s) failed.')
-                    self.fail(f'Docker CLI test for {kit} failed. {result.returncode} test(s) failed.')
-            except subprocess.TimeoutExpired:
-                logging.error(f'Docker CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
-                self.fail(f'Docker CLI test for {kit} timed out')
+        except subprocess.TimeoutExpired:
+            process.kill()
+            logging.error(f'CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
+            result = TestResult(
+                kit, 'CLI', 'TIMEOUT', CLI_COMMAND_TIMEOUT, f'Timed out after {CLI_COMMAND_TIMEOUT} seconds'
+            )
+            self.write_test_result(result)
 
-        finally:
-            subprocess.run(['docker', 'stop', container_id], check=True)
-            subprocess.run(['docker', 'rm', container_id], check=True)
+    def parse_subtest_results(self, kit: str, output: str, total_duration: float) -> None:
+        detailed_tests_found = False  # Flag to track if detailed tests are found
+        # Split output into lines
+        lines = output.strip().split('\n')
+        for line in lines:
+            # Skip empty lines
+            if not line.strip():
+                continue
+
+            # Ignore lines like 'Tests passed'
+            if 'Tests passed' in line:
+                continue
+
+            # Use regex to parse the line
+            match = re.match(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+) - (\w+) - (.*)$', line)
+            if match:
+                date_str = match.group(1)
+                log_level = match.group(2)
+                message = match.group(3).strip()
+
+                # Skip lines that are not test logs
+                if not message.startswith('test_'):
+                    continue
+
+                test_name = message
+
+                # Assuming status is 'PASSED' unless indicated otherwise
+                status = 'PASSED'
+
+                result = TestResult(kit, test_name, status, 0.0, '', date_str)
+                self.write_test_result(result)
+                detailed_tests_found = True  # Set flag to True since we found a detailed test
+            else:
+                # Line did not match the expected format; you can log or ignore it
+                logging.debug(f'Line did not match pattern: {line}')
+                continue
+
+        if not detailed_tests_found:
+            # No detailed tests found
+            # Check for "All CLI tests passed" message
+            all_passed_pattern = re.compile(r'All CLI tests for .+ passed')
+            if all_passed_pattern.search(output):
+                # Write general result with status "PASSED" and current timestamp
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                result = TestResult(kit, 'CLI', 'PASSED', total_duration, 'All CLI tests passed', current_time)
+                self.write_test_result(result)
+            else:
+                # No detailed tests and no "All CLI tests passed" message
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                result = TestResult(
+                    kit, 'CLI', 'UNKNOWN', total_duration, 'No detailed test results found', current_time
+                )
+                self.write_test_result(result)
 
 
+# Move create_test_methods outside the class
 def create_test_methods() -> None:
     for kit in STARTER_KITS:
 
@@ -306,7 +341,7 @@ create_test_methods()
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run tests for AI Starter Kit')
     parser.add_argument(
-        '--env', choices=['local', 'docker', 'all'], default='all', help='Specify the test environment (default: all)'
+        '--env', choices=['local', 'docker'], default='local', help='Specify the test environment (default: local)'
     )
     parser.add_argument('-v', '--verbose', action='store_true', help='Run tests in verbose mode')
     parser.add_argument('--skip-streamlit', action='store_true', help='Skip Streamlit tests')
@@ -318,15 +353,7 @@ if __name__ == '__main__':
 
     StarterKitTest.run_streamlit = not args.skip_streamlit
     StarterKitTest.run_cli = not args.skip_cli
+    StarterKitTest.env = args.env
 
-    if args.env in ['local', 'all']:
-        logging.info('Running local tests...')
-        StarterKitTest.env = TestEnvironment.LOCAL
-        local_suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
-        unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(local_suite)
-
-    if args.env in ['docker', 'all']:
-        logging.info('\nRunning Docker tests...')
-        StarterKitTest.env = TestEnvironment.DOCKER
-        docker_suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
-        unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(docker_suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
+    unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)

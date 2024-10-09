@@ -12,7 +12,7 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
     if not prod_mode:
         # In non-prod mode, prioritize environment variables
         st.session_state.SAMBANOVA_API_KEY = os.environ.get(
-            'SAMBANOVA_API_KEY', st.session_state.get('SMABANOVA_API_KEY', '')
+            'SAMBANOVA_API_KEY', st.session_state.get('SAMBANOVA_API_KEY', '')
         )
         for var in additional_env_vars:
             st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
