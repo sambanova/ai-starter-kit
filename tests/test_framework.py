@@ -46,22 +46,27 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
-
 }
+
 
 class TestEnvironment:
     """Enum-like class for test environments."""
+
     LOCAL = 'local'
     DOCKER = 'docker'
 
+
 class TestResult:
-    def __init__(self, kit: str, test_name: str, status: str, duration: float, message: str = "", date: str = "") -> None:
+    def __init__(
+        self, kit: str, test_name: str, status: str, duration: float, message: str = '', date: str = ''
+    ) -> None:
         self.kit = kit
         self.test_name = test_name
         self.status = status
         self.duration = duration
         self.message = message
         self.date = date  # Added date attribute
+
 
 class StarterKitTest(unittest.TestCase):
     root_dir: ClassVar[str]
@@ -91,28 +96,30 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def setup_csv_writer(cls: Type['StarterKitTest']) -> None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         results_dir = '/app/test_results' if cls.is_docker else os.path.join(cls.root_dir, 'test_results')
         os.makedirs(results_dir, exist_ok=True)
-        csv_filename = os.path.join(results_dir, f"test_results_{timestamp}.csv")
-        
+        csv_filename = os.path.join(results_dir, f'test_results_{timestamp}.csv')
+
         cls.csv_file = open(csv_filename, 'w', newline='')
         cls.csv_writer = csv.writer(cls.csv_file)
         # Updated CSV header to include 'Date'
         cls.csv_writer.writerow(['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date'])
-        logging.info(f"Test results will be saved to {csv_filename}")
+        logging.info(f'Test results will be saved to {csv_filename}')
 
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
         if cls.csv_writer:
-            cls.csv_writer.writerow([
-                result.kit,
-                result.test_name,
-                result.status,
-                f"{result.duration:.2f}",
-                result.message,
-                result.date  # Write the date to the CSV
-            ])
+            cls.csv_writer.writerow(
+                [
+                    result.kit,
+                    result.test_name,
+                    result.status,
+                    f'{result.duration:.2f}',
+                    result.message,
+                    result.date,  # Write the date to the CSV
+                ]
+            )
             cls.csv_file.flush()  # Ensure the result is written immediately
 
     @classmethod
@@ -161,17 +168,17 @@ class StarterKitTest(unittest.TestCase):
             logging.info(f'Waiting for Streamlit to start (timeout: {STREAMLIT_START_TIMEOUT}s)...')
             time.sleep(STREAMLIT_START_TIMEOUT)
             self._check_streamlit_accessibility(kit)
-            status = "PASSED"
-            message = ""
+            status = 'PASSED'
+            message = ''
         except AssertionError as e:
-            status = "FAILED"
+            status = 'FAILED'
             message = str(e)
         finally:
             process.terminate()
             process.wait()
-        
+
         duration = time.time() - start_time
-        result = TestResult(kit, "Streamlit", status, duration, message)
+        result = TestResult(kit, 'Streamlit', status, duration, message)
         self.write_test_result(result)
 
     def _check_streamlit_accessibility(self, kit: str) -> None:
@@ -227,13 +234,17 @@ class StarterKitTest(unittest.TestCase):
             else:
                 logging.error(f'CLI test for {kit} failed. Return code: {return_code}')
                 logging.error(f'Error output:\n{output}')
-                result = TestResult(kit, "CLI", "FAILED", time.time() - start_time, f"Return code: {return_code}\n{output}")
+                result = TestResult(
+                    kit, 'CLI', 'FAILED', time.time() - start_time, f'Return code: {return_code}\n{output}'
+                )
                 self.write_test_result(result)
 
         except subprocess.TimeoutExpired:
             process.kill()
             logging.error(f'CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
-            result = TestResult(kit, "CLI", "TIMEOUT", CLI_COMMAND_TIMEOUT, f"Timed out after {CLI_COMMAND_TIMEOUT} seconds")
+            result = TestResult(
+                kit, 'CLI', 'TIMEOUT', CLI_COMMAND_TIMEOUT, f'Timed out after {CLI_COMMAND_TIMEOUT} seconds'
+            )
             self.write_test_result(result)
 
     def parse_subtest_results(self, kit: str, output: str, total_duration: float) -> None:
@@ -265,12 +276,12 @@ class StarterKitTest(unittest.TestCase):
                 # Assuming status is 'PASSED' unless indicated otherwise
                 status = 'PASSED'
 
-                result = TestResult(kit, test_name, status, 0.0, "", date_str)
+                result = TestResult(kit, test_name, status, 0.0, '', date_str)
                 self.write_test_result(result)
                 detailed_tests_found = True  # Set flag to True since we found a detailed test
             else:
                 # Line did not match the expected format; you can log or ignore it
-                logging.debug(f"Line did not match pattern: {line}")
+                logging.debug(f'Line did not match pattern: {line}')
                 continue
 
         if not detailed_tests_found:
@@ -279,24 +290,29 @@ class StarterKitTest(unittest.TestCase):
             all_passed_pattern = re.compile(r'All CLI tests for .+ passed')
             if all_passed_pattern.search(output):
                 # Write general result with status "PASSED" and current timestamp
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
-                result = TestResult(kit, "CLI", "PASSED", total_duration, "All CLI tests passed", current_time)
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                result = TestResult(kit, 'CLI', 'PASSED', total_duration, 'All CLI tests passed', current_time)
                 self.write_test_result(result)
             else:
                 # No detailed tests and no "All CLI tests passed" message
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
-                result = TestResult(kit, "CLI", "UNKNOWN", total_duration, "No detailed test results found", current_time)
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                result = TestResult(
+                    kit, 'CLI', 'UNKNOWN', total_duration, 'No detailed test results found', current_time
+                )
                 self.write_test_result(result)
+
 
 # Move create_test_methods outside the class
 def create_test_methods() -> None:
     for kit in STARTER_KITS:
+
         def test_kit(self: Any, kit: str = kit) -> None:
             self.run_streamlit_test(kit)
             self.run_cli_test(kit)
 
         test_kit.__name__ = f'test_{kit}'
         setattr(StarterKitTest, test_kit.__name__, test_kit)
+
 
 create_test_methods()
 
