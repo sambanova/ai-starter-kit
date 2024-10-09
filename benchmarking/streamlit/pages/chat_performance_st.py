@@ -7,9 +7,11 @@ sys.path.append('../')
 import warnings
 from typing import Any, Dict
 
+from st_pages import hide_pages
+
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.streamlit.app import LLM_API_CODENAMES, LLM_API_OPTIONS
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, LLM_API_OPTIONS, find_pages_to_hide
 
 warnings.filterwarnings('ignore')
 
@@ -64,6 +66,10 @@ def _initialize_sesion_variables() -> None:
         st.session_state.llm_api = None
     if 'chat_disabled' not in st.session_state:
         st.session_state.chat_disabled = True
+    if 'prod_mode' not in st.session_state:
+        st.session_state.prod_mode = None
+    if 'setup_complete' not in st.session_state:
+        st.session_state.setup_complete = None
 
     # Initialize llm params
     # if "do_sample" not in st.session_state:
@@ -81,12 +87,12 @@ def _initialize_sesion_variables() -> None:
 
 
 def main() -> None:
-    st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-    )
-
-    _initialize_sesion_variables()
+    if st.session_state.prod_mode:
+        pages_to_hide = find_pages_to_hide()
+        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        hide_pages(pages_to_hide)
+    else:
+        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Chat Performance Evaluation')
     st.markdown(
@@ -105,7 +111,28 @@ def main() -> None:
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
         )
         llm_selected = f'{llm_model}'
-        llm_api_selected = st.session_state.llm_api = st.selectbox('API type', options=LLM_API_OPTIONS)
+        if st.session_state.prod_mode:
+            if st.session_state.llm_api == 'sncloud':
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=0,
+                    disabled=True,
+                )
+            elif st.session_state.llm_api == 'sambastudio':
+                st.selectbox(
+                    'API type',
+                    options=list(LLM_API_OPTIONS.keys()),
+                    format_func=lambda x: LLM_API_OPTIONS[x],
+                    index=1,
+                    disabled=True,
+                )
+        else:
+            st.session_state.llm_api = st.selectbox(
+                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+            )
+
         # st.session_state.do_sample = st.toggle("Do Sample")
         st.session_state.max_tokens_to_generate = st.number_input(
             'Max tokens to generate', min_value=50, max_value=2048, value=250, step=1
@@ -131,15 +158,19 @@ def main() -> None:
 
                 st.toast('Conversation reset. The next response will clear the history on the screen')
 
+        if st.session_state.prod_mode:
+            if st.button('Back to Setup'):
+                st.session_state.setup_complete = False
+                st.switch_page('app.py')
+
     try:
         # Sets LLM based on side bar parameters and COE model selected
 
         if sidebar_run_option:
             params = _get_params()
-            api_dict = {LLM_API_OPTIONS[i]: LLM_API_CODENAMES[i] for i in range(len(LLM_API_OPTIONS))}
-            if isinstance(llm_api_selected, str):
+            if isinstance(st.session_state.llm_api, str):
                 st.session_state.selected_llm = ChatPerformanceEvaluator(
-                    model_name=llm_selected, llm_api=api_dict[llm_api_selected], params=params
+                    model_name=llm_selected, llm_api=st.session_state.llm_api, params=params
                 )
                 st.toast('LLM setup ready! 🙌 Start asking!')
                 st.session_state.chat_disabled = False
@@ -199,4 +230,17 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    st.set_page_config(
+        page_title='AI Starter Kit',
+        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+    )
+
+    _initialize_sesion_variables()
+
+    if st.session_state.prod_mode:
+        if st.session_state.setup_complete:
+            main()
+        else:
+            st.switch_page('./app.py')
+    else:
+        main()
