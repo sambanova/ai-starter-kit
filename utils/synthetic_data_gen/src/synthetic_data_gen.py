@@ -51,7 +51,7 @@ class SyntheticData(BaseModel):
 class SyntheticDataGen:
     """Class for generating synthetic data"""
 
-    def __init__(self, config_file: str = None) -> None:
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         Initialize SyntheticDataGen class with configuration parameters.
 
@@ -75,7 +75,7 @@ class SyntheticDataGen:
         self.generation_config = config['generation']
         self.splitting_config = config['splitting']
 
-    def load_config(self, config_file: str) -> None:
+    def load_config(self, config_file: str) -> Any:
         """
         Load configuration parameters from a YAML file.
 
@@ -213,7 +213,7 @@ class SyntheticDataGen:
                     include_references=include_references,
                 )
                 lines = self.qa_pairs_to_prompt_completion(qa_pairs)
-                self.update_jsonl(out_file, lines)
+                self.update_jsonl(out_file, lines) # type: ignore
                 logging.info(f'Added {amount} qa pairs to {out_file}')
             except Exception as e:
                 logging.warning(f'Failed to generate qa pairs, error: \n {e} \n for document: "{document}", \nskipping')
@@ -227,7 +227,7 @@ class SyntheticDataGen:
         include_context: bool = True,
         include_thoughts: bool = True,
         include_references: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """
         Generate question answer (context, thought, references) pairs for a given context using the LLM.
 

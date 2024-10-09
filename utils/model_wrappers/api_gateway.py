@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
@@ -14,7 +14,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud
+from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
 from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 
@@ -119,11 +119,11 @@ class APIGateway:
     ) -> LLM:
         """Loads a langchain Sambanova llm model given a type and parameters
         Args:
-            type (str): wether to use sambastudio, or SambaNova Cloud model "sncloud"
-            streaming (bool): wether to use streaming method. Defaults to False.
+            type (str): whether to use sambastudio, or SambaNova Cloud model "sncloud"
+            streaming (bool): whether to use streaming method. Defaults to False.
             coe (bool): whether to use coe model. Defaults to False.
 
-            do_sample (bool) : Optional wether to do sample.
+            do_sample (bool) : Optional whether to do sample.
             max_tokens_to_generate (int) : Optional max number of tokens to generate.
             temperature (float) : Optional model temperature.
             select_expert (str) : Optional expert to use when using CoE models.
@@ -213,47 +213,97 @@ class APIGateway:
 
     @staticmethod
     def load_chat(
+        type: str,
         model: str,
         streaming: bool = False,
         max_tokens: int = 1024,
         temperature: Optional[float] = 0.0,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
-        stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
+        do_sample: Optional[bool] = False,
+        process_prompt: Optional[bool] = False,
+        stream_options: Optional[Dict[str, bool]] = {"include_usage": True},
+        special_tokens: Optional[Dict[str, str]] = {
+            'start': '<|begin_of_text|>',
+            'start_role': '<|begin_of_text|><|start_header_id|>{role}<|end_header_id|>',
+            'end_role': '<|eot_id|>',
+            'end': '<|start_header_id|>assistant<|end_header_id|>\n',
+        },
+        model_kwargs: Optional[Dict[str, Any]] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
+        sambastudio_url:  Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None
     ) -> BaseChatModel:
         """
-        Loads a langchain SambanovaCloud chat model given some parameters
+        Loads a langchain Sambanova chat model given some parameters
         Args:
+            type (str): whether to use sambastudio, or SambaNova Cloud chat model "sncloud"
             model (str): The name of the model to use, e.g., llama3-8b.
             streaming (bool): whether to use streaming method. Defaults to False.
-            max_tokens (int) : Optional max number of tokens to generate.
-            temperature (float) : Optional model temperature.
-            top_p (float) : Optional model top_p.
-            top_k (int) : Optional model top_k.
-            stream_options (dict) : stream options, include usage to get generation metrics
+            max_tokens (int): Optional max number of tokens to generate.
+            temperature (float): Optional model temperature.
+            top_p (float): Optional model top_p.
+            top_k (int): Optional model top_k.
+            do_sample (bool): whether to do sampling
+            process_prompt (bool): whether process prompt (for CoE generic v1 and v2 endpoints)
+            stream_options (dict): stream options, include usage to get generation metrics
+            special_tokens (dict): start, start_role, end_role and end special tokens 
+            (set for CoE generic v1 and v2 endpoints when process prompt set to false 
+            or for StandAlone v1 and v2 endpoints) 
+            default to llama3 special tokens
+            model_kwargs (dict): Key word arguments to pass to the model.
+
 
             sambanova_url (str): Optional SambaNova Cloud URL",
             sambanova_api_key (str): Optional SambaNovaCloud API key.
+            sambastudio_url (str): Optional SambaStudio URL",
+            sambastudio_api_key (str): Optional SambaStudio API key.
 
         Returns:
             langchain BaseChatModel
         """
 
-        envs = {
+        if type == 'sambastudio':
+            envs = {
+            'sambastudio_url': sambastudio_url,
+            'sambastudio_api_key': sambastudio_api_key,
+            }
+            envs = {k: v for k, v in envs.items() if v is not None}
+            model = ChatSambaStudio(
+                **envs,
+                model=model,
+                streaming=streaming,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+                do_sample=do_sample,
+                process_prompt=process_prompt,
+                stream_options=stream_options,
+                special_tokens=special_tokens,
+                model_kwargs=model_kwargs
+
+            )
+
+        elif type == 'sncloud':
+            envs = {
             'sambanova_url': sambanova_url,
             'sambanova_api_key': sambanova_api_key,
-        }
-        envs = {k: v for k, v in envs.items() if v is not None}
-        model = ChatSambaNovaCloud(
-            **envs,
-            model=model,
-            streaming=streaming,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            stream_options=stream_options,
-        )
+            }
+            envs = {k: v for k, v in envs.items() if v is not None}
+            model = ChatSambaNovaCloud(
+                **envs,
+                model= model,
+                streaming=streaming,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+                stream_options=stream_options
+            )
+
+        else:
+            raise ValueError(f"Invalid LLM API: {type}, only 'sncloud' and 'sambastudio' are supported.")
+
         return model
