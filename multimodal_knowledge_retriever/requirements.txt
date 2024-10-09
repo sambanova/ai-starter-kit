@@ -1,17 +1,19 @@
-streamlit==1.32.0
+chromadb==0.4.24
+instructorembedding==1.0.1
+langchain-chroma == 0.1.4
+langchain-community==0.3.1
+langchain-core==0.3.6
+langchain==0.3.1
+mypy==1.11.2
+nltk==3.8.1
 pydantic==2.9.2
 pydantic_core==2.23.4
 python-dotenv==1.0.1
-langchain==0.3.1
-langchain-core==0.3.6
-langchain-community==0.3.1
-langchain-chroma == 0.1.4
-sentence_transformers==2.2.2
-instructorembedding==1.0.1
+ruff==0.6.9
 schedule==1.2.2
-streamlit-extras
+sentence_transformers==2.2.2
 sseclient-py==1.8.0
-unstructured_inference==0.7.29
+streamlit-extras
+streamlit==1.32.0
 unstructured[pdf]==0.13.6
-chromadb==0.4.24
-nltk==3.8.1
+unstructured_inference==0.7.29
