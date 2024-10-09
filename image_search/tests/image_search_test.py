@@ -7,8 +7,8 @@ This script tests the functionality of the Image Search kit using unittest.
 Test cases:
     test_image_search_creation: checks if the image_search, client, collection and embeddings are not empty
     test_get_images: checks if the images path and images are not empty
-    test_search_image_by_text: checks if the respose is not empty
-    test_search_image_by_image: checks if the respose is not empty
+    test_search_image_by_text: checks if the response is not empty
+    test_search_image_by_image: checks if the response is not empty
 
 Usage:
     python tests/image_search_test.py
@@ -80,16 +80,16 @@ class ImageSearchTestCase(unittest.TestCase):
 
     def test_search_image_by_text(self) -> None:
         user_question = 'Show me a graph'
-        uris, distances = self.image_search.search_image_by_text(user_question)
+        image_paths, distances = self.image_search.search_image_by_text(user_question)
 
-        self.assertGreaterEqual(len(uris), 1, 'There should be at least one source chunk')
-        self.assertGreaterEqual(len(distances), 1, 'There should be at least one source chunk')
+        self.assertGreaterEqual(len(image_paths), 1, 'There should be at least one image path')
+        self.assertGreaterEqual(len(distances), 1, 'There should be at least one distance result')
 
     def test_search_image_by_image(self) -> None:
-        uris, distances = self.image_search.search_image_by_image(os.path.join(IMAGE_TEST_DATA_PATH, 'sample.png'))
+        image_paths, distances = self.image_search.search_image_by_image(os.path.join(IMAGE_TEST_DATA_PATH, 'sample.png'))
 
-        self.assertGreaterEqual(len(uris), 1, 'There should be at least one source chunk')
-        self.assertGreaterEqual(len(distances), 1, 'There should be at least one source chunk')
+        self.assertGreaterEqual(len(image_paths), 1, 'There should be at least one image path')
+        self.assertGreaterEqual(len(distances), 1, 'There should be at least one distance result')
 
     @classmethod
     def tearDownClass(cls: Type['ImageSearchTestCase']) -> None:
