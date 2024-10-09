@@ -14,6 +14,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
+from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
 from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
 from utils.model_wrappers.langchain_llms import SambaStudio
 from utils.model_wrappers.langchain_llms import SambaNovaCloud
