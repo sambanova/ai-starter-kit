@@ -17,7 +17,6 @@ asttokens==2.4.0
 async-timeout==4.0.3
 attrs==23.1.0
 backcall==0.2.0
-black
 certifi==2023.7.22
 charset-normalizer==3.3.0
 chromadb==0.4.22
