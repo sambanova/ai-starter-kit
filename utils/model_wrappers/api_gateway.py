@@ -16,9 +16,7 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
 from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
-from utils.model_wrappers.langchain_llms import SambaStudio
-from utils.model_wrappers.langchain_llms import SambaNovaCloud
-from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
+from utils.model_wrappers.langchain_llms import SambaStudio, SambaNovaCloud
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True
