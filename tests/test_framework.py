@@ -46,6 +46,8 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
+    'image_search': 'python tests/image_search_test.py',
+
 }
 
 
