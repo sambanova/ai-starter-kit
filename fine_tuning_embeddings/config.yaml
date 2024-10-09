@@ -1,5 +1,6 @@
+api: "sambastudio" #  set either sambastudio or sncloud
+
 llm: 
-    "api": "sambastudio"
     "do_sample": False
     "temperature": 0.01
     "streaming": False

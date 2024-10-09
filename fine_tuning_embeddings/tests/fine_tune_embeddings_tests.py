@@ -24,6 +24,7 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway # type: ignore
 from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely # type: ignore
+from fine_tuning_embeddings.src.finetune_embedding_model import DatasetLoader
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 DATA_DIRECTORY = os.path.join(kit_dir, 'sample_data')
@@ -34,6 +35,9 @@ VAL_OUTPUT_PATH = os.path.join(OUTPUT_PATH, 'val_corpus.json')
 with open(CONFIG_PATH, 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 llm_info = config['llm']
+api = config['api']
+
+logger.info(config)
 
 class GenerateEmbeddingDataTestCase(unittest.TestCase):
     time_start: float
@@ -66,13 +70,15 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
                                                                                           verbose=True)
         cls.train_dataset, cls.val_dataset = cls.create_dataset()
         cls.save_dataset()
+        cls.train_dataset_loader = DatasetLoader(dataset_path=TRAIN_OUTPUT_PATH)
+        cls.val_dataset_loader = DatasetLoader(dataset_path=VAL_OUTPUT_PATH)
         
 
     @classmethod
     def initialize_llm(cls: Type['GenerateEmbeddingDataTestCase']) -> LangChainLLM:
 
         llm: LLM = APIGateway.load_llm(
-            type=llm_info['api'],
+            type=api,
             streaming=True,
             coe=llm_info['coe'],
             do_sample=llm_info['do_sample'],
@@ -190,7 +196,8 @@ def main() -> int:
             return 0
     finally:
         try:
-            shutil.rmtree(OUTPUT_PATH)
+            logging.info('pass')
+            # shutil.rmtree(OUTPUT_PATH)
         except OSError as e:
             logging.error(f'Error: {e.filename} - {e.strerror}')
 
