@@ -223,16 +223,9 @@ class SambaStudioAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
         if self.request_config.api_variables:
-            self.base_url = self.request_config.api_variables['SAMBASTUDIO_BASE_URL']
-            self.base_uri = self.request_config.api_variables['SAMBASTUDIO_BASE_URI']
-            self.project_id = self.request_config.api_variables['SAMBASTUDIO_PROJECT_ID']
-            self.endpoint_id = self.request_config.api_variables['SAMBASTUDIO_ENDPOINT_ID']
+            self.base_url = self.request_config.api_variables['SAMBASTUDIO_URL']
             self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
         else:
-            # self.base_url = os.environ.get('SAMBASTUDIO_BASE_URL')
-            # self.base_uri = os.environ.get('SAMBASTUDIO_BASE_URI')
-            # self.project_id = os.environ.get('SAMBASTUDIO_PROJECT_ID')
-            # self.endpoint_id = os.environ.get('SAMBASTUDIO_ENDPOINT_ID')
             self.base_url = os.environ.get('SAMBASTUDIO_URL')
             self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
 
@@ -267,8 +260,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             stream_url = self.base_url
         else:
             if 'stream' in self.base_url:
-                base_url = self.base_url.replace('stream/', '')
-                stream_url = self.base_url
+                stream_url = self.base_url.replace('stream/', '')
             else:
                 if 'generic' in self.base_url:
                     stream_url = 'generic/stream'.join(self.base_url.split('generic'))
