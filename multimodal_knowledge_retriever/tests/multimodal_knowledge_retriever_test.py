@@ -22,8 +22,9 @@ import os
 import sys
 import time
 import unittest
-from types import TracebackType
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
+
+from langchain.docstore.document import Document
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,13 +39,21 @@ sys.path.append(repo_dir)
 
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 
-from multimodal_knowledge_retriever.src.multimodal import MultimodalRetrieval
+from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
 
 IMAGE_TEST_DATA_PATH = os.path.join(kit_dir, 'data/sample_docs')
 PDF_TEST_DATA = os.path.join(IMAGE_TEST_DATA_PATH, 'invoicesample.pdf')
 
 
 class MKRTestCase(unittest.TestCase):
+    time_start: float
+    multimodal_retriever: MultimodalRetrieval
+    text_docs: List[Document]
+    table_docs: List[Document]
+    image_paths: List[str]
+    vectorstore: Any
+    chain: Any
+
     @classmethod
     def setUpClass(cls: Type['MKRTestCase']) -> None:
         cls.time_start = time.time()
@@ -54,7 +63,7 @@ class MKRTestCase(unittest.TestCase):
         cls.chain = cls.create_retrieval_chain()
 
     @classmethod
-    def parse_data(cls: Type['MKRTestCase']) -> Tuple[List, List, List]:
+    def parse_data(cls: Type['MKRTestCase']) -> Tuple[List[Document], List[Document], List[str]]:
         raw_pdf_elements, _ = cls.multimodal_retriever.extract_pdf(PDF_TEST_DATA)
         text_docs, table_docs, image_paths = cls.multimodal_retriever.process_raw_elements(
             raw_pdf_elements, [IMAGE_TEST_DATA_PATH]
@@ -72,8 +81,9 @@ class MKRTestCase(unittest.TestCase):
         )
 
     @classmethod
-    def create_retrieval_chain(cls: Type['MKRTestCase']) -> Callable:
-        return cls.multimodal_retriever.get_retrieval_chain(cls.vectorstore, image_retrieval_type='summary')
+    def create_retrieval_chain(cls: Type['MKRTestCase']) -> Any:
+        cls.multimodal_retriever.set_retrieval_chain(cls.vectorstore, image_retrieval_type='summary')
+        return cls.multimodal_retriever.qa_chain
 
     # Add assertions
     def test_document_parsing(self) -> None:
@@ -104,6 +114,8 @@ class MKRTestCase(unittest.TestCase):
 
 
 class CustomTextTestResult(unittest.TextTestResult):
+    test_results: List[Dict[str, Any]]
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.test_results: List[Dict[str, Any]] = []
@@ -112,13 +124,11 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addSuccess(test)
         self.test_results.append({'name': test._testMethodName, 'status': 'PASSED'})
 
-    def addFailure(
-        self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]
-    ) -> None:
+    def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
 
-    def addError(self, test: unittest.TestCase, err: Tuple[Type[BaseException], BaseException, TracebackType]) -> None:
+    def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
@@ -128,6 +138,7 @@ def main() -> int:
     test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
 
     logger.info('\nTest Results:')
+    assert hasattr(test_result, 'test_results')
     for result in test_result.test_results:
         logger.info(f"{result['name']}: {result['status']}")
         if 'message' in result:

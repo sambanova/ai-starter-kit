@@ -9,6 +9,17 @@ endif
 PARSING_DIR := utils/parsing/unstructured-api
 PARSING_VENV := venv
 
+
+STREAMLIT_PORT := 8501
+# Load environment variables from .env file
+include .env
+export $(shell sed 's/=.*//' .env)
+
+# Docker-related variables
+DOCKER_PUSH := $(DOCKER_PUSH)
+
+
+
 # Set OS-specific variables and commands
 ifeq ($(DETECTED_OS),Windows)
     PYTHON := python
@@ -410,30 +421,74 @@ endif
 .PHONY: docker-build
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t ai-starter-kit .
+	@if [ "$(USE_CACHE)" = "true" ]; then \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			--cache-from $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) . || \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
+	else \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			--no-cache \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
+	fi
+
+.PHONY: docker-push
+docker-push:
+	@if [ "$(DOCKER_PUSH)" = "true" ]; then \
+		echo "Pushing Docker image to registry..."; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG); \
+	else \
+		echo "Skipping Docker push (DOCKER_PUSH is not set to true)"; \
+	fi
+
+.PHONY: docker-build-push
+docker-build-push: docker-build docker-push
 
 .PHONY: docker-run
-docker-run: docker-build
+docker-run:
 	@echo "Running Docker container..."
-	docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		--env-file .env \
+		$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 .PHONY: docker-shell
-docker-shell: docker-build
+docker-shell:
 	@echo "Opening a shell in the Docker container..."
-	docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		--env-file .env \
+		$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash
 
 .PHONY: docker-run-kit
-docker-run-kit: docker-build
+docker-run-kit:
 	@echo "Running specific kit in Docker container..."
 	@if [ -z "$(KIT)" ]; then \
 		echo "Error: KIT variable is not set. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"; \
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && streamlit run streamlit/app.py --browser.gatherUsageStats false"; \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			--env-file .env \
+			-v $(PWD)/$(KIT):/app/$(KIT) \
+			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
+			"cd $(KIT) && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p 8501:8501 ai-starter-kit /bin/bash -c "cd $(KIT) && $(COMMAND)"; \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			--env-file .env \
+			-v $(PWD)/$(KIT):/app/$(KIT) \
+			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
+			"cd $(KIT) && $(COMMAND)"; \
 	fi
+	@echo "Container $(KIT)_container started in detached mode."
 
 # Set up test suite
 .PHONY: setup-test-suite
@@ -474,13 +529,42 @@ else
 	@find . -type d -name '__pycache__' -delete
 endif
 
-# Format code using black
+# Extract all command-line arguments except the target itself
+get_args = $(filter-out $@,$(MAKECMDGOALS))
+
+# Format code using Ruff
 .PHONY: format
 format:
-	@echo "Formatting code..."
+	@echo "Formatting code using Ruff ..."
 	@. $(VENV_PATH)/bin/activate && \
-	black . && \
+	ruff format $(or $(module), $(call get_args), .) && \
 	deactivate
+
+# Lint and type-check code using Ruff and MyPy
+.PHONY: lint
+lint:
+	@echo "Linting and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff check --fix $(or $(module), $(call get_args), .) && \
+	ruff check --fix --select I $(or $(module), $(call get_args), .)&& \
+	mypy --explicit-package-bases $(or $(module), $(call get_args), .) && \
+	deactivate
+
+
+# Format, lint, and type-check code using Ruff and MyPy
+.PHONY: format-lint
+format-lint:
+	@echo "Formatting, linting, and type-checking code using Ruff & MyPy ..."
+	@. $(VENV_PATH)/bin/activate && \
+	ruff format $(or $(module), $(call get_args), .) && \
+	ruff check --fix $(or $(module), $(call get_args), .) && \
+	ruff check --fix --select I $(or $(module), $(call get_args), .) && \
+	mypy --explicit-package-bases $(or $(module), $(call get_args), .) && \
+	deactivate
+
+# Universal match for arguments passed directly
+%:
+	@:
 
 .PHONY: help
 help:
@@ -509,4 +593,6 @@ help:
 	@echo "  clean-test-suite       : Clean up the test suite environment"
 	@echo "  clean                  : Remove all virtual environments and cache files, stop parsing service"
 	@echo "  format                 : Format code using black"
-	@echo "  help                   : Show this help message"
+	@echo "  make format [args]     : Format code using Ruff"
+	@echo "  make lint [args]       : Lint and type-check code using Ruff & MyPy"
+	@echo "  make format-lint [args]: Format, lint, and type-check code using Ruff & MyPy"

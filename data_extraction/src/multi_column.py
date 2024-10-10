@@ -49,32 +49,33 @@ Usage
       print(page.get_text(clip=rect, sort=True))
   ----------------------------------------------------------------------------------
 """
-import os
+
 import sys
+from typing import Any, List
 
 import fitz
 
 
-def column_boxes(page, footer_margin=50, no_image_text=True):
+def column_boxes(page: Any, footer_margin: int = 50, no_image_text: bool = True) -> List[Any]:
     """Determine bboxes which wrap a column."""
     paths = page.get_drawings()
-    bboxes = []
+    bboxes: List[Any] = []
 
     # path rectangles
-    path_rects = []
+    path_rects: List[Any] = []
 
     # image bboxes
-    img_bboxes = []
+    img_bboxes: List[Any] = []
 
     # bboxes of non-horizontal text
     # avoid when expanding horizontal text boxes
-    vert_bboxes = []
+    vert_bboxes: List[Any] = []
 
     # compute relevant page area
     clip = +page.rect
     clip.y1 -= footer_margin
 
-    def can_extend(temp, bb, bboxlist):
+    def can_extend(temp: Any, bb: Any, bboxlist: List[Any]) -> bool:
         """Determines whether rectangle 'temp' can be extended by 'bb'
         without intersecting any of the rectangles contained in 'bboxlist'.
 
@@ -84,29 +85,29 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
             True if 'temp' has no intersections with items of 'bboxlist'.
         """
         for b in bboxlist:
-            if not intersects_bboxes(temp, vert_bboxes) and (
-                b == None or b == bb or (temp & b).is_empty
-            ):
+            if not intersects_bboxes(temp, vert_bboxes) and (b == None or b == bb or (temp & b).is_empty):
                 continue
             return False
 
         return True
 
-    def in_bbox(bb, bboxes):
+    def in_bbox(bb: Any, bboxes: Any) -> int:
         """Return 1-based number if a bbox contains bb, else return 0."""
         for i, bbox in enumerate(bboxes):
             if bb in bbox:
                 return i + 1
         return 0
 
-    def intersects_bboxes(bb, bboxes):
+    def intersects_bboxes(bb: Any, bboxes: Any) -> int:
         """Return True if a bbox intersects bb, else return False."""
         for bbox in bboxes:
             if not (bb & bbox).is_empty:
                 return True
         return False
 
-    def extend_right(bboxes, width, path_bboxes, vert_bboxes, img_bboxes):
+    def extend_right(
+        bboxes: List[Any], width: int, path_bboxes: List[Any], vert_bboxes: List[Any], img_bboxes: List[Any]
+    ) -> Any:
         """Extend a bbox to the right page border.
 
         Whenever there is no text to the right of a bbox, enlarge it up
@@ -145,7 +146,7 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
 
         return [b for b in bboxes if b != None]
 
-    def clean_nblocks(nblocks):
+    def clean_nblocks(nblocks: List[Any]) -> List[Any]:
         """Do some elementary cleaning."""
 
         # 1. remove any duplicate blocks.
@@ -172,9 +173,7 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
             b1 = nblocks[i]
             if abs(b1.y1 - y1) > 10:  # different bottom
                 if i1 > i0:  # segment length > 1? Sort it!
-                    nblocks[i0 : i1 + 1] = sorted(
-                        nblocks[i0 : i1 + 1], key=lambda b: b.x0
-                    )
+                    nblocks[i0 : i1 + 1] = sorted(nblocks[i0 : i1 + 1], key=lambda b: b.x0)
                 y1 = b1.y1  # store new bottom value
                 i0 = i  # store its start index
             i1 = i  # store current index
@@ -184,7 +183,7 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
 
     # extract vector graphics
     for p in paths:
-        path_rects.append(p["rect"].irect)
+        path_rects.append(p['rect'].irect)
     path_bboxes = path_rects
 
     # sort path bboxes by ascending top, then left coordinates
@@ -196,29 +195,29 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
 
     # blocks of text on page
     blocks = page.get_text(
-        "dict",
+        'dict',
         flags=fitz.TEXTFLAGS_TEXT,
         clip=clip,
-    )["blocks"]
+    )['blocks']
 
     # Make block rectangles, ignoring non-horizontal text
     for b in blocks:
-        bbox = fitz.IRect(b["bbox"])  # bbox of the block
+        bbox = fitz.IRect(b['bbox'])  # bbox of the block
 
         # ignore text written upon images
         if no_image_text and in_bbox(bbox, img_bboxes):
             continue
 
         # confirm first line to be horizontal
-        line0 = b["lines"][0]  # get first line
-        if line0["dir"] != (1, 0):  # only accept horizontal text
+        line0 = b['lines'][0]  # get first line
+        if line0['dir'] != (1, 0):  # only accept horizontal text
             vert_bboxes.append(bbox)
             continue
 
         srect = fitz.EMPTY_IRECT()
-        for line in b["lines"]:
-            lbbox = fitz.IRect(line["bbox"])
-            text = "".join([s["text"].strip() for s in line["spans"]])
+        for line in b['lines']:
+            lbbox = fitz.IRect(line['bbox'])
+            text = ''.join([s['text'].strip() for s in line['spans']])
             if len(text) > 1:
                 srect |= lbbox
         bbox = +srect
@@ -230,9 +229,7 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
     bboxes.sort(key=lambda k: (in_bbox(k, path_bboxes), k.y0, k.x0))
 
     # Extend bboxes to the right where possible
-    bboxes = extend_right(
-        bboxes, int(page.rect.width), path_bboxes, vert_bboxes, img_bboxes
-    )
+    bboxes = extend_right(bboxes, int(page.rect.width), path_bboxes, vert_bboxes, img_bboxes)
 
     # immediately return of no text found
     if bboxes == []:
@@ -285,7 +282,7 @@ def column_boxes(page, footer_margin=50, no_image_text=True):
     return nblocks
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     """Only for debugging purposes, currently.
 
     Draw red borders around the returned text bboxes and insert
@@ -321,11 +318,11 @@ if __name__ == "__main__":
             shape.draw_rect(rect)  # draw a border
 
             # write sequence number
-            shape.insert_text(rect.tl + (5, 15), str(i), color=fitz.pdfcolor["red"])
+            shape.insert_text(rect.tl + (5, 15), str(i), color=fitz.pdfcolor['red'])
 
         # finish drawing / text with color red
-        shape.finish(color=fitz.pdfcolor["red"])
+        shape.finish(color=fitz.pdfcolor['red'])
         shape.commit()  # store to the page
 
     # save document with text bboxes
-    doc.ez_save(filename.replace(".pdf", "-blocks.pdf"))
+    doc.ez_save(filename.replace('.pdf', '-blocks.pdf'))

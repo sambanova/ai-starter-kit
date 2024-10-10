@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import streamlit as st
 import yaml
@@ -13,10 +13,10 @@ from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
 from langchain_experimental.utilities import PythonREPL
+from pydantic import BaseModel, Field
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -33,7 +33,7 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 ## Get configs for tools
-def get_config_info(config_path: str) -> dict:
+def get_config_info(config_path: str) -> Tuple[Dict[str, Any], bool]:
     """
     Loads json config file
     """
@@ -252,7 +252,13 @@ def query_db(query: str) -> str:
         sambanova_api_key=sambanova_api_key,
     )
 
-    db_path = os.path.join(kit_dir, query_db_info['db']['path'])
+    if 'session_temp_db' in st.session_state:
+        if st.session_state.session_temp_db is not None:
+            db_path = st.session_state.session_temp_db
+        else:
+            db_path = os.path.join(kit_dir, query_db_info['db']['path'])
+    else:
+        db_path = os.path.join(kit_dir, query_db_info['db']['path'])
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 

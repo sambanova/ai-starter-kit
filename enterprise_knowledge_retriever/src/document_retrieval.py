@@ -1,19 +1,21 @@
 import os
-import shutil
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+import nltk
 import torch
 import yaml
-import nltk
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
-from langchain.prompts import BasePromptTemplate, load_prompt
+from langchain.prompts import PromptTemplate, load_prompt
 from langchain_core.callbacks import CallbackManagerForChainRun
-from langchain_core.language_models import BaseLanguageModel
+from langchain_core.embeddings import Embeddings
+from langchain_core.language_models import LanguageModelLike
+from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.vectorstores.base import VectorStoreRetriever
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -51,13 +53,14 @@ else:
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
 
+
 class RetrievalQAChain(Chain):
     """class for question-answering."""
 
     retriever: BaseRetriever
     rerank: bool = True
-    llm: BaseLanguageModel
-    qa_prompt: BasePromptTemplate
+    llm: LanguageModelLike
+    qa_prompt: PromptTemplate
     final_k_retrieved_documents: int = 3
 
     @property
@@ -74,10 +77,10 @@ class RetrievalQAChain(Chain):
         """
         return ['answer', 'source_documents']
 
-    def _format_docs(self, docs):
+    def _format_docs(self, docs: List[Document]) -> str:
         return '\n\n'.join(doc.page_content for doc in docs)
 
-    def rerank_docs(self, query, docs, final_k):
+    def rerank_docs(self, query: str, docs: List[Document], final_k: int) -> List[Document]:
         # Lazy hardcoding for now
         tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
         reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
@@ -116,7 +119,7 @@ class RetrievalQAChain(Chain):
         run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Dict[str, Any]:
         qa_chain = self.qa_prompt | self.llm | StrOutputParser()
-        response = {}
+        response: Dict[str, Any] = {}
         documents = self.retriever.invoke(inputs['question'])
         if self.rerank:
             documents = self.rerank_docs(inputs['question'], documents, self.final_k_retrieved_documents)
@@ -127,7 +130,7 @@ class RetrievalQAChain(Chain):
 
 
 class DocumentRetrieval:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
         self.api_info = config_info[0]
@@ -140,7 +143,7 @@ class DocumentRetrieval:
         self.retriever = None
         self.llm = self.set_llm()
 
-    def get_config_info(self):
+    def get_config_info(self) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
         """
         Loads json config file
         """
@@ -157,7 +160,7 @@ class DocumentRetrieval:
 
         return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
-    def set_llm(self):
+    def set_llm(self) -> LLM:
         if self.prod_mode:
             sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
@@ -179,12 +182,12 @@ class DocumentRetrieval:
         )
         return llm
 
-    def parse_doc(self, docs: List, additional_metadata: Optional[Dict] = None) -> List[Document]:
+    def parse_doc(self, doc_folder: str, additional_metadata: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
-        Parse the uploaded documents and return a list of LangChain documents.
+        Parse specified documents and return a list of LangChain documents.
 
         Args:
-            docs (List[UploadFile]): A list of uploaded files.
+            doc_folder (str): Path to the documents.
             additional_metadata (Optional[Dict], optional): Additional metadata to include in the processed documents.
                 Defaults to an empty dictionary.
 
@@ -194,38 +197,13 @@ class DocumentRetrieval:
         if additional_metadata is None:
             additional_metadata = {}
 
-        # Create the data/tmp folder if it doesn't exist
-        temp_folder = os.path.join(kit_dir, 'data/tmp')
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-        else:
-            # If there are already files there, delete them
-            for filename in os.listdir(temp_folder):
-                file_path = os.path.join(temp_folder, filename)
-                try:
-                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print(f'Failed to delete {file_path}. Reason: {e}')
-
-        # Save all selected files to the tmp dir with their file names
-        for doc in docs:
-            temp_file = os.path.join(temp_folder, doc.name)
-            with open(temp_file, 'wb') as f:
-                f.write(doc.getvalue())
-
-        # Pass in the temp folder for processing into the parse_doc_universal function
         _, _, langchain_docs = parse_doc_universal(
-            doc=temp_folder,
-            additional_metadata=additional_metadata,
-            lite_mode=self.pdf_only_mode
-            )
-        
+            doc=doc_folder, additional_metadata=additional_metadata, lite_mode=self.pdf_only_mode
+        )
+
         return langchain_docs
 
-    def load_embedding_model(self):
+    def load_embedding_model(self) -> Embeddings:
         embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info['type'],
             batch_size=self.embedding_model_info['batch_size'],
@@ -234,19 +212,25 @@ class DocumentRetrieval:
         )
         return embeddings
 
-    def create_vector_store(self, text_chunks, embeddings, output_db=None, collection_name=None):
+    def create_vector_store(
+        self,
+        text_chunks: List[Document],
+        embeddings: Any,
+        output_db: Optional[str] = None,
+        collection_name: Optional[str] = None,
+    ) -> Any:
         print(f'Collection name is {collection_name}')
         vectorstore = self.vectordb.create_vector_store(
             text_chunks, embeddings, output_db=output_db, collection_name=collection_name, db_type='chroma'
         )
         return vectorstore
 
-    def load_vdb(self, db_path, embeddings, collection_name=None):
+    def load_vdb(self, db_path: str, embeddings: Any, collection_name: Optional[str] = None) -> Any:
         print(f'Loading collection name is {collection_name}')
         vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type='chroma', collection_name=collection_name)
         return vectorstore
 
-    def init_retriever(self, vectorstore):
+    def init_retriever(self, vectorstore: Any) -> None:
         if self.retrieval_info['rerank']:
             self.retriever = vectorstore.as_retriever(
                 search_type='similarity_score_threshold',
@@ -264,7 +248,7 @@ class DocumentRetrieval:
                 },
             )
 
-    def get_qa_retrieval_chain(self):
+    def get_qa_retrieval_chain(self) -> RetrievalQAChain:
         """
         Generate a qa_retrieval chain using a language model.
 
@@ -289,7 +273,9 @@ class DocumentRetrieval:
 
         # response["answer"] = qa_chain.invoke({"question": question, "context": docs})
         # response["source_documents"] = documents
-
+        assert isinstance(
+            self.retriever, VectorStoreRetriever
+        ), f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
         retrievalQAChain = RetrievalQAChain(
             retriever=self.retriever,
             llm=self.llm,
@@ -299,12 +285,12 @@ class DocumentRetrieval:
         )
         return retrievalQAChain
 
-    def get_conversational_qa_retrieval_chain(self):
+    def get_conversational_qa_retrieval_chain(self) -> None:
         """
         Generate a conversational retrieval qa chain using a language model.
 
-        This function uses a language model, specifically a SambaNova LLM, to generate a conversational_qa_retrieval chain
-        based on the chat history and the relevant retrieved content from the input vector store of text chunks.
+        This function uses a language model, specifically a SambaNova LLM, to generate a conversational_qa_retrieval
+        chain based on the chat history and the relevant retrieved content from the input vector store of text chunks.
 
         Parameters:
         vectorstore (Chroma): A Vector Store containing embeddings of text chunks used as context

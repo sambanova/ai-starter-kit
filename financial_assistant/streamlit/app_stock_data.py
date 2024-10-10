@@ -1,4 +1,3 @@
-import datetime
 import json
 from typing import Any, List, Optional, Tuple
 
@@ -7,9 +6,12 @@ import streamlit
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+from financial_assistant.src.tools import get_logger
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import save_historical_price_callback, save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+
+logger = get_logger()
 
 
 def get_stock_data_analysis() -> None:
@@ -86,7 +88,8 @@ def get_stock_data_analysis() -> None:
 
     if streamlit.button('Retrieve stock info'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_stock_query(user_request, dataframe_name)
@@ -111,15 +114,14 @@ def get_stock_data_analysis() -> None:
         key='historical-stock-price-query',
         placeholder='E.g. ' + DEFAULT_HISTORICAL_STOCK_PRICE_QUERY,
     )
-    start_date = streamlit.date_input(
-        'Start Date', value=datetime.datetime.now() - datetime.timedelta(days=365), key='start-date'
-    )
-    end_date = streamlit.date_input('End Date', value=datetime.datetime.now(), key='end-date')
+    start_date = streamlit.date_input('Start Date', value=DEFAULT_START_DATE, key='start-date')
+    end_date = streamlit.date_input('End Date', value=DEFAULT_END_DATE, key='end-date')
 
     # Analyze stock data
     if streamlit.button('Analyze Historical Stock Data'):
         if len(user_request) == 0:
-            streamlit.error('Please enter your query.')
+            logger.error('No query entered.')
+            streamlit.error('No query entered.')
         else:
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
@@ -169,8 +171,8 @@ def handle_stock_query(
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['get_stock_info']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""
@@ -204,10 +206,11 @@ def handle_stock_data_analysis(
 
     Raises:
         ValueError: If `start_date` and `end_date` are both None.
-        TypeError: If `response` does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Check inputs
-    assert start_date is not None or end_date is not None, ValueError('Start date or end date must be provided.')
+    if start_date is None and end_date is None:
+        raise ValueError('Start date or end date must be provided.')
 
     if user_question is None:
         return None
@@ -215,8 +218,8 @@ def handle_stock_data_analysis(
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['get_historical_price']
 
-    # Attach the tools for the LLM to use
-    attach_tools(
+    # Set the tools for the LLM to use
+    set_llm_tools(
         tools=streamlit.session_state.tools,
         default_tool=None,
     )
@@ -233,13 +236,14 @@ def handle_stock_data_analysis(
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert (
-        isinstance(response, tuple)
-        and len(response) == 3
-        and isinstance(response[0], Figure)
-        and isinstance(response[1], pandas.DataFrame)
-        and isinstance(response[2], list)
-        and all([isinstance(i, str) for i in response[2]])
-    ), TypeError(f'Invalid response: {response}.')
+    if (
+        not isinstance(response, tuple)
+        or len(response) != 3
+        or not isinstance(response[0], Figure)
+        or not isinstance(response[1], pandas.DataFrame)
+        or not isinstance(response[2], list)
+        or not all([isinstance(i, str) for i in response[2]])
+    ):
+        raise Exception(f'Invalid response: {response}.')
 
     return response

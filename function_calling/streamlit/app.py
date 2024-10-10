@@ -1,10 +1,15 @@
 import logging
 import os
+import shutil
 import sys
+import time
+import uuid
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Callable, Generator, Optional
+from threading import Thread
+from typing import Any, Callable, Generator, List, Optional
 
+import schedule
 import streamlit as st
 import yaml
 
@@ -15,8 +20,8 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from function_calling.src.function_calling import FunctionCallingLlm  # type: ignore
-from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate  # type: ignore
+from function_calling.src.function_calling import FunctionCallingLlm
+from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
@@ -32,20 +37,22 @@ TOOLS = {
     'translate': translate,
     'rag': rag,
 }
+EXIT_TIME_DELTA = 30
 
 
-def load_config():
+def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
+db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
 
 
 @contextmanager
-def st_capture(output_func: Callable[[str], None]) -> Generator:
+def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]:
     """
     context manager to catch stdout and send it to an output streamlit element
 
@@ -64,10 +71,60 @@ def st_capture(output_func: Callable[[str], None]) -> Generator:
             return ret
 
         stdout.write = new_write  # type: ignore
-        yield
+        yield  # type: ignore
 
 
-def set_fc_llm(tools: list) -> None:
+def delete_temp_dir(temp_dir: str) -> None:
+    """
+    Delete the temporary directory and its contents.
+
+    Args:
+        temp_dir (str): The path of the temporary directory.
+    """
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            logging.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logging.info(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """
+    Schedule the deletion of the temporary directory after a delay.
+
+    Args:
+        temp_dir (str): The path of the temporary directory.
+        delay_minutes (int): The delay in minutes after which the temporary directory should be deleted.
+    """
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
+def create_temp_db(out_path: str) -> None:
+    """
+    Create a temporary database at the specified path.
+
+    Args:
+        out_path (str): The path where the temporary database will be created.
+    """
+    logging.info(f'creating temp db in {out_path}')
+    directory = os.path.dirname(out_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    shutil.copy2(os.path.join(kit_dir, db_path), out_path)
+
+
+def set_fc_llm(tools: List[Any]) -> None:
     """
     Set the FunctionCallingLlm object with the selected tools
 
@@ -75,6 +132,12 @@ def set_fc_llm(tools: list) -> None:
         tools (list): list of tools to be used
     """
     set_tools = [TOOLS[name] for name in tools]
+    if query_db in set_tools:
+        if prod_mode:
+            create_temp_db(st.session_state.session_temp_db)
+            schedule_temp_dir_deletion(os.path.dirname(st.session_state.session_temp_db), EXIT_TIME_DELTA)
+            st.toast("""your session will be active for the next 30 minutes, after this time tmp db will be deleted""")
+
     st.session_state.fc = FunctionCallingLlm(set_tools)
 
 
@@ -115,7 +178,10 @@ def setChatInputValue(chat_input_value: str) -> None:
     <script>
         function insertText(dummy_var_to_force_repeat_execution) {{
             var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                window.HTMLTextAreaElement.prototype,
+                "value"
+            ).set;
             nativeInputValueSetter.call(chatInput, "{chat_input_value}");
             var event = new Event('input', {{ bubbles: true}});
             chatInput.dispatchEvent(event);
@@ -145,17 +211,19 @@ def main() -> None:
         st.session_state.max_iterations = 5
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
+    if 'session_temp_db' not in st.session_state:
+        if prod_mode:
+            st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
+        else:
+            st.session_state.session_temp_db = None
 
     st.title(':orange[SambaNova] Function Calling Assistant')
 
     with st.sidebar:
         st.title('Setup')
 
-        #Callout to get SambaNova API Key
-        st.markdown(
-            "Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)"
-        )
-
+        # Callout to get SambaNova API Key
+        st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
@@ -195,13 +263,16 @@ def main() -> None:
                 st.markdown('DB operations')
                 if st.button('Create a summary table in the db'):
                     setChatInputValue(
-                        'Create and save a table in the database that will show the top 10 albums with the highest sales in 2013 and in the USA. The table fields will be the name of the album, the name of the artist, the total amount of sales, and the number of copies sold.'
+                        """Create and save a table in the database that will show the top 10 albums with the highest
+                        sales in 2013 and in the USA. The table fields will be the name of the album, the name of the
+                        artist, the total amount of sales, and the number of copies sold."""
                     )
                 if st.button('Get information of the created summary table'):
                     setChatInputValue('Give me a summary of the 2013 top albums table')
                 if st.button('Create insightful plots of the summary table'):
                     setChatInputValue(
-                        'Get the information of the 2013 top albums table in the DB, when you get the data then create some meaningful plots that summarize the information, and store them in PNG format'
+                        """Get the information of the 2013 top albums table in the DB, when you get the data then create
+                         some meaningful plots that summarize the information, and store them in PNG format"""
                     )
 
             with st.expander('Additional settings', expanded=False):

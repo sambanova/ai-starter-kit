@@ -1,9 +1,9 @@
-import pytest
-
 from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
+
 from prepline_general.api.app import app
 
 MAIN_API_ROUTE = "general/v0/general"
@@ -37,7 +37,7 @@ MAIN_API_ROUTE = "general/v0/general"
     ],
 )
 def test_form_params_passed_as_first_element_of_array_are_properly_handled(
-    parameters: dict[str, Any]
+    parameters: dict[str, Any],
 ):
     """
     Verify that responses do not include coordinates unless requested

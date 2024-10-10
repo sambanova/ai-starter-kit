@@ -8,8 +8,8 @@ import yfinance
 from bs4 import BeautifulSoup
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list, get_logger
@@ -25,7 +25,7 @@ class YahooFinanceNewsInput(BaseModel):
     """Tool for searching financial news on Yahoo Finance through web scraping."""
 
     company_list: Optional[List[str] | str] = Field(
-        None, description='A list of companies to search, if applicable.', example=['Google', 'Microsoft']
+        None, description='A list of companies to search, if applicable.', examples=['Google', 'Microsoft']
     )
     user_query: str = Field(..., description='The original user query.')
 
@@ -47,21 +47,20 @@ def scrape_yahoo_finance_news(company_list: List[str] | str, user_query: str) ->
             2. A list of links to articles that have been used for retrieval to answer the user query.
 
     Raises:
-        TypeError: If `symbol_list` is not a list of strings or `user_query` is not a string.
+        TypeError: If `company_list` is not a string or a list of strings or `user_query` is not a string.
     """
     if company_list is not None:
         # Check inputs
-        assert isinstance(company_list, (list, str)), TypeError(
-            f'Input must be of type `list` or `str`. Got {type(company_list)}.'
-        )
+        if not isinstance(company_list, (list, str)):
+            raise TypeError(f'Input must be of type `list` or `str`. Got {type(company_list)}.')
 
         # If `company_list` is a string, coerce it to a list of strings
         company_list = coerce_str_to_list(company_list)
 
-        assert all(isinstance(company, str) for company in company_list), TypeError(
-            'All elements in `company_list` must be of type str.'
-        )
-        assert isinstance(user_query, str), TypeError(f'Input must be of type str. Got {type(user_query)}.')
+        if not all(isinstance(company, str) for company in company_list):
+            raise TypeError('All elements in `company_list` must be of type str.')
+        if not isinstance(user_query, str):
+            raise TypeError(f'Input must be of type str. Got {type(user_query)}.')
 
     # Retrieve the list of ticker symbols
     try:
@@ -254,6 +253,9 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
         A tuple containing the following pair:
         1. The answer to the user query.
         2. A list of links to articles that have been used for retrieval to answer the user query.
+
+    Raises:
+        Exception: If the LLM response is not a dictionary.
     """
     # Load the dataframe from the text file
     try:
@@ -273,8 +275,9 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
     # Get the QA response
     response = get_qa_response(user_query, documents)
 
-    # Assert that response is indexable
-    assert isinstance(response, dict), 'QA response is not a dictionary.'
+    # Ensure that response is indexable
+    if not isinstance(response, dict):
+        raise Exception('QA response is not a dictionary.')
 
     # Extract the answer from  the QA response
     answer = response['answer']
@@ -299,11 +302,13 @@ def filter_texts_set(texts: Set[str]) -> List[str]:
         A list of chunks.
 
     Raises:
-        TypeError: If the input `texts` is not a set or a string.
+        TypeError: If the input `texts` is not a set of strings.
     """
     # Check inputs
-    assert isinstance(texts, set), TypeError(f'Input must be of type set. Got {type(texts)}.')
-    assert all(isinstance(text, str) for text in texts), TypeError(f'Input must be of type str.')
+    if not isinstance(texts, set):
+        raise TypeError(f'Input must be of type set. Got {type(texts)}.')
+    if not all(isinstance(text, str) for text in texts):
+        raise TypeError(f'Input must be of type str.')
 
     filtered_texts = set()
     for text in texts:
@@ -327,7 +332,8 @@ def filter_text(text: str) -> List[str]:
         TypeError: If the input `text` is not a string.
     """
     # Check inputs
-    assert isinstance(text, str), TypeError(f'Input must be of type str. Got {type(text)}.')
+    if not isinstance(text, str):
+        raise TypeError(f'Input must be of type str. Got {type(text)}.')
 
     filtered_texts: List[str] = list()
 
@@ -362,7 +368,8 @@ def clean_text(text: str) -> str:
     """Clean the text by removing extra spaces, newlines, and special characters."""
 
     # Check inputs
-    assert isinstance(text, str), TypeError(f'Input must be of type str. Got {type(text)}.')
+    if not isinstance(text, str):
+        raise TypeError(f'Input must be of type str. Got {type(text)}.')
 
     # Remove special characters
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)

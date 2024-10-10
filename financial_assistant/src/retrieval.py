@@ -6,7 +6,6 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
 from langchain_chroma import Chroma
-from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import PromptTemplate
@@ -14,10 +13,12 @@ from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
-from financial_assistant.src.tools import time_llm
+from financial_assistant.src.tools import get_logger, time_llm
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import _get_config_info
 from utils.model_wrappers.api_gateway import APIGateway
+
+logger = get_logger()
 
 
 def get_qa_response(user_request: str, documents: List[Document], session_id: Optional[str] = None) -> Any:
@@ -33,13 +34,14 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
         Answer to the user request.
 
     Raises:
-        TypeError: If user request is not string or documents are not list of strings.
+        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain.schema.Document`.
     """
-    assert isinstance(user_request, str), TypeError('user_request must be a string.')
-    assert isinstance(documents, list), TypeError(f'documents must be a list of strings. Got {type(documents)}.')
-    assert all(isinstance(doc, Document) for doc in documents), TypeError(
-        f'All documents must be of type `langchain.schema.Document`.'
-    )
+    if not isinstance(user_request, str):
+        raise TypeError('user_request must be a string.')
+    if not isinstance(documents, list):
+        raise TypeError(f'documents must be a list of strings. Got {type(documents)}.')
+    if not all(isinstance(doc, Document) for doc in documents):
+        raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry and the current `session_id`
     vectorstore, retriever = get_vectorstore_retriever(documents)
@@ -72,7 +74,7 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     return embedding_model_info, retrieval_info
 
 
-def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
+def load_embedding_model(embedding_model_info: Dict[str, Any]) -> SentenceTransformerEmbeddings | Embeddings:
     """Load the embedding model following the config information."""
 
     if embedding_model_info['type'] == 'cpu':
@@ -93,9 +95,7 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
         )
 
 
-def get_vectorstore_retriever(
-    documents: List[Document],
-) -> Tuple[Chroma, VectorStoreRetriever]:
+def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, VectorStoreRetriever]:
     """
     Get the retriever for a given session id and documents.
 
@@ -108,6 +108,9 @@ def get_vectorstore_retriever(
 
     Returns:
         A tuple with the vectorstore registry and the current session id.
+
+    Raisese:
+        Exception: If a vectorstore and a retriever cannot be instantiated.
     """
     # Load config
     config = _get_config_info(CONFIG_PATH)
@@ -120,12 +123,14 @@ def get_vectorstore_retriever(
 
     # Instantiate the vectorstore with an explicit in-memory configuration
     try:
-        vectorstore = Chroma.from_documents(documents, embedding_model, persist_directory=None)
+        vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
+        logger.error('Could not instantiate the vectorstore.')
         streamlit.error('Could not instantiate the vectorstore.')
         streamlit.stop()
 
-    assert isinstance(vectorstore, Chroma), f'Could not instantiate the vectorstore.'
+    if not isinstance(vectorstore, Chroma):
+        raise Exception('Could not instantiate the vectorstore.')
 
     # Instantiate the retriever
     retriever = vectorstore.as_retriever(
@@ -134,7 +139,8 @@ def get_vectorstore_retriever(
         },
     )
 
-    assert isinstance(retriever, VectorStoreRetriever), f'Could not retrieve the retriever.'
+    if not isinstance(retriever, VectorStoreRetriever):
+        raise Exception(f'Could not retrieve the retriever.')
 
     return vectorstore, retriever
 
@@ -148,10 +154,15 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
 
     Returns:
         A retrieval QA chain using the provided retriever.
+
+    Raises:
+        TypeError: If `retriever` is not of type `langchain_core.vectorstores.base.VectorStoreRetriever`.
     """
-    assert isinstance(
-        retriever, VectorStoreRetriever
-    ), f'`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. Got type {type(retriever)}.'
+    if not isinstance(retriever, VectorStoreRetriever):
+        raise TypeError(
+            '`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. '
+            f'Got type {type(retriever)}.'
+        )
 
     # The Retrieval QA prompt
     retrieval_qa_chat_prompt = PromptTemplate.from_template(

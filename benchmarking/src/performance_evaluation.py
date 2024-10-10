@@ -5,44 +5,41 @@ import random
 import re
 import threading
 import time
-import yaml
-from typing import Any, Dict, List, Tuple
-
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
 
 file_location = Path(__file__).parent.resolve()
 
-import pandas as pd
-from tqdm import tqdm
-import transformers
-from langchain.prompts import PromptTemplate
-
-from llmperf import common_metrics
-from llmperf.sambanova_client import llm_request
-from llmperf.models import RequestConfig, LLMResponse
-import llmperf.utils as utils
-from llmperf.utils import LLMPerfResults, flatten, get_tokenizer
-from dotenv import load_dotenv
-from streamlit.runtime.scriptrunner import add_script_run_ctx
-
-from time import sleep
-from stqdm import stqdm
-
 import logging
+
+import numpy as np
+import pandas as pd
+import transformers
+from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from stqdm import stqdm
+from streamlit.runtime.scriptrunner import add_script_run_ctx
+from tqdm import tqdm
+
+import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
+from benchmarking.src.llmperf import common_metrics
+from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten, get_tokenizer
+from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
+from benchmarking.src.llmperf.sambanova_client import llm_request
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
-load_dotenv("../.env", override=True)
+load_dotenv('../.env', override=True)
 
-SYSTEM_PROMPT_PATH = os.path.join(
-    file_location, "../prompts/system-prompt_template.yaml"
-)
-USER_PROMPT_PATH = os.path.join(file_location, "../prompts/user-prompt_template.yaml")
+SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
+USER_PROMPT_PATH = os.path.join(file_location, '../prompts/user-prompt_template.yaml')
 
 
 class BasePerformanceEvaluator(abc.ABC):
@@ -50,30 +47,32 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         model_name: str,
         results_dir: str,
-        num_workers: int,
+        num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
-        llm_api: str = "sambastudio",
+        llm_api: str = 'sncloud',
+        api_variables: Dict[str, Any] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
-    ):
+    ) -> None:
         self.model_name = model_name
         self.results_dir = results_dir
-        self.num_workers = num_workers
+        self.num_concurrent_requests = num_concurrent_requests
         self.user_metadata = user_metadata
         self.llm_api = llm_api
+        self.api_variables = api_variables
         self.is_stream_mode = is_stream_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
 
         # To be set upon saving of results
-        self.summary_file_path = None
-        self.individual_responses_file_path = None
+        self.summary_file_path: Optional[str] = None
+        self.individual_responses_file_path: Optional[str] = None
 
     def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
 
     @staticmethod
-    def sanitize_file_prefix(prefix: str):
+    def sanitize_file_prefix(prefix: str) -> str:
         """Utility for sanitizing the output file prefix.
 
         Args:
@@ -82,28 +81,38 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             Sanitized outfile prefix
         """
-        outfile_prefix = re.sub(r"[^\w\d-]+", "-", prefix)
-        outfile_prefix = re.sub(r"-{2,}", "-", outfile_prefix)
+        outfile_prefix = re.sub(r'[^\w\d-]+', '-', prefix)
+        outfile_prefix = re.sub(r'-{2,}', '-', outfile_prefix)
         return outfile_prefix
 
     @abc.abstractmethod
-    def create_output_filename(self, *args, **kwargs):
+    def create_output_filename(self, *args: Any, **kwargs: Any) -> str:
         pass
 
     @abc.abstractmethod
-    def run_benchmark(self, sampling_params: Dict = {}, *args, **kwargs):
+    def run_benchmark(
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         pass
 
     @abc.abstractmethod
-    def get_token_throughput_latencies(self, *args, **kwargs):
+    def get_token_throughput_latencies(
+        self, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[dict[str, object], List[LLMResponse]]
+    ):
         pass
 
     @abc.abstractmethod
-    def build_request_configs(self, *args, **kwargs):
+    def build_request_configs(self, *args: Any, **kwargs: Any) -> List[RequestConfig]:
         pass
 
     @abc.abstractmethod
-    def build_prompt(self, *args, **kwargs):
+    def build_prompt(self, *args: Any, **kwargs: Any) -> Tuple[str, int]:
         pass
 
     def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
@@ -126,25 +135,21 @@ class BasePerformanceEvaluator(abc.ABC):
             tokens = tokens[: target_token_count - 1]
         elif token_count < target_token_count:
             # Pad the text
-            pad_token = (
-                self.tokenizer.pad_token if self.tokenizer.pad_token else "<pad>"
-            )
+            pad_token = self.tokenizer.pad_token if self.tokenizer.pad_token else '<pad>'
             tokens += [pad_token] * (target_token_count - token_count - 1)
 
         # Convert tokens back to text
-        adjusted_text = self.tokenizer.convert_tokens_to_string(tokens)
+        adjusted_text = str(self.tokenizer.convert_tokens_to_string(tokens))
 
         # Validate token count
-        assert len(self.tokenizer.tokenize(adjusted_text)) == (
-            target_token_count - 1
-        ), "Token count mismatch!"
+        assert len(self.tokenizer.tokenize(adjusted_text)) == (target_token_count - 1), 'Token count mismatch!'
 
         return adjusted_text
 
     def send_requests(
         self,
-        request_config_batch: list,
-        completed_requests: list,
+        request_config_batch: List[Any],
+        completed_requests: List[Any],
         progress_bar: tqdm,
         start_time: float,
     ) -> None:
@@ -159,15 +164,11 @@ class BasePerformanceEvaluator(abc.ABC):
         for request_config in request_config_batch:
             if time.monotonic() - start_time >= self.timeout:
                 break
-            req_metrics, response_text, request_config = llm_request(
-                request_config, self.tokenizer
-            )
+            req_metrics, response_text, request_config = llm_request(request_config, self.tokenizer)
 
             # Create response object containing metrics, generated text, and corresponding request config
             response_object = LLMResponse(
-                metrics=req_metrics,
-                response_text=response_text,
-                request_config=request_config,
+                metrics=req_metrics, response_text=response_text, request_config=request_config
             )
             completed_requests.extend([response_object])
             progress_bar.update(1)
@@ -175,8 +176,8 @@ class BasePerformanceEvaluator(abc.ABC):
     def build_metrics_summary(
         self,
         metrics: List[Dict[str, Any]],
-        start_time: time,
-        end_time: time,
+        start_time: float,
+        end_time: float,
     ) -> Dict[str, Any]:
         """Builds a summary of metrics from a list of dictionaries.
 
@@ -194,7 +195,7 @@ class BasePerformanceEvaluator(abc.ABC):
         Dict[str, Any]: A dictionary containing the summary metrics.
         """
         # Create empty metrics summary to be filled and returned
-        metrics_summary = {}
+        metrics_summary: Dict[str, Any] = {}
 
         # Create base df from metrics returned from request responses
         raw_df = pd.DataFrame(metrics)
@@ -210,38 +211,36 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
         ]:
-            logger.info(f"Building Metrics Summary for metric: {metric}")
+            logger.info(f'Building Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
             # Generate statistics for specific metric
-            quantiles = (
-                series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
-            )
+            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
-                reformatted_key = f"p{int(quantile * 100)}"
-                logger.info(f"    {reformatted_key} = {value}")
+                reformatted_key = f'p{int(quantile * 100)}'
+                logger.info(f'    {reformatted_key} = {value}')
                 quantiles_reformatted_keys[reformatted_key] = value
-            metrics_summary[metric]["quantiles"] = quantiles_reformatted_keys
+            metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
 
             series_mean = round(series.mean(), 4)
-            logger.info(f"    mean = {series_mean}")
-            metrics_summary[metric]["mean"] = series_mean
+            logger.info(f'    mean = {series_mean}')
+            metrics_summary[metric]['mean'] = series_mean
 
             series_min = round(series.min(), 4)
-            logger.info(f"    min = {series_min}")
-            metrics_summary[metric]["min"] = series_min
+            logger.info(f'    min = {series_min}')
+            metrics_summary[metric]['min'] = series_min
 
             series_max = round(series.max(), 4)
-            logger.info(f"    max = {series_max}")
-            metrics_summary[metric]["max"] = series_max
+            logger.info(f'    max = {series_max}')
+            metrics_summary[metric]['max'] = series_max
 
             series_std = round(series.std(), 4)
-            logger.info(f"    stddev = {series_std}")
-            metrics_summary[metric]["stddev"] = series_std
+            logger.info(f'    stddev = {series_std}')
+            metrics_summary[metric]['stddev'] = series_std
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
@@ -249,42 +248,35 @@ class BasePerformanceEvaluator(abc.ABC):
         # Record error count and rate
         error_codes = raw_df[common_metrics.ERROR_CODE].dropna()
         num_errors = len(error_codes)
-        metrics_summary[common_metrics.ERROR_RATE] = (
-            num_errors / len(metrics) if len(metrics) else 0
-        )
+        metrics_summary[common_metrics.ERROR_RATE] = num_errors / len(metrics) if len(metrics) else 0
         metrics_summary[common_metrics.NUM_ERRORS] = num_errors
-        logger.info(f"Number Of Errored Requests: {num_errors}")
+        logger.info(f'Number Of Errored Requests: {num_errors}')
 
         # Record specific error code frequencies
         error_code_frequency = dict(error_codes.value_counts())
         if num_errors:
             error_code_frequency = dict(error_codes.value_counts())
-            logger.error("Error Code Frequency")
+            logger.error('Error Code Frequency')
             logger.error(error_code_frequency)
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
         overall_output_throughput = round(
-            metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum()
-            / (end_time - start_time),
+            metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum() / (end_time - start_time),
             4,
         )
-        logger.info(f"Overall Output Throughput: {overall_output_throughput}")
+        logger.info(f'Overall Output Throughput: {overall_output_throughput}')
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
 
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
-        num_completed_requests_per_min = round(
-            num_completed_requests / (end_time - start_time) * 60, 4
-        )
-        logger.info(f"Number Of Completed Requests: {num_completed_requests}")
-        logger.info(f"Number Of Concurrent Workers: {self.num_workers}")
-        logger.info(f"Completed Requests Per Minute: {num_completed_requests_per_min}")
+        num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
+        logger.info(f'Number Of Completed Requests: {num_completed_requests}')
+        logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
+        logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
-        metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = (
-            num_completed_requests_per_min
-        )
+        metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = num_completed_requests_per_min
 
         return metrics_summary
 
@@ -292,8 +284,10 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse],
-    ):
+        individual_responses: List[LLMResponse]
+        | List[Tuple[Dict[str, Any], str, RequestConfig]]
+        | Tuple[Dict[str, object], List[LLMResponse]],
+    ) -> None:
         """Save the performance evaluation results to a file.
 
         Args:
@@ -308,8 +302,8 @@ class BasePerformanceEvaluator(abc.ABC):
         Raises:
             ValueError: If the results directory does not exist or is not a directory.
         """
-        summary_filename = f"{filename}_summary"
-        individual_responses_filename = f"{filename}_individual_responses"
+        summary_filename = f'{filename}_summary'
+        individual_responses_filename = f'{filename}_individual_responses'
 
         # Update to metadata.
         summary.update(self.user_metadata)
@@ -319,12 +313,12 @@ class BasePerformanceEvaluator(abc.ABC):
         if not results_dir.exists():
             results_dir.mkdir(parents=True)
         elif not results_dir.is_dir():
-            raise ValueError(f"{results_dir} is not a directory")
+            raise ValueError(f'{results_dir} is not a directory')
 
         # Save summary results
         try:
-            self.summary_file_path = f"{results_dir}/{summary_filename}.json"
-            with open(self.summary_file_path, "w") as f:
+            self.summary_file_path = f'{results_dir}/{summary_filename}.json'
+            with open(self.summary_file_path, 'w') as f:
                 json.dump(results.to_dict(), f, indent=4, default=str)
         except Exception as e:
             logger.error(results.to_dict())
@@ -332,12 +326,12 @@ class BasePerformanceEvaluator(abc.ABC):
 
         # Save individual response results
         try:
-            self.individual_responses_file_path = (
-                f"{results_dir}/{individual_responses_filename}.json"
-            )
+            self.individual_responses_file_path = f'{results_dir}/{individual_responses_filename}.json'
 
-            response_metrics = [response.metrics for response in individual_responses]
-            with open(self.individual_responses_file_path, "w") as f:
+            response_metrics = [
+                response.metrics for response in individual_responses if isinstance(response, LLMResponse)
+            ]
+            with open(self.individual_responses_file_path, 'w') as f:
                 json.dump(response_metrics, f, indent=4)
         except Exception as e:
             logger.error(individual_responses)
@@ -345,9 +339,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(
-        self, input_file_path: str, save_response_texts: bool = False, *args, **kwargs
-    ):
+    def __init__(self, input_file_path: str, save_response_texts: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
@@ -355,16 +347,17 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.save_response_texts = save_response_texts
 
     @staticmethod
-    def read_dataset(input_file_path: str) -> List[Dict]:
+    def read_dataset(input_file_path: str) -> List[Dict[str, Any]]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
 
         Args:
             input_file_path (str): The absolute file path of the input file provided by the user
 
         Returns:
-            List[Dict]: A list of json objects (python dictionaries) containing the individual prompts the user wants to evaluate on
+            List[Dict]: A list of json objects (python dictionaries) containing the individual prompts the user wants
+            to evaluate on
         """
-        with open(input_file_path, "r") as file:
+        with open(input_file_path, 'r') as file:
             data = [json.loads(line) for line in file]
         return data
 
@@ -374,22 +367,23 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             str: Filename for the custom benchmark run.
         """
-        generation_mode = ""
+        generation_mode = ''
         if self.is_stream_mode:
-            generation_mode = "stream"
+            generation_mode = 'stream'
 
-        output_file_name = (
-            f"{self.model_name}_{self.file_name}_{self.num_workers}_{generation_mode}"
-        )
+        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse],
+        individual_responses: List[LLMResponse]
+        | List[Tuple[Dict[str, Any], str, RequestConfig]]
+        | Tuple[Dict[str, object], List[LLMResponse]],
     ) -> None:
-        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is setup as True
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is
+        setup as True
 
         Args:
             filename (str): The base name of the file to save the results to.
@@ -397,36 +391,40 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             individual_responses (List[LLMResponse]): A list of individual responses from the performance evaluation.
 
         Raises:
-            e: if an error happens when creating the output file related to prompts and completions, an error will be raised
+            e: if an error happens when creating the output file related to prompts and completions, an error will be
+            raised
         """
 
         super().save_results(filename, summary, individual_responses)
 
         # If specified, save the llm responses to output file
         if self.save_response_texts:
-
             # Create response texts file name
-            response_texts_file_name = f"{filename}_response_texts"
+            response_texts_file_name = f'{filename}_response_texts'
             results_dir = Path(self.results_dir)
 
             # Save response texts
             try:
-                self.response_texts_file_path = (
-                    f"{results_dir}/{response_texts_file_name}.jsonl"
-                )
-                with open(self.response_texts_file_path, "w") as f:
+                self.response_texts_file_path = f'{results_dir}/{response_texts_file_name}.jsonl'
+                with open(self.response_texts_file_path, 'w') as f:
                     for response in individual_responses:
-                        output_json = {
-                            "prompt": response.request_config.prompt_tuple[0],
-                            "completion": str(response.response_text),
-                        }
-                        f.write(json.dumps(output_json))
-                        f.write("\n")
+                        if isinstance(response, LLMResponse):
+                            output_json = {
+                                'prompt': response.request_config.prompt_tuple[0],
+                                'completion': str(response.response_text),
+                            }
+                            f.write(json.dumps(output_json))
+                            f.write('\n')
             except Exception as e:
-                logger.error("ERROR SAVING LLM OUTPUTS")
+                logger.error('ERROR SAVING LLM OUTPUTS')
                 raise e
 
-    def run_benchmark(self, sampling_params: Dict[str, Any]):
+    def run_benchmark(
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
@@ -448,10 +446,14 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 summary,
                 individual_responses,
             )
+        return None
 
     def get_token_throughput_latencies(
         self, sampling_params: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[dict[str, object], List[LLMResponse]]
+    ):
         """This function is used to measure the token throughput and latencies.
 
         Args:
@@ -464,8 +466,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             Exception: If an unexpected error happens when executing requests.
 
         Note:
-            This function uses threading to send requests concurrently. It splits the total request count evenly among the threads.
-            If there is a remainder, it assigns one extra request to the first threads.
+            This function uses threading to send requests concurrently. It splits the total request count evenly among
+            the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
         random.seed(11111)
         start_time = time.monotonic()
@@ -476,27 +478,21 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get batch size details
         total_request_count = len(request_configs)
-        requests_per_thread = total_request_count // self.num_workers
-        remainder = total_request_count % self.num_workers
+        requests_per_thread = total_request_count // self.num_concurrent_requests
+        remainder = total_request_count % self.num_concurrent_requests
 
         request_config_batches = []
         idx = 0
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (
-                1 if worker < remainder else 0
-            )
-            request_config_batch = request_configs[
-                idx : idx + num_requests_for_thread
-            ].copy()
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
+            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
         threads = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = stqdm(total=total_request_count,
-                             desc="Running Requests",
-                             mininterval=1)
-        #progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         for request_config_batch in request_config_batches:
             thread = threading.Thread(
@@ -509,7 +505,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 ),
             )
             threads.append(thread)
-            add_script_run_ctx(thread) # Give Streamlit context to thread
+            add_script_run_ctx(thread)  # Give Streamlit context to thread
             thread.start()
 
         for thread in threads:
@@ -518,14 +514,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
             raise Exception(
-                f"Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}. Additional message: {llm_responses[0].metrics['error_msg']}"
+                f"""Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}.
+                  Additional message: {llm_responses[0].metrics['error_msg']}"""
             )
 
         end_time = time.monotonic()
-        logger.info("Tasks Executed!")
-        logger.info(
-            f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
-        )
+        logger.info('Tasks Executed!')
+        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
         results = self.build_metrics_summary(
             metrics=[response.metrics for response in llm_responses],
             start_time=start_time,
@@ -533,25 +528,24 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         )
 
         metadata = {
-            "model": self.model_name,
-            "num_concurrent_workers": self.num_workers,
-            "results": results,
-            "request_count": len(self.dataset),
-            "sampling_params": sampling_params,
+            'model': self.model_name,
+            'num_concurrent_requests': self.num_concurrent_requests,
+            'results': results,
+            'request_count': len(self.dataset),
+            'sampling_params': sampling_params,
         }
 
         return metadata, llm_responses
 
-    def build_request_configs(
-        self, sampling_params: Dict[str, Any]
-    ) -> List[RequestConfig]:
-        """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and builds a
-        RequestConfig object for each data point. The RequestConfig object contains the necessary information to send a
-        request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint, generation mode,
-        and number of concurrent workers. The method returns a list of these RequestConfig objects.
+    def build_request_configs(self, sampling_params: Dict[str, Any]) -> List[RequestConfig]:
+        """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and
+        builds a RequestConfig object for each data point. The RequestConfig object contains the necessary information
+        to send a request to the LLM API, including the model name, prompt, sampling parameters, LLM API endpoint,
+        generation mode, and number of concurrent requests. The method returns a list of these RequestConfig objects.
 
         Args:
-            sampling_params (Dict[str, Any]): A dictionary of sampling parameters to be passed into the RequestConfig constructor.
+            sampling_params (Dict[str, Any]): A dictionary of sampling parameters to be passed into the RequestConfig
+            constructor.
 
         Returns:
             List[RequestConfig]: A list of RequestConfig objects, each representing a request to the LLM API.
@@ -560,18 +554,19 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for data_point in self.dataset:
-
+        for request_idx, data_point in enumerate(self.dataset):
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
             prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
 
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
+                api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
@@ -594,69 +589,66 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
 
-        sys_prompt_template = "You are a helpful assistant that provides concise and helpful assistance on a variety of subjects"
+        sys_prompt_template = (
+            'You are a helpful assistant that provides concise and helpful assistance on a variety of subjects'
+        )
 
         # Specific prompt templating for mistral models
-        if utils.MODEL_TYPE_IDENTIFIER["mistral"] in self.model_name.lower().replace(
-            "-", ""
-        ):
-            prompt = "[INST]" + raw_prompt + "[/INST]"
+        if llmperf_utils.MODEL_TYPE_IDENTIFIER['mistral'] in self.model_name.lower().replace('-', ''):
+            prompt = '[INST]' + raw_prompt + '[/INST]'
 
         # Specific prompt templating for Llama-3 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama3"] in self.model_name.lower().replace(
-            "-", ""
-        ):
-            system_prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>"
+        elif llmperf_utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model_name.lower().replace('-', ''):
+            system_prompt = (
+                f'<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>'
+            )
 
             prompt = (
                 system_prompt
-                + "<|start_header_id|>user<|end_header_id|>"
+                + '<|start_header_id|>user<|end_header_id|>'
                 + raw_prompt
-                + "<|eot_id|><|start_header_id|>assistant<|end_header_id|>Answer:"
+                + '<|eot_id|><|start_header_id|>assistant<|end_header_id|>Answer:'
             )
 
         # Specific prompt templating for Llama-2 models
-        elif utils.MODEL_TYPE_IDENTIFIER["llama2"] in self.model_name.lower().replace(
-            "-", ""
-        ):
-            system_prompt = f"[INST]<<SYS>>{sys_prompt_template}<</SYS>>"
-            prompt = system_prompt + raw_prompt + "[/INST]"
+        elif llmperf_utils.MODEL_TYPE_IDENTIFIER['llama2'] in self.model_name.lower().replace('-', ''):
+            system_prompt = f'[INST]<<SYS>>{sys_prompt_template}<</SYS>>'
+            prompt = system_prompt + raw_prompt + '[/INST]'
 
         # Prompt templating for other models (Deepseek, Solar, Eeve)
         else:
-            system_prompt = f"{sys_prompt_template}"
+            system_prompt = f'{sys_prompt_template}'
             prompt = system_prompt + raw_prompt
 
         return (prompt, self.get_token_length(prompt))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-    def create_output_filename(
-        self, num_input_tokens: int, num_output_tokens: int
-    ) -> str:
+    def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
 
         Returns:
             str: Filename for the synthetic benchmark run.
         """
-        generation_mode = ""
+        generation_mode = ''
         if self.is_stream_mode:
-            generation_mode = "stream"
+            generation_mode = 'stream'
 
-        output_file_name = f"{self.model_name}_{num_input_tokens}_{num_output_tokens}_{self.num_workers}_{generation_mode}"
+        output_file_name = (
+            f'{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
+        )
         return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
-        self,
-        num_input_tokens: int,
-        num_output_tokens: int,
-        num_requests: int,
-        sampling_params: Dict[str, Any],
-    ) -> tuple:
+        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+    ) -> (
+        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
+        | None
+    ):
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:
@@ -672,10 +664,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             summary (dict): structure with performance metrics and stats for the run
             individual_responses (tuple): list of performance metrics per request
         """
+        num_input_tokens = kwargs.get('num_input_tokens', 1000)
+        num_output_tokens = kwargs.get('num_output_tokens', 10)
+        num_requests = kwargs.get('num_requests', 1)
         if num_input_tokens < 40:
             raise ValueError(
-                "The minimum number of input tokens that will be sent is 40"
-                " because of the prompting logic right now"
+                'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
             )
 
         # Calculate performance metrics individually and summary
@@ -692,13 +686,108 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return summary, individual_responses
 
+    def add_metric_after_key(
+        self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str
+    ) -> Dict[str, Any]:
+        """Adds a new metric (dict key and value) to a dict after an specific key
+
+        Args:
+            metrics_dict (dict): dictionary to add new metric
+            new_key (str): new key
+            new_value (float): new value for key
+            after_key (str): key for reference to add new key after
+
+        Returns:
+            dict: dictionary with new key and value added
+        """
+
+        # Create a new dictionary
+        new_metrics_dict = {}
+
+        for key, value in metrics_dict.items():
+            # Copy the key-value pair to the new dictionary
+            new_metrics_dict[key] = value
+
+            # Check if this is the key after which to insert the new key-value pair
+            if key == after_key:
+                new_metrics_dict[new_key] = new_value
+
+        return new_metrics_dict
+
+    def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
+        """Logic to calculate switching time. Based on the first request TTFT,
+        if this value is significantly larger (more than 3 standard deviations) than the average TTFT
+        of the rest requests, then switching time will be the difference between first TTFT
+        and average of the coming TTFTs.
+
+        Args:
+            llm_responses (list[LLMResponse]): list of LLMResponse objects
+
+        Returns:
+            list[LLMResponse]: list of LLMResponse objects including switching time
+        """
+        # collect necessary information for switching time calculation
+        responses_ttfts = []
+
+        for llm_response in llm_responses:
+            if pd.isnull(llm_response.metrics['error_code']):
+                request_idx = llm_response.request_config.request_idx
+                start_time = llm_response.metrics['start_time']
+                server_ttft_s = llm_response.metrics['server_ttft_s']
+                responses_ttfts.append(
+                    {'request_idx': request_idx, 'start_time': start_time, 'server_ttft_s': server_ttft_s}
+                )
+
+        df_valid_responses = pd.DataFrame(responses_ttfts)
+
+        # transforming str to date time for sorting
+        df_valid_responses['start_time'] = pd.to_datetime(df_valid_responses['start_time'])
+        df_valid_responses = df_valid_responses.sort_values(by=['start_time'])
+
+        # initialize a column for the switching time
+        df_valid_responses['server_switching_time'] = None
+
+        # calculate switching time
+        first_ttft = df_valid_responses['server_ttft_s'].iloc[0]
+        mean_ttft = df_valid_responses['server_ttft_s'].iloc[1:].mean()
+        std_ttft = df_valid_responses['server_ttft_s'].iloc[1:].std()
+        std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
+
+        switching_time = first_ttft - mean_ttft
+        outlier_switching_time = None
+
+        if switching_time > (mean_ttft + 3 * std_ttft):
+            outlier_switching_time = switching_time
+            df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
+
+        # assign switching time back to request object
+        for llm_response in llm_responses:
+            metrics = llm_response.metrics
+
+            if llm_response.request_config.request_idx == df_valid_responses.head(1)['request_idx'].values[0]:
+                server_switching_time = df_valid_responses.head(1)['server_switching_time'].values[0]
+            else:
+                server_switching_time = None
+
+            llm_response.metrics = self.add_metric_after_key(
+                metrics,
+                new_key='server_switching_time',
+                new_value=server_switching_time,
+                after_key=common_metrics.TTFT_SERVER,
+            )
+
+        return llm_responses
+
     def get_token_throughput_latencies(
         self,
         num_input_tokens: int,
         num_output_tokens: int,
         num_requests: int,
-        sampling_params: dict,
-    ) -> Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]:
+        sampling_params: Dict[str, Any],
+    ) -> (
+        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
+        | Tuple[Dict[str, object], list[LLMResponse]]
+    ):
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
         and the specified number of requests.
@@ -711,7 +800,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         Returns:
             metadata (dict): A dictionary containing the results of the benchmark,
-                            including the model name, number of concurrent workers,
+                            including the model name, number of concurrent requests,
                             results, number of input tokens, number of output tokens,
                             and additional sampling parameters.
             completed_requests (list): A list of completed requests.
@@ -723,38 +812,30 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         start_time = time.monotonic()
 
         # Build the request config objects that are to be sent to the LLM API endpoint
-        request_configs = self.build_request_configs(
-            num_requests, num_input_tokens, num_output_tokens, sampling_params
-        )
+        request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = (total_request_count) // self.num_workers
-        remainder = (total_request_count) % self.num_workers
+        requests_per_thread = (total_request_count) // self.num_concurrent_requests
+        remainder = (total_request_count) % self.num_concurrent_requests
 
         # Set up empty batch array and index for a sliding window of request selection
         request_config_batches = []
         idx = 0
 
-        # Create batches of requests for each worker
-        for worker in range(self.num_workers):
-            num_requests_for_thread = requests_per_thread + (
-                1 if worker < remainder else 0
-            )
-            request_config_batch = request_configs[
-                idx : idx + num_requests_for_thread
-            ].copy()
+        # Create batches of requests for each concurrent request
+        for concurrent_requests in range(self.num_concurrent_requests):
+            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
+            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx += num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
         # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
         # completed requests respectively
-        threads = []
-        llm_responses = []
-        progress_bar = stqdm(total=total_request_count,
-                             desc="Running Requests",
-                             mininterval=1)
-        #progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        threads: List[threading.Thread] = []
+        llm_responses: List[LLMResponse] = []
+        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
@@ -768,7 +849,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 ),
             )
             threads.append(thread)
-            add_script_run_ctx(thread) # Add Streamlit context to thread
+            add_script_run_ctx(thread)  # Add Streamlit context to thread
             thread.start()
 
         # Wait for all threads to complete
@@ -777,17 +858,40 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             thread.join()
 
         # Error handling
-        if llm_responses[0].metrics["error_code"]:
+        error_codes = [llm_response.metrics['error_code'] for llm_response in llm_responses]
+
+        if not any([pd.isnull(error_code) for error_code in error_codes]):
+            unique_error_codes = list(
+                set(
+                    [
+                        llm_response.metrics['error_code']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            unique_error_msgs = list(
+                set(
+                    [
+                        llm_response.metrics['error_msg']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            nl = '\n'
             raise Exception(
-                f"Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}. Additional message: {llm_responses[0].metrics['error_msg']}"
+                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""
+                + f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
             )
 
         # Capture end time and notify user
         end_time = time.monotonic()
-        logger.info("Tasks Executed!")
-        logger.info(
-            f"Results for token benchmark for {self.model_name} queried with the {self.llm_api} api."
-        )
+        logger.info('Tasks Executed!')
+        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+
+        # Calculate switching time
+        llm_responses = self.calculate_switching_time(llm_responses)
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
@@ -798,12 +902,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Construct metadata payload to be returned
         metadata = {
-            "model": self.model_name,
-            "num_concurrent_workers": self.num_workers,
-            "results": results,
-            "num_input_tokens": num_input_tokens,
-            "num_output_tokens": num_output_tokens,
-            "additional_sampling_params": sampling_params,
+            'model': self.model_name,
+            'num_concurrent_requests': self.num_concurrent_requests,
+            'results': results,
+            'num_input_tokens': num_input_tokens,
+            'num_output_tokens': num_output_tokens,
+            'additional_sampling_params': sampling_params,
         }
 
         return metadata, llm_responses
@@ -813,12 +917,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_requests: int,
         input_token_count: int,
         output_token_count: int,
-        sampling_params: dict,
+        sampling_params: Dict[str, Any],
     ) -> List[RequestConfig]:
-        """Builds a list of request configuration objects used to send requests to the LLM. It iterates through the specified
-        number of requests, builds an input prompt for each request, updates the sampling parameters with the maximum number
-        of tokens to generate, and then creates the request configuration object. The request configurations are then returned
-        as a list.
+        """Builds a list of request configuration objects used to send requests to the LLM. It iterates through the
+        specified number of requests, builds an input prompt for each request, updates the sampling parameters with
+        the maximum number of tokens to generate, and then creates the request configuration object. The request
+        configurations are then returned as a list.
 
         Args:
             num_requests (int): The number of request configurations to build.
@@ -827,37 +931,38 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             sampling_params (dict): A dictionary of sampling parameters for the LLM.
 
         Returns:
-            List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling parameters,
-            LLM API, generation mode, and number of concurrent workers.
+            List[RequestConfig]: A list of request configurations, each containing the model name, prompt, sampling
+            parameters, LLM API, generation mode, and number of concurrent requests.
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
 
         # Iterate through data points and build a request config for each
-        for _ in range(num_requests):
-
+        for request_idx in range(num_requests):
             # Build input prompt to be sent in LLM request
             prompt_tuple = self.build_prompt(input_token_count)
 
             # Add max_tokens_to_generate to `sampling_params` dictionary
-            if self.llm_api == "sncloud":
+            if self.llm_api == 'sncloud':
                 updated_sampling_params = {
-                    "max_tokens": output_token_count,
+                    'max_tokens': output_token_count,
                 }
             else:
                 updated_sampling_params = {
-                    "max_tokens_to_generate": output_token_count,
+                    'max_tokens_to_generate': output_token_count,
                 }
             updated_sampling_params.update(sampling_params)
 
             # Create request config object
             request_config = RequestConfig(
+                request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
+                api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
-                num_concurrent_workers=self.num_workers,
+                num_concurrent_requests=self.num_concurrent_requests,
             )
 
             request_configs.append(request_config)
@@ -876,13 +981,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         # Load from prompt files
-        prompt_template = yaml.safe_load(
-            PromptTemplate.from_file(USER_PROMPT_PATH).template
-        )["template"]
+        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
 
         #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(
-            prompt_template, num_input_tokens
-        )
+        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
 
         return (full_input_prompt, self.get_token_length(full_input_prompt))

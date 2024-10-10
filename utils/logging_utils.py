@@ -1,8 +1,8 @@
-import os
+import copy
 import json
 import logging
+import os
 from functools import wraps
-import copy
 from typing import Any, Callable
 
 # Set up logging configuration
@@ -26,7 +26,7 @@ def log_method(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @wraps(func)
-    def wrapper(self, *args: Any, **kwargs: Any) -> Any:
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
         """
         Wrapper function to log method calls and save to JSON file.
 

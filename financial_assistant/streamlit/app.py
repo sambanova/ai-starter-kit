@@ -26,6 +26,7 @@ from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import (
     clear_cache,
     create_temp_dir_with_subdirs,
+    delete_all_subdirectories,
     display_directory_contents,
     get_blue_button_style,
     initialize_session,
@@ -87,20 +88,22 @@ def main() -> None:
                 css_styles=get_blue_button_style(),
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
-                    save_credentials('', '', prod_mode)
+                    save_credentials('', '', prod_mode)  # type: ignore
                     streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
                     streamlit.rerun()
 
         # Create the cache and its main subdirectories
         if are_credentials_set() and not os.path.exists(streamlit.session_state.cache_dir):
+            # List the main cache subdirectories
+            subdirectories = [
+                streamlit.session_state.source_dir,
+                streamlit.session_state.pdf_sources_directory,
+                streamlit.session_state.pdf_generation_directory,
+            ]
+
             if prod_mode:
                 # In production mode
-                subdirectories = [
-                    streamlit.session_state.source_dir,
-                    streamlit.session_state.pdf_sources_directory,
-                    streamlit.session_state.pdf_generation_directory,
-                ]
                 create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
                 # In production, schedule deletion after EXIT_TIME_DELTA minutes
@@ -111,11 +114,6 @@ def main() -> None:
 
             else:
                 # In development mode
-                subdirectories = [
-                    streamlit.session_state.source_dir,
-                    streamlit.session_state.pdf_sources_directory,
-                    streamlit.session_state.pdf_generation_directory,
-                ]
                 create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
         # Custom button to exit the app in prod mode
@@ -135,7 +133,7 @@ def main() -> None:
                     # Delete the cache
                     clear_cache(delete=True)
                     # Clear the SambaNova credentials
-                    save_credentials('', '', prod_mode)
+                    save_credentials('', '', prod_mode)  # type: ignore
 
                     streamlit.success(r':green[The chat history has been cleared.]')
                     streamlit.success(r':green[The cache has been deleted.]')
@@ -175,6 +173,14 @@ def main() -> None:
                 ):
                     try:
                         clear_cache(delete=False)
+                        # List the main cache subdirectories
+                        subdirectories = [
+                            streamlit.session_state.source_dir,
+                            streamlit.session_state.pdf_sources_directory,
+                            streamlit.session_state.pdf_generation_directory,
+                        ]
+                        delete_all_subdirectories(directory=streamlit.session_state.cache_dir, exclude=subdirectories)
+
                         streamlit.sidebar.success('All files have been deleted.')
                     except:
                         pass

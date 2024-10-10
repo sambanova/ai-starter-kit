@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import sys
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -11,8 +11,8 @@ from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_experimental.text_splitter import SemanticChunker
+from pydantic import BaseModel, Field
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,7 +51,7 @@ class SyntheticData(BaseModel):
 class SyntheticDataGen:
     """Class for generating synthetic data"""
 
-    def __init__(self, config_file: str = None) -> None:
+    def __init__(self, config_file: Optional[str] = None) -> None:
         """
         Initialize SyntheticDataGen class with configuration parameters.
 
@@ -75,7 +75,7 @@ class SyntheticDataGen:
         self.generation_config = config['generation']
         self.splitting_config = config['splitting']
 
-    def load_config(self, config_file: str) -> None:
+    def load_config(self, config_file: str) -> Any:
         """
         Load configuration parameters from a YAML file.
 
@@ -213,7 +213,7 @@ class SyntheticDataGen:
                     include_references=include_references,
                 )
                 lines = self.qa_pairs_to_prompt_completion(qa_pairs)
-                self.update_jsonl(out_file, lines)
+                self.update_jsonl(out_file, lines) # type: ignore
                 logging.info(f'Added {amount} qa pairs to {out_file}')
             except Exception as e:
                 logging.warning(f'Failed to generate qa pairs, error: \n {e} \n for document: "{document}", \nskipping')
@@ -221,8 +221,13 @@ class SyntheticDataGen:
         self.remove_repeated_lines_in_place(out_file)
 
     def generate_qa_pairs(
-        self, context: str, amount: int = 5, include_context=True, include_thoughts=True, include_references=True
-    ) -> dict:
+        self,
+        context: str,
+        amount: int = 5,
+        include_context: bool = True,
+        include_thoughts: bool = True,
+        include_references: bool = True,
+    ) -> List[Dict[str, Any]]:
         """
         Generate question answer (context, thought, references) pairs for a given context using the LLM.
 

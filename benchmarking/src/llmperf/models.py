@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 from pydantic import BaseModel
 
 
@@ -12,28 +13,30 @@ class RequestConfig(BaseModel):
             For more information see the Router app's documentation for the completions
         llm_api: The name of the LLM API to send the request to.
         mode: API mode (stream or batch)
-        num_concurrent_workers: number of concurrent workers
+        num_concurrent_requests: number of concurrent requests
         metadata: Additional metadata to attach to the request for logging or validation purposes.
     """
 
+    request_idx: int
     model: str
     prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
+    api_variables: Dict[str, Any] = {}
     is_stream_mode: Optional[bool] = None
-    num_concurrent_workers: int = None
+    num_concurrent_requests: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
 class LLMResponse(BaseModel):
     """The response object created from a response from one of the SambaStudio LLM APIs
-    
+
     Args:
         metrics: Dictionary containing the throughput metrics from the endpoint
         response_text: The generated text from the LLM
         request_config: The associated request config
     """
-    
-    metrics: Dict
+
+    metrics: Dict[str, Any]
     response_text: str
     request_config: RequestConfig

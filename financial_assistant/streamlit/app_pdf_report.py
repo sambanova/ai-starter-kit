@@ -11,7 +11,7 @@ from financial_assistant.src.tools import get_logger
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_assistant.streamlit.utilities_methods import attach_tools, handle_userinput
+from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
 
 logger = get_logger()
 
@@ -111,7 +111,7 @@ def include_pdf_report() -> None:
         data_paths['history'] = streamlit.session_state.history_path
 
     # Add title name (optional)
-    title_name = streamlit.text_input(label='Title Name', value='Financial Report')
+    title_name = streamlit.text_input(label='Title Name', value=DEFAULT_PDF_TITLE)
 
     # Include summary for each section
     include_summary = streamlit.checkbox(
@@ -128,7 +128,7 @@ def include_pdf_report() -> None:
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             report_name = title_name.lower().replace(' ', '_') + '.pdf'
 
-            # generate_pdf_report(data)
+            # Generate the PDF report
             pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
 
             # Embed PDF to display it:
@@ -220,7 +220,8 @@ def include_pdf_report() -> None:
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file in uploaded_files:
                     if not isinstance(file, UploadedFile):
-                        streamlit.error(f'{file} is not instance of UploadedFile.')
+                        logger.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
+                        streamlit.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
                     with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
                         f.write(file.getbuffer())
 
@@ -234,12 +235,14 @@ def include_pdf_report() -> None:
         # Use PDF reports for RAG
         if streamlit.button('Use report for RAG'):
             if len(user_request) == 0:
-                streamlit.error('Please enter your query.')
+                logger.error('No query entered.')
+                streamlit.error('No query entered.')
             else:
                 if use_generated_pdf and not upload_your_pdf:
                     # Check file selection
                     if len(streamlit.session_state.selected_files) == 0:
-                        streamlit.error('No file has been selected.')
+                        logger.error('No file selected.')
+                        streamlit.error('No file selected.')
 
                     # Retrieve the list of selected files
                     selected_files = streamlit.session_state.selected_files
@@ -264,7 +267,8 @@ def include_pdf_report() -> None:
                 elif upload_your_pdf and not use_generated_pdf:
                     # Check file upload
                     if len(streamlit.session_state.uploaded_files) == 0:
-                        streamlit.error('No file has been uploaded.')
+                        logger.error('No file uploaded.')
+                        streamlit.error('No file uploaded.')
 
                     # Retrieve the list of uploaded files
                     uploaded_file_names = streamlit.session_state.uploaded_files
@@ -293,7 +297,7 @@ def include_pdf_report() -> None:
 
 
 def handle_pdf_generation(
-    title_name: str = 'Financial Report',
+    title_name: str = DEFAULT_PDF_TITLE,
     report_name: str = 'financial_report',
     data_paths: Dict[str, str] = dict(),
     include_summary: bool = False,
@@ -323,15 +327,17 @@ def handle_pdf_generation(
         clear_directory(streamlit.session_state.pdf_sources_directory)
 
     # Derive the output file name
-    output_file = streamlit.session_state.pdf_generation_directory + report_name
+    output_file = os.path.join(streamlit.session_state.pdf_generation_directory, report_name)
 
     # Check that at least one data source is available
     if not any([data_paths[key] for key in data_paths]):
-        streamlit.error('Select at least one data source.')
+        logger.error('No data source selected.')
+        streamlit.error('No data source selected.')
         return None
 
-    # Assert that at least one data source exists as a file
+    # Ensure that at least one data source exists as a file
     if not any([os.path.isfile(data_paths[key]) for key in data_paths]):
+        logger.error('No data source available.')
         streamlit.error('No data source available.')
         return None
 
@@ -419,13 +425,13 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
         The LLM response using RAG from the selected or uploaded files.
 
     Raises;
-        TypeError: If the LLM response does not conform to the return type.
+        Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
     streamlit.session_state.tools = ['pdf_rag']
 
-    # Attach the tools for the LLM to use
-    attach_tools(streamlit.session_state.tools)
+    # Set the tools for the LLM to use
+    set_llm_tools(streamlit.session_state.tools)
 
     # Compose the user request
     user_request = f"""
@@ -439,6 +445,7 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
     response = handle_userinput(user_question, user_request)
 
     # Check the final answer of the LLM
-    assert isinstance(response, str), TypeError(f'Invalid response: {response}.')
+    if not isinstance(response, str):
+        raise TypeError(f'Invalid response: {response}.')
 
     return response

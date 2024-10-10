@@ -7,8 +7,8 @@ import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import StructuredTool, Tool
+from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.tools import get_logger, time_llm
@@ -53,21 +53,24 @@ class SambaNovaLLM:
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
-        assert (
-            isinstance(tools, list)
-            and all(isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools)
-        ) or tools is None, TypeError('tools must be a list of StructuredTool or Tool objects.')
+        if tools is not None:
+            if not (
+                isinstance(tools, list)
+                and all(isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools)
+            ):
+                raise TypeError('tools must be a list of StructuredTool or Tool objects.')
         self.tools = tools
 
         # Set the tools schemas
-        assert isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))) or default_tool is None, TypeError(
-            'Default tool must be a StructuredTool.'
-        )
+        if default_tool is not None:
+            if not isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))):
+                raise TypeError('Default tool must be a StructuredTool.')
         tools_schemas = self.get_tools_schemas(tools)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
         # Set the system prompt
-        assert isinstance(system_prompt, str), TypeError('System prompt must be a string.')
+        if not isinstance(system_prompt, str):
+            raise TypeError('System prompt must be a string.')
         self.system_prompt = system_prompt
 
     def get_llm_config_info(self, config_path: str) -> Any:
@@ -83,7 +86,8 @@ class SambaNovaLLM:
         Raises:
             TypeError: If `config_path` not found or `config_path` is not a string.
         """
-        assert isinstance(config_path, str), TypeError('Config path must be a string.')
+        if not isinstance(config_path, str):
+            raise TypeError('Config path must be a string.')
 
         # Read config file
         with open(config_path, 'r') as yaml_file:
@@ -97,17 +101,23 @@ class SambaNovaLLM:
     def check_llm_info(self) -> None:
         """Check the llm information."""
 
-        assert isinstance(self.llm_info, dict), TypeError('LLM information must be a dictionary.')
-        assert all(isinstance(key, str) for key in self.llm_info), TypeError('LLM information keys must be strings')
+        if not isinstance(self.llm_info, dict):
+            raise TypeError('LLM information must be a dictionary.')
+        if not all(isinstance(key, str) for key in self.llm_info):
+            raise TypeError('LLM information keys must be strings')
 
-        assert isinstance(self.llm_info['api'], str), TypeError('LLM `api` must be a string.')
-        assert isinstance(self.llm_info['coe'], bool), TypeError('LLM `coe` must be a boolean.')
-        assert isinstance(self.llm_info['do_sample'], bool), TypeError('LLM `do_sample` must be a boolean.')
-        assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError(
-            'LLM `max_tokens_to_generate` must be an integer.'
-        )
-        assert isinstance(self.llm_info['temperature'], float), TypeError('LLM `temperature` must be a float.')
-        assert isinstance(self.llm_info['select_expert'], str), TypeError('LLM `select_expert` must be a string.')
+        if not isinstance(self.llm_info['api'], str):
+            raise TypeError('LLM `api` must be a string.')
+        if not isinstance(self.llm_info['coe'], bool):
+            raise TypeError('LLM `coe` must be a boolean.')
+        if not isinstance(self.llm_info['do_sample'], bool):
+            raise TypeError('LLM `do_sample` must be a boolean.')
+        if not isinstance(self.llm_info['max_tokens_to_generate'], int):
+            raise TypeError('LLM `max_tokens_to_generate` must be an integer.')
+        if not isinstance(self.llm_info['temperature'], float):
+            raise TypeError('LLM `temperature` must be a float.')
+        if not isinstance(self.llm_info['select_expert'], str):
+            raise TypeError('LLM `select_expert` must be a string.')
 
     def set_llm(self) -> LLM:
         """
@@ -118,18 +128,21 @@ class SambaNovaLLM:
 
         Raises:
             ValueError: If the LLM API is not one of `sncloud` or `sambastudio`.
+            TypeError: If the LLM API parameters are not of the expected type.
         """
+        # Check config parameters
+        if not isinstance(self.llm_info['api'], str):
+            raise TypeError(f'LLM API must be a string. Got type{type(self.llm_info["api"])}')
+
         if self.llm_info['api'] in ['sncloud', 'sambastudio']:
-            # Check config parameters
-            assert isinstance(self.llm_info['api'], str), ValueError(
-                'LLM API must be either `sncloud` or `sambastudio`.'
-            )
-            assert isinstance(self.llm_info['coe'], bool), TypeError('`coe` must be a boolean.')
-            assert isinstance(self.llm_info['do_sample'], bool), TypeError('`do_sample` must be a boolean.')
-            assert isinstance(self.llm_info['max_tokens_to_generate'], int), TypeError(
-                '`max_tokens_to_generate` must be an integer.'
-            )
-            assert isinstance(self.llm_info['select_expert'], str), TypeError('`select_expert` must be a string.')
+            if not isinstance(self.llm_info['coe'], bool):
+                raise TypeError('`coe` must be a boolean.')
+            if not isinstance(self.llm_info['do_sample'], bool):
+                raise TypeError('`do_sample` must be a boolean.')
+            if not isinstance(self.llm_info['max_tokens_to_generate'], int):
+                raise TypeError('`max_tokens_to_generate` must be an integer.')
+            if not isinstance(self.llm_info['select_expert'], str):
+                raise TypeError('`select_expert` must be a string.')
 
             # Get the Sambanova API key
             sambanova_api_key = get_sambanova_credentials()
@@ -208,7 +221,8 @@ class SambaNovaLLM:
             TypeError: If `query` is not of type str.
         """
         # Checks the inputs
-        assert isinstance(query, str), TypeError(f'Query must be a string. Got {type(query)}.')
+        if not isinstance(query, str):
+            raise TypeError(f'Query must be a string. Got {type(query)}.')
 
         # Find the relevant tool
         invoked_tool = self.find_relevant_tool(query)
@@ -238,6 +252,9 @@ class SambaNovaLLM:
 
         Returns:
             The relevant tool to be invoked based on the query.
+
+        Raises:
+            Exception: If the LLM response does not provide exactly one tool.
         """
         # JSON output parser
         function_calling_parser = JsonOutputParser()
@@ -256,19 +273,27 @@ class SambaNovaLLM:
         for i in range(MAX_RETRIES):
             try:
                 invoked_tools = chain_function_calling.invoke({'tools': self.tools_schemas, 'user_query': query})
-                assert invoked_tools is not None, f'Expected a tool to call.'
-                assert len(invoked_tools) == 1, f'Expected one tool, got {len(invoked_tools)}.'
+                if invoked_tools is None:
+                    raise Exception(f'Expected a tool to call.')
+                if len(invoked_tools) != 1:
+                    raise Exception(f'Expected one tool, got {len(invoked_tools)}.')
                 break
             except:
                 continue
 
         try:
-            logger.info(invoked_tools[0])
+            logger.info(f'Invoked tool: {invoked_tools[0]["name"]}')
+            if not isinstance(invoked_tools, list) or len(invoked_tools) != 1:
+                raise Exception(f'Expected one tool to call.')
+
+            logger.info('Parameters:')
+            parameter_dict = invoked_tools[0]['parameters']
+            for parameter_key, parameter_value in parameter_dict.items():
+                logger.info(f'{parameter_key}: {parameter_value}')
         except:
+            logger.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
             streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
             streamlit.stop()
-
-        assert isinstance(invoked_tools, list) and len(invoked_tools) == 1, f'Expected one tool to call.'
 
         invoked_tool = invoked_tools[0]
 
@@ -286,5 +311,6 @@ def get_sambanova_credentials() -> str:
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-    assert isinstance(sambanova_api_key, str), 'SAMBANOVA_API_KEY must be a string.'
+    if not isinstance(sambanova_api_key, str):
+        raise TypeError('SAMBANOVA_API_KEY must be a string.')
     return sambanova_api_key
