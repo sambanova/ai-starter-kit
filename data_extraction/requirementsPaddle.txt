@@ -89,6 +89,7 @@ pdf2image==1.17.0
 pexpect==4.9.0
 pip==23.0.1
 platformdirs==4.1.0
+pre-commit==4.0.1
 premailer==3.10.0
 prompt-toolkit==3.0.43
 protobuf==4.25.2

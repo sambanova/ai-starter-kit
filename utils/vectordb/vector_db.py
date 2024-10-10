@@ -124,7 +124,7 @@ class VectorDb:
 
     def get_text_chunks(
         self, docs: List[Any], chunk_size: int, chunk_overlap: int, meta_data: Optional[List[Any]] = None
-        ) -> List[Any]:
+    ) -> List[Any]:
         """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
 
         Args:
@@ -246,7 +246,7 @@ class VectorDb:
     ) -> Any:
         vector_store: FAISS | Qdrant | Chroma
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True) #type: ignore
+            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)  # type: ignore
         elif db_type == 'chroma':
             if collection_name:
                 vector_store = Chroma(
@@ -273,7 +273,7 @@ class VectorDb:
         output_db: Optional[str] = None,
     ) -> Any:
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True) # type: ignore
+            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)  # type: ignore
             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
             vector_store.merge_from(new_vector_store)
             if output_db:

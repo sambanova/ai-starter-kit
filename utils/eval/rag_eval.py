@@ -397,7 +397,7 @@ class RAGEvaluator:
             # Log the bar chart for the current metric
             run.log(
                 {
-                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar( # type: ignore
+                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar(  # type: ignore
                         table,
                         'Evaluation Model',
                         'Value',

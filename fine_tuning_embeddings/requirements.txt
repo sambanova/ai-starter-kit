@@ -130,6 +130,7 @@ pgvector==0.2.5
 pillow==10.2.0
 platformdirs==4.2.0
 posthog==3.4.0
+pre-commit==4.0.1
 preshed==3.0.9
 prompt-toolkit==3.0.43
 protobuf==4.25.2
