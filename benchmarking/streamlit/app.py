@@ -36,15 +36,14 @@ def env_input_fields(mode: str, additional_env_vars: List[str] = []) -> Tuple[st
         api_key = st.text_input(
             'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
         )
-    else:  # SambaStudio
+    elif mode == 'SambaStudio':
         api_key = st.text_input(
             'SAMBASTUDIO API KEY', value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
         )
         for var in additional_env_vars:
-            if var == 'SAMBASTUDIO_BASE_URI':
-                additional_vars[var] = st.text_input(f'{var}', value='api/v2/predict/generic', type='password')
-            elif var != 'SAMBASTUDIO_API_KEY':
-                additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
+            additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
+    else:
+        raise Exception('Setup mode not supported.')
 
     return api_key, additional_vars
 
@@ -92,11 +91,7 @@ def main() -> None:
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio
                 additional_env_vars = [
-                    'SAMBASTUDIO_BASE_URL',
-                    'SAMBASTUDIO_BASE_URI',
-                    'SAMBASTUDIO_PROJECT_ID',
-                    'SAMBASTUDIO_ENDPOINT_ID',
-                    'SAMBASTUDIO_API_KEY',
+                    'SAMBASTUDIO_URL',
                 ]
                 st.session_state.llm_api = 'sambastudio'
 
