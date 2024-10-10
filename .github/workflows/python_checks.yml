@@ -36,7 +36,7 @@ jobs:
       # Dependencies
       - name: Install Dependencies
         run: |
-          python3 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r base-requirements.txt
           pip install ruff mypy
 
@@ -60,7 +60,7 @@ jobs:
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
-          python3 financial_assistant/tests/financial_assistant_test.py --suite github_pull_request
+          python financial_assistant/tests/financial_assistant_test.py --suite github_pull_request
 
       # Runs weekly, pre-merge, and manually
       - name: Run Unit Tests Weekly and Pre-Merge
@@ -68,4 +68,4 @@ jobs:
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
-          python3 financial_assistant/tests/financial_assistant_test.py
+          python financial_assistant/tests/financial_assistant_test.py

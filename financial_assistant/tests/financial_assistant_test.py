@@ -4,8 +4,8 @@ Financial Assistant Test Script.
 This script tests the functionality of the Financial Assistant starter kit using `unittest`.
 
 Usage:
-    python3 financial_assistant/tests/financial_assistant_test.py
-    python3 financial_assistant/tests/financial_assistant_test.py --suite suite_name
+    python financial_assistant/tests/financial_assistant_test.py
+    python financial_assistant/tests/financial_assistant_test.py --suite suite_name
 
 Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.

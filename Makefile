@@ -54,8 +54,8 @@ all:
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
 
 # Create a virtual environment and install dependencies
-.PHONY: init
-init: 
+.PHONY: venv-install
+venv-install: 
 	@make venv
 	@make install
 
