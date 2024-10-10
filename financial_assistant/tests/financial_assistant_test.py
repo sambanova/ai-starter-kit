@@ -637,10 +637,10 @@ def main_suite() -> unittest.TestSuite:
 
 
 def suite_github_pull_request() -> unittest.TestSuite:
-    """Test suite for GitHub actions on `pull_request`."""
+    """Test suite for GitHub actions on `pull_request`, i.e. to be run at every pull request commit."""
 
     # List all the test cases here in order of execution
-    suite_list = ['test_handle_stock_query']
+    suite_list = ['test_handle_stock_query']  # 3 LLM calls
 
     # Add all the tests to the suite
     suite = unittest.TestSuite()
@@ -708,14 +708,17 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
 
 
 if __name__ == '__main__':
+    # Add the argument --suite to run a specific suite of tests
     parser = argparse.ArgumentParser(description='Add a test suite for `financial_assistant`.')
     parser.add_argument('--suite', default='main', type=str, help='Suite for the tests.')
 
+    # Select the suite to run
     args = parser.parse_args()
     try:
         suite = suite_registry[args.suite]
     except KeyError as e:
         suite = suite_registry['main']
 
+    # Run the tests
     exit_status = main(suite)
     exit(exit_status)
