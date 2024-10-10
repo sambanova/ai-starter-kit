@@ -32,7 +32,7 @@ def env_input_fields(mode: str, additional_env_vars: List[str] = []) -> Tuple[st
 
     additional_vars = {}
 
-    if mode == 'SambaNova Cloud': 
+    if mode == 'SambaNova Cloud':
         api_key = st.text_input(
             'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
         )
@@ -43,7 +43,7 @@ def env_input_fields(mode: str, additional_env_vars: List[str] = []) -> Tuple[st
         for var in additional_env_vars:
             additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
     else:
-        raise Exception("Setup mode not supported.")
+        raise Exception('Setup mode not supported.')
 
     return api_key, additional_vars
 

@@ -226,8 +226,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
             self.base_url = self.request_config.api_variables['SAMBASTUDIO_URL']
             self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBASTUDIO_URL')
-            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
+            self.base_url = os.environ.get('SAMBASTUDIO_URL','')
+            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY','')
 
     # def _get_url(self) -> str:
     #     """Builds url for API call
@@ -244,8 +244,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
     #     url = f'{self.base_url}/{path}'
 
     #     return url
-    
-    def _get_url(self) -> Tuple[str, str]:
+
+    def _get_url(self) -> str:
         """
         Get streaming and non streaming URLs from the given URL
 
@@ -253,7 +253,6 @@ class SambaStudioAPI(BaseAPIEndpoint):
             url: string with sambastudio base or streaming endpoint url
 
         Returns:
-            base_url: string with url to do non streaming calls
             streaming_url: string with url to do streaming calls
         """
         if 'openai' in self.base_url:
@@ -415,7 +414,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
             self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
-            self.api_key = os.environ.get('SAMBANOVA_API_KEY')
+            self.api_key = os.environ.get('SAMBANOVA_API_KEY','')
 
     def _get_url(self) -> str:
         """Builds url for API call
