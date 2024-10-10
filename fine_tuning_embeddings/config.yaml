@@ -1,10 +1,10 @@
-api: "sambastudio" #  set either sambastudio or sncloud
+api: "sncloud" #  set either sambastudio or sncloud
 
 llm: 
     "do_sample": False
-    "temperature": 0.01
-    "streaming": False
+    "temperature": 0.7
+    "streaming": True
     "max_tokens_to_generate": 1200
-    "coe": True 
-    "select_expert": "Meta-Llama-3-70B-Instruct-8192"
+    "coe": False 
+    "select_expert": "Meta-Llama-3.1-8B-Instruct"
     "process_prompt": False
