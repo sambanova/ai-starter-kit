@@ -1,11 +1,12 @@
 repos:
 
+  # Official Ruff pre-commit hook
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
+  # Ruff version
   rev: v0.6.9
   hooks:
-    # Run the linter.
+    # Linting
     - id: ruff
       args: [--config=ruff.toml, --fix]
-    # Run the formatter.
+    # Formatting
     - id: ruff-format

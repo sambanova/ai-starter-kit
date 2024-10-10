@@ -81,7 +81,7 @@ yfinance==0.2.43
 # Development tools
 ipykernel==6.29.4
 mypy==1.11.2
-pre-commit==4.0.0
+pre-commit==4.0.1
 ruff==0.6.9
 
 # Schedule
