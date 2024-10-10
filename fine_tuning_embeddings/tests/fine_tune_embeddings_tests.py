@@ -1,3 +1,4 @@
+import functools
 from langchain_core.language_models.llms import LLM
 from llama_index.llms import LangChainLLM
 import logging
@@ -39,6 +40,18 @@ api = config['api']
 
 logger.info(config)
 
+
+def timing_decorator(func: Any):
+    @functools.wraps(func)
+    def wrapper(*args: tuple, **kwargs: dict[str, Any]):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        logger.info(f'Function {func.__name__} took {end - start:.2g} seconds to run.')
+        return result
+    return wrapper
+
+
 class GenerateEmbeddingDataTestCase(unittest.TestCase):
     time_start: float
     corpus_loader: CorpusLoader
@@ -52,6 +65,8 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
     val_relevant_docs: Dict[str, List[str]]
     train_dataset: Dict[str, object]
     val_dataset: Dict[str, object]
+    train_dataset_loader: DatasetLoader
+    val_dataset_loader: DatasetLoader
     
 
     @classmethod
@@ -110,41 +125,63 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
         save_dict_safely(cls.val_dataset, VAL_OUTPUT_PATH)
 
     # Assertions
+    @timing_decorator
     def test_sample_data(self) -> None:
         self.assertTrue(os.path.isdir(DATA_DIRECTORY), f'{DATA_DIRECTORY} does not exist.')
 
+    @timing_decorator
     def test_train_corpus(self) -> None:
-        self.assertGreater(len(self.train_corpus), 0, 'the train corpuse should not be empty.')
+        self.assertGreater(len(self.train_corpus), 0, 'the train corpus should not be empty.')
 
+    @timing_decorator
     def test_val_corpus(self) -> None:
-        self.assertGreater(len(self.val_corpus), 0, 'the train corpuse should not be empty.')
+        self.assertGreater(len(self.val_corpus), 0, 'the train corpus should not be empty.')
 
+    @timing_decorator
     def test_query_generator_creation(self) -> None:
         self.assertIsNotNone(self.query_generator, 'query generator could not be created.')
 
+    @timing_decorator
     def test_train_queries_generated(self) -> None:
         self.assertNotEqual(self.train_queries, {}, f'{self.train_queries} should not be empty')
 
+    @timing_decorator
     def test_val_queries_generated(self) -> None:
         self.assertNotEqual(self.val_queries, {}, f'{self.val_queries} should not be empty')
 
+    @timing_decorator
     def test_train_docs_generated(self) -> None:
         self.assertNotEqual(self.train_relevant_docs, {}, f'{self.train_relevant_docs} should not be empty')
 
+    @timing_decorator
     def test_val_docs_generated(self) -> None:
         self.assertNotEqual(self.val_relevant_docs, {}, f'{self.val_relevant_docs} should not be empty')
 
+    @timing_decorator
     def test_train_dataset_generated(self) -> None:
         self.assertNotEqual(self.train_dataset, {}, f'{self.train_dataset} should not be empty')
 
+    @timing_decorator
     def test_val_dataset_generated(self) -> None:
         self.assertNotEqual(self.val_dataset, {}, f'{self.val_dataset} should not be empty')
 
+    @timing_decorator
     def test_save_train_corpus(self) -> None:
         self.assertTrue(os.path.isfile(TRAIN_OUTPUT_PATH), f'{TRAIN_OUTPUT_PATH} does not exist.')
 
+    @timing_decorator
     def test_save_val_corpus(self) -> None:
         self.assertTrue(os.path.isfile(VAL_OUTPUT_PATH), f'{VAL_OUTPUT_PATH} does not exist.')
+
+    @timing_decorator
+    def test_train_dataset_loader_corpus(self) -> None:
+        self.assertNotEqual(self.train_dataset_loader.corpus, {}, f'{self.train_dataset_loader.corpus} should not' +
+                            'be empty')
+    
+    @timing_decorator
+    def test_val_dataset_loader_corpus(self) -> None:
+        self.assertNotEqual(self.val_dataset_loader.corpus, {}, f'{self.val_dataset_loader.corpus} should not' +
+                            'be empty')
 
     @classmethod
     def tearDownClass(cls: Type['GenerateEmbeddingDataTestCase']) -> None:
@@ -172,6 +209,55 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
+    
+    def main_suite() -> unittest.TestSuite:
+        """Test suite to define the order of the test execution."""
+
+        # List all the test cases here in order of execution
+        suite_list = [
+            'test_sample_data',
+            'test_train_corpus',
+            'test_val_corpus',
+            'test_query_generator_creation',
+            'test_train_queries_generated',
+            'test_val_queries_generated',
+            'test_train_docs_generated',
+            'test_val_docs_generated',
+            'test_train_dataset_generated',
+            'test_val_dataset_generated',
+            'test_save_train_corpus',
+            'test_save_val_corpus',
+            'test_train_dataset_loader_corpus',
+            'test_val_dataset_loader_corpus'
+        ]
+
+        # Add all the tests to the suite
+        suite = unittest.TestSuite()
+        for suite_item in suite_list:
+            suite.addTest(GenerateEmbeddingDataTestCase(suite_item))
+
+        return suite
+
+
+    def suite_github_pull_request() -> unittest.TestSuite:
+        """Test suite for GitHub actions on `pull_request`."""
+
+        # List all the test cases here in order of execution
+        suite_list = ['test_train_corpus']
+
+        # Add all the tests to the suite
+        suite = unittest.TestSuite()
+        for suite_item in suite_list:
+            suite.addTest(GenerateEmbeddingDataTestCase(suite_item))
+
+        return suite
+
+
+    # Suite registry for the tests
+    suite_registry = {
+        'main': main_suite(),
+        'github_pull_request': suite_github_pull_request(),
+    }
 
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(GenerateEmbeddingDataTestCase)
@@ -196,13 +282,11 @@ def main() -> int:
             return 0
     finally:
         try:
-            logging.info('pass')
-            # shutil.rmtree(OUTPUT_PATH)
+            logging.info(f'removing {OUTPUT_PATH}')
+            shutil.rmtree(OUTPUT_PATH)
+            logging.info(f'{OUTPUT_PATH} removed')
         except OSError as e:
             logging.error(f'Error: {e.filename} - {e.strerror}')
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
-
