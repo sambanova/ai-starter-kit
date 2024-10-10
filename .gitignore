@@ -279,6 +279,10 @@ utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
 
+# finetunning
+utils/fine_tuning/src/tmp_source_file.json
+utils/fine_tuning/sambastudio_fine_tuning_dataset
+
 # yoda llava_data_prep
 yoda/llava_data_prep/sec_data
 yoda/synthetic_data

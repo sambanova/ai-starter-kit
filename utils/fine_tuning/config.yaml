@@ -1,0 +1,75 @@
+sambastudio:
+  snapi_path: ""
+  rdu_arch: "sn20"
+
+dataset:
+  dataset_name: "smol_sql_dataset"
+  dataset_description: "test_dataset for sql fine-tuning"
+  dataset_path: "/Users/jorgep/Documents/ask_public_own/ai-starter-kit/utils/fine_tuning/sambastudio_fine_tuning_dataset"
+  dataset_apps_availability: 
+    - 'Mistral'
+    - 'Llama 3'
+    - 'Llama 2 with dynamic batching'
+    - 'Llama 2 7B'
+    - 'Llama 2 70B with dynamic batching'
+    - 'Llama 2 70B'
+    - 'Llama 2 13B'
+  dataset_job_types:
+    - "evaluation"
+    - "train"
+  dataset_source_type: "localMachine"
+  dataset_language: "english"
+  dataset_filetype: "hdf5"
+  dataset_url: ""
+  dataset_metadata:
+    labels_file: ""
+    train_filepath: ""
+    validation_filepath: ""
+    test_filepath: ""
+  
+project: 
+  project_name: "example project"
+  project_description: "this project will be used to test e2e fine-tuning pipeline implementation"
+
+job:
+  job_name: "snsdk_test_job"
+  job_description: "snsdk test training project"
+  job_type: "train"
+  model: "Llama-2-7b-chat-hf"
+  model_version: "1"
+  parallel_instances: 1
+  load_state: false
+  sub_path: ""
+  hyperparams:
+      batch_size: 256
+      do_eval: False
+      eval_steps: 50
+      evaluation_strategy: "no"
+      learning_rate: 0.00001
+      logging_steps: 1
+      lr_schedule: "fixed_lr"
+      max_sequence_length: 4096
+      num_iterations: 100
+      prompt_loss_weight: 0.0
+      save_optimizer_state: True
+      save_steps: 50
+      skip_checkpoint: False
+      subsample_eval: 0.01
+      subsample_eval_seed: 123
+      use_token_type_ids: True
+      vocab_size: 32000
+      warmup_steps: 0
+      weight_decay: 0.1
+
+model_checkpoint:
+  model_checkpoint_id: "" #set after listing the generated checkpoints after training #a876668b-fc48-49b9-af23-6b078c40ef84-d
+  model_name: "llama2_7b_fine_tuned_nstext2sql"
+  model_version: "1"
+  model_description: "finetuned llama2_7b model for nstext2sql"
+  model_type: "finetuned"
+
+endpoint:
+  endpoint_name: "test-endpoint-sql"
+  endpoint_description: "endpoint of finetuned sql model llama2 7b"
+  endpoint_instances: 1
+  hyperparams: null
