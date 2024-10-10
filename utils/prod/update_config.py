@@ -28,6 +28,7 @@ TEST_KITS: List[str] = [
     'web_crawled_data_retriever',
 ]
 
+
 def update_embedding_model(config: Dict[str, Any]) -> None:
     """Update the embedding model configuration."""
     if 'embedding_model' in config:
@@ -36,6 +37,7 @@ def update_embedding_model(config: Dict[str, Any]) -> None:
             embedding_model['type'] = 'sambastudio'
             embedding_model['batch_size'] = 32
             embedding_model['coe'] = False
+
 
 def update_config_prod(config: Dict[str, Any]) -> None:
     """Update configuration for production mode."""
@@ -48,6 +50,7 @@ def update_config_prod(config: Dict[str, Any]) -> None:
         audio_model = config['audio_model']
         if isinstance(audio_model, dict):
             audio_model['model'] = 'whisper-1'
+
 
 def update_makefile(root_dir: str) -> None:
     """Update the STREAMLIT_PORT in the Makefile."""
@@ -66,6 +69,7 @@ def update_makefile(root_dir: str) -> None:
     else:
         print(f'Makefile not found at {makefile_path}. Skipping STREAMLIT_PORT update.')
 
+
 def update_configs(mode: str = 'prod') -> None:
     """Update configurations for all kits based on the specified mode."""
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -76,7 +80,7 @@ def update_configs(mode: str = 'prod') -> None:
         config_path = os.path.join(kit_path, 'config.yaml')
 
         if not os.path.exists(config_path):
-            print(f"Config file not found for {kit_name}. Skipping.")
+            print(f'Config file not found for {kit_name}. Skipping.')
             continue
 
         with open(config_path, 'r') as file:
@@ -90,10 +94,11 @@ def update_configs(mode: str = 'prod') -> None:
         with open(config_path, 'w') as file:
             yaml.dump(config, file)
 
-        print(f"Updated config for {kit_name} in {mode} mode.")
+        print(f'Updated config for {kit_name} in {mode} mode.')
 
     if mode == 'prod':
         update_makefile(root_dir)
+
 
 if __name__ == '__main__':
     import sys

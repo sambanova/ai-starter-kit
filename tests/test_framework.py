@@ -58,7 +58,6 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
     'image_search': 'python tests/image_search_test.py',
-
 }
 
 
@@ -230,7 +229,7 @@ class StarterKitTest(unittest.TestCase):
             )
 
             if process.stdout is None:
-                logging.error("Process stdout is None")
+                logging.error('Process stdout is None')
                 return
 
             output_lines = []
