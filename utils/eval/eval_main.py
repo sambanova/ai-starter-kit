@@ -134,9 +134,7 @@ class RAGEvalConfig:
         """
         llm_name, config_dict = llm_config
         full_config_dict = {
-            'sambastudio_base_url': os.getenv(f'{llm_name.upper()}_BASE_URL'),
-            'sambastudio_project_id': os.getenv(f'{llm_name.upper()}_PROJECT_ID'),
-            'sambastudio_endpoint_id': os.getenv(f'{llm_name.upper()}_ENDPOINT_ID'),
+            'sambastudio_url': os.getenv(f'{llm_name.upper()}_URL'),
             'sambastudio_api_key': os.getenv(f'{llm_name.upper()}_API_KEY'),
             'streaming': True,
             'model_kwargs': config_dict.get('model_kwargs', {}),
