@@ -484,13 +484,11 @@ docker-run-kit:
 	@if [ -z "$(COMMAND)" ]; then \
 		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			--env-file .env \
-			-v $(PWD)/$(KIT):/app/$(KIT) \
 			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
 			"cd $(KIT) && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
 		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
 			--env-file .env \
-			-v $(PWD)/$(KIT):/app/$(KIT) \
 			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
 			"cd $(KIT) && $(COMMAND)"; \
 	fi
