@@ -11,10 +11,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml  # type: ignore
 from langchain_core.language_models.llms import LLM
-from llama_index import SimpleDirectoryReader
-from llama_index.llms import LangChainLLM
-from llama_index.node_parser import SimpleNodeParser
-from llama_index.schema import MetadataMode
+from llama_index.core import SimpleDirectoryReader
+from llama_index.llms.langchain import LangChainLLM
+from llama_index.core.node_parser import SimpleNodeParser
+from llama_index.core.schema import MetadataMode
 from tqdm import tqdm  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))

@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 # Third-party imports
 import yaml  # type: ignore
 from langchain_core.language_models.llms import LLM
-from llama_index.llms import LangChainLLM
+from llama_index.llms.langchain import LangChainLLM
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
