@@ -85,9 +85,9 @@ test_options=""
 
 run_local_tests() {
     echo "Running local tests..."
-    make clean
-    make venv
-    . .venv/bin/activate
+    make clean-test-suite
+    make setup-test-suite
+    #. .venv/bin/activate
     python tests/test_framework.py --env local $test_options
     deactivate
 }

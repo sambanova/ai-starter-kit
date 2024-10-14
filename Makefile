@@ -9,16 +9,14 @@ endif
 PARSING_DIR := utils/parsing/unstructured-api
 PARSING_VENV := venv
 
-
 STREAMLIT_PORT := 8501
+
 # Load environment variables from .env file
 include .env
 export $(shell sed 's/=.*//' .env)
 
 # Docker-related variables
 DOCKER_PUSH := $(DOCKER_PUSH)
-
-
 
 # Set OS-specific variables and commands
 ifeq ($(DETECTED_OS),Windows)
@@ -32,6 +30,7 @@ ifeq ($(DETECTED_OS),Windows)
 else
     PYTHON := python3
     PIP := pip3
+    HOME := $(HOME)
     MKDIR := mkdir -p
     RM := rm -rf
     FIND := find
@@ -51,14 +50,20 @@ TEST_SUITE_VENV := .test_suite_venv
 TEST_SUITE_REQUIREMENTS := tests/requirements.txt
 BASE_REQUIREMENTS := base-requirements.txt
 
+# Set default value for PARSING
+PARSING ?= false
+
+# Conditionally include start-parsing-service
+ifeq ($(PARSING),true)
+PARSING_SERVICE_TARGET := start-parsing-service
+else
+PARSING_SERVICE_TARGET :=
+endif
+
 # Default target
 .PHONY: all
-all: 
-	@make ensure-system-dependencies && \
-	make venv && \
-	make install && \
-	make start-parsing-service && \
-	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
+all: ensure-system-dependencies venv install $(PARSING_SERVICE_TARGET) post-process
+	@echo "Setup complete."
 
 # Create a virtual environment and install dependencies
 .PHONY: venv-install
@@ -97,7 +102,6 @@ replit-kit:
 	else \
 		echo "No run command specified. Setup complete."; \
 	fi
-
 
 # Update the existing replit target to include the new kit option
 .PHONY: replit
@@ -144,12 +148,12 @@ replit-setup-parsing-service:
 		exit 1; \
 	fi
 
-
 .PHONY: post-process-replit
 post-process-replit:
 	@echo "Post-processing installation for Repl.it..."
 	pip uninstall -y google-search-results
 	pip install google-search-results==2.4.2
+
 # Ensure system dependencies (Poppler and Tesseract)
 .PHONY: ensure-system-dependencies
 ensure-system-dependencies: ensure-poppler ensure-tesseract
@@ -170,14 +174,13 @@ else
 	@if ! command -v pdftoppm &> /dev/null; then \
 		echo "Poppler not found. Installing Poppler..."; \
 		sudo apt-get update && sudo apt-get install -y poppler-utils; \
-	elif ! dpkg-query -W -f='$${Status}' poppler-utils 2>/dev/null | grep -q "ok installed"; then \
+	elif ! dpkg-query -W -f='${Status}' poppler-utils 2>/dev/null | grep -q "ok installed"; then \
 		echo "Poppler not found. Installing Poppler..."; \
 		sudo apt-get update && sudo apt-get install -y poppler-utils; \
 	else \
 		echo "Poppler is already installed: $$(which pdftoppm)"; \
 	fi
 endif
-
 
 # Ensure libheif is installed
 .PHONY: ensure-libheif
@@ -199,7 +202,6 @@ else
 		echo "libheif is already installed."; \
 	fi
 endif
-
 
 # Ensure Tesseract is installed
 .PHONY: ensure-tesseract
@@ -367,7 +369,6 @@ else
 	bash -c '. $(PARSING_VENV_ACTIVATE) && \
 	make run-web-app > parsing_service.log 2>&1 & \
 	echo $$! > parsing_service.pid && \
-	conda deactivate \
 	deactivate' || true
 	@echo "Parsing service started. PID stored in $(PARSING_DIR)/parsing_service.pid"
 endif
@@ -550,10 +551,9 @@ lint:
 	@echo "Linting and type-checking code using Ruff & MyPy ..."
 	@. $(VENV_PATH)/bin/activate && \
 	ruff check --fix $(or $(module), $(call get_args), .) && \
-	ruff check --fix --select I $(or $(module), $(call get_args), .)&& \
+	ruff check --fix --select I $(or $(module), $(call get_args), .) && \
 	mypy --explicit-package-bases $(or $(module), $(call get_args), .) && \
 	deactivate
-
 
 # Format, lint, and type-check code using Ruff and MyPy
 .PHONY: format-lint
@@ -573,7 +573,8 @@ format-lint:
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all                    : Set up main project, create or use venv, install dependencies, start parsing service, and post-process"
+	@echo "  all                    : Set up main project, create or use venv, install dependencies, optionally start parsing service, and post-process"
+	@echo "                          Set PARSING=true to start the parsing service."
 	@echo "  replit                 : Set up project for Repl.it (skips pyenv check)"
 	@echo "  ensure-system-dependencies : Ensure Poppler and Tesseract are installed"
 	@echo "  ensure-poppler         : Install Poppler if not already installed"
