@@ -22,7 +22,7 @@ import shutil
 import time
 from typing import Any, Dict, List, Optional, Tuple, Type
 import unittest
-import yaml # type: ignore
+import yaml  # type: ignore
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -37,13 +37,13 @@ logger.info(f'repo_dir: {repo_dir}')
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway # type: ignore
-from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely # type: ignore
-from fine_tuning_embeddings.src.finetune_embedding_model import DatasetLoader # type: ignore
+from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
+from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely  # type: ignore
+from fine_tuning_embeddings.src.finetune_embedding_model import DatasetLoader  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 DATA_DIRECTORY = os.path.join(kit_dir, 'sample_data')
-OUTPUT_PATH = os.path.join(kit_dir, "data")
+OUTPUT_PATH = os.path.join(kit_dir, 'data')
 TRAIN_OUTPUT_PATH = os.path.join(OUTPUT_PATH, 'train_corpus.json')
 VAL_OUTPUT_PATH = os.path.join(OUTPUT_PATH, 'val_corpus.json')
 
@@ -73,6 +73,7 @@ def timing_decorator(func: Any) -> Any:
         end = time.time()
         logger.info(f'Function {func.__name__} took {end - start:.2g} seconds to run.')
         return result
+
     return wrapper
 
 
@@ -87,8 +88,8 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
     - val_corpus: The validation corpus resultant from the corpus_loader.
     - query_generator: The instantiated QueryGenerator object for generating synthetic queries
         and relevant documents.
-    - langchain_llm: The Langchain LLM from the LlamaIndex package.  
-    - train_queries: 
+    - langchain_llm: The Langchain LLM from the LlamaIndex package.
+    - train_queries:
     - train_relevant_docs: Resultant relevant training documents from the query_generator.
     - val_queries: Resultant training queries from the query_generator.
     - val_relevant_docs: Resultant relevant validation documents from the query_generator.
@@ -112,7 +113,6 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
     val_dataset: Dict[str, object]
     train_dataset_loader: DatasetLoader
     val_dataset_loader: DatasetLoader
-    
 
     @classmethod
     def setUpClass(cls: Type['GenerateEmbeddingDataTestCase']) -> None:
@@ -127,22 +127,21 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
         cls.langchain_llm = cls.initialize_llm()
         cls.query_generator = QueryGenerator(cls.langchain_llm)
         # Consider making a function for test calls
-        cls.train_queries, cls.train_relevant_docs = cls.query_generator.generate_queries(cls.train_corpus,
-                                                                                          verbose=True)
+        cls.train_queries, cls.train_relevant_docs = cls.query_generator.generate_queries(
+            cls.train_corpus, verbose=True
+        )
         # Consider making a function for test calls
-        cls.val_queries, cls.val_relevant_docs = cls.query_generator.generate_queries(cls.val_corpus,
-                                                                                          verbose=True)
+        cls.val_queries, cls.val_relevant_docs = cls.query_generator.generate_queries(cls.val_corpus, verbose=True)
         cls.train_dataset, cls.val_dataset = cls.create_dataset()
         cls.save_dataset()
         cls.train_dataset_loader = DatasetLoader(dataset_path=TRAIN_OUTPUT_PATH)
         cls.val_dataset_loader = DatasetLoader(dataset_path=VAL_OUTPUT_PATH)
-        
 
     @classmethod
     def initialize_llm(cls: Type['GenerateEmbeddingDataTestCase']) -> LangChainLLM:
         """
         Initializes the llm using APIGateway.
-        
+
         Returns:
             LangChainLLM: The LangChainLLM object for generating synthetic data.
         """
@@ -160,30 +159,30 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
         langchain_llm = LangChainLLM(llm=llm)
 
         return langchain_llm
-    
+
     @classmethod
     def create_dataset(cls: Type['GenerateEmbeddingDataTestCase']) -> Tuple[Dict[str, object], Dict[str, object]]:
         """
         Simple method for generating training and validation datasets.
-        
+
         Returns:
-            train_dataset, val_dataset: The training and validation datasets to be used when fine 
+            train_dataset, val_dataset: The training and validation datasets to be used when fine
                 tuning the embedding model.
         """
 
-        train_dataset = {'queries': cls.train_queries, 
-                         'corpus': cls.train_corpus, 
-                         'relevant_docs': cls.train_relevant_docs}
-        val_dataset = {'queries': cls.val_queries, 
-                       'corpus': cls.val_corpus, 
-                       'relevant_docs': cls.val_relevant_docs}
-        
+        train_dataset = {
+            'queries': cls.train_queries,
+            'corpus': cls.train_corpus,
+            'relevant_docs': cls.train_relevant_docs,
+        }
+        val_dataset = {'queries': cls.val_queries, 'corpus': cls.val_corpus, 'relevant_docs': cls.val_relevant_docs}
+
         return train_dataset, val_dataset
-    
+
     @classmethod
     def save_dataset(cls: Type['GenerateEmbeddingDataTestCase']) -> None:
-        """Simple method to safely save the training and validation datasets when dealing with 
-            memory intesnive files."""
+        """Simple method to safely save the training and validation datasets when dealing with
+        memory intesnive files."""
 
         save_dict_safely(cls.train_dataset, TRAIN_OUTPUT_PATH)
         save_dict_safely(cls.val_dataset, VAL_OUTPUT_PATH)
@@ -254,14 +253,16 @@ class GenerateEmbeddingDataTestCase(unittest.TestCase):
     @timing_decorator
     def test_train_dataset_loader_corpus(self) -> None:
         """Checks that the train dataset loader hsa been created and has loaded the training corpus."""
-        self.assertNotEqual(self.train_dataset_loader.corpus, {}, f'{self.train_dataset_loader.corpus} should not' +
-                            'be empty')
-    
+        self.assertNotEqual(
+            self.train_dataset_loader.corpus, {}, f'{self.train_dataset_loader.corpus} should not' + 'be empty'
+        )
+
     @timing_decorator
     def test_val_dataset_loader_corpus(self) -> None:
         """Checks that the validation dataset loader hsa been created and has loaded the validation corpus."""
-        self.assertNotEqual(self.val_dataset_loader.corpus, {}, f'{self.val_dataset_loader.corpus} should not' +
-                            'be empty')
+        self.assertNotEqual(
+            self.val_dataset_loader.corpus, {}, f'{self.val_dataset_loader.corpus} should not' + 'be empty'
+        )
 
     @classmethod
     def tearDownClass(cls: Type['GenerateEmbeddingDataTestCase']) -> None:
@@ -312,7 +313,7 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
-    
+
 def main_suite() -> unittest.TestSuite:
     """Test suite to define the order of the test execution."""
 
@@ -331,7 +332,7 @@ def main_suite() -> unittest.TestSuite:
         'test_save_train_corpus',
         'test_save_val_corpus',
         'test_train_dataset_loader_corpus',
-        'test_val_dataset_loader_corpus'
+        'test_val_dataset_loader_corpus',
     ]
 
     # Add all the tests to the suite
@@ -361,6 +362,7 @@ suite_registry = {
     'main': main_suite(),
     'github_pull_request': suite_github_pull_request(),
 }
+
 
 def main(suite: Optional[unittest.TestSuite] = None) -> int:
     """Main program to run a test suite."""
@@ -398,6 +400,7 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
         except OSError as e:
             logging.error(f'Error: {e.filename} - {e.strerror}')
 
+
 if __name__ == '__main__':
     # Add the argument --suite to run a specific suite of tests
     parser = argparse.ArgumentParser(description='Add a test suite for `fine_tuning_embeddings`.')
@@ -409,7 +412,7 @@ if __name__ == '__main__':
         suite = suite_registry[args.suite]
     except KeyError as e:
         suite = suite_registry['main']
-    
+
     # Run the tests
     exit_status = main(suite)
     exit(exit_status)
