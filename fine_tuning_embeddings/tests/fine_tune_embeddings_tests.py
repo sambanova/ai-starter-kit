@@ -13,16 +13,17 @@ Returns:
 
 import argparse
 import functools
-from langchain_core.language_models.llms import LLM
-from llama_index.llms import LangChainLLM
 import logging
 import os
-import sys
 import shutil
+import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type
 import unittest
+from typing import Any, Dict, List, Optional, Tuple, Type
+
 import yaml  # type: ignore
+from langchain_core.language_models.llms import LLM
+from llama_index.llms import LangChainLLM
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -37,9 +38,11 @@ logger.info(f'repo_dir: {repo_dir}')
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from fine_tuning_embeddings.src.finetune_embedding_model import \
+    DatasetLoader  # type: ignore
+from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import (  # type: ignore
+    CorpusLoader, QueryGenerator, save_dict_safely)
 from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
-from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import CorpusLoader, QueryGenerator, save_dict_safely  # type: ignore
-from fine_tuning_embeddings.src.finetune_embedding_model import DatasetLoader  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 DATA_DIRECTORY = os.path.join(kit_dir, 'sample_data')
