@@ -1,3 +1,17 @@
+"""
+fine tuning embeddings test script.
+
+This script tests the functionality of the fine tuning embeddings starter kit using `unittest`.
+
+Usage:
+    python fine_tuning_embeddings/tests/fine_tune_embeddings_tests.py
+    python fine_tuning_embeddings/tests/fine_tune_embeddings_tests.py --suite suite_name
+
+Returns:
+    0 if all tests pass, or a positive integer representing the number of failed tests.
+"""
+
+import argparse
 import functools
 from langchain_core.language_models.llms import LLM
 from llama_index.llms import LangChainLLM
@@ -6,7 +20,7 @@ import os
 import sys
 import shutil
 import time
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 import unittest
 import yaml # type: ignore
 
@@ -348,10 +362,15 @@ suite_registry = {
     'github_pull_request': suite_github_pull_request(),
 }
 
-def main() -> int:
+def main(suite: Optional[unittest.TestSuite] = None) -> int:
     """Main program to run a test suite."""
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(GenerateEmbeddingDataTestCase)
+    if suite is not None:
+        if not isinstance(suite, unittest.TestSuite):
+            raise TypeError(f'`suite` must be of type `unittest.TestSuite`. Got type {type(suite)}.')
+    else:
+        suite = main_suite()
+
     try:
         test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
 
@@ -380,4 +399,17 @@ def main() -> int:
             logging.error(f'Error: {e.filename} - {e.strerror}')
 
 if __name__ == '__main__':
-    sys.exit(main())
+    # Add the argument --suite to run a specific suite of tests
+    parser = argparse.ArgumentParser(description='Add a test suite for `fine_tuning_embeddings`.')
+    parser.add_argument('--suite', default='main', type=str, help='Suite for the tests.')
+
+    # Select the suite to run
+    args = parser.parse_args()
+    try:
+        suite = suite_registry[args.suite]
+    except KeyError as e:
+        suite = suite_registry['main']
+    
+    # Run the tests
+    exit_status = main(suite)
+    exit(exit_status)

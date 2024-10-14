@@ -84,6 +84,8 @@ def main(input_path: str, output_db: str, chunk_size: int, chunk_overlap: int, d
         f'Processing embeddings using {embedding_model}. This could take time depending on the number of chunks ...'
     )
 
+    vectorstore: FAISS | Qdrant | Chroma
+
     if db_type == 'faiss':
         vectorstore = FAISS.from_documents(documents=chunks, embedding=embeddings)
         # save vectorstore

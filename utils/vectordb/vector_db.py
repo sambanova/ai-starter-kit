@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Define the script's usage example
 USAGE_EXAMPLE = """
 Example usage:
@@ -18,7 +20,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Set
 
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
@@ -76,7 +78,7 @@ class VectorDb:
 
     def __init__(self) -> None:
         self.collection_id = str(uuid.uuid4())
-        self.vector_collections = set()
+        self.vector_collections: Set[Any] = set()
 
     def load_files(
         self,
@@ -100,6 +102,7 @@ class VectorDb:
         """
         docs = []
         text_loader_kwargs = {'autodetect_encoding': True}
+        loader: DirectoryLoader | UnstructuredURLLoader
         if input_path is not None:
             if load_txt:
                 loader = DirectoryLoader(
@@ -119,7 +122,9 @@ class VectorDb:
 
         return docs
 
-    def get_text_chunks(self, docs: list, chunk_size: int, chunk_overlap: int, meta_data: list = None) -> list:
+    def get_text_chunks(
+        self, docs: List[Any], chunk_size: int, chunk_overlap: int, meta_data: Optional[List[Any]] = None
+    ) -> List[Any]:
         """Gets text chunks. If metadata is not None, it will create chunks with metadata elements.
 
         Args:
@@ -192,6 +197,7 @@ class VectorDb:
             collection_name = f'collection_{self.collection_id}'
             logger.info(f'This is the collection name: {collection_name}')
 
+        vector_store: FAISS | Qdrant | Chroma
         if db_type == 'faiss':
             vector_store = FAISS.from_documents(documents=chunks, embedding=embeddings)
             if output_db:
@@ -238,8 +244,9 @@ class VectorDb:
         db_type: str = 'chroma',
         collection_name: Optional[str] = None,
     ) -> Any:
+        vector_store: FAISS | Qdrant | Chroma
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)
+            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)  # type: ignore
         elif db_type == 'chroma':
             if collection_name:
                 vector_store = Chroma(
@@ -264,9 +271,9 @@ class VectorDb:
         db_type: str,
         input_db: Optional[str] = None,
         output_db: Optional[str] = None,
-    ) -> VectorDb:
+    ) -> Any:
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)
+            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)  # type: ignore
             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
             vector_store.merge_from(new_vector_store)
             if output_db:
@@ -288,7 +295,7 @@ class VectorDb:
         chunk_overlap: int,
         db_type: str,
         output_db: Optional[str] = None,
-        recursive: Optional[bool] = False,
+        recursive: bool = False,
         tokenizer: Optional[Any] = None,
         load_txt: bool = True,
         load_pdf: bool = False,

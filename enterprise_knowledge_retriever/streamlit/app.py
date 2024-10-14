@@ -1,9 +1,12 @@
 import logging
 import os
+import shutil
 import sys
+from typing import List, Optional
 
 import streamlit as st
 import yaml
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -22,6 +25,44 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
+
+
+def save_files_user(docs: List[UploadedFile]) -> str:
+    """
+    Save all user uploaded files in Streamlit to the tmp dir with their file names
+
+    Args:
+        docs (List[UploadFile]): A list of uploaded files in Streamlit
+
+    Returns:
+        str: path where the files are saved.
+    """
+
+    # Create the data/tmp folder if it doesn't exist
+    temp_folder = os.path.join(kit_dir, 'data/tmp')
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+    else:
+        # If there are already files there, delete them
+        for filename in os.listdir(temp_folder):
+            file_path = os.path.join(temp_folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
+
+    # Save all selected files to the tmp dir with their file names
+    for doc in docs:
+        assert hasattr(doc, 'name'), 'doc has no attribute name.'
+        assert callable(doc.getvalue), 'doc has no method getvalue.'
+        temp_file = os.path.join(temp_folder, doc.name)
+        with open(temp_file, 'wb') as f:
+            f.write(doc.getvalue())
+
+    return temp_folder
 
 
 def handle_userinput(user_question: str) -> None:
@@ -112,7 +153,7 @@ def main() -> None:
         if not are_credentials_set():
             url, api_key = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)  # type: ignore
+                message = save_credentials(url, api_key, prod_mode)
                 st.success(message)
                 st.rerun()
         else:
@@ -177,25 +218,27 @@ def main() -> None:
                 st.markdown('Create database')
                 if st.button('Process'):
                     with st.spinner('Processing'):
-                        # try:
-                        text_chunks = st.session_state.document_retrieval.parse_doc(docs)
-                        if len(text_chunks) == 0:
-                            st.error(
-                                """No able to get text from the documents. check your docs or try setting
-                                     pdf_only_mode to False"""
+                        try:
+                            if docs is not None:
+                                temp_folder = save_files_user(docs)
+                            text_chunks = st.session_state.document_retrieval.parse_doc(temp_folder)
+                            if len(text_chunks) == 0:
+                                st.error(
+                                    """No able to get text from the documents. check your docs or try setting
+                                        pdf_only_mode to False"""
+                                )
+                            embeddings = st.session_state.document_retrieval.load_embedding_model()
+                            collection_name = default_collection if not prod_mode else None
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(
+                                text_chunks, embeddings, output_db=None, collection_name=collection_name
                             )
-                        embeddings = st.session_state.document_retrieval.load_embedding_model()
-                        collection_name = default_collection if not prod_mode else None
-                        vectorstore = st.session_state.document_retrieval.create_vector_store(
-                            text_chunks, embeddings, output_db=None, collection_name=collection_name
-                        )
-                        st.session_state.vectorstore = vectorstore
-                        st.session_state.document_retrieval.init_retriever(vectorstore)
-                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
-                        st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
-                        st.session_state.input_disabled = False
-                    # except Exception as e:
-                    # st.error(f'An error occurred while processing: {str(e)}')
+                            st.session_state.vectorstore = vectorstore
+                            st.session_state.document_retrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                            st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
+                            st.session_state.input_disabled = False
+                        except Exception as e:
+                            st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')
@@ -203,7 +246,9 @@ def main() -> None:
                     if st.button('Process and Save database'):
                         with st.spinner('Processing'):
                             try:
-                                text_chunks = st.session_state.document_retrieval.parse_doc(docs)
+                                if docs is not None:
+                                    temp_folder = save_files_user(docs)
+                                text_chunks = st.session_state.document_retrieval.parse_doc(temp_folder)
                                 embeddings = st.session_state.document_retrieval.load_embedding_model()
                                 vectorstore = st.session_state.document_retrieval.create_vector_store(
                                     text_chunks, embeddings, output_db=save_location, collection_name=default_collection

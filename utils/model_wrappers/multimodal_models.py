@@ -5,7 +5,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, Generator, Iterator, List, Optional, Union
+from typing import Any, Dict, Generator, Iterator, List, Optional, Union
 
 import requests
 import sseclient
@@ -18,14 +18,14 @@ class SambastudioMultimodal:
 
     def __init__(
         self,
-        base_url: str = None,
-        api_key: str = None,
-        model: str = None,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
         temperature: float = 0.01,
         max_tokens_to_generate: int = 1024,
         top_p: float = 0.01,
         top_k: int = 1,
-        stop: list = None,
+        stop: Optional[List[str]] = None,
         do_sample: bool = False,
     ) -> None:
         """
@@ -43,10 +43,10 @@ class SambastudioMultimodal:
         """
         self.base_url = base_url
         if self.base_url is None:
-            self.base_url = os.getenv('LVLM_BASE_URL')
+            self.base_url = os.getenv('LVLM_BASE_URL', '')
         self.api_key = api_key
         if self.api_key is None:
-            self.api_key = os.getenv('LVLM_API_KEY')
+            self.api_key = os.getenv('LVLM_API_KEY', '')
         self.temperature = temperature
         self.model = model
         self.max_tokens_to_generate = max_tokens_to_generate
@@ -254,7 +254,7 @@ class SambastudioMultimodal:
         :rtype: Dict
         """
 
-        data = {
+        data: Dict[str, Any] = {
             'messages': [
                 {
                     'role': 'user',
@@ -269,7 +269,7 @@ class SambastudioMultimodal:
             'top_p': self.top_p,
             'stream': False,
         }
-        if len(self.stop) > 1:
+        if self.stop and len(self.stop) > 1:
             data['stop'] = self.stop
         for image in images:
             if not self._is_url(image):
@@ -299,7 +299,7 @@ class SambastudioMultimodal:
         :rtype: Dict
         """
 
-        data = {
+        data: Dict[str, Any] = {
             'messages': [
                 {
                     'role': 'user',
@@ -314,7 +314,7 @@ class SambastudioMultimodal:
             'top_p': self.top_p,
             'stream': True,
         }
-        if len(self.stop) > 1:
+        if self.stop and len(self.stop) > 1:
             data['stop'] = self.stop
         for image in images:
             if not self._is_url(image):
@@ -334,7 +334,7 @@ class SambastudioMultimodal:
         else:
             return response
 
-    def _load_images(self, images: Union[str, List] = None) -> Optional[List]:
+    def _load_images(self, images: Optional[Union[str, List]] = None) -> List[Any]:
         """
         Loads the images into base64 format or url.
 
@@ -358,7 +358,7 @@ class SambastudioMultimodal:
                 raise ValueError('images should be provided as an url, a path or as a base64 encoded image')
         return images_list
 
-    def invoke(self, prompt: str = None, images: Union[str, List] = None) -> str:
+    def invoke(self, prompt: Optional[str] = None, images: Optional[Union[str, List]] = None) -> str:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
 
@@ -369,10 +369,10 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if 'v1/chat/completions' in self.base_url:
-            response = self._call_openai_api(prompt, images_list)
+        if self.base_url is not None and 'v1/chat/completions' in self.base_url:
+            response = self._call_openai_api(prompt, images_list)  # type: ignore
             generation = self._process_openai_api_response(response)
-        elif 'generic' in self.base_url:
+        elif self.base_url is not None and 'generic' in self.base_url:
             if len(images_list) > 1:
                 raise ValueError('only one image can be provided for generic endpoint')
             if self._is_url(images_list[0]):
@@ -396,7 +396,7 @@ class SambastudioMultimodal:
             )
         return generation
 
-    def stream(self, prompt: str = None, images: Union[str, List] = None) -> Iterator:
+    def stream(self, prompt: Optional[str] = None, images: Optional[Union[str, List]] = None) -> Iterator:
         """
         Calls the Sambastudio multimodal endpoint to generate a response.
 
@@ -407,11 +407,11 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if 'v1/chat/completions' in self.base_url:
-            response = self._call_openai_api_stream(prompt, images_list)
+        if self.base_url is not None and 'v1/chat/completions' in self.base_url:
+            response = self._call_openai_api_stream(prompt, images_list)  # type: ignore
             for chunk in self._process_openai_api_response_stream(response):
                 yield chunk
-        elif 'generic' in self.base_url:
+        elif self.base_url is not None and 'generic' in self.base_url:
             if len(images_list) > 1:
                 raise ValueError('only one image can be provided for generic endpoint')
             if self._is_url(images_list[0]):

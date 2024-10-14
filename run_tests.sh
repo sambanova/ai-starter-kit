@@ -19,48 +19,11 @@
 #   ./run_tests.sh local --verbose
 #   ./run_tests.sh docker --skip-streamlit
 #   ./run_tests.sh all --skip-cli
-#   ./run_tests.sh local --verbose --skip-streamlit --skip-cli
+
+set -e
 
 # Change to the directory containing this script
 cd "$(dirname "$0")"
-
-# Run Make-Clean
-make clean-test-suite
-
-# Deactivate any active virtual environment or conda environment
-if [ -n "$VIRTUAL_ENV" ]; then
-    echo "Deactivating virtual environment: $VIRTUAL_ENV"
-    deactivate
-elif [ -n "$CONDA_DEFAULT_ENV" ]; then
-    echo "Deactivating conda environment: $CONDA_DEFAULT_ENV"
-    conda deactivate
-fi
-
-# Unset environment variables
-unset VIRTUAL_ENV
-unset CONDA_DEFAULT_ENV
-
-# Ensure pyenv is installed and set up
-if ! make ensure-pyenv; then
-    echo "Error: Failed to set up pyenv. Exiting."
-    exit 1
-fi
-
-# Set up and activate the test suite environment
-if ! make setup-test-suite; then
-    echo "Error: Failed to set up test suite environment. Exiting."
-    exit 1
-fi
-
-if [ -f .test_suite_venv/bin/activate ]; then
-    . .test_suite_venv/bin/activate
-else
-    echo "Error: Virtual environment not created. Check the setup-test-suite make target."
-    exit 1
-fi
-
-# Add the current directory to PYTHONPATH
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
 # Parse command line arguments
 env="all"
@@ -99,29 +62,67 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Load and clean environment variables from .env file
+if [ -f ".env" ]; then
+    while IFS='=' read -r key value || [[ -n "$key" ]]; do
+        # Trim leading and trailing whitespace from key and value
+        key=$(echo "$key" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        
+        # Skip comments and empty lines
+        if [[ ! $key =~ ^# && -n $key ]]; then
+            # Export the cleaned variable
+            export "$key=$value"
+        fi
+    done < .env
+fi
+
 # Construct the test command
-test_command="python tests/test_framework.py --env $env"
+test_options=""
+[ "$verbose" == "true" ] && test_options+=" --verbose"
+[ "$skip_streamlit" == "true" ] && test_options+=" --skip-streamlit"
+[ "$skip_cli" == "true" ] && test_options+=" --skip-cli"
 
-if [ "$verbose" == "true" ]; then
-    test_command+=" --verbose"
-fi
-
-if [ "$skip_streamlit" == "true" ]; then
-    test_command+=" --skip-streamlit"
-fi
-
-if [ "$skip_cli" == "true" ]; then
-    test_command+=" --skip-cli"
-fi
-
-# Run tests
-echo "Running tests with command: $test_command"
-eval $test_command
-
-# Deactivate the test suite environment
-if [ -n "$VIRTUAL_ENV" ]; then
+run_local_tests() {
+    echo "Running local tests..."
+    make clean
+    make venv
+    . .venv/bin/activate
+    python tests/test_framework.py --env local $test_options
     deactivate
-fi
+}
 
-# Clean up the test suite environment
-make clean-test-suite
+run_docker_tests() {
+    echo "Building Docker image for testing..."
+    make docker-build
+
+    echo "Running Docker tests..."
+    # Create a temporary file with cleaned environment variables
+    temp_env_file=$(mktemp)
+    env | grep -v '^_' > "$temp_env_file"
+
+    # Pass cleaned environment variables to Docker
+    docker run --rm \
+        --env-file "$temp_env_file" \
+        -e DOCKER_ENV=true \
+        -v $(pwd)/test_results:/app/test_results \
+        -w /app \
+        "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}" \
+        python tests/test_framework.py --env docker $test_options
+
+    # Remove the temporary file
+    rm "$temp_env_file"
+}
+
+case $env in
+    local)
+        run_local_tests
+        ;;
+    docker)
+        run_docker_tests
+        ;;
+    all)
+        run_local_tests
+        run_docker_tests
+        ;;
+esac

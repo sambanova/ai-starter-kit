@@ -11,6 +11,13 @@ PARSING_VENV := venv
 
 
 STREAMLIT_PORT := 8501
+# Load environment variables from .env file
+include .env
+export $(shell sed 's/=.*//' .env)
+
+# Docker-related variables
+DOCKER_PUSH := $(DOCKER_PUSH)
+
 
 
 # Set OS-specific variables and commands
@@ -52,6 +59,12 @@ all:
 	make install && \
 	make start-parsing-service && \
 	make post-process || (echo "An error occurred during setup. Please check the output above." && exit 1)
+
+# Create a virtual environment and install dependencies
+.PHONY: venv-install
+venv-install: 
+	@make venv
+	@make install
 
 # Repl.it specific targets for kit installation
 .PHONY: replit-kit
@@ -414,40 +427,74 @@ endif
 .PHONY: docker-build
 docker-build:
 	@echo "Building Docker image..."
-	DOCKER_BUILDKIT=1 docker build \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from ai-starter-kit \
-		-t ai-starter-kit .
+	@if [ "$(USE_CACHE)" = "true" ]; then \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			--cache-from $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) . || \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
+	else \
+		DOCKER_BUILDKIT=1 docker build \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--build-arg PROD_MODE=$(PROD_MODE) \
+			--secret id=env,src=.env \
+			--no-cache \
+			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
+	fi
+
+.PHONY: docker-push
+docker-push:
+	@if [ "$(DOCKER_PUSH)" = "true" ]; then \
+		echo "Pushing Docker image to registry..."; \
+		docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG); \
+	else \
+		echo "Skipping Docker push (DOCKER_PUSH is not set to true)"; \
+	fi
+
+.PHONY: docker-build-push
+docker-build-push: docker-build docker-push
 
 .PHONY: docker-run
-docker-run: docker-build
+docker-run:
 	@echo "Running Docker container..."
-	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 ai-starter-kit
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		--env-file .env \
+		$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
 
 .PHONY: docker-shell
-docker-shell: docker-build
+docker-shell:
 	@echo "Opening a shell in the Docker container..."
-	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 ai-starter-kit /bin/bash
+	docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		--env-file .env \
+		$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash
 
 .PHONY: docker-run-kit
-docker-run-kit: docker-build
+docker-run-kit:
 	@echo "Running specific kit in Docker container..."
 	@if [ -z "$(KIT)" ]; then \
 		echo "Error: KIT variable is not set. Usage: make docker-run-kit KIT=<kit_name> [COMMAND=<command>]"; \
 		exit 1; \
 	fi
 	@if [ -z "$(COMMAND)" ]; then \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			--env-file .env \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
-			ai-starter-kit /bin/bash -c \
-			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
+			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
+			"cd $(KIT) && streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false"; \
 	else \
-		docker run -it --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+		docker run -d --name $(KIT)_container --rm -p 8005:8005 -p $(STREAMLIT_PORT):8501 \
+			--env-file .env \
 			-v $(PWD)/$(KIT):/app/$(KIT) \
-			ai-starter-kit /bin/bash -c \
-			"cd $(KIT) && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && $(COMMAND)"; \
+			$(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c \
+			"cd $(KIT) && $(COMMAND)"; \
 	fi
-
+	@echo "Container $(KIT)_container started in detached mode."
 
 # Set up test suite
 .PHONY: setup-test-suite
