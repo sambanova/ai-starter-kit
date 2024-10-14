@@ -2,8 +2,8 @@ import argparse
 import json
 from typing import Any, List, Optional
 
-from sentence_transformers import InputExample, SentenceTransformer, losses # type: ignore
-from sentence_transformers.evaluation import InformationRetrievalEvaluator # type: ignore
+from sentence_transformers import InputExample, SentenceTransformer, losses  # type: ignore
+from sentence_transformers.evaluation import InformationRetrievalEvaluator  # type: ignore
 from torch.utils.data import DataLoader, Dataset
 
 

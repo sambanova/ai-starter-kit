@@ -8,14 +8,14 @@ import re
 import sys
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
-import yaml # type: ignore
+import yaml  # type: ignore
 
 from langchain_core.language_models.llms import LLM
 from llama_index import SimpleDirectoryReader
 from llama_index.llms import LangChainLLM
 from llama_index.node_parser import SimpleNodeParser
 from llama_index.schema import MetadataMode
-from tqdm import tqdm # type: ignore
+from tqdm import tqdm  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -24,7 +24,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway # type: ignore
+from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,29 +39,31 @@ api = config['api']
 
 logger.info(config)
 
+
 def initialize_llm() -> LangChainLLM:
-        """
-        Initializes the llm using APIGateway.
-        
-        Returns:
-            LangChainLLM: The LangChainLLM object for generating synthetic data.
-        """
+    """
+    Initializes the llm using APIGateway.
 
-        llm: LLM = APIGateway.load_llm(
-            type=api,
-            streaming=True,
-            coe=llm_info['coe'],
-            do_sample=llm_info['do_sample'],
-            max_tokens_to_generate=llm_info['max_tokens_to_generate'],
-            temperature=llm_info['temperature'],
-            select_expert=llm_info['select_expert'],
-            process_prompt=False,
-        )
+    Returns:
+        LangChainLLM: The LangChainLLM object for generating synthetic data.
+    """
 
-        # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
-        langchain_llm = LangChainLLM(llm=llm)
+    llm: LLM = APIGateway.load_llm(
+        type=api,
+        streaming=True,
+        coe=llm_info['coe'],
+        do_sample=llm_info['do_sample'],
+        max_tokens_to_generate=llm_info['max_tokens_to_generate'],
+        temperature=llm_info['temperature'],
+        select_expert=llm_info['select_expert'],
+        process_prompt=False,
+    )
 
-        return langchain_llm
+    # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
+    langchain_llm = LangChainLLM(llm=llm)
+
+    return langchain_llm
+
 
 class CorpusLoader:
     """
@@ -81,7 +83,7 @@ class CorpusLoader:
 
         if not os.path.exists(directory):
             raise NotADirectoryError(f'{directory} does not exist')
-        
+
         if not isinstance(val_ratio, float):
             raise TypeError(f'Got type {val_ratio}.  val_ratio must be a float.')
 
@@ -96,10 +98,10 @@ class CorpusLoader:
         Returns:
             Tuple containing lists of training and validation file paths.
         """
-        
+
         pdf_files = glob.glob(f'{self.directory}/*.pdf')
         if not len(pdf_files) > 1:
-            raise ValueError("Must have more than 1 file.")
+            raise ValueError('Must have more than 1 file.')
         logging.info(f'found {pdf_files}.')
         random.shuffle(pdf_files)
         split_index = int(len(pdf_files) * (1 - self.val_ratio))
