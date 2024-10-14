@@ -70,7 +70,13 @@ class TestEnvironment:
 
 class TestResult:
     def __init__(
-        self, kit: str, test_name: str, status: str, duration: float, message: str = '', date: str = ''
+        self,
+        kit: str,
+        test_name: str,
+        status: str,
+        duration: float,
+        message: str = '',
+        date: str = '',
     ) -> None:
         self.kit = kit
         self.test_name = test_name
@@ -82,6 +88,7 @@ class TestResult:
 
 class CsvWriter(Protocol):
     def writerow(self, row: List[Any]) -> None: ...
+
     def writerows(self, rows: List[List[Any]]) -> None: ...
 
 
@@ -91,6 +98,7 @@ class StarterKitTest(unittest.TestCase):
     run_streamlit: ClassVar[bool]
     run_cli: ClassVar[bool]
     is_docker: ClassVar[bool]
+    recreate_venv: ClassVar[bool]
     csv_writer: ClassVar[Optional[CsvWriter]]
     csv_file: ClassVar[Optional[Any]]
 
@@ -103,7 +111,8 @@ class StarterKitTest(unittest.TestCase):
         if not cls.is_docker:
             cls.activate_base_venv()
             if cls.env == TestEnvironment.LOCAL:
-                cls.run_make_clean()
+                if cls.recreate_venv:
+                    cls.run_make_clean()
                 cls.run_make_all()
 
     @classmethod
@@ -225,7 +234,12 @@ class StarterKitTest(unittest.TestCase):
 
         try:
             process = subprocess.Popen(
-                cli_command, shell=True, cwd=kit_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+                cli_command,
+                shell=True,
+                cwd=kit_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
             )
 
             if process.stdout is None:
@@ -264,7 +278,11 @@ class StarterKitTest(unittest.TestCase):
             process.kill()
             logging.error(f'CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
             result = TestResult(
-                kit, 'CLI', 'TIMEOUT', CLI_COMMAND_TIMEOUT, f'Timed out after {CLI_COMMAND_TIMEOUT} seconds'
+                kit,
+                'CLI',
+                'TIMEOUT',
+                CLI_COMMAND_TIMEOUT,
+                f'Timed out after {CLI_COMMAND_TIMEOUT} seconds',
             )
             self.write_test_result(result)
 
@@ -318,7 +336,12 @@ class StarterKitTest(unittest.TestCase):
                 # No detailed tests and no "All CLI tests passed" message
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
                 result = TestResult(
-                    kit, 'CLI', 'UNKNOWN', total_duration, 'No detailed test results found', current_time
+                    kit,
+                    'CLI',
+                    'UNKNOWN',
+                    total_duration,
+                    'No detailed test results found',
+                    current_time,
                 )
                 self.write_test_result(result)
 
@@ -340,11 +363,19 @@ create_test_methods()
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run tests for AI Starter Kit')
     parser.add_argument(
-        '--env', choices=['local', 'docker'], default='local', help='Specify the test environment (default: local)'
+        '--env',
+        choices=['local', 'docker'],
+        default='local',
+        help='Specify the test environment (default: local)',
     )
     parser.add_argument('-v', '--verbose', action='store_true', help='Run tests in verbose mode')
     parser.add_argument('--skip-streamlit', action='store_true', help='Skip Streamlit tests')
     parser.add_argument('--skip-cli', action='store_true', help='Skip CLI tests')
+    parser.add_argument(
+        '--recreate-venv',
+        action='store_true',
+        help='Recreate the virtual environment by running make clean',
+    )
     args, unknown = parser.parse_known_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
@@ -353,6 +384,7 @@ if __name__ == '__main__':
     StarterKitTest.run_streamlit = not args.skip_streamlit
     StarterKitTest.run_cli = not args.skip_cli
     StarterKitTest.env = args.env
+    StarterKitTest.recreate_venv = args.recreate_venv
 
     suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
     unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)
