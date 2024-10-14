@@ -1,7 +1,7 @@
 import argparse
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import yaml
 
@@ -30,54 +30,67 @@ TEST_KITS: List[str] = [
 ]
 
 
-def get_nested_dict(data: Dict[str, Any], keys: List[str]) -> Optional[Dict[str, Any]]:
-    """Retrieve a nested dictionary given a list of keys."""
-    for key in keys:
-        if isinstance(data, dict) and key in data:
-            data = data[key]
-        else:
-            return None
-    return data if isinstance(data, dict) else None
+def update_all_embedding_models(config: Any) -> None:
+    """Recursively update all 'embedding_model' configurations in the config dictionary.
 
+    This function traverses the entire configuration dictionary recursively,
+    finds all occurrences of the 'embedding_model' key regardless of their nesting,
+    and updates their settings to standardize the embedding model to use 'sambastudio'.
 
-def update_nested_dict(data: Dict[str, Any], keys: List[str], value: Any) -> None:
-    """Update a nested dictionary given a list of keys and a value."""
-    for key in keys[:-1]:
-        data = data.setdefault(key, {})
-    data[keys[-1]] = value
-
-
-def update_embedding_model(config: Dict[str, Any]) -> None:
-    """Update the embedding model configuration."""
-    embedding_model = get_nested_dict(config, ['rag', 'embedding_model']) or get_nested_dict(
-        config, ['embedding_model']
-    )
-    if embedding_model:
-        embedding_model['type'] = 'sambastudio'
-        embedding_model['batch_size'] = 32
-        embedding_model['coe'] = False
+    Args:
+        config: The configuration dictionary or list to update.
+    """
+    if isinstance(config, dict):
+        for key, value in config.items():
+            if key == 'embedding_model' and isinstance(value, dict):
+                # Overwrite the embedding model settings to use 'sambastudio'
+                value['type'] = 'sambastudio'
+                value['batch_size'] = 32
+                value['coe'] = False
+                # We standardize the embedding model settings to use 'sambastudio',
+                # which is suitable for hosted kits that can utilize our embeddings.
+            else:
+                # Recursively call the function for nested dictionaries or lists
+                update_all_embedding_models(value)
+    elif isinstance(config, list):
+        for item in config:
+            update_all_embedding_models(item)
 
 
 def update_config_prod(config: Dict[str, Any]) -> None:
-    """Update configuration for production mode."""
-    update_nested_dict(config, ['prod_mode'], True)
-    update_embedding_model(config)
+    """Update configuration for production mode.
 
-    audio_model = get_nested_dict(config, ['audio_model'])
-    if audio_model:
+    Args:
+        config: The configuration dictionary to update.
+    """
+    # Enforcing 'prod_mode' ensures that production-specific optimizations
+    # and configurations are active.
+    config['prod_mode'] = True
+    update_all_embedding_models(config)
+
+    # This overwrite is to use a currently supported audio model in prod_mode
+    audio_model = config.get('audio_model')
+    if isinstance(audio_model, dict):
         audio_model['model'] = 'whisper-1'
 
     # Update pages_to_show for prod mode
-    update_nested_dict(config, ['pages_to_show'], ['synthetic_eval'])
+    config['pages_to_show'] = ['synthetic_eval']
 
 
 def update_makefile(root_dir: str, port: int) -> None:
-    """Update the STREAMLIT_PORT in the Makefile."""
+    """Update the STREAMLIT_PORT in the Makefile.
+
+    Args:
+        root_dir: The root directory where the Makefile is located.
+        port: The port number to set for STREAMLIT_PORT.
+    """
     makefile_path = os.path.join(root_dir, 'Makefile')
     if os.path.exists(makefile_path):
         with open(makefile_path, 'r', encoding='utf-8') as file:
             makefile_content = file.read()
 
+        # Update the STREAMLIT_PORT variable in Makefile using regex
+        # This provides flexibility when running multiple containers for production
         new_makefile_content = re.sub(
             r'^(STREAMLIT_PORT\s*:=\s*)\d+',
             f'\\g<1>{port}',
@@ -93,7 +106,12 @@ def update_makefile(root_dir: str, port: int) -> None:
 
 
 def update_configs(mode: str = 'prod', port: int = 8501) -> None:
-    """Update configurations for all kits based on the specified mode."""
+    """Update configurations for all kits based on the specified mode.
+
+    Args:
+        mode: The mode to run in ('prod' or 'test'). Default is 'prod'.
+        port: The port number to set for STREAMLIT_PORT. Default is 8501.
+    """
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     kits = PROD_KITS if mode == 'prod' else TEST_KITS
 
@@ -111,7 +129,8 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
         if mode == 'prod':
             update_config_prod(config)
         else:
-            update_embedding_model(config)
+            # Only runs embedding changes; used for running global tests
+            update_all_embedding_models(config)
 
         with open(config_path, 'w', encoding='utf-8') as file:
             yaml.dump(config, file, default_flow_style=False)
@@ -129,7 +148,7 @@ def main() -> None:
         'mode',
         nargs='?',
         default='prod',
-        choices=['prod', 'test'],
+        choices=['prod', 'test'],  # 'test' is for running the global suite of tests for kits
         help='The mode to run in (prod or test). Default is prod.',
     )
     parser.add_argument('--port', type=int, default=8501, help='The port to use for Streamlit. Default is 8501.')
