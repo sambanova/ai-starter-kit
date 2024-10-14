@@ -26,6 +26,22 @@ This function calling kit is an example of tools calling implementation and a ge
 
 <!-- /TOC -->
 <!-- /TOC -->
+# Overview
+
+This example application for function calling automates multi-step analysis by enabling language models to use information and operations from user-defined functions. While you can use any functions or database with the application, an example use case is implemented here: Uncovering trends in music sales using the provided sample database and tools. By leveraging natural language understanding, database interaction, code generation, and data visualization, the application provides a real-world example of how models can use function calling to automate multi-step analysis tasks with accuraccy.
+
+In addition to the sample DB of music sales, the application includes four tools that are available for the model to call as functions:
+
+- **query_db**: Allows users to interact with the sample music sales database via natural queries. You can ask questions about the data, such as "What are the top-selling albums of all time?" or "What is the total revenue from sales in a specific region?" The function will then retrieve the relevant data from the database and display the results.
+- **python_repl**: Provides a Python Read-Eval-Print Loop (REPL) interface, allowing the model to execute Python code and interact with the results in real-time. The model can use this function to perform data analysis, create data visualizations, or execute custom code to generate and verify the answer to any arbitrary question where code is helpful.
+- **calculator**: Provides a simple calculator interface that allows the model to perform mathematical calculations using natural language inputs. The user can ask questions like "What is 10% of 100?" or "What is the sum of 2+2?" and the function will return the result.
+- **get_time**: Returns the current date and time for use in queries or calculations.
+
+Once the API credentials are set in the Streamlit GUI, a user can select which tools are available to the model for function calling, and select how many iterations (reasoning steps) that the model can call a tool before stopping. Once these parameters are set, users can then submit natural language queries about the dataset or select from the examples. While the application runs, the user can view how the model is trying to solve them in the execution scratchpad, and view the output from execution in the chat window.
+
+Here is a five-minute video walking through use of the kit:
+https://github.com/user-attachments/assets/71e1a4d1-fbc6-4022-a997-d31bfa0b5f14
+
 
 # Before you begin
 
