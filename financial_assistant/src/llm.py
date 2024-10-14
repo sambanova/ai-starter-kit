@@ -11,6 +11,7 @@ from langchain_core.tools import StructuredTool, Tool
 from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
+from financial_assistant.src.exceptions import LLMException
 from financial_assistant.src.tools import get_logger, time_llm
 from financial_assistant.streamlit.constants import *
 from utils.model_wrappers.api_gateway import APIGateway
@@ -291,9 +292,9 @@ class SambaNovaLLM:
             for parameter_key, parameter_value in parameter_dict.items():
                 logger.info(f'{parameter_key}: {parameter_value}')
         except:
-            logger.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
-            streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
-            streamlit.stop()
+            return LLMException(
+                f'We are experiencing an issue with the language model. Please try again in a few minutes.'
+            )
 
         invoked_tool = invoked_tools[0]
 

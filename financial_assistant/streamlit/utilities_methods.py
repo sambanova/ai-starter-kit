@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 from pydantic import BaseModel
 
+from financial_assistant.src.exceptions import LLMException
 from financial_assistant.src.llm import SambaNovaLLM
 from financial_assistant.src.tools import get_conversational_response, get_logger
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
@@ -91,6 +92,10 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
     with streamlit.spinner('Processing...'):
         with st_capture(output.code):
             response = streamlit.session_state.llm.invoke_tools(query=user_query)
+
+    if isinstance(response, LLMException):
+        streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
+        streamlit.stop()
 
     streamlit.session_state.chat_history.append(user_question)
     streamlit.session_state.chat_history.append(response)
