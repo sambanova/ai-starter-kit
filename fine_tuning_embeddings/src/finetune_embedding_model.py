@@ -2,9 +2,9 @@ import argparse
 import json
 from typing import Any, List, Optional
 
-from sentence_transformers import InputExample, SentenceTransformer, losses
-from sentence_transformers.evaluation import InformationRetrievalEvaluator
-from torch.utils.data import DataLoader
+from sentence_transformers import InputExample, SentenceTransformer, losses # type: ignore
+from sentence_transformers.evaluation import InformationRetrievalEvaluator # type: ignore
+from torch.utils.data import DataLoader, Dataset
 
 
 class DatasetLoader:
@@ -22,7 +22,7 @@ class DatasetLoader:
         self.queries = dataset['queries']
         self.relevant_docs = dataset['relevant_docs']
 
-    def get_examples(self) -> List[InputExample]:
+    def get_examples(self) -> Dataset[InputExample]:
         examples: List[Any] = []
         assert self.queries is not None
         assert hasattr(self.queries, 'items')
