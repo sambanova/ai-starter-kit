@@ -11,6 +11,7 @@ Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
+# Standard imports
 import argparse
 import functools
 import logging
@@ -21,6 +22,7 @@ import time
 import unittest
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+# Third-party imports
 import yaml  # type: ignore
 from langchain_core.language_models.llms import LLM
 from llama_index.llms import LangChainLLM
@@ -38,10 +40,13 @@ logger.info(f'repo_dir: {repo_dir}')
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from fine_tuning_embeddings.src.finetune_embedding_model import \
-    DatasetLoader  # type: ignore
+# Local imports
+from fine_tuning_embeddings.src.finetune_embedding_model import DatasetLoader  # type: ignore
 from fine_tuning_embeddings.src.generate_fine_tune_embed_dataset import (  # type: ignore
-    CorpusLoader, QueryGenerator, save_dict_safely)
+    CorpusLoader,
+    QueryGenerator,
+    save_dict_safely,
+)
 from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
