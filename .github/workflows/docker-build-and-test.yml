@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Define environment variables used in the workflow
-      DOCKER_IMAGE: aisk-unit-tests  # Replace with your actual Docker image name
+      DOCKER_IMAGE: aisk-unit-tests  # Updated Docker image name
       DOCKER_TAG: ${{ github.sha }}
       PROD_MODE: false
       TEST_MODE: true
@@ -26,8 +26,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Assuming you have added a .dockerignore file to reduce build context
-      # This step is optional and can be removed if the .dockerignore is already in your repository
       - name: Verify .dockerignore is present
         run: |
           if [ ! -f .dockerignore ]; then
@@ -40,12 +38,11 @@ jobs:
       - name: Create empty .env file
         run: touch .env
 
-      - name: Build Docker image
-        env:
-          DOCKER_BUILDKIT: 0  # Disable BuildKit
+      - name: Build Docker image with BuildKit and verbose logging
         run: |
-          echo "Building Docker image..."
+          echo "Building Docker image with BuildKit and verbose logging..."
           docker build \
+            --progress=plain \
             --build-arg PROD_MODE=$PROD_MODE \
             --build-arg TEST_MODE=$TEST_MODE \
             --secret id=env,src=.env \
@@ -67,6 +64,3 @@ jobs:
           TEST_MODE: ${{ env.TEST_MODE }}
         run: |
           ./run_tests.sh docker --skip-streamlit
-
-      # Note: We cannot use 'actions/upload-artifact' due to organizational policies
-      # If you need to upload test results, consider alternative methods
