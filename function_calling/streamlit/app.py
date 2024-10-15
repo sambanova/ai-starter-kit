@@ -204,8 +204,36 @@ def main() -> None:
 
     initialize_env_variables(prod_mode, additional_env_vars)
 
+    st.title('AI Starter Kit')
+
     if 'fc' not in st.session_state:
         st.session_state.fc = None
+
+        # show overview message when function calling is not yet initialized
+        with st.chat_message(
+            'ai',
+            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        ):
+            st.write(
+                'This example application for function calling automates multi-step analysis by enabling language ' 
+                'models to use information and operations from user-defined functions. While you can use any '
+                'functions or database with the application, an example use case is implemented here: Uncovering '
+                'trends in music sales using the provided sample database and tools. By leveraging natural language '
+                'understanding, database interaction, code generation, and data visualization, the application '
+                ' provides a real-world example of how models can use function calling to automate multi-step analysis '
+                'tasks with accuracy.\n '
+                'In addition to the sample DB of music sales, the application includes several tools that are '
+                'available for the model to call as functions, some of the included tools are:\n'
+                '- **query_db**: Allows users to interact with the sample music sales database via natural queries. '
+                'You can ask questions about the data, such as "What are the top-selling albums of all time?" or "What '
+                'is the total revenue from sales in a specific region?" The function will then retrieve the relevant '
+                'data from the database and display the results.\n'
+                '- **calculator**: Provides a simple calculator interface that allows the model to perform '
+                'mathematical calculations using natural language inputs. The user can ask questions like "What is 10% '
+                'of 100?" or "What is the sum of 2+2?" and the function will return the result.\n'
+                '- **get_time**: Returns the current date and time for use in queries or calculations.'
+            )
+
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
     if 'tools' not in st.session_state:
@@ -219,8 +247,6 @@ def main() -> None:
             st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
         else:
             st.session_state.session_temp_db = None
-
-    st.title(':orange[SambaNova] Function Calling Assistant')
 
     with st.sidebar:
         st.title('Setup')
@@ -271,9 +297,9 @@ def main() -> None:
             with st.expander('Additional settings', expanded=False):
                 st.markdown('**Interaction options**')
 
-                st.markdown('**Reset chat**')
+                st.markdown('**Reset messages**')
                 st.markdown('**Note:** Resetting the chat will clear all interactions history')
-                if st.button('Reset conversation'):
+                if st.button('Reset messages history'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
                     st.toast('Interactions reset. The next response will clear the history on the screen')
