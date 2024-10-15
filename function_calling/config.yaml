@@ -51,3 +51,23 @@ tools:
         "score_treshold": 0.3
 
 prod_mode: False
+
+st_tools: # set which tools to show in the streamlit app set up bar
+  "get_time":
+    "enabled": True
+    "default": True
+  "query_db":
+    "enabled": True
+    "default": True
+  "python_repl":
+    "enabled": True
+    "default": True
+  "calculator":
+    "enabled": True
+    "default": False
+  "translate":
+    "enabled": True
+    "default": False
+  "rag":
+    "enabled": True
+    "default": False

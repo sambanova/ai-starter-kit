@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.INFO)
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
-# tool mapping of available tools
+# tool mapping of defined tools
 TOOLS = {
     'get_time': get_time,
     'calculator': calculator,
@@ -46,6 +46,7 @@ def load_config() -> Any:
 
 
 config = load_config()
+st_tools = config.get('st_tools', {})
 prod_mode = config.get('prod_mode', False)
 db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
@@ -206,7 +207,7 @@ def main() -> None:
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
     if 'tools' not in st.session_state:
-        st.session_state.tools = ['get_time', 'python_repl', 'query_db']
+        st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
     if 'input_disabled' not in st.session_state:
@@ -242,8 +243,8 @@ def main() -> None:
             st.markdown('**1. Select the tools for function calling.**')
             st.session_state.tools = st.multiselect(
                 'Available tools',
-                ['get_time', 'calculator', 'python_repl', 'query_db', 'translate', 'rag'],
-                ['get_time', 'python_repl', 'query_db'],
+                [k for k, v in st_tools.items() if v['enabled']],
+                [k for k, v in st_tools.items() if v['default'] and v['enabled']],
             )
             st.markdown('**2. Set the maximum number of iterations your want the model to run**')
             st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
