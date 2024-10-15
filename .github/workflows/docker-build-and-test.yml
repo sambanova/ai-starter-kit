@@ -14,24 +14,24 @@ jobs:
     if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE: aisk-unit-testing  # Replace with your actual Docker image name
+      # Define environment variables used in the workflow
+      DOCKER_IMAGE: aisk-unit-tests  # Replace with your actual Docker image name
       DOCKER_TAG: ${{ github.sha }}
       PROD_MODE: false
       TEST_MODE: true
+      # Enable debug logging
+      ACTIONS_RUNNER_DEBUG: 'true'
+      ACTIONS_STEP_DEBUG: 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Install QEMU manually
-      - name: Set up QEMU
-        run: |
-          docker run --privileged --rm tonistiigi/binfmt --install all
-
+      # Remove cross-compilation and QEMU setup
       # Set up Buildx manually
       - name: Set up Docker Buildx
         run: |
           mkdir -p ~/.docker/cli-plugins
-          curl -L https://github.com/docker/buildx/releases/download/v0.10.5/buildx-v0.10.5.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
+          curl -sSL https://github.com/docker/buildx/releases/download/v0.10.5/buildx-v0.10.5.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
           chmod +x ~/.docker/cli-plugins/docker-buildx
           docker buildx version
           docker buildx create --use
@@ -39,10 +39,9 @@ jobs:
       - name: Create empty .env file
         run: touch .env
 
-      - name: Build multi-platform Docker image
+      - name: Build Docker image for single platform
         run: |
           docker buildx build \
-            --platform linux/amd64,linux/arm64 \
             --build-arg PROD_MODE=$PROD_MODE \
             --build-arg TEST_MODE=$TEST_MODE \
             --secret id=env,src=.env \
@@ -65,3 +64,5 @@ jobs:
           TEST_MODE: ${{ env.TEST_MODE }}
         run: |
           ./run_tests.sh docker --skip-streamlit
+
+      # Since 'actions/upload-artifact' is not allowed, we skip uploading artifacts
