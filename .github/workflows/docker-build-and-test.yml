@@ -1,4 +1,4 @@
-name: Docker Build and Test
+name: Docker Build and Test  # Name of the workflow
 
 on:
   workflow_dispatch:
@@ -7,54 +7,54 @@ on:
         description: 'Run tests'
         required: false
   push:
-    branches: [ "improvement/docker-testing-workflow-branch" ]  # Use your branch name
+    branches: [ "improvement/docker-testing-workflow-branch" ]  # Trigger on pushes to this branch for isolated testing
 
 jobs:
   build_and_test:
+    # Conditional statement to ensure the job runs only on the specified branch or when manually triggered
     if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
     env:
-      DOCKER_IMAGE: aisk-unit-tests  # Updated Docker image name
-      DOCKER_TAG: ${{ github.sha }}
-      PROD_MODE: false
-      TEST_MODE: true
-      # Enable debug logging
+      DOCKER_IMAGE: aisk-unit-tests  # Name of the Docker image to build
+      DOCKER_TAG: ${{ github.sha }}  # Use the Git commit SHA as the Docker image tag
+      PROD_MODE: false  # Set production mode to false
+      TEST_MODE: true   # Using test mode to enable Sambastudio embeddings for faster global testing
+      # Enable debug logging for GitHub Actions runner
       ACTIONS_RUNNER_DEBUG: 'true'
       ACTIONS_STEP_DEBUG: 'true'
     steps:
-      - name: Checkout code
+      - name: Checkout code  # Step to checkout the repository code
         uses: actions/checkout@v4
 
-      - name: Verify .dockerignore is present
+      - name: Verify .dockerignore is present  # Step to ensure .dockerignore file exists
         run: |
           if [ ! -f .dockerignore ]; then
             echo "Error: .dockerignore file is missing."
-            exit 1
+            exit 1  # Exit with error if .dockerignore is missing
           else
             echo ".dockerignore file is present."
           fi
 
-      - name: Create empty .env file
+      - name: Create empty .env file  # Create an empty .env file to be used in the build
         run: touch .env
 
-      - name: Build Docker image with BuildKit and verbose logging
+      - name: Build Docker image with BuildKit and verbose logging  # Build the Docker image
         run: |
           echo "Building Docker image with BuildKit and verbose logging..."
           docker build \
-            --progress=plain \
-            --build-arg PROD_MODE=$PROD_MODE \
+            --progress=plain \  # Show detailed build output
+            --build-arg PROD_MODE=$PROD_MODE \  # Pass build arguments
             --build-arg TEST_MODE=$TEST_MODE \
-            --secret id=env,src=.env \
-            -t "${DOCKER_IMAGE}:${DOCKER_TAG}" \
+            --secret id=env,src=.env \  # Pass the .env file as a secret
+            -t "${DOCKER_IMAGE}:${DOCKER_TAG}" \  # Tag the image with the name and commit SHA
             .
-
-      - name: List Docker images
+      - name: List Docker images  # List Docker images to verify the build
         run: docker images
 
-      - name: Create .env file with secrets
+      - name: Create .env file with secrets  # Create a .env file containing secrets
         run: |
           echo "Creating .env file with secrets..."
-          set +x  # Disable command echoing to protect secrets
+          set +x  # Disable command echoing to protect secrets in the logs
           {
             echo "SAMBASTUDIO_BASE_URL=${{ secrets.SAMBASTUDIO_BASE_URL }}"
             echo "SAMBASTUDIO_PROJECT_ID=${{ secrets.SAMBASTUDIO_PROJECT_ID }}"
@@ -68,28 +68,28 @@ jobs:
             echo "LVLM_BASE_URL=${{ secrets.LVLM_BASE_URL }}"
             echo "LVLM_API_KEY=${{ secrets.LVLM_API_KEY }}"
             echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
-          } >> .env
+          } >> .env  # Append all secrets to the .env file
           set -x  # Re-enable command echoing
         shell: bash
 
-      - name: Run tests in Docker container
+      - name: Run tests in Docker container  # Run the tests inside the Docker container
         run: |
           echo "Running Docker tests..."
           # Define the image name
           IMAGE_NAME="${DOCKER_IMAGE}:${DOCKER_TAG}"
 
           # Run the Docker container and execute tests
-          docker run --rm \
-            --env-file .env \
-            -e DOCKER_ENV=true \
+          docker run --rm \  # Remove the container after it exits
+            --env-file .env \  # Pass the .env file with secrets to the container
+            -e DOCKER_ENV=true \  # Set environment variables
             -e PROD_MODE=$PROD_MODE \
             -e TEST_MODE=$TEST_MODE \
-            -v "$(pwd)/test_results:/app/test_results" \
-            -w /app \
-            "$IMAGE_NAME" \
-            python tests/test_framework.py --env docker --skip-streamlit
+            -v "$(pwd)/test_results:/app/test_results" \  # Mount the test_results directory for outputs
+            -w /app \  # Set the working directory inside the container
+            "$IMAGE_NAME" \  # Specify the image to run
+            python tests/test_framework.py --env docker --skip-streamlit  # Command to execute inside the container
         env:
-          # Pass secrets as environment variables
+          # Pass secrets as environment variables (required by the script or application)
           SAMBASTUDIO_BASE_URL: ${{ secrets.SAMBASTUDIO_BASE_URL }}
           SAMBASTUDIO_PROJECT_ID: ${{ secrets.SAMBASTUDIO_PROJECT_ID }}
           SAMBASTUDIO_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}
