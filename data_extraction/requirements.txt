@@ -81,6 +81,7 @@ pexpect==4.8.0
 pickleshare==0.7.5
 pikepdf==8.11.2
 platformdirs==3.11.0
+pre-commit==4.0.1
 prompt-toolkit==3.0.39
 prov==2.0.0
 psutil==5.9.5

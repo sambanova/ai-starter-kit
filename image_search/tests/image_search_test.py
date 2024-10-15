@@ -86,8 +86,9 @@ class ImageSearchTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(distances), 1, 'There should be at least one distance result')
 
     def test_search_image_by_image(self) -> None:
-        image_paths, distances = \
-         self.image_search.search_image_by_image(os.path.join(IMAGE_TEST_DATA_PATH, 'sample.png'))
+        image_paths, distances = self.image_search.search_image_by_image(
+            os.path.join(IMAGE_TEST_DATA_PATH, 'sample.png')
+        )
 
         self.assertGreaterEqual(len(image_paths), 1, 'There should be at least one image path')
         self.assertGreaterEqual(len(distances), 1, 'There should be at least one distance result')
