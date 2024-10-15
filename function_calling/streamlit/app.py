@@ -46,8 +46,10 @@ def load_config() -> Any:
 
 
 config = load_config()
-st_tools = config.get('st_tools', {})
 prod_mode = config.get('prod_mode', False)
+st_tools = config.get('st_tools', {})
+st_preset_queries = config.get('st_preset_queries', {})
+
 db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
 
@@ -262,19 +264,9 @@ def main() -> None:
 
             with st.expander('**Preset Example queries**', expanded=True):
                 st.markdown('DB operations')
-                if st.button('Create a summary table in the db'):
-                    setChatInputValue(
-                        """Create and save a table in the database that will show the top 10 albums with the highest
-                        sales in 2013 and in the USA. The table fields will be the name of the album, the name of the
-                        artist, the total amount of sales, and the number of copies sold."""
-                    )
-                if st.button('Get information of the created summary table'):
-                    setChatInputValue('Give me a summary of the 2013 top albums table')
-                if st.button('Create insightful plots of the summary table'):
-                    setChatInputValue(
-                        """Get the information of the 2013 top albums table in the DB, when you get the data then create
-                         some meaningful plots that summarize the information, and store them in PNG format"""
-                    )
+                for button_title, query in st_preset_queries.items():
+                    if st.button(button_title):
+                        setChatInputValue(query.strip())
 
             with st.expander('Additional settings', expanded=False):
                 st.markdown('**Interaction options**')

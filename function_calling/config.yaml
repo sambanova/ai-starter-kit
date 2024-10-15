@@ -71,3 +71,14 @@ st_tools: # set which tools to show in the streamlit app set up bar
   "rag":
     "enabled": True
     "default": False
+
+st_preset_queries: 
+  "Create a summary table in the db": >
+    Create and save a table in the database that will show the top 10 albums with the highest
+    sales in 2013 and in the USA. The table fields will be the name of the album, the name of the
+    artist, the total amount of sales, and the number of copies sold.
+  "Get information of the created summary table": >
+    Give me a summary of the 2013 top albums table
+  "Create insightful plots of the summary table": >
+    Get the information of the 2013 top albums table in the DB, when you get the data then create
+    some meaningful plots that summarize the information, and store them in PNG format
