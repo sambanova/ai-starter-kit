@@ -26,27 +26,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Remove cross-compilation and QEMU setup
-      # Set up Buildx manually
-      - name: Set up Docker Buildx
+      # Assuming you have added a .dockerignore file to reduce build context
+      # This step is optional and can be removed if the .dockerignore is already in your repository
+      - name: Verify .dockerignore is present
         run: |
-          mkdir -p ~/.docker/cli-plugins
-          curl -sSL https://github.com/docker/buildx/releases/download/v0.10.5/buildx-v0.10.5.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
-          chmod +x ~/.docker/cli-plugins/docker-buildx
-          docker buildx version
-          docker buildx create --use
+          if [ ! -f .dockerignore ]; then
+            echo "Error: .dockerignore file is missing."
+            exit 1
+          else
+            echo ".dockerignore file is present."
+          fi
 
       - name: Create empty .env file
         run: touch .env
 
-      - name: Build Docker image for single platform
+      - name: Build Docker image
+        env:
+          DOCKER_BUILDKIT: 0  # Disable BuildKit
         run: |
-          docker buildx build \
+          echo "Building Docker image..."
+          docker build \
             --build-arg PROD_MODE=$PROD_MODE \
             --build-arg TEST_MODE=$TEST_MODE \
             --secret id=env,src=.env \
             -t $DOCKER_IMAGE:$DOCKER_TAG \
-            --load \
             .
 
       - name: List Docker images
@@ -65,4 +68,5 @@ jobs:
         run: |
           ./run_tests.sh docker --skip-streamlit
 
-      # Since 'actions/upload-artifact' is not allowed, we skip uploading artifacts
+      # Note: We cannot use 'actions/upload-artifact' due to organizational policies
+      # If you need to upload test results, consider alternative methods
