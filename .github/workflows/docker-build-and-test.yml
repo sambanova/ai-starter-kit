@@ -67,6 +67,7 @@ jobs:
             echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY }}"
             echo "LVLM_BASE_URL=${{ secrets.LVLM_BASE_URL }}"
             echo "LVLM_API_KEY=${{ secrets.LVLM_API_KEY }}"
+            echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
           } >> .env
           set -x  # Re-enable command echoing
         shell: bash
@@ -100,3 +101,4 @@ jobs:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           LVLM_BASE_URL: ${{ secrets.LVLM_BASE_URL }}
           LVLM_API_KEY: ${{ secrets.LVLM_API_KEY }}
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
