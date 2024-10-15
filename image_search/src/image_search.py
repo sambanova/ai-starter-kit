@@ -32,8 +32,8 @@ class ClipEmbbeding(EmbeddingFunction[D]):
         pass
 
     def embed_image(self, img_path: Optional[str] = None, img: Optional[Any] = None) -> Any:
-        base_url = os.environ.get('CLIP_BASE_URL')
-        api_key = os.environ.get('CLIP_API_KEY')
+        base_url = os.environ.get('CLIP_BASE_URL', '')
+        api_key = os.environ.get('CLIP_API_KEY', '')
         url = base_url.replace('nlp', 'file')
         if img_path:
             files = {'predict_file': open(img_path, 'rb')}
@@ -46,8 +46,8 @@ class ClipEmbbeding(EmbeddingFunction[D]):
         return response.json()['data'][0]
 
     def embed_text(self, text: Any) -> Any:
-        base_url = os.environ.get('CLIP_BASE_URL')
-        api_key = os.environ.get('CLIP_API_KEY')
+        base_url = os.environ.get('CLIP_BASE_URL', '')
+        api_key = os.environ.get('CLIP_API_KEY', '')
         input_data = {'inputs': [text]}
         headers = {'key': api_key, 'Content-Type': 'application/json'}
         response = requests.post(base_url, json=input_data, headers=headers)
