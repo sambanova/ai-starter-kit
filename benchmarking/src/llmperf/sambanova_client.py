@@ -426,7 +426,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
-            sampling_params['stream_options'] = {'include_usage': 'true'}
+            sampling_params['stream_options'] = {'include_usage': True}
         else:
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
@@ -460,7 +460,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
-
+        
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
