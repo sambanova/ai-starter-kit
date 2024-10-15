@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       run_tests:
-        description: 'Run unit tests via docker'
+        description: 'Run tests'
         required: false
   push:
     branches: [ "improvement/docker-testing-workflow-branch" ]  # Updated branch name
@@ -13,11 +13,11 @@ on:
 jobs:
   build_and_test:
     # Run the job only on the specified branch or when manually triggered
-    if: github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch'
+    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       # Define environment variables used in the workflow
-      DOCKER_IMAGE: aisk-unit-testing  # Replace with your actual Docker image name
+      DOCKER_IMAGE: your-docker-image-name  # Replace with your actual Docker image name
       DOCKER_TAG: ${{ github.sha }}
       PROD_MODE: false
       TEST_MODE: true
