@@ -1,6 +1,5 @@
 name: Docker Build and Test
 
-# Trigger the workflow on manual dispatch and pushes to the specified branch
 on:
   workflow_dispatch:
     inputs:
@@ -8,16 +7,14 @@ on:
         description: 'Run tests'
         required: false
   push:
-    branches: [ "improvement/docker-testing-workflow-branch" ]  # Updated branch name
+    branches: [ "improvement/docker-testing-workflow-branch" ]
 
 jobs:
   build_and_test:
-    # Run the job only on the specified branch or when manually triggered
     if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
-      # Define environment variables used in the workflow
-      DOCKER_IMAGE: your-docker-image-name  # Replace with your actual Docker image name
+      DOCKER_IMAGE: aisk-unit-testing  # Replace with your actual Docker image name
       DOCKER_TAG: ${{ github.sha }}
       PROD_MODE: false
       TEST_MODE: true
@@ -25,39 +22,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Install QEMU manually
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install all
 
+      # Set up Buildx manually
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        id: cache-docker-layers
-        uses: actions/cache@v3
-        with:
-          path: .docker-cache
-          key: ${{ runner.os }}-docker-cache-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-docker-cache-
+        run: |
+          mkdir -p ~/.docker/cli-plugins
+          curl -L https://github.com/docker/buildx/releases/download/v0.10.5/buildx-v0.10.5.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
+          chmod +x ~/.docker/cli-plugins/docker-buildx
+          docker buildx version
+          docker buildx create --use
 
       - name: Create empty .env file
         run: touch .env
 
       - name: Build multi-platform Docker image
         run: |
-          mkdir -p .docker-cache
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --build-arg PROD_MODE=$PROD_MODE \
             --build-arg TEST_MODE=$TEST_MODE \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --secret id=env,src=.env \
-            --cache-from type=local,src=.docker-cache \
-            --cache-to type=local,dest=.docker-cache-new \
             -t $DOCKER_IMAGE:$DOCKER_TAG \
             --load \
             .
-          mv .docker-cache-new .docker-cache
 
       - name: List Docker images
         run: docker images
@@ -74,10 +65,3 @@ jobs:
           TEST_MODE: ${{ env.TEST_MODE }}
         run: |
           ./run_tests.sh docker --skip-streamlit
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: test_results/
