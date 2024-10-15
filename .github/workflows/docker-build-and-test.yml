@@ -1,0 +1,83 @@
+name: Docker Build and Test
+
+# Trigger the workflow on manual dispatch and pushes to the specified branch
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run unit tests via docker'
+        required: false
+  push:
+    branches: [ "improvement/docker-testing-workflow-branch" ]  # Updated branch name
+
+jobs:
+  build_and_test:
+    # Run the job only on the specified branch or when manually triggered
+    if: github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      # Define environment variables used in the workflow
+      DOCKER_IMAGE: aisk-unit-testing  # Replace with your actual Docker image name
+      DOCKER_TAG: ${{ github.sha }}
+      PROD_MODE: false
+      TEST_MODE: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        id: cache-docker-layers
+        uses: actions/cache@v3
+        with:
+          path: .docker-cache
+          key: ${{ runner.os }}-docker-cache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-cache-
+
+      - name: Create empty .env file
+        run: touch .env
+
+      - name: Build multi-platform Docker image
+        run: |
+          mkdir -p .docker-cache
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --build-arg PROD_MODE=$PROD_MODE \
+            --build-arg TEST_MODE=$TEST_MODE \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --secret id=env,src=.env \
+            --cache-from type=local,src=.docker-cache \
+            --cache-to type=local,dest=.docker-cache-new \
+            -t $DOCKER_IMAGE:$DOCKER_TAG \
+            --load \
+            .
+          mv .docker-cache-new .docker-cache
+
+      - name: List Docker images
+        run: docker images
+
+      - name: Make run_tests.sh executable
+        run: chmod +x ./run_tests.sh
+
+      - name: Run tests
+        env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          DOCKER_TAG: ${{ env.DOCKER_TAG }}
+          PROD_MODE: ${{ env.PROD_MODE }}
+          TEST_MODE: ${{ env.TEST_MODE }}
+        run: |
+          ./run_tests.sh docker --skip-streamlit
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test_results/
