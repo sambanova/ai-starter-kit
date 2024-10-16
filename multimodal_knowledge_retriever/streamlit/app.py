@@ -206,20 +206,19 @@ def main() -> None:
                 if not, image summaries will be used instead'
             )
             # hard setting of llm and lvlm (overwrites models from config.yaml)
-            if prod_mode:
-                st.markdown('**Optional Set a specific multimodal model and LLM**')
-                lvlm_model = st.selectbox('Select the multimodal model to use', LVLM_MODELS, 0)
-                llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
-                if st.button('set_model'):
-                    st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
-                    st.session_state.multimodal_retriever.set_llm(llm_model)
-                    # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
-                    if st.session_state.multimodal_retriever.qa_chain is not None:
-                        if raw_image_retrieval:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
-                        else:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
-                    st.toast('Models updated')
+            st.markdown('**Optional Set a specific multimodal model and LLM**')
+            lvlm_model = st.selectbox('Select the multimodal model to use', LVLM_MODELS, 0)
+            llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
+            if st.button('set_model'):
+                st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
+                st.session_state.multimodal_retriever.set_llm(llm_model)
+                # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
+                if st.session_state.multimodal_retriever.qa_chain is not None:
+                    if raw_image_retrieval:
+                        st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
+                    else:
+                        st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
+                st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
             if st.button('Process'):
