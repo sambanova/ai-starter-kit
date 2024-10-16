@@ -4,8 +4,7 @@ llm:
   "temperature": 0.0
   "max_tokens_to_generate": 1024
   "coe": True #set as true if using Sambastudio CoE endpoint
-  "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
-        #sncloud CoE expert name -> "llama3-405b"
+  "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm exper
 
 tools:
     query_db:
@@ -15,8 +14,7 @@ tools:
         "temperature": 0.0 
         "max_tokens_to_generate": 1024
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
-        #sncloud CoE expert name -> "llama3-405b"
+        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
       db:
         "path": "data/chinook.db" 
 
@@ -27,8 +25,7 @@ tools:
         "temperature": 0.0
         "max_tokens_to_generate": 1024
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
-        #sncloud CoE expert name -> "llama3-405b"
+        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
 
     rag:
       llm:
@@ -37,8 +34,7 @@ tools:
         "temperature": 0.0 
         "max_tokens_to_generate": 1024
         "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "llama3-405b" #set if using sncloud, SambaStudio CoE llm expert
-        #sncloud CoE expert name -> "llama3-405b"
+        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
       embedding_model: 
         "type": "cpu" # set either sambastudio or cpu
         "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
@@ -51,3 +47,26 @@ tools:
         "score_treshold": 0.3
 
 prod_mode: False
+
+# set which tools to show in the streamlit app setup bar
+# enabled will make the tools available in the tool selector
+# default will set the tool as preselected in the tool selector 
+st_tools: 
+  "get_time":
+    "enabled": True
+    "default": True
+  "query_db":
+    "enabled": True
+    "default": True
+  "python_repl":
+    "enabled": True
+    "default": True
+  "calculator":
+    "enabled": True
+    "default": False
+  "translate":
+    "enabled": True
+    "default": False
+  "rag":
+    "enabled": True
+    "default": False
