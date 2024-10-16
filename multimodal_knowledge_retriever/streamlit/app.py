@@ -30,10 +30,10 @@ ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-3.2-11B-Vision-Instruct',
-    'llama-3.2-11b-vision-preview',
+    'Llama-3.2-90B-Vision-Instruct',
+    'llava-v1.5-7b-4096-preview',
     'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
     'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
-    'llava-v1.5-7b-4096-preview',
 ]
 # Available models in dropdown menu
 LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
