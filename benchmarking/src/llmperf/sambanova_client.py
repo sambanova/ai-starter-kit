@@ -226,24 +226,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
             self.base_url = self.request_config.api_variables['SAMBASTUDIO_URL']
             self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBASTUDIO_URL','')
-            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY','')
-
-    # def _get_url(self) -> str:
-    #     """Builds url for API call
-
-    #     Returns:
-    #         str: url needed for API
-    #     """
-
-    #     if self.request_config.is_stream_mode:
-    #         path = f'{self.base_uri}/stream/{self.project_id}/{self.endpoint_id}'
-    #     else:
-    #         path = f'{self.base_uri}/{self.project_id}/{self.endpoint_id}'
-
-    #     url = f'{self.base_url}/{path}'
-
-    #     return url
+            self.base_url = os.environ.get('SAMBASTUDIO_URL', '')
+            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY', '')
 
     def _get_url(self) -> str:
         """
@@ -414,7 +398,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
             self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
-            self.api_key = os.environ.get('SAMBANOVA_API_KEY','')
+            self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:
         """Builds url for API call

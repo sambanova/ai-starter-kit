@@ -1,8 +1,8 @@
-import yaml
 import warnings
 
 import pandas as pd
 import streamlit as st
+import yaml
 from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
@@ -23,6 +23,7 @@ with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
+
 
 def _initialize_sesion_variables() -> None:
     # Initialize chat history

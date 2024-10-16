@@ -5,12 +5,11 @@
 # sys.path.append(kit_dir)
 # sys.path.append(repo_dir)
 
-import yaml
 import warnings
 
 import pandas as pd
 import streamlit as st
-from dotenv import load_dotenv
+import yaml
 from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
@@ -31,6 +30,7 @@ with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
+
 
 def _initialize_session_variables() -> None:
     # Initialize llm

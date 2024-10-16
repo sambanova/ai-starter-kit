@@ -1,7 +1,7 @@
 import sys
-import yaml
 
 import streamlit as st
+import yaml
 
 sys.path.append('../')
 
@@ -21,6 +21,7 @@ with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
+
 
 def _get_params() -> Dict[str, Any]:
     """Get LLM params

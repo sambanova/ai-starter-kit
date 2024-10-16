@@ -7,21 +7,22 @@ sys.path.append('./src')
 sys.path.append('./streamlit')
 
 import warnings
-from typing import Any, List, Tuple
+from typing import List
 
 import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
-import extra_streamlit_components as stx
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES
-from utils.visual.env_utils import are_credentials_set, initialize_env_variables, save_credentials, env_input_fields
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 warnings.filterwarnings('ignore')
+
 
 @st.cache_data
 def _init() -> None:
     load_dotenv('../.env', override=True)
+
 
 CONFIG_PATH = './config.yaml'
 with open(CONFIG_PATH) as file:
@@ -29,14 +30,15 @@ with open(CONFIG_PATH) as file:
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
+
 def _initialize_session_variables() -> None:
     if 'prod_mode' not in st.session_state:
         st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
 
-def main() -> None:
 
+def main() -> None:
     show_pages(
         [
             Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),
@@ -47,7 +49,7 @@ def main() -> None:
     )
 
     prod_mode = st.session_state.prod_mode
-    
+
     if prod_mode:
         if not st.session_state.setup_complete:
             hide_pages(
@@ -65,8 +67,8 @@ def main() -> None:
 
             # Mode selection
             st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
-            
-            additional_env_vars = []
+
+            additional_env_vars: List[str] = []
             if st.session_state.mode == 'SambaNova Cloud':
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio
@@ -109,8 +111,8 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     _init()
     _initialize_session_variables()
-    
+
     main()
