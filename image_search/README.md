@@ -60,11 +60,8 @@ To set set up your environment, follow these steps:
 2. Update the environment variables file in the root repo directory `sn-ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, enter an endpoint with the URL "https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123" and a SambaStudio key `"1234567890abcdef987654321fedcba0123456789abcdef"` with no spaces as:
 
 ```yaml
-BASE_URL="https://api-stage.sambanova.net"
-PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-SAMBASTUDIO_KEY="1234567890abcdef987654321fedcba0123456789abcdef"
+CLIP_BASE_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+CLIP_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 3. In the [config file](./config.yaml) file, set the variable `api` to `"sambastudio"`    
 
