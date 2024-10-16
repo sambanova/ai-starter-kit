@@ -62,7 +62,8 @@ class SambaNovaLLM:
 
     @property
     def tools(self) -> Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]]:
-        """Getter method for tool."""
+        """Getter method for tools."""
+
         return self._tools
 
     @tools.setter
@@ -71,7 +72,8 @@ class SambaNovaLLM:
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
         default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
     ) -> None:
-        """Setter method for tool."""
+        """Setter method for tools."""
+
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
