@@ -57,6 +57,23 @@ def update_all_embedding_models(config: Any) -> None:
             update_all_embedding_models(item)
 
 
+def update_tools(config: Dict[str, Any]) -> None:
+    """Update 'st_tools' configurations in the config dictionary for prod mode.
+
+    Args:
+        config: The configuration dictionary to update.
+    """
+    st_tools = config.get('st_tools')
+    if isinstance(st_tools, dict):
+        python_repl = st_tools.get('python_repl')
+        if isinstance(python_repl, dict):
+            python_repl['enabled'] = False
+            python_repl['default'] = False
+        calculator = st_tools.get('calculator')
+        if isinstance(calculator, dict):
+            calculator['default'] = True
+
+
 def update_config_prod(config: Dict[str, Any]) -> None:
     """Update configuration for production mode.
 
@@ -67,6 +84,7 @@ def update_config_prod(config: Dict[str, Any]) -> None:
     # and configurations are active.
     config['prod_mode'] = True
     update_all_embedding_models(config)
+    update_tools(config)
 
     # This overwrite is to use a currently supported audio model in prod_mode
     audio_model = config.get('audio_model')
@@ -105,6 +123,34 @@ def update_makefile(root_dir: str, port: int) -> None:
         print(f'Makefile not found at {makefile_path}. Skipping STREAMLIT_PORT update.')
 
 
+def update_preset_queries(kit_path: str) -> None:
+    """Update the prompts/streamlit_preset_queries.yaml file for function_calling kit.
+
+    Args:
+        kit_path: The path to the kit directory.
+    """
+    prompts_file_path = os.path.join(kit_path, 'prompts', 'streamlit_preset_queries.yaml')
+    if os.path.exists(prompts_file_path):
+        with open(prompts_file_path, 'r', encoding='utf-8') as file:
+            prompts = yaml.safe_load(file)
+
+        # Modify the prompts
+        key_to_replace = 'Create insightful plots of the summary table'
+        if key_to_replace in prompts:
+            prompts[key_to_replace] = (
+                'What is the price in colombian pesos of the track "Snowballed" in the db '
+                'if one usd is equal to 3800 cop?'
+            )
+
+            with open(prompts_file_path, 'w', encoding='utf-8') as file:
+                yaml.dump(prompts, file, default_flow_style=False)
+            print(f'Updated prompts in {prompts_file_path}')
+        else:
+            print(f'Key "{key_to_replace}" not found in prompts for {kit_path}')
+    else:
+        print(f'Prompts file not found at {prompts_file_path}')
+
+
 def update_configs(mode: str = 'prod', port: int = 8501) -> None:
     """Update configurations for all kits based on the specified mode.
 
@@ -136,6 +182,10 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
             yaml.dump(config, file, default_flow_style=False)
 
         print(f'Updated config for {kit_name} in {mode} mode.')
+
+        # Custom change for function_calling kit
+        if mode == 'prod' and kit_name == 'function_calling':
+            update_preset_queries(kit_path)
 
     if mode == 'prod':
         update_makefile(root_dir, port)
