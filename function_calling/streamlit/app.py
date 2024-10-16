@@ -204,7 +204,7 @@ def main() -> None:
 
     initialize_env_variables(prod_mode, additional_env_vars)
 
-    st.title('AI Starter Kit')
+    st.title(':orange[SambaNova] Function Calling Assistant')
 
     if 'fc' not in st.session_state:
         st.session_state.fc = None
