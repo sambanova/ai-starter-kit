@@ -1,4 +1,5 @@
 import datetime
+import shutil
 from typing import Any, Dict, List, Optional
 
 import pandas
@@ -21,7 +22,6 @@ from financial_assistant.src.tools import (
     extract_yfinance_data,
 )
 from financial_assistant.src.utilities import time_llm
-from financial_assistant.streamlit.utilities_app import delete_temp_dir
 
 
 class StockInfoSchema(BaseModel):
@@ -170,7 +170,7 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     )
 
     # Delete the pandasai cache
-    delete_temp_dir(temp_dir=PANDASAI_CACHE, verbose=False)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     # Answer the user query by symbol
     return interrogate_dataframe_pandasai(yahoo_connector, user_query)
@@ -202,7 +202,7 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
     )
 
     # Delete the pandasai cache
-    delete_temp_dir(temp_dir=PANDASAI_CACHE, verbose=False)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS

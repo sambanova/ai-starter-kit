@@ -406,7 +406,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
 
     # Delete the pandasai cache
-    shutil.rmtree(PANDASAI_CACHE)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     return response
 
