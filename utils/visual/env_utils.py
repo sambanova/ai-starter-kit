@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit as st
 
+
 def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optional[List[str]] = None) -> None:
     if additional_env_vars is None:
         additional_env_vars = []
@@ -45,9 +46,9 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
         if additional_vars:
             for key, value in additional_vars.items():
                 os.environ[key] = value
-                
 
-def env_input_fields(additional_env_vars: List[str] = [], mode: str='SambaNova Cloud') -> Tuple[str, Any]:
+
+def env_input_fields(additional_env_vars: List[str] = [], mode: str = 'SambaNova Cloud') -> Tuple[str, Any]:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -57,9 +58,7 @@ def env_input_fields(additional_env_vars: List[str] = [], mode: str='SambaNova C
         )
         additional_vars = {}
     elif mode == 'SambaStudio':
-        url = st.text_input(
-            'SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password'
-        )
+        url = st.text_input('SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password')
         api_key = st.text_input(
             'SAMBASTUDIO API KEY', value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
         )
@@ -67,7 +66,7 @@ def env_input_fields(additional_env_vars: List[str] = [], mode: str='SambaNova C
         additional_vars['SAMBASTUDIO_URL'] = url
     else:
         raise Exception('Setup mode not supported.')
-    
+
     for var in additional_env_vars:
         additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
 
