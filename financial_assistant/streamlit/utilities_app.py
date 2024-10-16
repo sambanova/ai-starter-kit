@@ -306,12 +306,14 @@ def display_directory_contents(path: str, default_path: str) -> None:
         streamlit.sidebar.markdown('#### Subdirectories:')
         for idx, subdir in enumerate(subdirectories):
             if streamlit.sidebar.button(f'📁 {subdir}', key=f'{subdir}_{idx}'):
-                streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
-                # Recursion
-                display_directory_contents(streamlit.session_state.current_path, default_path)
                 files_subdir = list_files_in_directory(os.path.join(path, subdir))
                 for file in files_subdir:
                     download_file(streamlit.session_state.current_path + '/' + file)
+
+                # Recursion
+                streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
+                display_directory_contents(streamlit.session_state.current_path, default_path)
+                return
 
     if files:
         streamlit.sidebar.markdown('#### Files:')
