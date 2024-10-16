@@ -1,4 +1,5 @@
 import sys
+import yaml
 
 import streamlit as st
 
@@ -15,6 +16,11 @@ from benchmarking.streamlit.streamlit_utils import APP_PAGES, LLM_API_OPTIONS, f
 
 warnings.filterwarnings('ignore')
 
+CONFIG_PATH = './config.yaml'
+with open(CONFIG_PATH) as file:
+    st.session_state.config = yaml.safe_load(file)
+    st.session_state.prod_mode = st.session_state.config['prod_mode']
+    st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
 def _get_params() -> Dict[str, Any]:
     """Get LLM params
@@ -66,8 +72,6 @@ def _initialize_sesion_variables() -> None:
         st.session_state.llm_api = None
     if 'chat_disabled' not in st.session_state:
         st.session_state.chat_disabled = True
-    if 'prod_mode' not in st.session_state:
-        st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
 
