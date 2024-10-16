@@ -27,6 +27,7 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 logging.basicConfig(level=logging.INFO)
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+PRESET_QUERIES_PATH = os.path.join(kit_dir, 'prompts', 'streamlit_preset_queries.yaml')
 
 # tool mapping of defined tools
 TOOLS = {
@@ -45,10 +46,15 @@ def load_config() -> Any:
         return yaml.safe_load(yaml_file)
 
 
+def load_preset_queries() -> Any:
+    with open(PRESET_QUERIES_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
 config = load_config()
 prod_mode = config.get('prod_mode', False)
 st_tools = config.get('st_tools', {})
-st_preset_queries = config.get('st_preset_queries', {})
+st_preset_queries = load_preset_queries()
 
 db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
@@ -215,7 +221,7 @@ def main() -> None:
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
             st.write(
-                'This example application for function calling automates multi-step analysis by enabling language ' 
+                'This example application for function calling automates multi-step analysis by enabling language '
                 'models to use information and operations from user-defined functions. While you can use any '
                 'functions or database with the application, an example use case is implemented here: Uncovering '
                 'trends in music sales using the provided sample database and tools. By leveraging natural language '
