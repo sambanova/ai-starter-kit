@@ -178,25 +178,23 @@ def main() -> None:
                     except:
                         pass
 
-            # Set the default path
-            cache_dir = CACHE_DIR
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
-                streamlit.session_state.current_path = cache_dir
+                streamlit.session_state.current_path = CACHE_DIR
 
-            if os.path.exists(cache_dir):
+            if os.path.exists(CACHE_DIR):
                 # Input to allow user to go back to a parent directory, up to the cache, but not beyond the cache
                 if (
                     streamlit.sidebar.button('⬅️ Back', key=f'back')
-                    and cache_dir in streamlit.session_state.current_path
+                    and CACHE_DIR in streamlit.session_state.current_path
                 ):
                     streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
 
                     # Display the current directory contents
-                    display_directory_contents(streamlit.session_state.current_path, cache_dir)
+                    display_directory_contents(streamlit.session_state.current_path, CACHE_DIR)
                 else:
                     # Display the current directory contents
-                    display_directory_contents(streamlit.session_state.current_path, cache_dir)
+                    display_directory_contents(streamlit.session_state.current_path, CACHE_DIR)
 
     # Title of the main page
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')

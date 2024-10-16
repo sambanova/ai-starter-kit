@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import pathlib
 import re
 import shutil
 import time
@@ -286,7 +287,12 @@ def list_directory(directory: str) -> Tuple[List[str], List[str]]:
 
 
 def display_directory_contents(path: str, default_path: str) -> None:
-    """Display subdirectories and files in the current path."""
+    """Display subdirectories and files in the current path, up to the default path."""
+
+    # Check that `path` is contained relative to `default_path`
+    if not pathlib.Path(path).is_relative_to(pathlib.Path(default_path)):
+        path = default_path
+        streamlit.session_state.current_path = default_path
 
     subdirectories, files = list_directory(path)
 
@@ -301,7 +307,8 @@ def display_directory_contents(path: str, default_path: str) -> None:
         for idx, subdir in enumerate(subdirectories):
             if streamlit.sidebar.button(f'📁 {subdir}', key=f'{subdir}_{idx}'):
                 streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
-
+                # Recursion
+                display_directory_contents(streamlit.session_state.current_path, default_path)
                 files_subdir = list_files_in_directory(os.path.join(path, subdir))
                 for file in files_subdir:
                     download_file(streamlit.session_state.current_path + '/' + file)
