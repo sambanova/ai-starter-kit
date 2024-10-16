@@ -4,7 +4,6 @@ import sys
 import time
 
 import weave
-import yaml
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,13 +15,13 @@ sys.path.append(repo_dir)
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
-from financial_assistant.src.tools import get_logger
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.app_financial_filings import include_financial_filings
 from financial_assistant.streamlit.app_pdf_report import include_pdf_report
 from financial_assistant.streamlit.app_stock_data import get_stock_data_analysis
 from financial_assistant.streamlit.app_stock_database import get_stock_database
 from financial_assistant.streamlit.app_yfinance_news import get_yfinance_news
-from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import (
     clear_cache,
     create_temp_dir_with_subdirs,
@@ -40,12 +39,6 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, save_c
 # Initialize Weave with your project name
 if os.getenv('WANDB_API_KEY') is not None:
     weave.init('sambanova_financial_assistant')
-
-# Load the config
-with open(CONFIG_PATH, 'r') as yaml_file:
-    config = yaml.safe_load(yaml_file)
-# Get the production flag
-prod_mode = config['prod_mode']
 
 logger = get_logger()
 
@@ -94,27 +87,27 @@ def main() -> None:
                     streamlit.rerun()
 
         # Create the cache and its main subdirectories
-        if are_credentials_set() and not os.path.exists(streamlit.session_state.cache_dir):
+        if are_credentials_set() and not os.path.exists(CACHE_DIR):
             # List the main cache subdirectories
             subdirectories = [
-                streamlit.session_state.source_dir,
-                streamlit.session_state.pdf_sources_directory,
-                streamlit.session_state.pdf_generation_directory,
+                SOURCE_DIR,
+                PDF_SOURCES_DIR,
+                PDF_GENERATION_DIRECTORY,
             ]
 
             if prod_mode:
                 # In production mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+                create_temp_dir_with_subdirs(CACHE_DIR, subdirectories)
 
                 # In production, schedule deletion after EXIT_TIME_DELTA minutes
                 try:
-                    schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
+                    schedule_temp_dir_deletion(CACHE_DIR, delay_minutes=EXIT_TIME_DELTA)
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
             else:
                 # In development mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+                create_temp_dir_with_subdirs(CACHE_DIR, subdirectories)
 
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
@@ -175,18 +168,18 @@ def main() -> None:
                         clear_cache(delete=False)
                         # List the main cache subdirectories
                         subdirectories = [
-                            streamlit.session_state.source_dir,
-                            streamlit.session_state.pdf_sources_directory,
-                            streamlit.session_state.pdf_generation_directory,
+                            SOURCE_DIR,
+                            PDF_SOURCES_DIR,
+                            PDF_GENERATION_DIRECTORY,
                         ]
-                        delete_all_subdirectories(directory=streamlit.session_state.cache_dir, exclude=subdirectories)
+                        delete_all_subdirectories(directory=CACHE_DIR, exclude=subdirectories)
 
                         streamlit.sidebar.success('All files have been deleted.')
                     except:
                         pass
 
             # Set the default path
-            cache_dir = streamlit.session_state.cache_dir
+            cache_dir = CACHE_DIR
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
                 streamlit.session_state.current_path = cache_dir
@@ -250,10 +243,7 @@ def main() -> None:
         elif menu == 'Financial Filings Analysis':
             # Populate SEC-EDGAR credentials
             submit_sec_edgar_details()
-            if (
-                streamlit.session_state.SEC_API_ORGANIZATION is not None
-                and streamlit.session_state.SEC_API_EMAIL is not None
-            ):
+            if os.getenv('SEC_API_ORGANIZATION') is not None and os.getenv('SEC_API_EMAIL') is not None:
                 include_financial_filings()
 
         # Generate PDF Report page

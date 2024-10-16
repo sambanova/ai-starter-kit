@@ -1,4 +1,4 @@
-prod_mode: False
+prod_mode: True
 
 llm: 
     "api": "sncloud" #  Set either `sambastudio` or `sncloud`

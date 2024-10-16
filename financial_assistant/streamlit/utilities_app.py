@@ -7,54 +7,19 @@ import time
 from pathlib import Path
 from threading import Thread
 from typing import Any, Dict, List, Optional, Tuple
-from uuid import uuid4
 
 import pandas
 import pandasai
 import schedule
 import streamlit
-import yaml
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_assistant.src.tools import get_logger
-from financial_assistant.streamlit.constants import *
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from utils.visual.env_utils import initialize_env_variables
 
 logger = get_logger()
-
-
-def _get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, str]:
-    """
-    Loads json config file.
-
-    Args:
-        path: The path to the config file.
-        Defaults to CONFIG_PATH.
-    Returns:
-        A dictionary with the config information:
-            - api_info: string containing API to use:
-                `sncloud` or `sambastudio`.
-            - embedding_model_info:
-                String containing embedding model type to use,
-                `cpu` or `sambastudio`.
-            - llm_info: Dictionary containing LLM parameters.
-            - retrieval_info:
-                Dictionary containing retrieval parameters.
-            - web_crawling_params:
-                Dictionary containing web crawling parameters.
-            - extra_loaders:
-                List containing extra loader to use when doing web crawling
-                (only pdf available in base kit).
-    """
-    # Read config file
-    with open(config_path, 'r') as yaml_file:
-        config_file = yaml.safe_load(yaml_file)
-
-    # Convert the config file to a dictionary
-    config = dict(config_file)
-
-    return config
 
 
 def initialize_session(
@@ -64,10 +29,6 @@ def initialize_session(
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
-    # Initialize the session id
-    if 'session_id' not in session_state:
-        session_state.session_id = str(uuid4())
-
     # Initialize the production mode
     if 'prod_mode' not in session_state:
         session_state.prod_mode = prod_mode
@@ -75,87 +36,20 @@ def initialize_session(
     # Initialize credentials
     initialize_env_variables(prod_mode)
 
-    # Initialize SEC EDGAR credentials
-    if 'SEC_API_ORGANIZATION' not in streamlit.session_state:
-        if prod_mode:
-            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
-        else:
-            streamlit.session_state.SEC_API_ORGANIZATION = os.getenv('SEC_API_ORGANIZATION')
-    if 'SEC_API_EMAIL' not in streamlit.session_state:
-        if prod_mode:
-            streamlit.session_state.SEC_API_EMAIL = f'user_{session_state.session_id}@sambanova_cloud.com'
-        else:
-            streamlit.session_state.SEC_API_EMAIL = os.getenv('SEC_API_EMAIL')
-
     # Initialize the chat history
     if 'chat_history' not in session_state:
         session_state.chat_history = list()
-    # Initialize function calling
-    if 'llm' not in session_state:
-        session_state.llm = None
-
-    # Initialize cache directory
-    if prod_mode:
-        if 'cache_dir' not in session_state:
-            session_state.cache_dir = os.path.join(cache_dir[:-1] + '_prod_mode', f'cache_{session_state.session_id}')
-    else:
-        if 'cache_dir' not in session_state:
-            session_state.cache_dir = cache_dir
-
-    # Main cache directories
-    if 'history_path' not in session_state:
-        session_state.history_path = os.path.join(session_state.cache_dir, 'chat_history.txt')
-    if 'pdf_generation_directory' not in session_state:
-        session_state.pdf_generation_directory = os.path.join(streamlit.session_state.cache_dir, 'pdf_generation')
-    if 'stock_query_path' not in session_state:
-        session_state.stock_query_path = os.path.join(streamlit.session_state.cache_dir, 'stock_query.txt')
-    if 'db_query_path' not in session_state:
-        session_state.db_query_path = os.path.join(streamlit.session_state.cache_dir, 'db_query.txt')
-    if 'yfinance_news_path' not in session_state:
-        session_state.yfinance_news_path = os.path.join(streamlit.session_state.cache_dir, 'yfinance_news.txt')
-    if 'filings_path' not in session_state:
-        session_state.filings_path = os.path.join(streamlit.session_state.cache_dir, 'filings.txt')
-    if 'pdf_rag_path' not in session_state:
-        session_state.pdf_rag_path = os.path.join(streamlit.session_state.cache_dir, 'pdf_rag.txt')
-    if 'web_scraping_path' not in session_state:
-        session_state.web_scraping_path = os.path.join(streamlit.session_state.cache_dir, 'web_scraping.csv')
-    if 'llm_class_logger_path' not in session_state:
-        session_state.llm_class_logger_path = os.path.join(streamlit.session_state.cache_dir, 'llm_calls_logger.txt')
-
-    # Main source directories
-    if 'source_dir' not in session_state:
-        session_state.source_dir = os.path.join(streamlit.session_state.cache_dir, 'sources')
-    if 'db_path' not in session_state:
-        session_state.db_path = os.path.join(session_state.source_dir, 'stock_database.db')
-    if 'yfinance_news_txt_path' not in session_state:
-        session_state.yfinance_news_txt_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.txt')
-    if 'yfinance_news_csv_path' not in session_state:
-        session_state.yfinance_news_csv_path = os.path.join(session_state.source_dir, 'yfinance_news_documents.csv')
-    if 'pdf_sources_directory' not in session_state:
-        session_state.pdf_sources_directory = os.path.join(session_state.source_dir, 'pdf_sources')
-
-    # Main figures directories
-    if 'stock_query_figures_dir' not in session_state:
-        session_state.stock_query_figures_dir = os.path.join(session_state.cache_dir, 'stock_query_figures')
-    if 'history_figures_dir' not in session_state:
-        session_state.history_figures_dir = os.path.join(session_state.cache_dir, 'history_figures')
-    if 'db_query_figures_dir' not in session_state:
-        session_state.db_query_figures_dir = os.path.join(session_state.cache_dir, 'db_query_figures')
 
     # Launch time
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
-
-    # Clear pandasai cache
-    if 'pandasai_cache' not in session_state:
-        session_state.pandasai_cache = os.path.join(os.getcwd(), 'cache')
 
     # Delete pandasai cache
     try:
         pandasai.clear_cache()
     except:
         pass
-    delete_temp_dir(temp_dir=session_state.pandasai_cache, verbose=False)
+    delete_temp_dir(temp_dir=PANDASAI_CACHE, verbose=False)
 
 
 def submit_sec_edgar_details() -> None:
@@ -166,24 +60,23 @@ def submit_sec_edgar_details() -> None:
         to comply with the SEC Edgar's downloading fair access
         <a href="https://www.sec.gov/os/webmaster-faq#code-support" target="_blank">policy</a>.
     """
-    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+    if os.getenv('SEC_API_ORGANIZATION') is None or os.getenv('SEC_API_EMAIL') is None:
         streamlit.markdown(sec_edgar_help, unsafe_allow_html=True)
+
     # Populate SEC-EDGAR credentials
-    if streamlit.session_state.SEC_API_ORGANIZATION is None:
-        streamlit.session_state.SEC_API_ORGANIZATION = streamlit.text_input(
+    if os.getenv('SEC_API_ORGANIZATION') is None:
+        os.environ['SEC_API_ORGANIZATION'] = streamlit.text_input(
             'For SEC-EDGAR: <your organization>', None, key=key + '-organization'
-        )
-    if streamlit.session_state.SEC_API_EMAIL is None:
-        streamlit.session_state.SEC_API_EMAIL = streamlit.text_input(
+        )  # type: ignore
+
+    if os.environ['SEC_API_EMAIL'] is None:
+        os.environ['SEC_API_EMAIL'] = streamlit.text_input(
             'For SEC-EDGAR: <user@email_provider.com>', None, key=key + '-email'
         )
     # Save button
-    if streamlit.session_state.SEC_API_ORGANIZATION is None or streamlit.session_state.SEC_API_EMAIL is None:
+    if os.getenv('SEC_API_ORGANIZATION') is None or os.environ['SEC_API_EMAIL'] is None:
         if streamlit.button('Save SEC EDGAR details', key=key + '-button'):
-            if (
-                streamlit.session_state.SEC_API_ORGANIZATION is not None
-                and streamlit.session_state.SEC_API_EMAIL is not None
-            ):
+            if os.getenv('SEC_API_ORGANIZATION') is not None and os.environ['SEC_API_EMAIL'] is not None:
                 streamlit.success('SEC EDGAR details saved successfully!')
         else:
             streamlit.warning('Please enter organization and email.')
@@ -201,7 +94,7 @@ def save_historical_price_callback(
     """Save dataframe and figure callback for streamlit button."""
 
     # Derive the directory name
-    dir_name = streamlit.session_state.history_figures_dir
+    dir_name = HISTORY_FIGURES_DIR
 
     # Create the directory for storing historical price data
     if not os.path.exists(dir_name):
@@ -452,7 +345,7 @@ def clear_cache(delete: bool = False, verbose: bool = False) -> None:
     """Clear and/or delete the cache."""
 
     try:
-        cache_dir = streamlit.session_state.cache_dir
+        cache_dir = CACHE_DIR
 
         if not os.path.exists(cache_dir):
             if verbose:

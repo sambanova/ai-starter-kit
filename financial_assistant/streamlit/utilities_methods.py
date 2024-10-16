@@ -2,18 +2,16 @@ import json
 import re
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Any, Callable, Generator, List, Optional, Tuple, Type
+from typing import Any, Callable, Generator, List, Optional, Tuple
 
 import pandas
 import streamlit
-from langchain_core.tools import StructuredTool, Tool
 from matplotlib.figure import Figure
 from PIL import Image
-from pydantic import BaseModel
 
-from financial_assistant.src.exceptions import LLMException
-from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.src.tools import get_conversational_response, get_logger
+from financial_assistant.constants import *
+from financial_assistant.src.exceptions import LLMException, TableNotFoundException, VectorStoreException
+from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
@@ -22,7 +20,7 @@ from financial_assistant.src.tools_stocks import (
     get_stock_info,
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
-from financial_assistant.streamlit.constants import *
+from financial_assistant.src.utilities import get_logger
 
 logger = get_logger()
 
@@ -59,24 +57,7 @@ def st_capture(output_func: Callable[[Any], Any]) -> Generator[None, None, None]
             output_func(stdout.getvalue())
 
 
-def set_llm_tools(
-    tools: Optional[List[str]] = None,
-    default_tool: Optional[StructuredTool | Tool | Type[BaseModel]] = None,
-) -> None:
-    """
-    Instantiate the LLM and set the tools for the LLM to use.
-
-    Args:
-        tools: list of tools to be used.
-    """
-    if tools is not None:
-        set_tools = [TOOLS[name] for name in tools]
-    else:
-        set_tools = [default_tool]
-    streamlit.session_state.llm = SambaNovaLLM(tools=set_tools, default_tool=default_tool)
-
-
-def handle_userinput(user_question: Optional[str], user_query: Optional[str]) -> Optional[Any]:
+def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
     """
     Handle the user input and generate a response, also update chat UI in the Streamlit app.
 
@@ -91,11 +72,20 @@ def handle_userinput(user_question: Optional[str], user_query: Optional[str]) ->
 
     with streamlit.spinner('Processing...'):
         with st_capture(output.code):
-            response = streamlit.session_state.llm.invoke_tools(query=user_query)
+            try:
+                response = sambanova_llm.invoke_tools(query=user_query)
 
-    if isinstance(response, LLMException):
-        streamlit.error(f'We are experiencing an issue with the language model. Please try again in a few minutes.')
-        streamlit.stop()
+            except LLMException:
+                streamlit.error(
+                    f'We are experiencing an issue with the language model. Please try again in a few minutes.'
+                )
+                streamlit.stop()
+            except VectorStoreException:
+                streamlit.error('Could not instantiate the vectorstore.')
+                streamlit.stop()
+            except TableNotFoundException:
+                streamlit.error('No relevant SQL tables found.')
+                streamlit.stop()
 
     streamlit.session_state.chat_history.append(user_question)
     streamlit.session_state.chat_history.append(response)

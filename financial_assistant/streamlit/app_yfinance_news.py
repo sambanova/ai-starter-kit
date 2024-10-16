@@ -2,10 +2,10 @@ from typing import List, Tuple
 
 import streamlit
 
-from financial_assistant.src.tools import get_logger
-from financial_assistant.streamlit.constants import *
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
 logger = get_logger()
 
@@ -41,13 +41,13 @@ def get_yfinance_news() -> None:
                 content = answer + '\n\n'.join(url_list)
 
                 # Save the query and answer to the history text file
-                save_output_callback(content, streamlit.session_state.history_path, user_request)
+                save_output_callback(content, HISTORY_PATH, user_request)
 
                 # Save the query and answer to the Yahoo Finance News text file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(content, streamlit.session_state.yfinance_news_path, user_request),
+                    args=(content, YFINANCE_NEWS_PATH, user_request),
                 ):
                     pass
 
@@ -68,15 +68,13 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
         Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = [
+    tools = [
         'scrape_yahoo_finance_news',
     ]
 
     # Set the tools for the LLM to use
-    set_llm_tools(
-        tools=streamlit.session_state.tools,
-        default_tool=None,
-    )
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
+
     user_request = f"""
         You are an expert in the stock market.
         Please answer the following question, which may be general or related to a specific list of companies:
@@ -89,6 +87,9 @@ def handle_yfinance_news(user_question: str) -> Tuple[str, List[str]]:
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     # Check the final answer of the LLM
     if (

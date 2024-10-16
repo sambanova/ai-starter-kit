@@ -29,19 +29,18 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.src.tools import get_logger
+from financial_assistant.constants import *
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
 from financial_assistant.src.tools_stocks import get_historical_price, get_stock_info
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.app_financial_filings import handle_financial_filings
 from financial_assistant.streamlit.app_pdf_report import handle_pdf_generation, handle_pdf_rag
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
-from financial_assistant.streamlit.constants import *
 from financial_assistant.streamlit.utilities_app import (
     create_temp_dir_with_subdirs,
     delete_temp_dir,
@@ -76,24 +75,18 @@ class FinancialAssistantTest(unittest.TestCase):
         initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
 
         # Initialize SEC EDGAR credentials
-        if (
-            'SEC_API_ORGANIZATION' not in streamlit.session_state
-            or streamlit.session_state.SEC_API_ORGANIZATION is None
-        ):
-            streamlit.session_state.SEC_API_ORGANIZATION = 'SambaNova'
-        if 'SEC_API_EMAIL' not in streamlit.session_state or streamlit.session_state.SEC_API_EMAIL is None:
-            streamlit.session_state.SEC_API_EMAIL = f'user_{streamlit.session_state.session_id}@sambanova_cloud.com'
-
-        # Initialize the LLM
-        streamlit.session_state.llm = SambaNovaLLM()
+        if os.getenv('SEC_API_ORGANIZATION') is None:
+            os.environ['SEC_API_ORGANIZATION'] = 'SambaNova'
+        if os.getenv('SEC_API_EMAIL') is None:
+            os.environ['SEC_API_EMAIL'] = f'user_{streamlit.session_state.session_id}@sambanova_cloud.com'
 
         # Create the cache and its main subdirectories
         subdirectories = [
-            streamlit.session_state.source_dir,
-            streamlit.session_state.pdf_sources_directory,
-            streamlit.session_state.pdf_generation_directory,
+            SOURCE_DIR,
+            PDF_SOURCES_DIR,
+            PDF_GENERATION_DIRECTORY,
         ]
-        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+        create_temp_dir_with_subdirs(CACHE_DIR, subdirectories)
 
         # List of available methods for database query
         self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
@@ -140,7 +133,7 @@ class FinancialAssistantTest(unittest.TestCase):
         self.check_get_stock_info(response)
 
         # Save response to cache
-        save_output_callback(response, streamlit.session_state.stock_query_path, query)
+        save_output_callback(response, STOCK_QUERY_PATH, query)
 
     def test_get_historical_price(self) -> None:
         """Test for the tool `get_historical_price`."""
@@ -181,7 +174,7 @@ class FinancialAssistantTest(unittest.TestCase):
             response[0],
             DEFAULT_START_DATE,
             DEFAULT_END_DATE,
-            streamlit.session_state.stock_query_path,
+            STOCK_QUERY_PATH,
         )
 
     def test_create_stock_database(self) -> None:
@@ -263,7 +256,7 @@ class FinancialAssistantTest(unittest.TestCase):
             self.check_query_stock_database(response, method)
 
             # Save response to cache
-            save_output_callback(response, streamlit.session_state.db_query_path, query)
+            save_output_callback(response, DB_QUERY_PATH, query)
 
     def test_scrape_yahoo_finance_news(self) -> None:
         """Test for the tool `scrape_yahoo_finance_news`."""
@@ -295,7 +288,7 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Save response to cache
         content = response + '\n\n'.join(url_list)
-        save_output_callback(content, streamlit.session_state.yfinance_news_path, query)
+        save_output_callback(content, YFINANCE_NEWS_PATH, query)
 
     def test_retrieve_filings(self) -> None:
         """Test for the tool `retrieve_filings`."""
@@ -333,7 +326,7 @@ class FinancialAssistantTest(unittest.TestCase):
         self.check_retrieve_filings(response)
 
         # Save response to cache
-        save_output_callback(response, streamlit.session_state.filings_path, query)
+        save_output_callback(response, FILINGS_PATH, query)
 
     def test_handle_pdf_generation(self) -> None:
         """Test the tool `handle_pdf_generation`."""
@@ -342,10 +335,10 @@ class FinancialAssistantTest(unittest.TestCase):
         report_name = report_title.lower().replace(' ', '_') + '.pdf'
 
         data_paths = dict()
-        data_paths['stock_query'] = streamlit.session_state.stock_query_path
-        data_paths['stock_database'] = streamlit.session_state.db_query_path
-        data_paths['yfinance_news'] = streamlit.session_state.yfinance_news_path
-        data_paths['filings'] = streamlit.session_state.filings_path
+        data_paths['stock_query'] = STOCK_QUERY_PATH
+        data_paths['stock_database'] = DB_QUERY_PATH
+        data_paths['yfinance_news'] = YFINANCE_NEWS_PATH
+        data_paths['filings'] = FILINGS_PATH
 
         # Generate the PDF report
         pdf_handler = handle_pdf_generation(report_title, report_name, data_paths, True)
@@ -363,7 +356,7 @@ class FinancialAssistantTest(unittest.TestCase):
         query = DEFAULT_PDF_RAG_QUERY
 
         # The pdf files names
-        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_directory, report_name)]
+        pdf_files_names = [os.path.join(PDF_GENERATION_DIRECTORY, report_name)]
 
         # Invoke the tool to answer the user query
         response = pdf_rag.invoke(
@@ -386,7 +379,7 @@ class FinancialAssistantTest(unittest.TestCase):
         query = DEFAULT_PDF_RAG_QUERY
 
         # The pdf files names
-        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_directory, report_name)]
+        pdf_files_names = [os.path.join(PDF_GENERATION_DIRECTORY, report_name)]
 
         # Invoke the LLM to answer the user query
         response = handle_pdf_rag(query, pdf_files_names)

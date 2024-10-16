@@ -4,7 +4,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import streamlit
 from fpdf import FPDF
 from fpdf.fpdf import Align
 from langchain_community.document_loaders import PyPDFLoader
@@ -15,9 +14,10 @@ from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field
 
+from financial_assistant.constants import *
 from financial_assistant.src.retrieval import get_qa_response
-from financial_assistant.src.tools import coerce_str_to_list, time_llm
-from financial_assistant.streamlit.constants import *
+from financial_assistant.src.tools import coerce_str_to_list
+from financial_assistant.src.utilities import time_llm
 
 EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
 
@@ -113,10 +113,10 @@ def read_txt_files(directory: str) -> List[str]:
 
     # Target list of text files, used to order the different sources
     target_list = [
-        Path(streamlit.session_state.stock_query_path).name,
-        Path(streamlit.session_state.db_query_path).name,
-        Path(streamlit.session_state.yfinance_news_path).name,
-        Path(streamlit.session_state.filings_path).name,
+        Path(STOCK_QUERY_PATH).name,
+        Path(DB_QUERY_PATH).name,
+        Path(YFINANCE_NEWS_PATH).name,
+        Path(FILINGS_PATH).name,
     ]
 
     # Sort the files of the list following the order of the target list
@@ -284,7 +284,6 @@ def generate_pdf(
     # Add a summary at the beginning
     if include_summary:
         progress_text = f'Summarizing {len(content_list)} queries...'
-        summary_bar = streamlit.progress(0, text=progress_text)
 
         intermediate_summaries, intermediate_titles, final_summary, abstract = summarize_text(split_docs)
         if len(abstract) > 0:
@@ -297,7 +296,6 @@ def generate_pdf(
 
         for idx, item in enumerate(content_list):
             time.sleep(0.01)
-            summary_bar.progress(idx + 1, text=progress_text)
 
             # Add the section title
             if len(intermediate_titles[idx]) > 0:
@@ -319,7 +317,6 @@ def generate_pdf(
                     pdf.add_figure(figure)
 
         time.sleep(0.01)
-        summary_bar.empty()
     else:
         for idx, item in enumerate(content_list):
             pdf.chapter_title('Query ' + str(idx))
@@ -389,9 +386,6 @@ def summarize_text(split_docs: List[Document]) -> Tuple[List[str], List[str], st
 def invoke_abstract_chain(final_summary: str) -> Any:
     """Invoke the LLM to extract an abstract for the final summary."""
 
-    # Extract the LLM
-    llm = streamlit.session_state.llm.llm
-
     # Abstract parser
     abstract_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
 
@@ -409,10 +403,10 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     )
 
     # Abstract chain
-    abstract_chain = abstact_prompt | llm | abstract_parser
+    abstract_chain = abstact_prompt | sambanova_llm | abstract_parser  # type: ignore
 
     # Run chain
-    abstract = abstract_chain.invoke(final_summary).summary
+    abstract = abstract_chain.invoke(final_summary).summary  # type: ignore
 
     return abstract
 
@@ -420,8 +414,6 @@ def invoke_abstract_chain(final_summary: str) -> Any:
 @time_llm
 def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     """Invoke the LLM to reduce a list of intermediate summaries to one final summary."""
-    # Extract the LLM
-    llm = streamlit.session_state.llm.llm
 
     # Reduce parser
     reduce_parser = PydanticOutputParser(pydantic_object=ReduceSummary)
@@ -441,10 +433,10 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     )
 
     # Reduce chain
-    reduce_chain = reduce_prompt | llm | reduce_parser
+    reduce_chain = reduce_prompt | sambanova_llm | reduce_parser  # type: ignore
 
     # Run chain
-    final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
+    final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary  # type: ignore
 
     return final_summary
 
@@ -452,9 +444,6 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
 @time_llm
 def invoke_summary_map_chain(doc: Document) -> Any:
     """Invoke the LLM to summarize the text in `doc` using the LLM."""
-
-    # Extract the LLM
-    llm = streamlit.session_state.llm.llm
 
     # Map parser
     map_parser = PydanticOutputParser(pydantic_object=Summary)
@@ -474,9 +463,9 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     )
 
     # Map chain
-    map_chain = map_prompt | llm | map_parser
+    map_chain = map_prompt | sambanova_llm | map_parser  # type: ignore
 
-    return map_chain.invoke(doc)
+    return map_chain.invoke(doc)  # type: ignore
 
 
 class PDFRAGInput(BaseModel):
@@ -518,7 +507,7 @@ def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     # Load PDF files
     documents = []
     for file in pdf_files_names:
-        pdf_path = os.path.join(streamlit.session_state.pdf_generation_directory, file)
+        pdf_path = os.path.join(PDF_GENERATION_DIRECTORY, file)
         loader = PyPDFLoader(pdf_path)
         documents.extend(loader.load())
 

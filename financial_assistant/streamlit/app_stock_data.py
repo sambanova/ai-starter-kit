@@ -6,10 +6,10 @@ import streamlit
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_assistant.src.tools import get_logger
-from financial_assistant.streamlit.constants import *
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import save_historical_price_callback, save_output_callback
-from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
 logger = get_logger()
 
@@ -95,13 +95,13 @@ def get_stock_data_analysis() -> None:
                 response_dict = handle_stock_query(user_request, dataframe_name)
 
                 # Save the output to the history file
-                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
+                save_output_callback(response_dict, HISTORY_PATH, user_request)
 
                 # Save the output to the stock query file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(response_dict, streamlit.session_state.stock_query_path, user_request),
+                    args=(response_dict, STOCK_QUERY_PATH, user_request),
                 ):
                     pass
 
@@ -127,9 +127,7 @@ def get_stock_data_analysis() -> None:
                 fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
             # Save the output to the history file
-            save_historical_price_callback(
-                user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.history_path
-            )
+            save_historical_price_callback(user_request, symbol_list, data, fig, start_date, end_date, HISTORY_PATH)
 
             # Save the output to the stock query file
             if streamlit.button(
@@ -142,7 +140,7 @@ def get_stock_data_analysis() -> None:
                     fig,
                     start_date,
                     end_date,
-                    streamlit.session_state.stock_query_path,
+                    STOCK_QUERY_PATH,
                 ),
             ):
                 pass
@@ -169,10 +167,10 @@ def handle_stock_query(
         dataframe_name = 'None'
 
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['get_stock_info']
+    tools = ['get_stock_info']
 
     # Set the tools for the LLM to use
-    set_llm_tools(streamlit.session_state.tools)
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -184,7 +182,13 @@ def handle_stock_query(
         to retrieve the relevant company information before providing your answer.
     """
 
-    return handle_userinput(user_question, user_request)
+    # Call the LLM on the user request with the attached tools
+    response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
+
+    return response
 
 
 def handle_stock_data_analysis(
@@ -216,13 +220,10 @@ def handle_stock_data_analysis(
         return None
 
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['get_historical_price']
+    tools = ['get_historical_price']
 
     # Set the tools for the LLM to use
-    set_llm_tools(
-        tools=streamlit.session_state.tools,
-        default_tool=None,
-    )
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -234,6 +235,9 @@ def handle_stock_data_analysis(
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     # Check the final answer of the LLM
     if (

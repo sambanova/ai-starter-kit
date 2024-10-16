@@ -2,7 +2,6 @@ import json
 import os
 from typing import Any, Dict, List, Optional, Union
 
-import streamlit
 import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
@@ -11,12 +10,14 @@ from langchain_core.tools import StructuredTool, Tool
 from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
-from financial_assistant.src.exceptions import LLMException
-from financial_assistant.src.tools import get_logger, time_llm
-from financial_assistant.streamlit.constants import *
+from financial_assistant.src.exceptions import LLMException, ToolNotFoundException
+from financial_assistant.src.utilities import get_logger, time_llm
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
+
+# LLM constants
+MAX_RETRIES = 3
 
 
 class SambaNovaLLM:
@@ -24,17 +25,17 @@ class SambaNovaLLM:
 
     def __init__(
         self,
+        config_path: str,
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
         default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
         system_prompt: Optional[str] = FUNCTION_CALLING_PROMPT_TEMPLATE,
-        config_path: str = CONFIG_PATH,
     ) -> None:
         """
         Args:
+            config_path: The path to the config file.
             tools: The optional tools to use.
             default_tool: The optional default tool to use. Defaults to `ConversationalResponse`.
             system_prompt: The optional system prompt to use. Defaults to `FUNCTION_CALLING_SYSTEM_PROMPT`.
-            config_path: The path to the config file. Defaults to `CONFIG_PATH`.
 
         Raises:
             TypeError: If `tools` is not a list of
@@ -51,6 +52,26 @@ class SambaNovaLLM:
         # Set the LLM
         self.llm = self.set_llm()
 
+        # Set the tools
+        self._tools = tools
+
+        # Set the system prompt
+        if not isinstance(system_prompt, str):
+            raise TypeError('System prompt must be a string.')
+        self.system_prompt = system_prompt
+
+    @property
+    def tools(self) -> Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]]:
+        """Getter method for tool."""
+        return self._tools
+
+    @tools.setter
+    def tools(
+        self,
+        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
+        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
+    ) -> None:
+        """Setter method for tool."""
         # Set the list of tools to use
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
             tools = [tools]
@@ -60,7 +81,7 @@ class SambaNovaLLM:
                 and all(isinstance(tool, StructuredTool) or isinstance(tool, Tool) for tool in tools)
             ):
                 raise TypeError('tools must be a list of StructuredTool or Tool objects.')
-        self.tools = tools
+        self._tools = tools
 
         # Set the tools schemas
         if default_tool is not None:
@@ -68,11 +89,6 @@ class SambaNovaLLM:
                 raise TypeError('Default tool must be a StructuredTool.')
         tools_schemas = self.get_tools_schemas(tools)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
-
-        # Set the system prompt
-        if not isinstance(system_prompt, str):
-            raise TypeError('System prompt must be a string.')
-        self.system_prompt = system_prompt
 
     def get_llm_config_info(self, config_path: str) -> Any:
         """
@@ -120,7 +136,7 @@ class SambaNovaLLM:
         if not isinstance(self.llm_info['select_expert'], str):
             raise TypeError('LLM `select_expert` must be a string.')
 
-    def set_llm(self) -> LLM:
+    def set_llm(self, sambanova_api_key: Optional[str] = None) -> LLM:
         """
         Set the LLM to use.
 
@@ -146,7 +162,8 @@ class SambaNovaLLM:
                 raise TypeError('`select_expert` must be a string.')
 
             # Get the Sambanova API key
-            sambanova_api_key = get_sambanova_credentials()
+            if sambanova_api_key is None:
+                sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
 
             # Instantiate the LLM
             llm = APIGateway.load_llm(
@@ -234,12 +251,15 @@ class SambaNovaLLM:
 
         # Create a map of tools with their names
         if self.tools is not None:
-            tools_map = {tool.name: tool for tool in self.tools}
+            tools_map = {tool.name: tool for tool in self.tools if hasattr(tool, 'name')}  # type: ignore
         else:
             tools_map = dict()
 
+        if tools_map.get(tool_name) is None:
+            raise ToolNotFoundException(f'The tool {tool_name} does not feature in the list of available tools.')
+
         # Invoke the tool with the retrieved inputs
-        answer = tools_map[tool_name].invoke(tool_parameters)
+        answer = tools_map[tool_name].invoke(tool_parameters)  # type: ignore
 
         return answer
 
@@ -299,19 +319,3 @@ class SambaNovaLLM:
         invoked_tool = invoked_tools[0]
 
         return invoked_tool
-
-
-def get_sambanova_credentials() -> str:
-    """Get the LLM credentials (`SAMBANOVA_API_KEY`) following `prod_mode`."""
-
-    if streamlit.session_state.prod_mode:
-        sambanova_api_key = streamlit.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in streamlit.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or streamlit.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
-    if not isinstance(sambanova_api_key, str):
-        raise TypeError('SAMBANOVA_API_KEY must be a string.')
-    return sambanova_api_key
