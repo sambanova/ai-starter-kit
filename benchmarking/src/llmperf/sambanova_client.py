@@ -426,7 +426,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
-            sampling_params['stream_options'] = {'include_usage': 'true'}
+            sampling_params['stream_options'] = {'include_usage': True}
         else:
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
