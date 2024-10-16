@@ -3,7 +3,8 @@ import os
 import re
 from typing import Any, Dict, List
 
-import yaml
+import ruamel.yaml
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString, FoldedScalarString
 
 # List of starter kits for production updates
 PROD_KITS: List[str] = [
@@ -131,22 +132,38 @@ def update_preset_queries(kit_path: str) -> None:
     """
     prompts_file_path = os.path.join(kit_path, 'prompts', 'streamlit_preset_queries.yaml')
     if os.path.exists(prompts_file_path):
+        yaml = ruamel.yaml.YAML()
+        yaml.preserve_quotes = True
         with open(prompts_file_path, 'r', encoding='utf-8') as file:
-            prompts = yaml.safe_load(file)
+            prompts = yaml.load(file)
 
         # Modify the prompts
-        key_to_replace = 'Create insightful plots of the summary table'
-        if key_to_replace in prompts:
-            prompts[key_to_replace] = (
-                'What is the price in colombian pesos of the track "Snowballed" in the db '
+        old_key = 'Create insightful plots of the summary table'
+        new_key = 'Check the price of a track and do a currency conversion'
+        if old_key in prompts:
+            # Remove the old key-value pair
+            prompts.pop(old_key)
+
+            # Create the new key as a double-quoted scalar
+            new_key_scalar = DoubleQuotedScalarString(new_key)
+
+            # Prepare the escaped value
+            escaped_string = (
+                'What is the price in colombian pesos of the track \\"Snowballed\\" in the db '
                 'if one usd is equal to 3800 cop?'
             )
 
+            # Create the new value as a folded scalar string
+            new_value = FoldedScalarString(escaped_string)
+
+            # Add the new key-value pair
+            prompts[new_key_scalar] = new_value
+
             with open(prompts_file_path, 'w', encoding='utf-8') as file:
-                yaml.dump(prompts, file, default_flow_style=False)
+                yaml.dump(prompts, file)
             print(f'Updated prompts in {prompts_file_path}')
         else:
-            print(f'Key "{key_to_replace}" not found in prompts for {kit_path}')
+            print(f'Key "{old_key}" not found in prompts for {kit_path}')
     else:
         print(f'Prompts file not found at {prompts_file_path}')
 
@@ -169,8 +186,9 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
             print(f'Config file not found for {kit_name}. Skipping.')
             continue
 
+        yaml = ruamel.yaml.YAML()
         with open(config_path, 'r', encoding='utf-8') as file:
-            config: Dict[str, Any] = yaml.safe_load(file)
+            config: Dict[str, Any] = yaml.load(file)
 
         if mode == 'prod':
             update_config_prod(config)
@@ -179,7 +197,7 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
             update_all_embedding_models(config)
 
         with open(config_path, 'w', encoding='utf-8') as file:
-            yaml.dump(config, file, default_flow_style=False)
+            yaml.dump(config, file)
 
         print(f'Updated config for {kit_name} in {mode} mode.')
 
