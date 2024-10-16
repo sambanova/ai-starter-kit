@@ -26,10 +26,7 @@ class Guard:
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
         coe: Optional[bool] = True,
-        sambastudio_base_url: Optional[str] = None,
-        sambastudio_base_uri: Optional[str] = None,
-        sambastudio_project_id: Optional[str] = None,
-        sambastudio_endpoint_id: Optional[str] = None,
+        sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
@@ -43,10 +40,7 @@ class Guard:
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is
          'utils/guardrails/guardrails.yaml'.
         - coe (bool, optional): Whether the llama-guard model is in a SambaStudio CoE endpoint
-        - sambastudio_base_url (str, optional): Base URL for SambaStudio API.
-        - sambastudio_base_uri (str, optional): Base URI for SambaStudio API.
-        - sambastudio_project_id (str, optional): Project ID for SambaStudio API.
-        - sambastudio_endpoint_id (str, optional): Endpoint ID for SambaStudio API.
+        - sambastudio_base_url (str, optional): URL for SambaStudio API.
         - sambastudio_api_key (str, optional): API key for SambaStudio API.
         - sambanova_url (str, optional): SambaNova Cloud URL.
         - sambanova_api_key (str, optional): SambaNova Cloud API key.
@@ -69,10 +63,7 @@ class Guard:
             coe=coe,
             select_expert='Meta-Llama-Guard-2-8B',
             process_prompt=False,
-            sambastudio_base_url=sambastudio_base_url,
-            sambastudio_base_uri=sambastudio_base_uri,
-            sambastudio_project_id=sambastudio_project_id,
-            sambastudio_endpoint_id=sambastudio_endpoint_id,
+            sambastudio_url=sambastudio_url,
             sambastudio_api_key=sambastudio_api_key,
             sambanova_url=sambanova_url,
             sambanova_api_key=sambanova_api_key,
