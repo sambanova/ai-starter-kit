@@ -38,7 +38,7 @@ class SyntheticDatum(BaseModel):
 
     question: str = Field(description='generated question')
     answer: str = Field(description='generated answer')
-    references: list[str] = Field(description='references for generated answer')
+    references: List[str] = Field(description='references for generated answer')
     thought: str = Field(description='thought for answer generation')
 
 
