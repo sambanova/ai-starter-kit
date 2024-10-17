@@ -2,6 +2,7 @@ import warnings
 
 import pandas as pd
 import streamlit as st
+import yaml
 from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
@@ -16,6 +17,12 @@ from benchmarking.streamlit.streamlit_utils import (
 )
 
 warnings.filterwarnings('ignore')
+
+CONFIG_PATH = './config.yaml'
+with open(CONFIG_PATH) as file:
+    st.session_state.config = yaml.safe_load(file)
+    st.session_state.prod_mode = st.session_state.config['prod_mode']
+    st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
 
 def _initialize_sesion_variables() -> None:
@@ -44,8 +51,6 @@ def _initialize_sesion_variables() -> None:
         st.session_state.top_k = None
     if 'top_p' not in st.session_state:
         st.session_state.top_p = None
-    if 'prod_mode' not in st.session_state:
-        st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
 
@@ -71,13 +76,8 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
         api_variables=api_variables,
     )
 
-    if st.session_state.llm_api == 'sambastudio':
-        sampling_params = {'max_tokens_to_generate': st.session_state.max_tokens}
-    elif st.session_state.llm_api == 'sncloud':
-        sampling_params = {'max_tokens': st.session_state.max_tokens}
-    else:
-        sampling_params = {}
-
+    # set generic max tokens parameter
+    sampling_params = {'max_tokens_to_generate': st.session_state.max_tokens}
     custom_performance_evaluator.run_benchmark(
         sampling_params=sampling_params,
     )
