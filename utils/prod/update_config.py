@@ -3,7 +3,8 @@ import os
 import re
 from typing import Any, Dict, List
 
-import yaml
+import ruamel.yaml
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString, FoldedScalarString
 
 # List of starter kits for production updates
 PROD_KITS: List[str] = [
@@ -13,6 +14,7 @@ PROD_KITS: List[str] = [
     'function_calling',
     'search_assistant',
     'multimodal_knowledge_retriever',
+    'sambanova_scribe'
 ]
 
 # List of starter kits for test updates
@@ -57,6 +59,23 @@ def update_all_embedding_models(config: Any) -> None:
             update_all_embedding_models(item)
 
 
+def update_tools(config: Dict[str, Any]) -> None:
+    """Update 'st_tools' configurations in the config dictionary for prod mode.
+
+    Args:
+        config: The configuration dictionary to update.
+    """
+    st_tools = config.get('st_tools')
+    if isinstance(st_tools, dict):
+        python_repl = st_tools.get('python_repl')
+        if isinstance(python_repl, dict):
+            python_repl['enabled'] = False
+            python_repl['default'] = False
+        calculator = st_tools.get('calculator')
+        if isinstance(calculator, dict):
+            calculator['default'] = True
+
+
 def update_config_prod(config: Dict[str, Any]) -> None:
     """Update configuration for production mode.
 
@@ -67,6 +86,7 @@ def update_config_prod(config: Dict[str, Any]) -> None:
     # and configurations are active.
     config['prod_mode'] = True
     update_all_embedding_models(config)
+    update_tools(config)
 
     # This overwrite is to use a currently supported audio model in prod_mode
     audio_model = config.get('audio_model')
@@ -105,6 +125,50 @@ def update_makefile(root_dir: str, port: int) -> None:
         print(f'Makefile not found at {makefile_path}. Skipping STREAMLIT_PORT update.')
 
 
+def update_preset_queries(kit_path: str) -> None:
+    """Update the prompts/streamlit_preset_queries.yaml file for function_calling kit.
+
+    Args:
+        kit_path: The path to the kit directory.
+    """
+    prompts_file_path = os.path.join(kit_path, 'prompts', 'streamlit_preset_queries.yaml')
+    if os.path.exists(prompts_file_path):
+        yaml = ruamel.yaml.YAML()
+        yaml.preserve_quotes = True
+        with open(prompts_file_path, 'r', encoding='utf-8') as file:
+            prompts = yaml.load(file)
+
+        # Modify the prompts
+        old_key = 'Create insightful plots of the summary table'
+        new_key = 'Check the price of a track and do a currency conversion'
+        if old_key in prompts:
+            # Remove the old key-value pair
+            prompts.pop(old_key)
+
+            # Create the new key as a double-quoted scalar
+            new_key_scalar = DoubleQuotedScalarString(new_key)
+
+            # Prepare the escaped value
+            escaped_string = (
+                'What is the price in colombian pesos of the track \\"Snowballed\\" in the db '
+                'if one usd is equal to 3800 cop?'
+            )
+
+            # Create the new value as a folded scalar string
+            new_value = FoldedScalarString(escaped_string)
+
+            # Add the new key-value pair
+            prompts[new_key_scalar] = new_value
+
+            with open(prompts_file_path, 'w', encoding='utf-8') as file:
+                yaml.dump(prompts, file)
+            print(f'Updated prompts in {prompts_file_path}')
+        else:
+            print(f'Key "{old_key}" not found in prompts for {kit_path}')
+    else:
+        print(f'Prompts file not found at {prompts_file_path}')
+
+
 def update_configs(mode: str = 'prod', port: int = 8501) -> None:
     """Update configurations for all kits based on the specified mode.
 
@@ -123,8 +187,9 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
             print(f'Config file not found for {kit_name}. Skipping.')
             continue
 
+        yaml = ruamel.yaml.YAML()
         with open(config_path, 'r', encoding='utf-8') as file:
-            config: Dict[str, Any] = yaml.safe_load(file)
+            config: Dict[str, Any] = yaml.load(file)
 
         if mode == 'prod':
             update_config_prod(config)
@@ -133,9 +198,13 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
             update_all_embedding_models(config)
 
         with open(config_path, 'w', encoding='utf-8') as file:
-            yaml.dump(config, file, default_flow_style=False)
+            yaml.dump(config, file)
 
         print(f'Updated config for {kit_name} in {mode} mode.')
+
+        # Custom change for function_calling kit
+        if mode == 'prod' and kit_name == 'function_calling':
+            update_preset_queries(kit_path)
 
     if mode == 'prod':
         update_makefile(root_dir, port)

@@ -427,25 +427,28 @@ endif
 # Docker-related commands
 .PHONY: docker-build
 docker-build:
-	@echo "Building Docker image..."
+	@echo "Building Docker image for platform linux/amd64..."
 	@if [ "$(USE_CACHE)" = "true" ]; then \
 		DOCKER_BUILDKIT=1 docker build \
-			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--platform linux/amd64 \
 			--build-arg PROD_MODE=$(PROD_MODE) \
 			--secret id=env,src=.env \
 			--cache-from $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
 			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) . || \
 		DOCKER_BUILDKIT=1 docker build \
-			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--platform linux/amd64 \
 			--build-arg PROD_MODE=$(PROD_MODE) \
 			--secret id=env,src=.env \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
 			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
 	else \
 		DOCKER_BUILDKIT=1 docker build \
-			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			--platform linux/amd64 \
 			--build-arg PROD_MODE=$(PROD_MODE) \
 			--secret id=env,src=.env \
 			--no-cache \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
 			-t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG) .; \
 	fi
 
