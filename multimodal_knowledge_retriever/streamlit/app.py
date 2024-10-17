@@ -30,10 +30,10 @@ ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-3.2-11B-Vision-Instruct',
-    'llama-3.2-11b-vision-preview',
+    'Llama-3.2-90B-Vision-Instruct',
+    'llava-v1.5-7b-4096-preview',
     'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
     'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
-    'llava-v1.5-7b-4096-preview',
 ]
 # Available models in dropdown menu
 LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
@@ -206,20 +206,19 @@ def main() -> None:
                 if not, image summaries will be used instead'
             )
             # hard setting of llm and lvlm (overwrites models from config.yaml)
-            if prod_mode:
-                st.markdown('**Optional Set a specific multimodal model and LLM**')
-                lvlm_model = st.selectbox('Select the multimodal model to use', LVLM_MODELS, 0)
-                llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
-                if st.button('set_model'):
-                    st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
-                    st.session_state.multimodal_retriever.set_llm(llm_model)
-                    # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
-                    if st.session_state.multimodal_retriever.qa_chain is not None:
-                        if raw_image_retrieval:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
-                        else:
-                            st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
-                    st.toast('Models updated')
+            st.markdown('**Optional Set a specific multimodal model and LLM**')
+            lvlm_model = st.selectbox('Select the multimodal model to use', LVLM_MODELS, 0)
+            llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
+            if st.button('set_model'):
+                st.session_state.multimodal_retriever.set_lvlm(lvlm_model)
+                st.session_state.multimodal_retriever.set_llm(llm_model)
+                # set again qa chain with out ingestion in case step 4 was done previously to avoid re ingestion
+                if st.session_state.multimodal_retriever.qa_chain is not None:
+                    if raw_image_retrieval:
+                        st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='raw')
+                    else:
+                        st.session_state.multimodal_retriever.set_retrieval_chain(image_retrieval_type='summary')
+                st.toast('Models updated')
             st.markdown('**4. Process your documents and create an in memory vector store**')
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
             if st.button('Process'):
