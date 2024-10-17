@@ -22,7 +22,7 @@ class RequestConfig(BaseModel):
     prompt_tuple: Tuple[str, int]
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
-    api_variables: Dict[str, Any] = {}
+    api_variables: Dict[str, str] = {}
     is_stream_mode: Optional[bool] = None
     num_concurrent_requests: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
