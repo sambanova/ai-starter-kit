@@ -49,7 +49,7 @@ STARTER_KITS: List[str] = [
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
-    'benchmarking': './run_synthetic_dataset.sh',
+    'benchmarking': './run_synthetic_dataset.sh --num-requests 2',
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
