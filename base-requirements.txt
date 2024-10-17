@@ -67,6 +67,9 @@ unstructured[pdf]==0.14.9
 unstructured-client==0.18.0
 unstructured-inference==0.7.36
 
+# Audio and Video
+yt-dlp==2024.8.6
+
 # Miscellaneous
 schedule==1.2.2
 tqdm>=4.66.3
@@ -85,6 +88,7 @@ ipykernel==6.29.4
 mypy==1.11.2
 pre-commit==4.0.1
 ruff==0.6.9
+ruamel.yaml==0.18.6
 
 # Schedule
 schedule==1.2.2
