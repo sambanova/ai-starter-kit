@@ -1,23 +1,18 @@
 import ast
 import datetime
 import json
-import logging
-import time
-from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar
+from typing import Any, Dict, List, Optional, Protocol
 
 import pandas
-import streamlit
 import yfinance
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+from financial_assistant.constants import sambanova_llm
 from financial_assistant.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
-from financial_assistant.streamlit.constants import *
-
-# Generic function type
-F = TypeVar('F', bound=Callable[..., Any])
+from financial_assistant.src.utilities import get_logger
 
 
 class HasCall(Protocol):
@@ -27,30 +22,7 @@ class HasCall(Protocol):
         pass
 
 
-# Configure the logger
-def get_logger(logger_name: str = 'logger') -> logging.Logger:
-    # Get or create a logger instance
-    logger = logging.getLogger(logger_name)
-
-    # Ensure that the logger has not been configured with handlers already
-    if not logger.hasHandlers():
-        logger.setLevel(logging.INFO)
-
-        # Prevent log messages from being propagated to the root logger
-        logger.propagate = False
-
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        general_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        console_handler.setFormatter(general_formatter)
-
-        logger.addHandler(console_handler)
-
-    return logger
-
-
 # Get the loggers
-timing_logger = get_logger('timingLogger')
 logger = get_logger()
 
 
@@ -95,12 +67,12 @@ def get_conversational_response(user_query: str, response_object: Any) -> Any:
 
     try:
         # The chain
-        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm | conversational_parser
+        conversational_chain = conversational_prompt | sambanova_llm.llm | conversational_parser
         # Get response from the LLM
         response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string}).response
     except:
         # The chain without the output parser
-        conversational_chain = conversational_prompt | streamlit.session_state.llm.llm
+        conversational_chain = conversational_prompt | sambanova_llm.llm
         # Get response from the LLM
         response = conversational_chain.invoke({'user_query': user_query, 'response_string': response_string})
 
@@ -467,59 +439,6 @@ def coerce_str_to_list(input_string: str | List[str]) -> List[str]:
 
     else:
         raise TypeError(f'Input must be a string or a list of strings. Got {type(input_string)}.')
-
-
-def time_llm(func: F) -> Any:
-    """
-    Decorator to measure the execution time of a function and log the duration.
-
-    Args:
-        func: The function to be decorated.
-
-    Returns:
-        The wrapped function that returns the original function's return value.
-    """
-
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """
-        Wrapper function to execute the timing logic.
-
-        Args:
-            *args: Variable length argument list for the decorated function.
-            **kwargs: Arbitrary keyword arguments for the decorated function.
-
-        Returns:
-            The original function's return value.
-        """
-        # Create a scratchpad placeholder
-        scratchpad = streamlit.empty()
-
-        # Initialize time
-        start_time = time.time()
-
-        # Call the function
-        result = func(*args, **kwargs)
-
-        # End time
-        end_time = time.time()
-
-        # Compute duration
-        duration = end_time - start_time
-
-        # Log to file
-        timing_logger.info(f'{func.__name__} took {duration:.2f} seconds.\n')
-
-        # Stream duration to scratchpad
-        scratchpad.markdown(
-            f'- **<span style="color:rgb{SAMBANOVA_ORANGE}">{func.__name__}</span>'
-            f'** took **<span style="color:rgb{SAMBANOVA_ORANGE}">{duration:.2f}</span>** seconds.',
-            unsafe_allow_html=True,
-        )
-
-        # Return only result
-        return result
-
-    return wrapper
 
 
 def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = None) -> pandas.DataFrame:

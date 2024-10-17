@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas
 import requests
-import streamlit
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain.schema import Document
@@ -14,10 +13,11 @@ from pydantic import BaseModel, Field
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
+from financial_assistant.constants import *
 from financial_assistant.src.retrieval import get_qa_response
-from financial_assistant.src.tools import coerce_str_to_list, get_logger
+from financial_assistant.src.tools import coerce_str_to_list
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
-from financial_assistant.streamlit.constants import *
+from financial_assistant.src.utilities import get_logger
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -93,7 +93,7 @@ def retrieve_filings(
 
     # Retrieve the filing text from SEC Edgar
     try:
-        downloader = Downloader(streamlit.session_state.SEC_API_ORGANIZATION, streamlit.session_state.SEC_API_EMAIL)
+        downloader = Downloader(os.getenv('SEC_API_ORGANIZATION'), os.getenv('SEC_API_EMAIL'))
     except requests.exceptions.HTTPError:
         raise Exception('Please submit your SEC EDGAR details (organization and email) in the sidebar first.')
 
@@ -133,7 +133,7 @@ def retrieve_filings(
 
         # Load the dataframe from the text file
         try:
-            df = pandas.read_csv(os.path.join(streamlit.session_state.source_dir, f'{filename}.csv'))
+            df = pandas.read_csv(os.path.join(SOURCE_DIR, f'{filename}.csv'))
         except FileNotFoundError:
             logger.error('No scraped data found.')
 
@@ -244,7 +244,7 @@ def parse_filings(
                     f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"
                     + f'{ticker_symbol}_{report_date.date().year}'
                 )
-                df.to_csv(os.path.join(streamlit.session_state.source_dir, f'{filename}.csv'), index=False)
+                df.to_csv(os.path.join(SOURCE_DIR, f'{filename}.csv'), index=False)
                 break
 
     # If neither the year nor the quarter match, raise an error

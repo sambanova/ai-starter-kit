@@ -1,8 +1,8 @@
 import datetime
+import shutil
 from typing import Any, Dict, List, Optional
 
 import pandas
-import streamlit
 import yfinance
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -14,15 +14,14 @@ from pandasai import SmartDataframe
 from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 from pydantic import BaseModel, Field
 
+from financial_assistant.constants import *
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS
 from financial_assistant.src.tools import (
     coerce_str_to_list,
     convert_data_to_frame,
     extract_yfinance_data,
-    time_llm,
 )
-from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import delete_temp_dir
+from financial_assistant.src.utilities import time_llm
 
 
 class StockInfoSchema(BaseModel):
@@ -171,7 +170,7 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     )
 
     # Delete the pandasai cache
-    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     # Answer the user query by symbol
     return interrogate_dataframe_pandasai(yahoo_connector, user_query)
@@ -194,16 +193,16 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
     df = SmartDataframe(
         df_pandas,
         config={
-            'llm': streamlit.session_state.llm.llm,
+            'llm': sambanova_llm.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': streamlit.session_state.stock_query_figures_dir,
+            'save_charts_path': STOCK_QUERY_FIGURES_DIR,
             'enable_cache': False,
         },
     )
 
     # Delete the pandasai cache
-    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS
@@ -259,10 +258,10 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         )
 
         # The chain
-        chain_symbol = prompt_symbol | streamlit.session_state.llm.llm | parser_symbol
+        chain_symbol = prompt_symbol | sambanova_llm.llm | parser_symbol
 
         # Invoke the chain to derive the ticker symbol of the company
-        symbol = chain_symbol.invoke(company).symbol
+        symbol = chain_symbol.invoke(company).symbol  # type: ignore
         symbol_list.append(symbol)
 
     return list(set(symbol_list))

@@ -1,10 +1,11 @@
 import datetime
 import json
+import os
 import re
+import shutil
 from typing import Any, Dict, List
 
 import pandas
-import streamlit
 from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
@@ -16,20 +17,18 @@ from pandasai.connectors import SqliteConnector
 from pydantic import BaseModel, Field
 from sqlalchemy import Inspector, create_engine
 
+from financial_assistant.constants import *
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS_TEMPLATE
 from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
-from financial_assistant.src.llm import get_sambanova_credentials
+from financial_assistant.src.exceptions import TableNotFoundException
 from financial_assistant.src.tools import (
     coerce_str_to_list,
     convert_data_to_frame,
     extract_yfinance_data,
     get_conversational_response,
-    get_logger,
-    time_llm,
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
-from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import delete_temp_dir
+from financial_assistant.src.utilities import get_logger, time_llm
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
@@ -86,9 +85,7 @@ def create_stock_database(
         company_data_dict[symbol] = extract_yfinance_data(symbol, start_date, end_date)
 
     # Create SQL database
-    company_tables_dict = store_company_dataframes_to_sqlite(
-        db_name=streamlit.session_state.db_path, company_data_dict=company_data_dict
-    )
+    company_tables_dict = store_company_dataframes_to_sqlite(db_name=DB_PATH, company_data_dict=company_data_dict)
 
     return company_tables_dict
 
@@ -109,7 +106,7 @@ def store_company_dataframes_to_sqlite(
         A dictionary with company symbols as keys and a list of SQL table names as values.
     """
     # Connect to the SQLite database
-    engine = create_engine(f'sqlite:///{streamlit.session_state.db_path}')
+    engine = create_engine(f'sqlite:///{DB_PATH}')
 
     # Create a dictionary with company names as keys and SQL tables as values
     company_tables: Dict[str, List[str]] = dict()
@@ -246,13 +243,13 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     queries_list = get_sql_queries(selected_schemas, user_query)
 
     # Create a SQL database engine and connect to it using the selected tables
-    engine = create_engine(f'sqlite:///{streamlit.session_state.db_path}')
+    engine = create_engine(f'sqlite:///{DB_PATH}')
     db = SQLDatabase(engine=engine, include_tables=selected_tables)
 
     # TODO: With larger context windows
     # https://python.langchain.com/v0.1/docs/use_cases/sql/quickstart/#convert-question-to-sql-query
     # from langchain.chains import create_sql_query_chain
-    # chain = create_sql_query_chain(streamlit.session_state.llm.llm, db)
+    # chain = create_sql_query_chain(sambanova_llm, db)
 
     # Instantiate the SQL executor
     query_executor = QuerySQLDataBaseTool(db=db)
@@ -302,7 +299,7 @@ def get_sql_queries(selected_schemas: str, user_query: str) -> List[str]:
 
     # Chain that receives the natural language input and the table schemas, invoke the LLM,
     # and finally execute the SQL finder method, retrieving only the filtered SQL query
-    query_generation_chain = query_generation_prompt | streamlit.session_state.llm.llm | RunnableLambda(sql_finder)
+    query_generation_chain = query_generation_prompt | sambanova_llm.llm | RunnableLambda(sql_finder)
 
     # Generate the SQL query
     query: str = query_generation_chain.invoke(
@@ -366,7 +363,7 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
             # Insert table name in the prompt
             final_query = user_query.format(table_name=table)
             # Append the response for the given company symbol
-            response[symbol].append(interrogate_table(streamlit.session_state.db_path, table, final_query))
+            response[symbol].append(interrogate_table(DB_PATH, table, final_query))
 
     return response
 
@@ -397,10 +394,10 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     df = SmartDataframe(
         connector,
         config={
-            'llm': streamlit.session_state.llm.llm,
+            'llm': sambanova_llm.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': streamlit.session_state.db_query_figures_dir,
+            'save_charts_path': DB_QUERY_FIGURES_DIR,
             'enable_cache': False,
         },
     )
@@ -409,7 +406,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
 
     # Delete the pandasai cache
-    delete_temp_dir(temp_dir=streamlit.session_state.pandasai_cache, verbose=False)
+    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
 
     return response
 
@@ -457,21 +454,17 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
     )
 
     # Invoke the chain with the user query and the table summaries
-    max_tokens_to_generate_list = list(
-        {streamlit.session_state.llm.llm_info['max_tokens_to_generate'], 1024, 512, 256, 128}
-    )
+    max_tokens_to_generate_list = list({sambanova_llm.llm_info['max_tokens_to_generate'], 1024, 512, 256, 128})
     # Bound the number of tokens to generate based on the config value
     max_tokens_to_generate_list = [
-        elem
-        for elem in max_tokens_to_generate_list
-        if elem <= streamlit.session_state.llm.llm_info['max_tokens_to_generate']
+        elem for elem in max_tokens_to_generate_list if elem <= sambanova_llm.llm_info['max_tokens_to_generate']
     ]
 
     # Sort the list in descending order
     max_tokens_to_generate_list = sorted(max_tokens_to_generate_list, reverse=True)
 
     # Get the Sambanova API key
-    sambanova_api_key = get_sambanova_credentials()
+    sambanova_api_key = os.getenv('SAMBANOVA_APY_KEY')
 
     # Call the LLM for each number of tokens to generate
     # Return the first valid response
@@ -480,13 +473,13 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         try:
             # Instantiate the LLM
             llm = APIGateway.load_llm(
-                type=streamlit.session_state.llm.llm_info['api'],
+                type=sambanova_llm.llm_info['api'],
                 streaming=False,
-                coe=streamlit.session_state.llm.llm_info['coe'],
-                do_sample=streamlit.session_state.llm.llm_info['do_sample'],
+                coe=sambanova_llm.llm_info['coe'],
+                do_sample=sambanova_llm.llm_info['do_sample'],
                 max_tokens_to_generate=item,
-                temperature=streamlit.session_state.llm.llm_info['temperature'],
-                select_expert=streamlit.session_state.llm.llm_info['select_expert'],
+                temperature=sambanova_llm.llm_info['temperature'],
+                select_expert=sambanova_llm.llm_info['select_expert'],
                 process_prompt=False,
                 sambanova_api_key=sambanova_api_key,
             )
@@ -504,9 +497,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
             pass
 
     if len(table_names) == 0:
-        logger.error('No relevant SQL tables found.')
-        streamlit.error('No relevant SQL tables found.')
-        streamlit.stop()
+        raise TableNotFoundException
 
     return table_names
 
@@ -527,7 +518,7 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
         Exception: If there is no SQL table in the database.
     """
     # Instantiate the inspector for the database
-    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state.db_path))
+    inspector = Inspector.from_engine(create_engine('sqlite:///' + DB_PATH))
 
     # Get the list of SQL tables in the database
     tables_names = inspector.get_table_names()
@@ -570,7 +561,7 @@ def get_table_summaries_from_names(table_names: List[str]) -> str:
     Returns:
         A text summary of SQL tables by their names.
     """
-    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state.db_path))
+    inspector = Inspector.from_engine(create_engine('sqlite:///' + DB_PATH))
     inspected_tables_names = inspector.get_table_names()
     inspected_tables_names_symbols = [
         inspected_table.split('_')[0].lower() for inspected_table in inspected_tables_names

@@ -2,10 +2,10 @@ from typing import Dict, Optional
 
 import streamlit
 
-from financial_assistant.src.tools import get_logger
-from financial_assistant.streamlit.constants import *
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
 logger = get_logger()
 
@@ -68,13 +68,13 @@ def include_financial_filings() -> None:
                 )
 
                 # Save the query and answer to the history text file
-                save_output_callback(answer, streamlit.session_state.history_path, user_request)
+                save_output_callback(answer, HISTORY_PATH, user_request)
 
                 # Save the query and answer to the filing text file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(answer, streamlit.session_state.filings_path, user_request),
+                    args=(answer, FILINGS_PATH, user_request),
                 ):
                     pass
 
@@ -108,10 +108,10 @@ def handle_financial_filings(
         Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['retrieve_filings']
+    tools = ['retrieve_filings']
 
     # Set the tools for the LLM to use
-    set_llm_tools(streamlit.session_state.tools)
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -128,6 +128,9 @@ def handle_financial_filings(
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     # Check the final answer of the LLM
     if not isinstance(response, dict):
