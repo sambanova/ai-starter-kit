@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 import sseclient
+from requests import Response
 
 sys.path.append('./src')
 sys.path.append('./src/llmperf')
@@ -254,7 +255,11 @@ class SambaStudioAPI(BaseAPIEndpoint):
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
         assert isinstance(self.api_key, str), 'No API KEY provided'
-        return {'key': self.api_key}
+
+        if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI request
+            return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+        else:  # Regular SambaStudio request
+            return {'key': self.api_key}
 
     def _get_json_data(self, url: str) -> Dict[str, Any]:
         """Gets json body for API call
@@ -270,6 +275,34 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
 
+        if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI data payload
+            data = self._get_json_data_for_sambastudio_openai_compatible(prompt, sampling_params)
+        else:  # Regular SambaStudio data payload
+            data = self._get_json_data_for_regular_sambastudio(url, prompt, sampling_params)
+
+        return data
+
+    def _get_json_data_for_sambastudio_openai_compatible(
+        self, prompt: str, sampling_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        sampling_params['model'] = self.request_config.model
+        sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
+
+        if self.request_config.is_stream_mode:
+            sampling_params['stream'] = True
+            sampling_params['stream_options'] = {'include_usage': True}
+        else:
+            # TODO: support not streaming mode
+            raise ValueError('Streaming mode required')
+
+        data = {'messages': [{'role': 'user', 'content': prompt}]}
+        data.update(sampling_params)
+
+        return data
+
+    def _get_json_data_for_regular_sambastudio(
+        self, url: str, prompt: str, sampling_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         # Change params whether model is COE or not
         if 'COE' in self.request_config.model:
             sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
@@ -313,14 +346,9 @@ class SambaStudioAPI(BaseAPIEndpoint):
         headers = self._get_headers()
         json_data = self._get_json_data(url)
 
-        # Set variables
-        generated_text = ''
-        chunks_received = []
-        chunks_timings = []
-
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
-        start_time = chunk_start_time = time.monotonic()
+        start_time = time.monotonic()
 
         if self.request_config.is_stream_mode:
             with requests.post(
@@ -330,38 +358,14 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     error_details = response.json().get('error', 'No additional error details provided.')
                     raise Exception(f'Error: {response.status_code}, Details: {error_details}')
 
-                # fetch generated text and metrics for api v2
-                if '/api/v2' in url.lower().strip():
-                    for chunk_orig in response.iter_lines(chunk_size=None):
-                        chunk = chunk_orig.strip()
-                        data = json.loads(chunk)
-
-                        completion = data['result']['items'][0]['value']['is_last_response']
-                        chunks_timings.append(time.monotonic() - chunk_start_time)
-                        chunk_start_time = time.monotonic()
-                        if completion is False:
-                            chunks_received.append(data['result']['items'][0]['value']['stream_token'])
-                            continue
-                        else:
-                            generated_text = data['result']['items'][0]['value']['completion']
-                            response_dict = data['result']['items'][0]['value']
-                        break
-                # support to fetch generated text and metrics for api v1
-                else:
-                    for chunk_orig in response.iter_lines(chunk_size=None):
-                        chunk = chunk_orig.strip()
-                        data = json.loads(chunk)
-
-                        completion = data['result']['responses'][0]['is_last_response']
-                        chunks_timings.append(time.monotonic() - chunk_start_time)
-                        chunk_start_time = time.monotonic()
-                        if completion is False:
-                            chunks_received.append(data['result']['responses'][0]['stream_token'])
-                            continue
-                        else:
-                            generated_text = data['result']['responses'][0]['completion']
-                            response_dict = data['result']['responses'][0]
-                            break
+                if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI data payload
+                    chunks_received, chunks_timings, response_dict, generated_text = (
+                        self._parse_sambastudio_openai_compatible_response(response, start_time)
+                    )
+                else:  # Regular SambaStudio data payload
+                    chunks_received, chunks_timings, response_dict, generated_text = (
+                        self._parse_regular_sambastudio_response(response, start_time, url)
+                    )
         else:
             # TODO: support non-streaming mode
             raise ValueError('Streaming mode required')
@@ -387,6 +391,82 @@ class SambaStudioAPI(BaseAPIEndpoint):
         )
 
         return metrics, generated_text
+
+    def _parse_sambastudio_openai_compatible_response(
+        self, response: Response, event_start_time: float
+    ) -> Tuple[List[Any], List[Any], Dict[str, Any], str]:
+        # Set variables
+        generated_text = ''
+        events_received = []
+        events_timings = []
+
+        client = sseclient.SSEClient(response)
+
+        for event in client.events():
+            try:
+                # check streaming events before last stream returns DONE
+                if event.data != '[DONE]':
+                    data = json.loads(event.data)
+                    # if events don't contain "usage" key, which only shows up in stream returning
+                    # performance metrics
+                    if data.get('usage') is None:
+                        # if streams still don't hit a finish reason
+                        if data['choices'][0]['finish_reason'] is None:
+                            # log s timings
+                            events_timings.append(time.monotonic() - event_start_time)
+                            event_start_time = time.monotonic()
+                            # concatenate streaming text pieces
+                            stream_content = data['choices'][0]['delta']['content']
+                            events_received.append(stream_content)
+                            generated_text += stream_content
+                    # process streaming chunk when performance usage is provided
+                    else:
+                        response_dict = data['usage']
+            except Exception as e:
+                raise Exception(f'Error: {e} at streamed event: {event.data}')
+        return events_received, events_timings, response_dict, generated_text
+
+    def _parse_regular_sambastudio_response(
+        self, response: Response, chunk_start_time: float, url: str
+    ) -> Tuple[List[Any], List[Any], Dict[str, Any], str]:
+        # Set variables
+        generated_text = ''
+        chunks_received = []
+        chunks_timings = []
+
+        # fetch generated text and metrics for api v2
+        if '/api/v2' in url.lower().strip():
+            for chunk_orig in response.iter_lines(chunk_size=None):
+                chunk = chunk_orig.strip()
+                data = json.loads(chunk)
+
+                completion = data['result']['items'][0]['value']['is_last_response']
+                chunks_timings.append(time.monotonic() - chunk_start_time)
+                chunk_start_time = time.monotonic()
+                if completion is False:
+                    chunks_received.append(data['result']['items'][0]['value']['stream_token'])
+                    continue
+                else:
+                    generated_text = data['result']['items'][0]['value']['completion']
+                    response_dict = data['result']['items'][0]['value']
+                break
+        # support to fetch generated text and metrics for api v1
+        else:
+            for chunk_orig in response.iter_lines(chunk_size=None):
+                chunk = chunk_orig.strip()
+                data = json.loads(chunk)
+
+                completion = data['result']['responses'][0]['is_last_response']
+                chunks_timings.append(time.monotonic() - chunk_start_time)
+                chunk_start_time = time.monotonic()
+                if completion is False:
+                    chunks_received.append(data['result']['responses'][0]['stream_token'])
+                    continue
+                else:
+                    generated_text = data['result']['responses'][0]['completion']
+                    response_dict = data['result']['responses'][0]
+                    break
+        return chunks_received, chunks_timings, response_dict, generated_text
 
 
 class SambaNovaCloudAPI(BaseAPIEndpoint):
@@ -423,6 +503,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         sampling_params = self.request_config.sampling_params
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
+        sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
