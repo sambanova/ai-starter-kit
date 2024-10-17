@@ -7,57 +7,38 @@ sys.path.append('./src')
 sys.path.append('./streamlit')
 
 import warnings
-from typing import Any, List, Tuple
+from typing import List
 
 import streamlit as st
+from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES
-from utils.visual.env_utils import are_credentials_set, initialize_env_variables, save_credentials
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 warnings.filterwarnings('ignore')
 
+
+@st.cache_data
+def _init() -> None:
+    load_dotenv('../.env', override=True)
+
+
 CONFIG_PATH = './config.yaml'
-
-
 with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
 
-def env_input_fields(mode: str, additional_env_vars: List[str] = []) -> Tuple[str, Any]:
-    if additional_env_vars is None:
-        additional_env_vars = []
-
-    additional_vars = {}
-
-    if mode == 'SambaNova Cloud':
-        api_key = st.text_input(
-            'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
-        )
-    else:  # SambaStudio
-        api_key = st.text_input(
-            'SAMBASTUDIO API KEY', value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
-        )
-        for var in additional_env_vars:
-            if var == 'SAMBASTUDIO_BASE_URI':
-                additional_vars[var] = st.text_input(f'{var}', value='api/v2/predict/generic', type='password')
-            elif var != 'SAMBASTUDIO_API_KEY':
-                additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
-
-    return api_key, additional_vars
-
-
-def main() -> None:
-    st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-    )
-
+def _initialize_session_variables() -> None:
+    if 'prod_mode' not in st.session_state:
+        st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
 
+
+def main() -> None:
     show_pages(
         [
             Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),
@@ -87,23 +68,16 @@ def main() -> None:
             # Mode selection
             st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
 
+            additional_env_vars: List[str] = []
             if st.session_state.mode == 'SambaNova Cloud':
-                additional_env_vars = []
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio
-                additional_env_vars = [
-                    'SAMBASTUDIO_BASE_URL',
-                    'SAMBASTUDIO_BASE_URI',
-                    'SAMBASTUDIO_PROJECT_ID',
-                    'SAMBASTUDIO_ENDPOINT_ID',
-                    'SAMBASTUDIO_API_KEY',
-                ]
                 st.session_state.llm_api = 'sambastudio'
 
             initialize_env_variables(prod_mode, additional_env_vars)
 
             if not are_credentials_set(additional_env_vars):
-                api_key, additional_vars = env_input_fields(st.session_state.mode, additional_env_vars)
+                api_key, additional_vars = env_input_fields(additional_env_vars, st.session_state.mode)
                 if st.button('Save Credentials'):
                     if st.session_state.mode == 'SambaNova Cloud':
                         message = save_credentials(api_key, None, prod_mode)
@@ -133,4 +107,12 @@ def main() -> None:
 
 
 if __name__ == '__main__':
+    st.set_page_config(
+        page_title='AI Starter Kit',
+        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+    )
+
+    _init()
+    _initialize_session_variables()
+
     main()

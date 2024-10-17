@@ -223,33 +223,33 @@ class SambaStudioAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambastudio env variables
         if self.request_config.api_variables:
-            self.base_url = self.request_config.api_variables['SAMBASTUDIO_BASE_URL']
-            self.base_uri = self.request_config.api_variables['SAMBASTUDIO_BASE_URI']
-            self.project_id = self.request_config.api_variables['SAMBASTUDIO_PROJECT_ID']
-            self.endpoint_id = self.request_config.api_variables['SAMBASTUDIO_ENDPOINT_ID']
+            self.base_url = self.request_config.api_variables['SAMBASTUDIO_URL']
             self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBASTUDIO_BASE_URL')
-            self.base_uri = os.environ.get('SAMBASTUDIO_BASE_URI')
-            self.project_id = os.environ.get('SAMBASTUDIO_PROJECT_ID')
-            self.endpoint_id = os.environ.get('SAMBASTUDIO_ENDPOINT_ID')
-            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY')
+            self.base_url = os.environ.get('SAMBASTUDIO_URL', '')
+            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY', '')
 
     def _get_url(self) -> str:
-        """Builds url for API call
+        """
+        Get streaming and non streaming URLs from the given URL
+
+        Args:
+            url: string with sambastudio base or streaming endpoint url
 
         Returns:
-            str: url needed for API
+            streaming_url: string with url to do streaming calls
         """
-
-        if self.request_config.is_stream_mode:
-            path = f'{self.base_uri}/stream/{self.project_id}/{self.endpoint_id}'
+        if 'openai' in self.base_url:
+            stream_url = self.base_url
         else:
-            path = f'{self.base_uri}/{self.project_id}/{self.endpoint_id}'
-
-        url = f'{self.base_url}/{path}'
-
-        return url
+            if 'stream' in self.base_url:
+                stream_url = self.base_url.replace('stream/', '')
+            else:
+                if 'generic' in self.base_url:
+                    stream_url = 'generic/stream'.join(self.base_url.split('generic'))
+                else:
+                    raise ValueError('Unsupported URL')
+        return stream_url
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
@@ -398,7 +398,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
             self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
-            self.api_key = os.environ.get('SAMBANOVA_API_KEY')
+            self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:
         """Builds url for API call

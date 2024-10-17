@@ -50,7 +50,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
-        api_variables: Dict[str, Any] = {},
+        api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
     ) -> None:
@@ -150,7 +150,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         request_config_batch: List[Any],
         completed_requests: List[Any],
-        progress_bar: tqdm,
+        progress_bars: Dict[str, Any],
         start_time: float,
     ) -> None:
         """Sends multiple requests to LLM and collects results
@@ -171,7 +171,8 @@ class BasePerformanceEvaluator(abc.ABC):
                 metrics=req_metrics, response_text=response_text, request_config=request_config
             )
             completed_requests.extend([response_object])
-            progress_bar.update(1)
+            progress_bars['stqdm'].update(1)
+            progress_bars['tqdm'].update(1)
 
     def build_metrics_summary(
         self,
@@ -491,8 +492,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         threads = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
+        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
 
         for request_config_batch in request_config_batches:
             thread = threading.Thread(
@@ -500,7 +502,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 args=(
                     request_config_batch,
                     llm_responses,
-                    progress_bar,
+                    progress_bars,
                     start_time,
                 ),
             )
@@ -834,8 +836,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
+        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
@@ -844,7 +847,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 args=(
                     request_config_batch,
                     llm_responses,
-                    progress_bar,
+                    progress_bars,
                     start_time,
                 ),
             )
