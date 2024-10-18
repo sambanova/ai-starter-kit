@@ -7,11 +7,12 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from typing import Any, Dict, List
+from typing import Any
 
 import weave
 import yaml
 
+from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.models import ChatModel, CorrectnessLLMJudge
 from utils.visual.env_utils import get_wandb_key
 
@@ -30,8 +31,9 @@ class BaseWeaveEvaluator:
     def __init__(self) -> None:
         self.config_info = self._get_config_info(CONFIG_PATH)
         self.judge = self._init_judge()
+        self.dataset_manager = self._init_dataset_manager()
 
-    async def evaluate(self, data: List[Dict[str, Any]]) -> None:
+    async def evaluate(self) -> None:
         """
         Evaluate a list of data using multiple LLM configurations.
 
@@ -39,11 +41,6 @@ class BaseWeaveEvaluator:
         `self.config_info['llms']`, creating a `ChatModel` for each configuration.
         It then sets up an evaluation using the provided data and a judge, executing
         the evaluation for each model configuration.
-
-        Args:
-            data (List[Dict[str, Any]]): A list of dictionaries representing the
-            dataset to be evaluated. Each dictionary should contain the relevant
-            information required for the evaluation.
 
         Returns:
             None: This method does not return any value. It performs the evaluation
@@ -54,6 +51,7 @@ class BaseWeaveEvaluator:
             Exception: If an error occurs during model evaluation or if the
             parameters provided to `ChatModel` are invalid.
         """
+        data = self.dataset_manager.create_dataset()
         llm_info = self.config_info['llms']
         for params in llm_info:
             test_model = ChatModel(**params)
@@ -115,3 +113,18 @@ class BaseWeaveEvaluator:
         """
         judge_info = self.config_info['eval_llm']
         return CorrectnessLLMJudge(**judge_info)
+
+    def _init_dataset_manager(self) -> WeaveDatasetManager:
+        """
+        Initialize and return an instance of WeaveDatasetManager.
+
+        Returns:
+            WeaveDatasetManager: An initialized instance based on config_info.
+
+        Raises:
+            KeyError: If required dataset parameters are missing in `self.config_info`.
+        """
+        dataset_info = self.config_info['eval_dataset']
+        name = dataset_info['name']
+        filepath = dataset_info['path']
+        return WeaveDatasetManager(name, filepath)
