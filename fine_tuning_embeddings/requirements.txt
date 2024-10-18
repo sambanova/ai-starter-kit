@@ -63,7 +63,7 @@ html2text==2020.1.16
 httpcore==1.0.2
 httptools==0.6.1
 httpx==0.26.0
-huggingface-hub==0.20.3
+huggingface-hub==0.25.2
 humanfriendly==10.0
 idna==3.6
 importlib-metadata==6.11.0
