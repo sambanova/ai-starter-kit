@@ -1,5 +1,6 @@
 eval_dataset:
-  path: data/eval_data.json
+  name: general_knowledge_data
+  path: data/eval_data.csv
 
 llms:
   - model_type: "sncloud"
