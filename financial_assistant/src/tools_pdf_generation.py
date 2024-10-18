@@ -17,7 +17,9 @@ from pydantic import BaseModel, Field
 from financial_assistant.constants import *
 from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list
-from financial_assistant.src.utilities import time_llm
+from financial_assistant.src.utilities import get_logger, time_llm
+
+logger = get_logger()
 
 EMPTY_TEXT_PLACEHOLDER = 'Empty text content'
 
@@ -284,6 +286,7 @@ def generate_pdf(
     # Add a summary at the beginning
     if include_summary:
         progress_text = f'Summarizing {len(content_list)} queries...'
+        logger.info(progress_text)
 
         intermediate_summaries, intermediate_titles, final_summary, abstract = summarize_text(split_docs)
         if len(abstract) > 0:
