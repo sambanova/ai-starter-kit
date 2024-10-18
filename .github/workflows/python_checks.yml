@@ -7,7 +7,7 @@ on:
 
   # Runs at every pull request
   pull_request:
-    types: [opened, synchronize, review_requested, reopened]
+    types: [opened, synchronize, reopened]
 
   # Runs at every pull request review
   pull_request_review:
@@ -50,22 +50,22 @@ jobs:
       - name: MyPy
         run: mypy --explicit-package-bases .
 
-      # # Set PYTHONPATH
-      # - name: Set PYTHONPATH
-      #   run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+      # Set PYTHONPATH
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
-      # # Runs only at every pull request commit for the Financial Assistant
-      # - name: Run Unit Tests at Pull Request
-      #   if: github.event_name == 'pull_request' || github.event_name != 'pull_request_review'
-      #   env:
-      #     SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
-      #   run: |
-      #     python financial_assistant/tests/github_pull_request_test.py
+      # Runs at every pull request commit
+      - name: Run Unit Tests at Pull Request
+        if: github.event_name == 'pull_request'
+        env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+        run: |
+          python financial_assistant/tests/financial_assistant_test.py --suite github_pull_request
 
-      # # Runs weekly
-      # - name: Run Unit Tests Weekly and Pre-Merge
-      #   if: github.event_name == 'schedule' || github.event_name == 'pull_request_review'
-      #   env:
-      #     SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
-      #   run: |
-      #     python financial_assistant/tests/financial_assistant_test.py
+      # Runs weekly, pre-merge, and manually
+      - name: Run Unit Tests Weekly and Pre-Merge
+        if: github.event_name == 'schedule' || github.event_name == 'pull_request_review' || github.event_name =='workflow_dispatch'
+        env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+        run: |
+          python financial_assistant/tests/financial_assistant_test.py

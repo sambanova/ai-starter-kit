@@ -101,18 +101,17 @@ class APIGateway:
         streaming: bool = False,
         coe: bool = False,
         do_sample: Optional[bool] = None,
+        max_tokens: Optional[int] = None,
         max_tokens_to_generate: Optional[int] = None,
         temperature: Optional[float] = None,
+        model: Optional[str] = None,
         select_expert: Optional[str] = None,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         repetition_penalty: Optional[float] = None,
         stop_sequences: Optional[str] = None,
         process_prompt: Optional[bool] = False,
-        sambastudio_base_url: Optional[str] = None,
-        sambastudio_base_uri: Optional[str] = None,
-        sambastudio_project_id: Optional[str] = None,
-        sambastudio_endpoint_id: Optional[str] = None,
+        sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
@@ -124,19 +123,18 @@ class APIGateway:
             coe (bool): whether to use coe model. Defaults to False.
 
             do_sample (bool) : Optional whether to do sample.
-            max_tokens_to_generate (int) : Optional max number of tokens to generate.
+            max_tokens (int) : Optional max number of tokens to generate.
+            max_tokens_to_generate (int) : Optional alias for max_tokens.
             temperature (float) : Optional model temperature.
-            select_expert (str) : Optional expert to use when using CoE models.
+            model (str) : Optional expert to use when using CoE models.
+            select_expert (str) : Optional alias for model.
             top_p (float) : Optional model top_p.
             top_k (int) : Optional model top_k.
             repetition_penalty (float) : Optional model repetition penalty.
             stop_sequences (str) : Optional model stop sequences.
             process_prompt (bool) : Optional default to false.
 
-            sambastudio_base_url (str): Optional SambaStudio environment URL".
-            sambastudio_base_uri (str): Optional SambaStudio-base-URI".
-            sambastudio_project_id (str): Optional SambaStudio project ID.
-            sambastudio_endpoint_id (str): Optional SambaStudio endpoint ID.
+            sambastudio_url (str): Optional SambaStudio environment URL".
             sambastudio_api_token (str): Optional SambaStudio endpoint API key.
 
             sambanova_url (str): Optional SambaNova Cloud URL",
@@ -148,19 +146,16 @@ class APIGateway:
 
         if type == 'sambastudio':
             envs = {
-                'sambastudio_base_url': sambastudio_base_url,
-                'sambastudio_base_uri': sambastudio_base_uri,
-                'sambastudio_project_id': sambastudio_project_id,
-                'sambastudio_endpoint_id': sambastudio_endpoint_id,
+                'sambastudio_url': sambastudio_url,
                 'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             if coe:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens_to_generate': max_tokens_to_generate,
+                    'max_tokens': max_tokens or max_tokens_to_generate,
                     'temperature': temperature,
-                    'select_expert': select_expert,
+                    'model': model or select_expert,
                     'top_p': top_p,
                     'top_k': top_k,
                     'repetition_penalty': repetition_penalty,
@@ -177,7 +172,7 @@ class APIGateway:
             else:
                 model_kwargs = {
                     'do_sample': do_sample,
-                    'max_tokens_to_generate': max_tokens_to_generate,
+                    'max_tokens': max_tokens or max_tokens_to_generate,
                     'temperature': temperature,
                     'top_p': top_p,
                     'top_k': top_k,
@@ -199,8 +194,8 @@ class APIGateway:
             envs = {k: v for k, v in envs.items() if v is not None}
             llm = SambaNovaCloud(
                 **envs,
-                max_tokens=max_tokens_to_generate,
-                model=select_expert,
+                max_tokens=max_tokens or max_tokens_to_generate,
+                model=model or select_expert,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
@@ -222,7 +217,7 @@ class APIGateway:
         top_k: Optional[int] = None,
         do_sample: Optional[bool] = False,
         process_prompt: Optional[bool] = False,
-        stream_options: Optional[Dict[str, bool]] = {"include_usage": True},
+        stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
         special_tokens: Optional[Dict[str, str]] = {
             'start': '<|begin_of_text|>',
             'start_role': '<|begin_of_text|><|start_header_id|>{role}<|end_header_id|>',
@@ -232,8 +227,8 @@ class APIGateway:
         model_kwargs: Optional[Dict[str, Any]] = None,
         sambanova_url: Optional[str] = None,
         sambanova_api_key: Optional[str] = None,
-        sambastudio_url:  Optional[str] = None,
-        sambastudio_api_key: Optional[str] = None
+        sambastudio_url: Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None,
     ) -> BaseChatModel:
         """
         Loads a langchain Sambanova chat model given some parameters
@@ -248,9 +243,9 @@ class APIGateway:
             do_sample (bool): whether to do sampling
             process_prompt (bool): whether process prompt (for CoE generic v1 and v2 endpoints)
             stream_options (dict): stream options, include usage to get generation metrics
-            special_tokens (dict): start, start_role, end_role and end special tokens 
-            (set for CoE generic v1 and v2 endpoints when process prompt set to false 
-            or for StandAlone v1 and v2 endpoints) 
+            special_tokens (dict): start, start_role, end_role and end special tokens
+            (set for CoE generic v1 and v2 endpoints when process prompt set to false
+            or for StandAlone v1 and v2 endpoints)
             default to llama3 special tokens
             model_kwargs (dict): Key word arguments to pass to the model.
 
@@ -266,8 +261,8 @@ class APIGateway:
 
         if type == 'sambastudio':
             envs = {
-            'sambastudio_url': sambastudio_url,
-            'sambastudio_api_key': sambastudio_api_key,
+                'sambastudio_url': sambastudio_url,
+                'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaStudio(
@@ -282,25 +277,24 @@ class APIGateway:
                 process_prompt=process_prompt,
                 stream_options=stream_options,
                 special_tokens=special_tokens,
-                model_kwargs=model_kwargs
-
+                model_kwargs=model_kwargs,
             )
 
         elif type == 'sncloud':
             envs = {
-            'sambanova_url': sambanova_url,
-            'sambanova_api_key': sambanova_api_key,
+                'sambanova_url': sambanova_url,
+                'sambanova_api_key': sambanova_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
             model = ChatSambaNovaCloud(
                 **envs,
-                model= model,
+                model=model,
                 streaming=streaming,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
-                stream_options=stream_options
+                stream_options=stream_options,
             )
 
         else:

@@ -14,12 +14,22 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
         st.session_state.SAMBANOVA_API_KEY = os.environ.get(
             'SAMBANOVA_API_KEY', st.session_state.get('SAMBANOVA_API_KEY', '')
         )
+        st.session_state.SAMBASTUDIO_URL = os.environ.get(
+            'SAMBASTUDIO_URL', st.session_state.get('SAMBASTUDIO_URL', '')
+        )
+        st.session_state.SAMBASTUDIO_API_KEY = os.environ.get(
+            'SAMBASTUDIO_API_KEY', st.session_state.get('SAMBASTUDIO_API_KEY', '')
+        )
         for var in additional_env_vars:
             st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
     else:
         # In prod mode, only use session state
         if 'SAMBANOVA_API_KEY' not in st.session_state:
             st.session_state.SAMBANOVA_API_KEY = ''
+        if 'SAMBASTUDIO_URL' not in st.session_state:
+            st.session_state.SAMBASTUDIO_URL = ''
+        if 'SAMBASTUDIO_API_KEY' not in st.session_state:
+            st.session_state.SAMBASTUDIO_API_KEY = ''
         for var in additional_env_vars:
             if var not in st.session_state:
                 st.session_state[var] = ''
@@ -38,13 +48,25 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
                 os.environ[key] = value
 
 
-def env_input_fields(additional_env_vars: Optional[List[str]] = None) -> Tuple[Any, Dict[str, Any]]:
+def env_input_fields(additional_env_vars: List[str] = [], mode: str = 'SambaNova Cloud') -> Tuple[str, Any]:
     if additional_env_vars is None:
         additional_env_vars = []
 
-    api_key = st.text_input('Sambanova API Key', value=st.session_state.SAMBANOVA_API_KEY, type='password')
+    if mode == 'SambaNova Cloud':
+        api_key = st.text_input(
+            'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
+        )
+        additional_vars = {}
+    elif mode == 'SambaStudio':
+        url = st.text_input('SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password')
+        api_key = st.text_input(
+            'SAMBASTUDIO API KEY', value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
+        )
+        additional_vars = {}
+        additional_vars['SAMBASTUDIO_URL'] = url
+    else:
+        raise Exception('Setup mode not supported.')
 
-    additional_vars = {}
     for var in additional_env_vars:
         additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
 

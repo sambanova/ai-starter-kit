@@ -42,10 +42,7 @@ def set_api_variables() -> Dict[str, Any]:
         # SambaStudio
         elif st.session_state.llm_api == 'sambastudio':
             api_variables = {
-                'SAMBASTUDIO_BASE_URL': st.session_state.SAMBASTUDIO_BASE_URL,
-                'SAMBASTUDIO_BASE_URI': st.session_state.SAMBASTUDIO_BASE_URI,
-                'SAMBASTUDIO_PROJECT_ID': st.session_state.SAMBASTUDIO_PROJECT_ID,
-                'SAMBASTUDIO_ENDPOINT_ID': st.session_state.SAMBASTUDIO_ENDPOINT_ID,
+                'SAMBASTUDIO_URL': st.session_state.SAMBASTUDIO_URL,
                 'SAMBASTUDIO_API_KEY': st.session_state.SAMBASTUDIO_API_KEY,
             }
         else:

@@ -37,9 +37,7 @@ class RAGEvalConfig:
     def get_llm_config(self, llm_config: Tuple[str, Dict]) -> Tuple[str, Dict]:
         llm_name, config_dict = llm_config
         full_config_dict = {
-            'sambastudio_base_url': os.getenv(f'{llm_name.upper()}_BASE_URL'),
-            'sambastudio_project_id': os.getenv(f'{llm_name.upper()}_PROJECT_ID'),
-            'sambastudio_endpoint_id': os.getenv(f'{llm_name.upper()}_ENDPOINT_ID'),
+            'sambastudio_url': os.getenv(f'{llm_name.upper()}_URL'),
             'sambastudio_api_key': os.getenv(f'{llm_name.upper()}_API_KEY'),
             'streaming': True,
             'model_kwargs': config_dict.get('model_kwargs', {}),
@@ -397,7 +395,7 @@ class RAGEvaluator:
             # Log the bar chart for the current metric
             run.log(
                 {
-                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar( # type: ignore
+                    f'Metric_Value_by_Evaluation Model_{metric}': wandb.plot.bar(  # type: ignore
                         table,
                         'Evaluation Model',
                         'Value',

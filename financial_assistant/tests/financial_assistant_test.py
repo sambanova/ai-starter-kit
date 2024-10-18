@@ -4,12 +4,14 @@ Financial Assistant Test Script.
 This script tests the functionality of the Financial Assistant starter kit using `unittest`.
 
 Usage:
-    python tests/financial_assistant_test.py
+    python financial_assistant/tests/financial_assistant_test.py
+    python financial_assistant/tests/financial_assistant_test.py --suite suite_name
 
 Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
+import argparse
 import os
 import sys
 import time
@@ -615,22 +617,15 @@ def main_suite() -> unittest.TestSuite:
 
     # List all the test cases here in order of execution
     suite_list = [
-        'test_get_stock_info',
-        'test_handle_stock_query',
-        'test_get_historical_price',
-        'test_handle_stock_data_analysis',
-        'test_create_stock_database',
-        'test_handle_database_creation',
-        'test_query_stock_database',
-        'test_handle_database_query',
-        'test_scrape_yahoo_finance_news',
-        'test_handle_yfinance_news',
-        'test_retrieve_filings',
-        'test_handle_financial_filings',
-        'test_handle_pdf_generation',
-        'test_pdf_rag',
-        'test_handle_pdf_rag',
-        'test_delete_cache',
+        'test_handle_stock_query',  # 3 LLM calls
+        'test_handle_stock_data_analysis',  # 2 LLM calls
+        'test_handle_database_creation',  # 2 LLM calls
+        'test_handle_database_query',  # 8 LLM calls (both `text-to-SQL` and `PandasAI-SqliteConnector`)
+        'test_handle_yfinance_news',  # 3 LLM calls
+        'test_handle_financial_filings',  # 3 LLM calls
+        'test_handle_pdf_generation',  # 8 LLM calls
+        'test_handle_pdf_rag',  # 2 LLM calls
+        'test_delete_cache',  # 0 LLM call
     ]
 
     # Add all the tests to the suite
@@ -639,6 +634,27 @@ def main_suite() -> unittest.TestSuite:
         suite.addTest(FinancialAssistantTest(suite_item))
 
     return suite
+
+
+def suite_github_pull_request() -> unittest.TestSuite:
+    """Test suite for GitHub actions on `pull_request`, i.e. to be run at every pull request commit."""
+
+    # List all the test cases here in order of execution
+    suite_list = ['test_handle_stock_query']  # 3 LLM calls
+
+    # Add all the tests to the suite
+    suite = unittest.TestSuite()
+    for suite_item in suite_list:
+        suite.addTest(FinancialAssistantTest(suite_item))
+
+    return suite
+
+
+# Suite registry for the tests
+suite_registry = {
+    'main': main_suite(),
+    'github_pull_request': suite_github_pull_request(),
+}
 
 
 def main(suite: Optional[unittest.TestSuite] = None) -> int:
@@ -692,5 +708,17 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
 
 
 if __name__ == '__main__':
-    exit_status = main()
+    # Add the argument --suite to run a specific suite of tests
+    parser = argparse.ArgumentParser(description='Add a test suite for `financial_assistant`.')
+    parser.add_argument('--suite', default='main', type=str, help='Suite for the tests.')
+
+    # Select the suite to run
+    args = parser.parse_args()
+    try:
+        suite = suite_registry[args.suite]
+    except KeyError as e:
+        suite = suite_registry['main']
+
+    # Run the tests
+    exit_status = main(suite)
     exit(exit_status)

@@ -38,7 +38,7 @@ class SyntheticDatum(BaseModel):
 
     question: str = Field(description='generated question')
     answer: str = Field(description='generated answer')
-    references: list[str] = Field(description='references for generated answer')
+    references: List[str] = Field(description='references for generated answer')
     thought: str = Field(description='thought for answer generation')
 
 
@@ -213,7 +213,7 @@ class SyntheticDataGen:
                     include_references=include_references,
                 )
                 lines = self.qa_pairs_to_prompt_completion(qa_pairs)
-                self.update_jsonl(out_file, lines) # type: ignore
+                self.update_jsonl(out_file, lines)  # type: ignore
                 logging.info(f'Added {amount} qa pairs to {out_file}')
             except Exception as e:
                 logging.warning(f'Failed to generate qa pairs, error: \n {e} \n for document: "{document}", \nskipping')

@@ -1,0 +1,108 @@
+name: Docker Build and Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run tests'
+        required: false
+  push:
+    branches: [ "improvement/docker-testing-workflow-branch" ]  # Isolated branch name for testing to ensure we don't affect main
+
+jobs:
+  build_and_test:
+    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }} #TODO: Remove
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE: aisk-unit-tests  # Updated Docker image name
+      DOCKER_TAG: ${{ github.sha }}
+      PROD_MODE: false
+      TEST_MODE: true
+      # Enable debug logging
+      ACTIONS_RUNNER_DEBUG: 'true'
+      ACTIONS_STEP_DEBUG: 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify .dockerignore is present
+        run: |
+          if [ ! -f .dockerignore ]; then
+            echo "Error: .dockerignore file is missing."
+            exit 1
+          else
+            echo ".dockerignore file is present."
+          fi
+
+      - name: Create empty .env file
+        run: touch .env
+
+      - name: Build Docker image with BuildKit and verbose logging
+        run: |
+          echo "Building Docker image with BuildKit and verbose logging..."
+          docker build \
+            --progress=plain \
+            --build-arg PROD_MODE=$PROD_MODE \
+            --build-arg TEST_MODE=$TEST_MODE \
+            --secret id=env,src=.env \
+            -t "${DOCKER_IMAGE}:${DOCKER_TAG}" \
+            .
+
+      - name: List Docker images
+        run: docker images
+
+      - name: Create .env file with secrets
+        run: |
+          echo "Creating .env file with secrets..."
+          set +x  # Disable command echoing to protect secrets
+          {
+            echo "SAMBASTUDIO_BASE_URL=${{ secrets.SAMBASTUDIO_BASE_URL }}"
+            echo "SAMBASTUDIO_PROJECT_ID=${{ secrets.SAMBASTUDIO_PROJECT_ID }}"
+            echo "SAMBASTUDIO_ENDPOINT_ID=${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}"
+            echo "SAMBASTUDIO_API_KEY=${{ secrets.SAMBASTUDIO_API_KEY }}"
+            echo "SAMBASTUDIO_EMBEDDINGS_BASE_URL=${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}"
+            echo "SAMBASTUDIO_EMBEDDINGS_PROJECT_ID=${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}"
+            echo "SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID=${{ secrets.SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID }}"
+            echo "SAMBASTUDIO_EMBEDDINGS_API_KEY=${{ secrets.SAMBASTUDIO_EMBEDDINGS_API_KEY }}"
+            echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY }}"
+            echo "LVLM_BASE_URL=${{ secrets.LVLM_BASE_URL }}"
+            echo "LVLM_API_KEY=${{ secrets.LVLM_API_KEY }}"
+            echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
+            echo "CLIP_BASE_URL=${{ secrets.CLIP_BASE_URL }}"
+            echo "CLIP_API_KEY=${{ secrets.CLIP_API_KEY }}"
+          } >> .env
+          set -x  # Re-enable command echoing
+        shell: bash
+
+      - name: Run tests in Docker container
+        run: |
+          echo "Running Docker tests..."
+          # Define the image name
+          IMAGE_NAME="${DOCKER_IMAGE}:${DOCKER_TAG}"
+
+          # Run the Docker container and execute tests
+          docker run --rm \
+            --env-file .env \
+            -e DOCKER_ENV=true \
+            -e PROD_MODE=$PROD_MODE \
+            -e TEST_MODE=$TEST_MODE \
+            -v "$(pwd)/test_results:/app/test_results" \
+            -w /app \
+            "$IMAGE_NAME" \
+            python tests/test_framework.py --env docker --skip-streamlit
+        env:
+          # Pass secrets as environment variables
+          SAMBASTUDIO_BASE_URL: ${{ secrets.SAMBASTUDIO_BASE_URL }}
+          SAMBASTUDIO_PROJECT_ID: ${{ secrets.SAMBASTUDIO_PROJECT_ID }}
+          SAMBASTUDIO_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}
+          SAMBASTUDIO_API_KEY: ${{ secrets.SAMBASTUDIO_API_KEY }}
+          SAMBASTUDIO_EMBEDDINGS_BASE_URL: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}
+          SAMBASTUDIO_EMBEDDINGS_PROJECT_ID: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}
+          SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID }}
+          SAMBASTUDIO_EMBEDDINGS_API_KEY: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_API_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          LVLM_BASE_URL: ${{ secrets.LVLM_BASE_URL }}
+          LVLM_API_KEY: ${{ secrets.LVLM_API_KEY }}
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+          CLIP_BASE_URL: ${{ secrets.CLIP_BASE_URL }}
+          CLIP_API_KEY: ${{ secrets.CLIP_API_KEY }}

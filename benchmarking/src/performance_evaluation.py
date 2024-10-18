@@ -50,7 +50,7 @@ class BasePerformanceEvaluator(abc.ABC):
         num_concurrent_requests: int,
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
-        api_variables: Dict[str, Any] = {},
+        api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
     ) -> None:
@@ -150,7 +150,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         request_config_batch: List[Any],
         completed_requests: List[Any],
-        progress_bar: tqdm,
+        progress_bars: Dict[str, Any],
         start_time: float,
     ) -> None:
         """Sends multiple requests to LLM and collects results
@@ -171,7 +171,8 @@ class BasePerformanceEvaluator(abc.ABC):
                 metrics=req_metrics, response_text=response_text, request_config=request_config
             )
             completed_requests.extend([response_object])
-            progress_bar.update(1)
+            progress_bars['stqdm'].update(1)
+            progress_bars['tqdm'].update(1)
 
     def build_metrics_summary(
         self,
@@ -491,8 +492,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         threads = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
+        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
 
         for request_config_batch in request_config_batches:
             thread = threading.Thread(
@@ -500,7 +502,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 args=(
                     request_config_batch,
                     llm_responses,
-                    progress_bar,
+                    progress_bars,
                     start_time,
                 ),
             )
@@ -747,18 +749,20 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # initialize a column for the switching time
         df_valid_responses['server_switching_time'] = None
 
-        # calculate switching time
-        first_ttft = df_valid_responses['server_ttft_s'].iloc[0]
-        mean_ttft = df_valid_responses['server_ttft_s'].iloc[1:].mean()
-        std_ttft = df_valid_responses['server_ttft_s'].iloc[1:].std()
-        std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
+        # check server ttft in case metric is not coming in response
+        if df_valid_responses['server_ttft_s'].notna().all():
+            # calculate switching time
+            first_ttft = df_valid_responses['server_ttft_s'].iloc[0]
+            mean_ttft = df_valid_responses['server_ttft_s'].iloc[1:].mean()
+            std_ttft = df_valid_responses['server_ttft_s'].iloc[1:].std()
+            std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
 
-        switching_time = first_ttft - mean_ttft
-        outlier_switching_time = None
+            switching_time = first_ttft - mean_ttft
+            outlier_switching_time = None
 
-        if switching_time > (mean_ttft + 3 * std_ttft):
-            outlier_switching_time = switching_time
-            df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
+            if switching_time > (mean_ttft + 3 * std_ttft):
+                outlier_switching_time = switching_time
+                df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
 
         # assign switching time back to request object
         for llm_response in llm_responses:
@@ -834,8 +838,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        # progress_bar = tqdm(total=total_request_count, desc="Running Requests")
+        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
+        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
+        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
@@ -844,7 +849,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 args=(
                     request_config_batch,
                     llm_responses,
-                    progress_bar,
+                    progress_bars,
                     start_time,
                 ),
             )
@@ -942,15 +947,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             # Build input prompt to be sent in LLM request
             prompt_tuple = self.build_prompt(input_token_count)
 
-            # Add max_tokens_to_generate to `sampling_params` dictionary
-            if self.llm_api == 'sncloud':
-                updated_sampling_params = {
-                    'max_tokens': output_token_count,
-                }
-            else:
-                updated_sampling_params = {
-                    'max_tokens_to_generate': output_token_count,
-                }
+            # Add generic max tokens parameter to `sampling_params` dictionary
+            updated_sampling_params = {
+                'max_tokens_to_generate': output_token_count,
+            }
             updated_sampling_params.update(sampling_params)
 
             # Create request config object
