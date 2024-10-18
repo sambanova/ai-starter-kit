@@ -26,12 +26,6 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
-# Read config file
-# with open(CONFIG_PATH, 'r') as yaml_file:
-#    config = yaml.safe_load(yaml_file)
-
-# prod_mode = config['prod_mode']
-
 
 def save_files_user(docs: List[UploadedFile]) -> str:
     """
