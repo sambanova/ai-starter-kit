@@ -1,6 +1,5 @@
 import datetime
 import os
-import pathlib
 import sys
 from uuid import uuid4
 
@@ -10,12 +9,7 @@ from financial_assistant.src.llm import SambaNovaLLM
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
-if pathlib.Path(current_dir).name == 'financial_assistant':
-    kit_dir = current_dir
-elif pathlib.Path(current_dir).name == 'streamlit':
-    kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-else:
-    raise Exception('Could not find the current directory')
+kit_dir = current_dir
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
