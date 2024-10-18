@@ -27,10 +27,11 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 # Read config file
-#with open(CONFIG_PATH, 'r') as yaml_file:
+# with open(CONFIG_PATH, 'r') as yaml_file:
 #    config = yaml.safe_load(yaml_file)
 
-#prod_mode = config['prod_mode']
+# prod_mode = config['prod_mode']
+
 
 def save_files_user(docs: List[UploadedFile]) -> str:
     """
@@ -106,6 +107,7 @@ def handle_userinput(user_question: str) -> None:
                         f'<font size="2" color="grey">{source}</font>',
                         unsafe_allow_html=True,
                     )
+
 
 def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval]:
     if prod_mode:

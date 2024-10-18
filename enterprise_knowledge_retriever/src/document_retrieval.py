@@ -128,7 +128,7 @@ class RetrievalQAChain(Chain):
 
 
 class DocumentRetrieval:
-    def __init__(self, sambanova_api_key:str) -> None:
+    def __init__(self, sambanova_api_key: str) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
         self.api_info = config_info[0]
