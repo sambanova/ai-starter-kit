@@ -26,14 +26,11 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-ADDITIONAL_ENV_VARS = ['LVLM_BASE_URL', 'LVLM_API_KEY']
+ADDITIONAL_ENV_VARS = []
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-3.2-11B-Vision-Instruct',
     'Llama-3.2-90B-Vision-Instruct',
-    'llava-v1.5-7b-4096-preview',
-    'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
-    'meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo',
 ]
 # Available models in dropdown menu
 LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
