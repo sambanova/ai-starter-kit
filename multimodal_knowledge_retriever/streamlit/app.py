@@ -5,7 +5,7 @@ import sys
 import time
 import uuid
 from threading import Thread
-from typing import Optional
+from typing import Any, Optional
 
 import yaml
 
@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-ADDITIONAL_ENV_VARS = []
+ADDITIONAL_ENV_VARS list[str] = []
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-3.2-11B-Vision-Instruct',
