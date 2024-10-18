@@ -13,7 +13,7 @@ import weave
 import yaml
 
 from utils.eval.dataset import WeaveDatasetManager
-from utils.eval.models import ChatModel, CorrectnessLLMJudge
+from utils.eval.llm import ChatModel, CorrectnessLLMJudge
 from utils.visual.env_utils import get_wandb_key
 
 wandb_api_key = get_wandb_key()
