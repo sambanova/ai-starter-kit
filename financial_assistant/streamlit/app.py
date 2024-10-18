@@ -1,5 +1,6 @@
 import datetime
 import os
+import pathlib
 import sys
 import time
 
@@ -7,7 +8,12 @@ import weave
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
-kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+if pathlib.Path(current_dir).name == 'financial_assistant':
+    kit_dir = current_dir
+elif pathlib.Path(current_dir).name == 'streamlit':
+    kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+else:
+    raise Exception('Could not find the current directory')
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)

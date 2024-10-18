@@ -1,5 +1,6 @@
 import datetime
 import os
+import pathlib
 import sys
 from uuid import uuid4
 
@@ -8,7 +9,13 @@ import yaml
 from financial_assistant.src.llm import SambaNovaLLM
 
 # Main directories
-kit_dir = os.path.dirname(os.path.abspath(__file__))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if pathlib.Path(current_dir).name == 'financial_assistant':
+    kit_dir = current_dir
+elif pathlib.Path(current_dir).name == 'streamlit':
+    kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+else:
+    raise Exception('Could not find the current directory')
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
@@ -66,9 +73,9 @@ DEFAULT_PDF_TITLE = 'Financial Report'
 
 
 # Cache directory
-CACHE_DIR = os.path.join(kit_dir, 'cache')
+CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache')
 if prod_mode:
-    CACHE_DIR = os.path.join(CACHE_DIR[:-1] + '_prod_mode', f'cache_{SESSION_ID}')
+    CACHE_DIR = os.path.join(CACHE_DIR + '_prod_mode', f'cache_{SESSION_ID}')
 
 
 # Main cache directories

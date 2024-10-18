@@ -205,6 +205,7 @@ def save_simple_output(
         response: The response to be saved.
         filename: The path to save the response in.
     """
+
     # If the response is a string or number, write it directly into the text file
     if isinstance(response, (str, float, int)):
         if isinstance(response, float):
@@ -300,25 +301,21 @@ def display_directory_contents(path: str, default_path: str) -> None:
     if dir_name.startswith('cache'):
         dir_name = 'cache'
 
-    streamlit.sidebar.markdown(f'### Directory: {dir_name}')
-
     if subdirectories:
-        streamlit.sidebar.markdown('#### Subdirectories:')
         for idx, subdir in enumerate(subdirectories):
             if streamlit.sidebar.button(f'📁 {subdir}', key=f'{subdir}_{idx}'):
                 files_subdir = list_files_in_directory(os.path.join(path, subdir))
                 for file in files_subdir:
-                    download_file(streamlit.session_state.current_path + '/' + file)
+                    download_file(
+                        os.path.join(streamlit.session_state.current_path, subdir, file), key=file + '_recursion'
+                    )
 
                 # Recursion
-                streamlit.session_state.current_path = os.path.join(streamlit.session_state.current_path, subdir)
-                display_directory_contents(streamlit.session_state.current_path, default_path)
-                return
+                display_directory_contents(os.path.join(streamlit.session_state.current_path, subdir), default_path)
 
-    if files:
-        streamlit.sidebar.markdown('#### Files:')
+    if files and dir_name.startswith('cache'):
         for file in files:
-            download_file(path + '/' + file)
+            download_file(os.path.join(path, file), key=file)
 
     if len(subdirectories + files) == 0:
         streamlit.write('No files found')
@@ -376,7 +373,7 @@ def clear_cache(delete: bool = False, verbose: bool = False) -> None:
             logger.warning(f'Error deleting cache directory {Path(cache_dir).name}: {e}')
 
 
-def download_file(filename: str) -> None:
+def download_file(filename: str, key: Optional[str] = None) -> None:
     """Add a button to download the file."""
 
     # Extract the format from the filename
@@ -401,6 +398,7 @@ def download_file(filename: str) -> None:
             data=data,
             file_name=Path(filename).name,
             mime=file_mime,
+            key=key if key is not None else Path(filename).name,
         )
     except Exception as e:
         logger.warning('Error reading file', str(e))

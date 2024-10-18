@@ -3,6 +3,9 @@ from collections import OrderedDict
 
 from financial_assistant.constants import *
 from financial_assistant.src.tools import convert_data_to_frame, extract_yfinance_data
+from financial_assistant.src.utilities import get_logger
+
+logger = get_logger()
 
 
 def save_yfinance_columns_to_json(symbol: str = 'GOOG') -> None:
@@ -26,7 +29,7 @@ def save_yfinance_columns_to_json(symbol: str = 'GOOG') -> None:
             columns_dict[name] = dataframe.columns.tolist()
 
         except:
-            print(f'Error retrieving {name} data.')
+            logger.warning(f'Error retrieving {name} data.')
 
     # Sort the dictionary by keys
     sorted_columns_dict = OrderedDict(sorted(columns_dict.items()))
