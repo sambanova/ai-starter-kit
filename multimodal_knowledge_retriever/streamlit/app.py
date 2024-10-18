@@ -5,7 +5,7 @@ import sys
 import time
 import uuid
 from threading import Thread
-from typing import Any, Optional
+from typing import Optional
 
 import yaml
 
