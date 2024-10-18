@@ -403,7 +403,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     )
 
     # Abstract chain
-    abstract_chain = abstact_prompt | sambanova_llm | abstract_parser  # type: ignore
+    abstract_chain = abstact_prompt | sambanova_llm.llm | abstract_parser
 
     # Run chain
     abstract = abstract_chain.invoke(final_summary).summary  # type: ignore
@@ -433,7 +433,7 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     )
 
     # Reduce chain
-    reduce_chain = reduce_prompt | sambanova_llm | reduce_parser  # type: ignore
+    reduce_chain = reduce_prompt | sambanova_llm.llm | reduce_parser
 
     # Run chain
     final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary  # type: ignore
@@ -463,7 +463,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     )
 
     # Map chain
-    map_chain = map_prompt | sambanova_llm | map_parser  # type: ignore
+    map_chain = map_prompt | sambanova_llm.llm | map_parser
 
     return map_chain.invoke(doc)  # type: ignore
 
