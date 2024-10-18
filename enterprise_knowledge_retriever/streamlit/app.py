@@ -103,10 +103,17 @@ def handle_userinput(user_question: str) -> None:
                     )
 
 
-def initialize_document_retrieval() -> Optional[DocumentRetrieval]:
+def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval]:
+    if prod_mode:
+        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+    else:
+        if 'SAMBANOVA_API_KEY' in st.session_state:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+        else:
+            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
     if are_credentials_set():
         try:
-            return DocumentRetrieval()
+            return DocumentRetrieval(sambanova_api_key=sambanova_api_key)
         except Exception as e:
             st.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
             return None
@@ -164,7 +171,7 @@ def main() -> None:
 
         if are_credentials_set():
             if st.session_state.document_retrieval is None:
-                st.session_state.document_retrieval = initialize_document_retrieval()
+                st.session_state.document_retrieval = initialize_document_retrieval(prod_mode)
 
         if st.session_state.document_retrieval is not None:
             st.markdown('**1. Pick a datasource**')

@@ -41,11 +41,13 @@ from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrie
 
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class EKRTestCase(unittest.TestCase):
     time_start: float
+    sambanova_api_key: str
     document_retrieval: DocumentRetrieval
     additional_metadata: Dict[str, Any]
     text_chunks: List[Document]
@@ -56,7 +58,8 @@ class EKRTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type['EKRTestCase']) -> None:
         cls.time_start = time.time()
-        cls.document_retrieval = DocumentRetrieval()
+        cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.document_retrieval = DocumentRetrieval(sambanova_api_key=cls.sambanova_api_key)
         cls.additional_metadata = {}
         cls.text_chunks = cls.parse_documents()
         cls.embeddings = cls.document_retrieval.load_embedding_model()
