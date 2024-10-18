@@ -136,25 +136,17 @@ class MultimodalRetrieval:
         model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
         if self.prod_mode:
-            lvlm_base_url = st.session_state.LVLM_BASE_URL
-            lvlm_api_key = st.session_state.LVLM_API_KEY
-
+            lvlm_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
-            if 'LVLM_API_KEY' in st.session_state:
-                lvlm_api_key = os.environ.get('LVLM_API_KEY') or st.session_state.LVLM_API_KEY
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                lvlm_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
             else:
-                lvlm_api_key = os.environ.get('LVLM_API_KEY')
-
-            if 'LVLM_BASE_URL' in st.session_state:
-                lvlm_base_url = os.environ.get('LVLM_BASE_URL') or st.session_state.LVLM_BASE_URL
-            else:
-                lvlm_base_url = os.environ.get('LVLM_BASE_URL')
+                lvlm_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         if model is None:
             model = self.lvlm_info['model']
 
         self.lvlm = SambastudioMultimodal(
-            base_url=lvlm_base_url,
             api_key=lvlm_api_key,
             model=model,
             temperature=self.lvlm_info['temperature'],
