@@ -61,6 +61,7 @@ jobs:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
         run: |
           python financial_assistant/tests/financial_assistant_test.py --suite github_pull_request
+          python fine_tuning_embeddings/tests/fine_tune_embeddings_tests.py --suite github_pull_request
 
       # Runs weekly, pre-merge, and manually
       - name: Run Unit Tests Weekly and Pre-Merge

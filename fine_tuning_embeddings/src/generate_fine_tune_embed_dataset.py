@@ -9,11 +9,13 @@ import sys
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-from llama_index import SimpleDirectoryReader
-from llama_index.llms import LangChainLLM
-from llama_index.node_parser import SimpleNodeParser
-from llama_index.schema import MetadataMode
-from tqdm import tqdm
+import yaml  # type: ignore
+from langchain_core.language_models.llms import LLM
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core.node_parser import SimpleNodeParser
+from llama_index.core.schema import MetadataMode
+from llama_index.llms.langchain import LangChainLLM
+from tqdm import tqdm  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -22,10 +24,45 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway
+from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+llm_info = config['llm']
+api = config['api']
+
+logger.info(config)
+
+
+def initialize_llm() -> LangChainLLM:
+    """
+    Initializes the llm using APIGateway.
+
+    Returns:
+        LangChainLLM: The LangChainLLM object for generating synthetic data.
+    """
+
+    llm: LLM = APIGateway.load_llm(
+        type=api,
+        streaming=True,
+        coe=llm_info['coe'],
+        do_sample=llm_info['do_sample'],
+        max_tokens_to_generate=llm_info['max_tokens_to_generate'],
+        temperature=llm_info['temperature'],
+        select_expert=llm_info['select_expert'],
+        process_prompt=False,
+    )
+
+    # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
+    langchain_llm = LangChainLLM(llm=llm)
+
+    return langchain_llm
 
 
 class CorpusLoader:
@@ -43,6 +80,13 @@ class CorpusLoader:
         """
         Initializes the CorpusLoader with a directory and validation ratio.
         """
+
+        if not os.path.exists(directory):
+            raise NotADirectoryError(f'{directory} does not exist')
+
+        if not isinstance(val_ratio, float):
+            raise TypeError(f'Got type {val_ratio}.  val_ratio must be a float.')
+
         self.directory = directory
         self.val_ratio = val_ratio
         self.train_files, self.val_files = self.split_train_val()
@@ -54,7 +98,11 @@ class CorpusLoader:
         Returns:
             Tuple containing lists of training and validation file paths.
         """
+
         pdf_files = glob.glob(f'{self.directory}/*.pdf')
+        if not len(pdf_files) > 1:
+            raise ValueError('Must have more than 1 file.')
+        logging.info(f'found {pdf_files}.')
         random.shuffle(pdf_files)
         split_index = int(len(pdf_files) * (1 - self.val_ratio))
         return pdf_files[:split_index], pdf_files[split_index:]
@@ -69,6 +117,10 @@ class CorpusLoader:
         Returns:
             Dictionary with node IDs as keys and document content as values.
         """
+
+        if not files:
+            raise ValueError(f'{files} is an empty list.')
+
         logging.info(f'Loading {len(files)} documents...')
         reader = SimpleDirectoryReader(input_files=files)
         docs = reader.load_data()
@@ -93,6 +145,9 @@ class QueryGenerator:
         """
         Initializes the QueryGenerator with a language model and optional model arguments.
         """
+
+        if not llm:
+            raise ValueError(f'llm cannot be None.')
         self.llm = llm
 
     def generate_queries(
@@ -147,6 +202,9 @@ def save_dict_safely(data: Dict[str, Any], file_path: str) -> None:
         data (Dict): Dictionary to save.
         file_path (str): Path to the file where the dictionary will be saved.
     """
+
+    if not data:
+        raise ValueError(f'{data} should not be empty.')
     logging.info(f'Saving data to {file_path}...')
     with open(file_path, 'w') as f:
         f.write('{')
@@ -202,27 +260,7 @@ def main() -> None:
     corpus_loader.save_corpus(train_corpus, args.train_corpus_output_path)
     corpus_loader.save_corpus(val_corpus, args.val_corpus_output_path)
 
-    # Example LLM instantiation:
-    # For a Sambanova LLM:
-    base_url = 'YOUR_BASE_URL'
-    project_id = 'YOUR_PROJECT_ID'
-    endpoint_id = 'YOUR_ENDPOINT_ID'
-    api_key = 'YOUR_API_KEY'
-
-    llm = APIGateway.load_llm(
-        type='sambastudio',
-        streaming=True,
-        coe=True,
-        do_sample=True,
-        max_tokens_to_generate=512,
-        temperature=0.01,
-        select_expert='Meta-Llama-3-70B-Instruct-4096',
-        process_prompt=False,
-        sambanova_api_key=api_key,
-    )
-
-    # Convert SN Endpoint to LangChain LLM As The Wrapper Is In Langchain
-    llm = LangChainLLM(llm=llm)
+    llm = initialize_llm()
 
     # For OpenAI:
     # llm = OpenAI(model='gpt-3.5-turbo')  # This line remains commented in the script for instructional purposes
