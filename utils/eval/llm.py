@@ -27,7 +27,7 @@ from utils.model_wrappers.api_gateway import APIGateway
 
 class CorrectnessLLMJudge(Scorer):
     """
-    A judge for evaluating the correctness of model outputs.
+    A judge class for evaluating the correctness of model outputs.
 
     This class is responsible for scoring the generated outputs of a model
     against expected answers using a chat model API. It encapsulates the
@@ -108,9 +108,9 @@ class CorrectnessLLMJudge(Scorer):
         return result
 
 
-class ChatModel(Model):
+class WeaveChatModel(Model):
     """
-    A model for generating chat responses.
+    A class for generating chat responses.
 
     This class encapsulates the configuration required to generate responses
     from a chat model API. It provides methods to interact with the model and
