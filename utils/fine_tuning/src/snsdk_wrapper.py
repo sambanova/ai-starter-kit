@@ -886,6 +886,38 @@ class SnsdkWrapper:
             )
             return None
 
+    def delete_model(self, model_name: Optional[str] = None) -> None:
+        """
+        Deletes a model from the SambaStudio.
+
+        Parameters:
+        model_name (str, optional): The name of the model to be deleted.
+            If not provided, the name from the configs file will be used.
+
+        Returns:
+        None
+
+        Raises:
+        Exception: If the model is not found or if there is an error in deleting the model.
+        """
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config["model_checkpoint"]["model_name"]
+
+        # Check if the model exists
+        model_id = self.search_model(model_name=model_name)
+        if model_id is None:
+            raise Exception(f"Model with name '{model_name}' not found")
+
+        delete_model_response = self.snsdk_client.delete_model(model=model_id)
+        if delete_model_response["status_code"] == 200:
+            logging.info(f"Model with name '{model_name}' deleted")
+        else:
+            logging.error(
+                f"Failed to delete model with name or id '{model_name}'. Details: {delete_model_response}"
+            )
+            raise Exception(f"Error message: {delete_model_response}")
+
     """Job"""
 
     def run_job(
