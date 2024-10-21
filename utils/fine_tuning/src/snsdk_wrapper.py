@@ -1,40 +1,41 @@
-import os
-import sys
 import json
-import yaml
-import re
 import logging
+import os
+import re
 import subprocess
-from snapi.snapi import USER_AGENT
-from snsdk import SnSdk
-from typing import Optional, List
+import sys
+from typing import Any, Dict, List, Optional
+
+import yaml
 from dotenv import load_dotenv
+from snapi.snapi import USER_AGENT  # type: ignore
+from snsdk import SnSdk  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-utils_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
-repo_dir = os.path.abspath(os.path.join(utils_dir, ".."))
+utils_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
-load_dotenv(os.path.join(repo_dir, ".env"), override=True)
+load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()],
 )
 
-SNAPI_PATH = "~/.snapi"
+SNAPI_PATH = '~/.snapi'
 
 # Job types: can not combine train/evaluation with batch_predict
 JOB_TYPES = [
-    "train",
-    "evaluation",
-    "batch_predict",
+    'train',
+    'evaluation',
+    'batch_predict',
 ]
 
 # TODO: future support for other types
-SOURCE_TYPES = ["localMachine"]
-SOURCE_FILE_PATH = os.path.join(utils_dir, "fine_tuning", "src", "tmp_source_file.json")
+SOURCE_TYPES = ['localMachine']
+SOURCE_FILE_PATH = os.path.join(utils_dir, 'fine_tuning', 'src', 'tmp_source_file.json')
 
 
 class SnsdkWrapper:
@@ -48,16 +49,15 @@ class SnsdkWrapper:
             config_path (str , optional): path to config path. Defaults to None.
             see a config file example in ./config.yaml
         """
-        self.config = None
-        self.tenant_name = None
+        self.config = {}
         self.snapi_path = SNAPI_PATH
 
         # If config is provided, load it and validate Snapi directory path
         if config_path is not None:
             self.config = self._load_config(config_path)
-            config_snapi_path = self.config["sambastudio"]["snapi_path"]
+            config_snapi_path = self.config['sambastudio']['snapi_path']
             if config_snapi_path is not None and len(config_snapi_path) > 0:
-                self.snapi_path = self.config["sambastudio"]["snapi_path"]
+                self.snapi_path = self.config['sambastudio']['snapi_path']
 
         # Get sambastudio variables to set up Snsdk
         host_url, tenant_id, access_key = self._get_sambastudio_variables()
@@ -70,7 +70,7 @@ class SnsdkWrapper:
         )
 
         # Set up cookie to avoid auth issues
-        self.snsdk_client.http_session.cookies.set("tenant", tenant_id)
+        self.snsdk_client.http_session.cookies.set('tenant', tenant_id)
 
     """Internal methods"""
 
@@ -78,10 +78,10 @@ class SnsdkWrapper:
         self,
         host_name: str,
         access_key: str,
-        current_snapi_config: dict,
+        current_snapi_config: Dict[Any, Any],
         snapi_config_path: str,
         snapi_secret_path: str,
-        tenant_name: str = "default",
+        tenant_name: str = 'default',
     ) -> tuple:
         """Sets Snapi using env variables. It also validates if tenant can be set in Snapi config file.
         Args:
@@ -100,45 +100,41 @@ class SnsdkWrapper:
         """
         # Updates snapi config file using requested Sambastudio env
         tmp_snapi_config = {}
-        tmp_snapi_config["HOST_NAME"] = host_name
-        tmp_snapi_config["CONFIG_DIR"] = current_snapi_config["CONFIG_DIR"]
-        tmp_snapi_config["DISABLE_SSL_WARNINGS"] = current_snapi_config[
-            "DISABLE_SSL_WARNINGS"
-        ]
-        with open(snapi_config_path, "w") as file:
+        tmp_snapi_config['HOST_NAME'] = host_name
+        tmp_snapi_config['CONFIG_DIR'] = current_snapi_config['CONFIG_DIR']
+        tmp_snapi_config['DISABLE_SSL_WARNINGS'] = current_snapi_config['DISABLE_SSL_WARNINGS']
+        with open(snapi_config_path, 'w') as file:
             json.dump(tmp_snapi_config, file)
-        with open(snapi_secret_path, "w") as file:
+        with open(snapi_secret_path, 'w') as file:
             file.write(access_key)
 
         # Sets default requested tenant
         snapi_config_response = subprocess.run(
-            ["snapi", "config", "set", "--tenant", f"{tenant_name}"],
+            ['snapi', 'config', 'set', '--tenant', f'{tenant_name}'],
             capture_output=True,
             text=True,
         )
 
         # If there's an error in Snapi subprocess, show it and stop process
         if (
-            ("status_code" in snapi_config_response.stdout.lower())
-            and ("error occured" in snapi_config_response.stdout.lower())
+            ('status_code' in snapi_config_response.stdout.lower())
+            and ('error occured' in snapi_config_response.stdout.lower())
             or (len(snapi_config_response.stderr) > 0)
         ):
             if len(snapi_config_response.stderr) > 0:
                 error_message = snapi_config_response.stderr
             else:
-                error_message = re.search(
-                    r"message:\s*(.*)", snapi_config_response.stdout
-                )[0]
-            logging.error(
-                f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}"
-            )
-            raise Exception(f"Error message: {error_message}")
+                error_search = re.search(r'message:\s*(.*)', snapi_config_response.stdout)
+                if error_search:
+                    error_message = error_search[0]
+            logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
+            raise Exception(f'Error message: {error_message}')
 
         # Read updated Snapi config file
-        with open(snapi_config_path, "r") as file:
+        with open(snapi_config_path, 'r') as file:
             new_snapi_config = json.load(file)
 
-        return host_name, new_snapi_config["TENANT_ID"], access_key
+        return host_name, new_snapi_config['TENANT_ID'], access_key
 
     def _get_sambastudio_variables(self) -> tuple:
         """Gets Sambastudio host name, tenant id and access key from Snapi folder location
@@ -150,40 +146,30 @@ class SnsdkWrapper:
         Returns:
             tuple: host name, tenant id and access key from snapi setup
         """
-        snapi_config = ""
-        snapi_secret = ""
-
+        snapi_config = {}
+        snapi_secret = ''
         try:
-
             # reads snapi config json
-            snapi_config_path = os.path.expanduser(self.snapi_path) + "/config.json"
-            with open(snapi_config_path, "r") as file:
+            snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
+            with open(snapi_config_path, 'r') as file:
                 snapi_config = json.load(file)
 
             # reads snapi secret txt file
-            snapi_secret_path = os.path.expanduser(self.snapi_path) + "/secret.txt"
-            with open(snapi_secret_path, "r") as file:
+            snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
+            with open(snapi_secret_path, 'r') as file:
                 snapi_secret = file.read()
 
         except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Error: The file {snapi_config_path} does not exist."
-            )
+            raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
         except ValueError:
-            raise ValueError(
-                f"Error: The file {snapi_config_path} contains invalid JSON."
-            )
+            raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
 
-        host_name = os.getenv("SAMBASTUDIO_HOST_NAME")
-        access_key = os.getenv("SAMBASTUDIO_ACCESS_KEY")
-        tenant_name = os.getenv("SAMBASTUDIO_TENANT_NAME")
+        host_name = os.getenv('SAMBASTUDIO_HOST_NAME')
+        access_key = os.getenv('SAMBASTUDIO_ACCESS_KEY')
+        tenant_name = os.getenv('SAMBASTUDIO_TENANT_NAME')
 
-        if (
-            (host_name is not None)
-            and (access_key is not None)
-            and (tenant_name is not None)
-        ):
-            logging.info(f"Using env variables to set up Snsdk.")
+        if (host_name is not None) and (access_key is not None) and (tenant_name is not None):
+            logging.info(f'Using env variables to set up Snsdk.')
             host_name, tenant_id, access_key = self._set_snapi_using_env_variables(
                 host_name,
                 access_key,
@@ -194,10 +180,13 @@ class SnsdkWrapper:
             )
 
         else:
-            logging.info(f"Using variables from Snapi config to set up Snsdk.")
-            host_name = snapi_config["HOST_NAME"]
-            tenant_id = snapi_config["TENANT_ID"]
+            logging.info(f'Using variables from Snapi config to set up Snsdk.')
+            host_name = snapi_config['HOST_NAME']
+            tenant_id = snapi_config['TENANT_ID']
             access_key = snapi_secret
+
+        if access_key is None:
+            access_key = ''
 
         return host_name, tenant_id, access_key.strip()
 
@@ -211,21 +200,21 @@ class SnsdkWrapper:
             dict: The configuration data loaded from the YAML file.
         """
         try:
-            with open(file_path, "r") as file:
+            with open(file_path, 'r') as file:
                 config = yaml.safe_load(file)
-            logging.info(f"Using config file located in {file_path}")
+            logging.info(f'Using config file located in {file_path}')
         except FileNotFoundError:
-            raise FileNotFoundError(f"Error: The file {file_path} does not exist.")
+            raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
         except yaml.scanner.ScannerError:
-            raise ValueError(f"Error: The file {file_path} contains invalid yaml.")
+            raise ValueError(f'Error: The file {file_path} contains invalid yaml.')
         return config
 
     def _raise_error_if_config_is_none(self) -> None:
         """Raise an error if the configuration file is not provided"""
         if self.config is None:
-            error_message = "No config found. Please provide parameter values."
+            error_message = 'No config found. Please provide parameter values.'
             logging.error(error_message)
-            raise Exception(f"Error message: {error_message}")
+            raise Exception(f'Error message: {error_message}')
 
     def _create_source_file(self, dataset_path: str) -> None:
         """
@@ -234,36 +223,34 @@ class SnsdkWrapper:
         Args:
             dataset_path string: path to dataset
         """
-        json_content = {"source_path": dataset_path}
-        with open(SOURCE_FILE_PATH, "w") as file:
+        json_content = {'source_path': dataset_path}
+        with open(SOURCE_FILE_PATH, 'w') as file:
             json.dump(json_content, file)
 
     """tenants"""
 
-    def list_tenants(self, verbose: bool = False) -> Optional[str]:
+    def list_tenants(self, verbose: bool = False) -> Optional[List[Dict[str, Any]]]:
         """Lists all tenants
 
         Returns:
             list | None: list of existing tenants. If there's an error, None is returned.
         """
         list_tenant_response = self.snsdk_client.list_tenants()
-        if list_tenant_response["status_code"] == 200:
+        if list_tenant_response['status_code'] == 200:
             tenants = []
             if verbose:
-                return list_tenant_response["data"]
+                return list_tenant_response['data']
             else:
-                for tenant in list_tenant_response["data"]:
+                for tenant in list_tenant_response['data']:
                     tenants.append(
                         {
-                            "tenant_id": tenant.get("tenant_id"),
-                            "tenant_name": tenant.get("tenant_name"),
+                            'tenant_id': tenant.get('tenant_id'),
+                            'tenant_name': tenant.get('tenant_name'),
                         }
                     )
                 return tenants
         else:
-            logging.error(
-                f"Failed to list projects. Details: {list_tenant_response['detail']}"
-            )
+            logging.error(f"Failed to list projects. Details: {list_tenant_response['detail']}")
             raise Exception(f"Error message: {list_tenant_response['detail']}")
 
     def search_tenant(self, tenant_name: Optional[str]) -> Optional[str]:
@@ -277,8 +264,8 @@ class SnsdkWrapper:
         """
 
         tenant_info_response = self.snsdk_client.tenant_info(tenant=tenant_name)
-        if tenant_info_response["status_code"] == 200:
-            tenant_id = tenant_info_response["data"]["tenant_id"]
+        if tenant_info_response['status_code'] == 200:
+            tenant_id = tenant_info_response['data']['tenant_id']
             logging.info(f"Tenant with name '{tenant_name}' found with id {tenant_id}")
             return tenant_id
         else:
@@ -300,15 +287,11 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
-        search_project_response = self.snsdk_client.search_project(
-            project_name=project_name
-        )
-        if search_project_response["status_code"] == 200:
-            project_id = search_project_response["data"]["project_id"]
-            logging.info(
-                f"Project with name '{project_name}' found with id {project_id}"
-            )
+            project_name = self.config['project']['project_name']
+        search_project_response = self.snsdk_client.search_project(project_name=project_name)
+        if search_project_response['status_code'] == 200:
+            project_id = search_project_response['data']['project_id']
+            logging.info(f"Project with name '{project_name}' found with id {project_id}")
             return project_id
         else:
             logging.info(f"Project with name '{project_name}' not found")
@@ -336,30 +319,26 @@ class SnsdkWrapper:
 
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         if project_description is None:
             self._raise_error_if_config_is_none()
-            project_description = self.config["project"]["project_description"]
+            project_description = self.config['project']['project_description']
 
         project_id = self.search_project(project_name)
         if project_id is None:
             create_project_response = self.snsdk_client.create_project(
                 project_name=project_name, description=project_description
             )
-            if create_project_response["status_code"] == 200:
-                project_id = create_project_response["id"]
-                logging.info(
-                    f"Project with name {project_name} created with id {project_id}"
-                )
+            if create_project_response['status_code'] == 200:
+                project_id = create_project_response['id']
+                logging.info(f'Project with name {project_name} created with id {project_id}')
             else:
                 logging.error(
                     f"Failed to create project with name '{project_name}'. Details: {create_project_response['detail']}"
                 )
                 raise Exception(f"Error message: {create_project_response['detail']}")
         else:
-            logging.info(
-                f"Project with name '{project_name}' already exists with id '{project_id}', using it"
-            )
+            logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
         return project_id
 
     def list_projects(self, verbose: Optional[bool] = False) -> list[dict]:
@@ -379,27 +358,19 @@ class SnsdkWrapper:
         Exception: If there is an error in listing the projects.
         """
         list_projects_response = self.snsdk_client.list_projects()
-        if list_projects_response["status_code"] == 200:
+        if list_projects_response['status_code'] == 200:
             projects = []
-            for project in list_projects_response.get("projects"):
+            for project in list_projects_response.get('projects'):
                 if verbose:
                     projects.append({k: v for k, v in project.items()})
                 else:
-                    project_info = {
-                        k: v
-                        for k, v in project.items()
-                        if k in ["name", "id", "status"]
-                    }
-                    project_info["owner"] = project["metadata"]["owner"]
+                    project_info = {k: v for k, v in project.items() if k in ['name', 'id', 'status']}
+                    project_info['owner'] = project['metadata']['owner']
                     projects.append(project_info)
             return projects
         else:
-            logging.error(
-                f"Failed to list projects. Details: {list_projects_response['detail']}"
-            )
-            logging.error(
-                f"Failed to list projects. Details: {list_projects_response['detail']}"
-            )
+            logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
+            logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
             raise Exception(f"Error message: {list_projects_response['detail']}")
 
     def delete_project(self, project_name: Optional[str] = None) -> None:
@@ -419,7 +390,7 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
 
         # Check if the project exists
         project_id = self.search_project(project_name=project_name)
@@ -427,13 +398,13 @@ class SnsdkWrapper:
             raise Exception(f"Project with name '{project_name}' not found")
 
         delete_project_response = self.snsdk_client.delete_project(project=project_id)
-        if delete_project_response["status_code"] == 200:
+        if delete_project_response['status_code'] == 200:
             logging.info(f"Project with name '{project_name}' deleted")
         else:
             logging.error(
                 f"Failed to delete project with name or id '{project_name}'. Details: {delete_project_response}"
             )
-            raise Exception(f"Error message: {delete_project_response}")
+            raise Exception(f'Error message: {delete_project_response}')
 
     """Dataset"""
 
@@ -444,23 +415,21 @@ class SnsdkWrapper:
             list | None: list of existing datasets. If there's an error, None is returned.
         """
         list_datasets_response = self.snsdk_client.list_datasets()
-        if list_datasets_response["status_code"] == 200:
+        if list_datasets_response['status_code'] == 200:
             datasets = []
             if verbose:
-                return list_datasets_response["datasets"]
+                return list_datasets_response['datasets']
             else:
-                for dataset in list_datasets_response["datasets"]:
+                for dataset in list_datasets_response['datasets']:
                     datasets.append(
                         {
-                            "id": dataset.get("id"),
-                            "dataset_name": dataset.get("dataset_name"),
+                            'id': dataset.get('id'),
+                            'dataset_name': dataset.get('dataset_name'),
                         }
                     )
                 return datasets
         else:
-            logging.error(
-                f"Failed to list models. Details: {list_datasets_response['detail']}"
-            )
+            logging.error(f"Failed to list models. Details: {list_datasets_response['detail']}")
             raise Exception(f"Error message: {list_datasets_response['detail']}")
 
     def search_dataset(self, dataset_name: Optional[str] = None) -> Optional[str]:
@@ -475,17 +444,13 @@ class SnsdkWrapper:
         # Decide whether using method parameters or config
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config["dataset"]["dataset_name"]
+            dataset_name = self.config['dataset']['dataset_name']
 
         # Search dataset
-        search_dataset_response = self.snsdk_client.search_dataset(
-            dataset_name=dataset_name
-        )
-        if search_dataset_response["status_code"] == 200:
-            dataset_id = search_dataset_response["data"]["dataset_id"]
-            logging.info(
-                f"Dataset with name '{dataset_name}' found with id {dataset_id}"
-            )
+        search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name)
+        if search_dataset_response['status_code'] == 200:
+            dataset_id = search_dataset_response['data']['dataset_id']
+            logging.info(f"Dataset with name '{dataset_name}' found with id {dataset_id}")
             return dataset_id
         else:
             logging.info(f"Dataset with name '{dataset_name}' not found")
@@ -495,7 +460,7 @@ class SnsdkWrapper:
         # Decide whether using method parameters or config
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config["dataset"]["dataset_name"]
+            dataset_name = self.config['dataset']['dataset_name']
 
         # Search dataset if exists
         dataset_id = self.search_dataset(dataset_name=dataset_name)
@@ -504,13 +469,11 @@ class SnsdkWrapper:
 
         # Delete dataset
         delete_dataset_response = self.snsdk_client.delete_dataset(dataset=dataset_name)
-        if delete_dataset_response["status_code"] == 200:
+        if delete_dataset_response['status_code'] == 200:
             logging.info(f"Dataset with name '{dataset_name}' deleted")
         else:
-            logging.error(
-                f"Failed to delete dataset with name '{dataset_name}'. Details: {delete_dataset_response}"
-            )
-            raise Exception(f"Error message: {delete_dataset_response}")
+            logging.error(f"Failed to delete dataset with name '{dataset_name}'. Details: {delete_dataset_response}")
+            raise Exception(f'Error message: {delete_dataset_response}')
 
     def _build_snapi_dataset_add_command(
         self,
@@ -522,7 +485,7 @@ class SnsdkWrapper:
         dataset_filetype: str,
         dataset_url: str,
         dataset_language: str,
-    ) -> str:
+    ) -> List[str]:
         """Builds snapi command to add a dataset to SambaStudio.
         Addresses apps and job types, since they're lists
         Args:
@@ -541,32 +504,32 @@ class SnsdkWrapper:
         # Get multiple job type parameters
         job_type_command_parameters = []
         for job_type in dataset_job_types:
-            job_type_command_parameters.append("--job_type")
+            job_type_command_parameters.append('--job_type')
             job_type_command_parameters.append(job_type)
 
         # Get multiple apps parameters
         apps_command_parameters = []
         for app in dataset_apps_availability:
-            apps_command_parameters.append("--apps")
+            apps_command_parameters.append('--apps')
             apps_command_parameters.append(app)
 
         command = [
-            "snapi",
-            "dataset",
-            "add",
-            "--dataset-name",
+            'snapi',
+            'dataset',
+            'add',
+            '--dataset-name',
             dataset_name,
-            "--description",
+            '--description',
             dataset_description,
-            "--source_type",
+            '--source_type',
             dataset_source_type,
-            "--language",
+            '--language',
             dataset_language,
-            "--source_file",
+            '--source_file',
             SOURCE_FILE_PATH,
-            "--file_type",
+            '--file_type',
             dataset_filetype,
-            "--url",
+            '--url',
             dataset_url,
         ]
         command.extend(job_type_command_parameters)
@@ -586,19 +549,17 @@ class SnsdkWrapper:
         dataset_url: Optional[str] = None,
         dataset_language: Optional[str] = None,
         dataset_metadata: Optional[dict] = None,
-    ) -> str:
+    ) -> Optional[str]:
         """ """
         # Decide whether using method parameters or config
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config["dataset"]["dataset_name"]
+            dataset_name = self.config['dataset']['dataset_name']
 
         # Validate if apps exist
         if dataset_apps_availability is None:
             self._raise_error_if_config_is_none()
-            dataset_apps_availability = self.config["dataset"][
-                "dataset_apps_availability"
-            ]
+            dataset_apps_availability = self.config['dataset']['dataset_apps_availability']
         for app_name in dataset_apps_availability:
             app_id = self.search_app(app_name)
             if app_id is None:
@@ -607,7 +568,7 @@ class SnsdkWrapper:
         # Validate job types
         if dataset_job_types is None:
             self._raise_error_if_config_is_none()
-            dataset_job_types = self.config["dataset"]["dataset_job_types"]
+            dataset_job_types = self.config['dataset']['dataset_job_types']
         for job_type in dataset_job_types:
             if job_type not in JOB_TYPES:
                 raise Exception(f"Job type '{job_type}' not valid")
@@ -615,14 +576,14 @@ class SnsdkWrapper:
         # Validate source type
         if dataset_source_type is None:
             self._raise_error_if_config_is_none()
-            dataset_source_type = self.config["dataset"]["dataset_source_type"]
+            dataset_source_type = self.config['dataset']['dataset_source_type']
         if dataset_source_type not in SOURCE_TYPES:
             raise Exception(f"Source type '{dataset_source_type}' not valid")
 
         # Decide whether using method parameters or config
         if dataset_path is None:
             self._raise_error_if_config_is_none()
-            dataset_path = self.config["dataset"]["dataset_path"]
+            dataset_path = self.config['dataset']['dataset_path']
 
         # Create source file based on dataset path
         self._create_source_file(dataset_path)
@@ -630,24 +591,24 @@ class SnsdkWrapper:
         # Decide whether using method parameters or config
         if dataset_description is None:
             self._raise_error_if_config_is_none()
-            dataset_description = self.config["dataset"]["dataset_description"]
+            dataset_description = self.config['dataset']['dataset_description']
 
         if dataset_filetype is None:
             self._raise_error_if_config_is_none()
-            dataset_filetype = self.config["dataset"]["dataset_filetype"]
+            dataset_filetype = self.config['dataset']['dataset_filetype']
 
         if dataset_url is None:
             self._raise_error_if_config_is_none()
-            dataset_url = self.config["dataset"]["dataset_url"]
+            dataset_url = self.config['dataset']['dataset_url']
 
         if dataset_language is None:
             self._raise_error_if_config_is_none()
-            dataset_language = self.config["dataset"]["dataset_language"]
+            dataset_language = self.config['dataset']['dataset_language']
 
         # TODO: Metadata WIP - waiting for channel's confirmation
         if dataset_metadata is None:
             self._raise_error_if_config_is_none()
-            dataset_metadata = self.config["dataset"]["dataset_metadata"]
+            dataset_metadata = self.config['dataset']['dataset_metadata']
         # for job_type in dataset_job_types:
         #     if job_type == "batch_predict":
         #         raise Exception(
@@ -669,41 +630,30 @@ class SnsdkWrapper:
                 dataset_url,
                 dataset_language,
             )
-            echo_response = subprocess.run(
-                ["echo", "yes"], capture_output=True, text=True
-            )
-            snapi_response = subprocess.run(
-                command, input=echo_response.stdout, capture_output=True, text=True
-            )
+            echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
+            snapi_response = subprocess.run(command, input=echo_response.stdout, capture_output=True, text=True)
 
             errors_response = (
-                ("status_code" in snapi_response.stdout.lower())
-                and ("error occured" in snapi_response.stdout.lower())
+                ('status_code' in snapi_response.stdout.lower()) and ('error occured' in snapi_response.stdout.lower())
             ) or (len(snapi_response.stderr) > 0)
             # if errors coming in response
             if errors_response:
                 if len(snapi_response.stderr) > 0:
                     error_message = snapi_response.stderr
                 else:
-                    error_message = re.search(
-                        r"message:\s*(.*)", snapi_response.stdout
-                    )[0]
-                logging.error(
-                    f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}"
-                )
-                raise Exception(f"Error message: {error_message}")
+                    error_search = re.search(r'message:\s*(.*)', snapi_response.stdout)
+                    if error_search:
+                        error_message = error_search[0]
+                logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
+                raise Exception(f'Error message: {error_message}')
             # if there are no errors in reponse
             else:
                 dataset_id = self.search_dataset(dataset_name=dataset_name)
-                logging.info(
-                    f"Dataset with name '{dataset_name}' created: '{snapi_response.stdout}'"
-                )
+                logging.info(f"Dataset with name '{dataset_name}' created: '{snapi_response.stdout}'")
                 return dataset_id
         # Dataset found, so return dataset id
         else:
-            logging.info(
-                f"Dataset with name '{dataset_name}' already exists with id '{dataset_id}', using it"
-            )
+            logging.info(f"Dataset with name '{dataset_name}' already exists with id '{dataset_id}', using it")
         return dataset_id
 
     """app"""
@@ -715,18 +665,16 @@ class SnsdkWrapper:
             list | None: list of existing apps. If there's an error, None is returned.
         """
         list_apps_response = self.snsdk_client.list_apps()
-        if list_apps_response["status_code"] == 200:
+        if list_apps_response['status_code'] == 200:
             apps = []
             if verbose:
-                apps = list_apps_response["apps"]
+                apps = list_apps_response['apps']
             else:
-                for app in list_apps_response["apps"]:
-                    apps.append({"id": app.get("id"), "name": app.get("name")})
+                for app in list_apps_response['apps']:
+                    apps.append({'id': app.get('id'), 'name': app.get('name')})
             return apps
         else:
-            logging.error(
-                f"Failed to list models. Details: {list_apps_response['detail']}"
-            )
+            logging.error(f"Failed to list models. Details: {list_apps_response['detail']}")
             raise Exception(f"Error message: {list_apps_response['detail']}")
 
     def search_app(self, app_name: str) -> str | None:
@@ -739,8 +687,8 @@ class SnsdkWrapper:
             str | None: searched app information. If there's an error, None is returned.
         """
         app_info_response = self.snsdk_client.app_info(app=app_name)
-        if app_info_response["status_code"] == 200:
-            app_id = app_info_response["apps"]["id"]
+        if app_info_response['status_code'] == 200:
+            app_id = app_info_response['apps']['id']
             logging.info(f"App with name '{app_name}' found with id {app_id}")
             return app_id
         else:
@@ -749,9 +697,7 @@ class SnsdkWrapper:
 
     """models"""
 
-    def model_info(
-        self, model_name: Optional[str] = None, job_type: Optional[str] = None
-    ) -> dict:
+    def model_info(self, model_name: Optional[str] = None, job_type: Optional[str] = None) -> dict:
         """Gets model info based on the job type specified.
         Several fields are pulled that describe different aspects of model.
 
@@ -768,21 +714,17 @@ class SnsdkWrapper:
         # Decide whether using method parameters or config
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["job"]["model"]
+            model_name = self.config['job']['model']
         if job_type is None:
             self._raise_error_if_config_is_none()
-            job_type = self.config["job"]["job_type"]
+            job_type = self.config['job']['job_type']
 
         # Get model's info
-        model_info_response = self.snsdk_client.model_info(
-            model=model_name, job_type=job_type
-        )
-        if model_info_response["status_code"] == 200:
+        model_info_response = self.snsdk_client.model_info(model=model_name, job_type=job_type)
+        if model_info_response['status_code'] == 200:
             return model_info_response
         else:
-            logging.error(
-                f"Failed to get model's info. Details: {model_info_response['message']}"
-            )
+            logging.error(f"Failed to get model's info. Details: {model_info_response['message']}")
             raise Exception(f"Error message: {model_info_response['message']}")
 
     def list_models(
@@ -809,25 +751,21 @@ class SnsdkWrapper:
         """
 
         list_models_response = self.snsdk_client.list_models()
-        if list_models_response["status_code"] == 200:
+        if list_models_response['status_code'] == 200:
             models = []
-            for model in list_models_response["models"]:
-                if set(filter_job_types).issubset(model.get("jobTypes")):
+            for model in list_models_response['models']:
+                if filter_job_types is None:
+                    filter_job_types = []
+                if set(filter_job_types).issubset(model.get('jobTypes')):
                     if verbose:
                         models.append({k: v for k, v in model.items()})
                     else:
                         models.append(
-                            {
-                                k: v
-                                for k, v in model.items()
-                                if k in ["model_checkpoint_name", "model_id", "version"]
-                            }
+                            {k: v for k, v in model.items() if k in ['model_checkpoint_name', 'model_id', 'version']}
                         )
             return models
         else:
-            logging.error(
-                f"Failed to list models. Details: {list_models_response['detail']}"
-            )
+            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
             raise Exception(f"Error message: {list_models_response['detail']}")
 
     def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
@@ -843,11 +781,11 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["job"]["model"]
+            model_name = self.config['job']['model']
 
         search_model_response = self.snsdk_client.search_model(model_name=model_name)
-        if search_model_response["status_code"] == 200:
-            model_id = search_model_response["data"]["model_id"]
+        if search_model_response['status_code'] == 200:
+            model_id = search_model_response['data']['model_id']
             logging.info(f"Model with name '{model_name}' found with id {model_id}")
             return model_id
         else:
@@ -867,23 +805,15 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["job"]["model"]
+            model_name = self.config['job']['model']
 
-        models = self.list_models(filter_job_types=["train", "deploy"])
-        model_id = [
-            model["model_id"]
-            for model in models
-            if model["model_checkpoint_name"] == model_name
-        ]
+        models = self.list_models(filter_job_types=['train', 'deploy'])
+        model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
         if len(model_id) > 0:
-            logging.info(
-                f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found"
-            )
+            logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
             return model_id[0]
         else:
-            logging.info(
-                f"Model '{model_name}' available for training and deployment not found"
-            )
+            logging.info(f"Model '{model_name}' available for training and deployment not found")
             return None
 
     def delete_model(self, model_name: Optional[str] = None) -> None:
@@ -902,7 +832,7 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["model_checkpoint"]["model_name"]
+            model_name = self.config['model_checkpoint']['model_name']
 
         # Check if the model exists
         model_id = self.search_model(model_name=model_name)
@@ -910,13 +840,11 @@ class SnsdkWrapper:
             raise Exception(f"Model with name '{model_name}' not found")
 
         delete_model_response = self.snsdk_client.delete_model(model=model_id)
-        if delete_model_response["status_code"] == 200:
+        if delete_model_response['status_code'] == 200:
             logging.info(f"Model with name '{model_name}' deleted")
         else:
-            logging.error(
-                f"Failed to delete model with name or id '{model_name}'. Details: {delete_model_response}"
-            )
-            raise Exception(f"Error message: {delete_model_response}")
+            logging.error(f"Failed to delete model with name or id '{model_name}'. Details: {delete_model_response}")
+            raise Exception(f'Error message: {delete_model_response}')
 
     """Job"""
 
@@ -997,7 +925,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1005,7 +933,7 @@ class SnsdkWrapper:
         # check if model selected is found and is trainable
         if model is None:
             self._raise_error_if_config_is_none()
-            model = self.config["job"]["model"]
+            model = self.config['job']['model']
         model_id = self.search_trainable_model(model)
         if model_id is None:
             raise Exception(f"model with name '{model}' not found")
@@ -1013,7 +941,7 @@ class SnsdkWrapper:
         # check if dataset exist
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config["dataset"]["dataset_name"]
+            dataset_name = self.config['dataset']['dataset_name']
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
@@ -1021,31 +949,31 @@ class SnsdkWrapper:
         # check extra params passed or in config file
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
         if model_version is None:
             self._raise_error_if_config_is_none()
-            model_version = self.config["job"]["model_version"]
+            model_version = self.config['job']['model_version']
         if job_description is None:
             self._raise_error_if_config_is_none()
-            job_description = self.config["job"]["job_description"]
+            job_description = self.config['job']['job_description']
         if job_type is None:
             self._raise_error_if_config_is_none()
-            job_type = self.config["job"]["job_type"]
+            job_type = self.config['job']['job_type']
         if parallel_instances is None:
             self._raise_error_if_config_is_none()
-            parallel_instances = self.config["job"]["parallel_instances"]
+            parallel_instances = self.config['job']['parallel_instances']
         if load_state is None:
             self._raise_error_if_config_is_none()
-            load_state = self.config["job"]["load_state"]
+            load_state = self.config['job']['load_state']
         if sub_path is None:
             self._raise_error_if_config_is_none()
-            sub_path = self.config["job"]["sub_path"]
+            sub_path = self.config['job']['sub_path']
         if rdu_arch is None:
             self._raise_error_if_config_is_none()
-            rdu_arch = self.config["sambastudio"]["rdu_arch"]
+            rdu_arch = self.config['sambastudio']['rdu_arch']
         if hyperparams is None:
             self._raise_error_if_config_is_none()
-            hyperparams = self.config["job"]["hyperparams"]
+            hyperparams = self.config['job']['hyperparams']
 
         # create job
         create_job_response = self.snsdk_client.create_job(
@@ -1063,19 +991,15 @@ class SnsdkWrapper:
             hyperparams=json.dumps(hyperparams),
         )
 
-        if create_job_response["status_code"] == 200:
-            job_id = create_job_response["job_id"]
+        if create_job_response['status_code'] == 200:
+            job_id = create_job_response['job_id']
             logging.info(f"Job with name '{job_name}' created: '{create_job_response}'")
             return job_id
         else:
-            logging.error(
-                f"Failed to create job with name '{job_name}'. Details: {create_job_response}"
-            )
-            raise Exception(f"Error message: {create_job_response}")
+            logging.error(f"Failed to create job with name '{job_name}'. Details: {create_job_response}")
+            raise Exception(f'Error message: {create_job_response}')
 
-    def search_job(
-        self, job_name: Optional[str] = None, project_name: Optional[str] = None
-    ) -> Optional[str]:
+    def search_job(self, job_name: Optional[str] = None, project_name: Optional[str] = None) -> Optional[str]:
         """
         Search for a job in a specific SambaStudio project.
 
@@ -1093,30 +1017,24 @@ class SnsdkWrapper:
         """
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
 
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         # search for job
-        search_job_response = self.snsdk_client.search_job(
-            project=project_id, job_name=job_name
-        )
-        if search_job_response["status_code"] == 200:
-            job_id = search_job_response["data"]["job_id"]
-            logging.info(
-                f"Job with name '{job_name}' in project '{project_name}' found with id '{job_id}'"
-            )
+        search_job_response = self.snsdk_client.search_job(project=project_id, job_name=job_name)
+        if search_job_response['status_code'] == 200:
+            job_id = search_job_response['data']['job_id']
+            logging.info(f"Job with name '{job_name}' in project '{project_name}' found with id '{job_id}'")
             return job_id
         else:
-            logging.info(
-                f"Job with name '{job_name}' in project '{project_name}' not found"
-            )
+            logging.info(f"Job with name '{job_name}' in project '{project_name}' not found")
             return None
 
     def check_job_progress(
@@ -1144,7 +1062,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1152,48 +1070,38 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(
-                f"Job with name '{job_name}' in project '{project_name}' not found"
-            )
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
         # check job progress
-        check_job_progress_response = self.snsdk_client.job_info(
-            project=project_id, job=job_id
-        )
+        check_job_progress_response = self.snsdk_client.job_info(project=project_id, job=job_id)
 
-        if check_job_progress_response["status_code"] == 200:
+        if check_job_progress_response['status_code'] == 200:
             if verbose:
-                job_progress = {
-                    k: v for k, v in check_job_progress_response["data"].items()
-                }
+                job_progress = {k: v for k, v in check_job_progress_response['data'].items()}
             else:
                 job_progress = {
                     k: v
-                    for k, v in check_job_progress_response["data"].items()
+                    for k, v in check_job_progress_response['data'].items()
                     if k
                     in [
-                        "job_name",
-                        "job_id",
-                        "job_type",
-                        "status",
-                        "time_created",
+                        'job_name',
+                        'job_id',
+                        'job_type',
+                        'status',
+                        'time_created',
                     ]
                 }
 
             logging.info(f"Job '{job_name}' with progress status: {job_progress}")
             return job_progress
         else:
-            logging.error(
-                f"Failed to check job progress. Details: {check_job_progress_response}"
-            )
-            raise Exception(f"Error message: {check_job_progress_response}")
+            logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
+            raise Exception(f'Error message: {check_job_progress_response}')
 
-    def list_jobs(
-        self, project_name: Optional[str] = None, verbose: Optional[bool] = False
-    ) -> list[dict]:
+    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> list[dict]:
         """
         List all jobs in a specific SambaStudio project.
 
@@ -1214,15 +1122,15 @@ class SnsdkWrapper:
         """
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
 
         project_id = self.search_project(project_name)
         if project_id is None:
             logging.info(f"Project '{project_name}' not found listing all user jobs")
         list_jobs_response = self.snsdk_client.list_jobs(project_id=project_id)
-        if list_jobs_response["status_code"] == 200:
+        if list_jobs_response['status_code'] == 200:
             jobs = []
-            for job in list_jobs_response["jobs"]:
+            for job in list_jobs_response['jobs']:
                 if verbose:
                     jobs.append({k: v for k, v in job.items()})
                 else:
@@ -1232,24 +1140,20 @@ class SnsdkWrapper:
                             for k, v in job.items()
                             if k
                             in [
-                                "job_name",
-                                "job_id",
-                                "job_type",
-                                "project_id",
-                                "status",
+                                'job_name',
+                                'job_id',
+                                'job_type',
+                                'project_id',
+                                'status',
                             ]
                         }
                     )
             return jobs
         else:
-            logging.error(
-                f"Failed to list jobs. Details: {list_jobs_response['detail']}"
-            )
+            logging.error(f"Failed to list jobs. Details: {list_jobs_response['detail']}")
             raise Exception(f"Error message: {list_jobs_response['detail']}")
 
-    def delete_job(
-        self, project_name: Optional[str] = None, job_name: Optional[str] = None
-    ) -> None:
+    def delete_job(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> None:
         """
         Deletes a job from a specified SambaStudio project.
         Use with caution it deletes the job and all its associated checkpoints
@@ -1271,7 +1175,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1279,27 +1183,22 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(
-                f"Job with name '{job_name}' in project '{project_name}' not found"
-            )
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
         # delete job
-        delete_job_response = self.snsdk_client.delete_job(
-            project=project_id, job=job_id
-        )
-        if delete_job_response["status_code"] == 200:
-            logging.info(
-                f"Job with name '{job_name}' in project '{project_name}' deleted"
-            )
+        delete_job_response = self.snsdk_client.delete_job(project=project_id, job=job_id)
+        if delete_job_response['status_code'] == 200:
+            logging.info(f"Job with name '{job_name}' in project '{project_name}' deleted")
             # TODO check if working, blocked by authorization error
         else:
             logging.error(
-                f"Failed to delete job with name '{job_name}' in project '{project_name}'. Details: {delete_job_response}"
+                f"Failed to delete job with name '{job_name}' in project '{project_name}'.\
+                    Details: {delete_job_response}"
             )
-            raise Exception(f"Error message: {delete_job_response}")
+            raise Exception(f'Error message: {delete_job_response}')
 
     """checkpoints"""
 
@@ -1332,7 +1231,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1340,35 +1239,25 @@ class SnsdkWrapper:
         # check if job selected exists
         if job_name is None:
             self._raise_error_if_config_is_none()
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(
-                f"Job with name '{job_name}' in project '{project_name}' not found"
-            )
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
-        list_checkpoints_response = self.snsdk_client.list_checkpoints(
-            project=project_id, job=job_id
-        )
-        if list_checkpoints_response["status_code"] == 200:
+        list_checkpoints_response = self.snsdk_client.list_checkpoints(project=project_id, job=job_id)
+        if list_checkpoints_response['status_code'] == 200:
             checkpoints = []
-            for checkpoint in list_checkpoints_response["data"]["checkpoints"]:
+            for checkpoint in list_checkpoints_response['data']['checkpoints']:
                 if verbose:
                     checkpoints.append({k: v for k, v in checkpoint.items()})
                 else:
                     checkpoints.append(
-                        {
-                            k: v
-                            for k, v in checkpoint.items()
-                            if k in ["checkpoint_name", "checkpoint_id"]
-                        }
+                        {k: v for k, v in checkpoint.items() if k in ['checkpoint_name', 'checkpoint_id']}
                     )
             return checkpoints
         else:
-            logging.error(
-                f"Failed to list checkpoints. Details: {list_checkpoints_response}"
-            )
-            raise Exception(f"Error message: {list_checkpoints_response}")
+            logging.error(f'Failed to list checkpoints. Details: {list_checkpoints_response}')
+            raise Exception(f'Error message: {list_checkpoints_response}')
 
     def promote_checkpoint(
         self,
@@ -1408,40 +1297,39 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         # check if job selected exists
         if job_name is None:
-            job_name = self.config["job"]["job_name"]
+            job_name = self.config['job']['job_name']
             self._raise_error_if_config_is_none()
         job_id = self.search_job(project_name=project_name, job_name=job_name)
         if job_id is None:
-            raise Exception(
-                f"Job with name '{job_name}' in project '{project_name}' not found"
-            )
+            raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
         if checkpoint_id is None:
             self._raise_error_if_config_is_none()
-            checkpoint_id = self.config["model_checkpoint"]["model_checkpoint_id"]
+            checkpoint_id = self.config['model_checkpoint']['model_checkpoint_id']
             if not checkpoint_id:
-                raise Exception("No model checkpoint_id provided")
-            # TODO: check if checkpoint in list checkpoints list blocked because authorization error in lists checkpoints method
+                raise Exception('No model checkpoint_id provided')
+            # TODO: check if checkpoint in list checkpoints list blocked because authorization error
+            # in lists checkpoints method
             # if checkpoint_id not in self.list_checkpoints(project_name=project_name, job_name=job_name):
             #     raise Exception(f"Checkpoint id '{checkpoint_id}' not found in job '{job_name}'")
 
         # check extra params passer or config file passed
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["model_checkpoint"]["model_name"]
+            model_name = self.config['model_checkpoint']['model_name']
         if model_description is None:
             self._raise_error_if_config_is_none()
-            model_description = self.config["model_checkpoint"]["model_description"]
+            model_description = self.config['model_checkpoint']['model_description']
         if model_type is None:
             self._raise_error_if_config_is_none()
-            model_type = self.config["model_checkpoint"]["model_type"]
+            model_type = self.config['model_checkpoint']['model_type']
 
         add_model_response = self.snsdk_client.add_model(
             project=project_name,
@@ -1452,19 +1340,14 @@ class SnsdkWrapper:
             checkpoint_type=model_type,
         )
 
-        if add_model_response["status_code"] == 200:
-            logging.info(
-                f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'"
-            )
-            # TODO test blocked because of authorization error
-            # return model_id
+        if add_model_response['status_code'] == 200:
+            logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
+            return add_model_response['data']['model_id']
         else:
-            logging.error(
-                f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}"
-            )
-            raise Exception(f"Error message: {add_model_response}")
+            logging.error(f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}")
+            raise Exception(f'Error message: {add_model_response}')
 
-    def delete_checkpoint(self, checkpoint: str = None) -> None:
+    def delete_checkpoint(self, checkpoint: Optional[str] = None) -> None:
         """
         Deletes a model checkpoint from the SambaStudio model hub.
 
@@ -1483,26 +1366,20 @@ class SnsdkWrapper:
         # check if checkpoint is provided
         if checkpoint is None:
             self._raise_error_if_config_is_none()
-            checkpoint = self.config["model_checkpoint"]["model_checkpoint_id"]
+            checkpoint = self.config['model_checkpoint']['model_checkpoint_id']
             if not checkpoint:
-                raise Exception("No model checkpoint_id provided")
+                raise Exception('No model checkpoint_id provided')
 
-        delete_checkpoint_response = self.snsdk_client.delete_checkpoint(
-            checkpoint=checkpoint
-        )
-        if delete_checkpoint_response["status_code"] == 200:
+        delete_checkpoint_response = self.snsdk_client.delete_checkpoint(checkpoint=checkpoint)
+        if delete_checkpoint_response['status_code'] == 200:
             logging.info(f"Model checkpoint '{checkpoint}' deleted")
         else:
-            logging.error(
-                f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}"
-            )
-            raise Exception(f"Error message: {delete_checkpoint_response}")
+            logging.error(f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}")
+            raise Exception(f'Error message: {delete_checkpoint_response}')
 
     """endpoint"""
 
-    def list_endpoints(
-        self, project_name: Optional[str] = None, verbose: Optional[bool] = None
-    ) -> list[dict]:
+    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> list[dict]:
         """
         List all endpoints in a specific project.
 
@@ -1524,17 +1401,15 @@ class SnsdkWrapper:
         # check if project exist
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
-            logging.info(
-                f"Project '{project_name}' not found listing all user endpoints"
-            )
+            logging.info(f"Project '{project_name}' not found listing all user endpoints")
 
         list_endpoints_response = self.snsdk_client.list_endpoints(project=project_id)
-        if list_endpoints_response["status_code"] == 200:
+        if list_endpoints_response['status_code'] == 200:
             endpoints = []
-            for endpoint in list_endpoints_response["endpoints"]:
+            for endpoint in list_endpoints_response['endpoints']:
                 if verbose:
                     endpoints.append({k: v for k, v in endpoint.items()})
                 else:
@@ -1544,18 +1419,16 @@ class SnsdkWrapper:
                             for k, v in endpoint.items()
                             if k
                             in [
-                                "name",
-                                "id",
-                                "project_id",
-                                "status",
+                                'name',
+                                'id',
+                                'project_id',
+                                'status',
                             ]
                         }
                     )
             return endpoints
         else:
-            logging.error(
-                f"Failed to list endpoints. Details: {list_endpoints_response['detail']}"
-            )
+            logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
             raise Exception(f"Error message: {list_endpoints_response['detail']}")
 
     def create_endpoint(
@@ -1602,7 +1475,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1610,7 +1483,7 @@ class SnsdkWrapper:
         # check if model selected exists
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config["model_checkpoint"]["model_name"]
+            model_name = self.config['model_checkpoint']['model_name']
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
             raise Exception(f"Model with name '{model_name}' not found")
@@ -1618,32 +1491,28 @@ class SnsdkWrapper:
         # check if endpoint selected exists
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config["endpoint"]["endpoint_name"]
-        endpoint_id = self.search_endpoint(
-            project=project_id, endpoint_name=endpoint_name
-        )
+            endpoint_name = self.config['endpoint']['endpoint_name']
+        endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
         if endpoint_id is not None:
-            logging.info(
-                f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}"
-            )
+            logging.info(f"Endpoint with name '{endpoint_name}' not created it already exist with id {endpoint_id}")
             return endpoint_id
 
         # check extra params passed or config file passed
         if model_version is None:
             self._raise_error_if_config_is_none()
-            model_version = self.config["model_checkpoint"]["model_version"]
+            model_version = self.config['model_checkpoint']['model_version']
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
-            endpoint_description = self.config["endpoint"]["endpoint_description"]
+            endpoint_description = self.config['endpoint']['endpoint_description']
         if instances is None:
             self._raise_error_if_config_is_none()
-            instances = self.config["endpoint"]["endpoint_instances"]
+            instances = self.config['endpoint']['endpoint_instances']
         if rdu_arch is None:
             self._raise_error_if_config_is_none()
-            rdu_arch = self.config["sambastudio"]["rdu_arch"]
+            rdu_arch = self.config['sambastudio']['rdu_arch']
         if hyperparams is None:
             self._raise_error_if_config_is_none()
-            hyperparams = self.config["endpoint"]["hyperparams"]
+            hyperparams = self.config['endpoint']['hyperparams']
 
         # create endpoint
         create_endpoint_response = self.snsdk_client.create_endpoint(
@@ -1657,20 +1526,16 @@ class SnsdkWrapper:
             hyperparams=json.dumps(hyperparams),
         )
 
-        if create_endpoint_response["status_code"] == 200:
+        if create_endpoint_response['status_code'] == 200:
             logging.info(f"Endpoint '{endpoint_name}' created")
-            endpoint_id = create_endpoint_response["id"]
+            endpoint_id = create_endpoint_response['id']
             return endpoint_id
 
         else:
-            logging.error(
-                f"Failed to create endpoint {endpoint_name}. Details: {create_endpoint_response}"
-            )
-            raise Exception(f"Error message: {create_endpoint_response}")
+            logging.error(f'Failed to create endpoint {endpoint_name}. Details: {create_endpoint_response}')
+            raise Exception(f'Error message: {create_endpoint_response}')
 
-    def search_endpoint(
-        self, project: Optional[str] = None, endpoint_name: Optional[str] = None
-    ) -> Optional[str]:
+    def search_endpoint(self, project: Optional[str] = None, endpoint_name: Optional[str] = None) -> Optional[str]:
         """
         Search for an endpoint in a specified project by its name.
 
@@ -1688,31 +1553,23 @@ class SnsdkWrapper:
         """
         if project is None:
             self._raise_error_if_config_is_none()
-            project = self.config["project"]["project_name"]
+            project = self.config['project']['project_name']
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config["endpoint"]["endpoint_name"]
-        endpoint_info_response = self.snsdk_client.endpoint_info(
-            project=project, endpoint=endpoint_name
-        )
+            endpoint_name = self.config['endpoint']['endpoint_name']
+        endpoint_info_response = self.snsdk_client.endpoint_info(project=project, endpoint=endpoint_name)
 
-        if endpoint_info_response["status_code"] == 200:
-            endpoint_id = endpoint_info_response["id"]
+        if endpoint_info_response['status_code'] == 200:
+            endpoint_id = endpoint_info_response['id']
             return endpoint_id
-        elif endpoint_info_response["status_code"] == 404:
-            logging.info(
-                f"Endpoint with name '{endpoint_name}' not found in project '{project}'"
-            )
+        elif endpoint_info_response['status_code'] == 404:
+            logging.info(f"Endpoint with name '{endpoint_name}' not found in project '{project}'")
             return None
         else:
-            logging.error(
-                f"Failed to retrieve information for endpoint Details: {endpoint_info_response}"
-            )
-            raise Exception(f"Error message: {endpoint_info_response}")
+            logging.error(f'Failed to retrieve information for endpoint Details: {endpoint_info_response}')
+            raise Exception(f'Error message: {endpoint_info_response}')
 
-    def get_endpoint_details(
-        self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None
-    ) -> dict:
+    def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> dict:
         """
         Retrieves the details of a specified endpoint in a given SambaStudio project.
 
@@ -1733,42 +1590,39 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
 
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config["endpoint"]["endpoint_name"]
+            endpoint_name = self.config['endpoint']['endpoint_name']
 
-        endpoint_info_response = self.snsdk_client.endpoint_info(
-            project=project_id, endpoint=endpoint_name
-        )
+        endpoint_info_response = self.snsdk_client.endpoint_info(project=project_id, endpoint=endpoint_name)
 
-        if endpoint_info_response["status_code"] == 200:
-            endpoint_url = endpoint_info_response["url"]
+        if endpoint_info_response['status_code'] == 200:
+            endpoint_url = endpoint_info_response['url']
             endpoint_details = {
-                "status": endpoint_info_response["status"],
-                "url": endpoint_url,
-                "langchain wrapper env": {
-                    "SAMBASTUDIO_BASE_URL": self.snsdk_client.host_url,
-                    "SAMBASTUDIO_BASE_URI": "/".join(endpoint_url.split("/")[1:4]),
-                    "SAMBASTUDIO_PROJECT_ID": endpoint_url.split("/")[-2],
-                    "SAMBASTUDIO_ENDPOINT_ID": endpoint_url.split("/")[-1],
-                    "SAMBASTUDIO_API_KEY": endpoint_info_response["api_key"],
+                'status': endpoint_info_response['status'],
+                'url': endpoint_url,
+                'langchain wrapper env': {
+                    'SAMBASTUDIO_BASE_URL': self.snsdk_client.host_url,
+                    'SAMBASTUDIO_BASE_URI': '/'.join(endpoint_url.split('/')[1:4]),
+                    'SAMBASTUDIO_PROJECT_ID': endpoint_url.split('/')[-2],
+                    'SAMBASTUDIO_ENDPOINT_ID': endpoint_url.split('/')[-1],
+                    'SAMBASTUDIO_API_KEY': endpoint_info_response['api_key'],
                 },
             }
             return endpoint_details
         else:
             logging.error(
-                f"Failed to get details for endpoint '{endpoint_name}' in project '{project_name}'. Details: {endpoint_info_response}"
+                f"Failed to get details for endpoint '{endpoint_name}' in project '{project_name}'.\
+                    Details: {endpoint_info_response}"
             )
-            raise Exception(f"Error message: {endpoint_info_response}")
+            raise Exception(f'Error message: {endpoint_info_response}')
 
-    def delete_endpoint(
-        self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None
-    ) -> None:
+    def delete_endpoint(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> None:
         """
         Deletes a specified endpoint in a given SambaStudio project.
 
@@ -1789,7 +1643,7 @@ class SnsdkWrapper:
         # check if project selected exists
         if project_name is None:
             self._raise_error_if_config_is_none()
-            project_name = self.config["project"]["project_name"]
+            project_name = self.config['project']['project_name']
         project_id = self.search_project(project_name)
         if project_id is None:
             raise Exception(f"Project '{project_name}' not found")
@@ -1797,26 +1651,19 @@ class SnsdkWrapper:
         # check if endpoint selected exists
         if endpoint_name is None:
             self._raise_error_if_config_is_none()
-            endpoint_name = self.config["endpoint"]["endpoint_name"]
-        endpoint_id = self.search_endpoint(
-            project=project_id, endpoint_name=endpoint_name
-        )
+            endpoint_name = self.config['endpoint']['endpoint_name']
+        endpoint_id = self.search_endpoint(project=project_id, endpoint_name=endpoint_name)
         if endpoint_id is None:
-            raise Exception(
-                f"Endpoint with name '{endpoint_name}' not found in project '{project_name}'"
-            )
+            raise Exception(f"Endpoint with name '{endpoint_name}' not found in project '{project_name}'")
 
-        delete_endpoint_response = self.snsdk_client.delete_endpoint(
-            project=project_id, endpoint=endpoint_id
-        )
+        delete_endpoint_response = self.snsdk_client.delete_endpoint(project=project_id, endpoint=endpoint_id)
 
-        if delete_endpoint_response["status_code"] == 200:
-            logging.info(
-                f"Endpoint '{endpoint_name}' deleted in project '{project_name}'"
-            )
+        if delete_endpoint_response['status_code'] == 200:
+            logging.info(f"Endpoint '{endpoint_name}' deleted in project '{project_name}'")
 
         else:
             logging.error(
-                f"Failed to delete endpoint '{endpoint_name}' in project '{project_name}'. Details: {delete_endpoint_response}"
+                f"Failed to delete endpoint '{endpoint_name}' in project '{project_name}'.\
+                    Details: {delete_endpoint_response}"
             )
-            raise Exception(f"Error message: {delete_endpoint_response}")
+            raise Exception(f'Error message: {delete_endpoint_response}')

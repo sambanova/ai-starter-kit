@@ -1,8 +1,9 @@
-import os
-import sys
 import logging
+import os
 import subprocess
-from typing import Union, Optional
+import sys
+from typing import Optional, Union
+
 from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +19,7 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()],
 )
+
 
 def setup_generative_data_prep() -> None:
     """
@@ -67,12 +69,12 @@ def setup_generative_data_prep() -> None:
 
 
 def run_generative_data_prep_pipeline(
-    input_path: str, output_path: str, tokenizer: str, max_seq_length: int, shuffle='on_RAM'
+    input_path: str, output_path: str, tokenizer: str, max_seq_length: int, shuffle: str = 'on_RAM'
 ) -> None:
     """
     Runs the generative data preparation pipeline to process a JSONL file.
 
-    This function uses the generative data preparation module to convert a JSONL dataset file into a format suitable for 
+    This function uses the generative data preparation module to convert a JSONL dataset file into a format suitable for
     fine-tuning in sambastudio. The function executes the pipeline command with the provided parameters.
 
     Args:
@@ -158,15 +160,10 @@ def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] 
     return output_path
 
 
-def gen_data_prep_pipeline(
-    input_files: Union[list, str], 
-    output_path: str, 
-    tokenizer: str, 
-    max_seq_length: int
-    ) -> str:
+def gen_data_prep_pipeline(input_files: Union[list, str], output_path: str, tokenizer: str, max_seq_length: int) -> str:
     """
     Merges input JSONL files, sets up and runs the generative data preparation pipeline.
-    
+
     Args:
     - input_files (Union[list, str]): A list of input JSONL file paths or a single JSONL file path.
     - output_path (str): The path to the output directory where the processed files will be saved.
