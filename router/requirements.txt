@@ -1,0 +1,13 @@
+langchain==0.2.8
+python-dotenv==1.0.1
+langchain_community==0.2.7
+langchain_core==0.2.19
+torch==2.1.1
+keybert==0.8.5
+keyphrase_vectorizers==0.0.13
+
+sseclient-py==1.8.0
+instructorembedding==1.0.1
+sentence_transformers==2.2.2
+chromadb==0.5.5
+streamlit==1.36.0
