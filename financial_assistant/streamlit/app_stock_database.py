@@ -3,10 +3,10 @@ from typing import Any, Dict, List, Optional
 import streamlit
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
-from financial_assistant.src.tools import get_logger
-from financial_assistant.streamlit.constants import *
+from financial_assistant.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import save_output_callback
-from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
 logger = get_logger()
 
@@ -63,13 +63,13 @@ def get_stock_database() -> None:
                 response_dict = handle_database_query(user_request, query_method)
 
                 # Save the query and answer to the history text file
-                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
+                save_output_callback(response_dict, HISTORY_PATH, user_request)
 
                 # Save the query and answer to the database query text file
                 if streamlit.button(
                     'Save Query',
                     on_click=save_output_callback,
-                    args=(response_dict, streamlit.session_state.db_query_path, user_request),
+                    args=(response_dict, DB_QUERY_PATH, user_request),
                 ):
                     pass
 
@@ -101,10 +101,10 @@ def handle_database_creation(
         raise ValueError('No companies selected.')
 
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['create_stock_database']
+    tools = ['create_stock_database']
 
     # Set the tools for the LLM to use
-    set_llm_tools(streamlit.session_state.tools)
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -116,6 +116,9 @@ def handle_database_creation(
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(requested_companies, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     # Check the final answer of the LLM
     if not isinstance(response, dict):
@@ -148,10 +151,10 @@ def handle_database_query(
         raise ValueError(f'Invalid query method {query_method}')
 
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['query_stock_database']
+    tools = ['query_stock_database']
 
     # Set the tools for the LLM to use
-    set_llm_tools(streamlit.session_state.tools)
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -165,5 +168,8 @@ def handle_database_query(
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     return response

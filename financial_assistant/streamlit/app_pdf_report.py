@@ -6,12 +6,11 @@ from typing import Any, Dict, List, Optional
 import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from financial_assistant.src.llm import SambaNovaLLM
-from financial_assistant.src.tools import get_logger
+from financial_assistant.constants import *
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
-from financial_assistant.streamlit.constants import *
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_assistant.streamlit.utilities_methods import handle_userinput, set_llm_tools
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
 logger = get_logger()
 
@@ -90,16 +89,16 @@ def include_pdf_report() -> None:
     data_paths = dict()
     if include_stock:
         # Add data from Stock Data Analysis
-        data_paths['stock_query'] = streamlit.session_state.stock_query_path
+        data_paths['stock_query'] = STOCK_QUERY_PATH
     if include_database:
         # Add data from Stock Database Analysis
-        data_paths['stock_database'] = streamlit.session_state.db_query_path
+        data_paths['stock_database'] = DB_QUERY_PATH
     if inlude_yahoo_news:
         # Add data from Yahoo News Analysis
-        data_paths['yfinance_news'] = streamlit.session_state.yfinance_news_path
+        data_paths['yfinance_news'] = YFINANCE_NEWS_PATH
     if include_filings:
         # Add data from Financial Filings Analysis
-        data_paths['filings'] = streamlit.session_state.filings_path
+        data_paths['filings'] = FILINGS_PATH
     if generate_from_history:
         # Deselect all other options
         include_stock = False
@@ -108,7 +107,7 @@ def include_pdf_report() -> None:
         include_filings = False
 
         # Add data from chat history
-        data_paths['history'] = streamlit.session_state.history_path
+        data_paths['history'] = HISTORY_PATH
 
     # Add title name (optional)
     title_name = streamlit.text_input(label='Title Name', value=DEFAULT_PDF_TITLE)
@@ -178,9 +177,8 @@ def include_pdf_report() -> None:
             # Get list of files in the directory
             files = [
                 f
-                for f in os.listdir(streamlit.session_state.pdf_generation_directory)
-                if os.path.isfile(os.path.join(streamlit.session_state.pdf_generation_directory, f))
-                and f.endswith('.pdf')
+                for f in os.listdir(PDF_GENERATION_DIRECTORY)
+                if os.path.isfile(os.path.join(PDF_GENERATION_DIRECTORY, f)) and f.endswith('.pdf')
             ]
 
             if len(files) > 0:
@@ -210,6 +208,13 @@ def include_pdf_report() -> None:
                 uploaded_files = [uploaded_results]
             else:
                 uploaded_files = uploaded_results
+
+            # Check all files
+            if isinstance(uploaded_files, list) and len(uploaded_files) > 0:
+                for file_item in uploaded_files:
+                    if not isinstance(file_item, UploadedFile):
+                        logger.error(f'{file_item} is not instance of `UploadedFile`. Got type {type(file_item)}.')
+                        streamlit.error(f'{file_item} is not instance of `UploadedFile`. Got type {type(file_item)}.')
             if (
                 isinstance(uploaded_files, list)
                 and len(uploaded_files) > 0
@@ -218,12 +223,9 @@ def include_pdf_report() -> None:
             ):
                 # Store uploaded files
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
-                for file in uploaded_files:
-                    if not isinstance(file, UploadedFile):
-                        logger.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
-                        streamlit.error(f'{file} is not instance of `UploadedFile`. Got type {type(file)}.')
-                    with open(os.path.join(streamlit.session_state.pdf_generation_directory, file.name), 'wb') as f:
-                        f.write(file.getbuffer())
+                for file_item in uploaded_files:
+                    with open(os.path.join(PDF_GENERATION_DIRECTORY, file_item.name), 'wb') as f:
+                        f.write(file_item.getbuffer())
 
         # The user request
         user_request = streamlit.text_input(
@@ -260,7 +262,7 @@ def include_pdf_report() -> None:
                         if streamlit.button(
                             'Save Answer',
                             on_click=save_output_callback,
-                            args=(content, streamlit.session_state.pdf_rag_path),
+                            args=(content, PDF_RAG_PATH),
                         ):
                             pass
 
@@ -291,7 +293,7 @@ def include_pdf_report() -> None:
                         if streamlit.button(
                             'Save Answer',
                             on_click=save_output_callback,
-                            args=(content, streamlit.session_state.pdf_rag_path),
+                            args=(content, PDF_RAG_PATH),
                         ):
                             pass
 
@@ -319,15 +321,13 @@ def handle_pdf_generation(
         Exception: If there are no values for selected or uploaded sources in the `data_paths` dictionary.
         Exception: If there are no file in `data_paths` from which to generate a PDF.
     """
-    # Initialize the function calling object
-    streamlit.session_state.llm = SambaNovaLLM()
 
     # Clean the sources directory if it exists
-    if os.path.exists(streamlit.session_state.pdf_sources_directory):
-        clear_directory(streamlit.session_state.pdf_sources_directory)
+    if os.path.exists(PDF_SOURCES_DIR):
+        clear_directory(PDF_SOURCES_DIR)
 
     # Derive the output file name
-    output_file = os.path.join(streamlit.session_state.pdf_generation_directory, report_name)
+    output_file = os.path.join(PDF_GENERATION_DIRECTORY, report_name)
 
     # Check that at least one data source is available
     if not any([data_paths[key] for key in data_paths]):
@@ -343,7 +343,7 @@ def handle_pdf_generation(
 
     for source_file in data_paths.values():
         # Create the full path for the destination file
-        destination_file = os.path.join(streamlit.session_state.pdf_sources_directory, os.path.basename(source_file))
+        destination_file = os.path.join(PDF_SOURCES_DIR, os.path.basename(source_file))
 
         try:
             # Copy selected document to the pdf generation directory
@@ -354,7 +354,7 @@ def handle_pdf_generation(
             logger.error('Error while copying file', exc_info=True)
 
     # Extract the documents from the selected files
-    documents = read_txt_files(streamlit.session_state.pdf_sources_directory)
+    documents = read_txt_files(PDF_SOURCES_DIR)
 
     # Parse the documents into a list of tuples of text and figure paths
     report_content = parse_documents(documents)
@@ -428,10 +428,10 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
         Exception: If the LLM response does not conform to the expected return type.
     """
     # Declare the permitted tools for function calling
-    streamlit.session_state.tools = ['pdf_rag']
+    tools = ['pdf_rag']
 
     # Set the tools for the LLM to use
-    set_llm_tools(streamlit.session_state.tools)
+    sambanova_llm.tools = [TOOLS[name] for name in tools]
 
     # Compose the user request
     user_request = f"""
@@ -443,6 +443,9 @@ def handle_pdf_rag(user_question: str, report_names: List[str]) -> Any:
 
     # Call the LLM on the user request with the attached tools
     response = handle_userinput(user_question, user_request)
+
+    # Reset tools
+    sambanova_llm.tools = None
 
     # Check the final answer of the LLM
     if not isinstance(response, str):

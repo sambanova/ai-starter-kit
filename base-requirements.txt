@@ -21,6 +21,7 @@ torch==2.2.2
 scikit-learn==1.4.1.post1
 transformers==4.41.2
 sentence-transformers==2.2.2
+huggingface-hub==0.25.2
 instructorembedding==1.0.1
 datasets==2.20.0
 evaluate==0.4.1
