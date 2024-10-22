@@ -24,8 +24,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-import streamlit as st
-
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
 from utils.visual.env_utils import get_wandb_key
@@ -130,7 +128,7 @@ class RetrievalQAChain(Chain):
 
 
 class DocumentRetrieval:
-    def __init__(self) -> None:
+    def __init__(self, sambanova_api_key: str) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
         self.api_info = config_info[0]
@@ -141,6 +139,7 @@ class DocumentRetrieval:
         self.prod_mode = config_info[5]
         self.pdf_only_mode = config_info[6]
         self.retriever = None
+        self.sambanova_api_key = sambanova_api_key
         self.llm = self.set_llm()
 
     def get_config_info(self) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
@@ -161,14 +160,6 @@ class DocumentRetrieval:
         return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
     def set_llm(self) -> LLM:
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
         llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
@@ -178,7 +169,7 @@ class DocumentRetrieval:
             temperature=self.llm_info['temperature'],
             select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambanova_api_key=sambanova_api_key,
+            sambanova_api_key=self.sambanova_api_key,
         )
         return llm
 

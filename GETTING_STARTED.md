@@ -23,16 +23,24 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 Access Meta’s Llama 3.2 and 3.1 family of models at **full precision** via the SambaNova Cloud API!
 
-| Model | Context Length |
-|-------|----------------|
-| Meta-Llama-3.2-1B-Instruct | 4096 | 
-| Meta-Llama-3.2-3B-Instruct | 4096 |
-| Meta-Llama-3.1-8B-Instruct | 4096 |  
-| Meta-Llama-3.1-8B-Instruct-8k | 8192 |  
-| Meta-Llama-3.1-70B-Instruct | 4096 |
-| Meta-Llama-3.1-70B-Instruct-8k | 8192 | 
-| Meta-Llama-3.1-405B-Instruct | 4096 | 
-| Meta-Llama-3.1-405B-Instruct-8k | 8192 |
+**Model details for Llama 3.2 family**:
+1. Llama 3.2 1B:
+   - Model ID: `Meta-Llama-3.2-1B-Instruct`
+   - Context length: 4,096 tokens
+2. Llama 3.2 3B:
+   - Model ID: `Meta-Llama-3.2-3B-Instruct`
+   - Context length: 4,096 tokens
+
+**Model details for Llama 3.1 family**:
+1. Llama 3.1 8B:
+   - Model ID: `Meta-Llama-3.1-8B-Instruct`
+   - Context length: 4k, 8k, 16k
+2. Llama 3.1 70B:
+   - Model ID: `Meta-Llama-3.1-70B-Instruct`
+   - Context length: 4k, 8k, 16k, 32k, 64k
+3. Llama 3.1 405B:
+   - Model ID: `Meta-Llama-3.1-405B-Instruct`
+   - Context length: 4k, 8k
 
 ## Query the API
 

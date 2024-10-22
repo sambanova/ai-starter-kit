@@ -4,6 +4,7 @@ chromadb==0.5.5
 datasets == 2.18.0
 evaluate == 0.4.1
 faiss-cpu==1.8.0.post1
+huggingface-hub==0.25.2
 jsonlines == 4.0.0
 langchain-community==0.3.1
 langchain-core==0.3.6

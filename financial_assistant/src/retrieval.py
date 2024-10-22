@@ -1,6 +1,5 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
-import streamlit
 import yaml
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -12,23 +11,22 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
+from financial_assistant.constants import *
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
-from financial_assistant.src.tools import get_logger, time_llm
-from financial_assistant.streamlit.constants import *
-from financial_assistant.streamlit.utilities_app import _get_config_info
+from financial_assistant.src.exceptions import VectorStoreException
+from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
 
 
-def get_qa_response(user_request: str, documents: List[Document], session_id: Optional[str] = None) -> Any:
+def get_qa_response(user_request: str, documents: List[Document]) -> Any:
     """
     Elaborate an answer to user request using RetrievalQA chain.
 
     Args:
         user_request: User request to answer.
         documents: List of documents to use for retrieval.
-        session_id: Optional unique identifier for the user session.
 
     Returns:
         Answer to the user request.
@@ -43,7 +41,7 @@ def get_qa_response(user_request: str, documents: List[Document], session_id: Op
     if not all(isinstance(doc, Document) for doc in documents):
         raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
-    # Get the vectostore registry and the current `session_id`
+    # Get the vectostore registry
     vectorstore, retriever = get_vectorstore_retriever(documents)
 
     # Get the QA chain from the retriever
@@ -103,8 +101,6 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
         documents: List of documents to be used for retrieval.
         vectorstore_registry: Registry of vectorstores to be used in retrieval.
             Defaults to an empty registry.
-        session_id: Optional unique identifier of the session.
-            Defaults to None.
 
     Returns:
         A tuple with the vectorstore registry and the current session id.
@@ -125,9 +121,7 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
     try:
         vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
-        logger.error('Could not instantiate the vectorstore.')
-        streamlit.error('Could not instantiate the vectorstore.')
-        streamlit.stop()
+        raise VectorStoreException('Could not instantiate the vectorstore.')
 
     if not isinstance(vectorstore, Chroma):
         raise Exception('Could not instantiate the vectorstore.')
@@ -170,7 +164,7 @@ def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
     )
 
     # Create a retrieval-based QA chain
-    combine_docs_chain = create_stuff_documents_chain(streamlit.session_state.llm.llm, retrieval_qa_chat_prompt)
+    combine_docs_chain = create_stuff_documents_chain(sambanova_llm.llm, retrieval_qa_chat_prompt)
     qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
     return qa_chain

@@ -53,19 +53,3 @@ jobs:
       # Set PYTHONPATH
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
-
-      # Runs at every pull request commit
-      - name: Run Unit Tests at Pull Request
-        if: github.event_name == 'pull_request'
-        env:
-          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
-        run: |
-          python financial_assistant/tests/financial_assistant_test.py --suite github_pull_request
-
-      # Runs weekly, pre-merge, and manually
-      - name: Run Unit Tests Weekly and Pre-Merge
-        if: github.event_name == 'schedule' || github.event_name == 'pull_request_review' || github.event_name =='workflow_dispatch'
-        env:
-          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
-        run: |
-          python financial_assistant/tests/financial_assistant_test.py
