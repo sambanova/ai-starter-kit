@@ -5,8 +5,8 @@ import requests
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
 from langchain_core.language_models.llms import LLM
 from langchain_core.outputs import GenerationChunk
-from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env, pre_init
-from pydantic import ConfigDict, Field, SecretStr
+from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
+from pydantic import Field, SecretStr
 from requests import Response
 
 
@@ -500,224 +500,260 @@ class SambaNovaCloud(LLM):
     """
     SambaNova Cloud large language models.
 
-    To use, you should have the environment variables
-    ``SAMBANOVA_URL`` set with your SambaNova Cloud URL.
-    ``SAMBANOVA_API_KEY`` set with your SambaNova Cloud API Key.
+    Setup:
+        To use, you should have the environment variables:
+        ``SAMBANOVA_URL`` set with SambaNova Cloud URL.
+        defaults to http://cloud.sambanova.ai/
+        ``SAMBANOVA_API_KEY`` set with your SambaNova Cloud API Key.
+        Example:
+        .. code-block:: python
+            from langchain_community.llms.sambanova  import SambaNovaCloud
+            SambaNovaCloud(
+                sambanova_api_key="your-SambaNovaCloud-API-key,
+                model = model name,
+                max_tokens = max number of tokens to generate,
+                temperature = model temperature,
+                top_p = model top p,
+                top_k = model top k
+            )
+    Key init args — completion params:
+        model: str
+            The name of the model to use, e.g., Meta-Llama-3-70B-Instruct-4096
+            (set for CoE endpoints).
+        streaming: bool
+            Whether to use streaming handler when using non streaming methods
+        max_tokens: int
+            max tokens to generate
+        temperature: float
+            model temperature
+        top_p: float
+            model top p
+        top_k: int
+            model top k
 
-    http://cloud.sambanova.ai/
-
-    Example:
-    .. code-block:: python
-
-        SambaNovaCloud(
-            sambanova_url = SambaNova cloud endpoint URL,
-            sambanova_api_key = set with your SambaNova cloud API key,
-            max_tokens = mas number of tokens to generate
-            stop_tokens = list of stop tokens
-            model = model name
-        )
+    Key init args — client params:
+        sambanova_url: str
+            SambaNovaCloud Url defaults to http://cloud.sambanova.ai/
+        sambanova_api_key: str
+            SambaNovaCloud api key
+    Instantiate:
+        .. code-block:: python
+            from langchain_community.llms.sambanova  import SambaNovaCloud
+            SambaNovaCloud(
+                sambanova_api_key="your-SambaNovaCloud-API-key,
+                model = model name,
+                max_tokens = max number of tokens to generate,
+                temperature = model temperature,
+                top_p = model top p,
+                top_k = model top k
+            )
+    Invoke:
+        .. code-block:: python
+            prompt = "tell me a joke"
+            response = llm.invoke(prompt)
+    Stream:
+        .. code-block:: python
+        for chunk in llm.stream(prompt):
+            print(chunk, end="", flush=True)
+    Async:
+        .. code-block:: python
+        response = llm.ainvoke(prompt)
+        await response
     """
 
-    sambanova_url: str = ''
+    sambanova_url: str = Field(default='')
     """SambaNova Cloud Url"""
 
-    sambanova_api_key: str = ''
+    sambanova_api_key: SecretStr = Field(default='')
     """SambaNova Cloud api key"""
 
-    max_tokens: int = 1024
+    model: str = Field(default='Meta-Llama-3.1-8B-Instruct')
+    """The name of the model"""
+
+    streaming: bool = Field(default=False)
+    """Whether to use streaming handler when using non streaming methods"""
+
+    max_tokens: int = Field(default=1024)
     """max tokens to generate"""
 
-    stop_tokens: list = ['<|eot_id|>']
-    """Stop tokens"""
-
-    model: str = 'llama3-8b'
-    """LLM model expert to use"""
-
-    temperature: float = 0.0
+    temperature: float = Field(default=0.7)
     """model temperature"""
 
-    top_p: float = 0.0
+    top_p: Optional[float] = Field(default=None)
     """model top p"""
 
-    top_k: int = 1
+    top_k: Optional[int] = Field(default=None)
     """model top k"""
 
-    stream_api: bool = True
-    """use stream api"""
-
-    stream_options: dict = {'include_usage': True}
+    stream_options: dict = Field(default={'include_usage': True})
     """stream options, include usage to get generation metrics"""
 
-    model_config = ConfigDict(
-        extra='forbid',
-    )
+    class Config:
+        populate_by_name = True
 
     @classmethod
     def is_lc_serializable(cls) -> bool:
-        return True
+        """Return whether this model can be serialized by Langchain."""
+        return False
+
+    @property
+    def lc_secrets(self) -> Dict[str, str]:
+        return {'sambanova_api_key': 'sambanova_api_key'}
 
     @property
     def _identifying_params(self) -> Dict[str, Any]:
-        """Get the identifying parameters."""
+        """Return a dictionary of identifying parameters.
+
+        This information is used by the LangChain callback system, which
+        is used for tracing purposes make it possible to monitor LLMs.
+        """
         return {
             'model': self.model,
+            'streaming': self.streaming,
             'max_tokens': self.max_tokens,
-            'stop': self.stop_tokens,
             'temperature': self.temperature,
             'top_p': self.top_p,
             'top_k': self.top_k,
+            'stream_options': self.stream_options,
         }
 
     @property
     def _llm_type(self) -> str:
-        """Return type of llm."""
-        return 'SambaNova Cloud'
+        """Get the type of language model used by this chat model."""
+        return 'sambanovacloud-llm'
 
-    @pre_init
-    def validate_environment(cls, values: Dict) -> Dict:
-        """Validate that api key and python package exists in environment."""
-        values['sambanova_url'] = get_from_dict_or_env(
-            values, 'sambanova_url', 'SAMBANOVA_URL', default='https://api.sambanova.ai/v1/chat/completions'
+    def __init__(self, **kwargs: Any) -> None:
+        """init and validate environment variables"""
+        kwargs['sambanova_url'] = get_from_dict_or_env(
+            kwargs,
+            'sambanova_url',
+            'SAMBANOVA_URL',
+            default='https://api.sambanova.ai/v1/chat/completions',
         )
-        values['sambanova_api_key'] = get_from_dict_or_env(values, 'sambanova_api_key', 'SAMBANOVA_API_KEY')
-        return values
+        kwargs['sambanova_api_key'] = convert_to_secret_str(
+            get_from_dict_or_env(kwargs, 'sambanova_api_key', 'SAMBANOVA_API_KEY')
+        )
+        super().__init__(**kwargs)
 
-    def _handle_nlp_predict_stream(
+    def _handle_request(
         self,
         prompt: Union[List[str], str],
-        stop: List[str],
-    ) -> Iterator[GenerationChunk]:
+        stop: Optional[List[str]] = None,
+        streaming: Optional[bool] = False,
+    ) -> Response:
         """
-        Perform a streaming request to the LLM.
+        Performs a post request to the LLM API.
 
         Args:
-            prompt: The prompt to use for the prediction.
+            prompt: The prompt to pass into the model.
             stop: list of stop tokens
 
         Returns:
-            An iterator of GenerationChunks.
+            A request Response object
         """
-        try:
-            import sseclient
-        except ImportError:
-            raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
-        try:
-            formatted_prompt = json.loads(prompt)  # type: ignore
-        except:
-            formatted_prompt = [{'role': 'user', 'content': prompt}]
+        if isinstance(prompt, str):
+            prompt = [prompt]
 
-        http_session = requests.Session()
-        if not stop:
-            stop = self.stop_tokens
+        messages_dict = [{'role': 'user', 'content': prompt[0]}]
         data = {
-            'messages': formatted_prompt,
+            'messages': messages_dict,
+            'stream': streaming,
             'max_tokens': self.max_tokens,
             'stop': stop,
             'model': self.model,
             'temperature': self.temperature,
             'top_p': self.top_p,
             'top_k': self.top_k,
-            'stream': self.stream_api,
-            'stream_options': self.stream_options,
         }
-        # Streaming output
-        response = http_session.post(
-            self.sambanova_url,
-            headers={'Authorization': f'Bearer {self.sambanova_api_key}', 'Content-Type': 'application/json'},
-            json=data,
-            stream=True,
-        )
+        data = {key: value for key, value in data.items() if value is not None}
+        headers = {
+            'Authorization': f'Bearer ' f'{self.sambanova_api_key.get_secret_value()}',
+            'Content-Type': 'application/json',
+        }
 
-        client = sseclient.SSEClient(response)
-        close_conn = False
+        http_session = requests.Session()
+        if streaming:
+            response = http_session.post(self.sambanova_url, headers=headers, json=data, stream=True)
+        else:
+            response = http_session.post(self.sambanova_url, headers=headers, json=data, stream=False)
 
         if response.status_code != 200:
             raise RuntimeError(
-                f'Sambanova /complete call failed with status code ' f'{response.status_code}.' f'{response.text}.'
+                f'Sambanova / complete call failed with status code ' f'{response.status_code}.' f'{response.text}.'
+            )
+        return response
+
+    def _process_response(self, response: Response) -> str:
+        """
+        Process a non streaming response from the api
+
+        Args:
+            response: A request Response object
+
+        Returns
+            completion: a string with model generation
+        """
+
+        # Extract json payload form response
+        try:
+            response_dict = response.json()
+        except Exception as e:
+            raise RuntimeError(
+                f"Sambanova /complete call failed couldn't get JSON response {e}" f'response: {response.text}'
             )
 
+        completion = response_dict['choices'][0]['message']['content']
+
+        return completion
+
+    def _process_stream_response(self, response: Response) -> Iterator[GenerationChunk]:
+        """
+        Process a streaming response from the api
+
+        Args:
+            response: An iterable request Response object
+
+        Yields:
+            GenerationChunk: a GenerationChunk with model partial generation
+        """
+
+        try:
+            import sseclient
+        except ImportError:
+            raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
+
+        client = sseclient.SSEClient(response)
         for event in client.events():
             if event.event == 'error_event':
-                close_conn = True
-            chunk = {
-                'event': event.event,
-                'data': event.data,
-                'status_code': response.status_code,
-            }
-
-            if chunk.get('error'):
                 raise RuntimeError(
-                    f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                    f'Sambanova /complete call failed with status code ' f'{response.status_code}.' f'{event.data}.'
                 )
-
             try:
-                # check if the response is a final event in that case event data response is '[DONE]'
-                if chunk['data'] != '[DONE]':
-                    data = json.loads(chunk['data'])
+                # check if the response is not a final event ("[DONE]")
+                if event.data != '[DONE]':
+                    if isinstance(event.data, str):
+                        data = json.loads(event.data)
+                    else:
+                        raise RuntimeError(
+                            f'Sambanova /complete call failed with status code '
+                            f'{response.status_code}.'
+                            f'{event.data}.'
+                        )
                     if data.get('error'):
                         raise RuntimeError(
-                            f"Sambanova /complete call failed with status code " f"{chunk['status_code']}." f"{chunk}."
+                            f'Sambanova /complete call failed with status code '
+                            f'{response.status_code}.'
+                            f'{event.data}.'
                         )
-                    # check if the response is a final response with usage stats (not includes content)
-                    if data.get('usage') is None:
-                        # check is not "end of text" response
-                        if data['choices'][0]['finish_reason'] is None:
-                            text = data['choices'][0]['delta']['content']
-                            generated_chunk = GenerationChunk(text=text)
-                            yield generated_chunk
+                    if len(data['choices']) > 0:
+                        content = data['choices'][0]['delta']['content']
+                    else:
+                        content = ''
+                    generated_chunk = GenerationChunk(text=content)
+                    yield generated_chunk
+
             except Exception as e:
-                raise Exception(f'Error getting content chunk raw streamed response: {chunk}')
-
-    def _stream(
-        self,
-        prompt: Union[List[str], str],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
-        **kwargs: Any,
-    ) -> Iterator[GenerationChunk]:
-        """Call out to Sambanova's complete endpoint.
-
-        Args:
-            prompt: The prompt to pass into the model.
-            stop: Optional list of stop words to use when generating.
-
-        Returns:
-            The string generated by the model.
-        """
-        try:
-            for chunk in self._handle_nlp_predict_stream(prompt, stop):  # type: ignore
-                if run_manager:
-                    run_manager.on_llm_new_token(chunk.text)
-                yield chunk
-        except Exception as e:
-            # Handle any errors raised by the inference endpoint
-            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
-
-    def _handle_stream_request(
-        self,
-        prompt: Union[List[str], str],
-        stop: Optional[List[str]],
-        run_manager: Optional[CallbackManagerForLLMRun],
-        kwargs: Dict[str, Any],
-    ) -> str:
-        """
-        Perform a streaming request to the LLM.
-
-        Args:
-            prompt: The prompt to generate from.
-            stop: Stop words to use when generating. Model output is cut off at the
-                first occurrence of any of the stop substrings.
-            run_manager: Callback manager for the run.
-            **kwargs: Additional keyword arguments. directly passed
-                to the Sambanova Cloud model in API call.
-
-        Returns:
-            The model output as a string.
-        """
-        completion = ''
-        for chunk in self._stream(prompt=prompt, stop=stop, run_manager=run_manager, **kwargs):
-            completion += chunk.text
-        return completion
+                raise RuntimeError(f'Error getting content chunk raw streamed response: {e}' f'data: {event.data}')
 
     def _call(
         self,
@@ -726,7 +762,7 @@ class SambaNovaCloud(LLM):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> str:
-        """Call out to Sambanova's  complete endpoint.
+        """Call out to SambaNovaCloud complete endpoint.
 
         Args:
             prompt: The prompt to pass into the model.
@@ -735,8 +771,35 @@ class SambaNovaCloud(LLM):
         Returns:
             The string generated by the model.
         """
-        try:
-            return self._handle_stream_request(prompt, stop, run_manager, kwargs)
-        except Exception as e:
-            # Handle any errors raised by the inference endpoint
-            raise ValueError(f'Error raised by the inference endpoint: {e}') from e
+        if self.streaming:
+            completion = ''
+            for chunk in self._stream(prompt=prompt, stop=stop, run_manager=run_manager, **kwargs):
+                completion += chunk.text
+
+            return completion
+
+        response = self._handle_request(prompt, stop, streaming=False)
+        completion = self._process_response(response)
+        return completion
+
+    def _stream(
+        self,
+        prompt: Union[List[str], str],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> Iterator[GenerationChunk]:
+        """Call out to SambaNovaCloud complete endpoint.
+
+        Args:
+            prompt: The prompt to pass into the model.
+            stop: Optional list of stop words to use when generating.
+
+        Returns:
+            The string generated by the model.
+        """
+        response = self._handle_request(prompt, stop, streaming=True)
+        for chunk in self._process_stream_response(response):
+            if run_manager:
+                run_manager.on_llm_new_token(chunk.text)
+            yield chunk
