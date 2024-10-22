@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
-from langchain_core.language_models.llms import LLM
-from langchain_core.messages.ai import AIMessage
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import BaseMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
@@ -122,7 +122,7 @@ class FunctionCallingLlm:
 
         return (llm_info, prod_mode)
 
-    def set_llm(self) -> LLM:
+    def set_llm(self) -> BaseChatModel:
         """
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
@@ -220,7 +220,7 @@ class FunctionCallingLlm:
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
-    def jsonFinder(self, input_message: AIMessage) -> Optional[str]:
+    def jsonFinder(self, input_message: BaseMessage) -> Optional[str]:
         """
         find json structures ina  llm string response, if bad formatted using LLM to correct it
 
@@ -229,6 +229,7 @@ class FunctionCallingLlm:
         """
         json_pattern = re.compile(r'(\{.*\}|\[.*\])', re.DOTALL)
         # Find the first JSON structure in the string
+        assert isinstance(input_message.content, str)
         json_match = json_pattern.search(input_message.content)
         if json_match:
             json_str = json_match.group(1)
