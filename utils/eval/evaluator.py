@@ -7,10 +7,13 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from typing import Any, Optional
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional
 
 import weave
 import yaml
+from weave import Dataset
 
 from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.llm import CorrectnessLLMJudge, WeaveChatModel
@@ -46,7 +49,9 @@ class BaseWeaveEvaluator:
         self.judge = self._init_judge()
         self.dataset_manager = self._init_dataset_manager()
 
-    async def evaluate(self, name: Optional[str] = None, filepath: Optional[str] = None) -> None:
+    async def evaluate(
+        self, name: Optional[str] = None, filepath: Optional[str] = None, use_concurrency: bool = False
+    ) -> None:
         """
         Evaluate a list of data using multiple LLM configurations.
 
@@ -78,13 +83,67 @@ class BaseWeaveEvaluator:
         data = self.dataset_manager.create_dataset(name, filepath)
 
         llm_info = self.config_info['llms']
-        for params in llm_info:
-            test_model = WeaveChatModel(**params)
+
+        if use_concurrency:
+            await self._run_concurrently_with_threads(llm_info, data)
+        else:
+            await self._run_sequentially(llm_info, data)
+
+    async def _run_sequentially(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+        """
+        Run evaluations of models sequentially for a list of parameters.
+        This method creates a `WeaveChatModel` for each parameter set, constructs an evaluation object,
+        and then evaluates the model within the context of the given parameters.
+
+        Args:
+            params (List[Dict[str, Any]]): A list of dictionaries containing parameters for each model to evaluate.
+            data (Dataset): The dataset to be used for evaluation.
+        """
+
+        for param in params:
+            test_model = WeaveChatModel(**param)
             evaluation = weave.Evaluation(
-                name=' '.join(str(value) for value in params.values()), dataset=data, scorers=[self.judge]
+                name=' '.join(str(value) for value in param.values()), dataset=data, scorers=[self.judge]
             )
-            with weave.attributes(params):
+            with weave.attributes(param):
                 await evaluation.evaluate(test_model)
+
+    async def _run_concurrently_with_threads(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+        """
+        Run evaluations of models concurrently using threads for a list of parameters.
+        This method utilizes a thread pool to run model evaluations concurrently.
+        Each set of parameters is evaluated in a separate thread to optimize performance.
+
+        Args:
+            params (List[Dict[str, Any]]): A list of dictionaries containing parameters for each model to evaluate.
+            data (Dataset): The dataset to be used for evaluation.        
+        """
+
+        with ThreadPoolExecutor() as executor:
+            evaluation_tasks = [
+                asyncio.get_event_loop().run_in_executor(executor, self._evaluate_model, param, data)
+                for param in params
+            ]
+
+            await asyncio.gather(*evaluation_tasks)
+
+    def _evaluate_model(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+        """
+        Evaluate a model using the provided parameters in a separate thread.
+        This method runs in a thread pool. It creates a `WeaveChatModel` using the
+        specified parameters and evaluates it using the provided dataset and judges.
+
+        Args:
+            params (Dict[str, Any]): A dictionary containing parameters for the model to evaluate.
+            data (Dataset): The dataset to be used for evaluation.
+        """
+        test_model = WeaveChatModel(**params)
+        evaluation = weave.Evaluation(
+            name=' '.join(str(value) for value in params.values()), dataset=data, scorers=[self.judge]
+        )
+
+        with weave.attributes(params):
+            asyncio.run(evaluation.evaluate(test_model))
 
     def _get_config_info(self, config_path: str) -> Any:
         """
