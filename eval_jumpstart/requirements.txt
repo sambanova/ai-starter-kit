@@ -5,3 +5,8 @@ mypy==1.11.2
 pre-commit==4.0.1
 ruff==0.6.9
 wandb==0.18.0
+weave==0.51.1
+pandas==2.2.3
+python-dotenv==1.0.0
+streamlit-extras==0.4.3
+streamlit==1.36.0
