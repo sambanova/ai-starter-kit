@@ -261,8 +261,9 @@ def query_db(query: str) -> str:
 
     prompt = ChatPromptTemplate(
         [
-            ('system',"""<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
-        
+            (
+                'system',
+                """
             {table_info}
             
             Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
@@ -279,9 +280,10 @@ def query_db(query: str) -> str:
             
             ```sql
             SELECT * FROM mainTable;
-            ```"""),
-            ('human', """{input}""")
-        ]     
+            ```""",  # noqa: E501
+            ),
+            ('human', """{input}"""),
+        ]
     )
 
     # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
@@ -420,15 +422,15 @@ def rag(query: str) -> str:
     )
     #  qa_chain definition
     prompt = [
-        ('system', 'You are an assistant for question-answering tasks.\n'
-        'Use the following pieces of retrieved contexts to answer the question. '
-        'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
-        'say "Could not find information.". Provide a concise answer to the question. '
-        'Do not provide any information that is not asked for in the question. '),
-        ('human', 'Question: {question} \n'
-        'Context: {context} \n'
-        '\n ------- \n'
-        'Answer:')
+        (
+            'system',
+            'You are an assistant for question-answering tasks.\n'
+            'Use the following pieces of retrieved contexts to answer the question. '
+            'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
+            'say "Could not find information.". Provide a concise answer to the question. '
+            'Do not provide any information that is not asked for in the question. ',
+        ),
+        ('human', 'Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'),
     ]
     retrieval_qa_prompt = ChatPromptTemplate(prompt)
     qa_chain = RetrievalQA.from_llm(

@@ -237,8 +237,11 @@ class FunctionCallingLlm:
             except:
                 json_correction_prompt = [
                     ('system', """You are a json format corrector tool"""),
-                    ('human', """fix the following json file: {json}
-                     do not provide any explanation only return the fixed json""")
+                    (
+                        'human',
+                        """fix the following json file: {json}
+                     do not provide any explanation only return the fixed json""",
+                    ),
                 ]
                 json_correction_prompt_template = ChatPromptTemplate(json_correction_prompt)
                 json_correction_chain = json_correction_prompt_template | self.llm | StrOutputParser()
