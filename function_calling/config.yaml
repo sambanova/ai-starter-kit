@@ -1,20 +1,18 @@
 llm: 
   "api": "sncloud" #  set either sambastudio or sncloud
   "do_sample": False
-  "temperature": 0.0
-  "max_tokens_to_generate": 1024
-  "coe": True #set as true if using Sambastudio CoE endpoint
-  "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm exper
+  "temperature": 0.01
+  "max_tokens": 1024
+  "model": "Meta-Llama-3.1-405B-Instruct"
 
 tools:
     query_db:
       llm: 
         "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
-        "temperature": 0.0 
-        "max_tokens_to_generate": 1024
-        "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
+        "temperature": 0.01 
+        "max_tokens": 1024
+        "model": "Meta-Llama-3.1-405B-Instruct" 
       db:
         "path": "data/chinook.db" 
 
@@ -23,18 +21,16 @@ tools:
         "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
         "temperature": 0.0
-        "max_tokens_to_generate": 1024
-        "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
+        "max_tokens": 1024
+        "model": "Meta-Llama-3.1-405B-Instruct" 
 
     rag:
       llm:
         "api": "sncloud" #  set either sambastudio or sncloud
         "do_sample": False
         "temperature": 0.0 
-        "max_tokens_to_generate": 1024
-        "coe": True #set as true if using Sambastudio CoE endpoint
-        "select_expert": "Meta-Llama-3.1-405B-Instruct" #set if using sncloud, SambaStudio CoE llm expert
+        "max_tokens": 1024
+        "model": "Meta-Llama-3.1-405B-Instruct"
       embedding_model: 
         "type": "cpu" # set either sambastudio or cpu
         "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
