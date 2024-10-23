@@ -8,7 +8,7 @@ import yaml
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
-from langchain.prompts import PromptTemplate, load_prompt
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import LanguageModelLike
@@ -58,7 +58,7 @@ class RetrievalQAChain(Chain):
     retriever: BaseRetriever
     rerank: bool = True
     llm: LanguageModelLike
-    qa_prompt: PromptTemplate
+    qa_prompt: ChatPromptTemplate
     final_k_retrieved_documents: int = 3
 
     @property
@@ -131,13 +131,12 @@ class DocumentRetrieval:
     def __init__(self, sambanova_api_key: str) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
-        self.api_info = config_info[0]
-        self.llm_info = config_info[1]
-        self.embedding_model_info = config_info[2]
-        self.retrieval_info = config_info[3]
-        self.prompts = config_info[4]
-        self.prod_mode = config_info[5]
-        self.pdf_only_mode = config_info[6]
+        self.llm_info = config_info[0]
+        self.embedding_model_info = config_info[1]
+        self.retrieval_info = config_info[2]
+        self.prompts = config_info[3]
+        self.prod_mode = config_info[4]
+        self.pdf_only_mode = config_info[5]
         self.retriever = None
         self.sambanova_api_key = sambanova_api_key
         self.llm = self.set_llm()
@@ -149,7 +148,6 @@ class DocumentRetrieval:
         # Read config file
         with open(CONFIG_PATH, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
-        api_info = config['api']
         llm_info = config['llm']
         embedding_model_info = config['embedding_model']
         retrieval_info = config['retrieval']
@@ -157,17 +155,15 @@ class DocumentRetrieval:
         prod_mode = config['prod_mode']
         pdf_only_mode = config['pdf_only_mode']
 
-        return api_info, llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
+        return llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
     def set_llm(self) -> LLM:
-        llm = APIGateway.load_llm(
-            type=self.api_info,
-            streaming=True,
-            coe=self.llm_info['coe'],
+        llm = APIGateway.load_chat(
+            type=self.llm_info['api'],
             do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            model=self.llm_info['model'],
             process_prompt=False,
             sambanova_api_key=self.sambanova_api_key,
         )
@@ -202,6 +198,30 @@ class DocumentRetrieval:
             select_expert=self.embedding_model_info['select_expert'],
         )
         return embeddings
+    
+    def load_chat_prompt(self, path: str) -> ChatPromptTemplate:
+        """Load chat prompt from yaml file"""
+        
+        with open(path, 'r') as file:
+            config = yaml.safe_load(file)
+
+        config.pop("_type")
+
+        template = config.pop("template")
+
+        if not template:
+            msg = "Can't load chat prompt without template"
+            raise ValueError(msg)
+
+        messages = []
+        if isinstance(template, str):
+            messages.append(("human", template))
+
+        elif isinstance(template, list):
+            for item in template:
+                messages.append((item["role"], item["content"]))
+
+        return ChatPromptTemplate(messages=messages, **config)
 
     def create_vector_store(
         self,
@@ -253,24 +273,13 @@ class DocumentRetrieval:
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
-        # customprompt = load_prompt(os.path.join(kit_dir, self.prompts["qa_prompt"]))
-        # qa_chain = customprompt | self.llm | StrOutputParser()
-
-        # response = {}
-        # documents = self.retriever.invoke(question)
-        # if self.retrieval_info["rerank"]:
-        #     documents = self.rerank_docs(question, documents, self.retrieval_info["final_k_retrieved_documents"])
-        # docs = self._format_docs(documents)
-
-        # response["answer"] = qa_chain.invoke({"question": question, "context": docs})
-        # response["source_documents"] = documents
         assert isinstance(
             self.retriever, VectorStoreRetriever
         ), f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
         retrievalQAChain = RetrievalQAChain(
             retriever=self.retriever,
             llm=self.llm,
-            qa_prompt=load_prompt(os.path.join(repo_dir, self.prompts['qa_prompt'])),
+            qa_prompt=self.load_chat_prompt(os.path.join(repo_dir, self.prompts['qa_prompt'])),
             rerank=self.retrieval_info['rerank'],
             final_k_retrieved_documents=self.retrieval_info['final_k_retrieved_documents'],
         )
