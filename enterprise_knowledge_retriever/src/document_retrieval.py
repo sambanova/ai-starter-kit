@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
@@ -8,6 +9,7 @@ import yaml
 from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
+from langchain.memory import ConversationSummaryMemory
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
@@ -33,8 +35,15 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-
 from utils.parsing.sambaparse import parse_doc_universal
+
+# Configure the logger
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
+    format='%(asctime)s [%(levelname)s] - %(message)s',  # Define the log message format
+)
+# Create a logger object
+logger = logging.getLogger(__name__)
 
 # Handle the WANDB_API_KEY resolution before importing weave
 wandb_api_key = get_wandb_key()
@@ -52,6 +61,30 @@ nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
 
 
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+    
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop("_type")
+
+    template = config.pop("template")
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(("human", template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item["role"], item["content"]))
+
+    return ChatPromptTemplate(messages=messages, **config)
+
 class RetrievalQAChain(Chain):
     """class for question-answering."""
 
@@ -60,6 +93,10 @@ class RetrievalQAChain(Chain):
     llm: LanguageModelLike
     qa_prompt: ChatPromptTemplate
     final_k_retrieved_documents: int = 3
+    conversational: bool = False
+    # wether or not to use memory and answer over reformulated query with history summary
+    summary_prompt: Optional[ChatPromptTemplate]
+    condensed_query_prompt: Optional[ChatPromptTemplate]
 
     @property
     def input_keys(self) -> List[str]:
@@ -74,6 +111,12 @@ class RetrievalQAChain(Chain):
         :meta private:
         """
         return ['answer', 'source_documents']
+    
+    def __init__(self, **kwargs: Any) -> None:
+        """init and validate environment variables"""
+        super().__init__(**kwargs)
+        if self.conversational:
+            self.init_memory()
 
     def _format_docs(self, docs: List[Document]) -> str:
         return '\n\n'.join(doc.page_content for doc in docs)
@@ -110,12 +153,47 @@ class RetrievalQAChain(Chain):
         docs_sorted = docs_sorted[:final_k]
 
         return docs_sorted
+    
+    def init_memory(self) -> None:
+        """
+        Initialize conversation summary memory for the conversation
+        """
+        self.memory = ConversationSummaryMemory(
+            llm=self.llm,
+            buffer='The human and AI greet each other to start a conversation.',
+            memory_key='chat_history',
+            return_messages=True,
+            output_key='answer',
+            prompt=self.summary_prompt,
+        )
+
+    def reformulate_query_with_history(self, query: str) -> str:
+        """
+        Reformulates the query based on the conversation history.
+
+        Args:
+        query (str): The current query to reformulate.
+
+        Returns:
+        str: The reformulated query.
+        """
+        if self.memory is None:
+            self.init_memory()
+        custom_condensed_question_prompt = self.condensed_query_prompt
+        assert self.memory is not None
+        history = self.memory.load_memory_variables({})
+        logger.info(f'HISTORY: {history}')
+        reformulated_query = self.llm.invoke(
+            custom_condensed_question_prompt.format(chat_history=history, question=query)
+        )
+        return reformulated_query
 
     def _call(
         self,
         inputs: Dict[str, Any],
         run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Dict[str, Any]:
+        #TODO: add memory management
         qa_chain = self.qa_prompt | self.llm | StrOutputParser()
         response: Dict[str, Any] = {}
         documents = self.retriever.invoke(inputs['question'])
@@ -198,30 +276,6 @@ class DocumentRetrieval:
             select_expert=self.embedding_model_info['select_expert'],
         )
         return embeddings
-    
-    def load_chat_prompt(self, path: str) -> ChatPromptTemplate:
-        """Load chat prompt from yaml file"""
-        
-        with open(path, 'r') as file:
-            config = yaml.safe_load(file)
-
-        config.pop("_type")
-
-        template = config.pop("template")
-
-        if not template:
-            msg = "Can't load chat prompt without template"
-            raise ValueError(msg)
-
-        messages = []
-        if isinstance(template, str):
-            messages.append(("human", template))
-
-        elif isinstance(template, list):
-            for item in template:
-                messages.append((item["role"], item["content"]))
-
-        return ChatPromptTemplate(messages=messages, **config)
 
     def create_vector_store(
         self,
@@ -259,43 +313,31 @@ class DocumentRetrieval:
                 },
             )
 
-    def get_qa_retrieval_chain(self) -> RetrievalQAChain:
+    def get_qa_retrieval_chain(self, conversational: bool = True) -> RetrievalQAChain:
         """
         Generate a qa_retrieval chain using a language model.
 
         This function uses a language model, specifically a SambaNova LLM, to generate a qa_retrieval chain
         based on the input vector store of text chunks.
-
+        
         Parameters:
-        vectorstore (Chroma): A Vector Store containing embeddings of text chunks used as context
-                            for generating the conversation chain.
-
+        conversational: wether or not to use memory and answer over reformulated query with history summary
+        
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
+        #TODO change default memory and set as true in app
         assert isinstance(
             self.retriever, VectorStoreRetriever
         ), f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
         retrievalQAChain = RetrievalQAChain(
             retriever=self.retriever,
             llm=self.llm,
-            qa_prompt=self.load_chat_prompt(os.path.join(repo_dir, self.prompts['qa_prompt'])),
+            qa_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['qa_prompt'])),
             rerank=self.retrieval_info['rerank'],
             final_k_retrieved_documents=self.retrieval_info['final_k_retrieved_documents'],
+            conversational=conversational,
+            summary_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['summary_prompt'])),
+            condensed_query_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['condensed_query_prompt']))
         )
         return retrievalQAChain
-
-    def get_conversational_qa_retrieval_chain(self) -> None:
-        """
-        Generate a conversational retrieval qa chain using a language model.
-
-        This function uses a language model, specifically a SambaNova LLM, to generate a conversational_qa_retrieval
-        chain based on the chat history and the relevant retrieved content from the input vector store of text chunks.
-
-        Parameters:
-        vectorstore (Chroma): A Vector Store containing embeddings of text chunks used as context
-                                        for generating the conversation chain.
-
-        Returns:
-        RetrievalQA: A chain ready for QA with memory
-        """

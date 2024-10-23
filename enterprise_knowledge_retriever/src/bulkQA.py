@@ -106,6 +106,7 @@ def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
             qa_prompt=load_prompt(os.path.join(kit_dir, documentRetrieval.prompts['qa_prompt'])),
             rerank=documentRetrieval.retrieval_info['rerank'],
             final_k_retrieved_documents=documentRetrieval.retrieval_info['final_k_retrieved_documents'],
+            conversational=False
         )
     else:
         raise FileNotFoundError(f'vector db path {vectordb_path} does not exist')

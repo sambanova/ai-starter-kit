@@ -18,8 +18,10 @@ retrieval:
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
     "final_k_retrieved_documents": 5
 
-pdf_only_mode: True  # Set to true for PDF-only lite parsing mode (use PyMuPdf instead of Sambaparse)
-prod_mode: False
-
 prompts: 
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"
+    "summary_prompt": "enterprise_knowledge_retriever/prompts/conversation-summary.yaml"
+    "condensed_query_prompt": "enterprise_knowledge_retriever/prompts/multiturn_custom_condensed_query.yaml"
+
+pdf_only_mode: True  # Set to true for PDF-only lite parsing mode (use PyMuPdf instead of Sambaparse)
+prod_mode: False
