@@ -20,6 +20,8 @@ sys.path.append(repo_dir)
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
 
+sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+
 
 class TimedRetrievalQAChain(RetrievalQAChain):
     # override call method to return times
@@ -87,7 +89,7 @@ def generate(
 
 
 def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
-    documentRetrieval = DocumentRetrieval()
+    documentRetrieval = DocumentRetrieval(sambanova_api_key=sambanova_api_key)
     tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
     if os.path.exists(vectordb_path):
         # load the vectorstore

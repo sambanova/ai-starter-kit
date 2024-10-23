@@ -9,10 +9,10 @@ import streamlit as st
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
-from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
 from langchain_experimental.utilities import PythonREPL
@@ -240,15 +240,12 @@ def query_db(query: str) -> str:
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-    llm = APIGateway.load_llm(
+    llm = APIGateway.load_chat(
         type=query_db_info['llm']['api'],
-        streaming=True,
-        coe=query_db_info['llm']['coe'],
         do_sample=query_db_info['llm']['do_sample'],
-        max_tokens_to_generate=query_db_info['llm']['max_tokens_to_generate'],
+        max_tokens=query_db_info['llm']['max_tokens'],
         temperature=query_db_info['llm']['temperature'],
-        select_expert=query_db_info['llm']['select_expert'],
-        process_prompt=False,
+        model=query_db_info['llm']['model'],
         sambanova_api_key=sambanova_api_key,
     )
 
@@ -262,36 +259,36 @@ def query_db(query: str) -> str:
     db_uri = f'sqlite:///{db_path}'
     db = SQLDatabase.from_uri(db_uri)
 
-    prompt = PromptTemplate.from_template(
-        """<|begin_of_text|><|start_header_id|>system<|end_header_id|> 
-        
-        {table_info}
-        
-        Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
-        Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
-        Do not assume ids in tables when inserting new values let them null or use the max id + 1
-        The queries must be formatted including backticks code symbols as follows:
-        do not include comments in the query
+    prompt = ChatPromptTemplate(
+        [
+            (
+                'system',
+                """
+            {table_info}
             
-        ```sql
-        query
-        ```
-        
-        Example format:
-        
-        ```sql
-        SELECT * FROM mainTable;
-        ```
-        
-        <|eot_id|><|start_header_id|>user<|end_header_id|>\
+            Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
+            Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
+            Do not assume ids in tables when inserting new values let them null or use the max id + 1
+            The queries must be formatted including backticks code symbols as follows:
+            do not include comments in the query
+                
+            ```sql
+            query
+            ```
             
-        {input}
-        <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""  # noqa E501
+            Example format:
+            
+            ```sql
+            SELECT * FROM mainTable;
+            ```""",  # noqa: E501
+            ),
+            ('human', """{input}"""),
+        ]
     )
 
     # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
     # and finally execute the sql finder method, retrieving only the filtered SQL query
-    query_generation_chain = prompt | llm | RunnableLambda(sql_finder)
+    query_generation_chain = prompt | llm | StrOutputParser() | RunnableLambda(sql_finder)
 
     table_info = db.get_table_info()
 
@@ -351,19 +348,17 @@ def translate(origin_language: str, final_language: str, input_sentence: str) ->
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-    llm = APIGateway.load_llm(
+    llm = APIGateway.load_chat(
         type=translate_info['llm']['api'],
-        streaming=True,
-        coe=translate_info['llm']['coe'],
         do_sample=translate_info['llm']['do_sample'],
-        max_tokens_to_generate=translate_info['llm']['max_tokens_to_generate'],
+        max_tokens=translate_info['llm']['max_tokens'],
         temperature=translate_info['llm']['temperature'],
-        select_expert=translate_info['llm']['select_expert'],
-        process_prompt=False,
+        model=translate_info['llm']['model'],
         sambanova_api_key=sambanova_api_key,
     )
+    chain = llm | StrOutputParser()
 
-    return llm.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
+    return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
 
 
 ## RAG tool
@@ -397,15 +392,12 @@ def rag(query: str) -> str:
         else:
             sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-    llm = APIGateway.load_llm(
+    llm = APIGateway.load_chat(
         type=rag_info['llm']['api'],
-        streaming=True,
-        coe=rag_info['llm']['coe'],
         do_sample=rag_info['llm']['do_sample'],
-        max_tokens_to_generate=rag_info['llm']['max_tokens_to_generate'],
+        max_tokens=rag_info['llm']['max_tokens'],
         temperature=rag_info['llm']['temperature'],
-        select_expert=rag_info['llm']['select_expert'],
-        process_prompt=False,
+        model=rag_info['llm']['model'],
         sambanova_api_key=sambanova_api_key,
     )
 
@@ -429,20 +421,18 @@ def rag(query: str) -> str:
         },
     )
     #  qa_chain definition
-    prompt = (
-        '<|begin_of_text|><|start_header_id|>system<|end_header_id|> '
-        'You are an assistant for question-answering tasks.\n'
-        'Use the following pieces of retrieved contexts to answer the question. '
-        'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
-        'say "Could not find information.". Provide a concise answer to the question. '
-        'Do not provide any information that is not asked for in the question. '
-        '<|eot_id|><|start_header_id|>user<|end_header_id|>\n'
-        'Question: {question} \n'
-        'Context: {context} \n'
-        '\n ------- \n'
-        'Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>'
-    )
-    retrieval_qa_prompt = PromptTemplate.from_template(prompt)
+    prompt = [
+        (
+            'system',
+            'You are an assistant for question-answering tasks.\n'
+            'Use the following pieces of retrieved contexts to answer the question. '
+            'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
+            'say "Could not find information.". Provide a concise answer to the question. '
+            'Do not provide any information that is not asked for in the question. ',
+        ),
+        ('human', 'Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'),
+    ]
+    retrieval_qa_prompt = ChatPromptTemplate(prompt)
     qa_chain = RetrievalQA.from_llm(
         llm=llm,
         retriever=retriever,
