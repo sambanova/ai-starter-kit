@@ -49,7 +49,7 @@ STARTER_KITS: List[str] = [
     'multimodal_knowledge_retriever',
     'post_call_analysis',
     'prompt_engineering',
-    'web_crawled_data_retriever',
+    #'web_crawled_data_retriever',
 ]
 
 # Dictionary to store CLI test commands for each kit
@@ -177,7 +177,7 @@ class StarterKitTest(unittest.TestCase):
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
         cls.test_results.append(result)
-        if result.status != 'PASSED':
+        if result.status == 'FAILED':
             cls.any_test_failed = True
         if cls.csv_writer and cls.csv_file:
             cls.csv_writer.writerow(

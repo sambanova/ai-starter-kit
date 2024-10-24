@@ -88,30 +88,37 @@ def save_credentials(api_key: str, additional_vars: Optional[Dict[str, Any]] = N
     return 'Credentials saved successfully!'
 
 
-def get_wandb_key() -> Optional[Any]:
+import netrc
+import os
+from typing import Optional
+
+def get_wandb_key() -> Optional[str]:
+    """
+    Retrieve the Weights & Biases API key from the environment or ~/.netrc,
+    and remove WANDB_API_KEY from the environment to prevent conflicts with weave.
+
+    Returns:
+        The API key if found, otherwise None.
+    """
     # Check for WANDB_API_KEY in environment variables
-    env_wandb_api_key = os.getenv('WANDB_API_KEY')
+    env_wandb_api_key = os.environ.pop('WANDB_API_KEY', None)
 
     # Check for WANDB_API_KEY in ~/.netrc
+    netrc_wandb_api_key = None
     try:
         netrc_path = os.path.expanduser('~/.netrc')
         netrc_data = netrc.netrc(netrc_path)
-        netrc_wandb_api_key = netrc_data.authenticators('api.wandb.ai')
+        auth = netrc_data.authenticators('api.wandb.ai')
+        if auth and len(auth) == 3:
+            netrc_wandb_api_key = auth[2]  # The password (API key) is the third element
     except (FileNotFoundError, netrc.NetrcParseError):
-        netrc_wandb_api_key = None
+        pass
 
-    # If both are set, handle the conflict
-    if env_wandb_api_key and netrc_wandb_api_key:
-        print('WANDB_API_KEY is set in both the environment and ~/.netrc. Prioritizing environment variable.')
-        # Optionally, you can choose to remove one of them, here we remove the env variable
-        del os.environ['WANDB_API_KEY']  # Remove from environment to prioritize ~/.netrc
-        return netrc_wandb_api_key[2] if netrc_wandb_api_key else None  # Return the key from .netrc
-
-    # Return the key from environment if available, otherwise from .netrc
+    # Return the API key from the environment variable if it was set
     if env_wandb_api_key:
         return env_wandb_api_key
     elif netrc_wandb_api_key:
-        return netrc_wandb_api_key[2] if netrc_wandb_api_key else None
+        return netrc_wandb_api_key
 
     # If neither is set, return None
     return None
