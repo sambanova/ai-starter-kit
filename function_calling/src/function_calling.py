@@ -8,12 +8,12 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
-from langchain_core.language_models.llms import LLM
-from langchain_core.messages.ai import AIMessage
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import BaseMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
 from pydantic import BaseModel, Field
@@ -122,7 +122,7 @@ class FunctionCallingLlm:
 
         return (llm_info, prod_mode)
 
-    def set_llm(self) -> LLM:
+    def set_llm(self) -> BaseChatModel:
         """
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
@@ -135,15 +135,11 @@ class FunctionCallingLlm:
             else:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        llm = APIGateway.load_llm(
+        llm = APIGateway.load_chat(
             type=self.llm_info['api'],
-            streaming=True,
-            coe=self.llm_info['coe'],
-            do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
-            process_prompt=False,
+            model=self.llm_info['model'],
             sambanova_api_key=sambanova_api_key,
         )
         return llm
@@ -224,7 +220,7 @@ class FunctionCallingLlm:
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
         return final_answer, tools_msgs
 
-    def jsonFinder(self, input_string: str) -> Optional[str]:
+    def jsonFinder(self, input_message: BaseMessage) -> Optional[str]:
         """
         find json structures ina  llm string response, if bad formatted using LLM to correct it
 
@@ -233,75 +229,33 @@ class FunctionCallingLlm:
         """
         json_pattern = re.compile(r'(\{.*\}|\[.*\])', re.DOTALL)
         # Find the first JSON structure in the string
-        json_match = json_pattern.search(input_string)
+        assert isinstance(input_message.content, str)
+        json_match = json_pattern.search(input_message.content)
         if json_match:
             json_str = json_match.group(1)
             try:
                 json.loads(json_str)
             except:
-                print(f'not parsable json: \n{json_str}\n  attempting to fix')
-                json_correction_prompt = """|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a json format corrector tool<|eot_id|><|start_header_id|>user<|end_header_id|>
-                fix the following non parsable json file: {json} 
-                <|eot_id|><|start_header_id|>assistant<|end_header_id|>
-                fixed json: """  # noqa E501
-                json_correction_prompt_template = PromptTemplate.from_template(json_correction_prompt)
-                json_correction_chain = json_correction_prompt_template | self.llm
+                json_correction_prompt = [
+                    ('system', """You are a json format corrector tool"""),
+                    (
+                        'human',
+                        """fix the following json file: {json}
+                     do not provide any explanation only return the fixed json""",
+                    ),
+                ]
+                json_correction_prompt_template = ChatPromptTemplate(json_correction_prompt)
+                json_correction_chain = json_correction_prompt_template | self.llm | StrOutputParser()
                 json_str = json_correction_chain.invoke({'json': json_str})
                 print(f'Corrected json: {json_str}')
         else:
             # will assume is a conversational response given is not json formatted
             print('response is not json formatted assuming conversational response')
-            dummy_json_response = [{'tool': 'ConversationalResponse', 'tool_input': {'response': input_string}}]
+            dummy_json_response = [
+                {'tool': 'ConversationalResponse', 'tool_input': {'response': input_message.content}}
+            ]
             json_str = json.dumps(dummy_json_response)
         return json_str
-
-    def msgs_to_llama3_str(self, msgs: List[Any]) -> str:
-        """
-        convert a list of langchain messages with roles to expected LLmana 3 input
-
-        Args:
-            msgs (list): The list of langchain messages.
-        """
-        formatted_msgs = []
-        for msg in msgs:
-            if msg.type == 'system':
-                sys_placeholder = (
-                    '<|begin_of_text|><|start_header_id|>system<|end_header_id|>system<|end_header_id|> {msg}'
-                )
-                formatted_msgs.append(sys_placeholder.format(msg=msg.content))
-            elif msg.type == 'human':
-                human_placeholder = '<|eot_id|><|start_header_id|>user<|end_header_id|>\nUser: {msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
-                formatted_msgs.append(human_placeholder.format(msg=msg.content))
-            elif msg.type == 'ai':
-                assistant_placeholder = '<|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant: {msg}'
-                formatted_msgs.append(assistant_placeholder.format(msg=msg.content))
-            elif msg.type == 'tool':
-                tool_placeholder = '<|eot_id|><|start_header_id|>tools<|end_header_id|>\n{msg} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssistant:'  # noqa E501
-                formatted_msgs.append(tool_placeholder.format(msg=msg.content))
-            else:
-                raise ValueError(f'Invalid message type: {msg.type}')
-        return '\n'.join(formatted_msgs)
-
-    def msgs_to_sncloud(self, msgs: List[Any]) -> str:
-        """
-        convert a list of langchain messages with roles to expected FastCoE input
-
-        Args:
-            msgs (list): The list of langchain messages.
-        """
-        formatted_msgs = []
-        for msg in msgs:
-            if msg.type == 'system':
-                formatted_msgs.append({'role': 'system', 'content': msg.content})
-            elif msg.type == 'human':
-                formatted_msgs.append({'role': 'user', 'content': msg.content})
-            elif msg.type == 'ai':
-                formatted_msgs.append({'role': 'assistant', 'content': msg.content})
-            elif msg.type == 'tool':
-                formatted_msgs.append({'role': 'tools', 'content': msg.content})
-            else:
-                raise ValueError(f'Invalid message type: {msg.type}')
-        return json.dumps(formatted_msgs)
 
     def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
         """
@@ -319,16 +273,11 @@ class FunctionCallingLlm:
 
         for i in range(max_it):
             json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
-
-            if self.llm_info['api'] == 'sncloud':
-                prompt = self.msgs_to_sncloud(history)
-            else:
-                prompt = self.msgs_to_llama3_str(history)
-            print(f'\n\n---\nCalling function calling LLM with prompt: \n{prompt}\n')
-            llm_response = self.llm.invoke(prompt)
+            print(f'\n\n---\nCalling function calling LLM with prompt: \n{history}\n')
+            llm_response = self.llm.invoke(history)
             print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
-            history.append(AIMessage(llm_response))
+            history.append(llm_response)
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
                 final_response = tools_msgs[0]

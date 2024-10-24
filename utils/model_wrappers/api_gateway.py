@@ -215,8 +215,8 @@ class APIGateway:
         temperature: Optional[float] = 0.0,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
-        do_sample: Optional[bool] = False,
-        process_prompt: Optional[bool] = False,
+        do_sample: Optional[bool] = None,
+        process_prompt: Optional[bool] = None,
         stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
         special_tokens: Optional[Dict[str, str]] = {
             'start': '<|begin_of_text|>',
