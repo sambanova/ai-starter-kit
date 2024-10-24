@@ -22,9 +22,7 @@ from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import requests
-
-# Import wandb
-import wandb
+import wandb  # Import wandb for Weights & Biases logging
 
 # Add the project root to the Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,16 +47,29 @@ STARTER_KITS: List[str] = [
     'multimodal_knowledge_retriever',
     'post_call_analysis',
     'prompt_engineering',
-    #'web_crawled_data_retriever',
+    'web_crawled_data_retriever',
 ]
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
-    'benchmarking': './run_synthetic_dataset.sh --num-requests 2',
+    'benchmarking': (
+        "python src/evaluator.py "
+        "--mode synthetic "
+        "--model-names 'llama3-8b llama3-70b llama3-405b' "
+        "--results-dir './data/results/llmperf' "
+        "--num-concurrent-requests 1 "
+        "--timeout 600 "
+        "--num-input-tokens 1000 "
+        "--num-output-tokens 1000 "
+        "--num-requests 2 "
+        "--llm-api sncloud"
+    ),
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
-    'multimodal_knowledge_retriever': 'python tests/multimodal_knowledge_retriever_test.py',
+    'multimodal_knowledge_retriever': (
+        'python tests/multimodal_knowledge_retriever_test.py'
+    ),
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
@@ -74,6 +85,8 @@ class TestEnvironment:
 
 
 class TestResult:
+    """Class to store individual test results."""
+
     def __init__(
         self,
         kit: str,
@@ -82,16 +95,20 @@ class TestResult:
         duration: float,
         message: str = '',
         date: str = '',
+        commit_hash: str = '',
     ) -> None:
         self.kit = kit
         self.test_name = test_name
         self.status = status
         self.duration = duration
         self.message = message
-        self.date = date  # Added date attribute
+        self.date = date
+        self.commit_hash = commit_hash
 
 
 class CsvWriter(Protocol):
+    """Protocol for CSV writer to ensure type checking."""
+
     def writerow(self, row: List[Any]) -> None:
         ...
 
@@ -100,6 +117,8 @@ class CsvWriter(Protocol):
 
 
 class StarterKitTest(unittest.TestCase):
+    """Main test class for the AI Starter Kits."""
+
     root_dir: ClassVar[str]
     env: ClassVar[str]
     run_streamlit: ClassVar[bool]
@@ -112,12 +131,17 @@ class StarterKitTest(unittest.TestCase):
     any_test_failed: ClassVar[bool] = False
     wandb_initialized: ClassVar[bool] = False
     wandb_run: ClassVar[Optional[wandb.sdk.wandb_run.Run]] = None
+    commit_hash: ClassVar[str] = ''
 
     @classmethod
     def setUpClass(cls: Type['StarterKitTest']) -> None:
+        """Set up the testing environment."""
         cls.root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         cls.is_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
         cls.setup_csv_writer()
+
+        # Retrieve the commit hash from the environment variable
+        cls.commit_hash = os.environ.get('GIT_COMMIT_HASH', 'unknown')
 
         # Wandb initialization
         wandb_key = get_wandb_key()
@@ -141,12 +165,15 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls: Type['StarterKitTest']) -> None:
+        """Clean up after all tests have run."""
         if cls.csv_file:
             cls.csv_file.close()
 
         if cls.wandb_initialized and cls.wandb_run:
             # Prepare data for wandb.Table
-            table = wandb.Table(columns=['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date'])
+            table = wandb.Table(columns=[
+                'Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'
+            ])
             for result in cls.test_results:
                 table.add_data(
                     result.kit,
@@ -155,6 +182,7 @@ class StarterKitTest(unittest.TestCase):
                     f'{result.duration:.2f}',
                     result.message,
                     result.date,
+                    result.commit_hash,
                 )
             # Log the table to wandb
             cls.wandb_run.log({'test_results': table})
@@ -163,6 +191,7 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def setup_csv_writer(cls: Type['StarterKitTest']) -> None:
+        """Set up the CSV writer for recording test results."""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         results_dir = '/app/test_results' if cls.is_docker else os.path.join(cls.root_dir, 'test_results')
         os.makedirs(results_dir, exist_ok=True)
@@ -170,40 +199,45 @@ class StarterKitTest(unittest.TestCase):
 
         cls.csv_file = open(csv_filename, 'w', newline='')
         cls.csv_writer = csv.writer(cls.csv_file)
-        # Updated CSV header to include 'Date'
-        cls.csv_writer.writerow(['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date'])
+        # Updated CSV header to include 'Date' and 'Commit Hash'
+        cls.csv_writer.writerow([
+            'Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'
+        ])
         logging.info(f'Test results will be saved to {csv_filename}')
 
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
+        """Write a test result to the CSV file and store it."""
         cls.test_results.append(result)
-        if result.status == 'FAILED':
+        if result.status != 'PASSED':
             cls.any_test_failed = True
         if cls.csv_writer and cls.csv_file:
-            cls.csv_writer.writerow(
-                [
-                    result.kit,
-                    result.test_name,
-                    result.status,
-                    f'{result.duration:.2f}',
-                    result.message,
-                    result.date,  # Write the date to the CSV
-                ]
-            )
+            cls.csv_writer.writerow([
+                result.kit,
+                result.test_name,
+                result.status,
+                f'{result.duration:.2f}',
+                result.message,
+                result.date,
+                result.commit_hash,
+            ])
             cls.csv_file.flush()  # Ensure the result is written immediately
 
     @classmethod
     def run_make_clean(cls: Type['StarterKitTest']) -> None:
+        """Run 'make clean' to clean the environment."""
         logging.info('Running make clean...')
         subprocess.run(['make', 'clean'], cwd=cls.root_dir, check=True, capture_output=False)
 
     @classmethod
     def run_make_all(cls: Type['StarterKitTest']) -> None:
+        """Run 'make all' to set up the environment."""
         logging.info('Running make all...')
         subprocess.run(['make', 'all'], cwd=cls.root_dir, check=True, capture_output=False)
 
     @classmethod
     def activate_base_venv(cls: Type['StarterKitTest']) -> None:
+        """Activate the base virtual environment."""
         base_venv_path = os.path.join(cls.root_dir, '.venv')
         if not os.path.exists(base_venv_path):
             logging.info('Base virtual environment not found. Creating it...')
@@ -222,6 +256,7 @@ class StarterKitTest(unittest.TestCase):
         logging.info(f'Activated base virtual environment at {base_venv_path}')
 
     def run_streamlit_test(self, kit: str) -> None:
+        """Run the Streamlit test for a given starter kit."""
         if not self.run_streamlit:
             logging.info(f'Skipping Streamlit test for {kit}')
             return
@@ -249,10 +284,19 @@ class StarterKitTest(unittest.TestCase):
             process.wait()
 
         duration = time.time() - start_time
-        result = TestResult(kit, 'Streamlit', status, duration, message)
+        result = TestResult(
+            kit,
+            'Streamlit',
+            status,
+            duration,
+            message,
+            date=datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3],
+            commit_hash=self.commit_hash,
+        )
         self.write_test_result(result)
 
     def _check_streamlit_accessibility(self, kit: str) -> None:
+        """Check if the Streamlit app is accessible."""
         logging.info('Checking Streamlit accessibility...')
         for attempt in range(3):
             try:
@@ -268,6 +312,7 @@ class StarterKitTest(unittest.TestCase):
         self.fail(f'Streamlit app for {kit} failed to start after 3 attempts')
 
     def run_cli_test(self, kit: str) -> None:
+        """Run the CLI test for a given starter kit."""
         if not self.run_cli:
             logging.info(f'Skipping CLI test for {kit}')
             return
@@ -321,7 +366,8 @@ class StarterKitTest(unittest.TestCase):
                     'FAILED',
                     time.time() - start_time,
                     f'Return code: {return_code}\n{output}',
-                    current_time,
+                    date=current_time,
+                    commit_hash=self.commit_hash,
                 )
                 self.write_test_result(result)
 
@@ -335,11 +381,13 @@ class StarterKitTest(unittest.TestCase):
                 'TIMEOUT',
                 CLI_COMMAND_TIMEOUT,
                 f'Timed out after {CLI_COMMAND_TIMEOUT} seconds',
-                current_time,
+                date=current_time,
+                commit_hash=self.commit_hash,
             )
             self.write_test_result(result)
 
     def parse_subtest_results(self, kit: str, output: str, total_duration: float) -> None:
+        """Parse subtest results from CLI output."""
         detailed_tests_found = False  # Flag to track if detailed tests are found
         # Split output into lines
         lines = output.strip().split('\n')
@@ -368,7 +416,15 @@ class StarterKitTest(unittest.TestCase):
                 # Determine status based on log level
                 status = 'PASSED' if log_level == 'INFO' else 'FAILED'
 
-                result = TestResult(kit, test_name, status, 0.0, '', date_str)
+                result = TestResult(
+                    kit,
+                    test_name,
+                    status,
+                    0.0,
+                    '',
+                    date_str,
+                    commit_hash=self.commit_hash,
+                )
                 self.write_test_result(result)
                 detailed_tests_found = True  # Set flag to True since we found a detailed test
             else:
@@ -383,7 +439,15 @@ class StarterKitTest(unittest.TestCase):
             if all_passed_pattern.search(output):
                 # Write general result with status "PASSED" and current timestamp
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
-                result = TestResult(kit, 'CLI', 'PASSED', total_duration, 'All CLI tests passed', current_time)
+                result = TestResult(
+                    kit,
+                    'CLI',
+                    'PASSED',
+                    total_duration,
+                    'All CLI tests passed',
+                    current_time,
+                    commit_hash=self.commit_hash,
+                )
                 self.write_test_result(result)
             else:
                 # No detailed tests and no "All CLI tests passed" message
@@ -395,12 +459,14 @@ class StarterKitTest(unittest.TestCase):
                     total_duration,
                     'No detailed test results found',
                     current_time,
+                    commit_hash=self.commit_hash,
                 )
                 self.write_test_result(result)
 
 
 # Move create_test_methods outside the class
 def create_test_methods() -> None:
+    """Dynamically create test methods for each starter kit."""
     for kit in STARTER_KITS:
 
         def test_kit(self: Any, kit: str = kit) -> None:

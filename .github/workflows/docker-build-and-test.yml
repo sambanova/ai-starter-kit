@@ -7,15 +7,15 @@ on:
         description: 'Run tests'
         required: false
   push:
-    branches: [ "improvement/docker-testing-workflow-branch" ]  # Isolated branch name for testing to ensure we don't affect main
+    branches: [ "improvement/docker-testing-workflow-branch" ]  # Isolated branch for testing
 
 jobs:
   build_and_test:
-    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }} #TODO: Remove
+    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE: aisk-unit-tests  # Updated Docker image name
-      DOCKER_TAG: ${{ github.sha }}
+      DOCKER_IMAGE: aisk-unit-tests  # Docker image name
+      DOCKER_TAG: ${{ github.sha }}   # Git commit hash as the Docker tag
       PROD_MODE: false
       TEST_MODE: true
       # Enable debug logging
@@ -87,6 +87,7 @@ jobs:
             -e DOCKER_ENV=true \
             -e PROD_MODE=$PROD_MODE \
             -e TEST_MODE=$TEST_MODE \
+            -e GIT_COMMIT_HASH=${{ github.sha }} \
             -v "$(pwd)/test_results:/app/test_results" \
             -w /app \
             "$IMAGE_NAME" \
@@ -108,4 +109,3 @@ jobs:
           CLIP_BASE_URL: ${{ secrets.CLIP_BASE_URL }}
           CLIP_API_KEY: ${{ secrets.CLIP_API_KEY }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-          
