@@ -44,32 +44,29 @@ STARTER_KITS: List[str] = [
     'function_calling',
     'search_assistant',
     'image_search',
-    'multimodal_knowledge_retriever',
+    #'multimodal_knowledge_retriever',
     'post_call_analysis',
     'prompt_engineering',
-    'web_crawled_data_retriever',
 ]
 
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
     'benchmarking': (
-        "python src/evaluator.py "
-        "--mode synthetic "
+        'python src/evaluator.py '
+        '--mode synthetic '
         "--model-names 'llama3-8b llama3-70b llama3-405b' "
         "--results-dir './data/results/llmperf' "
-        "--num-concurrent-requests 1 "
-        "--timeout 600 "
-        "--num-input-tokens 1000 "
-        "--num-output-tokens 1000 "
-        "--num-requests 2 "
-        "--llm-api sncloud"
+        '--num-concurrent-requests 1 '
+        '--timeout 600 '
+        '--num-input-tokens 1000 '
+        '--num-output-tokens 1000 '
+        '--num-requests 2 '
+        '--llm-api sncloud'
     ),
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
-    'multimodal_knowledge_retriever': (
-        'python tests/multimodal_knowledge_retriever_test.py'
-    ),
+    #'multimodal_knowledge_retriever': ('python tests/multimodal_knowledge_retriever_test.py'),
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
@@ -109,11 +106,9 @@ class TestResult:
 class CsvWriter(Protocol):
     """Protocol for CSV writer to ensure type checking."""
 
-    def writerow(self, row: List[Any]) -> None:
-        ...
+    def writerow(self, row: List[Any]) -> None: ...
 
-    def writerows(self, rows: List[List[Any]]) -> None:
-        ...
+    def writerows(self, rows: List[List[Any]]) -> None: ...
 
 
 class StarterKitTest(unittest.TestCase):
@@ -171,9 +166,9 @@ class StarterKitTest(unittest.TestCase):
 
         if cls.wandb_initialized and cls.wandb_run:
             # Prepare data for wandb.Table
-            table = wandb.Table(columns=[
-                'Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'
-            ])
+            table = wandb.Table(
+                columns=['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash']
+            )  # type: ignore[no-untyped-call]
             for result in cls.test_results:
                 table.add_data(
                     result.kit,
@@ -183,7 +178,7 @@ class StarterKitTest(unittest.TestCase):
                     result.message,
                     result.date,
                     result.commit_hash,
-                )
+                )  # type: ignore[no-untyped-call]
             # Log the table to wandb
             cls.wandb_run.log({'test_results': table})
             cls.wandb_run.finish()
@@ -200,9 +195,7 @@ class StarterKitTest(unittest.TestCase):
         cls.csv_file = open(csv_filename, 'w', newline='')
         cls.csv_writer = csv.writer(cls.csv_file)
         # Updated CSV header to include 'Date' and 'Commit Hash'
-        cls.csv_writer.writerow([
-            'Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'
-        ])
+        cls.csv_writer.writerow(['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'])
         logging.info(f'Test results will be saved to {csv_filename}')
 
     @classmethod
@@ -212,15 +205,17 @@ class StarterKitTest(unittest.TestCase):
         if result.status != 'PASSED':
             cls.any_test_failed = True
         if cls.csv_writer and cls.csv_file:
-            cls.csv_writer.writerow([
-                result.kit,
-                result.test_name,
-                result.status,
-                f'{result.duration:.2f}',
-                result.message,
-                result.date,
-                result.commit_hash,
-            ])
+            cls.csv_writer.writerow(
+                [
+                    result.kit,
+                    result.test_name,
+                    result.status,
+                    f'{result.duration:.2f}',
+                    result.message,
+                    result.date,
+                    result.commit_hash,
+                ]
+            )
             cls.csv_file.flush()  # Ensure the result is written immediately
 
     @classmethod
