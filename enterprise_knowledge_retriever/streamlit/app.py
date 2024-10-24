@@ -241,7 +241,9 @@ def main() -> None:
                             )
                             st.session_state.vectorstore = vectorstore
                             st.session_state.document_retrieval.init_retriever(vectorstore)
-                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                                conversational=True
+                            )
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
@@ -263,7 +265,7 @@ def main() -> None:
                                 st.session_state.vectorstore = vectorstore
                                 st.session_state.document_retrieval.init_retriever(vectorstore)
                                 st.session_state.conversation = (
-                                    st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                    st.session_state.document_retrieval.get_qa_retrieval_chain(conversational=True)
                                 )
                                 st.toast(
                                     f"""File uploaded and saved to {save_location} with collection
@@ -300,7 +302,7 @@ def main() -> None:
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)
                                     st.session_state.conversation = (
-                                        st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                        st.session_state.document_retrieval.get_qa_retrieval_chain(conversational=True)
                                     )
                                     st.session_state.input_disabled = False
                                 except Exception as e:
@@ -319,7 +321,12 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    if not st.session_state.input_disabled:
+                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                            conversational=True
+                        )
                     st.toast('Conversation reset. The next response will clear the history on the screen')
+                    logging.info('Conversation reset')
 
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:

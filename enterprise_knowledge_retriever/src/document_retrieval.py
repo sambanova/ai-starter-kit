@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 import nltk
@@ -10,11 +11,10 @@ from dotenv import load_dotenv
 from langchain.chains.base import Chain
 from langchain.docstore.document import Document
 from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
-from langchain_core.language_models import LanguageModelLike
-from langchain_core.language_models.llms import LLM
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
@@ -45,6 +45,7 @@ logging.basicConfig(
 # Create a logger object
 logger = logging.getLogger(__name__)
 
+
 # Handle the WANDB_API_KEY resolution before importing weave
 wandb_api_key = get_wandb_key()
 
@@ -55,7 +56,7 @@ if wandb_api_key:
     # Initialize Weave with your project name
     weave.init('sambanova_ekr')
 else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
+    logger.info('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
@@ -63,13 +64,13 @@ nltk.download('averaged_perceptron_tagger_eng')
 
 def load_chat_prompt(path: str) -> ChatPromptTemplate:
     """Load chat prompt from yaml file"""
-    
+
     with open(path, 'r') as file:
         config = yaml.safe_load(file)
 
-    config.pop("_type")
+    config.pop('_type')
 
-    template = config.pop("template")
+    template = config.pop('template')
 
     if not template:
         msg = "Can't load chat prompt without template"
@@ -77,20 +78,21 @@ def load_chat_prompt(path: str) -> ChatPromptTemplate:
 
     messages = []
     if isinstance(template, str):
-        messages.append(("human", template))
+        messages.append(('human', template))
 
     elif isinstance(template, list):
         for item in template:
-            messages.append((item["role"], item["content"]))
+            messages.append((item['role'], item['content']))
 
     return ChatPromptTemplate(messages=messages, **config)
+
 
 class RetrievalQAChain(Chain):
     """class for question-answering."""
 
     retriever: BaseRetriever
     rerank: bool = True
-    llm: LanguageModelLike
+    llm: BaseChatModel
     qa_prompt: ChatPromptTemplate
     final_k_retrieved_documents: int = 3
     conversational: bool = False
@@ -111,7 +113,7 @@ class RetrievalQAChain(Chain):
         :meta private:
         """
         return ['answer', 'source_documents']
-    
+
     def __init__(self, **kwargs: Any) -> None:
         """init and validate environment variables"""
         super().__init__(**kwargs)
@@ -153,19 +155,24 @@ class RetrievalQAChain(Chain):
         docs_sorted = docs_sorted[:final_k]
 
         return docs_sorted
-    
+
     def init_memory(self) -> None:
         """
         Initialize conversation summary memory for the conversation
         """
+        assert self.summary_prompt is not None
         self.memory = ConversationSummaryMemory(
             llm=self.llm,
-            buffer='The human and AI greet each other to start a conversation.',
+            buffer='The conversation just started',
             memory_key='chat_history',
             return_messages=True,
             output_key='answer',
             prompt=self.summary_prompt,
         )
+
+    def update_memory(self, query: str, response: str) -> None:
+        assert self.memory is not None
+        self.memory.save_context(inputs={'input': query}, outputs={'answer': response})
 
     def reformulate_query_with_history(self, query: str) -> str:
         """
@@ -179,13 +186,13 @@ class RetrievalQAChain(Chain):
         """
         if self.memory is None:
             self.init_memory()
+        assert self.condensed_query_prompt is not None
         custom_condensed_question_prompt = self.condensed_query_prompt
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
         logger.info(f'HISTORY: {history}')
-        reformulated_query = self.llm.invoke(
-            custom_condensed_question_prompt.format(chat_history=history, question=query)
-        )
+        reformulation_chain = custom_condensed_question_prompt | self.llm | StrOutputParser()
+        reformulated_query = reformulation_chain.invoke(input={'chat_history': history, 'question': query})
         return reformulated_query
 
     def _call(
@@ -193,15 +200,27 @@ class RetrievalQAChain(Chain):
         inputs: Dict[str, Any],
         run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Dict[str, Any]:
-        #TODO: add memory management
         qa_chain = self.qa_prompt | self.llm | StrOutputParser()
-        response: Dict[str, Any] = {}
-        documents = self.retriever.invoke(inputs['question'])
+
+        logger.info(f'USER QUERY: {inputs["question"]}')
+
+        if self.conversational:
+            query = self.reformulate_query_with_history(inputs['question'])
+            logger.info(f'REFORMULATED QUERY: {query}')
+        else:
+            query = inputs['question']
+
+        documents = self.retriever.invoke(query)
         if self.rerank:
-            documents = self.rerank_docs(inputs['question'], documents, self.final_k_retrieved_documents)
+            documents = self.rerank_docs(query, documents, self.final_k_retrieved_documents)
         docs = self._format_docs(documents)
-        response['answer'] = qa_chain.invoke({'question': inputs['question'], 'context': docs})
+        response: Dict[str, Any] = {}
+        response['answer'] = qa_chain.invoke({'question': query, 'context': docs})
         response['source_documents'] = documents
+
+        if self.conversational:
+            threading.Thread(target=self.update_memory, args=(inputs['question'], response['answer'])).start()
+
         return response
 
 
@@ -209,17 +228,17 @@ class DocumentRetrieval:
     def __init__(self, sambanova_api_key: str) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
-        self.llm_info = config_info[0]
-        self.embedding_model_info = config_info[1]
-        self.retrieval_info = config_info[2]
-        self.prompts = config_info[3]
-        self.prod_mode = config_info[4]
-        self.pdf_only_mode = config_info[5]
+        self.llm_info: Dict[str, Any] = config_info[0]
+        self.embedding_model_info: Dict[str, Any] = config_info[1]
+        self.retrieval_info: Dict[str, Any] = config_info[2]
+        self.prompts: Dict[str, Any] = config_info[3]
+        self.prod_mode: bool = config_info[4]
+        self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
         self.sambanova_api_key = sambanova_api_key
         self.llm = self.set_llm()
 
-    def get_config_info(self) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
+    def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
         """
         Loads json config file
         """
@@ -235,7 +254,7 @@ class DocumentRetrieval:
 
         return llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
-    def set_llm(self) -> LLM:
+    def set_llm(self) -> BaseChatModel:
         llm = APIGateway.load_chat(
             type=self.llm_info['api'],
             do_sample=self.llm_info['do_sample'],
@@ -284,14 +303,14 @@ class DocumentRetrieval:
         output_db: Optional[str] = None,
         collection_name: Optional[str] = None,
     ) -> Any:
-        print(f'Collection name is {collection_name}')
+        logger.info(f'Created collection, name is {collection_name}')
         vectorstore = self.vectordb.create_vector_store(
             text_chunks, embeddings, output_db=output_db, collection_name=collection_name, db_type='chroma'
         )
         return vectorstore
 
     def load_vdb(self, db_path: str, embeddings: Any, collection_name: Optional[str] = None) -> Any:
-        print(f'Loading collection name is {collection_name}')
+        logger.info(f'Loading collection, name is {collection_name}')
         vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type='chroma', collection_name=collection_name)
         return vectorstore
 
@@ -313,20 +332,19 @@ class DocumentRetrieval:
                 },
             )
 
-    def get_qa_retrieval_chain(self, conversational: bool = True) -> RetrievalQAChain:
+    def get_qa_retrieval_chain(self, conversational: bool = False) -> RetrievalQAChain:
         """
         Generate a qa_retrieval chain using a language model.
 
         This function uses a language model, specifically a SambaNova LLM, to generate a qa_retrieval chain
         based on the input vector store of text chunks.
-        
+
         Parameters:
         conversational: wether or not to use memory and answer over reformulated query with history summary
-        
+
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
-        #TODO change default memory and set as true in app
         assert isinstance(
             self.retriever, VectorStoreRetriever
         ), f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
@@ -338,6 +356,6 @@ class DocumentRetrieval:
             final_k_retrieved_documents=self.retrieval_info['final_k_retrieved_documents'],
             conversational=conversational,
             summary_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['summary_prompt'])),
-            condensed_query_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['condensed_query_prompt']))
+            condensed_query_prompt=load_chat_prompt(os.path.join(repo_dir, self.prompts['condensed_query_prompt'])),
         )
         return retrievalQAChain
