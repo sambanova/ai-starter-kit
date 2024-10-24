@@ -23,9 +23,15 @@ from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import requests
 
+# Wandb imports
+import wandb
+
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, project_root)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+repo_dir = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(repo_dir)
+
+from utils.visual.env_utils import get_wandb_key  # Import get_wandb_key
 
 # Timeout variables (in seconds)
 STREAMLIT_START_TIMEOUT = 25
@@ -39,7 +45,6 @@ STARTER_KITS: List[str] = [
     'financial_assistant',
     'function_calling',
     'search_assistant',
-    'benchmarking',
     'image_search',
     'multimodal_knowledge_retriever',
     'post_call_analysis',
@@ -101,12 +106,28 @@ class StarterKitTest(unittest.TestCase):
     recreate_venv: ClassVar[bool]
     csv_writer: ClassVar[Optional[CsvWriter]]
     csv_file: ClassVar[Optional[Any]]
+    test_results: ClassVar[List[TestResult]] = []
+    any_test_failed: ClassVar[bool] = False
+    wandb_initialized: ClassVar[bool] = False
+    wandb_run: ClassVar[Optional[wandb.sdk.wandb_run.Run]] = None
 
     @classmethod
     def setUpClass(cls: Type['StarterKitTest']) -> None:
         cls.root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         cls.is_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
         cls.setup_csv_writer()
+
+        # Wandb initialization
+        wandb_key = get_wandb_key()
+        if wandb_key:
+            wandb.login(key=wandb_key)
+            cls.wandb_initialized = True
+            cls.wandb_run = wandb.init(project='AISK_E2ETesting')
+            logging.info('Weights & Biases initialized.')
+        else:
+            cls.wandb_initialized = False
+            cls.wandb_run = None
+            logging.info('Weights & Biases not initialized; wandb key not found.')
 
         if not cls.is_docker:
             cls.activate_base_venv()
@@ -119,6 +140,23 @@ class StarterKitTest(unittest.TestCase):
     def tearDownClass(cls: Type['StarterKitTest']) -> None:
         if cls.csv_file:
             cls.csv_file.close()
+
+        if cls.wandb_initialized and cls.wandb_run:
+            # Prepare data for wandb.Table
+            table = wandb.Table(columns=['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date'])
+            for result in cls.test_results:
+                table.add_data(
+                    result.kit,
+                    result.test_name,
+                    result.status,
+                    f'{result.duration:.2f}',
+                    result.message,
+                    result.date,
+                )
+            # Log the table to wandb
+            wandb.log({'test_results': table})
+            cls.wandb_run.finish()
+            logging.info('Test results logged to Weights & Biases.')
 
     @classmethod
     def setup_csv_writer(cls: Type['StarterKitTest']) -> None:
@@ -135,6 +173,9 @@ class StarterKitTest(unittest.TestCase):
 
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
+        cls.test_results.append(result)
+        if result.status != 'PASSED':
+            cls.any_test_failed = True
         if cls.csv_writer and cls.csv_file:
             cls.csv_writer.writerow(
                 [
@@ -269,20 +310,28 @@ class StarterKitTest(unittest.TestCase):
             else:
                 logging.error(f'CLI test for {kit} failed. Return code: {return_code}')
                 logging.error(f'Error output:\n{output}')
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
                 result = TestResult(
-                    kit, 'CLI', 'FAILED', time.time() - start_time, f'Return code: {return_code}\n{output}'
+                    kit,
+                    'CLI',
+                    'FAILED',
+                    time.time() - start_time,
+                    f'Return code: {return_code}\n{output}',
+                    current_time,
                 )
                 self.write_test_result(result)
 
         except subprocess.TimeoutExpired:
             process.kill()
             logging.error(f'CLI test for {kit} timed out after {CLI_COMMAND_TIMEOUT} seconds')
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
             result = TestResult(
                 kit,
                 'CLI',
                 'TIMEOUT',
                 CLI_COMMAND_TIMEOUT,
                 f'Timed out after {CLI_COMMAND_TIMEOUT} seconds',
+                current_time,
             )
             self.write_test_result(result)
 
@@ -312,8 +361,8 @@ class StarterKitTest(unittest.TestCase):
 
                 test_name = message
 
-                # Assuming status is 'PASSED' unless indicated otherwise
-                status = 'PASSED'
+                # Determine status based on log level
+                status = 'PASSED' if log_level == 'INFO' else 'FAILED'
 
                 result = TestResult(kit, test_name, status, 0.0, '', date_str)
                 self.write_test_result(result)
@@ -338,7 +387,7 @@ class StarterKitTest(unittest.TestCase):
                 result = TestResult(
                     kit,
                     'CLI',
-                    'UNKNOWN',
+                    'FAILED',
                     total_duration,
                     'No detailed test results found',
                     current_time,
@@ -388,3 +437,7 @@ if __name__ == '__main__':
 
     suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
     unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)
+
+    # Exit with a non-zero code if any tests failed
+    if StarterKitTest.any_test_failed:
+        sys.exit(1)

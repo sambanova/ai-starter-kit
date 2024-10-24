@@ -70,6 +70,7 @@ jobs:
             echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
             echo "CLIP_BASE_URL=${{ secrets.CLIP_BASE_URL }}"
             echo "CLIP_API_KEY=${{ secrets.CLIP_API_KEY }}"
+            echo "WANDB_API_KEY=${{ secrets.WANDB_API_KEY }}"
           } >> .env
           set -x  # Re-enable command echoing
         shell: bash
@@ -106,3 +107,5 @@ jobs:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           CLIP_BASE_URL: ${{ secrets.CLIP_BASE_URL }}
           CLIP_API_KEY: ${{ secrets.CLIP_API_KEY }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+          
