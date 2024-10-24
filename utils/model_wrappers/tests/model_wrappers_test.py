@@ -18,7 +18,7 @@ import sys
 # from time import sleep
 import time
 import unittest
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Tuple, Type
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,13 +32,16 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '../..'))  # absolute path for 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from pydantic import ValidationError
-from utils.model_wrappers.api_gateway import APIGateway
-from langchain_core.language_models.chat_models import BaseChatModel
-from dotenv import load_dotenv
 import yaml
+from dotenv import load_dotenv
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.llms import LLM
+from pydantic import ValidationError
+
+from utils.model_wrappers.api_gateway import APIGateway
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
+
 
 def load_test_config(config_path: str) -> Any:
     with open(config_path, 'r') as file:
@@ -47,71 +50,124 @@ def load_test_config(config_path: str) -> Any:
 
 test_config = load_test_config(kit_dir + '/tests/test_config.yaml')
 interface = APIGateway
-bad_format_chat_model_params = test_config["bad_format_chat_model"]
-sn_chat_model_params = test_config["sn_chat_model"]
-ss_chat_model_params = test_config["sambastudio_chat_model"]
 
-sn_chat_model = interface.load_chat(
-    **sn_chat_model_params
-)
+bad_format_chat_model_params = test_config['bad_format_chat_model']
 
-ss_chat_model = interface.load_chat(
-    **ss_chat_model_params
-)
 
 class ModelWrapperTestCase(unittest.TestCase):
     time_start: float
+    sn_llm_params: Dict[str, Any]
+    sn_llm_params_output: Dict[str, Any]
+    ss_llm_params: Dict[str, Any]
+    sn_chat_model_params: Dict[str, Any]
+    sn_chat_model_params_output: Dict[str, Any]
+    ss_chat_model_params: Dict[str, Any]
+    ss_chat_model_params_output: Dict[str, Any]
+    sn_llm_model: LLM
+    ss_llm_model: LLM
     sn_chat_model: BaseChatModel
+    ss_chat_model: BaseChatModel
 
     @classmethod
     def setUpClass(cls: Type['ModelWrapperTestCase']) -> None:
         cls.time_start = time.time()
-        cls.sn_chat_model = sn_chat_model
-        cls.ss_chat_model = ss_chat_model
+        (
+            cls.sn_llm_params,
+            cls.sn_llm_params_output,
+            cls.ss_llm_params,
+            cls.sn_chat_model_params,
+            cls.sn_chat_model_params_output,
+            cls.ss_chat_model_params,
+            cls.ss_chat_model_params_output,
+        ) = cls.get_params()
+        cls.sn_llm_model, cls.ss_llm_model = cls.init_llm_models()
+        cls.sn_chat_model, cls.ss_chat_model = cls.init_chat_models()
+
+    @classmethod
+    def get_params(cls: Type['ModelWrapperTestCase']) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any],
+     Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+        sn_llm_params = test_config['sn_llm']
+        sn_llm_params_output = sn_llm_params.copy()
+        sn_llm_params_output.pop('type')
+        sn_llm_params_output['stop'] = ['<|eot_id|>']
+        sn_llm_params_output['_type'] = 'SambaNova Cloud'
+
+        ss_llm_params = test_config['ss_llm']
+
+        sn_chat_model_params = test_config['sn_chat_model']
+        sn_chat_model_params_output = sn_chat_model_params.copy()
+        sn_chat_model_params_output.pop('type')
+        sn_chat_model_params_output['_type'] = 'sambanovacloud-chatmodel'
+
+        ss_chat_model_params = test_config['sambastudio_chat_model']
+        ss_chat_model_params_output = ss_chat_model_params.copy()
+        ss_chat_model_params_output.pop('type')
+        ss_chat_model_params_output['_type'] = 'sambastudio-chatmodel'
+
+        return (
+            sn_llm_params,
+            sn_llm_params_output,
+            ss_llm_params,
+            sn_chat_model_params,
+            sn_chat_model_params_output,
+            ss_chat_model_params,
+            ss_chat_model_params_output,
+        )
+
+    @classmethod
+    def init_llm_models(cls: Type['ModelWrapperTestCase']) -> Tuple[LLM, LLM]:
+        sn_llm_model = interface.load_llm(**cls.sn_llm_params)
+
+        ss_llm_model = interface.load_llm(**cls.ss_llm_params)
+        return sn_llm_model, ss_llm_model
+
+    @classmethod
+    def init_chat_models(cls: Type['ModelWrapperTestCase']) -> Tuple[BaseChatModel, BaseChatModel]:
+        sn_chat_model = interface.load_chat(**cls.sn_chat_model_params)
+
+        ss_chat_model = interface.load_chat(**cls.ss_chat_model_params)
+        return sn_chat_model, ss_chat_model
+
+    def test_llm_model_creation(self) -> None:
+        self.assertIsNotNone(self.sn_llm_model, 'llm model class could not be created')
+        self.assertIsNotNone(self.ss_llm_model, 'llm model class could not be created')
 
     def test_chat_model_creation(self) -> None:
         self.assertIsNotNone(self.sn_chat_model, 'chat model class could not be created')
         self.assertIsNotNone(self.ss_chat_model, 'chat model class could not be created')
 
+    def test_llm_model_params(self) -> None:
+        self.assertEqual(self.sn_llm_model.dict(), self.sn_llm_params_output)
+
     def test_chat_model_params(self) -> None:
-        self.assertEqual(self.sn_chat_model.dict(), {"model": "llama3-8b", "streaming": False, "max_tokens": 1024,
-                                                "temperature": 0.7, "top_k": 1, "top_p": 0.01,
-                                                "stream_options": {"include_usage": True},
-                                                "_type": "sambanovacloud-chatmodel"
-                                            })
-    
+        self.assertEqual(self.sn_chat_model.dict(), self.sn_chat_model_params_output)
+        self.assertEqual(self.ss_chat_model.dict(), self.ss_chat_model_params_output)
+
     def test_chat_model_validation(self) -> None:
-        with self.assertRaises(ValidationError) as context:
-            interface.load_chat(**bad_format_chat_model_params[0])
-        self.assertIn("Input should be a valid string", str(context.exception))
+        for i in bad_format_chat_model_params.get('string'):
+            with self.assertRaises(ValidationError) as context:
+                interface.load_chat(**i)
+            self.assertIn('Input should be a valid string', str(context.exception))
 
-        with self.assertRaises(ValidationError) as context:
-            interface.load_chat(**bad_format_chat_model_params[1])
-        self.assertIn("Input should be a valid boolean", str(context.exception))
+        for i in bad_format_chat_model_params.get('boolean'):
+            with self.assertRaises(ValidationError) as context:
+                interface.load_chat(**i)
+            self.assertIn('Input should be a valid boolean', str(context.exception))
 
-        with self.assertRaises(ValidationError) as context:
-            interface.load_chat(**bad_format_chat_model_params[2])
-        self.assertIn("Input should be a valid integer", str(context.exception))
+        for i in bad_format_chat_model_params.get('integer'):
+            with self.assertRaises(ValidationError) as context:
+                interface.load_chat(**i)
+            self.assertIn('Input should be a valid integer', str(context.exception))
 
-        with self.assertRaises(ValidationError) as context:
-            interface.load_chat(**bad_format_chat_model_params[3])
-        self.assertIn("Input should be a valid number", str(context.exception))
+        for i in bad_format_chat_model_params.get('number'):
+            with self.assertRaises(ValidationError) as context:
+                interface.load_chat(**i)
+            self.assertIn('Input should be a valid number', str(context.exception))
 
-        with self.assertRaises(ValidationError) as context:
-            interface.load_chat(**bad_format_chat_model_params[4])
-        self.assertIn("Input should be a valid dictionary", str(context.exception))
-
-    def test_chat_model_param(self) -> None:
-        test_cases = [
-            {"type":"sncloud", "model": "foo", "top_k": 1, "top_p": 0.01},
-            {"type":"sambastudio", "model": "foo", "top_k": 1, "top_p": 0.01, "temperature": 0.0},
-        ]
-
-        for case in test_cases:
-            llm = interface.load_chat(**case)
-            self.assertEqual(llm.model, "foo", "Model name should be 'foo'")
-            self.assertTrue(hasattr(llm, "temperature"), "temperature attribute should exist")
-            self.assertEqual(llm.temperature, 0.0, "temperature default should be set to 0.0")
+        for i in bad_format_chat_model_params.get('dict'):
+            with self.assertRaises(ValidationError) as context:
+                interface.load_chat(**i)
+            self.assertIn('Input should be a valid dictionary', str(context.exception))
 
     @classmethod
     def tearDownClass(cls: Type['ModelWrapperTestCase']) -> None:
@@ -164,4 +220,3 @@ def main() -> int:
 
 if __name__ == '__main__':
     sys.exit(main())
-        
