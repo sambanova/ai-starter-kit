@@ -108,9 +108,11 @@ class TestResult:
 class CsvWriter(Protocol):
     """Protocol for CSV writer to ensure type checking."""
 
-    def writerow(self, row: List[Any]) -> None: ...
+    def writerow(self, row: List[Any]) -> None:
+        ...
 
-    def writerows(self, rows: List[List[Any]]) -> None: ...
+    def writerows(self, rows: List[List[Any]]) -> None:
+        ...
 
 
 class StarterKitTest(unittest.TestCase):
@@ -124,6 +126,7 @@ class StarterKitTest(unittest.TestCase):
     recreate_venv: ClassVar[bool]
     csv_writer: ClassVar[Optional[CsvWriter]]
     csv_file: ClassVar[Optional[Any]]
+    csv_filename: ClassVar[str]
     test_results: ClassVar[List[TestResult]] = []
     any_test_failed: ClassVar[bool] = False
     wandb_initialized: ClassVar[bool] = False
@@ -166,11 +169,15 @@ class StarterKitTest(unittest.TestCase):
         if cls.csv_file:
             cls.csv_file.close()
 
+        # Calculate durations using pandas
+        cls.calculate_durations()
+
         if cls.wandb_initialized and cls.wandb_run:
             # Prepare data for wandb.Table
             table = wandb.Table(
                 columns=['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash']
             )  # type: ignore[no-untyped-call]
+
             for result in cls.test_results:
                 table.add_data(
                     result.kit,
@@ -192,13 +199,44 @@ class StarterKitTest(unittest.TestCase):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         results_dir = '/app/test_results' if cls.is_docker else os.path.join(cls.root_dir, 'test_results')
         os.makedirs(results_dir, exist_ok=True)
-        csv_filename = os.path.join(results_dir, f'test_results_{timestamp}.csv')
+        cls.csv_filename = os.path.join(results_dir, f'test_results_{timestamp}.csv')
 
-        cls.csv_file = open(csv_filename, 'w', newline='')
+        cls.csv_file = open(cls.csv_filename, 'w', newline='')
         cls.csv_writer = csv.writer(cls.csv_file)
         # Updated CSV header to include 'Date' and 'Commit Hash'
         cls.csv_writer.writerow(['Kit', 'Test Name', 'Status', 'Duration (s)', 'Message', 'Date', 'Commit Hash'])
-        logging.info(f'Test results will be saved to {csv_filename}')
+        logging.info(f'Test results will be saved to {cls.csv_filename}')
+
+    @classmethod
+    def calculate_durations(cls) -> None:
+        """Calculate durations using pandas and update the CSV file."""
+        try:
+            import pandas as pd
+        except ImportError:
+            logging.error('Pandas is not installed. Please install pandas to calculate durations.')
+            return
+
+        df = pd.read_csv(cls.csv_filename)
+        df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S,%f')
+        df.sort_values(by='Date', inplace=True)
+
+        # Calculate durations
+        df['Duration (s)'] = df['Date'].diff().dt.total_seconds().fillna(0)
+        df['Duration (s)'] = df['Duration (s)'].apply(lambda x: f'{x:.6f}')
+
+        # Update test_results with new durations
+        for index, row in df.iterrows():
+            for result in cls.test_results:
+                if (
+                    result.kit == row['Kit']
+                    and result.test_name == row['Test Name']
+                    and result.date == row['Date'].strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                ):
+                    result.duration = float(row['Duration (s)'])
+                    break
+
+        # Write the updated DataFrame back to CSV
+        df.to_csv(cls.csv_filename, index=False)
 
     @classmethod
     def write_test_result(cls, result: TestResult) -> None:
@@ -386,7 +424,6 @@ class StarterKitTest(unittest.TestCase):
     def parse_subtest_results(self, kit: str, output: str, total_duration: float) -> None:
         """Parse subtest results from CLI output."""
         detailed_tests_found = False  # Flag to track if detailed tests are found
-        previous_timestamp: Optional[datetime] = None
         # Split output into lines
         lines = output.strip().split('\n')
         for line in lines:
@@ -401,86 +438,66 @@ class StarterKitTest(unittest.TestCase):
                 log_level = match.group(2)
                 message = match.group(3).strip()
 
-                # Convert date_str to datetime object
-                try:
-                    current_timestamp = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S,%f')
-                except ValueError as e:
-                    logging.warning(f"Failed to parse date '{date_str}': {e}")
-                    current_timestamp = datetime.now()
-                    date_str = current_timestamp.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
-
                 if message.startswith('test_'):
                     test_name = message
+
                     # Determine status based on log level
                     status = 'PASSED' if log_level == 'INFO' else 'FAILED'
-
-                    if previous_timestamp is not None:
-                        duration = (current_timestamp - previous_timestamp).total_seconds()
-                    else:
-                        duration = 0.0  # First test, duration is set to zero
 
                     result = TestResult(
                         kit,
                         test_name,
                         status,
-                        duration,
+                        0.0,
                         '',
                         date_str,
                         commit_hash=self.commit_hash,
                     )
                     self.write_test_result(result)
                     detailed_tests_found = True  # Set flag to True since we found a detailed test
-                    previous_timestamp = current_timestamp
                 elif message == f'All CLI tests for {kit} passed':
                     # We have the success message for the kit
-                    duration = (
-                        (current_timestamp - previous_timestamp).total_seconds()
-                        if previous_timestamp
-                        else total_duration
-                    )
                     result = TestResult(
                         kit,
                         'CLI',
                         'PASSED',
-                        duration,
+                        total_duration,
                         'All CLI tests passed',
                         date_str,
                         commit_hash=self.commit_hash,
                     )
                     self.write_test_result(result)
                     detailed_tests_found = True
-            else:
+            elif f'All CLI tests for {kit} passed' in line:
                 # Line did not match the expected format; check for success message
-                if f'All CLI tests for {kit} passed' in line:
-                    current_time = datetime.now()
-                    date_str = current_time.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
-                    duration = (
-                        (current_time - previous_timestamp).total_seconds() if previous_timestamp else total_duration
-                    )
-                    result = TestResult(
-                        kit,
-                        'CLI',
-                        'PASSED',
-                        duration,
-                        'All CLI tests passed',
-                        date_str,
-                        commit_hash=self.commit_hash,
-                    )
-                    self.write_test_result(result)
-                    detailed_tests_found = True
+                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+                result = TestResult(
+                    kit,
+                    'CLI',
+                    'PASSED',
+                    total_duration,
+                    'All CLI tests passed',
+                    current_time,
+                    commit_hash=self.commit_hash,
+                )
+                self.write_test_result(result)
+                detailed_tests_found = True
+            else:
+                # Line did not match the expected format; you can log or ignore it
+                logging.debug(f'Line did not match pattern: {line}')
+                continue
 
         if not detailed_tests_found:
             # No detailed tests found and no 'All CLI tests for {kit} passed' message
             # Mark as FAILED
-            current_time = datetime.now()
-            date_str = current_time.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
             result = TestResult(
                 kit,
                 'CLI',
                 'FAILED',
                 total_duration,
                 'No detailed test results found',
-                date_str,
+                current_time,
                 commit_hash=self.commit_hash,
             )
             self.write_test_result(result)
