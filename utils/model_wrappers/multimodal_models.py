@@ -280,7 +280,7 @@ class SambastudioMultimodal:
 
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
-        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json', 'SN-CANARY': 'always'}
+        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data))
         if response.status_code != 200:
             raise RuntimeError(
@@ -324,7 +324,7 @@ class SambastudioMultimodal:
                 image = f'data:image/jpeg;base64,{self.url_to_b64(image)}'
             data['messages'][0]['content'].append({'type': 'image_url', 'image_url': {'url': image}})
 
-        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json', 'SN-CANARY': 'always'}
+        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         response = requests.post(self.base_url, headers=headers, data=json.dumps(data), stream=True)
         if response.status_code != 200:
             raise RuntimeError(
