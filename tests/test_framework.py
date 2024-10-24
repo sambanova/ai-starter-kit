@@ -23,7 +23,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import requests
 
-# Wandb imports
+# Import wandb
 import wandb
 
 # Add the project root to the Python path
@@ -92,9 +92,11 @@ class TestResult:
 
 
 class CsvWriter(Protocol):
-    def writerow(self, row: List[Any]) -> None: ...
+    def writerow(self, row: List[Any]) -> None:
+        ...
 
-    def writerows(self, rows: List[List[Any]]) -> None: ...
+    def writerows(self, rows: List[List[Any]]) -> None:
+        ...
 
 
 class StarterKitTest(unittest.TestCase):
@@ -120,7 +122,8 @@ class StarterKitTest(unittest.TestCase):
         # Wandb initialization
         wandb_key = get_wandb_key()
         if wandb_key:
-            wandb.login(key=wandb_key)
+            # Perform wandb login with host
+            wandb.login(key=wandb_key, host='https://sambanova.wandb.io/')
             cls.wandb_initialized = True
             cls.wandb_run = wandb.init(project='AISK_E2ETesting')
             logging.info('Weights & Biases initialized.')
@@ -154,7 +157,7 @@ class StarterKitTest(unittest.TestCase):
                     result.date,
                 )
             # Log the table to wandb
-            wandb.log({'test_results': table})
+            cls.wandb_run.log({'test_results': table})
             cls.wandb_run.finish()
             logging.info('Test results logged to Weights & Biases.')
 
@@ -208,7 +211,8 @@ class StarterKitTest(unittest.TestCase):
 
         activate_this = os.path.join(base_venv_path, 'bin', 'activate_this.py')
         if os.path.exists(activate_this):
-            exec(open(activate_this).read(), {'__file__': activate_this})
+            with open(activate_this) as f:
+                exec(f.read(), {'__file__': activate_this})
         else:
             logging.warning(f'activate_this.py not found at {activate_this}. Falling back to manual activation.')
             os.environ['VIRTUAL_ENV'] = base_venv_path
@@ -436,8 +440,8 @@ if __name__ == '__main__':
     StarterKitTest.recreate_venv = args.recreate_venv
 
     suite = unittest.TestLoader().loadTestsFromTestCase(StarterKitTest)
-    unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)
+    result = unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)
 
     # Exit with a non-zero code if any tests failed
-    if StarterKitTest.any_test_failed:
+    if StarterKitTest.any_test_failed or not result.wasSuccessful():
         sys.exit(1)
