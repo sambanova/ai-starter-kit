@@ -30,7 +30,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 repo_dir = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.append(repo_dir)
 
-from utils.visual.env_utils import get_wandb_key  # Import get_wandb_key
+from utils.visual.env_utils import get_wandb_key  
 
 # Timeout variables (in seconds)
 STREAMLIT_START_TIMEOUT = 25
@@ -46,6 +46,7 @@ STARTER_KITS: List[str] = [
     'search_assistant',
     'image_search',
     #'multimodal_knowledge_retriever',
+    # TODO: Add back in 
     'post_call_analysis',
     'prompt_engineering',
 ]
@@ -70,6 +71,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     # 'multimodal_knowledge_retriever': (
     #     'python tests/multimodal_knowledge_retriever_test.py'
     # ),
+    # TODO: Add back in 
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
