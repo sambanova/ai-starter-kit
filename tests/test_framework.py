@@ -21,6 +21,7 @@ import unittest
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
+import pandas as pd
 import requests
 import wandb  # Import wandb for Weights & Biases logging
 
@@ -44,7 +45,7 @@ STARTER_KITS: List[str] = [
     'function_calling',
     'search_assistant',
     'image_search',
-   # 'multimodal_knowledge_retriever',
+    #'multimodal_knowledge_retriever',
     'post_call_analysis',
     'prompt_engineering',
 ]
@@ -110,11 +111,9 @@ class TestResult:
 class CsvWriter(Protocol):
     """Protocol for CSV writer to ensure type checking."""
 
-    def writerow(self, row: List[Any]) -> None:
-        ...
+    def writerow(self, row: List[Any]) -> None: ...
 
-    def writerows(self, rows: List[List[Any]]) -> None:
-        ...
+    def writerows(self, rows: List[List[Any]]) -> None: ...
 
 
 class StarterKitTest(unittest.TestCase):
@@ -146,12 +145,8 @@ class StarterKitTest(unittest.TestCase):
         # Retrieve the commit hash from the environment variable
         cls.commit_hash = os.environ.get('GIT_COMMIT_HASH', 'unknown')
 
-        # Get additional GitHub environment variables
-        github_server_url = os.environ.get('GITHUB_SERVER_URL', 'https://github.com')
-        github_repository = os.environ.get('GITHUB_REPOSITORY', 'unknown')
-
         # Construct the commit URL
-        cls.commit_url = f"{github_server_url}/{github_repository}/commit/{cls.commit_hash}"
+        cls.commit_url = f'https://github.com/sambanova/ai-starter-kit/commit/{cls.commit_hash}'
 
         # Generate a meaningful wandb run name
         run_name = f"{cls.commit_hash}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -233,8 +228,33 @@ class StarterKitTest(unittest.TestCase):
         logging.info(f'Test results will be saved to {cls.csv_filename}')
 
     @classmethod
+    def calculate_kit_durations(cls, df: Any) -> Any:
+        """Calculate kit durations, preserving existing non-zero durations."""
+        # Convert date and sort
+        df = df.copy()
+        df['Date'] = pd.to_datetime(df['Date'])
+
+        # Calculate time differences between kit start times
+        kit_times = df.groupby('Kit')['Date'].first().sort_values()
+
+        # Calculate durations by taking difference with previous time
+        kit_durations = (kit_times - kit_times.shift()).dt.total_seconds()
+
+        # Map durations to kits, excluding first kit (it keeps original duration)
+        duration_map = pd.Series(kit_durations.values[1:], index=kit_times.index[1:])
+
+        # Create a mask for rows that need updating (duration is 0)
+        zero_duration_mask = (df['Duration (s)'].astype(float) == 0.0) & (df['Kit'] != kit_times.index[0])
+
+        # Update only the rows with zero duration, excluding first kit
+        if zero_duration_mask.any():
+            df.loc[zero_duration_mask, 'Duration (s)'] = df.loc[zero_duration_mask, 'Kit'].map(duration_map)
+
+        return df.sort_values(['Kit', 'Date'])
+
+    @classmethod
     def calculate_durations(cls) -> None:
-        """Calculate durations per kit using pandas and update the CSV file."""
+        """Calculate kit durations, preserving existing non-zero durations."""
         try:
             import pandas as pd
         except ImportError:
@@ -243,11 +263,9 @@ class StarterKitTest(unittest.TestCase):
 
         df = pd.read_csv(cls.csv_filename)
         df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S,%f')
-        df.sort_values(by=['Kit', 'Date'], inplace=True)
 
-        # Calculate durations per kit
-        df['Duration (s)'] = df.groupby('Kit')['Date'].diff().dt.total_seconds().fillna(0)
-        df['Duration (s)'] = df['Duration (s)'].apply(lambda x: f'{x:.6f}')
+        # Use the calculate_kit_durations function
+        df = cls.calculate_kit_durations(df)
 
         # Update test_results with new durations
         for index, row in df.iterrows():
@@ -468,7 +486,8 @@ class StarterKitTest(unittest.TestCase):
                 message = match.group(3).strip()
 
                 if message.startswith('test_'):
-                    test_name = message
+                    # Remove ': PASSED' or ': FAILED' suffix from the test name
+                    test_name = re.sub(r':\s*(PASSED|FAILED)$', '', message)
 
                     # Determine status based on log level
                     status = 'PASSED' if log_level == 'INFO' else 'FAILED'
