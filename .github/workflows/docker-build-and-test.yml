@@ -1,17 +1,24 @@
 name: Docker Build and Test
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_tests:
-        description: 'Run tests'
-        required: false
+  # Runs at every push on main
   push:
-    branches: [ "improvement/docker-testing-workflow-branch" ]  # Isolated branch for testing
+    branches:
+      - main
+
+  # Runs at every pull request review
+  pull_request_review:
+    types: [submitted]
+
+  # Runs manually via Run Workflow in GitHub Actions
+  workflow_dispatch:
+
+  # Runs every Monday at 12:00 UTC
+  schedule:
+    - cron: '0 12 * * 1'
 
 jobs:
   build_and_test:
-    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: aisk-unit-tests  # Docker image name
