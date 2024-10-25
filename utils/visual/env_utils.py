@@ -92,6 +92,7 @@ import netrc
 import os
 from typing import Optional
 
+
 def get_wandb_key() -> Optional[str]:
     """
     Retrieve the Weights & Biases API key from the environment or ~/.netrc,
