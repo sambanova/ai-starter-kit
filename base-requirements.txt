@@ -96,3 +96,4 @@ schedule==1.2.2
 
 #llm-eval
 weave==0.51.1
+wandb==0.18.5

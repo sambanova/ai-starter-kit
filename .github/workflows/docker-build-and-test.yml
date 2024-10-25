@@ -1,21 +1,28 @@
 name: Docker Build and Test
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_tests:
-        description: 'Run tests'
-        required: false
+  # Runs at every push on main
   push:
-    branches: [ "improvement/docker-testing-workflow-branch" ]  # Isolated branch name for testing to ensure we don't affect main
+    branches:
+      - main
+
+  # Runs at every pull request review
+  pull_request_review:
+    types: [submitted]
+
+  # Runs manually via Run Workflow in GitHub Actions
+  workflow_dispatch:
+
+  # Runs every Monday at 12:00 UTC
+  schedule:
+    - cron: '0 12 * * 1'
 
 jobs:
   build_and_test:
-    if: ${{ github.ref == 'refs/heads/improvement/docker-testing-workflow-branch' || github.event_name == 'workflow_dispatch' }} #TODO: Remove
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE: aisk-unit-tests  # Updated Docker image name
-      DOCKER_TAG: ${{ github.sha }}
+      DOCKER_IMAGE: aisk-unit-tests  # Docker image name
+      DOCKER_TAG: ${{ github.sha }}   # Git commit hash as the Docker tag
       PROD_MODE: false
       TEST_MODE: true
       # Enable debug logging
@@ -70,6 +77,7 @@ jobs:
             echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
             echo "CLIP_BASE_URL=${{ secrets.CLIP_BASE_URL }}"
             echo "CLIP_API_KEY=${{ secrets.CLIP_API_KEY }}"
+            echo "WANDB_API_KEY=${{ secrets.WANDB_API_KEY }}"
           } >> .env
           set -x  # Re-enable command echoing
         shell: bash
@@ -86,6 +94,7 @@ jobs:
             -e DOCKER_ENV=true \
             -e PROD_MODE=$PROD_MODE \
             -e TEST_MODE=$TEST_MODE \
+            -e GIT_COMMIT_HASH=${{ github.sha }} \
             -v "$(pwd)/test_results:/app/test_results" \
             -w /app \
             "$IMAGE_NAME" \
@@ -106,3 +115,4 @@ jobs:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           CLIP_BASE_URL: ${{ secrets.CLIP_BASE_URL }}
           CLIP_API_KEY: ${{ secrets.CLIP_API_KEY }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
