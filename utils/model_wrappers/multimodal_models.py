@@ -43,7 +43,7 @@ class SambastudioMultimodal:
         """
         self.base_url = base_url
         if self.base_url is None:
-            self.base_url = os.getenv('LVLM_BASE_URL', '')
+            self.base_url = os.getenv('LVLM_BASE_URL', 'https://api.sambanova.ai/v1/chat/completions')
         self.api_key = api_key
         if self.api_key is None:
             self.api_key = os.getenv('LVLM_API_KEY', '')
