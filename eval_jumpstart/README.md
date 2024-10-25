@@ -70,10 +70,17 @@ sys.path.append(repo_dir)
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
-from utils.eval.evaluator import BaseWeaveEvaluator
-import weave
 import asyncio
 import time
+from utils.eval.evaluator import BaseWeaveEvaluator
+from utils.visual.env_utils import get_wandb_key
+
+wandb_api_key = get_wandb_key()
+if wandb_api_key:
+    import weave
+else:
+    raise ValueError('WANDB_API_KEY is not set.')
+
 
 weave.init('your-project-name')
 
