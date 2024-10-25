@@ -1,3 +1,40 @@
+"""
+Bulk Question-Answering Evaluation Script
+
+This standalone script enables automated bulk testing of question-answering capabilities
+using a pre-built vector database and an Excel file containing questions. It's designed
+for quick evaluation of RAG (Retrieval-Augmented Generation) performance across multiple
+questions.
+
+Key Features:
+- Processes questions in bulk from an Excel file
+- Uses a pre-built vector database for document retrieval
+- Measures and records performance metrics including:
+  * Preprocessing time
+  * LLM inference time
+  * Token count and tokens per second
+  * Source documents used for each answer
+- Saves results incrementally to prevent data loss
+- Supports resuming interrupted runs by skipping already answered questions
+
+Input Requirements:
+- Vector database path containing stored documents for RAG
+- Excel file (.xlsx) with questions in a column named 'Questions'
+
+Output:
+- Creates a new Excel file with '_output' suffix containing:
+  * Original questions
+  * Generated answers
+  * Source documents used
+  * Performance metrics for each response
+
+Usage:
+    python bulkQA.py <vectordb_path> <questions_path>
+
+Example:
+    python bulkQA.py ./path/to/vectordb ./path/to/questions.xlsx
+"""
+
 import argparse
 import os
 import sys
