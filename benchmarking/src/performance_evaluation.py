@@ -942,11 +942,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
 
+        # Build input prompt to be sent in LLM request
+        prompt_tuple = self.build_prompt(input_token_count)
+
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
-            # Build input prompt to be sent in LLM request
-            prompt_tuple = self.build_prompt(input_token_count)
-
             # Add generic max tokens parameter to `sampling_params` dictionary
             updated_sampling_params = {
                 'max_tokens_to_generate': output_token_count,
