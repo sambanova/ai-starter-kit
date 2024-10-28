@@ -5,8 +5,6 @@ from uuid import uuid4
 
 import yaml
 
-from financial_assistant.src.llm import SambaNovaLLM
-
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = current_dir
@@ -100,6 +98,3 @@ PANDASAI_CACHE = os.path.join(os.getcwd(), 'cache')
 # Unit tests
 TEST_DIR = os.path.join(kit_dir, 'tests/')
 TEST_CACHE_DIR = os.path.join(TEST_DIR, 'cache/')
-
-# Instantiate the LLM
-sambanova_llm = SambaNovaLLM(config_path=CONFIG_PATH)

@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.constants import *
+from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.src.exceptions import LLMException, TableNotFoundException, VectorStoreException
 from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database

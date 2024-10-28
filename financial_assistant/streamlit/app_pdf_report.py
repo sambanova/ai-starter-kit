@@ -7,6 +7,7 @@ import streamlit
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from financial_assistant.constants import *
+from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback

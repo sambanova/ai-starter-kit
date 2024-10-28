@@ -4,6 +4,7 @@ import sys
 import time
 
 import weave
+from dotenv import load_dotenv
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,12 +17,6 @@ import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
 from financial_assistant.constants import *
-from financial_assistant.src.utilities import get_logger
-from financial_assistant.streamlit.app_financial_filings import include_financial_filings
-from financial_assistant.streamlit.app_pdf_report import include_pdf_report
-from financial_assistant.streamlit.app_stock_data import get_stock_data_analysis
-from financial_assistant.streamlit.app_stock_database import get_stock_database
-from financial_assistant.streamlit.app_yfinance_news import get_yfinance_news
 from financial_assistant.streamlit.utilities_app import (
     clear_cache,
     create_temp_dir_with_subdirs,
@@ -33,8 +28,63 @@ from financial_assistant.streamlit.utilities_app import (
     set_css_styles,
     submit_sec_edgar_details,
 )
+
+# Initialize session
+initialize_session(streamlit.session_state, prod_mode)
+
+# Streamlit app setup
+streamlit.set_page_config(
+    page_title='Finance App',
+    page_icon=SAMBANOVA_LOGO,
+    layout='wide',
+)
+
+# Set CSS styles
+set_css_styles()
+
+# Add SambaNova logo
+streamlit.logo(
+    image=SAMBANOVA_LOGO,
+    link=SAMBANOVA_LOGO,
+    icon_image=SAMBANOVA_LOGO,
+)
+
+if not prod_mode:
+    load_dotenv(os.path.join(repo_dir, '.env'))
+
+# Add sidebar
+with streamlit.sidebar:
+    if os.getenv('SAMBANOVA_API_KEY') is None:
+        # Get the SambaNova API Key
+        streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
+        api_key = streamlit.text_input('SAMBANOVA CLOUD API KEY')
+        if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
+            os.environ['SAMBANOVA_API_KEY'] = api_key
+            streamlit.success('Credentials saved successfully!')
+            streamlit.rerun()
+        else:
+            streamlit.stop()
+    else:
+        if prod_mode:
+            streamlit.success('Credentials are set')
+            with stylable_container(
+                key='blue-button',
+                css_styles=get_blue_button_style(),
+            ):
+                if streamlit.button('Clear Credentials', key='clear_credentials'):
+                    del os.environ['SAMBANOVA_API_KEY']
+                    streamlit.success(r':orange[You have been logged out.]')
+                    time.sleep(2)
+                    streamlit.rerun()
+
+
+from financial_assistant.src.utilities import get_logger
+from financial_assistant.streamlit.app_financial_filings import include_financial_filings
+from financial_assistant.streamlit.app_pdf_report import include_pdf_report
+from financial_assistant.streamlit.app_stock_data import get_stock_data_analysis
+from financial_assistant.streamlit.app_stock_database import get_stock_database
+from financial_assistant.streamlit.app_yfinance_news import get_yfinance_news
 from financial_assistant.streamlit.utilities_methods import stream_chat_history
-from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
 
 # Initialize Weave with your project name
 if os.getenv('WANDB_API_KEY') is not None:
@@ -44,50 +94,9 @@ logger = get_logger()
 
 
 def main() -> None:
-    # Initialize session
-    initialize_session(streamlit.session_state, prod_mode)
-
-    # Streamlit app setup
-    streamlit.set_page_config(
-        page_title='Finance App',
-        page_icon=SAMBANOVA_LOGO,
-        layout='wide',
-    )
-
-    # Set CSS styles
-    set_css_styles()
-
-    # Add SambaNova logo
-    streamlit.logo(
-        image=SAMBANOVA_LOGO,
-        link=SAMBANOVA_LOGO,
-        icon_image=SAMBANOVA_LOGO,
-    )
-
-    # Add sidebar
     with streamlit.sidebar:
-        if not are_credentials_set():
-            # Get the SambaNova API Key
-            streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
-            url, api_key = env_input_fields()
-            if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)
-                streamlit.success(message)
-                streamlit.rerun()
-        else:
-            streamlit.success('Credentials are set')
-            with stylable_container(
-                key='blue-button',
-                css_styles=get_blue_button_style(),
-            ):
-                if streamlit.button('Clear Credentials', key='clear_credentials'):
-                    save_credentials('', '', prod_mode)  # type: ignore
-                    streamlit.success(r':orange[You have been logged out.]')
-                    time.sleep(2)
-                    streamlit.rerun()
-
         # Create the cache and its main subdirectories
-        if are_credentials_set() and not os.path.exists(CACHE_DIR):
+        if os.getenv('SAMBANOVA_API_KEY') is not None and not os.path.exists(CACHE_DIR):
             # List the main cache subdirectories
             subdirectories = [
                 SOURCE_DIR,
@@ -126,7 +135,7 @@ def main() -> None:
                     # Delete the cache
                     clear_cache(delete=True)
                     # Clear the SambaNova credentials
-                    save_credentials('', '', prod_mode)  # type: ignore
+                    del os.environ['SAMBANOVA_API_KEY']
 
                     streamlit.success(r':green[The chat history has been cleared.]')
                     streamlit.success(r':green[The cache has been deleted.]')
@@ -135,7 +144,7 @@ def main() -> None:
                     streamlit.rerun()
                     return
 
-        if are_credentials_set():
+        if os.getenv('SAMBANOVA_API_KEY') is not None:
             # Navigation menu
             streamlit.title('Navigation')
             menu = streamlit.radio(
@@ -201,7 +210,7 @@ def main() -> None:
     columns[0].image(SAMBANOVA_LOGO, width=100)
     columns[1].title('SambaNova Financial Assistant')
 
-    if are_credentials_set():
+    if os.getenv('SAMBANOVA_API_KEY') is not None:
         # Home page
         if menu == 'Home':
             streamlit.title('Financial Insights with LLMs')
