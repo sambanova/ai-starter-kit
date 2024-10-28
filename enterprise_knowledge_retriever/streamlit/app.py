@@ -125,6 +125,7 @@ def main() -> None:
         config = yaml.safe_load(yaml_file)
 
     prod_mode = config.get('prod_mode', False)
+    conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
 
     initialize_env_variables(prod_mode)
@@ -241,7 +242,9 @@ def main() -> None:
                             )
                             st.session_state.vectorstore = vectorstore
                             st.session_state.document_retrieval.init_retriever(vectorstore)
-                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain()
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                                conversational=conversational
+                            )
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
@@ -263,7 +266,9 @@ def main() -> None:
                                 st.session_state.vectorstore = vectorstore
                                 st.session_state.document_retrieval.init_retriever(vectorstore)
                                 st.session_state.conversation = (
-                                    st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                    st.session_state.document_retrieval.get_qa_retrieval_chain(
+                                        conversational=conversational
+                                    )
                                 )
                                 st.toast(
                                     f"""File uploaded and saved to {save_location} with collection
@@ -300,7 +305,9 @@ def main() -> None:
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)
                                     st.session_state.conversation = (
-                                        st.session_state.document_retrieval.get_qa_retrieval_chain()
+                                        st.session_state.document_retrieval.get_qa_retrieval_chain(
+                                            conversational=conversational
+                                        )
                                     )
                                     st.session_state.input_disabled = False
                                 except Exception as e:
@@ -319,7 +326,12 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    if not st.session_state.input_disabled:
+                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                            conversational=conversational
+                        )
                     st.toast('Conversation reset. The next response will clear the history on the screen')
+                    logging.info('Conversation reset')
 
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:
