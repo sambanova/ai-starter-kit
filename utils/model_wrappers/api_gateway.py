@@ -216,7 +216,7 @@ class APIGateway:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
         do_sample: Optional[bool] = None,
-        process_prompt: Optional[bool] = None,
+        process_prompt: Optional[bool] = True,
         stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
         special_tokens: Optional[Dict[str, str]] = {
             'start': '<|begin_of_text|>',
@@ -241,7 +241,7 @@ class APIGateway:
             top_p (float): Optional model top_p.
             top_k (int): Optional model top_k.
             do_sample (bool): whether to do sampling
-            process_prompt (bool): whether process prompt (for CoE generic v1 and v2 endpoints)
+            process_prompt (bool): whether use API process prompt (for CoE generic v1 and v2 endpoints)
             stream_options (dict): stream options, include usage to get generation metrics
             special_tokens (dict): start, start_role, end_role and end special tokens
             (set for CoE generic v1 and v2 endpoints when process prompt set to false
