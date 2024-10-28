@@ -25,6 +25,9 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway  # type: ignore
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
