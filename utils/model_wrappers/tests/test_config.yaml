@@ -1,8 +1,8 @@
 embedding_model: 
-    "type": "cpu"
-    "batch_size": 1
-    "coe": True
-    "select_expert": "e5-mistral-7b-instruct"
+    type: "cpu"
+    batch_size: 1
+    coe: True
+    select_expert: "e5-mistral-7b-instruct"
 
 sn_llm:
     type: "sncloud"
@@ -17,7 +17,7 @@ ss_llm:
     temperature: 0.0
     do_sample: False
     max_tokens_to_generate: 1200
-    coe: True #set as true if using Sambastudio CoE endpoint
+    coe: True
     select_expert: "Meta-Llama-3-70B-Instruct-4096"
 
 sn_chat_model:
@@ -49,6 +49,107 @@ sambastudio_chat_model:
       end_role: "<|eot_id|>"
       end: "<|start_header_id|>assistant<|end_header_id|>\n"
     model_kwargs: null
+
+bad_format_embeddings_model:
+    type:
+      - type: "string"
+        batch_size: 1
+        coe: True
+        select_expert: "e5-mistral-7b-instruct"
+
+    string:
+      - type: "cpu"
+        batch_size: 1
+        coe: True
+        select_expert: 1
+      
+      - type: "sambastudio"
+        batch_size: 1
+        coe: True
+        select_expert: 1
+
+    boolean:
+      - type: "cpu"
+        batch_size: 1
+        coe: "string"
+        select_expert: "e5-mistral-7b-instruct"
+      
+      - type: "sambastudio"
+        batch_size: 1
+        coe: "string"
+        select_expert: "e5-mistral-7b-instruct"
+
+    integer:
+      - type: "cpu"
+        batch_size: "string"
+        coe: True
+        select_expert: "e5-mistral-7b-instruct"
+      
+      - type: "sambastudio"
+        batch_size: "string"
+        coe: True
+        select_expert: "e5-mistral-7b-instruct"
+
+bad_format_llm_model:
+    string:
+      - type: "sncloud"
+        model: 1
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: False
+
+      - type: "sambastudio"
+        model: 1
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: False
+        coe: True
+        select_expert: "Meta-Llama-3-70B-Instruct-4096"
+    
+    boolean:
+      - type: "sncloud"
+        model: "foo"
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: "string"
+
+      - type: "sambastudio"
+        model: "foo"
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: "string"
+        coe: True
+        select_expert: "Meta-Llama-3-70B-Instruct-4096"
+
+    integer:
+      - type: "sncloud"
+        model: "foo"
+        max_tokens: "one"
+        temperature: 0.0
+        streaming: False
+
+      - type: "sambastudio"
+        model: "foo"
+        max_tokens: "one"
+        temperature: 0.0
+        streaming: False
+        coe: True
+        select_expert: "Meta-Llama-3-70B-Instruct-4096"
+
+    number:
+      - type: "sncloud"
+        model: "foo"
+        max_tokens: 1024
+        temperature: "string"
+        streaming: False
+
+      - type: "sambastudio"
+        model: "foo"
+        max_tokens: 1024
+        temperature: "string"
+        streaming: False
+        coe: True
+        select_expert: "Meta-Llama-3-70B-Instruct-4096"
 
 bad_format_chat_model:
     string:
@@ -83,6 +184,7 @@ bad_format_chat_model:
         max_tokens: "one"
         temperature: 0.0
         streaming: False
+
       - type: "sambastudio"
         model: "foo"
         max_tokens: "one"
