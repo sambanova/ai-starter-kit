@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Setup paths and global variables
 current_dir = os.getcwd()
-kit_dir = current_dir  # absolute path for function_calling kit dir
+kit_dir = current_dir
 repo_dir = os.path.abspath(os.path.join(kit_dir, '../..'))  # absolute path for ai-starter-kit root repo
 
 sys.path.append(kit_dir)
