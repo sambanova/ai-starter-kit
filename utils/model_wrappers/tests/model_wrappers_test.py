@@ -34,9 +34,9 @@ sys.path.append(repo_dir)
 
 import yaml
 from dotenv import load_dotenv
+from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import LLM
-from langchain_core.embeddings import Embeddings
 from pydantic import ValidationError
 
 from utils.model_wrappers.api_gateway import APIGateway
@@ -91,8 +91,18 @@ class ModelWrapperTestCase(unittest.TestCase):
         cls.sn_chat_model, cls.ss_chat_model = cls.init_chat_models()
 
     @classmethod
-    def get_params(cls: Type['ModelWrapperTestCase']) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any],
-     Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    def get_params(
+        cls: Type['ModelWrapperTestCase'],
+    ) -> Tuple[
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+        Dict[str, Any],
+    ]:
         embed_params = test_config['embedding_model']
 
         sn_llm_params = test_config['sn_llm']
@@ -171,12 +181,12 @@ class ModelWrapperTestCase(unittest.TestCase):
             with self.assertRaises(ValidationError) as context:
                 EmbeddingsBaseModel(**i)
             self.assertIn('Input should be a valid string', str(context.exception))
-        
+
         for i in bad_format_embeddings_model_params.get('boolean'):
             with self.assertRaises(ValidationError) as context:
                 EmbeddingsBaseModel(**i)
             self.assertIn('Input should be a valid boolean', str(context.exception))
-    
+
         for i in bad_format_embeddings_model_params.get('integer'):
             with self.assertRaises(ValidationError) as context:
                 EmbeddingsBaseModel(**i)
@@ -187,7 +197,7 @@ class ModelWrapperTestCase(unittest.TestCase):
             with self.assertRaises(ValidationError) as context:
                 LLMBaseModel(**i)
             self.assertIn('Input should be a valid string', str(context.exception))
-        
+
         for i in bad_format_llm_model_params.get('boolean'):
             with self.assertRaises(ValidationError) as context:
                 LLMBaseModel(**i)
@@ -247,8 +257,10 @@ class ModelWrapperTestCase(unittest.TestCase):
         sn_cloud_response = self.sn_chat_model.invoke(query)
         ss_response = self.ss_chat_model.invoke(query)
 
-        if not isinstance(sn_cloud_response, dict): sn_cloud_response = sn_cloud_response.model_dump()
-        if not isinstance(ss_response, dict): ss_response = ss_response.model_dump()
+        if not isinstance(sn_cloud_response, dict):
+            sn_cloud_response = sn_cloud_response.model_dump()
+        if not isinstance(ss_response, dict):
+            ss_response = ss_response.model_dump()
 
         self.assertIn('content', sn_cloud_response, "Response should have a 'content' key")
         self.assertGreaterEqual(len(sn_cloud_response['content']), 1, 'Content should be a non-empty string')
