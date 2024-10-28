@@ -17,6 +17,7 @@ retrieval:
     "rerank": False # set if you want to rerank retriever results 
     "reranker": 'BAAI/bge-reranker-large' # set if you rerank enabled
     "final_k_retrieved_documents": 5
+    "conversational": true # set to enable query rephrasing with history in streamlit application 
 
 prompts: 
     "qa_prompt": "enterprise_knowledge_retriever/prompts/qa_prompt.yaml"

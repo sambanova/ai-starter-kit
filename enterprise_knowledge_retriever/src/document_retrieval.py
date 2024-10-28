@@ -97,6 +97,7 @@ class RetrievalQAChain(Chain):
     final_k_retrieved_documents: int = 3
     conversational: bool = False
     # wether or not to use memory and answer over reformulated query with history summary
+    # instead of answer over raw user query with our using history
     summary_prompt: Optional[ChatPromptTemplate]
     condensed_query_prompt: Optional[ChatPromptTemplate]
 
@@ -200,10 +201,14 @@ class RetrievalQAChain(Chain):
         inputs: Dict[str, Any],
         run_manager: Optional[CallbackManagerForChainRun] = None,
     ) -> Dict[str, Any]:
+        """ "call the Retrieval QA Chain"""
+
         qa_chain = self.qa_prompt | self.llm | StrOutputParser()
 
         logger.info(f'USER QUERY: {inputs["question"]}')
 
+        # when conversational enabled, before retrieval
+        # the user query is reformulated using stored history summary
         if self.conversational:
             query = self.reformulate_query_with_history(inputs['question'])
             logger.info(f'REFORMULATED QUERY: {query}')
@@ -218,6 +223,7 @@ class RetrievalQAChain(Chain):
         response['answer'] = qa_chain.invoke({'question': query, 'context': docs})
         response['source_documents'] = documents
 
+        # Update memory when conversational mode is enabled
         if self.conversational:
             threading.Thread(target=self.update_memory, args=(inputs['question'], response['answer'])).start()
 
@@ -340,7 +346,8 @@ class DocumentRetrieval:
         based on the input vector store of text chunks.
 
         Parameters:
-        conversational: wether or not to use memory and answer over reformulated query with history summary
+        conversational: wether or not to use memory
+        when enabled user query is reformulated using history summary
 
         Returns:
         RetrievalQA: A chain ready for QA without memory
