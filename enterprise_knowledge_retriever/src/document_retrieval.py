@@ -88,7 +88,18 @@ def load_chat_prompt(path: str) -> ChatPromptTemplate:
 
 
 class RetrievalQAChain(Chain):
-    """class for question-answering."""
+    """class for question-answering.
+
+    Do retrieval over relevant documents in the vectorstore set in the retriever
+
+    If conversational enabled, before doing the retrieval QA call
+    the llm is called to rephrase original user query to  include relevant details in the history
+    then the rephrased query is used as input to the retriever and the QA call is done using
+    relevant documents, then the user query and final answer is added to the history and history
+    is summarized using the llm
+
+    When reranking enabled, reranker model is used to filter final_k_retrieved_documents
+    """
 
     retriever: BaseRetriever
     rerank: bool = True
