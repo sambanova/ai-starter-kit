@@ -1,4 +1,4 @@
-# RAG Evaluation Kit
+# Eval Kit
 
 A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.
 
@@ -7,11 +7,13 @@ A tool for evaluating the performance of LLM APIs using the RAG Evaluation metho
   ```bash
   git clone https://github.com/sambanova/ai-starter-kit
   cd eval_jumpstart
+  python -m venv eval_jumpstart_env
+  source eval_jumpstart_env/bin/activate
   pip install -r requirements.txt
   ```
 
 ## Basic Usage
-We implement performance tests for evaluating LLMs using various metrics.
+We implement performance tests for evaluating LLMs.
 
 ### Config File
 
@@ -20,122 +22,92 @@ Create a YAML configuration file to specify the evaluation settings.
 Example config.yaml
 
 ```yaml
-llms:
-  - name: samba_llm
-    sambastudio_base_url: "https://api-stage.sambanova.net"
-    sambastudio_project_id: "your_project_id"
-    sambastudio_endpoint_id: "your_endpoint_id"
-    sambastudio_api_key: "your_api_key"
-
-eval_llms:
-  - name: eval_llm
-    sambastudio_base_url: "https://api-stage.sambanova.net"
-    sambastudio_project_id: "your_project_id"
-    sambastudio_endpoint_id: "your_endpoint_id"
-    sambastudio_api_key: "your_api_key"
-
-embeddings:
-  model_name: "sentence-transformers/all-MiniLM-L6-v2"
-
 eval_dataset:
-  path: "data/eval_dataset.csv"
-  question_col: "question"
-  answer_col: "answer"
-  ground_truth_col: "ground_truth"
-  context_col: "context"
+  name: general_knowledge_data
+  path: data/eval_data.csv
 
-evaluation:
-  num_samples: 100
-  log_wandb: true
-  project_name: "rag-eval"
-  eval_name: "rag_eval_test"
+llms:
+  - name: sncloud-llama3.1-405
+    model_type: "sncloud"
+    model_name: "Meta-Llama-3.1-405B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+  - name: sambastudio-llama2-70
+    model_type: "sambastudio"
+    model_name: "llama-2-70b-chat-hf"
+    max_tokens: 1024
+    temperature: 0.0
+  - name: sncloud-llama3.1-70
+    model_type: "sncloud"
+    model_name: "Meta-Llama-3.1-70B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+  - name: sncloud-llama3.2-3
+    model_type: "sncloud"
+    model_name: "Meta-Llama-3.2-3B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+
+eval_llm:
+  model_type: "sncloud"
+  model_name: "Meta-Llama-3.1-405B-Instruct"
+  max_tokens: 1024
+  temperature: 0.0
 ```
 
 ## Evaluation Use Cases
 
 ```python
-## Use Case 1: Evaluation without Generation
+from dotenv import load_dotenv
+import sys
+import os
 
-from rag_eval import RAGEvaluator, RAGEvalConfig
-from langchain_community.llms.sambanova import SambaStudio
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-import pandas as pd
+current_dir = os.getcwd()
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
 
-config_path = "path/to/config.yaml"
-config = RAGEvalConfig(config_path)
-eval_llms = [
-    (llm_name, SambaStudio(**llm_config))
-    for conf in config.eval_llm_configs 
-    for llm_name, llm_config in [config.get_llm_config(conf)]
-]
-eval_embeddings = HuggingFaceInstructEmbeddings(model_name=config.embedding_model_name)
-evaluator = RAGEvaluator(eval_llms=eval_llms, eval_embeddings=eval_embeddings, config_yaml_path=config_path)
-eval_df = pd.read_csv("path/to/eval.csv")
-results_no_gen = evaluator.evaluate(eval_df)
-print(results_no_gen)
-```
+load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
-## Use Case 3: Evaluation with Generation
+import asyncio
+import time
+from utils.eval.evaluator import BaseWeaveEvaluator
+from utils.visual.env_utils import get_wandb_key
 
-```python
-from rag_eval import RAGEvaluator, RAGEvalConfig, load_pipeline
-from langchain_community.llms.sambanova import SambaStudio
+wandb_api_key = get_wandb_key()
+if wandb_api_key:
+    import weave
+else:
+    raise ValueError('WANDB_API_KEY is not set.')
 
-config_path = "path/to/config.yaml"
-config = RAGEvalConfig(config_path)
-eval_llms = [
-    (llm_name, SambaStudio(**llm_config))
-    for conf in config.eval_llm_configs 
-    for llm_name, llm_config in [config.get_llm_config(conf)]
-]
-eval_embeddings = HuggingFaceInstructEmbeddings(model_name=config.embedding_model_name)
-evaluator = RAGEvaluator(eval_llms=eval_llms, eval_embeddings=eval_embeddings, config_yaml_path=config_path)
-eval_df = pd.read_csv("path/to/eval.csv")
-pipelines = [
-    load_pipeline((llm_name, SambaStudio(**llm_config)), config)
-    for llm_name, llm_config in [
-        config.get_llm_config(conf) for conf in config.llm_configs
-    ]
-]
-results_with_gen = evaluator.evaluate(eval_df, pipelines)
-print(results_with_gen)
+
+weave.init('your-project-name')
+
+evaluator = BaseWeaveEvaluator()
+
+start_time = time.time()
+
+asyncio.run(evaluator.evaluate(name='dataset_name', filepath='dataset/path', use_concurrency=True))
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+print(f"Elapsed time: {elapsed_time:.2f} seconds")
 ```
 
 More use cases are available in the [notebooks](./notebooks)
 
-## Running the Evaluation Using CLI
-
-Command without Generation
-
-```bash
-python evaluate.py --config path/to/config.yaml --eval_csv path/to/eval.csv
-```
-
-Command with Generation
-
-```bash
-python evaluate.py --config path/to/config.yaml --eval_csv path/to/eval.csv --generation
-
-```
-
 ## Metrics
 
 The evaluation kit uses various metrics to evaluate the performance of LLMs:
--
-- Answer Relevancy
-- Answer Correctness
-- Answer Similarity
-- Context Precision
-- Context Recall
-- Faithfulness
-- Context Relevancy
 
-These are from RAGAS please see the RAGAS website for details on the underlying methodlogy 
-https://docs.ragas.io/en/stable/concepts/metrics/index.html
+- Score
+- Reason
 
 ## Logging
 
-Results can be logged to Weights & Biases (wandb) by setting the log_wandb parameter in the configuration file.
+Results can be logged to Weights & Biases (wandb) by setting your WANDB_API_KEY in the `.env` file.
 
 ## Third-party tools and data sources
 
