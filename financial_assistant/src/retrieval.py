@@ -82,7 +82,7 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> SentenceTransf
         embeddings_sambastudio = APIGateway.load_embedding_model(
             type=embedding_model_info['type'],
             batch_size=embedding_model_info['batch_size'],
-            coe=embedding_model_info['coe'],
+            bundle=embedding_model_info['bundle'],
             select_expert=embedding_model_info['select_expert'],
         )
         return embeddings_sambastudio

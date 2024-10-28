@@ -65,7 +65,7 @@ To perform this setup, you must be a SambaNova customer with a SambaStudio accou
 
 1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
 
-2. Select the LLM to use (e,g. CoE1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+2. Select the LLM to use (e,g. Bundle1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 ## Get Continue Extension/plugin
 
@@ -140,17 +140,17 @@ The example template can be further customized based on the use case.
 
 ## Modify the parameters and the model to use
 
-You can change the default SambaNova Cloud model or the default model used with SambaStudio CoE models modifying the model and expert selection in [config.ts](config.ts) file:
+You can change the default SambaNova Cloud model or the default model used with SambaStudio Bundle models modifying the model and expert selection in [config.ts](config.ts) file:
 
 - If using SambaNova Cloud:
     ```ts
         const sambanova_model = "llama3-405b";
     ```
 
-- If using SambaStudio CoE:
+- If using SambaStudio Bundle:
     ```ts
-        const sambastudio_use_coe = true;
-        const sambastudio_coe_expert_name = "Meta-Llama-3-8B-Instruct";
+        const sambastudio_use_bundle = true;
+        const sambastudio_bundle_expert_name = "Meta-Llama-3-8B-Instruct";
     ```
 
 Also you can modify model parameters modifying the `body` params of the SambaNova Cloud model and Sambastudio model in the `SambastudioModel` an `SambaNovaCloudModel` definitions of [config.ts file](config.ts).

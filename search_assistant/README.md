@@ -73,7 +73,7 @@ The next step is to set up your environment variables to use one of the inferenc
     Then, in the [config file](./config.yaml), set the llm `api` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 - **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, and set the `bundle` and `select_expert` configs if you are using a Bundle endpoint.
 
 ### Set up the embedding model
 

@@ -138,7 +138,7 @@ def generate_qa_pairs(
     llm = APIGateway.load_llm(
         type='sambastudio',
         streaming=True,
-        coe=True,
+        bundle=True,
         do_sample=False,
         max_tokens_to_generate=500,
         temperature=0.0,

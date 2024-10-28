@@ -48,7 +48,7 @@ def update_all_embedding_models(config: Any) -> None:
                 # Overwrite the embedding model settings to use 'sambastudio'
                 value['type'] = 'sambastudio'
                 value['batch_size'] = 32
-                value['coe'] = False
+                value['bundle'] = False
                 # We standardize the embedding model settings to use 'sambastudio',
                 # which is suitable for hosted kits that can utilize our embeddings.
             else:

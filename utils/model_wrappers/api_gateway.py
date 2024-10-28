@@ -37,7 +37,7 @@ class APIGateway:
     def load_embedding_model(
         type: str = 'cpu',
         batch_size: Optional[int] = None,
-        coe: bool = False,
+        bundle: bool = False,
         select_expert: Optional[str] = None,
         sambastudio_embeddings_base_url: Optional[str] = None,
         sambastudio_embeddings_base_uri: Optional[str] = None,
@@ -49,8 +49,8 @@ class APIGateway:
         Args:
             type (str): wether to use sambastudio embedding model or in local cpu model
             batch_size (int, optional): batch size for sambastudio model. Defaults to None.
-            coe (bool, optional): whether to use coe model. Defaults to False. only for sambastudio models
-            select_expert (str, optional): expert model to be used when coe selected. Defaults to None.
+            bundle (bool, optional): whether to use bundle model. Defaults to False. only for sambastudio models
+            select_expert (str, optional): expert model to be used when bundle selected. Defaults to None.
                 only for sambastudio models.
             sambastudio_embeddings_base_url (str, optional): base url for sambastudio model. Defaults to None.
             sambastudio_embeddings_base_uri (str, optional): endpoint base uri for sambastudio model. Defaults to None.
@@ -71,7 +71,7 @@ class APIGateway:
             }
             envs = {k: v for k, v in envs.items() if v is not None}
 
-            if coe:
+            if bundle:
                 if batch_size is None:
                     batch_size = 1
                 embeddings = SambaStudioEmbeddings(
@@ -99,7 +99,7 @@ class APIGateway:
     def load_llm(
         type: str,
         streaming: bool = False,
-        coe: bool = False,
+        bundle: bool = False,
         do_sample: Optional[bool] = None,
         max_tokens: Optional[int] = None,
         max_tokens_to_generate: Optional[int] = None,
@@ -120,7 +120,7 @@ class APIGateway:
         Args:
             type (str): whether to use sambastudio, or SambaNova Cloud model "sncloud"
             streaming (bool): whether to use streaming method. Defaults to False.
-            coe (bool): whether to use coe model. Defaults to False.
+            bundle (bool): whether to use bundle model. Defaults to False.
 
             do_sample (bool) : Optional whether to do sample.
             max_tokens (int) : Optional max number of tokens to generate.
@@ -150,7 +150,7 @@ class APIGateway:
                 'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
-            if coe:
+            if bundle:
                 model_kwargs = {
                     'do_sample': do_sample,
                     'max_tokens': max_tokens or max_tokens_to_generate,

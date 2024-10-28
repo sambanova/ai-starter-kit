@@ -7,8 +7,8 @@ const sambastudio_base_url = "your-sambastudio-base-url";
 const sambastudio_project_id = "your-sambastudio-project-id";
 const sambastudio_endpoint_id = "your-sambastudio-endpoint-id";
 const sambastudio_api_key = "your-sambastudio-api-key";
-const sambastudio_use_coe = true;
-const sambastudio_coe_expert_name = "Meta-Llama-3-70B-Instruct-4096";
+const sambastudio_use_bundle = true;
+const sambastudio_bundle_expert_name = "Meta-Llama-3-70B-Instruct-4096";
 
 /**
  * Llama3 template structure
@@ -105,7 +105,7 @@ async function* sambaStudioEndpointHandler(
 let SambaStudioModel = {
   options: {
     title: "SambaStudio",
-    model: sambastudio_coe_expert_name,
+    model: sambastudio_bundle_expert_name,
     contextLength: 2048,
     templateMessages: templateLlama3Messages,
   },
@@ -121,7 +121,7 @@ let SambaStudioModel = {
   ) {
     const url = `${sambastudio_base_url}/api/predict/generic/stream/${sambastudio_project_id}/${sambastudio_endpoint_id}`;
     let body = ""
-    if(sambastudio_use_coe){
+    if(sambastudio_use_bundle){
       body = JSON.stringify({
         instance: prompt,
         params: {

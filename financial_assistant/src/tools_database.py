@@ -475,7 +475,7 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
             llm = APIGateway.load_llm(
                 type=sambanova_llm.llm_info['api'],
                 streaming=False,
-                coe=sambanova_llm.llm_info['coe'],
+                bundle=sambanova_llm.llm_info['bundle'],
                 do_sample=sambanova_llm.llm_info['do_sample'],
                 max_tokens_to_generate=item,
                 temperature=sambanova_llm.llm_info['temperature'],

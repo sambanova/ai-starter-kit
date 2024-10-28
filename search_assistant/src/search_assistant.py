@@ -157,7 +157,7 @@ class SearchAssistant:
         llm = APIGateway.load_llm(
             type=self.api_info,
             streaming=True,
-            coe=self.llm_info['coe'],
+            bundle=self.llm_info['bundle'],
             do_sample=self.llm_info['do_sample'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],
@@ -550,7 +550,7 @@ class SearchAssistant:
         embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info['type'],
             batch_size=self.embedding_model_info['batch_size'],
-            coe=self.embedding_model_info['coe'],
+            bundle=self.embedding_model_info['bundle'],
             select_expert=self.embedding_model_info['select_expert'],
         )
 
@@ -599,7 +599,7 @@ class SearchAssistant:
         embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info['type'],
             batch_size=self.embedding_model_info['batch_size'],
-            coe=self.embedding_model_info['coe'],
+            bundle=self.embedding_model_info['bundle'],
             select_expert=self.embedding_model_info['select_expert'],
         )
         if update and os.path.exists(persist_directory):

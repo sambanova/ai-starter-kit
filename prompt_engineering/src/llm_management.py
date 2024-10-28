@@ -45,7 +45,7 @@ class LLMManager:
         """Sets a langchain embedding model
         Args:
             llm_info (dict):
-            coe_flag (bool):
+            bundle_flag (bool):
             model_expert (str):
         Returns:
             langchain embedding model
@@ -53,7 +53,7 @@ class LLMManager:
         llm = APIGateway.load_llm(
             type=self.llm_info['api'],
             streaming=False,
-            coe=self.llm_info['coe'],
+            bundle=self.llm_info['bundle'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],
             select_expert=model_expert,

@@ -96,7 +96,7 @@ The config.yaml file is crucial for customizing the behavior of the CoE LLM Rout
       "temperature": 0.0
       "do_sample": False
       "max_tokens_to_generate": 1200
-      "coe": True #set as true if using Sambastudio CoE endpoint
+      "bundle": True #set as true if using Sambastudio CoE endpoint
       "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
   ```
   These settings define the API to use and the parameters for the language model.
@@ -150,7 +150,7 @@ To add new categories, you would add them to the list of categories, provide exa
 5. CoE Name Map:
 
   ```yaml
-  coe_name_map:
+  bundle_name_map:
     Finance expert: "finance-chat"
     Math expert: "deepseek-llm-67b-chat"
     Code expert: "deepseek-llm-67b-chat"
@@ -164,9 +164,9 @@ Remember to update the .env file in the root directory of the ai-starter-kit wit
 
 # NEEDED FOR SAMBASTUDIO COE MODEL
 SAMBASTUDIO_BASE_URL="https://your-sambastudio.url"
-SAMBASTUDIO_PROJECT_ID="your-coe-model-project-id"
-SAMBASTUDIO_ENDPOINT_ID="your-coe-model-endpoint-id"
-SAMBASTUDIO_API_KEY="your-coe-model-api-key"
+SAMBASTUDIO_PROJECT_ID="your-bundle-model-project-id"
+SAMBASTUDIO_ENDPOINT_ID="your-cbundleoe-model-endpoint-id"
+SAMBASTUDIO_API_KEY="your-bundle-model-api-key"
 VECTOR_DB_URL=http://localhost:6333
 
 # NEEDED FOR SAMBASTUDIO EMBEDDINGS MODEL
@@ -179,11 +179,11 @@ SAMBASTUDIO_EMBED_API_KEY="your-embedding-model-api-key"
 
 ## Starter kit usage
 Using the Python script
-Update the config.yaml file with your desired configuration, then run the use_coe_model.py script with the desired mode:
+Update the config.yaml file with your desired configuration, then run the use_bundle_model.py script with the desired mode:
 
 
 ### Using the Python script
-Update the config.yaml file with your desired configuration, then run the use_coe_model.py script with the desired mode:
+Update the config.yaml file with your desired configuration, then run the use_bundle_model.py script with the desired mode:
   
   ```bash
   python src/use_CoE_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]

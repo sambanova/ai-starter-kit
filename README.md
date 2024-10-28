@@ -141,8 +141,8 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="CoE_jump_start/README.md">CoE jump start</a></td>
-<td width="40%">This kit demonstrates how to call <a href=https://coe-1.Cloud.snova.ai/>SambaNova CoE</a> models using the Langchain framework. The script offers different approaches for calling CoE models, including using SambaStudio with a named expert, and using SambaStudio with routing.</td>
+<td width="20%"><a href="bundle_jump_start/README.md">Bundle jump start</a></td>
+<td width="40%">This kit demonstrates how to call <a href=https://coe-1.Cloud.snova.ai/>SambaNova Bundle</a> models using the Langchain framework. The script offers different approaches for calling Bundle models, including using SambaStudio with a named expert, and using SambaStudio with routing.</td>
 <td width="20%">SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>  
 </tr>
@@ -257,7 +257,7 @@ Set your environment as shown in [integrate your model](#integrate-your-model-in
 
 1. Import the **SambaStudio** langchain community wrapper in your project and define your **SambaStudio* LLM:
 
-- If using a CoE endpoint:
+- If using a Bundle endpoint:
 
 ```python
 from langchain_community.llms.sambanova import SambaStudio
@@ -325,7 +325,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 1. Import the **SambaStudioEmbedding** langchain community wrapper in your project and define your **SambaStudioEmbeddings** embedding:
 
-- If using a CoE endpoint
+- If using a Bundle endpoint
 
 ```python
 from langchain_community.embeddings import SambaStudioEmbeddings
