@@ -29,7 +29,6 @@ from langchain.output_parsers import (
 from langchain.prompts import load_prompt
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.exceptions import OutputParserException
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 
