@@ -67,9 +67,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
     'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
-    'multimodal_knowledge_retriever': (
-        'python tests/multimodal_knowledge_retriever_test.py'
-    ),
+    'multimodal_knowledge_retriever': ('python tests/multimodal_knowledge_retriever_test.py'),
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',

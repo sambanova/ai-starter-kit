@@ -106,7 +106,6 @@ def handle_user_input(user_question: str) -> None:
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
-            
             formatted_ans = ans.replace('$', '\$')
             st.write(f'{formatted_ans}')
             if st.session_state.show_sources:
