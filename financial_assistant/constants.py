@@ -12,6 +12,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+# Session ID
 SESSION_ID = str(uuid4())
 
 # Main config file
@@ -63,12 +64,10 @@ DEFAULT_FILING_QUARTER = 0
 DEFAULT_FILING_YEAR = datetime.datetime.today().date().year - 1
 DEFAULT_PDF_TITLE = 'Financial Report'
 
-
 # Cache directory
 CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache')
 if prod_mode:
     CACHE_DIR = os.path.join(CACHE_DIR + '_prod_mode', f'cache_{SESSION_ID}')
-
 
 # Main cache directories
 HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')
@@ -80,7 +79,6 @@ FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
 PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
 WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
 TIME_LLM_PATH = os.path.join(CACHE_DIR, 'time_llm.json')
-
 
 # Main source directories
 SOURCE_DIR = os.path.join(CACHE_DIR, 'sources')
