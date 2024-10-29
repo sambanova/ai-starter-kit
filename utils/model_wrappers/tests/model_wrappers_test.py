@@ -40,7 +40,7 @@ from langchain_core.language_models.llms import LLM
 from pydantic import ValidationError
 
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.tests.schemas import EmbeddingsBaseModel, LLMBaseModel
+from utils.model_wrappers.tests.schemas import EmbeddingsBaseModel, LLMBaseModel, SNCloudResponse
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
@@ -265,8 +265,16 @@ class ModelWrapperTestCase(unittest.TestCase):
 
     def test_chat_model_response(self) -> None:
         query = 'Where is alpha centauri located?'
+        format_query = [{"role": "user", "content": query}]
+
         sn_cloud_response = self.sn_chat_model.invoke(query)
         ss_response = self.ss_chat_model.invoke(query)
+        sn_cloud_raw_response = self.sn_chat_model._handle_request(format_query)
+
+        try:
+            SNCloudResponse(**sn_cloud_raw_response)
+        except ValidationError as e:
+            self.fail(f"Schema validation failed: {e}")
 
         if not isinstance(sn_cloud_response, dict):
             sn_cloud_response = sn_cloud_response.model_dump()
