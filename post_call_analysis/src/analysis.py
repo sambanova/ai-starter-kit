@@ -20,10 +20,16 @@ from langchain.chains import LLMChain, ReduceDocumentsChain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains.retrieval import create_retrieval_chain
-from langchain.output_parsers import CommaSeparatedListOutputParser, ResponseSchema, StructuredOutputParser
+from langchain.output_parsers import (
+    CommaSeparatedListOutputParser,
+    OutputFixingParser,
+    ResponseSchema,
+    StructuredOutputParser,
+)
 from langchain.prompts import load_prompt
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.exceptions import OutputParserException
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import StrOutputParser
 
@@ -129,7 +135,8 @@ def classify_main_topic(conversation: str, classes: List[str], model: LLM = mode
     topic_classification_prompt = load_prompt(os.path.join(kit_dir, 'prompts/topic_classification.yaml'))
     list_output_parser = CommaSeparatedListOutputParser()
     list_format_instructions = list_output_parser.get_format_instructions()
-    topic_classification_chain = topic_classification_prompt | model | list_output_parser
+    list_fixing_output_parser = OutputFixingParser.from_llm(parser=list_output_parser, llm=model)
+    topic_classification_chain = topic_classification_prompt | model | list_fixing_output_parser
     input_variables = {
         'conversation': conversation,
         'topic_classes': '\n\t- '.join(classes),
@@ -159,7 +166,8 @@ def get_entities(conversation: str, entities: List[str], model: LLM = model) -> 
     for entity in entities:
         response_schemas.append(ResponseSchema(name=entity, description=f'{entity}s find in conversation', type='list'))
     entities_output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
-    ner_chain = ner_prompt | model | entities_output_parser
+    entities_fixing_output_parser = OutputFixingParser.from_llm(parser=entities_output_parser, llm=model)
+    ner_chain = ner_prompt | model | entities_fixing_output_parser
     input_variables = {
         'conversation': conversation,
         'entities': '\n\t- '.join(entities),
@@ -187,7 +195,8 @@ def get_sentiment(conversation: str, sentiments: List[Any], model: LLM = model) 
     sentiment_analysis_prompt = load_prompt(os.path.join(kit_dir, 'prompts/sentiment_analysis.yaml'))
     list_output_parser = CommaSeparatedListOutputParser()
     list_format_instructions = list_output_parser.get_format_instructions()
-    sentiment_analysis_chain = sentiment_analysis_prompt | model | list_output_parser
+    list_fixing_output_parser = OutputFixingParser.from_llm(parser=list_output_parser, llm=model)
+    sentiment_analysis_chain = sentiment_analysis_prompt | model | list_fixing_output_parser
     input_variables = {
         'conversation': conversation,
         'sentiments': sentiments,
@@ -216,8 +225,9 @@ def get_nps(conversation: str, model: LLM = model) -> Dict[str, Any]:
     ]
     nps_output_parser = StructuredOutputParser.from_response_schemas(nps_response_schemas)
     format_instructions = nps_output_parser.get_format_instructions()
+    nps_fixing_output_parser = OutputFixingParser.from_llm(parser=nps_output_parser, llm=model)
     nps_prompt = load_prompt(os.path.join(kit_dir, 'prompts/nps.yaml'))
-    nps_chain = nps_prompt | model | nps_output_parser
+    nps_chain = nps_prompt | model | nps_fixing_output_parser
     input_variables = {'conversation': conversation, 'format_instructions': format_instructions}
     print(f'predicting nps')
     nps = nps_chain.invoke(input_variables)
@@ -320,13 +330,16 @@ def factual_accuracy_analysis(conversation: str, retriever: Any, model: LLM = mo
         factual_accuracy_analysis_response_schemas
     )
     format_instructions = factual_accuracy_analysis_output_parser.get_format_instructions()
+    factual_accuracy_analysis_fixing_output_parser = OutputFixingParser.from_llm(
+        parser=factual_accuracy_analysis_output_parser, llm=model
+    )
     retrieval_qa_chat_prompt = load_prompt(os.path.join(kit_dir, 'prompts/factual_accuracy_analysis.yaml'))
     combine_docs_chain = create_stuff_documents_chain(model, retrieval_qa_chat_prompt)
     retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
     input_variables = {'input': conversation, 'format_instructions': format_instructions}
     model_response = retrieval_chain.invoke(input_variables)['answer']
     print('factual check')
-    factual_accuracy_analysis_response = factual_accuracy_analysis_output_parser.invoke(model_response)
+    factual_accuracy_analysis_response = factual_accuracy_analysis_fixing_output_parser.invoke(model_response)
     print('factual check done')
     return factual_accuracy_analysis_response
 
@@ -363,10 +376,13 @@ def procedural_accuracy_analysis(conversation: str, procedures_path: str, model:
         procedures_analysis_response_schemas
     )
     format_instructions = procedures_analysis_output_parser.get_format_instructions()
+    procedures_analysis_fixing_output_parser = OutputFixingParser.from_llm(
+        parser=procedures_analysis_output_parser, llm=model
+    )
     procedures_prompt = load_prompt(os.path.join(kit_dir, 'prompts/procedures_analysis.yaml'))
     with open(procedures_path, 'r') as file:
         procedures = file.readlines()
-    procedures_chain = procedures_prompt | model | procedures_analysis_output_parser
+    procedures_chain = procedures_prompt | model | procedures_analysis_fixing_output_parser
     input_variables = {'input': conversation, 'procedures': procedures, 'format_instructions': format_instructions}
     print('proceduress check')
     procedures_analysis_response = procedures_chain.invoke(input_variables)
