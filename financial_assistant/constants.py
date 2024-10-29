@@ -79,6 +79,8 @@ YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.txt')
 FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
 PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
 WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
+TIME_LLM_PATH = os.path.join(CACHE_DIR, 'time_llm.json')
+
 
 # Main source directories
 SOURCE_DIR = os.path.join(CACHE_DIR, 'sources')
