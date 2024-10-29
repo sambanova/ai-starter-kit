@@ -11,7 +11,7 @@ from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.src.tools_pdf_generation import generate_pdf, parse_documents, read_txt_files
 from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import clear_directory, save_output_callback
-from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
+from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput, stream_time_llm
 
 logger = get_logger()
 
@@ -130,6 +130,12 @@ def include_pdf_report() -> None:
 
             # Generate the PDF report
             pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
+
+            # Stream the duration of the LLM calls
+            stream_time_llm()
+
+            # Delete LLM time json file
+            os.remove(TIME_LLM_PATH)
 
             # Embed PDF to display it:
             if pdf_handler is not None:
