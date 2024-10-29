@@ -126,33 +126,34 @@ def include_pdf_report() -> None:
     # Generate the report
     if streamlit.button('Generate Report'):
         with streamlit.expander('**Execution scratchpad**', expanded=True):
-            report_name = title_name.lower().replace(' ', '_') + '.pdf'
+            with streamlit.spinner('Processing...'):
+                report_name = title_name.lower().replace(' ', '_') + '.pdf'
 
-            # Generate the PDF report
-            pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
+                # Generate the PDF report
+                pdf_handler = handle_pdf_generation(title_name, report_name, data_paths, include_summary)
 
-            # Stream the duration of the LLM calls
-            stream_time_llm()
+                # Embed PDF to display it:
+                if pdf_handler is not None:
+                    # Stream the duration of the LLM calls
+                    stream_time_llm()
 
-            # Delete LLM time json file
-            os.remove(TIME_LLM_PATH)
+                    # Delete LLM time json file
+                    os.remove(TIME_LLM_PATH)
 
-            # Embed PDF to display it:
-            if pdf_handler is not None:
-                base64_pdf = b64encode(pdf_handler).decode('utf-8')
-                pdf_display = (
-                    f'<embed src="data:application/pdf;base64,{base64_pdf}"'
-                    ' width="700" height="400" type="application/pdf">'
-                )
-                streamlit.markdown(pdf_display, unsafe_allow_html=True)
-                # Add download button
-                streamlit.download_button(
-                    label='Download Report',
-                    data=pdf_handler,
-                    file_name=report_name,
-                    mime='application/pdf',
-                )
-                streamlit.write('PDF report generated successfully.')
+                    base64_pdf = b64encode(pdf_handler).decode('utf-8')
+                    pdf_display = (
+                        f'<embed src="data:application/pdf;base64,{base64_pdf}"'
+                        ' width="700" height="400" type="application/pdf">'
+                    )
+                    streamlit.markdown(pdf_display, unsafe_allow_html=True)
+                    # Add download button
+                    streamlit.download_button(
+                        label='Download Report',
+                        data=pdf_handler,
+                        file_name=report_name,
+                        mime='application/pdf',
+                    )
+                    streamlit.write('PDF report generated successfully.')
 
     # Use PDF report for RAG
     streamlit.markdown('<h2> Use PDF Report for RAG </h2>', unsafe_allow_html=True)
