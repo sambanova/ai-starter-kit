@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import Inspector, create_engine
 
 from financial_assistant.constants import *
+from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS_TEMPLATE
 from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
 from financial_assistant.src.exceptions import TableNotFoundException

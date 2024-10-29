@@ -1,8 +1,12 @@
+import json
 import logging
+import os
 import time
 from typing import Any, Callable, Dict, TypeVar
 
 import yaml
+
+from financial_assistant.constants import TIME_LLM_PATH
 
 # Generic function type
 F = TypeVar('F', bound=Callable[..., Any])
@@ -103,6 +107,24 @@ def time_llm(func: F) -> Any:
 
         # Log to file
         logger.info(f'{func.__name__} took {duration:.2f} seconds.')
+
+        # Create a row for the csv file
+        row = [func.__name__, duration]
+
+        if os.path.exists(TIME_LLM_PATH):
+            # Read the existing data from the JSON file
+            with open(TIME_LLM_PATH, 'r') as file:
+                data = json.load(file)
+        else:
+            # If the file does not exist, start with an empty list
+            data = list()
+
+        # Append the row to the list of rows
+        data.append(row)
+
+        # Save the new list of rows to a JSON file
+        with open(TIME_LLM_PATH, 'w') as file:
+            json.dump(data, file, indent=4)
 
         # Return only result
         return result

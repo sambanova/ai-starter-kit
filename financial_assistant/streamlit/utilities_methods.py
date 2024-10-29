@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
@@ -10,6 +11,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.constants import *
+from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.src.exceptions import LLMException, TableNotFoundException, VectorStoreException
 from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
@@ -23,7 +25,6 @@ from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.src.utilities import get_logger
 
 logger = get_logger()
-
 
 # tool mapping of available tools
 TOOLS = {
@@ -73,7 +74,14 @@ def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
     with streamlit.spinner('Processing...'):
         with st_capture(output.code):
             try:
+                # Invoke the tools on the user query
                 response = sambanova_llm.invoke_tools(query=user_query)
+
+                # Stream the duration of the LLM calls
+                stream_time_llm()
+
+                # Delete LLM time json file
+                os.remove(TIME_LLM_PATH)
 
             except LLMException:
                 streamlit.error(
@@ -96,6 +104,23 @@ def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
     stream_response_object(response)
 
     return response
+
+
+def stream_time_llm() -> None:
+    """Stream LLM call duration."""
+
+    if os.path.exists(TIME_LLM_PATH):
+        with open(TIME_LLM_PATH, 'r') as file:
+            data = json.load(file)
+            while data:
+                streamlit.markdown(
+                    f'- **<span style="color:rgb{SAMBANOVA_ORANGE}">{data[0][0]}</span>'
+                    f'** took **<span style="color:rgb{SAMBANOVA_ORANGE}">'
+                    f'{float(data[0][1]):.2f}</span>** seconds.',
+                    unsafe_allow_html=True,
+                )
+                data.pop(0)
+    return
 
 
 def stream_chat_history() -> None:
