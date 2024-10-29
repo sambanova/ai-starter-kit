@@ -34,7 +34,7 @@ sn_chat_model:
 sambastudio_chat_model:
     type: "sambastudio"
     model: "Meta-Llama-3-70B-Instruct-4096"
-    streaming: false
+    streaming: true
     max_tokens: 1200
     temperature: 0.0
     top_p: null

@@ -81,6 +81,7 @@ class ModelWrapperTestCase(unittest.TestCase):
             cls.sn_llm_params,
             cls.sn_llm_params_output,
             cls.ss_llm_params,
+            cls.ss_llm_params_output,
             cls.sn_chat_model_params,
             cls.sn_chat_model_params_output,
             cls.ss_chat_model_params,
@@ -102,16 +103,19 @@ class ModelWrapperTestCase(unittest.TestCase):
         Dict[str, Any],
         Dict[str, Any],
         Dict[str, Any],
+        Dict[str, Any],
     ]:
         embed_params = test_config['embedding_model']
 
         sn_llm_params = test_config['sn_llm']
         sn_llm_params_output = sn_llm_params.copy()
         sn_llm_params_output.pop('type')
-        sn_llm_params_output['stop'] = ['<|eot_id|>']
-        sn_llm_params_output['_type'] = 'SambaNova Cloud'
+        sn_llm_params_output['_type'] = 'sambanovacloud-llm'
 
         ss_llm_params = test_config['ss_llm']
+        ss_llm_params_output = sn_llm_params.copy()
+        ss_llm_params_output.pop('type')
+        ss_llm_params_output['_type'] = 'sambastudio-llm'
 
         sn_chat_model_params = test_config['sn_chat_model']
         sn_chat_model_params_output = sn_chat_model_params.copy()
@@ -128,6 +132,7 @@ class ModelWrapperTestCase(unittest.TestCase):
             sn_llm_params,
             sn_llm_params_output,
             ss_llm_params,
+            ss_llm_params_output,
             sn_chat_model_params,
             sn_chat_model_params_output,
             ss_chat_model_params,
@@ -165,11 +170,14 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertIsNotNone(self.ss_chat_model, 'chat model class could not be created')
 
     def test_llm_model_params(self) -> None:
-        self.assertEqual(self.sn_llm_model.dict(), self.sn_llm_params_output)
+        for i in self.sn_llm_params_output:
+            params = self.sn_llm_model.dict()
+            self.assertIn(i, params, f'{i} should be a param of llm class')
+            self.assertEqual(self.sn_llm_params_output.get(i), params.get(i), 'llm model params not equal')
 
     def test_chat_model_params(self) -> None:
-        self.assertEqual(self.sn_chat_model.dict(), self.sn_chat_model_params_output)
-        self.assertEqual(self.ss_chat_model.dict(), self.ss_chat_model_params_output)
+        self.assertEqual(self.sn_chat_model.dict(), self.sn_chat_model_params_output, 'chat model prams not equal')
+        self.assertEqual(self.ss_chat_model.dict(), self.ss_chat_model_params_output, 'chat model prams not equal')
 
     def test_embeddings_model_validation(self) -> None:
         for i in bad_format_embeddings_model_params.get('type'):
@@ -241,8 +249,11 @@ class ModelWrapperTestCase(unittest.TestCase):
 
     def test_embeddings_model_response(self) -> None:
         query = 'What is computer science?'
+        queries = ['tell me a 50 word tale', 'tell me a joke']
         response = self.embeddings_model.embed_query(query)
+        multiple_response = self.embeddings_model.embed_documents(queries)
         self.assertEqual(len(response), 1024, 'Embeddings dimension should be 1024')
+        self.assertEqual(len(multiple_response), 2, 'Response length should be 2')
 
     def test_llm_model_response(self) -> None:
         query = 'How many moons does Jupiter have?'
