@@ -2,10 +2,12 @@ import logging
 import os
 import shutil
 import sys
+import uuid
 from typing import List, Optional
 
 import streamlit as st
 import yaml
+from dotenv import load_dotenv
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +20,7 @@ sys.path.append(repo_dir)
 from typing import Optional
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -25,6 +28,8 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
+
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def save_files_user(docs: List[UploadedFile]) -> str:
@@ -149,6 +154,16 @@ def main() -> None:
         st.session_state.input_disabled = True
     if 'document_retrieval' not in st.session_state:
         st.session_state.document_retrieval = None
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='enterprise_knowledge_retriever',
+            track=prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
     st.title(':orange[SambaNova] Analyst Assistant')
 
@@ -162,6 +177,7 @@ def main() -> None:
             url, api_key = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(url, api_key, prod_mode)
+                st.session_state.mp_events.api_key_saved()
                 st.success(message)
                 st.rerun()
         else:
@@ -225,6 +241,7 @@ def main() -> None:
                 )
                 st.markdown('Create database')
                 if st.button('Process'):
+                    st.session_state.mp_events.input_submitted('document_ingest')
                     with st.spinner('Processing'):
                         try:
                             if docs is not None:
@@ -335,6 +352,7 @@ def main() -> None:
 
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:
+        st.session_state.mp_events.input_submitted('chat_input')
         handle_userinput(user_question)
 
 
