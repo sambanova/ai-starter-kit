@@ -1,13 +1,15 @@
+import logging
 import os
 import sys
+import uuid
 
 import streamlit as st
 import yaml
+from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-import logging
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
@@ -16,12 +18,15 @@ import concurrent.futures
 from typing import Any
 
 from search_assistant.src.search_assistant import SearchAssistant
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
+
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def load_config() -> Any:
@@ -143,6 +148,16 @@ def main() -> None:
         st.session_state.query = None
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='search_assistant',
+            track=prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
     st.title(':orange[SambaNova] Search Assistant')
 
@@ -158,6 +173,7 @@ def main() -> None:
             api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
+                st.session_state.mp_events.api_key_saved()
                 st.success(message)
                 st.rerun()
         else:
@@ -208,6 +224,7 @@ def main() -> None:
                             if scraper_state is not None:
                                 st.error(scraper_state.get('message'))
                             st.session_state.input_disabled = False
+                            st.session_state.mp_events.input_submitted('scrape_and_ingest_sites')
                             st.toast('Search done and knowledge base updated you can chat now')
                     elif method == 'Search and answer':
                         st.session_state.method = 'basic_query'
@@ -239,6 +256,7 @@ def main() -> None:
         'Ask questions about data in provided sites', disabled=st.session_state.input_disabled
     )
     if user_question is not None:
+        st.session_state.mp_events.input_submitted('chat_input')
         handle_user_input(user_question)
 
 
