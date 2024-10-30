@@ -60,9 +60,11 @@ interface = APIGateway
 
 class ModelWrapperTestCase(unittest.TestCase):
     time_start: float
+    embed_params: Dict[str, Any]
     sn_llm_params: Dict[str, Any]
     sn_llm_params_output: Dict[str, Any]
     ss_llm_params: Dict[str, Any]
+    ss_llm_params_output: Dict[str, Any]
     sn_chat_model_params: Dict[str, Any]
     sn_chat_model_params_output: Dict[str, Any]
     ss_chat_model_params: Dict[str, Any]
@@ -259,13 +261,19 @@ class ModelWrapperTestCase(unittest.TestCase):
         query = 'How many moons does Jupiter have?'
         sn_cloud_response = self.sn_llm_model.invoke(query)
         ss_response = self.ss_llm_model.invoke(query)
+        sn_cloud_raw_response = self.sn_llm_model._handle_request(query).json()
+
+        try:
+            SNCloudResponse(**sn_cloud_raw_response)
+        except ValidationError as e:
+            self.fail(f'Schema validation failed: {e}')
 
         self.assertGreaterEqual(len(sn_cloud_response), 1, 'Response should be a non-empty string')
         self.assertGreaterEqual(len(ss_response), 1, 'Response should be a non-empty string')
 
     def test_chat_model_response(self) -> None:
         query = 'Where is alpha centauri located?'
-        format_query = [{"role": "user", "content": query}]
+        format_query = [{'role': 'user', 'content': query}]
 
         sn_cloud_response = self.sn_chat_model.invoke(query)
         ss_response = self.ss_chat_model.invoke(query)
@@ -274,22 +282,21 @@ class ModelWrapperTestCase(unittest.TestCase):
         try:
             SNCloudResponse(**sn_cloud_raw_response)
         except ValidationError as e:
-            self.fail(f"Schema validation failed: {e}")
+            self.fail(f'Schema validation failed: {e}')
 
-        if not isinstance(sn_cloud_response, dict):
-            sn_cloud_response = sn_cloud_response.model_dump()
-        if not isinstance(ss_response, dict):
-            ss_response = ss_response.model_dump()
+        sn_cloud_response_dict = sn_cloud_response.model_dump()
+        ss_response_dict = ss_response.model_dump()
 
-        self.assertIn('content', sn_cloud_response, "Response should have a 'content' key")
-        self.assertGreaterEqual(len(sn_cloud_response['content']), 1, 'Content should be a non-empty string')
-        self.assertIn('response_metadata', sn_cloud_response, "Response should have a 'response_metadata' key")
-        self.assertIn('usage', sn_cloud_response['response_metadata'], "Response metadata should have a 'usage' key")
+        self.assertIn('content', sn_cloud_response_dict, "Response should have a 'content' key")
+        self.assertGreaterEqual(len(sn_cloud_response_dict['content']), 1, 'Content should be a non-empty string')
+        self.assertIn('response_metadata', sn_cloud_response_dict, "Response should have a 'response_metadata' key")
+        self.assertIn('usage', sn_cloud_response_dict['response_metadata'],
+         "Response metadata should have a 'usage' key")
 
-        self.assertIn('content', ss_response, "Response should have a 'content' key")
-        self.assertGreaterEqual(len(ss_response['content']), 1, 'Content should be a non-empty string')
-        self.assertIn('response_metadata', ss_response, "Response should have a 'response_metadata' key")
-        self.assertIn('usage', ss_response['response_metadata'], "Response metadata should have a 'usage' key")
+        self.assertIn('content', ss_response_dict, "Response should have a 'content' key")
+        self.assertGreaterEqual(len(ss_response_dict['content']), 1, 'Content should be a non-empty string')
+        self.assertIn('response_metadata', ss_response_dict, "Response should have a 'response_metadata' key")
+        self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
 
     @classmethod
     def tearDownClass(cls: Type['ModelWrapperTestCase']) -> None:
