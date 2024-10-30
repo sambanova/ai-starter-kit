@@ -24,7 +24,8 @@ class MixpanelEvents:
         Initializes the MixpanelEvents instance.
 
         Args:
-            token (Optional[str]): The Mixpanel project token. If not provided, it is fetched from the environment variable 'MIXPANEL_TOKEN'.
+            token (Optional[str]): The Mixpanel project token.
+            If not provided, it is fetched from the environment variable 'MIXPANEL_TOKEN'.
             st_session_id (Optional[str]): The streamlit session ID for tracking.
             kit_name (Optional[str]): The name of the kit.
             track (bool): A flag to enable or disable event tracking. Defaults to True.
@@ -50,7 +51,8 @@ class MixpanelEvents:
 
         Args:
             event_name (str): The name of the event to track.
-            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event. Defaults to None.
+            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event.
+            Defaults to None.
         """
         if self.track:
             if extra_properties is None:
@@ -77,7 +79,8 @@ class MixpanelEvents:
 
         Args:
             submission_type (Optional[str]): The type of submission.
-            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event. Defaults to None.
+            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event.
+            Defaults to None.
         """
         if extra_properties is None:
             extra_properties = {}
@@ -90,7 +93,8 @@ class MixpanelEvents:
         Tracks an 'api_key_saved' event.
 
         Args:
-            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event. Defaults to None.
+            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event.
+            Defaults to None.
         """
         if extra_properties is None:
             extra_properties = {}
@@ -101,7 +105,8 @@ class MixpanelEvents:
         Tracks a 'demo_launch' event.
 
         Args:
-            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event. Defaults to None.
+            extra_properties (Optional[Dict[str, Any]]): Additional properties to include with the event.
+            Defaults to None.
         """
         if extra_properties is None:
             extra_properties = {}
