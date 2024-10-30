@@ -18,7 +18,6 @@ sys.path.append(repo_dir)
 
 import schedule
 import streamlit as st
-from dotenv import load_dotenv
 
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
 from utils.events.mixpanel import MixpanelEvents
@@ -38,8 +37,6 @@ LVLM_MODELS = [
 LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
-
-load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def delete_temp_dir(temp_dir: str) -> None:

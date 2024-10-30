@@ -12,7 +12,6 @@ from typing import Any, Callable, Generator, List, Optional
 import schedule
 import streamlit as st
 import yaml
-from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -41,8 +40,6 @@ TOOLS = {
     'rag': rag,
 }
 EXIT_TIME_DELTA = 30
-
-load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def load_config() -> Any:

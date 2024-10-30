@@ -5,7 +5,6 @@ import uuid
 
 import streamlit as st
 import yaml
-from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -25,8 +24,6 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
-
-load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def load_config() -> Any:

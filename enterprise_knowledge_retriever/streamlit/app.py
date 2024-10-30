@@ -7,7 +7,6 @@ from typing import List, Optional
 
 import streamlit as st
 import yaml
-from dotenv import load_dotenv
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,8 +27,6 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
-
-load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 def save_files_user(docs: List[UploadedFile]) -> str:
