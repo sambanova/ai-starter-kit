@@ -58,6 +58,7 @@ def include_financial_filings() -> None:
             logger.error('No query entered.')
             streamlit.error('No query entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('analyze_filing')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 # Call the function to analyze the financial filing
                 answer = handle_financial_filings(

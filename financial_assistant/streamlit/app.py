@@ -61,6 +61,7 @@ with streamlit.sidebar:
         if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
             os.environ['SAMBANOVA_API_KEY'] = api_key
             streamlit.success('Credentials saved successfully!')
+            streamlit.session_state.mp_events.api_key_saved()
             streamlit.rerun()
         else:
             streamlit.stop()

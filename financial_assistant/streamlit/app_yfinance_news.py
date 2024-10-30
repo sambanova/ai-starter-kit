@@ -32,6 +32,7 @@ def get_yfinance_news() -> None:
             logger.error('No query entered.')
             streamlit.error('No query entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('retrieve_news')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 if user_request is not None:
                     answer, url_list = handle_yfinance_news(user_request)
