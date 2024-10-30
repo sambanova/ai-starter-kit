@@ -116,7 +116,7 @@ class BaseWeaveEvaluator:
 
         Args:
             params (List[Dict[str, Any]]): A list of dictionaries containing parameters for each model to evaluate.
-            data (Dataset): The dataset to be used for evaluation.        
+            data (Dataset): The dataset to be used for evaluation.
         """
 
         with ThreadPoolExecutor() as executor:

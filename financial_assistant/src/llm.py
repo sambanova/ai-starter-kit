@@ -238,7 +238,7 @@ class SambaNovaLLM:
             The LLM response, resulting from the exeecution of the relevant tool.
 
         Raises:
-            TypeError: If `query` is not of type str.
+            TypeError: If `query` is not of type `str`.
         """
         # Checks the inputs
         if not isinstance(query, str):
