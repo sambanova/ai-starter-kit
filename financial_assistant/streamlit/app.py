@@ -12,7 +12,6 @@ kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-
 import streamlit
 from streamlit_extras.stylable_container import stylable_container
 
@@ -28,6 +27,7 @@ from financial_assistant.streamlit.utilities_app import (
     set_css_styles,
     submit_sec_edgar_details,
 )
+from utils.visual.env_utils import are_credentials_set, save_credentials
 
 # Initialize session
 initialize_session(streamlit.session_state, prod_mode)
@@ -54,13 +54,13 @@ if not prod_mode:
 
 # Add sidebar
 with streamlit.sidebar:
-    if os.getenv('SAMBANOVA_API_KEY') is None:
+    if not are_credentials_set():
         # Get the SambaNova API Key
         streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
         api_key = streamlit.text_input('SAMBANOVA CLOUD API KEY')
         if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
-            os.environ['SAMBANOVA_API_KEY'] = api_key
-            streamlit.success('Credentials saved successfully!')
+            message = save_credentials(api_key=api_key, prod_mode=prod_mode)
+            streamlit.success(message)
             streamlit.rerun()
         else:
             streamlit.stop()
@@ -72,7 +72,7 @@ with streamlit.sidebar:
                 css_styles=get_blue_button_style(),
             ):
                 if streamlit.button('Clear Credentials', key='clear_credentials'):
-                    del os.environ['SAMBANOVA_API_KEY']
+                    save_credentials(api_key='', prod_mode=prod_mode)
                     streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
                     streamlit.rerun()
@@ -96,7 +96,7 @@ logger = get_logger()
 def main() -> None:
     with streamlit.sidebar:
         # Create the cache and its main subdirectories
-        if os.getenv('SAMBANOVA_API_KEY') is not None and not os.path.exists(CACHE_DIR):
+        if are_credentials_set() and not os.path.exists(CACHE_DIR):
             # List the main cache subdirectories
             subdirectories = [
                 SOURCE_DIR,
@@ -135,7 +135,7 @@ def main() -> None:
                     # Delete the cache
                     clear_cache(delete=True)
                     # Clear the SambaNova credentials
-                    del os.environ['SAMBANOVA_API_KEY']
+                    save_credentials(api_key='', prod_mode=prod_mode)
 
                     streamlit.success(r':green[The chat history has been cleared.]')
                     streamlit.success(r':green[The cache has been deleted.]')
@@ -144,7 +144,7 @@ def main() -> None:
                     streamlit.rerun()
                     return
 
-        if os.getenv('SAMBANOVA_API_KEY') is not None:
+        if are_credentials_set():
             # Navigation menu
             streamlit.title('Navigation')
             menu = streamlit.radio(
@@ -210,7 +210,7 @@ def main() -> None:
     columns[0].image(SAMBANOVA_LOGO, width=100)
     columns[1].title('SambaNova Financial Assistant')
 
-    if os.getenv('SAMBANOVA_API_KEY') is not None:
+    if are_credentials_set():
         # Home page
         if menu == 'Home':
             streamlit.title('Financial Insights with LLMs')

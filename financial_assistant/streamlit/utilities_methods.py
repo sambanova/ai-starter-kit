@@ -11,7 +11,6 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.constants import *
-from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.src.exceptions import LLMException, TableNotFoundException, VectorStoreException
 from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
@@ -23,6 +22,7 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.src.utilities import get_logger
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 logger = get_logger()
 
