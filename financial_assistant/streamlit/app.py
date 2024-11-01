@@ -29,6 +29,9 @@ from financial_assistant.streamlit.utilities_app import (
 )
 from utils.visual.env_utils import are_credentials_set, save_credentials
 
+if not prod_mode:
+    load_dotenv(os.path.join(repo_dir, '.env'))
+
 # Initialize session
 initialize_session(streamlit.session_state, prod_mode)
 
@@ -48,9 +51,6 @@ streamlit.logo(
     link=SAMBANOVA_LOGO,
     icon_image=SAMBANOVA_LOGO,
 )
-
-if not prod_mode:
-    load_dotenv(os.path.join(repo_dir, '.env'))
 
 # Add sidebar
 with streamlit.sidebar:
