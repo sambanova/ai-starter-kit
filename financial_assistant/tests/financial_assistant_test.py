@@ -30,6 +30,17 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from financial_assistant.constants import *
+from financial_assistant.streamlit.utilities_app import (
+    create_temp_dir_with_subdirs,
+    delete_temp_dir,
+    initialize_session,
+    save_historical_price_callback,
+    save_output_callback,
+)
+
+# Initialize the session
+initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
+
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
 from financial_assistant.src.tools_pdf_generation import pdf_rag
@@ -41,13 +52,6 @@ from financial_assistant.streamlit.app_pdf_report import handle_pdf_generation, 
 from financial_assistant.streamlit.app_stock_data import handle_stock_data_analysis, handle_stock_query
 from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
 from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
-from financial_assistant.streamlit.utilities_app import (
-    create_temp_dir_with_subdirs,
-    delete_temp_dir,
-    initialize_session,
-    save_historical_price_callback,
-    save_output_callback,
-)
 
 # Instantiate the logger
 logger = get_logger()
@@ -70,9 +74,6 @@ class FinancialAssistantTest(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up before every test."""
-
-        # Initialize the session
-        initialize_session(session_state=streamlit.session_state, prod_mode=False, cache_dir=TEST_CACHE_DIR)
 
         # Initialize SEC EDGAR credentials
         if os.getenv('SEC_API_ORGANIZATION') is None:
