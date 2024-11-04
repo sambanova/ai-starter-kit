@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional, Set,Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -90,7 +90,7 @@ class BYOC(SnsdkWrapper):
                     yaml.dump(self.config, outfile)
                 logging.info(f'config file updated with checkpoints parameters')
 
-    def get_suitable_apps(self, checkpoints: Optional[Union[List[Dict[str,Any]], Dict[str,Any]]] = None) -> None:
+    def get_suitable_apps(self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
         """
         find suitable sambastudio apps for the given checkpoints
 
@@ -125,7 +125,7 @@ class BYOC(SnsdkWrapper):
             for app in app_list:
                 if app['id'] in suitable_apps:
                     named_suitable_apps.append(str(app))
-            
+
             formatted_suitable_apps = '\n'.join(named_suitable_apps)
             logging.info(f'Checkpoint {checkpoint["model_name"]} suitable apps:' + '\n' + f'{formatted_suitable_apps}')
 
@@ -429,7 +429,7 @@ class BYOC(SnsdkWrapper):
         model_version: Optional[str] = None,
         instances: Optional[int] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[Dict[str,Any]] = None,
+        hyperparams: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """
         Creates a new endpoint in a specified Sambastudio project using a specified model.
@@ -466,7 +466,7 @@ class BYOC(SnsdkWrapper):
             model_name = self.config['composite_model']['model_name']
 
         if model_version is None:
-            model_version = "1"
+            model_version = '1'
 
         return super().create_endpoint(
             project_name,

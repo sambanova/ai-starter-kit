@@ -83,7 +83,7 @@ class SnsdkWrapper:
         snapi_config_path: str,
         snapi_secret_path: str,
         tenant_name: str = 'default',
-    ) -> Tuple[str,str,str]:
+    ) -> Tuple[str, str, str]:
         """Sets Snapi using env variables. It also validates if tenant can be set in Snapi config file.
         Args:
             host_name (str): host name coming from env variables
@@ -137,7 +137,7 @@ class SnsdkWrapper:
 
         return host_name, new_snapi_config['TENANT_ID'], access_key
 
-    def _get_sambastudio_variables(self) -> Tuple[str,str,str]:
+    def _get_sambastudio_variables(self) -> Tuple[str, str, str]:
         """Gets Sambastudio host name, tenant id and access key from Snapi folder location
 
         Raises:
@@ -204,7 +204,7 @@ class SnsdkWrapper:
         """
         try:
             with open(file_path, 'r') as file:
-                config:Dict[str,Any] = yaml.safe_load(file)
+                config: Dict[str, Any] = yaml.safe_load(file)
             logging.info(f'Using config file located in {file_path}')
         except FileNotFoundError:
             raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
@@ -411,7 +411,7 @@ class SnsdkWrapper:
 
     """Dataset"""
 
-    def list_datasets(self, verbose: bool = False) -> Optional[List[Dict[str,Any]]]:
+    def list_datasets(self, verbose: bool = False) -> Optional[List[Dict[str, Any]]]:
         """Lists all datasets
 
         Returns:
@@ -551,7 +551,7 @@ class SnsdkWrapper:
         dataset_filetype: Optional[str] = None,
         dataset_url: Optional[str] = None,
         dataset_language: Optional[str] = None,
-        dataset_metadata: Optional[Dict[str,Any]] = None,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """ """
         # Decide whether using method parameters or config
@@ -661,7 +661,7 @@ class SnsdkWrapper:
 
     """app"""
 
-    def list_apps(self, verbose: bool = False) -> Optional[List[Dict[str,Any]]]:
+    def list_apps(self, verbose: bool = False) -> Optional[List[Dict[str, Any]]]:
         """Lists all apps
 
         Returns:
@@ -700,7 +700,7 @@ class SnsdkWrapper:
 
     """models"""
 
-    def model_info(self, model_name: Optional[str] = None, job_type: Optional[str] = None) -> Dict[str,Any]:
+    def model_info(self, model_name: Optional[str] = None, job_type: Optional[str] = None) -> Dict[str, Any]:
         """Gets model info based on the job type specified.
         Several fields are pulled that describe different aspects of model.
 
@@ -864,7 +864,7 @@ class SnsdkWrapper:
         load_state: Optional[bool] = None,
         sub_path: Optional[str] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[Dict[str,Any]] = None,
+        hyperparams: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Creates a new job in an specific SambaStudio project with the given parameters.
@@ -1045,7 +1045,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
-    ) -> Dict[str,Any]:
+    ) -> Dict[str, Any]:
         """
         Check the progress of a job in a specific SambaStudio project.
 
@@ -1104,7 +1104,7 @@ class SnsdkWrapper:
             logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
             raise Exception(f'Error message: {check_job_progress_response}')
 
-    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> List[Dict[str,Any]]:
+    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> List[Dict[str, Any]]:
         """
         List all jobs in a specific SambaStudio project.
 
@@ -1210,7 +1210,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
-    ) -> List[Dict[str,Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         List all checkpoints in a specific job within a SambaStudio project.
 
@@ -1382,7 +1382,9 @@ class SnsdkWrapper:
 
     """endpoint"""
 
-    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> List[Dict[str, Any]]:
+    def list_endpoints(
+        self, project_name: Optional[str] = None, verbose: Optional[bool] = None
+    ) -> List[Dict[str, Any]]:
         """
         List all endpoints in a specific project.
 
@@ -1443,7 +1445,7 @@ class SnsdkWrapper:
         model_version: Optional[str] = None,
         instances: Optional[int] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[Dict[str,Any]] = None,
+        hyperparams: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """
         Creates a new endpoint in a specified Sambastudio project using a specified model.
@@ -1572,7 +1574,9 @@ class SnsdkWrapper:
             logging.error(f'Failed to retrieve information for endpoint Details: {endpoint_info_response}')
             raise Exception(f'Error message: {endpoint_info_response}')
 
-    def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> Dict[str,Any]:
+    def get_endpoint_details(
+        self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Retrieves the details of a specified endpoint in a given SambaStudio project.
 
@@ -1587,7 +1591,7 @@ class SnsdkWrapper:
         - Exception: If there is an error getting endpoint details
 
         Returns:
-        - dict: Dictionary containing the endpoint's status, and environment variables 
+        - dict: Dictionary containing the endpoint's status, and environment variables
             for using the model with langchain wrappers.
         """
 
