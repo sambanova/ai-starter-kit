@@ -1608,7 +1608,7 @@ class SnsdkWrapper:
                 'status': endpoint_info_response['status'],
                 'url': endpoint_url,
                 'langchain_wrapper_env': {
-                    'SAMBASTUDIO_URL': self.snsdk_client.host_url+endpoint_url,
+                    'SAMBASTUDIO_URL': self.snsdk_client.host_url + endpoint_url,
                     'SAMBASTUDIO_API_KEY': endpoint_info_response['api_key'],
                 },
             }

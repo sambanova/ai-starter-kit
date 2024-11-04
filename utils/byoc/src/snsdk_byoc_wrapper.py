@@ -4,10 +4,10 @@ import os
 import re
 import subprocess
 import sys
-import yaml
-from typing import Any, Dict, List, Optional, Union
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Union
 
+import yaml
 from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +31,7 @@ logging.basicConfig(
 class BYOC(SnsdkWrapper):
     def __init__(self, config_path: Optional[str] = None) -> None:
         """Wrapper around the SnSdk and SNAPI for BYOC in SambaStudio
-        
+
         Parameters:
             config_path (str , optional): path to config path. Defaults to None.
             see a config file example in ./config.yaml
@@ -40,61 +40,57 @@ class BYOC(SnsdkWrapper):
         # Initialize SnsdkWrapper with sambastudio config (initialize snsdk client and snapi path)
         super().__init__(config_path=config_path)
 
-    def find_config_params(
-        self,
-        checkpoint_paths: Optional[Union[list,str]] = None,
-        update_config_file: bool = False
-    ):
+    def find_config_params(self, checkpoint_paths: Optional[Union[list, str]] = None, update_config_file: bool = False):
         """
         Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
         in given checkpoint paths.
-        
+
         Parameters:
             checkpoint_paths (list of str or str, optional): checkpoint paths.
                 if not set config paths in config,yaml file will be used
-            update_config_file (bool, optional): Whether to update the config file 
+            update_config_file (bool, optional): Whether to update the config file
                 with the found parameters. Defaults to False.
         """
         if isinstance(checkpoint_paths, str):
             checkpoint_paths = [checkpoint_paths]
-            
+
         if checkpoint_paths is None:
             self._raise_error_if_config_is_none()
-            checkpoint_paths = [checkpoint['checkpoint_path'] for checkpoint in self.config["checkpoints"]]
-            
+            checkpoint_paths = [checkpoint['checkpoint_path'] for checkpoint in self.config['checkpoints']]
+
         checkpoint_params = []
         for checkpoint_path in checkpoint_paths:
-            with open(os.path.join(checkpoint_path,"config.json")) as file:
+            with open(os.path.join(checkpoint_path, 'config.json')) as file:
                 checkpoint_config = json.load(file)
                 checkpoint_params.append(
                     {
-                        "model_arch":checkpoint_config["model_type"],
-                        "seq_length":checkpoint_config["max_position_embeddings"],
-                        "vocab_size":checkpoint_config["vocab_size"]
+                        'model_arch': checkpoint_config['model_type'],
+                        'seq_length': checkpoint_config['max_position_embeddings'],
+                        'vocab_size': checkpoint_config['vocab_size'],
                     }
                 )
-                logging.info(f"Params for checkpoint in {checkpoint_path}:\n{checkpoint_params}") 
-                 
+                logging.info(f'Params for checkpoint in {checkpoint_path}:\n{checkpoint_params}')
+
         if self.config is not None:
-            checkpoints=[]
-            for checkpoint, params in zip(self.config["checkpoints"], checkpoint_params):
-                checkpoint["model_arch"]=params["model_arch"]
-                checkpoint["seq_length"]=params["seq_length"]
-                checkpoint["vocab_size"]=params["vocab_size"]
+            checkpoints = []
+            for checkpoint, params in zip(self.config['checkpoints'], checkpoint_params):
+                checkpoint['model_arch'] = params['model_arch']
+                checkpoint['seq_length'] = params['seq_length']
+                checkpoint['vocab_size'] = params['vocab_size']
                 checkpoints.append(checkpoint)
-            self.config["checkpoints"]=checkpoints
-            logging.info(f"config updated with checkpoints parameters")
-            
+            self.config['checkpoints'] = checkpoints
+            logging.info(f'config updated with checkpoints parameters')
+
             if update_config_file:
                 self._raise_error_if_config_is_none()
                 with open(self.config_path, 'w') as outfile:
                     yaml.dump(self.config, outfile)
-                logging.info(f"config file updated with checkpoints parameters")
-       
-    def get_suitable_apps(self, checkpoints: Optional[Union[list,dict]]=None) -> None:
+                logging.info(f'config file updated with checkpoints parameters')
+
+    def get_suitable_apps(self, checkpoints: Optional[Union[list, dict]] = None) -> None:
         """
-        find suitable sambastudio apps for the given checkpoints 
-        
+        find suitable sambastudio apps for the given checkpoints
+
         Parameters:
             checkpoints (list of dict or dict, optional): checkpoints.
                 if not set checkpoints in config.yaml file will be used
@@ -103,30 +99,30 @@ class BYOC(SnsdkWrapper):
             checkpoints = [checkpoints]
         if checkpoints is None:
             self._raise_error_if_config_is_none()
-            checkpoints = self.config["checkpoints"]
-        
-        sstudio_models=self.list_models(verbose=True)
-        
+            checkpoints = self.config['checkpoints']
+
+        sstudio_models = self.list_models(verbose=True)
+
         for checkpoint in checkpoints:
             suitable_apps = []
             for model in sstudio_models:
-                params = model.get("params",{})
+                params = model.get('params', {})
                 if params is not None:
-                    model_params=params.get("invalidates_checkpoint")
+                    model_params = params.get('invalidates_checkpoint')
                     if model_params is not None:
-                        #if byoc_params["model_arch"].lower() in model["architecture"].lower():
-                            if str(checkpoint["param_count"])+'b' == model_params.get("model_parameter_count"):
-                                if checkpoint["vocab_size"] == model_params.get("vocab_size"):
-                                    if checkpoint["seq_length"] == model_params.get("max_seq_length"):
-                                        suitable_apps.append(model["app_id"])
-            suitable_apps=set(suitable_apps)
+                        # if byoc_params["model_arch"].lower() in model["architecture"].lower():
+                        if str(checkpoint['param_count']) + 'b' == model_params.get('model_parameter_count'):
+                            if checkpoint['vocab_size'] == model_params.get('vocab_size'):
+                                if checkpoint['seq_length'] == model_params.get('max_seq_length'):
+                                    suitable_apps.append(model['app_id'])
+            suitable_apps = set(suitable_apps)
             app_list = self.list_apps()
             formatted_suitable_apps = []
             for app in app_list:
-                if app["id"] in suitable_apps:
+                if app['id'] in suitable_apps:
                     formatted_suitable_apps.append(str(app))
-            formatted_suitable_apps = "\n".join(formatted_suitable_apps)  
-            logging.info(f'Checkpoint {checkpoint["model_name"]} suitable apps:'+'\n'+f'{formatted_suitable_apps}')
+            formatted_suitable_apps = '\n'.join(formatted_suitable_apps)
+            logging.info(f'Checkpoint {checkpoint["model_name"]} suitable apps:' + '\n' + f'{formatted_suitable_apps}')
 
     def _build_snapi_import_model_create_command(
         self,
@@ -325,10 +321,7 @@ class BYOC(SnsdkWrapper):
                 except Exception as e:
                     logging.error(f'Error uploading checkpoint for model {model_name}: {e}', exc_info=True)
 
-    def get_checkpoints_status(
-        self, 
-        model_names: Optional[List[str]] = None
-    ) -> None :
+    def get_checkpoints_status(self, model_names: Optional[List[str]] = None) -> None:
         """
         Get status of uploaded checkpoints
 
@@ -337,10 +330,10 @@ class BYOC(SnsdkWrapper):
         """
         if model_names is None:
             self._raise_error_if_config_is_none()
-            model_names = [checkpoint["model_name"] for checkpoint in self.config["checkpoints"]]
+            model_names = [checkpoint['model_name'] for checkpoint in self.config['checkpoints']]
         for model in model_names:
             model_status = self.snsdk_client.import_status(model_id=model)
-            logging.info(f"model {model} status: \n {model_status}")
+            logging.info(f'model {model} status: \n {model_status}')
 
     def create_composite_model(
         self,
