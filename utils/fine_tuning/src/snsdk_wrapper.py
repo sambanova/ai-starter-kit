@@ -1585,7 +1585,7 @@ class SnsdkWrapper:
         - Exception: If there is an error getting endpoint details
 
         Returns:
-        - dict: Dictionary containing the endpoint's status, URL, and environment variables for the Langchain wrapper.
+        - dict: Dictionary containing the endpoint's status, and environment variables for using the model with langchain wrappers.
         """
 
         # check if project selected exists
@@ -1607,11 +1607,8 @@ class SnsdkWrapper:
             endpoint_details = {
                 'status': endpoint_info_response['status'],
                 'url': endpoint_url,
-                'langchain wrapper env': {
-                    'SAMBASTUDIO_BASE_URL': self.snsdk_client.host_url,
-                    'SAMBASTUDIO_BASE_URI': '/'.join(endpoint_url.split('/')[1:4]),
-                    'SAMBASTUDIO_PROJECT_ID': endpoint_url.split('/')[-2],
-                    'SAMBASTUDIO_ENDPOINT_ID': endpoint_url.split('/')[-1],
+                'langchain_wrapper_env': {
+                    'SAMBASTUDIO_URL': self.snsdk_client.host_url+endpoint_url,
                     'SAMBASTUDIO_API_KEY': endpoint_info_response['api_key'],
                 },
             }
