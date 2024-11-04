@@ -168,9 +168,16 @@ def main() -> None:
 
         if are_credentials_set(additional_env_vars):
             if prod_mode:
+                sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+                serpapi_api_key = st.session_state.SERPAPI_API_KEY
                 st.session_state.tool = ['serpapi']
                 st.session_state.search_engine = 'google'
             else:
+                if 'SAMBANOVA_API_KEY' in st.session_state:
+                    sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+                else:
+                    sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+                serpapi_api_key = os.environ.get('SERPAPI_API_KEY')
                 tool = st.radio('Select Search Tool to use', ['serpapi', 'serper', 'openserp'])
                 if tool == 'serpapi':
                     st.session_state.tool = ['serpapi']
@@ -190,7 +197,7 @@ def main() -> None:
                 st.session_state.query = st.text_input('Query')
 
             if st.button('set'):
-                st.session_state.search_assistant = SearchAssistant()
+                st.session_state.search_assistant = SearchAssistant(sambanova_api_key, serpapi_api_key)
                 with st.spinner(
                     'setting searchAssistant' if method == 'Search and answer' else 'searching and scraping sites'
                 ):
