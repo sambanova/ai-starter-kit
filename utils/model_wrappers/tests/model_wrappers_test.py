@@ -40,6 +40,8 @@ from langchain_core.language_models.llms import LLM
 from pydantic import ValidationError
 
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
+from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 from utils.model_wrappers.tests.schemas import EmbeddingsBaseModel, LLMBaseModel, SNCloudResponse
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
@@ -111,22 +113,18 @@ class ModelWrapperTestCase(unittest.TestCase):
 
         sn_llm_params = test_config['sn_llm']
         sn_llm_params_output = sn_llm_params.copy()
-        sn_llm_params_output.pop('type')
         sn_llm_params_output['_type'] = 'sambanovacloud-llm'
 
-        ss_llm_params = test_config['ss_llm']
+        ss_llm_params = test_config['sambastudio_llm']
         ss_llm_params_output = sn_llm_params.copy()
-        ss_llm_params_output.pop('type')
         ss_llm_params_output['_type'] = 'sambastudio-llm'
 
         sn_chat_model_params = test_config['sn_chat_model']
         sn_chat_model_params_output = sn_chat_model_params.copy()
-        sn_chat_model_params_output.pop('type')
         sn_chat_model_params_output['_type'] = 'sambanovacloud-chatmodel'
 
         ss_chat_model_params = test_config['sambastudio_chat_model']
         ss_chat_model_params_output = ss_chat_model_params.copy()
-        ss_chat_model_params_output.pop('type')
         ss_chat_model_params_output['_type'] = 'sambastudio-chatmodel'
 
         return (
@@ -148,16 +146,16 @@ class ModelWrapperTestCase(unittest.TestCase):
 
     @classmethod
     def init_llm_models(cls: Type['ModelWrapperTestCase']) -> Tuple[LLM, LLM]:
-        sn_llm_model = interface.load_llm(**cls.sn_llm_params)
+        sn_llm_model = SambaNovaCloud(**cls.sn_llm_params)
+        ss_llm_model = SambaStudio(**cls.ss_llm_params)
 
-        ss_llm_model = interface.load_llm(**cls.ss_llm_params)
         return sn_llm_model, ss_llm_model
 
     @classmethod
     def init_chat_models(cls: Type['ModelWrapperTestCase']) -> Tuple[BaseChatModel, BaseChatModel]:
-        sn_chat_model = interface.load_chat(**cls.sn_chat_model_params)
+        sn_chat_model = ChatSambaNovaCloud(**cls.sn_chat_model_params)
+        ss_chat_model = ChatSambaStudio(**cls.ss_chat_model_params)
 
-        ss_chat_model = interface.load_chat(**cls.ss_chat_model_params)
         return sn_chat_model, ss_chat_model
 
     def test_embeddings_model_creation(self) -> None:
@@ -178,8 +176,8 @@ class ModelWrapperTestCase(unittest.TestCase):
             self.assertEqual(self.sn_llm_params_output.get(i), params.get(i), 'llm model params not equal')
 
     def test_chat_model_params(self) -> None:
-        self.assertEqual(self.sn_chat_model.dict(), self.sn_chat_model_params_output, 'chat model prams not equal')
-        self.assertEqual(self.ss_chat_model.dict(), self.ss_chat_model_params_output, 'chat model prams not equal')
+        self.assertEqual(self.sn_chat_model.dict(), self.sn_chat_model_params_output, 'chat model params not equal')
+        self.assertEqual(self.ss_chat_model.dict(), self.ss_chat_model_params_output, 'chat model params not equal')
 
     def test_embeddings_model_validation(self) -> None:
         for i in bad_format_embeddings_model_params.get('type'):
@@ -226,28 +224,38 @@ class ModelWrapperTestCase(unittest.TestCase):
     def test_chat_model_validation(self) -> None:
         for i in bad_format_chat_model_params.get('string'):
             with self.assertRaises(ValidationError) as context:
-                interface.load_chat(**i)
+                ChatSambaNovaCloud(**i)
+                ChatSambaStudio(**i)
             self.assertIn('Input should be a valid string', str(context.exception))
 
         for i in bad_format_chat_model_params.get('boolean'):
             with self.assertRaises(ValidationError) as context:
-                interface.load_chat(**i)
+                ChatSambaNovaCloud(**i)
+                ChatSambaStudio(**i)
             self.assertIn('Input should be a valid boolean', str(context.exception))
 
         for i in bad_format_chat_model_params.get('integer'):
             with self.assertRaises(ValidationError) as context:
-                interface.load_chat(**i)
+                ChatSambaNovaCloud(**i)
+                ChatSambaStudio(**i)
             self.assertIn('Input should be a valid integer', str(context.exception))
 
         for i in bad_format_chat_model_params.get('number'):
             with self.assertRaises(ValidationError) as context:
-                interface.load_chat(**i)
+                ChatSambaStudio(**i)
             self.assertIn('Input should be a valid number', str(context.exception))
 
-        for i in bad_format_chat_model_params.get('dict'):
+        for i in bad_format_chat_model_params.get('sambastudio_boolean'):
             with self.assertRaises(ValidationError) as context:
-                interface.load_chat(**i)
+                ChatSambaNovaCloud(**i)
+                ChatSambaStudio(**i)
+            self.assertIn('Input should be a valid boolean', str(context.exception))
+
+        for i in bad_format_chat_model_params.get('sambastudio_dict'):
+            with self.assertRaises(ValidationError) as context:
+                ChatSambaStudio(**i)
             self.assertIn('Input should be a valid dictionary', str(context.exception))
+
 
     def test_embeddings_model_response(self) -> None:
         query = 'What is computer science?'
@@ -259,16 +267,16 @@ class ModelWrapperTestCase(unittest.TestCase):
 
     def test_llm_model_response(self) -> None:
         query = 'How many moons does Jupiter have?'
-        sn_cloud_response = self.sn_llm_model.invoke(query)
+        sn_response = self.sn_llm_model.invoke(query)
         ss_response = self.ss_llm_model.invoke(query)
-        sn_cloud_raw_response = self.sn_llm_model._handle_request(query).json()
+        sn_raw_response = self.sn_llm_model._handle_request(query).json()
 
         try:
-            SNCloudResponse(**sn_cloud_raw_response)
+            SNCloudResponse(**sn_raw_response)
         except ValidationError as e:
             self.fail(f'Schema validation failed: {e}')
 
-        self.assertGreaterEqual(len(sn_cloud_response), 1, 'Response should be a non-empty string')
+        self.assertGreaterEqual(len(sn_response), 1, 'Response should be a non-empty string')
         self.assertGreaterEqual(len(ss_response), 1, 'Response should be a non-empty string')
 
     def test_chat_model_response(self) -> None:
@@ -297,7 +305,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(ss_response_dict['content']), 1, 'Content should be a non-empty string')
         self.assertIn('response_metadata', ss_response_dict, "Response should have a 'response_metadata' key")
         self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
-
+        
     @classmethod
     def tearDownClass(cls: Type['ModelWrapperTestCase']) -> None:
         time_end = time.time()

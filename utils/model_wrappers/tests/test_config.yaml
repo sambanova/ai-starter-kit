@@ -5,23 +5,20 @@ embedding_model:
     select_expert: "e5-mistral-7b-instruct"
 
 sn_llm:
-    type: "sncloud"
     model: "Meta-Llama-3.1-70B-Instruct"
     max_tokens: 1200
     temperature: 0.0
     top_p: 0.0
     top_k: 1
 
-ss_llm:
-    type: "sambastudio"
-    temperature: 0.0
-    do_sample: False
-    max_tokens_to_generate: 1200
-    coe: True
-    select_expert: "Meta-Llama-3-70B-Instruct-4096"
+sambastudio_llm:
+    model_kwargs:
+      model: "Meta-Llama-3-70B-Instruct-4096"
+      temperature: 0.0
+      do_sample: False
+      max_tokens_to_generate: 1200
 
 sn_chat_model:
-    type: "sncloud"
     model: "Meta-Llama-3.1-70B-Instruct"
     streaming: False
     max_tokens: 1024
@@ -32,7 +29,6 @@ sn_chat_model:
         include_usage: True
 
 sambastudio_chat_model:
-    type: "sambastudio"
     model: "Meta-Llama-3-70B-Instruct-4096"
     streaming: true
     max_tokens: 1200
@@ -153,68 +149,64 @@ bad_format_llm_model:
 
 bad_format_chat_model:
     string:
-      - type: "sncloud"
-        model: 1
-        max_tokens: 1024
-        temperature: 0.0
-        streaming: False
-
-      - type: "sambastudio"
-        model: 1
+      - model: 1
         max_tokens: 1024
         temperature: 0.0
         streaming: False
 
     boolean:
-      - type: "sncloud"
-        model: "foo"
-        max_tokens: 1024
-        temperature: 0.0
-        streaming: "string"
-
-      - type: "sambastudio"
-        model: "foo"
+      - model: "foo"
         max_tokens: 1024
         temperature: 0.0
         streaming: "string"
 
     integer:
-      - type: "sncloud"
-        model: "foo"
+      - model: "foo"
         max_tokens: "one"
         temperature: 0.0
         streaming: False
-
-      - type: "sambastudio"
-        model: "foo"
-        max_tokens: "one"
+      
+      - model: "foo"
+        max_tokens: 1024
         temperature: 0.0
         streaming: False
+        top_k: "string"
 
     number:
-      - type: "sncloud"
-        model: "foo"
+      - model: "foo"
         max_tokens: 1024
         temperature: "string"
         streaming: False
-
-      - type: "sambastudio"
-        model: "foo"
+      
+      - model: "foo"
         max_tokens: 1024
-        temperature: "string"
+        temperature: 0.0
         streaming: False
+        top_p: "string"
 
     dict:
-      - type: "sncloud"
-        model: "foo"
+      - model: "foo"
         max_tokens: 1024
         temperature: 0.0
         streaming: False
         stream_options: "string"
 
-      - type: "sambastudio"
-        model: "foo"
+    sambastudio_boolean:
+      - model: "foo"
         max_tokens: 1024
         temperature: 0.0
         streaming: False
-        stream_options: "string"
+        do_sample: "string"
+      
+      - model: "foo"
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: False
+        process_prompt: "string"
+    
+    sambastudio_dict:
+      - model: "foo"
+        max_tokens: 1024
+        temperature: 0.0
+        streaming: False
+        special_tokens: "string"
