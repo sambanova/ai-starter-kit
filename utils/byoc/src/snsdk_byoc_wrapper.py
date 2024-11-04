@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Union
 
 import yaml
@@ -40,7 +40,9 @@ class BYOC(SnsdkWrapper):
         # Initialize SnsdkWrapper with sambastudio config (initialize snsdk client and snapi path)
         super().__init__(config_path=config_path)
 
-    def find_config_params(self, checkpoint_paths: Optional[Union[list, str]] = None, update_config_file: bool = False):
+    def find_config_params(
+        self, checkpoint_paths: Optional[Union[list, str]] = None, update_config_file: bool = False
+    ) -> None:
         """
         Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
         in given checkpoint paths.
@@ -177,7 +179,8 @@ class BYOC(SnsdkWrapper):
             '-ni',  # -ni flag is used to  use non interactive mode
         ]
 
-        # --publisher and --description flags and values are optional and only sent if provided in the config file or arguments
+        # --publisher and --description flags and values are optional and only sent
+        #   if provided in the config file or arguments
         if publisher is not None:
             if len(publisher) > 0:
                 command.extend(['--publisher', publisher])
@@ -403,7 +406,9 @@ class BYOC(SnsdkWrapper):
                 logging.info(f'Composite model with name {model_name} created with id {model_id}')
             else:
                 logging.error(
-                    f"Failed to create composite model with name '{model_name}'. Message: {create_composite_model_response['message']} .Details: {create_composite_model_response['details']}"
+                    f'Failed to create composite model with name "{model_name}".'
+                    f'Message: {create_composite_model_response["message"]}.'
+                    f'Details: {create_composite_model_response["details"]}'
                 )
                 raise Exception(f"Error message: {create_composite_model_response['details']}")
 
@@ -415,15 +420,15 @@ class BYOC(SnsdkWrapper):
 
     def create_endpoint(
         self,
-        project_name=None,
-        endpoint_name=None,
-        endpoint_description=None,
-        model_name=None,
-        model_version=None,
-        instances=None,
-        rdu_arch=None,
-        hyperparams=None,
-    ):
+        project_name: Optional[str] = None,
+        endpoint_name: Optional[str] = None,
+        endpoint_description: Optional[str] = None,
+        model_name: Optional[str] = None,
+        model_version: Optional[int] = None,
+        instances: Optional[int] = None,
+        rdu_arch: Optional[str] = None,
+        hyperparams: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
         """
         Creates a new endpoint in a specified Sambastudio project using a specified model.
 
@@ -437,11 +442,11 @@ class BYOC(SnsdkWrapper):
         - model_name (str, optional): The name of the model.
             If not provided, the model name from the configuration is used.
         - model_version (str, optional): The version of the model.
-        - instances (str, optional): The number of instances for the endpoint.
+        - instances (int, optional): The number of instances for the endpoint.
             If not provided, the endpoint instances from the configuration is used.
         - rdu_arch (str, optional): The RDU architecture for the endpoint.
             If not provided, the RDU architecture from the configuration is used.
-        - hyperparams (str, optional): The hyperparameters for the endpoint.
+        - hyperparams (dict, optional): The hyperparameters for the endpoint.
             If not provided, the hyperparameters from the configuration is used.
 
         Raises:

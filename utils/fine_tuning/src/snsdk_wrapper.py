@@ -1585,7 +1585,8 @@ class SnsdkWrapper:
         - Exception: If there is an error getting endpoint details
 
         Returns:
-        - dict: Dictionary containing the endpoint's status, and environment variables for using the model with langchain wrappers.
+        - dict: Dictionary containing the endpoint's status, and environment variables 
+            for using the model with langchain wrappers.
         """
 
         # check if project selected exists
