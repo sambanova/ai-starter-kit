@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set,Union
 
 import yaml
 from dotenv import load_dotenv
@@ -41,7 +41,7 @@ class BYOC(SnsdkWrapper):
         super().__init__(config_path=config_path)
 
     def find_config_params(
-        self, checkpoint_paths: Optional[Union[list, str]] = None, update_config_file: bool = False
+        self, checkpoint_paths: Optional[Union[List[str], str]] = None, update_config_file: bool = False
     ) -> None:
         """
         Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
@@ -85,11 +85,12 @@ class BYOC(SnsdkWrapper):
 
             if update_config_file:
                 self._raise_error_if_config_is_none()
+                assert isinstance(self.config_path, str)
                 with open(self.config_path, 'w') as outfile:
                     yaml.dump(self.config, outfile)
                 logging.info(f'config file updated with checkpoints parameters')
 
-    def get_suitable_apps(self, checkpoints: Optional[Union[list, dict]] = None) -> None:
+    def get_suitable_apps(self, checkpoints: Optional[Union[List[Dict[str,Any]], Dict[str,Any]]] = None) -> None:
         """
         find suitable sambastudio apps for the given checkpoints
 
@@ -106,7 +107,8 @@ class BYOC(SnsdkWrapper):
         sstudio_models = self.list_models(verbose=True)
 
         for checkpoint in checkpoints:
-            suitable_apps = []
+            assert isinstance(checkpoint, dict)
+            suitable_apps: Set[str] = set()
             for model in sstudio_models:
                 params = model.get('params', {})
                 if params is not None:
@@ -116,14 +118,15 @@ class BYOC(SnsdkWrapper):
                         if str(checkpoint['param_count']) + 'b' == model_params.get('model_parameter_count'):
                             if checkpoint['vocab_size'] == model_params.get('vocab_size'):
                                 if checkpoint['seq_length'] == model_params.get('max_seq_length'):
-                                    suitable_apps.append(model['app_id'])
-            suitable_apps = set(suitable_apps)
+                                    suitable_apps.add(model['app_id'])
             app_list = self.list_apps()
-            formatted_suitable_apps = []
+            named_suitable_apps = []
+            assert app_list is not None
             for app in app_list:
                 if app['id'] in suitable_apps:
-                    formatted_suitable_apps.append(str(app))
-            formatted_suitable_apps = '\n'.join(formatted_suitable_apps)
+                    named_suitable_apps.append(str(app))
+            
+            formatted_suitable_apps = '\n'.join(named_suitable_apps)
             logging.info(f'Checkpoint {checkpoint["model_name"]} suitable apps:' + '\n' + f'{formatted_suitable_apps}')
 
     def _build_snapi_import_model_create_command(
@@ -137,7 +140,7 @@ class BYOC(SnsdkWrapper):
         app_id: str,
         publisher: Optional[str] = None,
         description: Optional[str] = None,
-    ) -> str:
+    ) -> List[str]:
         """Build the command to import a model into Snapi
 
         Parameters:
@@ -231,9 +234,8 @@ class BYOC(SnsdkWrapper):
                 raise ValueError(f'{checkpoint_path} does not exist')
 
             # Validate if app exist
-
-            app_id = self.search_app(app_id)
-            if app_id is None:
+            found_app_id = self.search_app(app_id)
+            if found_app_id is None:
                 logging.error(f'app: {app_id} for checkpoint with name: {model_name} does not exist')
                 raise ValueError(f'app: {app_id} does not exist')
 
@@ -424,10 +426,10 @@ class BYOC(SnsdkWrapper):
         endpoint_name: Optional[str] = None,
         endpoint_description: Optional[str] = None,
         model_name: Optional[str] = None,
-        model_version: Optional[int] = None,
+        model_version: Optional[str] = None,
         instances: Optional[int] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[Dict[str, Any]] = None,
+        hyperparams: Optional[Dict[str,Any]] = None,
     ) -> Optional[str]:
         """
         Creates a new endpoint in a specified Sambastudio project using a specified model.
@@ -464,7 +466,7 @@ class BYOC(SnsdkWrapper):
             model_name = self.config['composite_model']['model_name']
 
         if model_version is None:
-            model_version = 1
+            model_version = "1"
 
         return super().create_endpoint(
             project_name,

@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 from dotenv import load_dotenv
@@ -83,7 +83,7 @@ class SnsdkWrapper:
         snapi_config_path: str,
         snapi_secret_path: str,
         tenant_name: str = 'default',
-    ) -> tuple:
+    ) -> Tuple[str,str,str]:
         """Sets Snapi using env variables. It also validates if tenant can be set in Snapi config file.
         Args:
             host_name (str): host name coming from env variables
@@ -137,7 +137,7 @@ class SnsdkWrapper:
 
         return host_name, new_snapi_config['TENANT_ID'], access_key
 
-    def _get_sambastudio_variables(self) -> tuple:
+    def _get_sambastudio_variables(self) -> Tuple[str,str,str]:
         """Gets Sambastudio host name, tenant id and access key from Snapi folder location
 
         Raises:
@@ -183,7 +183,9 @@ class SnsdkWrapper:
         else:
             logging.info(f'Using variables from Snapi config to set up Snsdk.')
             host_name = snapi_config['HOST_NAME']
+            assert host_name is not None
             tenant_id = snapi_config['TENANT_ID']
+            assert tenant_id is not None
             access_key = snapi_secret
 
         if access_key is None:
@@ -191,7 +193,7 @@ class SnsdkWrapper:
 
         return host_name, tenant_id, access_key.strip()
 
-    def _load_config(self, file_path: str) -> dict:
+    def _load_config(self, file_path: str) -> Dict[str, Any]:
         """Loads a YAML configuration file.
 
         Args:
@@ -202,7 +204,7 @@ class SnsdkWrapper:
         """
         try:
             with open(file_path, 'r') as file:
-                config = yaml.safe_load(file)
+                config:Dict[str,Any] = yaml.safe_load(file)
             logging.info(f'Using config file located in {file_path}')
         except FileNotFoundError:
             raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
@@ -342,7 +344,7 @@ class SnsdkWrapper:
             logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
         return project_id
 
-    def list_projects(self, verbose: Optional[bool] = False) -> list[dict]:
+    def list_projects(self, verbose: Optional[bool] = False) -> List[Dict[str, Any]]:
         """
         List all projects.
 
@@ -409,7 +411,7 @@ class SnsdkWrapper:
 
     """Dataset"""
 
-    def list_datasets(self, verbose: bool = False) -> Optional[list]:
+    def list_datasets(self, verbose: bool = False) -> Optional[List[Dict[str,Any]]]:
         """Lists all datasets
 
         Returns:
@@ -479,8 +481,8 @@ class SnsdkWrapper:
     def _build_snapi_dataset_add_command(
         self,
         dataset_name: str,
-        dataset_apps_availability: list,
-        dataset_job_types: list,
+        dataset_apps_availability: List[str],
+        dataset_job_types: List[str],
         dataset_source_type: str,
         dataset_description: str,
         dataset_filetype: str,
@@ -549,7 +551,7 @@ class SnsdkWrapper:
         dataset_filetype: Optional[str] = None,
         dataset_url: Optional[str] = None,
         dataset_language: Optional[str] = None,
-        dataset_metadata: Optional[dict] = None,
+        dataset_metadata: Optional[Dict[str,Any]] = None,
     ) -> Optional[str]:
         """ """
         # Decide whether using method parameters or config
@@ -659,11 +661,11 @@ class SnsdkWrapper:
 
     """app"""
 
-    def list_apps(self, verbose: bool = False) -> list | None:
+    def list_apps(self, verbose: bool = False) -> Optional[List[Dict[str,Any]]]:
         """Lists all apps
 
         Returns:
-            list | None: list of existing apps. If there's an error, None is returned.
+            list (optional) : list of existing apps. If there's an error, None is returned.
         """
         list_apps_response = self.snsdk_client.list_apps()
         if list_apps_response['status_code'] == 200:
@@ -678,14 +680,14 @@ class SnsdkWrapper:
             logging.error(f"Failed to list models. Details: {list_apps_response['detail']}")
             raise Exception(f"Error message: {list_apps_response['detail']}")
 
-    def search_app(self, app_name: str) -> str | None:
+    def search_app(self, app_name: str) -> Optional[str]:
         """Searches an App
 
         Args:
             app_name (str): app name to search
 
         Returns:
-            str | None: searched app information. If there's an error, None is returned.
+            str (optional): searched app information. If there's an error, None is returned.
         """
         app_info_response = self.snsdk_client.app_info(app=app_name)
         if app_info_response['status_code'] == 200:
@@ -698,7 +700,7 @@ class SnsdkWrapper:
 
     """models"""
 
-    def model_info(self, model_name: Optional[str] = None, job_type: Optional[str] = None) -> dict:
+    def model_info(self, model_name: Optional[str] = None, job_type: Optional[str] = None) -> Dict[str,Any]:
         """Gets model info based on the job type specified.
         Several fields are pulled that describe different aspects of model.
 
@@ -730,9 +732,9 @@ class SnsdkWrapper:
 
     def list_models(
         self,
-        filter_job_types: Optional[list[str]] = [],
+        filter_job_types: Optional[List[str]] = [],
         verbose: Optional[bool] = False,
-    ) -> list[dict]:
+    ) -> List[Dict[str, Any]]:
         """
         List models in sambastudio based on the provided filter.
 
@@ -862,7 +864,7 @@ class SnsdkWrapper:
         load_state: Optional[bool] = None,
         sub_path: Optional[str] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[dict] = None,
+        hyperparams: Optional[Dict[str,Any]] = None,
     ) -> str:
         """
         Creates a new job in an specific SambaStudio project with the given parameters.
@@ -1043,7 +1045,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
-    ) -> dict:
+    ) -> Dict[str,Any]:
         """
         Check the progress of a job in a specific SambaStudio project.
 
@@ -1102,7 +1104,7 @@ class SnsdkWrapper:
             logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
             raise Exception(f'Error message: {check_job_progress_response}')
 
-    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> list[dict]:
+    def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> List[Dict[str,Any]]:
         """
         List all jobs in a specific SambaStudio project.
 
@@ -1208,7 +1210,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
-    ) -> list[dict]:
+    ) -> List[Dict[str,Any]]:
         """
         List all checkpoints in a specific job within a SambaStudio project.
 
@@ -1380,7 +1382,7 @@ class SnsdkWrapper:
 
     """endpoint"""
 
-    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> list[dict]:
+    def list_endpoints(self, project_name: Optional[str] = None, verbose: Optional[bool] = None) -> List[Dict[str, Any]]:
         """
         List all endpoints in a specific project.
 
@@ -1439,9 +1441,9 @@ class SnsdkWrapper:
         endpoint_description: Optional[str] = None,
         model_name: Optional[str] = None,
         model_version: Optional[str] = None,
-        instances: Optional[str] = None,
+        instances: Optional[int] = None,
         rdu_arch: Optional[str] = None,
-        hyperparams: Optional[str] = None,
+        hyperparams: Optional[Dict[str,Any]] = None,
     ) -> Optional[str]:
         """
         Creates a new endpoint in a specified Sambastudio project using a specified model.
@@ -1456,11 +1458,11 @@ class SnsdkWrapper:
         - model_name (str, optional): The name of the model.
             If not provided, the model name from the configuration is used.
         - model_version (str, optional): The version of the model.
-        - instances (str, optional): The number of instances for the endpoint.
+        - instances (int, optional): The number of instances for the endpoint.
             If not provided, the endpoint instances from the configuration is used.
         - rdu_arch (str, optional): The RDU architecture for the endpoint.
             If not provided, the RDU architecture from the configuration is used.
-        - hyperparams (str, optional): The hyperparameters for the endpoint.
+        - hyperparams (dict, optional): The hyperparameters for the endpoint.
             If not provided, the hyperparameters from the configuration is used.
 
         Raises:
@@ -1570,7 +1572,7 @@ class SnsdkWrapper:
             logging.error(f'Failed to retrieve information for endpoint Details: {endpoint_info_response}')
             raise Exception(f'Error message: {endpoint_info_response}')
 
-    def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> dict:
+    def get_endpoint_details(self, project_name: Optional[str] = None, endpoint_name: Optional[str] = None) -> Dict[str,Any]:
         """
         Retrieves the details of a specified endpoint in a given SambaStudio project.
 
