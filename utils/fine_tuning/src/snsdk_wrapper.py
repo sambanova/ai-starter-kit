@@ -49,12 +49,13 @@ class SnsdkWrapper:
             config_path (str , optional): path to config path. Defaults to None.
             see a config file example in ./config.yaml
         """
+        self.config_path = config_path
         self.config = {}
         self.snapi_path = SNAPI_PATH
 
         # If config is provided, load it and validate Snapi directory path
-        if config_path is not None:
-            self.config = self._load_config(config_path)
+        if self.config_path is not None:
+            self.config = self._load_config(self.config_path)
             config_snapi_path = self.config['sambastudio']['snapi_path']
             if config_snapi_path is not None and len(config_snapi_path) > 0:
                 self.snapi_path = self.config['sambastudio']['snapi_path']
@@ -789,7 +790,7 @@ class SnsdkWrapper:
             logging.info(f"Model with name '{model_name}' found with id {model_id}")
             return model_id
         else:
-            logging.info(f"Project with name '{model_name}' not found")
+            logging.info(f"Model with name '{model_name}' not found")
             return None
 
     def search_trainable_model(self, model_name: Optional[str] = None) -> Optional[str]:
