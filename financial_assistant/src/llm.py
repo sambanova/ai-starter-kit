@@ -29,6 +29,7 @@ class SambaNovaLLM:
         tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
         default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
         system_prompt: Optional[str] = FUNCTION_CALLING_PROMPT_TEMPLATE,
+        sambanova_api_key: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -36,6 +37,7 @@ class SambaNovaLLM:
             tools: The optional tools to use.
             default_tool: The optional default tool to use. Defaults to `ConversationalResponse`.
             system_prompt: The optional system prompt to use. Defaults to `FUNCTION_CALLING_SYSTEM_PROMPT`.
+            sambanova_api_key: The optional sambanova api key for authentication.
 
         Raises:
             TypeError: If `tools` is not a list of
@@ -50,7 +52,7 @@ class SambaNovaLLM:
         self.check_llm_info()
 
         # Set the LLM
-        self.llm = self.set_llm()
+        self.llm = self.set_llm(sambanova_api_key=sambanova_api_key)
 
         # Set the tools
         self._tools = tools
@@ -238,7 +240,7 @@ class SambaNovaLLM:
             The LLM response, resulting from the exeecution of the relevant tool.
 
         Raises:
-            TypeError: If `query` is not of type str.
+            TypeError: If `query` is not of type `str`.
         """
         # Checks the inputs
         if not isinstance(query, str):
@@ -314,9 +316,7 @@ class SambaNovaLLM:
             for parameter_key, parameter_value in parameter_dict.items():
                 logger.info(f'{parameter_key}: {parameter_value}')
         except:
-            return LLMException(
-                f'We are experiencing an issue with the language model. Please try again in a few minutes.'
-            )
+            raise LLMException()
 
         invoked_tool = invoked_tools[0]
 

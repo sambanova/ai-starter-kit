@@ -18,6 +18,7 @@ from financial_assistant.constants import *
 from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list
 from financial_assistant.src.utilities import get_logger, time_llm
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 logger = get_logger()
 

@@ -86,20 +86,19 @@ class CorrectnessLLMJudge(Scorer):
         )
 
         llm = APIGateway.load_chat(
-                type=self.model_type,
-                model=self.model_name,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_k=self.top_k,
-                top_p=self.top_p,
-                stream_options={'include_usage': True},
-            )
+            type=self.model_type,
+            model=self.model_name,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            top_k=self.top_k,
+            top_p=self.top_p,
+            stream_options={'include_usage': True},
+        )
 
         # fix_parser = OutputFixingParser.from_llm(parser=JsonOutputParser(), llm=llm)
 
         judge = (
-            llm
-            | JsonOutputParser()
+            llm | JsonOutputParser()
             # | RunnableLambda(lambda x: fix_parser.parse(x))
         )
 

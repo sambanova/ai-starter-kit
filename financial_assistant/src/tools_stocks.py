@@ -22,6 +22,7 @@ from financial_assistant.src.tools import (
     extract_yfinance_data,
 )
 from financial_assistant.src.utilities import time_llm
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 
 class StockInfoSchema(BaseModel):
