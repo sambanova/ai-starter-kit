@@ -61,7 +61,7 @@ additional_env_vars = config.get('additional_env_vars', None)
 
 
 @contextmanager
-def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]:
+def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
     """
     context manager to catch stdout and send it to an output streamlit element
 
@@ -80,7 +80,7 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]
             return ret
 
         stdout.write = new_write  # type: ignore
-        yield  # type: ignore
+        yield stdout
 
 
 def delete_temp_dir(temp_dir: str) -> None:
@@ -157,66 +157,14 @@ def handle_userinput(user_question: Optional[str]) -> None:
     Args:
         user_question (str): The user's question or input.
     """
-    global output
+
+    # append user question and response to history
     if user_question:
-        with st.spinner('Processing...'):
-            with st_capture(output.code):  # type: ignore
-                response = st.session_state.fc.function_call_llm(
-                    query=user_question, max_it=st.session_state.max_iterations, debug=True
-                )
-
         st.session_state.chat_history.append(user_question)
-        st.session_state.chat_history.append(response)
+        # crete an execution scratchpad output
 
-    for ques, ans in zip(
-        st.session_state.chat_history[::2],
-        st.session_state.chat_history[1::2],
-    ):
-        with st.chat_message('user'):
-            st.write(f'{ques}')
-
-        with st.chat_message(
-            'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-        ):
-            formatted_ans = ans.replace('$', '\$')
-            st.write(f'{formatted_ans}')
-
-
-def setChatInputValue(chat_input_value: str) -> None:
-    js = f"""
-    <script>
-        function insertText(dummy_var_to_force_repeat_execution) {{
-            var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-                window.HTMLTextAreaElement.prototype,
-                "value"
-            ).set;
-            nativeInputValueSetter.call(chatInput, "{chat_input_value}");
-            var event = new Event('input', {{ bubbles: true}});
-            chatInput.dispatchEvent(event);
-        }}
-        insertText(3);
-    </script>
-    """
-    st.components.v1.html(js)
-
-
-def main() -> None:
-    global output
-    st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-    )
-
-    initialize_env_variables(prod_mode, additional_env_vars)
-
-    st.title(':orange[SambaNova] Function Calling Assistant')
-
-    if 'fc' not in st.session_state:
-        st.session_state.fc = None
-
-        # show overview message when function calling is not yet initialized
+    # show overview message when chat history is empty
+    if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
@@ -241,14 +189,86 @@ def main() -> None:
                 '- **get_time**: Returns the current date and time for use in queries or calculations.'
             )
 
+    # show history in chat view
+    for i in range(len(st.session_state.chat_history)):
+        if i % 2 == 0:
+            # show user input (even messages)
+            with st.chat_message('user'):
+                st.write(f'{st.session_state.chat_history[i]}')
+            # show execution scratchpad if already stored
+            if i // 2 < len(st.session_state.execution_scratchpad_history):
+                with st.expander('**Execution Scratchpad**', expanded=False):
+                    st.code(st.session_state.execution_scratchpad_history[i // 2])
+        else:
+            # show AI outputs (odd messages)
+            with st.chat_message(
+                'ai',
+                avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            ):
+                formatted_ans = st.session_state.chat_history[i].replace('$', '\$')
+                st.write(f'{formatted_ans}')
+
+    # generate response
+    if user_question:
+        with st.spinner('Processing...'):
+            with st.expander('**Calling Tools to generate a response**', expanded=True):
+                # create a new empty scratchpad expander
+                execution_scratchpad_output = st.empty()
+            # capture logs and show them in the current expanded execution scratchpad
+            with st_capture(execution_scratchpad_output.code) as stdout:  # type: ignore
+                response = st.session_state.fc.function_call_llm(
+                    query=user_question, max_it=st.session_state.max_iterations, debug=True
+                )
+                # Add scratchpad output to the scratchpad history
+                st.session_state.execution_scratchpad_history.append(stdout.getvalue())
+                # append response to history
+                st.session_state.chat_history.append(response)
+                # rerun the app to reflect the new chat history
+                st.rerun()
+
+
+def setChatInputValue(chat_input_value: str) -> None:
+    js = f"""
+    <script>
+        function insertText(dummy_var_to_force_repeat_execution) {{
+            var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
+            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                window.HTMLTextAreaElement.prototype,
+                "value"
+            ).set;
+            nativeInputValueSetter.call(chatInput, "{chat_input_value}");
+            var event = new Event('input', {{ bubbles: true}});
+            chatInput.dispatchEvent(event);
+        }}
+        insertText(3);
+    </script>
+    """
+    st.components.v1.html(js)
+
+
+def main() -> None:
+    st.set_page_config(
+        page_title='AI Starter Kit',
+        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+    )
+
+    initialize_env_variables(prod_mode, additional_env_vars)
+
+    st.title(':orange[SambaNova] Function Calling Assistant')
+
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'execution_scratchpad_history' not in st.session_state:
+        st.session_state.execution_scratchpad_history = []
     if 'tools' not in st.session_state:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
+    if 'fc' not in st.session_state:
+        st.session_state.fc = None
+        set_fc_llm(st.session_state.tools)
     if 'input_disabled' not in st.session_state:
-        st.session_state.input_disabled = True
+        st.session_state.input_disabled = False
     if 'session_temp_db' not in st.session_state:
         if prod_mode:
             st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
@@ -281,19 +301,18 @@ def main() -> None:
                 [k for k, v in st_tools.items() if v['enabled']],
                 [k for k, v in st_tools.items() if v['default'] and v['enabled']],
             )
-            st.markdown('**2. Set the maximum number of iterations your want the model to run**')
-            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
-            st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
+
             if st.button('Set'):
                 with st.spinner('Processing'):
                     set_fc_llm(st.session_state.tools)
                     st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
                 st.session_state.input_disabled = False
 
-            st.markdown('**3. Ask the model**')
+            st.markdown('**2. Set the maximum number of iterations your want the model to run**')
+            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
+            st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
 
-            with st.expander('**Execution scratchpad**', expanded=True):
-                output = st.empty()  # type: ignore
+            st.markdown('**3. Ask the model**')
 
             with st.expander('**Preset Example queries**', expanded=True):
                 st.markdown('DB operations')
@@ -308,7 +327,7 @@ def main() -> None:
                 st.markdown('**Note:** Resetting the chat will clear all interactions history')
                 if st.button('Reset messages history'):
                     st.session_state.chat_history = []
-                    st.session_state.sources_history = []
+                    st.session_state.execution_scratchpad_history = []
                     st.toast('Interactions reset. The next response will clear the history on the screen')
 
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
