@@ -4,11 +4,16 @@ Main exceptions for the finance assistant.
 
 from typing import Optional
 
+LLM_EXCEPTION_MESSAGE = (
+    'We are experiencing an issue with the language model. '
+    'Please try again in a few minutes or change your SAMBANOVA_API_KEY.'
+)
+
 
 class LLMException(Exception):
     """Exception raised when the Large Language Model (LLM) is not working."""
 
-    def __init__(self, message: str, error_code: Optional[int] = None) -> None:
+    def __init__(self, message: str = LLM_EXCEPTION_MESSAGE, error_code: Optional[int] = None) -> None:
         """
         Initializes the LLMException.
 
