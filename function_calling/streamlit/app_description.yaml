@@ -1,0 +1,20 @@
+app_overview: "This example application for function calling automates multi-step analysis by enabling language \ 
+  \ models to use information and operations from user-defined functions. While you can use any \ 
+  \ functions or database with the application, an example use case is implemented here: Uncovering \ 
+  \ trends in music sales using the provided sample database and tools. By leveraging natural language \ 
+  \ understanding, database interaction, code generation, and data visualization, the application \ 
+  \  provides a real-world example of how models can use function calling to automate multi-step analysis \ 
+  \ tasks with accuracy.\n \ 
+  \ In addition to the sample DB of music sales, the application includes several tools that are \ 
+  \ available for the model to call as functions, some of the included tools are:\n\ 
+  \ - **query_db**: Allows users to interact with the sample music sales database via natural queries. \ 
+  \ You can ask questions about the data, such as 'What are the top-selling albums of all time?' or 'What \ 
+  \ is the total revenue from sales in a specific region?' The function will then retrieve the relevant \ 
+  \ data from the database and display the results.\n\ 
+  \ - **calculator**: Provides a simple calculator interface that allows the model to perform \ 
+  \ mathematical calculations using natural language inputs. The user can ask questions like 'What is 10% \ 
+  \ of 100?' or 'What is the sum of 2+2?' and the function will return the result.\n\ 
+  \ - **get_time**: Returns the current date and time for use in queries or calculations.\n\
+  \ - **python repl**: Enables the model to execute Python code snippets for complex calculations or operations.\
+  \ you can input commands such as 'calculate the factorial of 9' or 'is the word rotator a palindrome'\
+  \ and the REPL will execute the code and return the results."

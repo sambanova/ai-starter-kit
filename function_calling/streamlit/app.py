@@ -28,6 +28,7 @@ logging.basicConfig(level=logging.INFO)
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PRESET_QUERIES_PATH = os.path.join(kit_dir, 'prompts', 'streamlit_preset_queries.yaml')
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 
 # tool mapping of defined tools
 TOOLS = {
@@ -51,10 +52,16 @@ def load_preset_queries() -> Any:
         return yaml.safe_load(yaml_file)
 
 
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
 config = load_config()
 prod_mode = config.get('prod_mode', False)
 st_tools = config.get('st_tools', {})
 st_preset_queries = load_preset_queries()
+st_description = load_app_description()
 
 db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
@@ -169,25 +176,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
-            st.write(
-                'This example application for function calling automates multi-step analysis by enabling language '
-                'models to use information and operations from user-defined functions. While you can use any '
-                'functions or database with the application, an example use case is implemented here: Uncovering '
-                'trends in music sales using the provided sample database and tools. By leveraging natural language '
-                'understanding, database interaction, code generation, and data visualization, the application '
-                ' provides a real-world example of how models can use function calling to automate multi-step analysis '
-                'tasks with accuracy.\n '
-                'In addition to the sample DB of music sales, the application includes several tools that are '
-                'available for the model to call as functions, some of the included tools are:\n'
-                '- **query_db**: Allows users to interact with the sample music sales database via natural queries. '
-                'You can ask questions about the data, such as "What are the top-selling albums of all time?" or "What '
-                'is the total revenue from sales in a specific region?" The function will then retrieve the relevant '
-                'data from the database and display the results.\n'
-                '- **calculator**: Provides a simple calculator interface that allows the model to perform '
-                'mathematical calculations using natural language inputs. The user can ask questions like "What is 10% '
-                'of 100?" or "What is the sum of 2+2?" and the function will return the result.\n'
-                '- **get_time**: Returns the current date and time for use in queries or calculations.'
-            )
+            st.write(st_description.get('app_overview'))
 
     # show history in chat view
     for i in range(len(st.session_state.chat_history)):
