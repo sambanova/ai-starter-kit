@@ -18,9 +18,8 @@ composite_model:
   description: "CoE including byoc Hermes"
   rdu_required: 8
   model_list:
-    - "Meta-Llama-3-8B-Instruct"
-    - "e5-mistral-7b-instruct"
     - "HermesProInstructV10"
+    - "Meta-Llama-3-8B-Instruct"
 
 #deployment:
 project: 
