@@ -1,6 +1,5 @@
 import datetime
 import json
-import os
 import re
 import shutil
 from typing import Any, Dict, List
@@ -18,7 +17,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import Inspector, create_engine
 
 from financial_assistant.constants import *
-from financial_assistant.llm_model import sambanova_llm
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS, TITLE_INSTRUCTIONS_TEMPLATE
 from financial_assistant.prompts.sql_queries_prompt import SQL_QUERY_PROMPT_TEMPLATE
 from financial_assistant.src.exceptions import TableNotFoundException
@@ -30,7 +28,7 @@ from financial_assistant.src.tools import (
 )
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.src.utilities import get_logger, time_llm
-from utils.model_wrappers.api_gateway import APIGateway
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 logger = get_logger()
 
@@ -454,48 +452,16 @@ def select_database_tables(user_query: str, symbol_list: List[str]) -> List[str]
         partial_variables={'format_instructions': parser.get_format_instructions()},
     )
 
-    # Invoke the chain with the user query and the table summaries
-    max_tokens_to_generate_list = list({sambanova_llm.llm_info['max_tokens_to_generate'], 1024, 512, 256, 128})
-    # Bound the number of tokens to generate based on the config value
-    max_tokens_to_generate_list = [
-        elem for elem in max_tokens_to_generate_list if elem <= sambanova_llm.llm_info['max_tokens_to_generate']
-    ]
-
-    # Sort the list in descending order
-    max_tokens_to_generate_list = sorted(max_tokens_to_generate_list, reverse=True)
-
-    # Get the Sambanova API key
-    sambanova_api_key = os.getenv('SAMBANOVA_APY_KEY')
-
-    # Call the LLM for each number of tokens to generate
-    # Return the first valid response
     table_names = list()
-    for item in max_tokens_to_generate_list:
-        try:
-            # Instantiate the LLM
-            llm = APIGateway.load_llm(
-                type=sambanova_llm.llm_info['api'],
-                streaming=False,
-                coe=sambanova_llm.llm_info['coe'],
-                do_sample=sambanova_llm.llm_info['do_sample'],
-                max_tokens_to_generate=item,
-                temperature=sambanova_llm.llm_info['temperature'],
-                select_expert=sambanova_llm.llm_info['select_expert'],
-                process_prompt=False,
-                sambanova_api_key=sambanova_api_key,
-            )
 
-            # The chain
-            chain = prompt | llm | parser
-            response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
-            if not (
-                isinstance(response.table_names, list) and all([isinstance(elem, str) for elem in response.table_names])
-            ):
-                raise Exception('Invalid response')
-            table_names = response.table_names
-            break
-        except:
-            pass
+    # The chain
+    chain = prompt | sambanova_llm.llm | parser
+
+    # Invoke the chain
+    response = chain.invoke({'user_request': user_query, 'summary_text': summary_text})
+    if not (isinstance(response.table_names, list) and all([isinstance(elem, str) for elem in response.table_names])):
+        raise Exception('Invalid response')
+    table_names = response.table_names
 
     if len(table_names) == 0:
         raise TableNotFoundException
