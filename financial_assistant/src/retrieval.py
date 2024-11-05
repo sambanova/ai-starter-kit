@@ -12,10 +12,10 @@ from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 
 from financial_assistant.constants import *
+from financial_assistant.streamlit.llm_model import sambanova_llm
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
 from financial_assistant.src.exceptions import VectorStoreException
 from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
-from financial_assistant.streamlit.llm_model import sambanova_llm
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()

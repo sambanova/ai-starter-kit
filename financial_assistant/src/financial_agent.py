@@ -1,53 +1,52 @@
 import datetime
+import functools
 import operator
 import os
-from typing import Annotated, Any, Dict, List
+from typing import Annotated, Any, Dict, List, Sequence
+import streamlit
 
+streamlit.session_state.SAMBANOVA_API_KEY = os.getenv('SAMBANOVA_API_KEY')
 from IPython.display import Image, display
-from langchain_core.messages import HumanMessage, SystemMessage, get_buffer_string
-from langchain_openai import ChatOpenAI
-from langgraph.graph import END, START, MessagesState, StateGraph
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage, get_buffer_string
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import ToolNode, create_react_agent
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 from financial_assistant.constants import *
-from financial_assistant.streamlit.app_financial_filings import handle_financial_filings
-from financial_assistant.streamlit.app_stock_database import handle_database_creation, handle_database_query
-from financial_assistant.streamlit.app_yfinance_news import handle_yfinance_news
+from financial_assistant.src.tools import get_conversational_response
+from financial_assistant.src.tools_database import create_stock_database, query_stock_database
+from financial_assistant.src.tools_filings import retrieve_filings
+from financial_assistant.src.tools_pdf_generation import pdf_rag
+from financial_assistant.src.tools_stocks import (
+    get_historical_price,
+    get_stock_info,
+)
+from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
+from financial_assistant.streamlit.llm_model import sambanova_chat
 
-llm = ChatOpenAI(model='gpt-4o', temperature=0)
+# tool mapping of available tools
+TOOLS = {
+    'get_stock_info': get_stock_info,
+    'get_historical_price': get_historical_price,
+    'scrape_yahoo_finance_news': scrape_yahoo_finance_news,
+    'get_conversational_response': get_conversational_response,
+    'retrieve_filings': retrieve_filings,
+    'create_stock_database': create_stock_database,
+    'query_stock_database': query_stock_database,
+    'pdf_rag': pdf_rag,
+}
 
-
-class Analyst(BaseModel):
-    role: str = Field(
-        description='Role of the analyst in the context of the topic.',
-    )
-    description: str = Field(
-        description='Description of the analyst focus, concerns, and motives.',
-    )
-
-    @property
-    def persona(self) -> str:
-        return f'Role: {self.role}\nDescription: {self.description}\n'
-
-
-class Perspectives(BaseModel):
-    analysts: List[Analyst] = Field(
-        description='Comprehensive list of analysts with their roles and descriptions.',
-    )
-
-
-class GenerateAnalystsState(TypedDict):
-    human_analyst_feedback: str  # Human feedback
-    analysts: List[Analyst]
+# llm = ChatOpenAI(model='gpt-4o', temperature=0)
+llm = sambanova_chat
 
 
-class AnalysisState(MessagesState):
-    question: str
-    max_num_turns: int
-    analyst: Analyst
-    analysis: str
-    sections: List[str]
+# This defines the object that is passed between each node
+# in the graph. We will create different nodes for each agent and tool
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], operator.add]
+    sender: str
 
 
 class SearchQuery(BaseModel):
@@ -67,7 +66,6 @@ class SingularQuery(BaseModel):
 
 class ReportGraphState(TypedDict):
     human_analyst_feedback: str
-    analysts: List[Analyst]
     user_query: str
     companies: List[str]
     sections: Annotated[List[str], operator.add]
@@ -77,37 +75,35 @@ class ReportGraphState(TypedDict):
     final_report: str
 
 
-def generate_question(analysis_state: AnalysisState) -> Dict[str, Any]:
+def generate_question(analysis_state: AgentState) -> Dict[str, Any]:
     """Node to generate a question"""
 
-    # Get state
-    analyst = analysis_state['analyst']
+    # # Get state
     messages = analysis_state['messages']
 
     # Generate question
-    system_message = ''
+    system_message = 'You are a financial analyst.'
     question = llm.invoke([SystemMessage(content=system_message)] + messages)  # type: ignore
 
     # Write messages to state
     return {'messages': [question]}
 
 
-def generate_answer(analysis_state: AnalysisState) -> Dict[str, Any]:
+def generate_answer(analysis_state: AgentState) -> Dict[str, Any]:
     """Node to answer a question"""
 
     # Get state
-    analyst = analysis_state['analyst']
     messages = analysis_state['messages']
 
     # Answer question
-    system_message = ''
+    system_message = 'Compose an answer from the receive messages.'
     answer = llm.invoke([SystemMessage(content=system_message)] + messages)  # type: ignore
 
     # Append it to state
     return {'messages': [answer]}
 
 
-def save_analysis(analysis_state: AnalysisState) -> Dict[str, Any]:
+def save_analysis(analysis_state: AgentState) -> Dict[str, Any]:
     """Save analysis."""
 
     # Get messages
@@ -120,50 +116,60 @@ def save_analysis(analysis_state: AnalysisState) -> Dict[str, Any]:
     return {'analysis': analysis}
 
 
-def stock_database_query(singular_query: SingularQuery) -> Dict[str, Any]:
-    handle_database_creation(
-        requested_companies=singular_query.company_name,
-        start_date=singular_query.start_date,
-        end_date=singular_query.end_date,
-    )
+def agent_node(state: StateGraph, agent: CompiledGraph, name: str) -> Dict[str, List[Any]]:
+    """Helper function to create a node for a given agent."""
 
-    response_text_to_sql = handle_database_query(
-        user_question=singular_query.company_query,
-        query_method='text-to-SQL',
-    )
-
-    response_pandasai = handle_database_query(
-        user_question=singular_query.company_query,
-        query_method='PandasAI-SqliteConnector',
-    )
-
+    result = agent.invoke(state)
+    # We convert the agent output into a format that is suitable to append to the global state
+    if isinstance(result, ToolMessage):
+        pass
+    else:
+        result = AIMessage(**result.dict(exclude={'type', 'name'}), name=name)
     return {
-        'text-to-SQL': response_text_to_sql,
-        'PandasAI-SqliteConnector': response_pandasai,
+        'messages': [result],
+        # Since we have a strict workflow, we can
+        # track the sender so we know who to pass to next.
+        'sender': name,
     }
 
 
-def yfinance_news_query(search_query: SearchQuery) -> Any:
-    response = handle_yfinance_news(
-        user_question=search_query.user_query,
-    )
+database_tools = [
+    'create_stock_database',
+    'query_stock_database',
+]
 
-    return response
+database_agent = create_react_agent(
+    llm,
+    tools=[TOOLS[tool_name] for tool_name in database_tools],
+)
+stock_database_node = functools.partial(agent_node, agent=database_agent, name='Database')
+
+yfinance_news_tools = [
+    'scrape_yahoo_finance_news',
+]
+
+yahoo_news_agent = create_react_agent(
+    llm,
+    tools=[TOOLS[tool_name] for tool_name in yfinance_news_tools],
+)
+yfinance_news_node = functools.partial(agent_node, agent=yahoo_news_agent, name='YahooFinance')
+
+financial_filings_tools = [
+    'retrieve_filings',
+]
+
+financial_filings_agent = create_react_agent(
+    llm,
+    tools=[TOOLS[tool_name] for tool_name in financial_filings_tools],
+)
+financial_filings_node = functools.partial(agent_node, agent=financial_filings_agent, name='FinancialFilings')
+
+tool_node = ToolNode(
+    tools=[TOOLS[tool_name] for tool_name in database_tools + yfinance_news_tools + financial_filings_tools]
+)
 
 
-def financial_filings_query(singular_query: SingularQuery) -> Any:
-    response = handle_financial_filings(
-        user_question=singular_query.company_query,
-        company_name=singular_query.company_name,
-        filing_type=singular_query.filing_type,
-        filing_quarter=singular_query.filing_quarter,
-        selected_year=singular_query.selected_year,
-    )
-
-    return response
-
-
-def write_section(state: AnalysisState) -> Dict[str, Any]:
+def write_section(state: AgentState) -> Dict[str, Any]:
     """Node to write a section"""
 
     section = ''
@@ -172,29 +178,65 @@ def write_section(state: AnalysisState) -> Dict[str, Any]:
     return {'sections': section}
 
 
-def route_messages() -> None:
-    pass
+def router(state: AgentState) -> str:
+    # This is the router
+    messages = state['messages']
+    last_message = messages[-1]
+    if last_message.tool_calls:
+        # The previous agent is invoking a tool
+        return 'call_tool'
+    if 'FINAL ANSWER' in last_message.content:
+        # Any agent decided the work is done
+        return END
+    return 'continue'
 
 
 # Add nodes and edges
-analysis_builder = StateGraph(AnalysisState)
+analysis_builder = StateGraph(AgentState)
 analysis_builder.add_node('ask_question', generate_question)
-analysis_builder.add_node('stock_database_query', stock_database_query)
-analysis_builder.add_node('yfinance_news_query', yfinance_news_query)
-analysis_builder.add_node('financial_filings_query', financial_filings_query)
+analysis_builder.add_node('call_tool', tool_node)
+analysis_builder.add_node('stock_database_node', stock_database_node)
+analysis_builder.add_node('yfinance_news_node', yfinance_news_node)
+analysis_builder.add_node('financial_filings_node', financial_filings_node)
 analysis_builder.add_node('answer_question', generate_answer)
 analysis_builder.add_node('save_analysis', save_analysis)
 analysis_builder.add_node('write_section', write_section)
 
 # Flow
 analysis_builder.add_edge(START, 'ask_question')
-analysis_builder.add_edge('ask_question', 'stock_database_query')
-analysis_builder.add_edge('ask_question', 'yfinance_news_query')
-analysis_builder.add_edge('ask_question', 'financial_filings_query')
-analysis_builder.add_edge('stock_database_query', 'answer_question')
-analysis_builder.add_edge('yfinance_news_query', 'answer_question')
-analysis_builder.add_edge('financial_filings_query', 'answer_question')
-analysis_builder.add_conditional_edges('answer_question', route_messages, ['ask_question', 'save_analysis'])
+analysis_builder.add_edge('ask_question', 'stock_database_node')
+analysis_builder.add_edge('ask_question', 'yfinance_news_node')
+analysis_builder.add_edge('ask_question', 'financial_filings_node')
+analysis_builder.add_conditional_edges(
+    'stock_database_node',
+    router,
+    {'continue': 'answer_question', 'call_tool': 'call_tool'},
+)
+analysis_builder.add_conditional_edges(
+    'yfinance_news_node',
+    router,
+    {'continue': 'answer_question', 'call_tool': 'call_tool'},
+)
+analysis_builder.add_conditional_edges(
+    'financial_filings_node',
+    router,
+    {'continue': 'answer_question', 'call_tool': 'call_tool'},
+)
+
+analysis_builder.add_conditional_edges(
+    'call_tool',
+    # Each agent node updates the 'sender' field
+    # the tool calling node does not, meaning
+    # this edge will route back to the original agent
+    # who invoked the tool
+    lambda x: x['sender'],
+    {
+        'stock_database_node': 'stock_database_node',
+        'yfinance_news_node': 'yfinance_news_node',
+        'financial_filings_node': 'financial_filings_node',
+    },
+)
+analysis_builder.add_conditional_edges('answer_question', router, ['ask_question', 'save_analysis'])
 analysis_builder.add_edge('save_analysis', 'write_section')
 analysis_builder.add_edge('write_section', END)
 
@@ -206,10 +248,6 @@ display(  # type: ignore
         .draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'analysis_builder.png'))
     )
 )
-
-
-def supervisor(report_state: ReportGraphState) -> None:
-    pass
 
 
 def supervisor(report_state: ReportGraphState) -> Dict[str, Any]:
@@ -256,3 +294,15 @@ graph = builder.compile(interrupt_before=['human_feedback'])
 
 # View
 display(Image(graph.get_graph().draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'graph.png'))))  # type: ignore
+
+analyis_graph = analysis_builder.compile()
+events = analyis_graph.stream(
+    {
+        'messages': [HumanMessage(content='What is the research and development trend of Meta?')],
+    },
+    # Maximum number of steps to take in the graph
+    {'recursion_limit': 150},
+)
+for s in events:
+    print(s)
+    print('----')

@@ -15,6 +15,7 @@ from pandasai.connectors.yahoo_finance import YahooFinanceConnector
 from pydantic import BaseModel, Field
 
 from financial_assistant.constants import *
+from financial_assistant.streamlit.llm_model import sambanova_llm
 from financial_assistant.prompts.pandasai_prompts import PLOT_INSTRUCTIONS
 from financial_assistant.src.tools import (
     coerce_str_to_list,
@@ -22,7 +23,6 @@ from financial_assistant.src.tools import (
     extract_yfinance_data,
 )
 from financial_assistant.src.utilities import time_llm
-from financial_assistant.streamlit.llm_model import sambanova_llm
 
 
 class StockInfoSchema(BaseModel):

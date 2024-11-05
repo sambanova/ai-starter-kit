@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.constants import *
+from financial_assistant.streamlit.llm_model import sambanova_llm
 from financial_assistant.src.exceptions import (
     LLM_EXCEPTION_MESSAGE,
     LLMException,
@@ -27,11 +28,10 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.src.utilities import get_logger
-from financial_assistant.streamlit.llm_model import sambanova_llm
 
 logger = get_logger()
 
-# tool mapping of available tools
+# Tool mapping of available tools
 TOOLS = {
     'get_stock_info': get_stock_info,
     'get_historical_price': get_historical_price,

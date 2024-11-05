@@ -3,8 +3,8 @@ from typing import Dict, Optional
 import streamlit
 
 from financial_assistant.constants import *
-from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.llm_model import sambanova_llm
+from financial_assistant.src.utilities import get_logger
 from financial_assistant.streamlit.utilities_app import save_output_callback
 from financial_assistant.streamlit.utilities_methods import TOOLS, handle_userinput
 
