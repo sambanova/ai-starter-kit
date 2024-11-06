@@ -75,44 +75,26 @@ class ReportGraphState(TypedDict):
     final_report: str
 
 
-def generate_question(analysis_state: AgentState) -> Dict[str, Any]:
+def generate_question(state: AgentState) -> Dict[str, Any]:
     """Node to generate a question"""
 
-    # # Get state
-    messages = analysis_state['messages']
-
-    # Generate question
     system_message = 'You are a financial analyst.'
-    question = llm.invoke([SystemMessage(content=system_message)] + messages)  # type: ignore
-
-    # Write messages to state
+    question = llm.invoke([SystemMessage(content=system_message)] + state['messages'])
     return {'messages': [question]}
 
 
-def generate_answer(analysis_state: AgentState) -> Dict[str, Any]:
+def generate_answer(state: AgentState) -> Dict[str, Any]:
     """Node to answer a question"""
 
-    # Get state
-    messages = analysis_state['messages']
-
-    # Answer question
-    system_message = 'Compose an answer from the receive messages.'
-    answer = llm.invoke([SystemMessage(content=system_message)] + messages)  # type: ignore
-
-    # Append it to state
+    system_message = 'Compose an answer from the received messages.'
+    answer = llm.invoke([SystemMessage(content=system_message)] + state.messages)
     return {'messages': [answer]}
 
 
-def save_analysis(analysis_state: AgentState) -> Dict[str, Any]:
+def save_analysis(state: AgentState) -> Dict[str, Any]:
     """Save analysis."""
 
-    # Get messages
-    messages = analysis_state['messages']
-
-    # Convert interview to a string
-    analysis = get_buffer_string(messages)
-
-    # Save to interviews key
+    analysis = get_buffer_string(state.messages)
     return {'analysis': analysis}
 
 
@@ -179,63 +161,46 @@ def write_section(state: AgentState) -> Dict[str, Any]:
 
 
 def router(state: AgentState) -> str:
-    # This is the router
-    messages = state['messages']
-    last_message = messages[-1]
-    if last_message.tool_calls:
-        # The previous agent is invoking a tool
-        return 'call_tool'
-    if 'FINAL ANSWER' in last_message.content:
-        # Any agent decided the work is done
-        return END
-    return 'continue'
+    """Router node."""
+
+    last_message = state.messages[-1]
+    match last_message:
+        case BaseMessage(tool_calls=[*_]):
+            return 'call_tool'
+        case BaseMessage(content=content) if 'FINAL ANSWER' in content:
+            return END
+        case _:
+            return 'continue'
 
 
-# Add nodes and edges
 analysis_builder = StateGraph(AgentState)
-analysis_builder.add_node('ask_question', generate_question)
-analysis_builder.add_node('call_tool', tool_node)
-analysis_builder.add_node('stock_database_node', stock_database_node)
-analysis_builder.add_node('yfinance_news_node', yfinance_news_node)
-analysis_builder.add_node('financial_filings_node', financial_filings_node)
-analysis_builder.add_node('answer_question', generate_answer)
-analysis_builder.add_node('save_analysis', save_analysis)
-analysis_builder.add_node('write_section', write_section)
+nodes = {
+    'ask_question': generate_question,
+    'call_tool': tool_node,
+    'stock_database_node': stock_database_node,
+    'yfinance_news_node': yfinance_news_node,
+    'financial_filings_node': financial_filings_node,
+    'answer_question': generate_answer,
+    'save_analysis': save_analysis,
+    'write_section': write_section,
+}
 
-# Flow
+tool_nodes = ['stock_database_node', 'yfinance_news_node', 'financial_filings_node']
+
+for name, func in nodes.items():
+    analysis_builder.add_node(name, func)
+
 analysis_builder.add_edge(START, 'ask_question')
-analysis_builder.add_edge('ask_question', 'stock_database_node')
-analysis_builder.add_edge('ask_question', 'yfinance_news_node')
-analysis_builder.add_edge('ask_question', 'financial_filings_node')
-analysis_builder.add_conditional_edges(
-    'stock_database_node',
-    router,
-    {'continue': 'answer_question', 'call_tool': 'call_tool'},
-)
-analysis_builder.add_conditional_edges(
-    'yfinance_news_node',
-    router,
-    {'continue': 'answer_question', 'call_tool': 'call_tool'},
-)
-analysis_builder.add_conditional_edges(
-    'financial_filings_node',
-    router,
-    {'continue': 'answer_question', 'call_tool': 'call_tool'},
-)
+for node in tool_nodes:
+    analysis_builder.add_edge('ask_question', node)
+    analysis_builder.add_conditional_edges(node, router, {'continue': 'answer_question', 'call_tool': 'call_tool'})
 
 analysis_builder.add_conditional_edges(
     'call_tool',
-    # Each agent node updates the 'sender' field
-    # the tool calling node does not, meaning
-    # this edge will route back to the original agent
-    # who invoked the tool
     lambda x: x['sender'],
-    {
-        'stock_database_node': 'stock_database_node',
-        'yfinance_news_node': 'yfinance_news_node',
-        'financial_filings_node': 'financial_filings_node',
-    },
+    {node: node for node in tool_nodes},
 )
+
 analysis_builder.add_conditional_edges('answer_question', router, ['ask_question', 'save_analysis'])
 analysis_builder.add_edge('save_analysis', 'write_section')
 analysis_builder.add_edge('write_section', END)
