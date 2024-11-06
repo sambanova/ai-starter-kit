@@ -11,8 +11,12 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 from financial_assistant.constants import *
-from financial_assistant.llm_model import sambanova_llm
-from financial_assistant.src.exceptions import LLMException, TableNotFoundException, VectorStoreException
+from financial_assistant.src.exceptions import (
+    LLM_EXCEPTION_MESSAGE,
+    LLMException,
+    TableNotFoundException,
+    VectorStoreException,
+)
 from financial_assistant.src.tools import get_conversational_response
 from financial_assistant.src.tools_database import create_stock_database, query_stock_database
 from financial_assistant.src.tools_filings import retrieve_filings
@@ -23,6 +27,7 @@ from financial_assistant.src.tools_stocks import (
 )
 from financial_assistant.src.tools_yahoo_news import scrape_yahoo_finance_news
 from financial_assistant.src.utilities import get_logger
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 logger = get_logger()
 
@@ -84,9 +89,7 @@ def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
                 os.remove(TIME_LLM_PATH)
 
             except LLMException:
-                streamlit.error(
-                    f'We are experiencing an issue with the language model. Please try again in a few minutes.'
-                )
+                streamlit.error(LLM_EXCEPTION_MESSAGE)
                 streamlit.stop()
             except VectorStoreException:
                 streamlit.error('Could not instantiate the vectorstore.')

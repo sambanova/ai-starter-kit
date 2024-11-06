@@ -20,6 +20,7 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import get_logger
+from utils.visual.env_utils import initialize_env_variables
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -43,6 +44,9 @@ def initialize_session(
     # Initialize the production mode
     if 'prod_mode' not in session_state:
         session_state.prod_mode = prod_mode
+
+    # Initialize credentials
+    initialize_env_variables(prod_mode)
 
     # Initialize the chat history
     if 'chat_history' not in session_state:
