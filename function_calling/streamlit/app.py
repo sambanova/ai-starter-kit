@@ -28,6 +28,7 @@ logging.basicConfig(level=logging.INFO)
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PRESET_QUERIES_PATH = os.path.join(kit_dir, 'prompts', 'streamlit_preset_queries.yaml')
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 
 # tool mapping of defined tools
 TOOLS = {
@@ -51,17 +52,23 @@ def load_preset_queries() -> Any:
         return yaml.safe_load(yaml_file)
 
 
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
 config = load_config()
 prod_mode = config.get('prod_mode', False)
 st_tools = config.get('st_tools', {})
 st_preset_queries = load_preset_queries()
+st_description = load_app_description()
 
 db_path = config['tools']['query_db']['db'].get('path')
 additional_env_vars = config.get('additional_env_vars', None)
 
 
 @contextmanager
-def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]:
+def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
     """
     context manager to catch stdout and send it to an output streamlit element
 
@@ -80,7 +87,7 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[str, None, None]
             return ret
 
         stdout.write = new_write  # type: ignore
-        yield  # type: ignore
+        yield stdout
 
 
 def delete_temp_dir(temp_dir: str) -> None:
@@ -157,30 +164,56 @@ def handle_userinput(user_question: Optional[str]) -> None:
     Args:
         user_question (str): The user's question or input.
     """
-    global output
+
+    # append user question and response to history
     if user_question:
-        with st.spinner('Processing...'):
-            with st_capture(output.code):  # type: ignore
-                response = st.session_state.fc.function_call_llm(
-                    query=user_question, max_it=st.session_state.max_iterations, debug=True
-                )
-
         st.session_state.chat_history.append(user_question)
-        st.session_state.chat_history.append(response)
+        # crete an execution scratchpad output
 
-    for ques, ans in zip(
-        st.session_state.chat_history[::2],
-        st.session_state.chat_history[1::2],
-    ):
-        with st.chat_message('user'):
-            st.write(f'{ques}')
-
+    # show overview message when chat history is empty
+    if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
             avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         ):
-            formatted_ans = ans.replace('$', '\$')
-            st.write(f'{formatted_ans}')
+            st.write(st_description.get('app_overview'))
+
+    # show history in chat view
+    for i in range(len(st.session_state.chat_history)):
+        if i % 2 == 0:
+            # show user input (even messages)
+            with st.chat_message('user'):
+                st.write(f'{st.session_state.chat_history[i]}')
+            # show execution scratchpad if already stored
+            if i // 2 < len(st.session_state.execution_scratchpad_history):
+                with st.expander('**Execution Scratchpad**', expanded=False):
+                    st.code(st.session_state.execution_scratchpad_history[i // 2])
+        else:
+            # show AI outputs (odd messages)
+            with st.chat_message(
+                'ai',
+                avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            ):
+                formatted_ans = st.session_state.chat_history[i].replace('$', '\$')
+                st.write(f'{formatted_ans}')
+
+    # generate response
+    if user_question:
+        with st.spinner('Processing...'):
+            with st.expander('**Calling Tools to generate a response**', expanded=True):
+                # create a new empty scratchpad expander
+                execution_scratchpad_output = st.empty()
+            # capture logs and show them in the current expanded execution scratchpad
+            with st_capture(execution_scratchpad_output.code) as stdout:  # type: ignore
+                response = st.session_state.fc.function_call_llm(
+                    query=user_question, max_it=st.session_state.max_iterations, debug=True
+                )
+                # Add scratchpad output to the scratchpad history
+                st.session_state.execution_scratchpad_history.append(stdout.getvalue())
+                # append response to history
+                st.session_state.chat_history.append(response)
+                # rerun the app to reflect the new chat history
+                st.rerun()
 
 
 def setChatInputValue(chat_input_value: str) -> None:
@@ -203,7 +236,6 @@ def setChatInputValue(chat_input_value: str) -> None:
 
 
 def main() -> None:
-    global output
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
@@ -213,42 +245,19 @@ def main() -> None:
 
     st.title(':orange[SambaNova] Function Calling Assistant')
 
-    if 'fc' not in st.session_state:
-        st.session_state.fc = None
-
-        # show overview message when function calling is not yet initialized
-        with st.chat_message(
-            'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-        ):
-            st.write(
-                'This example application for function calling automates multi-step analysis by enabling language '
-                'models to use information and operations from user-defined functions. While you can use any '
-                'functions or database with the application, an example use case is implemented here: Uncovering '
-                'trends in music sales using the provided sample database and tools. By leveraging natural language '
-                'understanding, database interaction, code generation, and data visualization, the application '
-                ' provides a real-world example of how models can use function calling to automate multi-step analysis '
-                'tasks with accuracy.\n '
-                'In addition to the sample DB of music sales, the application includes several tools that are '
-                'available for the model to call as functions, some of the included tools are:\n'
-                '- **query_db**: Allows users to interact with the sample music sales database via natural queries. '
-                'You can ask questions about the data, such as "What are the top-selling albums of all time?" or "What '
-                'is the total revenue from sales in a specific region?" The function will then retrieve the relevant '
-                'data from the database and display the results.\n'
-                '- **calculator**: Provides a simple calculator interface that allows the model to perform '
-                'mathematical calculations using natural language inputs. The user can ask questions like "What is 10% '
-                'of 100?" or "What is the sum of 2+2?" and the function will return the result.\n'
-                '- **get_time**: Returns the current date and time for use in queries or calculations.'
-            )
-
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'execution_scratchpad_history' not in st.session_state:
+        st.session_state.execution_scratchpad_history = []
     if 'tools' not in st.session_state:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
+    if 'fc' not in st.session_state:
+        st.session_state.fc = None
+        set_fc_llm(st.session_state.tools)
     if 'input_disabled' not in st.session_state:
-        st.session_state.input_disabled = True
+        st.session_state.input_disabled = False
     if 'session_temp_db' not in st.session_state:
         if prod_mode:
             st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
@@ -281,19 +290,18 @@ def main() -> None:
                 [k for k, v in st_tools.items() if v['enabled']],
                 [k for k, v in st_tools.items() if v['default'] and v['enabled']],
             )
-            st.markdown('**2. Set the maximum number of iterations your want the model to run**')
-            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
-            st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
+
             if st.button('Set'):
                 with st.spinner('Processing'):
                     set_fc_llm(st.session_state.tools)
                     st.toast(f'Tool calling assistant set! Go ahead and ask some questions', icon='🎉')
                 st.session_state.input_disabled = False
 
-            st.markdown('**3. Ask the model**')
+            st.markdown('**2. Set the maximum number of iterations your want the model to run**')
+            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
+            st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
 
-            with st.expander('**Execution scratchpad**', expanded=True):
-                output = st.empty()  # type: ignore
+            st.markdown('**3. Ask the model**')
 
             with st.expander('**Preset Example queries**', expanded=True):
                 st.markdown('DB operations')
@@ -308,7 +316,7 @@ def main() -> None:
                 st.markdown('**Note:** Resetting the chat will clear all interactions history')
                 if st.button('Reset messages history'):
                     st.session_state.chat_history = []
-                    st.session_state.sources_history = []
+                    st.session_state.execution_scratchpad_history = []
                     st.toast('Interactions reset. The next response will clear the history on the screen')
 
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
