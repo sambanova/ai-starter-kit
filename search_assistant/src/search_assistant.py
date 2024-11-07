@@ -31,6 +31,7 @@ from serpapi import GoogleSearch
 
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
+from utils.visual.env_utils import get_wandb_key
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
