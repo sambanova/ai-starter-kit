@@ -408,7 +408,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                     invalid_tool_calls.append(make_invalid_tool_call(raw_tool_call, str(e)))
         message = AIMessage(
             content=content,
-            additional_kwargs={},
+            additional_kwargs=additional_kwargs,
             tool_calls=tool_calls,
             invalid_tool_calls=invalid_tool_calls,
             response_metadata={
