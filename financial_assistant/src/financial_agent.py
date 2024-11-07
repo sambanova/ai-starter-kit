@@ -3,10 +3,10 @@ import functools
 import operator
 import os
 from typing import Annotated, Any, Dict, List, Sequence
+
 import streamlit
 
 streamlit.session_state.SAMBANOVA_API_KEY = os.getenv('SAMBANOVA_API_KEY')
-from IPython.display import Image, display
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage, get_buffer_string
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.graph import CompiledGraph
@@ -42,16 +42,9 @@ TOOLS = {
 llm = sambanova_chat
 
 
-# This defines the object that is passed between each node
-# in the graph. We will create different nodes for each agent and tool
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    sender: str
-
-
 class SearchQuery(BaseModel):
     requested_companies: List[str] = Field(None, description='List of companies to research.')
-    user_query: str = Field(None, description='Search query for retrieval.')
+    user_query: str = Field(None, description='User query for that list of companies.')
 
 
 class SingularQuery(BaseModel):
@@ -62,6 +55,14 @@ class SingularQuery(BaseModel):
     filing_type: str = Field('10-K', description='Filing type to search.')
     filing_quarter: int = Field(0, description='Quarter to search. 0 for no quarters.')
     selected_year: int = Field(2023, description='Year to search.')
+
+
+# This defines the object that is passed between each node
+# in the graph. We will create different nodes for each agent and tool
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], operator.add]
+    search_queries: Annotated[Sequence[SearchQuery], operator.add]
+    sender: str
 
 
 class ReportGraphState(TypedDict):
@@ -75,12 +76,13 @@ class ReportGraphState(TypedDict):
     final_report: str
 
 
-def generate_question(state: AgentState) -> Dict[str, Any]:
+def generate_question(state: AgentState) -> SearchQuery:
     """Node to generate a question"""
 
-    system_message = 'You are a financial analyst.'
-    question = llm.invoke([SystemMessage(content=system_message)] + state['messages'])
-    return {'messages': [question]}
+    system_message = 'You are a financial analyst. Please generate a question for each '
+    structured_llm = llm.with_structured_output(schema=SearchQuery)
+    question = structured_llm.invoke([SystemMessage(content=system_message)] + state['messages'])
+    return {'search_queries': [question]}
 
 
 def generate_answer(state: AgentState) -> Dict[str, Any]:
@@ -174,7 +176,7 @@ def router(state: AgentState) -> str:
 
 
 analysis_builder = StateGraph(AgentState)
-nodes = {
+analysis_nodes = {
     'ask_question': generate_question,
     'call_tool': tool_node,
     'stock_database_node': stock_database_node,
@@ -187,7 +189,7 @@ nodes = {
 
 tool_nodes = ['stock_database_node', 'yfinance_news_node', 'financial_filings_node']
 
-for name, func in nodes.items():
+for name, func in analysis_nodes.items():
     analysis_builder.add_node(name, func)
 
 analysis_builder.add_edge(START, 'ask_question')
@@ -205,23 +207,20 @@ analysis_builder.add_conditional_edges('answer_question', router, ['ask_question
 analysis_builder.add_edge('save_analysis', 'write_section')
 analysis_builder.add_edge('write_section', END)
 
-# View
-display(  # type: ignore
-    Image(  # type: ignore
-        analysis_builder.compile()
-        .get_graph()
-        .draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'analysis_builder.png'))
-    )
-)
+# Save analysis graph
+analysis_builder.compile().get_graph().draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'analysis_builder.png'))
 
 
-def supervisor(report_state: ReportGraphState) -> Dict[str, Any]:
+def supervisor(state: ReportGraphState) -> Dict[str, List[str]]:
     """Decompose the analysis into a list of analysis by company."""
-    user_query = report_state['user_query']
-    system_message = f'The following companies match your query: {user_query}'
 
-    companies = llm.invoke([SystemMessage(system_message)] + [HumanMessage(user_query)])
-    return {'companies': companies}
+    system_message = f'The following companies match your query: {state.user_query}'
+    try:
+        companies = llm.invoke([SystemMessage(content=system_message), HumanMessage(content=state.user_query)])
+        return {'companies': companies.content.split(', ')}
+    except Exception as e:
+        print(f'Error in supervisor function: {e}')
+        return {'companies': []}
 
 
 def human_feedback(report_state: ReportGraphState) -> None:
@@ -241,33 +240,40 @@ def end_analysis(report_state: ReportGraphState) -> None:
 
 
 # Add nodes and edges
-builder = StateGraph(ReportGraphState)
-builder.add_node('supervisor', supervisor)
-builder.add_node('human_feedback', human_feedback)
-builder.add_node('conduct_analysis', analysis_builder.compile())
-builder.add_node('write_report', write_report)
+graph_nodes = {
+    'supervisor': supervisor,
+    'human_feedback': human_feedback,
+    'conduct_analysis': analysis_builder.compile(),
+    'write_report': write_report,
+}
+graph_builder = StateGraph(ReportGraphState)
+for name, func in graph_nodes.items():
+    graph_builder.add_node(name, func)
+
 
 # Logic
-builder.add_edge(START, 'supervisor')
-builder.add_edge('supervisor', 'human_feedback')
-builder.add_conditional_edges('human_feedback', start_analysis, ['supervisor', 'conduct_analysis'])
-builder.add_edge('conduct_analysis', 'write_report')
-builder.add_conditional_edges('write_report', end_analysis, ['supervisor', END])
+graph_builder.add_edge(START, 'supervisor')
+graph_builder.add_edge('supervisor', 'human_feedback')
+graph_builder.add_conditional_edges('human_feedback', start_analysis, ['supervisor', 'conduct_analysis'])
+graph_builder.add_edge('conduct_analysis', 'write_report')
+graph_builder.add_conditional_edges('write_report', end_analysis, ['supervisor', END])
 
 # Compile
-graph = builder.compile(interrupt_before=['human_feedback'])
+graph = graph_builder.compile(interrupt_before=['human_feedback'])
 
-# View
-display(Image(graph.get_graph().draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'graph.png'))))  # type: ignore
+# Save graph
+graph.get_graph().draw_mermaid_png(output_file_path=os.path.join(kit_dir, 'graph.png'))  # type: ignore
 
-analyis_graph = analysis_builder.compile()
-events = analyis_graph.stream(
-    {
-        'messages': [HumanMessage(content='What is the research and development trend of Meta?')],
-    },
-    # Maximum number of steps to take in the graph
-    {'recursion_limit': 150},
-)
-for s in events:
-    print(s)
-    print('----')
+
+if __name__ == '__main__':
+    analyis_graph = analysis_builder.compile()
+    events = analyis_graph.stream(
+        {
+            'messages': [HumanMessage(content='What is the research and development trend of Meta?')],
+        },
+        # Maximum number of steps to take in the graph
+        {'recursion_limit': 150},
+    )
+    for s in events:
+        print(s)
+        print('---------------------------------------------------------------')

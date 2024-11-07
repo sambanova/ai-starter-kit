@@ -10,9 +10,9 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
-from financial_assistant.streamlit.llm_model import sambanova_llm
 from financial_assistant.prompts.conversational_prompts import CONVERSATIONAL_RESPONSE_PROMPT_TEMPLATE
 from financial_assistant.src.utilities import get_logger
+from financial_assistant.streamlit.llm_model import sambanova_llm
 
 
 class HasCall(Protocol):
