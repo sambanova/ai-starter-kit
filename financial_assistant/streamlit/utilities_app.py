@@ -58,7 +58,7 @@ def initialize_session(
 
     # Mixpanel events
     if 'st_session_id' not in session_state:
-        session_state.st_session_id = str(uuid.uuid4())
+        session_state.st_session_id = SESSION_ID
 
     if 'mp_events' not in session_state:
         session_state.mp_events = MixpanelEvents(
