@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import joblib
 import yaml
 
 file_location = Path(__file__).parent.resolve()
@@ -127,7 +128,16 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             str: adjusted text
         """
-        tokens = self.tokenizer.tokenize(text)
+        model = self.model_name.replace('COE/', '').replace('/', '_')
+        tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
+        tokenized_text_filepath = f'{file_location}/../prompts/{tokenized_text_filename}'
+
+        if not Path(tokenized_text_filepath).exists():
+            tokens = self.tokenizer.tokenize(text)
+            joblib.dump(tokens, tokenized_text_filepath)
+        else:
+            tokens = joblib.load(tokenized_text_filepath)
+
         token_count = len(tokens)
 
         if token_count > target_token_count:
