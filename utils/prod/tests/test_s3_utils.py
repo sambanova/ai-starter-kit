@@ -55,7 +55,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test saves an in-memory text file to S3 and verifies its content and type.
         """
-        object_key = 'test_s3/test_memory_file.txt'
+        object_key = os.path.join('test_s3', 'test_memory_file.txt')
         file_content = 'This is a test file content.'
         content_type = 'text/plain'
 
@@ -76,7 +76,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test downloads an image from a URL, saves it to S3, and verifies its content.
         """
-        object_key = 'logotype_sambanova_orange.png'
+        object_key = os.path.join('test_s3', 'logotype_sambanova_orange.png')
         image_url = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
 
         # Download the image
@@ -100,7 +100,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test creates a simple PDF, saves it to S3, and verifies its content.
         """
-        object_key = 'test_pdf.pdf'
+        object_key = os.path.join('test_s3', 'test_pdf.pdf')
 
         # Create a simple PDF
         pdf = FPDF()
@@ -126,7 +126,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test generates a CSV file, saves it to S3, and verifies its content.
         """
-        object_key = 'test_csv.csv'
+        object_key = os.path.join('test_s3', 'test_csv.csv')
 
         # Generate a simple CSV
         data = {
@@ -154,7 +154,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test uploads a file to S3, retrieves it, and verifies its content.
         """
-        object_key = 'test_s3/test_get_bytes.txt'
+        object_key = os.path.join('test_s3', 'test_get_bytes.txt')
         file_content = b'This is a test file content.'
 
         # Upload a file to S3 for testing
@@ -173,7 +173,7 @@ class TestS3Functions(unittest.TestCase):
         self.assertEqual(retrieved_content_body, file_content)
 
         # Non existent object
-        object_key = 'non_existent_object.txt'
+        object_key = os.path.join('text_s3', 'non_existent_object.txt')
         with self.assertRaises(ClientError):
             get_object_from_s3(object_key, self.bucket_name)
 
@@ -183,7 +183,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test creates a local file, uploads it to S3, and verifies its content.
         """
-        object_key = 'test_s3/test_upload.txt'
+        object_key = os.path.join('test_s3', 'test_upload.txt')
         file_content = 'This is a test file for upload.'
         file_path = 'utils/prod/tests/test_upload.txt'
 
@@ -207,7 +207,7 @@ class TestS3Functions(unittest.TestCase):
             os.remove(file_path)
 
         # Non existent file path
-        non_existent_file_path = 'test_s3/non_existent_object.txt'
+        non_existent_file_path = os.path.join('test_s3', 'non_existent_object.txt')
         result = upload_local_file_to_s3(object_key, non_existent_file_path, self.bucket_name)
         self.assertFalse(result)
 
@@ -217,7 +217,7 @@ class TestS3Functions(unittest.TestCase):
 
         This test uploads a file to S3, downloads it, and verifies its content.
         """
-        object_key = 'test_s3/test_download.txt'
+        object_key = os.path.join('test_s3', 'test_download.txt')
         file_content = 'This is a test file for download.'
         file_path = 'test_download.txt'
 
@@ -242,7 +242,7 @@ class TestS3Functions(unittest.TestCase):
                 os.remove(file_path)
 
         # Non existent file path
-        non_existent_file_path = 'test_s3/non_existent_object.txt'
+        non_existent_file_path = os.path.join('test_s3', 'non_existent_object.txt')
         result = download_file_from_s3(object_key, non_existent_file_path, self.bucket_name)
         self.assertFalse(result)
 
