@@ -2,6 +2,7 @@ import os
 import unittest
 
 import boto3
+import pandas
 import requests
 from botocore.exceptions import ClientError
 from fpdf import FPDF
@@ -83,12 +84,7 @@ class TestS3Functions(unittest.TestCase):
         image_content = response.content
 
         # Save the image to S3
-        result = put_object_to_s3(
-            object_key,
-            image_content,
-            'image/png',
-            self.bucket_name,
-        )
+        result = put_object_to_s3(object_key, image_content, 'image/png', self.bucket_name)
 
         # Assert the result
         self.assertTrue(result)
@@ -123,6 +119,34 @@ class TestS3Functions(unittest.TestCase):
         response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
         self.assertEqual(response['ContentType'], 'application/pdf')
         self.assertEqual(response['Body'].read(), pdf_content)
+
+    def test_put_csv_to_s3(self) -> None:
+        """
+        Test saving a CSV to S3 using `utils.prod.s3_utils.put_object_to_s3`.
+
+        This test generates a CSV file, saves it to S3, and verifies its content.
+        """
+        object_key = 'test_csv.csv'
+
+        # Generate a simple CSV
+        data = {
+            'Country': ['UK', 'Italy', 'France'],
+            'Capital': ['London', 'Rome', 'Paris'],
+        }
+
+        df = pandas.DataFrame(data)
+        csv_content = df.to_csv(index=False).encode('utf-8')
+
+        # Save the CSV to S3
+        result = put_object_to_s3(object_key, csv_content, 'text/csv', self.bucket_name)
+
+        # Assert the result
+        self.assertTrue(result)
+
+        # Verify the CSV was uploaded
+        response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
+        self.assertEqual(response['ContentType'], 'text/csv')
+        self.assertEqual(response['Body'].read(), csv_content)
 
     def test_get_object_from_s3_as_bytes(self) -> None:
         """

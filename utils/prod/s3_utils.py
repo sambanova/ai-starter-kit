@@ -59,7 +59,7 @@ def put_object_to_s3(
         return True
 
     except ClientError as e:
-        logger.error(f'An error occurred: {e}')
+        logger.warning(f'An error occurred: {e}')
         return False
 
 
@@ -100,7 +100,7 @@ def get_object_from_s3(
             return response['Body'].read()
 
     except ClientError as e:
-        logger.error(f'An error occurred while retrieving the object: {e}')
+        logger.warning(f'An error occurred while retrieving the object: {e}')
         raise e
 
 
@@ -134,7 +134,7 @@ def upload_local_file_to_s3(
         return True
 
     except (ClientError, FileNotFoundError) as e:
-        logger.error(f'An error occurred while uploading the file: {e}')
+        logger.warning(f'An error occurred while uploading the file: {e}')
         return False
 
 
@@ -168,5 +168,5 @@ def download_file_from_s3(
         return True
 
     except (ClientError, FileNotFoundError) as e:
-        logger.error(f'An error occurred while downloading the file: {e}')
+        logger.warning(f'An error occurred while downloading the file: {e}')
         return False
