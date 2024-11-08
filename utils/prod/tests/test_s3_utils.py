@@ -130,8 +130,8 @@ class TestS3Functions(unittest.TestCase):
 
         # Generate a simple CSV
         data = {
-            'Country': ['UK', 'Italy', 'France'],
-            'Capital': ['London', 'Rome', 'Paris'],
+            'Country': ['France', 'Italy', 'UK'],
+            'Capital': ['Paris', 'Rome', 'London'],
         }
 
         df = pandas.DataFrame(data)
