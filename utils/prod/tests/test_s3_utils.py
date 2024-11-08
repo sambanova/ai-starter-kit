@@ -1,8 +1,10 @@
 import os
 import unittest
-import requests
+
 import boto3
+import requests
 from botocore.exceptions import ClientError
+from fpdf import FPDF
 
 from utils.prod.s3_utils import (
     BUCKET_AWS_NAME,
@@ -69,7 +71,7 @@ class TestS3Functions(unittest.TestCase):
 
     def test_put_image_to_s3(self) -> None:
         """
-        Test saving an image to S3.
+        Test saving an image to S3 using `utils.prod.s3_utils.put_object_to_s3`
 
         This test downloads an image from a URL, saves it to S3, and verifies its content.
         """
@@ -95,6 +97,32 @@ class TestS3Functions(unittest.TestCase):
         response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
         self.assertEqual(response['ContentType'], 'image/png')
         self.assertEqual(response['Body'].read(), image_content)
+
+    def test_put_pdf_to_s3(self) -> None:
+        """
+        Test saving a PDF to S3 using `utils.prod.s3_utils.put_object_to_s3`.
+
+        This test creates a simple PDF, saves it to S3, and verifies its content.
+        """
+        object_key = 'test_pdf.pdf'
+
+        # Create a simple PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', size=15)
+        pdf.cell(200, 10, txt='Welcome to the AI Starter Kit.', ln=True, align='C')
+        pdf_content = pdf.output()
+
+        # Save the PDF to S3
+        result = put_object_to_s3(object_key, pdf_content, 'application/pdf', self.bucket_name)
+
+        # Assert the result
+        self.assertTrue(result)
+
+        # Verify the PDF was uploaded
+        response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
+        self.assertEqual(response['ContentType'], 'application/pdf')
+        self.assertEqual(response['Body'].read(), pdf_content)
 
     def test_get_object_from_s3_as_bytes(self) -> None:
         """
