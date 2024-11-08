@@ -22,6 +22,7 @@ sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm
 from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
@@ -258,11 +259,23 @@ def main() -> None:
         set_fc_llm(st.session_state.tools)
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = False
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
     if 'session_temp_db' not in st.session_state:
         if prod_mode:
-            st.session_state.session_temp_db = os.path.join(kit_dir, 'data', 'tmp_' + str(uuid.uuid4()), 'temp_db.db')
+            st.session_state.session_temp_db = os.path.join(
+                kit_dir, 'data', 'tmp_' + st.session_state.st_session_id, 'temp_db.db'
+            )
         else:
             st.session_state.session_temp_db = None
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='function_calling',
+            track=prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
     with st.sidebar:
         st.title('Setup')
@@ -275,6 +288,7 @@ def main() -> None:
             if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)
+                st.session_state.mp_events.api_key_saved()
                 st.rerun()
 
         else:
@@ -320,7 +334,9 @@ def main() -> None:
                     st.toast('Interactions reset. The next response will clear the history on the screen')
 
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
-    handle_userinput(user_question)
+    if user_question is not None:
+        st.session_state.mp_events.input_submitted('chat_input')
+        handle_userinput(user_question)
 
 
 if __name__ == '__main__':
