@@ -1,19 +1,17 @@
-import os
-
-import dotenv
-
-dotenv.load_dotenv()
 import io
 import logging
+import os
 from typing import BinaryIO, Union
 
 import boto3
+import dotenv
 from botocore.exceptions import ClientError
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+dotenv.load_dotenv()
 
 # Get the S3 bucket name
 BUCKET_AWS_NAME = os.getenv('BUCKET_AWS_NAME')
