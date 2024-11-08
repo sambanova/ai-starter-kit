@@ -1,6 +1,6 @@
 import os
 import unittest
-
+import requests
 import boto3
 from botocore.exceptions import ClientError
 
@@ -67,6 +67,35 @@ class TestS3Functions(unittest.TestCase):
         self.assertEqual(response['ContentType'], content_type)
         self.assertEqual(response['Body'].read().decode('utf-8'), file_content)
 
+    def test_put_image_to_s3(self) -> None:
+        """
+        Test saving an image to S3.
+
+        This test downloads an image from a URL, saves it to S3, and verifies its content.
+        """
+        object_key = 'logotype_sambanova_orange.png'
+        image_url = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
+
+        # Download the image
+        response = requests.get(image_url)
+        image_content = response.content
+
+        # Save the image to S3
+        result = put_object_to_s3(
+            object_key,
+            image_content,
+            'image/png',
+            self.bucket_name,
+        )
+
+        # Assert the result
+        self.assertTrue(result)
+
+        # Verify the image was uploaded
+        response = self.s3.get_object(Bucket=self.bucket_name, Key=object_key)
+        self.assertEqual(response['ContentType'], 'image/png')
+        self.assertEqual(response['Body'].read(), image_content)
+
     def test_get_object_from_s3_as_bytes(self) -> None:
         """
         Test `utils.prod.s3_utils.get_object_from_s3`.
@@ -127,8 +156,8 @@ class TestS3Functions(unittest.TestCase):
 
         # Non existent file path
         non_existent_file_path = 'test_s3/non_existent_object.txt'
-        with self.assertRaises(FileNotFoundError):
-            upload_local_file_to_s3(object_key, non_existent_file_path, self.bucket_name)
+        result = upload_local_file_to_s3(object_key, non_existent_file_path, self.bucket_name)
+        self.assertFalse(result)
 
     def test_download_file_from_s3(self) -> None:
         """
@@ -162,8 +191,8 @@ class TestS3Functions(unittest.TestCase):
 
         # Non existent file path
         non_existent_file_path = 'test_s3/non_existent_object.txt'
-        with self.assertRaises(FileNotFoundError):
-            download_file_from_s3(object_key, non_existent_file_path, self.bucket_name)
+        result = download_file_from_s3(object_key, non_existent_file_path, self.bucket_name)
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':
