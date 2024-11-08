@@ -43,7 +43,6 @@ stqdm==0.0.5
 xlrd==2.0.1
 
 # Web and API
-moto==5.0.20
 boto3==1.35.56
 requests>=2.32.2
 aiohttp==3.9.1
