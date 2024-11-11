@@ -1,4 +1,11 @@
-api: "sncloud" #  set either sambastudio or sncloud
+llm:
+    "type": "sncloud" #  set either sambastudio or sncloud
+    "temperature": 0.01
+    "max_tokens_to_generate": 500
+    "top_p": 1
+    "do_sample": false
+    "bundle": True #set as true if using Sambastudio bundle endpoint
+    "select_expert": "Meta-Llama-3.1-70B-Instruct"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -34,9 +41,10 @@ web_crawling:
         - 'whatsapp.com'
         - 'wa.me' 
 
-prod_mode: False
 additional_env_vars:
   - SERPAPI_API_KEY
 
 extra_loaders:
     - "pdf"
+
+prod_mode: False

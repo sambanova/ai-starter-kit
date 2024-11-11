@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
 from threading import Thread
@@ -19,6 +20,15 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import get_logger
 from utils.visual.env_utils import initialize_env_variables
+
+# Main directories
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+sys.path.append(kit_dir)
+sys.path.append(repo_dir)
+
+from utils.events.mixpanel import MixpanelEvents
 
 logger = get_logger()
 
@@ -44,6 +54,19 @@ def initialize_session(
     # Launch time
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
+
+    # Mixpanel events
+    if 'st_session_id' not in session_state:
+        session_state.st_session_id = SESSION_ID
+
+    if 'mp_events' not in session_state:
+        session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=session_state.st_session_id,
+            kit_name='financial_assistant',
+            track=session_state.prod_mode,
+        )
+        session_state.mp_events.demo_launch()
 
     # Delete pandasai cache
     try:

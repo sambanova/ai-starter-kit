@@ -71,13 +71,6 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="edgar_qna/README.md">EDGAR Q&A</a></td>
-<td width="40%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Intelligent Information Retrieval </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>

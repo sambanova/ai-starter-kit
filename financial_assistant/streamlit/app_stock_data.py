@@ -92,6 +92,7 @@ def get_stock_data_analysis() -> None:
             logger.error('No query entered.')
             streamlit.error('No query entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('retrieve_stock_info')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_stock_query(user_request, dataframe_name)
 
@@ -124,6 +125,7 @@ def get_stock_data_analysis() -> None:
             logger.error('No query entered.')
             streamlit.error('No query entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('analyze_historical_stock_data')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 fig, data, symbol_list = handle_stock_data_analysis(user_request, start_date, end_date)
 
