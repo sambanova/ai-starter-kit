@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import uuid
 from io import BytesIO
 from typing import Any, Optional
 
@@ -18,6 +19,7 @@ sys.path.append(repo_dir)
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 from sambanova_scribe.src.scribe import MAX_FILE_SIZE, FileSizeExceededError, Scribe
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import (
     are_credentials_set,
     env_input_fields,
@@ -50,9 +52,10 @@ def setup_sidebar() -> None:
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
             api_key, additional_vars = env_input_fields(ADDITIONAL_ENV_VARS)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(api_key, additional_vars, prod_mode)  # type: ignore
+                message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.sambanova_scribe = Scribe()
                 st.success(message)
+                st.session_state.mp_events.api_key_saved()
                 st.rerun()
         else:
             st.success('Credentials are set')
@@ -78,6 +81,7 @@ def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> 
         BytesIO: The processed audio file.
     """
     if input_method == 'YouTube link':
+        st.session_state.mp_events.input_submitted('youtube_video_input')
         st.write('Downloading audio from YouTube link ....')
         audio_file_path = st.session_state.sambanova_scribe.download_youtube_audio(youtube_link)
         if not audio_file_path:
@@ -89,6 +93,7 @@ def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> 
         audio_file.name = os.path.basename(audio_file_path)
         st.session_state.sambanova_scribe.delete_downloaded_file(audio_file_path)
     elif input_method == 'Upload audio file':
+        st.session_state.mp_events.input_submitted('audio_file_input')
         assert hasattr(audio_file, 'size')
         if audio_file.size > MAX_FILE_SIZE:
             raise FileSizeExceededError(f'File size exceeds {MAX_FILE_SIZE/1024/1024:.2f} MB limit')
@@ -108,6 +113,16 @@ def main() -> None:
         st.session_state.sambanova_scribe = None
     if 'transcription_text' not in st.session_state:
         st.session_state.transcription_text = None
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='sambanova_scribe',
+            track=prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
     st.title(':orange[SambaNova] Scribe')
     setup_sidebar()
@@ -143,6 +158,7 @@ def main() -> None:
                 st.markdown(r'$\Large{\textsf{Transcription}}$')
                 st.text_area('', st.session_state.transcription_text, height=150)
                 if st.button('Summarize'):
+                    st.session_state.mp_events.input_submitted('summarize_transcription')
                     summary = st.session_state.sambanova_scribe.summarize(st.session_state.transcription_text)
                     st.toast('Summarization complete!')
                     st.markdown(r'$\Large{\textsf{Bullet Point Summary:}}$')

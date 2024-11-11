@@ -80,13 +80,12 @@ class SearchAssistant:
         config_info = self._get_config_info(CONFIG_PATH)
         self.sambanova_api_key = sambanova_api_key
         self.serpapi_api_key = serpapi_api_key
-        self.api_info = config_info[0]
-        self.embedding_model_info = config_info[1]
-        self.llm_info = config_info[2]
-        self.retrieval_info = config_info[3]
-        self.web_crawling_params = config_info[4]
-        self.extra_loaders: List[str] = config_info[5]
-        self.prod_mode = config_info[6]
+        self.embedding_model_info = config_info[0]
+        self.llm_info = config_info[1]
+        self.retrieval_info = config_info[2]
+        self.web_crawling_params = config_info[3]
+        self.extra_loaders: List[str] = config_info[4]
+        self.prod_mode = config_info[5]
         self.documents: Sequence[Document]
         self.urls: List[Any] = []
         self.llm = self.init_llm_model()
@@ -96,7 +95,7 @@ class SearchAssistant:
 
     def _get_config_info(
         self, config_path: str
-    ) -> Tuple[str, Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], List[str], bool]:
+    ) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], List[str], bool]:
         """
         Loads json config file
 
@@ -104,7 +103,6 @@ class SearchAssistant:
         config_path (str): Path to the YAML configuration file.
 
         Returns:
-        api_info (string): string containing API to use SambaStudio or SambaNovaCloud.
         embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
@@ -115,7 +113,6 @@ class SearchAssistant:
         """
         with open(config_path, 'r') as yaml_file:
             config = yaml.safe_load(yaml_file)
-        api_info = config['api']
         embedding_model_info = config['embedding_model']
         llm_info = config['llm']
         retrieval_info = config['retrieval']
@@ -123,7 +120,7 @@ class SearchAssistant:
         extra_loaders = config['extra_loaders']
         prod_mode = config['prod_mode']
 
-        return api_info, embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders, prod_mode
+        return embedding_model_info, llm_info, retrieval_info, web_crawling_params, extra_loaders, prod_mode
 
     def init_memory(self) -> None:
         """
@@ -149,7 +146,7 @@ class SearchAssistant:
         """
 
         llm = APIGateway.load_llm(
-            type=self.api_info,
+            type=self.llm_info['type'],
             streaming=True,
             coe=self.llm_info['coe'],
             do_sample=self.llm_info['do_sample'],
