@@ -51,6 +51,7 @@ from utils.model_wrappers.tests.schemas import (
     SambaStudioOpenAIResponse,
     SambaStudioOpenAIResponseMetadata,
     SNCloudResponse,
+    SNCloudChatCompletionChunk
 )
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
@@ -354,6 +355,24 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(ss_response_dict['content']), 1, 'Content should be a non-empty string')
         self.assertIn('response_metadata', ss_response_dict, "Response should have a 'response_metadata' key")
         self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
+
+    def test_chat_model_response_streaming(self) -> None:
+        query = 'Where is alpha centauri located?'
+        format_query = [{'role': 'user', 'content': query}]
+
+        for i in self.sn_chat_model._handle_streaming_request(format_query):
+            try:
+                SNCloudChatCompletionChunk(**i)
+            except ValidationError as e:
+                self.fail(f'Schema validation failed: {e}')
+
+        for chunk in self.sn_chat_model.stream(query):
+            self.assertIn('content', chunk.model_dump(), "Response should have a 'content' attribute")
+            self.assertTrue(isinstance(chunk.content, str), 'Content should be a string')
+        
+        for chunk in self.ss_chat_model.stream(query):
+            self.assertIn('content', chunk.model_dump(), "Response should have a 'content' attribute")
+            self.assertTrue(isinstance(chunk.content, str), 'Content should be a string')
 
     @classmethod
     def tearDownClass(cls: Type['ModelWrapperTestCase']) -> None:

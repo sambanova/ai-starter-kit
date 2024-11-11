@@ -20,7 +20,7 @@ sambastudio_llm:
 
 sn_chat_model:
     model: "Meta-Llama-3.1-70B-Instruct"
-    streaming: False
+    streaming: True
     max_tokens: 1024
     temperature: 0.7
     top_k: 1

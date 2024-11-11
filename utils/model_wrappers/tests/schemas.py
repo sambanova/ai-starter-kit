@@ -1,7 +1,42 @@
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
+
+
+class Delta(BaseModel):
+    content: Optional[str]
+    role: Optional[str] = None
+
+class SNCloudChoice(BaseModel):
+    delta: Delta
+    finish_reason: Optional[str]
+    index: int
+    logprobs: Optional[Dict[str, Any]]
+
+class SNCloudUsage(BaseModel):
+    acceptance_rate: float
+    completion_tokens: int
+    completion_tokens_after_first_per_sec: float
+    completion_tokens_after_first_per_sec_first_ten: float
+    completion_tokens_per_sec: float
+    end_time: float
+    is_last_response: bool
+    prompt_tokens: int
+    start_time: float
+    time_to_first_token: float
+    total_latency: float
+    total_tokens: int
+    total_tokens_per_sec: float
+
+class SNCloudChatCompletionChunk(BaseModel):
+    choices: List[SNCloudChoice]
+    created: int
+    id: str
+    model: str
+    object: str
+    system_fingerprint: str
+    usage: Optional[SNCloudUsage] = None
 
 
 class SambaStudioOpenAIResponseMetadata(BaseModel):
@@ -24,11 +59,11 @@ class SambaStudioGenericV2Item(BaseModel):
 
 
 class SambaStudioGenericV2Response(BaseModel):
-    items: list[SambaStudioGenericV2Item]
+    items: List[SambaStudioGenericV2Item]
 
 
 class SambaStudioGenericV1Response(BaseModel):
-    predictions: list[Dict[str, Any]]
+    predictions: List[Dict[str, Any]]
 
 
 class Message(BaseModel):
@@ -60,7 +95,7 @@ class Usage(BaseModel):
 
 
 class SNCloudResponse(BaseModel):
-    choices: list[Choice]
+    choices: List[Choice]
     created: int
     id: str
     model: str
