@@ -243,14 +243,12 @@ class VectorDb:
                 documents=chunks,
                 embedding=embeddings,
                 collection_name=collection_name,
-                connection_args={
-                    'uri': uri
-                },
+                connection_args={'uri': uri},
                 index_params={
-                    "metric_type": "L2",
-                    "index_type": "AUTOINDEX",
-                    "params": {},
-                }
+                    'metric_type': 'L2',
+                    'index_type': 'AUTOINDEX',
+                    'params': {},
+                },
             )
 
         logger.info(f'Vector store saved to {output_db}')
@@ -282,7 +280,7 @@ class VectorDb:
         elif db_type == 'milvus':
             if collection_name is None:
                 collection_name = 'LangChainCollection'
-            if persist_directory.endswith(".db"):
+            if persist_directory.endswith('.db'):
                 persist_directory = os.path.dirname(persist_directory)
             uri = os.path.join(persist_directory, 'milvus.db')
             vector_store = Milvus(
@@ -292,10 +290,10 @@ class VectorDb:
                     'uri': uri,
                 },
                 index_params={
-                    "metric_type": "L2",
-                    "index_type": "AUTOINDEX",
-                    "params": {},
-                }
+                    'metric_type': 'L2',
+                    'index_type': 'AUTOINDEX',
+                    'params': {},
+                },
             )
         else:
             raise ValueError(f'Unsupported database type: {db_type}')
