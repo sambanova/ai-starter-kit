@@ -15,15 +15,15 @@ python src/evaluator.py \
 # Notes:
 # 1. Replace <CUSTOM DATASET PATH HERE> with the path to your custom dataset.
 #
-# 2. For Bundle Models, make sure to include the prefix "COE/" before the expert name.
+# 2. For Bundle Models, make sure to include the prefix "BUNDLE/" before the expert name.
 #   For example:
-#      --model-name "COE/llama-2-7b-chat-hf"
+#      --model-name "BUNDLE/llama-2-7b-chat-hf"
 #          OR
-#      --model-name "COE/llama-2-13b-chat-hf"
+#      --model-name "BUNDLE/llama-2-13b-chat-hf"
 #          OR
-#      --model-name "COE/Mistral-7B-Instruct-v0.2"
+#      --model-name "BUNDLE/Mistral-7B-Instruct-v0.2"
 #          OR
-#      --model-name "COE/Meta-Llama-3-8B-Instruct"
+#      --model-name "BUNDLE/Meta-Llama-3-8B-Instruct"
 #
 # 3. For Non-Bundle models, use the model name directly and remember to update and source the `.env` file for a new endpoint.
 #   For example:
