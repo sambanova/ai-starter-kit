@@ -190,6 +190,7 @@ def main() -> None:
                 st.switch_page('app.py')
 
     if job_submitted:
+        st.session_state.mp_events.input_submitted('custom_performance_evaluation ')
         st.toast(
             """Performance evaluation in progress. This could take a while depending on the dataset size and max tokens
               setting."""

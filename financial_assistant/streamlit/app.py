@@ -61,6 +61,7 @@ with streamlit.sidebar:
         if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
             message = save_credentials(api_key=api_key, prod_mode=prod_mode)
             streamlit.success(message)
+            streamlit.session_state.mp_events.api_key_saved()
             streamlit.rerun()
         else:
             streamlit.stop()
