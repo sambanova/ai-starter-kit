@@ -50,8 +50,8 @@ from utils.model_wrappers.tests.schemas import (
     SambaStudioGenericV2Response,
     SambaStudioOpenAIResponse,
     SambaStudioOpenAIResponseMetadata,
+    SNCloudChatCompletionChunk,
     SNCloudResponse,
-    SNCloudChatCompletionChunk
 )
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
@@ -360,16 +360,18 @@ class ModelWrapperTestCase(unittest.TestCase):
         query = 'Where is alpha centauri located?'
         format_query = [{'role': 'user', 'content': query}]
 
-        for i in self.sn_chat_model._handle_streaming_request(format_query):
+        raw_response = self.sn_chat_model._handle_request(format_query)
+
+        for chunk in self.sn_chat_model._process_stream_response(raw_response):
             try:
-                SNCloudChatCompletionChunk(**i)
+                SNCloudChatCompletionChunk(**chunk)
             except ValidationError as e:
                 self.fail(f'Schema validation failed: {e}')
 
         for chunk in self.sn_chat_model.stream(query):
             self.assertIn('content', chunk.model_dump(), "Response should have a 'content' attribute")
             self.assertTrue(isinstance(chunk.content, str), 'Content should be a string')
-        
+
         for chunk in self.ss_chat_model.stream(query):
             self.assertIn('content', chunk.model_dump(), "Response should have a 'content' attribute")
             self.assertTrue(isinstance(chunk.content, str), 'Content should be a string')

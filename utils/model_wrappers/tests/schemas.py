@@ -8,11 +8,13 @@ class Delta(BaseModel):
     content: Optional[str]
     role: Optional[str] = None
 
+
 class SNCloudChoice(BaseModel):
     delta: Delta
     finish_reason: Optional[str]
     index: int
     logprobs: Optional[Dict[str, Any]]
+
 
 class SNCloudUsage(BaseModel):
     acceptance_rate: float
@@ -28,6 +30,7 @@ class SNCloudUsage(BaseModel):
     total_latency: float
     total_tokens: int
     total_tokens_per_sec: float
+
 
 class SNCloudChatCompletionChunk(BaseModel):
     choices: List[SNCloudChoice]
