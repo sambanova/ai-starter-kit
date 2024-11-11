@@ -20,6 +20,7 @@ import schedule
 import streamlit as st
 
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 logging.basicConfig(level=logging.INFO)
@@ -158,15 +159,26 @@ def main() -> None:
         st.session_state.show_sources = True
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = True
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
     if 'session_temp_subfolder' not in st.session_state:
         if prod_mode:
-            st.session_state.session_temp_subfolder = 'upload_' + str(uuid.uuid4())
+            st.session_state.session_temp_subfolder = 'upload_' + st.session_state.st_session_id
         else:
             st.session_state.session_temp_subfolder = None
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='multimodal_knowledge_retriever',
+            track=prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
     st.title(':orange[SambaNova] Multimodal Assistant')
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:
+        st.session_state.mp_events.input_submitted('chat_input')
         handle_user_input(user_question)
 
     with st.sidebar:
@@ -178,6 +190,7 @@ def main() -> None:
             api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, aditional_variables, prod_mode)
+                st.session_state.mp_events.api_key_saved()
                 st.rerun()
                 st.success(message)
 
@@ -221,6 +234,7 @@ def main() -> None:
             st.caption('**Note:** Depending on the size and number of your documents, this could take several minutes')
             if st.button('Process'):
                 if docs:
+                    st.session_state.mp_events.input_submitted('document_ingest')
                     with st.spinner('Processing this could take a while...'):
                         if prod_mode:
                             schedule_temp_dir_deletion(

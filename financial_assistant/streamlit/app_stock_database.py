@@ -34,6 +34,7 @@ def get_stock_database() -> None:
             logger.error('No company entered.')
             streamlit.error('No company entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('create_stock_database')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_string = handle_database_creation(requested_companies, start_date, end_date)
 
@@ -60,6 +61,7 @@ def get_stock_database() -> None:
             logger.error('No query entered.')
             streamlit.error('No query entered.')
         else:
+            streamlit.session_state.mp_events.input_submitted('query_stock_database')
             with streamlit.expander('**Execution scratchpad**', expanded=True):
                 response_dict = handle_database_query(user_request, query_method)
 

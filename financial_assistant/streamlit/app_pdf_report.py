@@ -125,6 +125,7 @@ def include_pdf_report() -> None:
 
     # Generate the report
     if streamlit.button('Generate Report'):
+        streamlit.session_state.mp_events.input_submitted('generate_report')
         with streamlit.expander('**Execution scratchpad**', expanded=True):
             with streamlit.spinner('Processing...'):
                 report_name = title_name.lower().replace(' ', '_') + '.pdf'
@@ -254,6 +255,8 @@ def include_pdf_report() -> None:
                         logger.error('No file selected.')
                         streamlit.error('No file selected.')
 
+                    streamlit.session_state.mp_events.input_submitted('rag_generated_report')
+
                     # Retrieve the list of selected files
                     selected_files = streamlit.session_state.selected_files
 
@@ -280,6 +283,7 @@ def include_pdf_report() -> None:
                         logger.error('No file uploaded.')
                         streamlit.error('No file uploaded.')
 
+                    streamlit.session_state.mp_events.input_submitted('rag_uploaded_report')
                     # Retrieve the list of uploaded files
                     uploaded_file_names = streamlit.session_state.uploaded_files
 
