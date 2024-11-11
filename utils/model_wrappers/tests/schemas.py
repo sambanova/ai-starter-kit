@@ -1,7 +1,34 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 from pydantic import BaseModel
+
+
+class SambaStudioOpenAIResponseMetadata(BaseModel):
+    finish_reason: str
+    usage: Optional[Dict[str, Any]]
+    model_name: str
+    system_fingerprint: str
+    created: str
+
+
+class SambaStudioOpenAIResponse(BaseModel):
+    content: str
+    id: str
+    response_metadata: SambaStudioOpenAIResponseMetadata
+
+
+class SambaStudioGenericV2Item(BaseModel):
+    id: str
+    value: Dict[str, Any]
+
+
+class SambaStudioGenericV2Response(BaseModel):
+    items: list[SambaStudioGenericV2Item]
+
+
+class SambaStudioGenericV1Response(BaseModel):
+    predictions: list[Dict[str, Any]]
 
 
 class Message(BaseModel):

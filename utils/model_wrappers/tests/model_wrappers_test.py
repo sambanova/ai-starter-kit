@@ -37,12 +37,21 @@ from dotenv import load_dotenv
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import LLM
+from langchain_core.messages import HumanMessage
 from pydantic import ValidationError
 
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
-from utils.model_wrappers.tests.schemas import EmbeddingsBaseModel, LLMBaseModel, SNCloudResponse
+from utils.model_wrappers.tests.schemas import (
+    EmbeddingsBaseModel,
+    LLMBaseModel,
+    SambaStudioGenericV1Response,
+    SambaStudioGenericV2Response,
+    SambaStudioOpenAIResponse,
+    SambaStudioOpenAIResponseMetadata,
+    SNCloudResponse,
+)
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
@@ -256,7 +265,6 @@ class ModelWrapperTestCase(unittest.TestCase):
                 ChatSambaStudio(**i)
             self.assertIn('Input should be a valid dictionary', str(context.exception))
 
-
     def test_embeddings_model_response(self) -> None:
         query = 'What is computer science?'
         queries = ['tell me a 50 word tale', 'tell me a joke']
@@ -282,10 +290,50 @@ class ModelWrapperTestCase(unittest.TestCase):
     def test_chat_model_response(self) -> None:
         query = 'Where is alpha centauri located?'
         format_query = [{'role': 'user', 'content': query}]
+        messages = [
+            HumanMessage(content=query),
+        ]
 
         sn_cloud_response = self.sn_chat_model.invoke(query)
         ss_response = self.ss_chat_model.invoke(query)
         sn_cloud_raw_response = self.sn_chat_model._handle_request(format_query)
+        ss_raw_response = self.ss_chat_model._handle_request(messages)
+        ss_raw_response_dict = ss_raw_response.json()
+
+        if 'openai' in self.ss_chat_model.sambastudio_url:
+            try:
+                content = ss_raw_response_dict['choices'][0]['message']['content']
+                id = ss_raw_response_dict['id']
+                response_metadata = SambaStudioOpenAIResponseMetadata(
+                    finish_reason=ss_raw_response_dict['choices'][0]['finish_reason'],
+                    usage=ss_raw_response_dict.get('usage'),
+                    model_name=ss_raw_response_dict['model'],
+                    system_fingerprint=ss_raw_response_dict['system_fingerprint'],
+                    created=ss_raw_response_dict['created'],
+                )
+                SambaStudioOpenAIResponse(content=content, id=id, response_metadata=response_metadata)
+            except ValidationError as e:
+                self.fail(f'Invalid SambaStudioOpenAI response: {e}')
+
+        elif 'api/v2/predict/generic' in self.ss_chat_model.sambastudio_url:
+            try:
+                validated_response = SambaStudioGenericV2Response(items=ss_raw_response_dict['items'])
+                content = validated_response.items[0].value['completion']
+                id = validated_response.items[0].id
+                response_metadata = validated_response.items[0].dict()
+                return {'content': content, 'id': id, 'response_metadata': response_metadata}
+            except ValidationError as e:
+                self.fail(f'Invalid SambaStudio Generic V2 response: {e}')
+
+        elif 'api/predict/generic' in self.ss_chat_model.sambastudio_url:
+            try:
+                validated_response = SambaStudioGenericV1Response(predictions=ss_raw_response_dict['predictions'])
+                content = validated_response.predictions[0]['completion']
+                id = None
+                response_metadata = ss_raw_response_dict
+                return {'content': content, 'id': id, 'response_metadata': response_metadata}
+            except Exception as e:
+                self.fail(f'Invalid SambaStudio Generic V1 response: {e}')
 
         try:
             SNCloudResponse(**sn_cloud_raw_response)
@@ -298,14 +346,15 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertIn('content', sn_cloud_response_dict, "Response should have a 'content' key")
         self.assertGreaterEqual(len(sn_cloud_response_dict['content']), 1, 'Content should be a non-empty string')
         self.assertIn('response_metadata', sn_cloud_response_dict, "Response should have a 'response_metadata' key")
-        self.assertIn('usage', sn_cloud_response_dict['response_metadata'],
-         "Response metadata should have a 'usage' key")
+        self.assertIn(
+            'usage', sn_cloud_response_dict['response_metadata'], "Response metadata should have a 'usage' key"
+        )
 
         self.assertIn('content', ss_response_dict, "Response should have a 'content' key")
         self.assertGreaterEqual(len(ss_response_dict['content']), 1, 'Content should be a non-empty string')
         self.assertIn('response_metadata', ss_response_dict, "Response should have a 'response_metadata' key")
         self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
-        
+
     @classmethod
     def tearDownClass(cls: Type['ModelWrapperTestCase']) -> None:
         time_end = time.time()
