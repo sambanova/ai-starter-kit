@@ -7,9 +7,9 @@
 
 SambaNova AI Starter Kits
 ====================
-## Using Composition of Experts (CoE) LLM Router Kit
+## Using Composition of Experts (bundle) LLM Router Kit
 
-This repository provides a Python script, a Jupyter Notebook, and a Streamlit app that demonstrate how to route user queries to a specific SambaNova CoE model using an LLM as a router. The implementation offers different approaches for doing this, including expert mode, simple mode, end-to-end mode with vector database, and bulk evaluation mode.
+This repository provides a Python script, a Jupyter Notebook, and a Streamlit app that demonstrate how to route user queries to a specific SambaNova bundle model using an LLM as a router. The implementation offers different approaches for doing this, including expert mode, simple mode, end-to-end mode with vector database, and bulk evaluation mode.
 
 <!-- TOC -->
 - [Features](#features)
@@ -47,7 +47,7 @@ This AI starter kit supports the following features:
 The next step is to set up your environment variables to use one of the inference models available from SambaNova. For this kit you can deploy your models using SambaStudio.
 
 - **SambaStudio (Option 1)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
+    Then, in the [config file](./config.yaml), set the llm `api` variable to `"sambastudio"`, and set the `bundle` and `select_expert` configs if you are using a bundle endpoint.
 
 ## Key dependencies
 
@@ -63,11 +63,11 @@ _(Installed below)_
 ## Installation
 _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
-1. Clone the main repository and cd into CoE starter kit:
+1. Clone the main repository and cd into bundle starter kit:
 
   ```bash
   git clone https://github.com/sambanova/ai-starter-kit.git
-  cd CoE_jump_start
+  cd bundle_jump_start
   ```
 
 2. (Recommended) Create a virtual environment and activate it:
@@ -85,7 +85,7 @@ _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you wi
 
 
 ## Configuration
-The config.yaml file is crucial for customizing the behavior of the CoE LLM Router. Here's a breakdown of its main sections:
+The config.yaml file is crucial for customizing the behavior of the bundle LLM Router. Here's a breakdown of its main sections:
 
 1. API and LLM Settings:
 
@@ -96,8 +96,8 @@ The config.yaml file is crucial for customizing the behavior of the CoE LLM Rout
       "temperature": 0.0
       "do_sample": False
       "max_tokens_to_generate": 1200
-      "bundle": True #set as true if using Sambastudio CoE endpoint
-      "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
+      "bundle": True #set as true if using Sambastudio bundle endpoint
+      "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio bundle llm expert
   ```
   These settings define the API to use and the parameters for the language model.
 
@@ -147,7 +147,7 @@ The expert_prompt section is a crucial part of the configuration. It defines how
 
 To add new categories, you would add them to the list of categories, provide examples, and update the classification instructions as needed.
 
-5. CoE Name Map:
+5. bundle Name Map:
 
   ```yaml
   bundle_name_map:
@@ -156,16 +156,16 @@ To add new categories, you would add them to the list of categories, provide exa
     Code expert: "deepseek-llm-67b-chat"
   ```
 
-This crucial section maps the expert categories to specific CoE models. When adding new categories or changing the routing logic, make sure to update this section to map your categories to the appropriate CoE models available in your SambaStudio environment.
+This crucial section maps the expert categories to specific bundle models. When adding new categories or changing the routing logic, make sure to update this section to map your categories to the appropriate bundle models available in your SambaStudio environment.
 
 Remember to update the .env file in the root directory of the ai-starter-kit with your API keys and endpoints:
 
   ```bash
 
-# NEEDED FOR SAMBASTUDIO COE MODEL
+# NEEDED FOR SAMBASTUDIO BUNDLE MODEL
 SAMBASTUDIO_BASE_URL="https://your-sambastudio.url"
 SAMBASTUDIO_PROJECT_ID="your-bundle-model-project-id"
-SAMBASTUDIO_ENDPOINT_ID="your-cbundleoe-model-endpoint-id"
+SAMBASTUDIO_ENDPOINT_ID="your-bundle-model-endpoint-id"
 SAMBASTUDIO_API_KEY="your-bundle-model-api-key"
 VECTOR_DB_URL=http://localhost:6333
 
@@ -186,25 +186,25 @@ Update the config.yaml file with your desired configuration, then run the use_bu
 Update the config.yaml file with your desired configuration, then run the use_bundle_model.py script with the desired mode:
   
   ```bash
-  python src/use_CoE_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
+  python src/use_bundle_model.py <mode> [--query <query>] [--dataset <dataset_path>] [--num_examples <num>]
   ```
 
   1. Expert Mode: Get only the expert category for a given query
 
   ```bash
-  python src/use_CoE_model.py expert --query "What is the capital of France?"
+  python src/use_bundle_model.py expert --query "What is the capital of France?"
   ```
 
   2. Simple Mode: Run a simple LLM invoke with routing
 
   ```bash
-  python src/use_CoE_model.py simple --query "Explain the concept of supply and demand."
+  python src/use_bundle_model.py simple --query "Explain the concept of supply and demand."
   ```
 
   3. Bulk Mode: Run bulk routing evaluation on a dataset (For an example JSONL File to test this on see the notebook)
 
   ```bash
-  python src/use_CoE_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
+  python src/use_bundle_model.py bulk --dataset path/to/your/dataset.jsonl --num_examples 100
   ```
 
   The dataset file should be in JSONL (JSON Lines) format, where each line is a valid JSON object containing a 'prompt' and a 'router_label'. Here's an example of how your dataset.jsonl file should be formatted:
@@ -254,7 +254,7 @@ Run the notebook cells to execute the code and observe the results.
 - Bulk Evaluation: Evaluate the router on a large dataset (visualisations displayed and results stored in results folder)
 
 
-4. Follow the instructions on each page to interact with the CoE LLM Router.
+4. Follow the instructions on each page to interact with the bundle LLM Router.
 
 ## Modes of Operation
 
@@ -264,7 +264,7 @@ Run the notebook cells to execute the code and observe the results.
 4. Bulk Evaluation Mode: This mode is used for evaluating the router's performance on a large dataset of queries. It provides accuracy metrics and a confusion matrix for analysis.
 
 ## Supported Models
-The script, notebook, and Streamlit app support various models for CoE as per SambaStudio support, including:
+The script, notebook, and Streamlit app support various models for bundle as per SambaStudio support, including:
 
 Mistral-7B-Instruct-v0.2
 LLama3-70B-Instruct
@@ -273,7 +273,7 @@ deepseek-llm-67b-chat
 medicine-chat
 law-chat
 
-For a full list of supported CoE models, see the Supported Models documentation and your SambaStudio instances ModelHub.
+For a full list of supported bundle models, see the Supported Models documentation and your SambaStudio instances ModelHub.
 
 ## Contributing
 Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
