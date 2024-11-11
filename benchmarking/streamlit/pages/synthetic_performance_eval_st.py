@@ -179,6 +179,7 @@ def main() -> None:
                 st.switch_page('app.py')
 
     if sidebar_option:
+        st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
         st.toast('Performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             try:

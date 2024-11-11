@@ -185,6 +185,7 @@ def main() -> None:
 
         # If user's asking something
         if user_prompt:
+            st.session_state.mp_events.input_submitted('chat_input')
             with st.spinner('Processing'):
                 # Display llm response
                 llm_response = _parse_llm_response(st.session_state.selected_llm, user_prompt)

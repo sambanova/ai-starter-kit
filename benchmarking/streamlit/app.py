@@ -1,4 +1,6 @@
+import os
 import sys
+import uuid
 
 import yaml
 
@@ -14,6 +16,7 @@ from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 warnings.filterwarnings('ignore')
@@ -36,6 +39,16 @@ def _initialize_session_variables() -> None:
         st.session_state.prod_mode = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='benchmarking',
+            track=st.session_state.prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
 
 def main() -> None:
@@ -86,6 +99,7 @@ def main() -> None:
                         message = save_credentials(api_key, additional_vars, prod_mode)
                     st.success(message)
                     st.session_state.setup_complete = True
+                    st.session_state.mp_events.api_key_saved()
                     st.rerun()
             else:
                 st.success('Credentials are set')

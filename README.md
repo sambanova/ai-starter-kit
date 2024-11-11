@@ -71,13 +71,6 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="edgar_qna/README.md">EDGAR Q&A</a></td>
-<td width="40%">Example workflow that uses the SambaNova platform to answer questions about organizations using their 10-K annual reports. Includes a runnable local demo and a Docker container to simplify remote deployment.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Intelligent Information Retrieval </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
@@ -355,6 +348,49 @@ embedding = SambaStudioEmbeddings(batch_size=32)
 2. Use your embedding model in your langchain pipeline
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
+
+### Javascript Example
+
+1. Before running the code, ensure that you have Node.js installed on your system. You can download the latest version from the official Node.js [website](https://nodejs.org/en).
+
+2. Set Up the Environment. To set up the environment, run the following commands in your terminal:
+
+``` bash
+npm init -y
+```
+
+``` bash
+npm install @langchain/openai @langchain/core
+```
+
+> These commands will create a new package.json file and install the required dependencies.
+
+3. Create a new file named `app.js` and add the following code:
+
+```javascript
+import { ChatOpenAI } from "@langchain/openai";
+
+const SambaNovaCloudBaseURL = "https://api.sambanova.ai/v1";
+const apiKey = "your-api-key";
+
+const SambaNovaCloudChatModel = new ChatOpenAI({
+  temperature: 0.9,
+  model: "Meta-Llama-3.1-70B-Instruct",
+  configuration: {
+    baseURL: SambaNovaCloudBaseURL,
+    apiKey: apiKey,
+  },
+});
+
+const response = await SambaNovaCloudChatModel.invoke("Hi there, tell me a joke!");
+console.log(response.content);
+```
+
+4. To run the app, execute the following command in your terminal:
+
+``` bash
+node app.js
+```
 
 ---
 
