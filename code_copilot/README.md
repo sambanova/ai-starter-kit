@@ -174,7 +174,7 @@ In the [~/.continue/config.ts](~/.continue/config.ts) script you can add new Sam
 
 ## Modify the parameters and the model to use
 
-You can change the default SambaNova Cloud model or the default model used with SambaStudio CoE models modifying the model and expert selection in [config.ts](config.ts) file:
+You can change the default SambaNova Cloud model or the default model used with SambaStudio Bundle models modifying the model and expert selection in [config.ts](config.ts) file:
 
 - If using SambaNova Cloud:
     ```ts
