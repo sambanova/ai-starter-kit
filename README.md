@@ -349,6 +349,49 @@ embedding = SambaStudioEmbeddings(batch_size=32)
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
+### Javascript Example
+
+1. Before running the code, ensure that you have Node.js installed on your system. You can download the latest version from the official Node.js [website](https://nodejs.org/en).
+
+2. Set Up the Environment. To set up the environment, run the following commands in your terminal:
+
+``` bash
+npm init -y
+```
+
+``` bash
+npm install @langchain/openai @langchain/core
+```
+
+> These commands will create a new package.json file and install the required dependencies.
+
+3. Create a new file named `app.js` and add the following code:
+
+```javascript
+import { ChatOpenAI } from "@langchain/openai";
+
+const SambaNovaCloudBaseURL = "https://api.sambanova.ai/v1";
+const apiKey = "your-api-key";
+
+const SambaNovaCloudChatModel = new ChatOpenAI({
+  temperature: 0.9,
+  model: "Meta-Llama-3.1-70B-Instruct",
+  configuration: {
+    baseURL: SambaNovaCloudBaseURL,
+    apiKey: apiKey,
+  },
+});
+
+const response = await SambaNovaCloudChatModel.invoke("Hi there, tell me a joke!");
+console.log(response.content);
+```
+
+4. To run the app, execute the following command in your terminal:
+
+``` bash
+node app.js
+```
+
 ---
 
 </details>
