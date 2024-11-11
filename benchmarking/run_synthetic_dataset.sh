@@ -13,15 +13,15 @@ python src/evaluator.py \
 --llm-api sncloud
 
 # Notes:
-# 1. For Bundle Models, make sure to include the prefix "COE/" before each expert name.
+# 1. For Bundle Models, make sure to include the prefix "BUNDLE/" before each expert name.
 #   For example:
-#      --model-names "COE/llama-2-7b-chat-hf"
+#      --model-names "BUNDLE/llama-2-7b-chat-hf"
 #          OR
-#      --model-names "COE/llama-2-7b-chat-hf COE/llama-2-13b-chat-hf"
+#      --model-names "BUNDLE/llama-2-7b-chat-hf BUNDLE/llama-2-13b-chat-hf"
 #          OR
-#      --model-names "COE/llama-2-7b-chat-hf COE/Mistral-7B-Instruct-v0.2"
+#      --model-names "BUNDLE/llama-2-7b-chat-hf BUNDLE/Mistral-7B-Instruct-v0.2"
 #          OR
-#      --model-names "COE/Meta-Llama-3-8B-Instruct"
+#      --model-names "BUNDLE/Meta-Llama-3-8B-Instruct"
 #
 # 2. For Non-Bundle models, use the model name directly and remember to update and source the `.env` file for a new endpoint.
 #   For example:
