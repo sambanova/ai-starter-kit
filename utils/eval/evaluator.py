@@ -17,14 +17,6 @@ from weave import Dataset
 
 from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.llm import CorrectnessLLMJudge, WeaveChatModel
-from utils.visual.env_utils import get_wandb_key
-
-wandb_api_key = get_wandb_key()
-
-if wandb_api_key:
-    import weave
-else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')

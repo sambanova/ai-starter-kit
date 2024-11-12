@@ -3,13 +3,7 @@ import sys
 
 from langchain_core.output_parsers import JsonOutputParser
 
-from utils.visual.env_utils import get_wandb_key
-
-wandb_api_key = get_wandb_key()
-if wandb_api_key:
-    import weave
-else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
+import weave
 from typing import Any, Dict, Optional
 
 from weave import Model
@@ -22,6 +16,7 @@ sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
 from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
+from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
 from utils.model_wrappers.api_gateway import APIGateway
 
 
@@ -143,7 +138,7 @@ class WeaveChatModel(Model):
     model_kwargs: Optional[Dict[str, Any]] = None
 
     @weave.op()
-    async def predict(self, query: str, system_message: str) -> Dict[str, Any]:
+    async def predict(self, query: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate a response for a given query and system message.
 
@@ -171,6 +166,9 @@ class WeaveChatModel(Model):
             top_p=self.top_p,
             stream_options={'include_usage': True},
         )
+
+        if system_message is None:
+            system_message = SYSTEM_PROMPT
 
         try:
             messages = [
