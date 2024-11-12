@@ -123,8 +123,7 @@ Package owners must:
 
 
 ## Questions or Issues?
-
-- Message us on SambaNova Community
+- <a href="https://community.sambanova.ai/latest" target="_blank">,Message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" 
 - Create an issue on GitHub
 - We're happy to help!
 
