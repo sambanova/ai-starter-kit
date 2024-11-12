@@ -57,7 +57,7 @@ make format       # Format code with Ruff
 make lint         # Lint and type check with Ruff & MyPy
 make format-lint  # Run all checks
 
-# Direct commands (Optional)
+# Direct commands (Optional if you've ran the make commands above)
 ruff format your_module
 ruff check --fix your_module
 ruff check --fix --select I your_module
@@ -69,6 +69,7 @@ mypy --explicit-package-bases your_module
 - All contributions must pass the unit test suite
 - Tests are automatically run when opening a PR
 - Package owners must maintain up-to-date tests with good coverage
+- New AISK Modules ie Kits (at high effort level with UI, etc.) should have unit test coverage that has been reviewed in a tests folder within the module. See the enterprise_knowledge_retreiver kit for an example.
 
 ## Pull Request Guidelines
 
