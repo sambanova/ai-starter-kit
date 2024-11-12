@@ -6,7 +6,6 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-import streamlit as st
 import weave
 import yaml
 from dotenv import load_dotenv
@@ -57,7 +56,7 @@ class SearchAssistant:
     Class used to do generation over search query results and scraped sites
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, sambanova_api_key: str, serpapi_api_key: str, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Initializes the search assistant with the given configuration parameters.
 
@@ -79,6 +78,8 @@ class SearchAssistant:
         else:
             self.config = config
         config_info = self._get_config_info(CONFIG_PATH)
+        self.sambanova_api_key = sambanova_api_key
+        self.serpapi_api_key = serpapi_api_key
         self.embedding_model_info = config_info[0]
         self.llm_info = config_info[1]
         self.retrieval_info = config_info[2]
@@ -143,13 +144,6 @@ class SearchAssistant:
         Returns:
         llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         llm = APIGateway.load_llm(
             type=self.llm_info['type'],
@@ -160,7 +154,7 @@ class SearchAssistant:
             temperature=self.llm_info['temperature'],
             select_expert=self.llm_info['select_expert'],
             process_prompt=False,
-            sambanova_api_key=sambanova_api_key,
+            sambanova_api_key=self.sambanova_api_key,
         )
         return llm
 
@@ -368,12 +362,7 @@ class SearchAssistant:
         """
         if engine not in ['google', 'bing']:
             raise ValueError('engine must be either google or bing')
-        params = {
-            'q': query,
-            'num': limit,
-            'engine': engine,
-            'api_key': st.session_state.SERPAPI_API_KEY if self.prod_mode else os.environ.get('SERPAPI_API_KEY'),
-        }
+        params = {'q': query, 'num': limit, 'engine': engine, 'api_key': self.serpapi_api_key}
 
         try:
             search = GoogleSearch(params)
