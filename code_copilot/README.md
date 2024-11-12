@@ -63,9 +63,9 @@ The next step sets you up to use one of the models available from SambaNova. It 
 
 To perform this setup, you must be a SambaNova customer with a SambaStudio account.
 
-1. Log in to SambaStudio and get your API authorization key. The steps for getting this key are described [here](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html#_acquire_the_api_key).
+1. Log in to SambaStudio and select the LLM to use (e,g. Bundle1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
-2. Select the LLM to use (e,g. Bundle1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+2. Get your endpoint API authorization key. as shown [here](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_endpoint_api_keys).
 
 ## Get Continue Extension/plugin
 
@@ -77,11 +77,72 @@ you will need to install the [Continue](https://www.continue.dev/) [VSCode](http
 
 After installing Continue you will need to do the basic setup
 
-- First you will be prompted to select a model to use you can skip this step and close the ***Continue** window
+- First you will be prompted to select a provider Select SambaNova Cloud, and enter your SambaNovaCLoud api key, then click **Connect** and close the ***Continue** window
 
-## Set the custom SambaNova integration
+## Add SambaNovaCloud default models
 
-After the basic installation it is needed to set the custom SambaNovaCloud or the SambaStudio ***Continue*** connectors
+You should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ bottom right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file, and update the `apiKey` model fields with your SambaNovaCloud API Key
+
+This will add to ***Continue*** the following models
+
+- `Meta-Llama-3.1-8B-Instruct`
+- `Meta-Llama-3.1-70B-Instruct`
+- `Meta-Llama-3.1-405B-Instruct`
+
+And will add `Meta-Llama-3.2-1B-Instruct` as tab autocompletion model.
+
+### Add SambaStudio models
+
+If you want to use models deployed in your SambaStudio environment see the steps in [customizing the connector section](#set-the-custom-sambanova-integration-optional)
+
+# Usage
+
+## Ask question to the LLM in your IDE
+
+You can interact with the LLM directly using ⌘+l command this will open a ***Continue*** session in a new extension window then ask anything to the to the model!
+
+## Ask about selected code
+
+You can ask information of a selected snippet of code to the LLM directly selecting your text and then pressing ⌘+l, this will open a ***Continue*** session in a new extension window with the code snippet as context, then ask anything related with your code!
+
+## Edit code
+
+You can ask your LLM to modify your code, add functionalities, documentation etc, over a selected code snippet, for this first select the code snippet you want the model to modify, then press ⌘+i, this will open an input bar in the top of your IDE, then write your desired changes and press enter, this will generate the modified code for you and you can edit it, accept or reject the proposed changes.
+
+## Understand terminal errors
+
+You can ask the model to inspect your terminal error outputs to explain you the error and give you some suggestions, for this after getting an error in your terminal only press ⌘+shit+r, this will open a ***Continue*** session in a new extension window with the error explanation!
+
+## Code autocompletion
+check in your IDE bottom bar the ***Continue*** button and click on Enable Autocomplete, you will see a tick mark indication is enabled, then in all files you will see auto completion suggestions you can accept pressing tab.
+
+## Custom Actions 
+
+You can execute your custom actions/prompts selecting a code snippet and then pressing ⌘+l to open a new ***Continue*** session then write `/<yourCommand>` to generate, see how to create your custom commands [here](#add-custom-actions)
+
+> See more about ***Continue*** extension usage [here](https://docs.continue.dev/how-to-use-continue)
+
+# Customizing the connector
+
+The example template can be further customized based on the use case.
+
+## Add custom actions
+
+You can add your custom commands adding them to the [config.json file](config.json)
+ 
+A custom command should have the following structure
+
+```json
+{
+  "name": "yourCommand",
+  "prompt": "{{{ input }}} \n\n custom prompt",
+  "description": "Description of your custom action"
+}
+```
+
+## Set the custom SambaNova integration (Optional)
+
+After the basic installation you can set the custom SambaNovaCloud or the SambaStudio ***Continue*** connectors
 
 First you should modify the ***Continue*** `config.ts` file
 
@@ -108,35 +169,8 @@ First you should modify the ***Continue*** `config.ts` file
     const sambastudio_api_key = "123456ab-cdef-0123-4567-890abcdef"
     ```
 
-Then you should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ bottom right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file.
+In the [~/.continue/config.ts](~/.continue/config.ts) script you can add new SambaNovaCloud and SambaStudio models with the possibility of customize parameters like temperature, top_p, top_k, do_sample and others, even call a more complex service using sambaNova Models in behind.
 
-# Usage
-
-## Ask question to the LLM in your IDE
-
-You can interact with the LLM directly using ⌘+l command this will open a ***Continue*** session in a new extension window then ask anything to the to the model!
-
-## Ask about selected code
-
-You can ask information of a selected snippet of code to the LLM directly selecting your text and then pressing ⌘+l, this will open a ***Continue*** session in a new extension window with the code snippet as context, then ask anything related with your code!
-
-## Edit code
-
-You can ask your LLM to modify your code, add functionalities, documentation etc, over a selected code snippet, for this first select the code snippet you want the model to modify, then press ⌘+i, this will open an input bar in the top of your IDE, then write your desired changes and press enter, this will generate the modified code for you and you can edit it, accept or reject the proposed changes.
-
-## Understand terminal errors
-
-You can ask the model to inspect your terminal error outputs to explain you the error and give you some suggestions, for this after getting an error in your terminal only press ⌘+shit+r, this will open a ***Continue*** session in a new extension window with the error explanation!
-
-## Custom commands 
-
-You can execute your custom commands/prompts selecting a code snippet and then pressing ⌘+l to open a new ***Continue*** session then write `/<yourCommand>` to generate, see how to create your custom commands [here](#add-custom-commands)
-
-> See more about ***Continue*** extension usage [here](https://docs.continue.dev/how-to-use-continue)
-
-# Customizing the connector
-
-The example template can be further customized based on the use case.
 
 ## Modify the parameters and the model to use
 
@@ -150,24 +184,10 @@ You can change the default SambaNova Cloud model or the default model used with 
 - If using SambaStudio Bundle:
     ```ts
         const sambastudio_use_bundle = true;
-        const sambastudio_bundle_expert_name = "Meta-Llama-3-8B-Instruct";
+        const sambastudio_model = "Meta-Llama-3-8B-Instruct";
     ```
 
 Also you can modify model parameters modifying the `body` params of the SambaNova Cloud model and Sambastudio model in the `SambastudioModel` an `SambaNovaCloudModel` definitions of [config.ts file](config.ts).
-
-## Add custom commands
-
-You can add your custom commands adding them to the [config.json file](config.json)
- 
-A custom command should have the following structure
-
-```json
-{
-  "name": "yourCommand",
-  "prompt": "{{{ input }}} \n\n custom prompt",
-  "description": "Description of your custom command"
-}
-```
 
 # Acknowledgments
 

@@ -1,6 +1,6 @@
 //SambaNova Cloud usage
-const sambanova_api_key = "your-SambaNovaCloud-api-key";
-const sambanova_model = "llama3-8b";
+const sambanovacloud_api_key = "your-SambaNovaCloud-api-key";
+const sambanovacloud_model = "Meta-Llama-3.1-70B-Instruct";
 
 //SambaStudio usage
 const sambastudio_base_url = "your-sambastudio-base-url";
@@ -8,7 +8,7 @@ const sambastudio_project_id = "your-sambastudio-project-id";
 const sambastudio_endpoint_id = "your-sambastudio-endpoint-id";
 const sambastudio_api_key = "your-sambastudio-api-key";
 const sambastudio_use_bundle = true;
-const sambastudio_bundle_expert_name = "Meta-Llama-3-70B-Instruct-4096";
+const sambastudio_model = "Meta-Llama-3-70B-Instruct-4096"; //when using bundle endpoint
 
 /**
  * Llama3 template structure
@@ -90,7 +90,7 @@ async function* sambaStudioEndpointHandler(
         if (line.trim()) {
           try {
             const json_line = JSON.parse(line);
-            yield json_line.result.responses[0].stream_token;
+            yield json_line.result.items[0].value.stream_token;
           } catch (error) {
             console.error('failed to parse JSON: ', line)
           }
@@ -105,8 +105,8 @@ async function* sambaStudioEndpointHandler(
 let SambaStudioModel = {
   options: {
     title: "SambaStudio",
-    model: sambastudio_bundle_expert_name,
-    contextLength: 2048,
+    model: sambastudio_model,
+    contextLength: 4096,
     templateMessages: templateLlama3Messages,
   },
   /**
@@ -119,24 +119,17 @@ let SambaStudioModel = {
     prompt: string,
     options: CompletionOptions,
   ) {
-    const url = `${sambastudio_base_url}/api/predict/generic/stream/${sambastudio_project_id}/${sambastudio_endpoint_id}`;
+    const url = `${sambastudio_base_url}/api/v2/predict/generic/stream/${sambastudio_project_id}/${sambastudio_endpoint_id}`;
     let body = ""
     if(sambastudio_use_bundle){
       body = JSON.stringify({
-        instance: prompt,
+        items:[{"id": "item0", "value": prompt}],
         params: {
-          select_expert: {
-            type: "string",
-            value: options.model
-          },
-          process_prompt: {
-            type: "bool",
-            value: "false"
-          },
-          max_tokens_to_generate: {
-            type: "int",
-            value: "1024"
-          }
+          select_expert: options.model,
+          do_sample: true,
+          process_prompt: false,
+          max_tokens_to_generate: 1024,
+          temperature:"0.7",
         }
       });
     }
@@ -144,18 +137,10 @@ let SambaStudioModel = {
       body = JSON.stringify({
         instance: prompt,
         params: {
-          do_sample:{
-            type:"bool",
-            value:"true",
-          },
-          max_tokens_to_generate: {
-            type: "int",
-            value: "1024",
-          },
-          temperature:{
-            type:"float",
-            value:"0.7",
-          },
+          do_sample:true,
+          process_prompt: false,
+          max_tokens_to_generate:1024,
+          temperature:"0.7",
         }
       });
     }
@@ -245,8 +230,8 @@ async function* sambaNovaCloudEndpointHandler(
 let SambaNovaCloudModel = {
   options: {
     title: "SambaNovaCloud",
-    model: sambanova_model,
-    contextLength: 2048,
+    model: sambanovacloud_model,
+    contextLength: 4096,
     templateMessages: templateLlama3Messages,
   },
   /**
@@ -274,7 +259,7 @@ let SambaNovaCloudModel = {
       stream: true,
       max_tokens: 1024,
     });
-    yield* sambaNovaCloudEndpointHandler(url, sambanova_api_key, body, extraHeaders);
+    yield* sambaNovaCloudEndpointHandler(url, sambanovacloud_api_key, body, extraHeaders);
   },
 };
 
