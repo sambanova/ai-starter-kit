@@ -8,6 +8,7 @@ huggingface-hub==0.25.2
 jsonlines == 4.0.0
 langchain-community==0.3.1
 langchain-core==0.3.6
+langchain-milvus==0.1.7rc2
 langchain==0.3.1
 mypy==1.11.2
 omegaconf == 2.3.0
