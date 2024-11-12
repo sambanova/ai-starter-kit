@@ -19,7 +19,7 @@ SambaNova AI Starter Kits are open-source examples and guides designed to facili
 ## Getting Started
 
 1. Create a branch (not a fork) for your contribution
-2. Set up your development environment
+2. Set up your development environment [See Here For Instructions](https://github.com/sambanova/ai-starter-kit?tab=readme-ov-file#2-base-environment-setup)
 3. Make your changes following our coding standards
 4. Submit a pull request
 
