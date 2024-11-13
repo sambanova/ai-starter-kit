@@ -79,7 +79,11 @@ def _convert_message_to_dict(message: BaseMessage) -> Dict[str, Any]:
             if message_dict['content'] == '':
                 message_dict['content'] = None
     elif isinstance(message, ToolMessage):
-        message_dict = {'role': 'tool', 'content': message.content, 'tool_call_id': message.tool_call_id}
+        message_dict = {
+            'role': 'tool',
+            'content': message.content,
+            'tool_call_id': message.tool_call_id,
+        }
     else:
         raise TypeError(f'Got unknown type {message}')
     return message_dict
@@ -628,8 +632,11 @@ class ChatSambaNovaCloud(BaseChatModel):
             if schema is None:
                 raise ValueError("schema must be specified when method is not 'json_mode'. " 'Received None.')
             llm = self
-            # TODO bind response format when json schema available by API, update example
-            # llm = self.bind(response_format={"type": "json_object", "json_schema": schema})
+            # TODO bind response format when json schema available by API,
+            # update example
+            # llm = self.bind(
+            #   response_format={"type": "json_object", "json_schema": schema}
+            # )
             if is_pydantic_schema:
                 schema = cast(Type[BaseModel], schema)
                 output_parser = PydanticOutputParser(pydantic_object=schema)
