@@ -273,6 +273,7 @@ class ChatSambaNovaCloud(BaseChatModel):
     """stream options, include usage to get generation metrics"""
 
     additional_headers: Dict[str, Any] = Field(default={})
+    """Additional headers to sent in request"""
 
     class Config:
         populate_by_name = True
