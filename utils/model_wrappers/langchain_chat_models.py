@@ -209,6 +209,29 @@ class ChatSambaNovaCloud(BaseChatModel):
             }
         ]
 
+    Structured output:
+        .. code-block:: python
+
+            from typing import Optional
+
+            from pydantic import BaseModel, Field
+
+            class Joke(BaseModel):
+                '''Joke to tell user.'''
+
+                setup: str = Field(description="The setup of the joke")
+                punchline: str = Field(description="The punchline to the joke")
+
+            structured_model = llm.with_structured_output(Joke)
+            structured_model.invoke("Tell me a joke about cats")
+
+        .. code-block:: python
+
+            Joke(setup="Why did the cat join a band?",
+            punchline="Because it wanted to be the purr-cussionist!")
+
+        See ``ChatSambanovaCloud.with_structured_output()`` for more.
+
     Token usage:
         .. code-block:: python
         response = chat.invoke(messages)
