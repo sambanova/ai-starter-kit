@@ -566,6 +566,7 @@ class ChatSambaNovaCloud(BaseChatModel):
 
         Example: schema=None, method="json_mode", include_raw=True:
             .. code-block::
+
                 from langchain_community.chat_models import ChatSambaNovaCloud
 
                 llm = ChatSambaNovaCloud(model="Meta-Llama-3.1-70B-Instruct", temperature=0)
@@ -587,6 +588,7 @@ class ChatSambaNovaCloud(BaseChatModel):
 
         Example: schema=None, method="json_schema", include_raw=True:
             .. code-block::
+
                 from langchain_community.chat_models import ChatSambaNovaCloud
 
                 class AnswerWithJustification(BaseModel):
@@ -606,6 +608,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 #     'parsed': AnswerWithJustification(answer='They are the same weight', justification='A pound is a unit of weight or mass, so a pound of bricks and a pound of feathers both weigh the same amount, one pound. The difference is in their density and volume. A pound of feathers would take up more space than a pound of bricks due to the difference in their densities.'),
                 #     'parsing_error': None
                 # }
+
         """  # noqa: E501
         if kwargs:
             raise ValueError(f'Received unsupported arguments {kwargs}')
