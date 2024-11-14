@@ -58,14 +58,19 @@ query = test_config['query']
 
 class SearchAssistantTestCase(unittest.TestCase):
     time_start: float
+    sambanova_api_key: str
+    serpapi_api_key: str
     search_assistant: SearchAssistant
     scraper_state: Optional[Dict[str, str]]
 
     @classmethod
     def setUpClass(cls: Type['SearchAssistantTestCase']) -> None:
         cls.time_start = time.time()
-
-        cls.search_assistant = SearchAssistant()
+        cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.serpapi_api_key = os.environ.get('SERPAPI_API_KEY', '')
+        cls.search_assistant = SearchAssistant(
+            sambanova_api_key=cls.sambanova_api_key, serpapi_api_key=cls.serpapi_api_key
+        )
         cls.scraper_state = cls.search_assistant.search_and_scrape(
             query=query,
             search_method=tool[0],
