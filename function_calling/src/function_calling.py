@@ -24,6 +24,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from function_calling.src.tools import calculator, get_time, python_repl, query_db, rag, translate
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.visual.env_utils import get_wandb_key
 
@@ -63,6 +64,15 @@ Your answer should be in the same language as the initial query.
 
 """  # noqa E501
 
+# tool mapping of default tools
+TOOLS = {
+    'get_time': get_time,
+    'calculator': calculator,
+    'python_repl': python_repl,
+    'query_db': Query_db,
+    'translate': Translate,
+    'rag': Rag,
+}
 
 # tool schema
 class ConversationalResponse(BaseModel):
@@ -83,7 +93,7 @@ class FunctionCallingLlm:
 
     def __init__(
         self,
-        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
+        tools: Optional[Union[str, StructuredTool, Tool, List[Union[str, StructuredTool, Tool]]]] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
@@ -100,8 +110,12 @@ class FunctionCallingLlm:
         self.llm_info = configs[0]
         self.prod_mode = configs[1]
         self.llm = self.set_llm()
-        if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
+        if isinstance(tools, Tool) or isinstance(tools, StructuredTool) or isinstance(tools, str):
             tools = [tools]
+        langchain_tools=[]
+        for tool in tools:
+            langchain_tools.append(self.set_default_tool(str))
+
         self.tools = tools
         if system_prompt is None:
             self.system_prompt = FUNCTION_CALLING_SYSTEM_PROMPT
@@ -109,6 +123,19 @@ class FunctionCallingLlm:
             default_tool = ConversationalResponse
         tools_schemas = self.get_tools_schemas(tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
+
+    def set_default_tool(self, tool : Union[str, StructuredTool, Tool,]):
+        if isinstance(tool, StructuredTool) or isinstance (tool, Tool):
+            return tool
+        elif isinstance(tool, str):
+            if name, tool in TOOLS.items():
+                if tool 
+            else:
+                raise ValueError("Tool not found in TOOLS mapping dict")
+        else:
+            raise ValueError("Tool type not supported allowed types: StructuredTool, Tool "
+                             "or str with tool name in TOOLS mapping dict")
+        
 
     def get_config_info(self, config_path: str) -> Tuple[Dict[str, Any], bool]:
         """
