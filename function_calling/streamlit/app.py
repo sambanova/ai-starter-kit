@@ -336,7 +336,7 @@ def main() -> None:
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
     if user_question is not None:
         st.session_state.mp_events.input_submitted('chat_input')
-        handle_userinput(user_question)
+    handle_userinput(user_question)
 
 
 if __name__ == '__main__':
