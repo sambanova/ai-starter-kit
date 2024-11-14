@@ -20,6 +20,7 @@ from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import get_logger
 from utils.visual.env_utils import initialize_env_variables
+from utils.prod.s3_utils import list_s3_objects
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -318,7 +319,10 @@ def display_directory_contents(path: str, default_path: str) -> None:
         path = default_path
         streamlit.session_state.current_path = default_path
 
-    subdirectories, files = list_directory(path)
+    if not prod_mode or not cache_bucket_aws:
+        subdirectories, files = list_directory(path)
+    else:
+        subdirectories, files = list_s3_objects(bucket_name=BUCKET_AWS_NAME, prefix=path)
 
     dir_name = Path(path).name
     if dir_name.startswith('cache'):

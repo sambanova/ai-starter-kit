@@ -1,7 +1,7 @@
 import io
 import logging
 import os
-from typing import BinaryIO, Union
+from typing import BinaryIO, Union, Tuple, List
 
 import boto3
 import dotenv
@@ -168,3 +168,40 @@ def download_file_from_s3(
     except (ClientError, FileNotFoundError) as e:
         logger.warning(f'An error occurred while downloading the file: {e}')
         return False
+
+
+def list_s3_objects(bucket_name: str = BUCKET_AWS_NAME, prefix: str = '') -> Tuple[List[str], List[str]]:
+    """
+    List all subdirectories and files in a specified folder (prefix) of an S3 bucket.
+
+    :param bucket_name: The name of the S3 bucket.
+    :param prefix: The prefix (folder path) within the bucket. Defaults to an empty string.
+    :return: A tuple containing two lists: the first is a list of subdirectory paths,
+             and the second is a list of file paths.
+    """
+    # Connect to Amazon S3
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('BUCKET_AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('BUCKET_AWS_SECRET_ACCESS_KEY'),
+    )
+
+    subdirectories = list()
+    files = list()
+
+    # Use S3 API to paginate through objects
+    paginator = s3_client.get_paginator('list_objects_v2')
+    pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix, Delimiter='/')
+
+    for page in pages:
+        # Add directories to the subdirectories list
+        if 'CommonPrefixes' in page:
+            for prefix_info in page['CommonPrefixes']:
+                subdirectories.append(prefix_info['Prefix'])
+
+        # Add files to the files list
+        if 'Contents' in page:
+            for obj in page['Contents']:
+                files.append(obj['Key'])
+
+    return subdirectories, files

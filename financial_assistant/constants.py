@@ -25,6 +25,12 @@ with open(CONFIG_PATH, 'r') as yaml_file:
 # Get the llm information
 prod_mode = config['prod_mode']
 
+# Get the S3 bucket name
+BUCKET_AWS_NAME = os.getenv('BUCKET_AWS_NAME')
+
+# Get the cache bucket name
+cache_bucket_aws = config['cache_prod_mode']['bucket_aws'] if BUCKET_AWS_NAME is not None else False
+
 # Initialize SEC EDGAR credentials
 if prod_mode or os.getenv('SEC_API_ORGANIZATION') is None or os.getenv('SEC_API_EMAIL') is None:
     os.environ['SEC_API_ORGANIZATION'] = 'SambaNova'
@@ -67,7 +73,10 @@ DEFAULT_PDF_TITLE = 'Financial Report'
 # Cache directory
 CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache')
 if prod_mode:
-    CACHE_DIR = os.path.join(CACHE_DIR + '_prod_mode', f'cache_{SESSION_ID}')
+    if cache_bucket_aws:
+        CACHE_DIR = os.path.join('cache_prod_mode', f'cache_{SESSION_ID}')
+    else:
+        CACHE_DIR = os.path.join(CACHE_DIR + '_prod_mode', f'cache_{SESSION_ID}')
 
 # Main cache directories
 HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')

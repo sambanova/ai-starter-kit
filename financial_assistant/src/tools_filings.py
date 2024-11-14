@@ -18,6 +18,7 @@ from financial_assistant.src.retrieval import get_qa_response
 from financial_assistant.src.tools import coerce_str_to_list
 from financial_assistant.src.tools_stocks import retrieve_symbol_list
 from financial_assistant.src.utilities import get_logger
+from utils.prod.s3_utils import put_object_to_s3
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -244,7 +245,14 @@ def parse_filings(
                     f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"
                     + f'{ticker_symbol}_{report_date.date().year}'
                 )
-                df.to_csv(os.path.join(SOURCE_DIR, f'{filename}.csv'), index=False)
+
+                if not prod_mode or not cache_prod_mode:
+                    # Save the chunks to a csv file
+                    df.to_csv(os.path.join(SOURCE_DIR, f'{filename}.csv'), index=False)
+                else:
+                    csv_content = df.to_csv(index=False).encode('utf-8')
+                    put_object_to_s3(f'{filename}.csv', csv_content, 'text/csv', BUCKET_AWS_NAME)
+
                 break
 
     # If neither the year nor the quarter match, raise an error

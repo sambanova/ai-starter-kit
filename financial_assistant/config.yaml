@@ -1,4 +1,7 @@
-prod_mode: False
+prod_mode: True
+
+cache_prod_mode:
+    "bucket_aws": True
 
 llm: 
     "api": "sncloud" #  Set either `sambastudio` or `sncloud`
