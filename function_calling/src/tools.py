@@ -4,8 +4,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
-from functools import partial
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -288,7 +287,8 @@ class QueryDb(ToolClass):
             ]
         )
 
-        # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
+        # Chain that receives the natural language input and the table schema,
+        # then pass the teh formatted prompt to the llm
         # and finally execute the sql finder method, retrieving only the filtered SQL query
         query_generation_chain = prompt | llm | StrOutputParser() | RunnableLambda(self.sql_finder)
 
@@ -424,7 +424,8 @@ class Rag(ToolClass):
                 'system',
                 'You are an assistant for question-answering tasks.\n'
                 'Use the following pieces of retrieved contexts to answer the question. '
-                'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
+                'If the information that is relevant to answering the question does not '
+                'appear in the retrieved contexts, '
                 'say "Could not find information.". Provide a concise answer to the question. '
                 'Do not provide any information that is not asked for in the question. ',
             ),
