@@ -23,7 +23,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from function_calling.src.tools import ToolClass, calculator, get_time, python_repl, QueryDb, Rag, Translate
+from function_calling.src.tools import QueryDb, Rag, ToolClass, Translate, calculator, get_time, python_repl
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.visual.env_utils import get_wandb_key
 
@@ -73,6 +73,7 @@ TOOLS = {
     'rag': Rag,
 }
 
+
 # tool schema
 class ConversationalResponse(BaseModel):
     (
@@ -92,12 +93,14 @@ class FunctionCallingLlm:
 
     def __init__(
         self,
-        tools: Optional[Union[str, StructuredTool, Tool, ToolClass, List[Union[str, StructuredTool, Tool, ToolClass]]]] = None,
+        tools: Optional[
+            Union[str, StructuredTool, Tool, ToolClass, List[Union[str, StructuredTool, Tool, ToolClass]]]
+        ] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
         sambanova_api_key: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Args:
@@ -107,7 +110,7 @@ class FunctionCallingLlm:
             system_prompt (Optional[str]): The system prompt to use. defaults to FUNCTION_CALLING_SYSTEM_PROMPT
             config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
-        self.sambanova_api_key=sambanova_api_key
+        self.sambanova_api_key = sambanova_api_key
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
         self.prod_mode = configs[1]
@@ -115,7 +118,7 @@ class FunctionCallingLlm:
         self.kwargs = kwargs
         if isinstance(tools, Tool) or isinstance(tools, StructuredTool) or isinstance(tools, str):
             tools = [tools]
-        langchain_tools=[]
+        langchain_tools = []
         for tool in tools:
             langchain_tools.append(self._set_tool(tool))
         self.tools = langchain_tools
@@ -126,24 +129,31 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(self.tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def _set_tool(self, tool : Union[str, StructuredTool, Tool, ToolClass]):
-        if isinstance(tool, StructuredTool) or isinstance (tool, Tool):
+    def _set_tool(self, tool: Union[str, StructuredTool, Tool, ToolClass]):
+        if isinstance(tool, StructuredTool) or isinstance(tool, Tool):
             return tool
         elif isinstance(tool, str):
             if tool in TOOLS.keys():
                 if isinstance(TOOLS[tool], StructuredTool) or isinstance(TOOLS[tool], Tool):
-                    return TOOLS[ tool]
+                    return TOOLS[tool]
                 else:
                     tool = TOOLS[tool](sambanova_api_key=self.sambanova_api_key, **self.kwargs)
                     return tool.get_tool()
             else:
-                raise ValueError(f"Tool {tool} not found in TOOLS mapping dict")
-        elif issubclass(tool, ToolClass): #TODO check is class
-            return tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                raise ValueError(f'Tool {tool} not found in TOOLS mapping dict')
+        elif isinstance(tool, type):
+            if issubclass(tool, ToolClass):
+                return tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+            else:
+                raise ValueError(
+                    f'Tool {type(tool)}  not supported allowed types: StructuredTool, Tool, '
+                    'ToolClass or str with tool name in TOOLS mapping dict'
+                )
         else:
-            raise ValueError(f"Tool type {type(tool)} not supported allowed types: StructuredTool, Tool "
-                             "or str with tool name in TOOLS mapping dict")
-        
+            raise ValueError(
+                f'Tool type {type(tool)} not supported allowed types: StructuredTool, Tool '
+                'ToolClass or str with tool name in TOOLS mapping dict'
+            )
 
     def get_config_info(self, config_path: str) -> Tuple[Dict[str, Any], bool]:
         """
@@ -162,7 +172,7 @@ class FunctionCallingLlm:
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
         """
-        
+
         llm = APIGateway.load_chat(
             type=self.llm_info['api'],
             max_tokens=self.llm_info['max_tokens'],
@@ -285,14 +295,13 @@ class FunctionCallingLlm:
             json_str = json.dumps(dummy_json_response)
         return json_str
 
-    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
+    def function_call_llm(self, query: str, max_it: int = 5) -> str:
         """
         invocation method for function calling workflow
 
         Args:
             query (str): The query to execute.
             max_it (int, optional): The maximum number of iterations. Defaults to 5.
-            debug (bool, optional): Whether to print debug information. Defaults to False.
         """
         function_calling_chat_template = ChatPromptTemplate.from_messages([('system', self.system_prompt)])
         history = function_calling_chat_template.format_prompt(tools=self.tools_schemas).to_messages()
@@ -309,9 +318,8 @@ class FunctionCallingLlm:
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
                 final_response = tools_msgs[0]
-                if debug:
-                    print('\n\n---\nFinal function calling LLM history: \n')
-                    pprint(f'{history}')
+                print('\n\n---\nFinal function calling LLM history: \n')
+                pprint(f'{history}')
                 return final_response
             else:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))

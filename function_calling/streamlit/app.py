@@ -138,17 +138,17 @@ def set_fc_llm(tools: List[Any]) -> None:
     Args:
         tools (list): list of tools to be used
     """
-    if "query_db" in tools:
+    if 'query_db' in tools:
         if prod_mode:
             create_temp_db(st.session_state.session_temp_db)
             schedule_temp_dir_deletion(os.path.dirname(st.session_state.session_temp_db), EXIT_TIME_DELTA)
             st.toast("""your session will be active for the next 30 minutes, after this time tmp db will be deleted""")
 
     st.session_state.fc = FunctionCallingLlm(
-        tools, 
-        sambanova_api_key=st.session_state.get("sambanova_api_key"), 
-        session_temp_db=st.session_state.session_temp_db
-        )
+        tools,
+        sambanova_api_key=st.session_state.get('SAMBANOVA_API_KEY'),
+        session_temp_db=st.session_state.session_temp_db,
+    )
 
 
 def handle_userinput(user_question: Optional[str]) -> None:
@@ -200,7 +200,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
             # capture logs and show them in the current expanded execution scratchpad
             with st_capture(execution_scratchpad_output.code) as stdout:  # type: ignore
                 response = st.session_state.fc.function_call_llm(
-                    query=user_question, max_it=st.session_state.max_iterations, debug=True
+                    query=user_question, max_it=st.session_state.max_iterations
                 )
                 # Add scratchpad output to the scratchpad history
                 st.session_state.execution_scratchpad_history.append(stdout.getvalue())
@@ -229,20 +229,7 @@ def setChatInputValue(chat_input_value: str) -> None:
     st.components.v1.html(js)
 
 
-def main() -> None:
-    st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-    )
-
-    initialize_env_variables(prod_mode, additional_env_vars)
-
-    st.title(':orange[SambaNova] Function Calling Assistant')
-
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-    if 'execution_scratchpad_history' not in st.session_state:
-        st.session_state.execution_scratchpad_history = []
+def set_fc_session_state_variables():
     if 'tools' not in st.session_state:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
@@ -257,8 +244,18 @@ def main() -> None:
     if 'fc' not in st.session_state:
         st.session_state.fc = None
         set_fc_llm(st.session_state.tools)
-    if 'input_disabled' not in st.session_state:
-        st.session_state.input_disabled = False
+
+
+def main() -> None:
+    st.set_page_config(
+        page_title='AI Starter Kit',
+        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+    )
+
+    initialize_env_variables(prod_mode, additional_env_vars)
+
+    st.title(':orange[SambaNova] Function Calling Assistant')
+
     if 'st_session_id' not in st.session_state:
         st.session_state.st_session_id = str(uuid.uuid4())
     if 'mp_events' not in st.session_state:
@@ -269,6 +266,12 @@ def main() -> None:
             track=prod_mode,
         )
         st.session_state.mp_events.demo_launch()
+    if 'input_disabled' not in st.session_state:
+        st.session_state.input_disabled = False
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
+    if 'execution_scratchpad_history' not in st.session_state:
+        st.session_state.execution_scratchpad_history = []
 
     with st.sidebar:
         st.title('Setup')
@@ -291,6 +294,7 @@ def main() -> None:
                 st.rerun()
 
         if are_credentials_set(additional_env_vars):
+            set_fc_session_state_variables()
             st.markdown('**1. Select the tools for function calling.**')
             st.session_state.tools = st.multiselect(
                 'Available tools',
@@ -329,7 +333,7 @@ def main() -> None:
     user_question = st.chat_input('Ask something', disabled=st.session_state.input_disabled, key='TheChatInput')
     if user_question is not None:
         st.session_state.mp_events.input_submitted('chat_input')
-        handle_userinput(user_question)
+    handle_userinput(user_question)
 
 
 if __name__ == '__main__':

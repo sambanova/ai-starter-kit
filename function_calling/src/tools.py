@@ -4,8 +4,9 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple, Union
 from functools import partial
+from typing import Any, Dict, Optional, Tuple, Union
+
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
@@ -43,9 +44,11 @@ def get_config_info(config_path: str = CONFIG_PATH) -> Tuple[Dict[str, Any], boo
 
     return tools_info
 
+
 class ToolClass(ABC):
     """Default class for creating configurable tools,
     that needs constants or parameters not sent in a tool calling event"""
+
     def __init__(self, config_path: str = CONFIG_PATH, **kwargs):
         self.kwargs = kwargs
         self.config = get_config_info(config_path)
@@ -56,6 +59,7 @@ class ToolClass(ABC):
 
 
 ### Get time tool
+
 
 # tool schema
 class GetTimeSchema(BaseModel):
@@ -85,6 +89,7 @@ def get_time(kind: str = 'both') -> str:
 
 
 ### Calculator Tool
+
 
 # tool schema
 class CalculatorSchema(BaseModel):
@@ -167,6 +172,7 @@ calculator = StructuredTool.from_function(
 
 ### Python standard shell, or REPL (Read-Eval-Print Loop)
 
+
 # tool schema
 class ReplSchema(BaseModel):
     (
@@ -193,8 +199,8 @@ python_repl = Tool(
 
 ### SQL tool
 
+
 class QueryDb(ToolClass):
-    
     # tool schema
     class QueryDBSchema(BaseModel):
         (
@@ -203,7 +209,6 @@ class QueryDb(ToolClass):
         )
 
         query: str = Field(..., description='natural language question or instruction.')
-
 
     def sql_finder(self, text: str) -> str:
         """Search in a string for a SQL query or code with format"""
@@ -231,7 +236,7 @@ class QueryDb(ToolClass):
                 return query
             else:
                 raise Exception('No SQL code found in LLM generation')
-            
+
     # tool definition
     def query_db(self, query: str) -> str:
         """query generation tool. Use this to generate sql queries and retrieve the results from a database.
@@ -246,11 +251,11 @@ class QueryDb(ToolClass):
             max_tokens=query_db_info['llm']['max_tokens'],
             temperature=query_db_info['llm']['temperature'],
             model=query_db_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
         )
 
-        if self.kwargs.get('session_temp_db') is not None:  #TODO pass this param
-                db_path = self.kwargs.get('session_temp_db')
+        if self.kwargs.get('session_temp_db') is not None:  # TODO pass this param
+            db_path = self.kwargs.get('session_temp_db')
         else:
             db_path = os.path.join(kit_dir, query_db_info['db']['path'])
         db_uri = f'sqlite:///{db_path}'
@@ -308,17 +313,18 @@ class QueryDb(ToolClass):
 
         result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
         return result
-    
+
     def get_tool(self):
         tool = StructuredTool.from_function(
-            func = self.query_db,
-            name = "query_db",
-            args_schema = self.QueryDBSchema,
+            func=self.query_db,
+            name='query_db',
+            args_schema=self.QueryDBSchema,
         )
         return tool
 
 
 ### Translation tool
+
 
 class Translate(ToolClass):
     # tool schema
@@ -329,7 +335,7 @@ class Translate(ToolClass):
         final_language: str = Field(description='language to translate the sentence into')
         input_sentence: str = Field(description='sentence to translate')
 
-    #tool definition
+    # tool definition
     def translate(self, origin_language: str, final_language: str, input_sentence: str) -> str:
         """Returns translated input sentence to desired language
 
@@ -349,7 +355,7 @@ class Translate(ToolClass):
             max_tokens=translate_info['llm']['max_tokens'],
             temperature=translate_info['llm']['temperature'],
             model=translate_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
         )
         chain = llm | StrOutputParser()
 
@@ -357,11 +363,12 @@ class Translate(ToolClass):
 
     def get_tool(self):
         tool = StructuredTool.from_function(
-            func = self.translate,
-            name = "translate",
-            args_schema = self.TranslateSchema,
+            func=self.translate,
+            name='translate',
+            args_schema=self.TranslateSchema,
         )
         return tool
+
 
 ### RAG tool
 class Rag(ToolClass):
@@ -371,7 +378,7 @@ class Rag(ToolClass):
 
         query: str = Field(description='input question to solve using the knowledge base')
 
-    #tool definition
+    # tool definition
     def rag(self, query: str) -> str:
         """Returns information from a document knowledge base
 
@@ -389,7 +396,7 @@ class Rag(ToolClass):
             max_tokens=rag_info['llm']['max_tokens'],
             temperature=rag_info['llm']['temperature'],
             model=rag_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
         )
 
         vdb = VectorDb()
@@ -443,8 +450,8 @@ class Rag(ToolClass):
 
     def get_tool(self):
         tool = StructuredTool.from_function(
-            func = self.rag,
-            name = "rag",
-            args_schema = self.RAGSchema,
+            func=self.rag,
+            name='rag',
+            args_schema=self.RAGSchema,
         )
         return tool
