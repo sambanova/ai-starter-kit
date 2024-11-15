@@ -254,6 +254,8 @@ def main() -> None:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
         st.session_state.max_iterations = 5
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
     if 'session_temp_db' not in st.session_state:
         if prod_mode:
             st.session_state.session_temp_db = os.path.join(
@@ -266,8 +268,6 @@ def main() -> None:
         set_fc_llm(st.session_state.tools)
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = False
-    if 'st_session_id' not in st.session_state:
-        st.session_state.st_session_id = str(uuid.uuid4())
     if 'mp_events' not in st.session_state:
         st.session_state.mp_events = MixpanelEvents(
             os.getenv('MIXPANEL_TOKEN'),
