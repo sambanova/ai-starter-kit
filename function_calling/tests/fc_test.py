@@ -33,9 +33,9 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm
-from function_calling.src.tools import calculator, get_time, python_repl, query_db
+from function_calling.src.tools import calculator, get_time, python_repl, QueryDb
 
-tools = [get_time, calculator, python_repl, query_db]
+tools = ["get_time", "calculator", "python_repl", "query_db"]
 
 
 class FCTestCase(unittest.TestCase):
@@ -72,24 +72,24 @@ class FCTestCase(unittest.TestCase):
         self.assertTrue(result, "python_repl result shouldn't be empty")
 
     def test_query_db_tool(self) -> None:
-        result = query_db.invoke({'query': 'How many genres of music are in the chinook db'})
+        result = QueryDb().get_tool().invoke({'query': 'How many genres of music are in the chinook db'})
         logger.info('\nInvoking query_db:')
         logger.info(result)
         self.assertTrue(result, "query_db result shouldn't be empty")
 
     def test_fc_pipeline(self) -> None:
-        response = self.fc.function_call_llm('what time is it?', max_it=5, debug=False)
+        response = self.fc.function_call_llm('what time is it?', max_it=5)
         logger.info('\nFunction calling pipeline with get_time:')
         logger.info(response)
         self.assertTrue(response, "LLM final response shouldn't be empty")
 
-        response = self.fc.function_call_llm('calculate 5*10-3', max_it=5, debug=False)
+        response = self.fc.function_call_llm('calculate 5*10-3', max_it=5)
         logger.info('\nFunction calling pipeline with calculator:')
         logger.info(response)
         self.assertTrue(response, "LLM final response shouldn't be empty")
 
         response = self.fc.function_call_llm(
-            "sort this list of elements alphabetically ['screwdriver', 'pliers', 'hammer']", max_it=5, debug=False
+            "sort this list of elements alphabetically ['screwdriver', 'pliers', 'hammer']", max_it=5
         )
         logger.info('\nFunction calling pipeline with python_repl:')
         logger.info(response)
@@ -97,8 +97,7 @@ class FCTestCase(unittest.TestCase):
 
         response = self.fc.function_call_llm(
             'whats the price in colombian pesos of the track "Snowballed" in the db if one usd is equal to 3800 cop?',
-            max_it=5,
-            debug=False,
+            max_it=5
         )
         logger.info('\nFunction calling pipeline with query_db and calculator:')
         logger.info(response)
