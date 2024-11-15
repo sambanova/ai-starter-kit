@@ -2,10 +2,10 @@ import operator
 import os
 import re
 import sys
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple, Union
-
-import streamlit as st
+from functools import partial
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
@@ -32,8 +32,7 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-## Get configs for tools
-def get_config_info(config_path: str) -> Tuple[Dict[str, Any], bool]:
+def get_config_info(config_path: str = CONFIG_PATH) -> Tuple[Dict[str, Any], bool]:
     """
     Loads json config file
     """
@@ -41,13 +40,22 @@ def get_config_info(config_path: str) -> Tuple[Dict[str, Any], bool]:
     with open(config_path, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
     tools_info = config['tools']
-    prod_mode = config['prod_mode']
 
-    return tools_info, prod_mode
+    return tools_info
+
+class ToolClass(ABC):
+    """Default class for creating configurable tools,
+    that needs constants or parameters not sent in a tool calling event"""
+    def __init__(self, config_path: str = CONFIG_PATH, **kwargs):
+        self.kwargs = kwargs
+        self.config = get_config_info(config_path)
+
+    @abstractmethod
+    def get_tool(self):
+        pass
 
 
-##Get time tool
-
+### Get time tool
 
 # tool schema
 class GetTimeSchema(BaseModel):
@@ -76,9 +84,9 @@ def get_time(kind: str = 'both') -> str:
         return f'Current date: {date}, Current time: {time}'
 
 
-## Calculator Tool
+### Calculator Tool
 
-
+# tool schema
 class CalculatorSchema(BaseModel):
     """allow calculation of only basic operations: + - * and /
     with a string input expression"""
@@ -156,8 +164,8 @@ calculator = StructuredTool.from_function(
     handle_tool_error=_handle_error,
 )  # type: ignore
 
-## Python standard shell, or REPL (Read-Eval-Print Loop)
 
+### Python standard shell, or REPL (Read-Eval-Print Loop)
 
 # tool schema
 class ReplSchema(BaseModel):
@@ -183,269 +191,260 @@ python_repl = Tool(
 )  # type: ignore
 
 
-## SQL tool
-# tool schema
-class QueryDBSchema(BaseModel):
-    (
-        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
-        'Do not pass sql queries directly. Input must be a natural language question or instruction.'
-    )
+### SQL tool
 
-    query: str = Field(..., description='natural language question or instruction.')
+class QueryDb(ToolClass):
+    
+    # tool schema
+    class QueryDBSchema(BaseModel):
+        (
+            'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
+            'Do not pass sql queries directly. Input must be a natural language question or instruction.'
+        )
+
+        query: str = Field(..., description='natural language question or instruction.')
 
 
-def sql_finder(text: str) -> str:
-    """Search in a string for a SQL query or code with format"""
+    def sql_finder(self, text: str) -> str:
+        """Search in a string for a SQL query or code with format"""
 
-    # regex for finding sql_code_pattern with format:
-    # ```sql
-    #    <query>
-    # ```
-
-    print(f'query_db: query generation LLM raw response: \n{text}\n')
-    sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
-    match = sql_code_pattern.search(text)
-    if match is not None:
-        query = match.group(1)
-        return query
-    else:
         # regex for finding sql_code_pattern with format:
+        # ```sql
+        #    <query>
         # ```
-        # <quey>
-        # ```
-        code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
-        match = code_pattern.search(text)
+
+        print(f'query_db: query generation LLM raw response: \n{text}\n')
+        sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
+        match = sql_code_pattern.search(text)
         if match is not None:
             query = match.group(1)
             return query
         else:
-            raise Exception('No SQL code found in LLM generation')
+            # regex for finding sql_code_pattern with format:
+            # ```
+            # <quey>
+            # ```
+            code_pattern = re.compile(r'```\s+(.*?)\s+```', re.DOTALL)
+            match = code_pattern.search(text)
+            if match is not None:
+                query = match.group(1)
+                return query
+            else:
+                raise Exception('No SQL code found in LLM generation')
+            
+    # tool definition
+    def query_db(self, query: str) -> str:
+        """query generation tool. Use this to generate sql queries and retrieve the results from a database.
+        Do not pass sql queries directly. Input must be a natural language question or instruction."""
 
+        # get tool configs
+        query_db_info = self.config['query_db']
 
-@tool(args_schema=QueryDBSchema)
-def query_db(query: str) -> str:
-    """query generation tool. Use this to generate sql queries and retrieve the results from a database.
-    Do not pass sql queries directly. Input must be a natural language question or instruction."""
+        llm = APIGateway.load_chat(
+            type=query_db_info['llm']['api'],
+            do_sample=query_db_info['llm']['do_sample'],
+            max_tokens=query_db_info['llm']['max_tokens'],
+            temperature=query_db_info['llm']['temperature'],
+            model=query_db_info['llm']['model'],
+            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+        )
 
-    # get tool configs
-    query_db_info = get_config_info(CONFIG_PATH)[0]['query_db']
-
-    # set the llm based in tool configs
-    prod_mode = get_config_info(CONFIG_PATH)[1]
-    if prod_mode:
-        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
-    llm = APIGateway.load_chat(
-        type=query_db_info['llm']['api'],
-        do_sample=query_db_info['llm']['do_sample'],
-        max_tokens=query_db_info['llm']['max_tokens'],
-        temperature=query_db_info['llm']['temperature'],
-        model=query_db_info['llm']['model'],
-        sambanova_api_key=sambanova_api_key,
-    )
-
-    if 'session_temp_db' in st.session_state:
-        if st.session_state.session_temp_db is not None:
-            db_path = st.session_state.session_temp_db
+        if self.kwargs.get('session_temp_db') is not None:  #TODO pass this param
+                db_path = self.kwargs.get('session_temp_db')
         else:
             db_path = os.path.join(kit_dir, query_db_info['db']['path'])
-    else:
-        db_path = os.path.join(kit_dir, query_db_info['db']['path'])
-    db_uri = f'sqlite:///{db_path}'
-    db = SQLDatabase.from_uri(db_uri)
+        db_uri = f'sqlite:///{db_path}'
+        db = SQLDatabase.from_uri(db_uri)
 
-    prompt = ChatPromptTemplate(
-        [
+        prompt = ChatPromptTemplate(
+            [
+                (
+                    'system',
+                    """
+                {table_info}
+                
+                Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
+                Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
+                Do not assume ids in tables when inserting new values let them null or use the max id + 1
+                The queries must be formatted including backticks code symbols as follows:
+                do not include comments in the query
+                    
+                ```sql
+                query
+                ```
+                
+                Example format:
+                
+                ```sql
+                SELECT * FROM mainTable;
+                ```""",  # noqa: E501
+                ),
+                ('human', """{input}"""),
+            ]
+        )
+
+        # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
+        # and finally execute the sql finder method, retrieving only the filtered SQL query
+        query_generation_chain = prompt | llm | StrOutputParser() | RunnableLambda(self.sql_finder)
+
+        table_info = db.get_table_info()
+
+        print(f'query_db: Calling query generation LLM with input: \n{query}\n')
+
+        query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
+
+        print(f'query_db: query generation LLM filtered response: \n{query}\n')
+
+        queries = query.split(';')
+
+        query_executor = QuerySQLDataBaseTool(db=db)
+
+        results = []
+        for query in queries:
+            if query.strip() != '':
+                print(f'query_db: executing query: \n{query}\n')
+                results.append(query_executor.invoke(query))
+                print(f'query_db: query result: \n{results[-1]}\n')
+
+        result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
+        return result
+    
+    def get_tool(self):
+        tool = StructuredTool.from_function(
+            func = self.query_db,
+            name = "query_db",
+            args_schema = self.QueryDBSchema,
+        )
+        return tool
+
+
+### Translation tool
+
+class Translate(ToolClass):
+    # tool schema
+    class TranslateSchema(BaseModel):
+        """Returns translated input sentence to desired language"""
+
+        origin_language: str = Field(description='language of the original sentence')
+        final_language: str = Field(description='language to translate the sentence into')
+        input_sentence: str = Field(description='sentence to translate')
+
+    #tool definition
+    def translate(self, origin_language: str, final_language: str, input_sentence: str) -> str:
+        """Returns translated input sentence to desired language
+
+        Args:
+            origin_language: language of the original sentence
+            final_language: language to translate the sentence into
+            input_sentence: sentence to translate
+        """
+
+        # get tool configs
+        translate_info = self.config['translate']
+
+        # set the llm based in tool configs
+        llm = APIGateway.load_chat(
+            type=translate_info['llm']['api'],
+            do_sample=translate_info['llm']['do_sample'],
+            max_tokens=translate_info['llm']['max_tokens'],
+            temperature=translate_info['llm']['temperature'],
+            model=translate_info['llm']['model'],
+            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+        )
+        chain = llm | StrOutputParser()
+
+        return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
+
+    def get_tool(self):
+        tool = StructuredTool.from_function(
+            func = self.translate,
+            name = "translate",
+            args_schema = self.TranslateSchema,
+        )
+        return tool
+
+### RAG tool
+class Rag(ToolClass):
+    # tool schema
+    class RAGSchema(BaseModel):
+        """Returns information from a document knowledge base"""
+
+        query: str = Field(description='input question to solve using the knowledge base')
+
+    #tool definition
+    def rag(self, query: str) -> str:
+        """Returns information from a document knowledge base
+
+        Args:
+            query: str = input question to solve using the knowledge base
+        """
+
+        # get tool configs
+        rag_info = self.config['rag']
+
+        # set the llm based in tool configs
+        llm = APIGateway.load_chat(
+            type=rag_info['llm']['api'],
+            do_sample=rag_info['llm']['do_sample'],
+            max_tokens=rag_info['llm']['max_tokens'],
+            temperature=rag_info['llm']['temperature'],
+            model=rag_info['llm']['model'],
+            sambanova_api_key=self.kwargs.get("sambanova_api_key"),
+        )
+
+        vdb = VectorDb()
+
+        # load embedding model
+        embeddings = APIGateway.load_embedding_model(
+            type=rag_info['embedding_model']['type'],
+            batch_size=rag_info['embedding_model']['batch_size'],
+            coe=rag_info['embedding_model']['coe'],
+            select_expert=rag_info['embedding_model']['select_expert'],
+        )
+
+        # set vectorstore and retriever
+        vectorstore = vdb.load_vdb(os.path.join(kit_dir, rag_info['vector_db']['path']), embeddings, db_type='chroma')
+        retriever = vectorstore.as_retriever(
+            search_type='similarity_score_threshold',
+            search_kwargs={
+                'score_threshold': rag_info['retrieval']['score_treshold'],
+                'k': rag_info['retrieval']['k_retrieved_documents'],
+            },
+        )
+        #  qa_chain definition
+        prompt = [
             (
                 'system',
-                """
-            {table_info}
-            
-            Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
-            Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
-            Do not assume ids in tables when inserting new values let them null or use the max id + 1
-            The queries must be formatted including backticks code symbols as follows:
-            do not include comments in the query
-                
-            ```sql
-            query
-            ```
-            
-            Example format:
-            
-            ```sql
-            SELECT * FROM mainTable;
-            ```""",  # noqa: E501
+                'You are an assistant for question-answering tasks.\n'
+                'Use the following pieces of retrieved contexts to answer the question. '
+                'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
+                'say "Could not find information.". Provide a concise answer to the question. '
+                'Do not provide any information that is not asked for in the question. ',
             ),
-            ('human', """{input}"""),
+            ('human', 'Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'),
         ]
-    )
+        retrieval_qa_prompt = ChatPromptTemplate(prompt)
+        qa_chain = RetrievalQA.from_llm(
+            llm=llm,
+            retriever=retriever,
+            return_source_documents=True,
+            verbose=False,
+            input_key='question',
+            output_key='answer',
+            prompt=retrieval_qa_prompt,
+        )
 
-    # Chain that receives the natural language input and the table schema, then pass the teh formatted prompt to the llm
-    # and finally execute the sql finder method, retrieving only the filtered SQL query
-    query_generation_chain = prompt | llm | StrOutputParser() | RunnableLambda(sql_finder)
+        response = qa_chain.invoke({'question': query})
+        answer = response['answer']
 
-    table_info = db.get_table_info()
+        source_documents = set([doc.metadata['filename'] for doc in response['source_documents']])
 
-    print(f'query_db: Calling query generation LLM with input: \n{query}\n')
+        return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'
 
-    query = query_generation_chain.invoke({'input': query, 'table_info': table_info})
-
-    print(f'query_db: query generation LLM filtered response: \n{query}\n')
-
-    queries = query.split(';')
-
-    query_executor = QuerySQLDataBaseTool(db=db)
-
-    results = []
-    for query in queries:
-        if query.strip() != '':
-            print(f'query_db: executing query: \n{query}\n')
-            results.append(query_executor.invoke(query))
-            print(f'query_db: query result: \n{results[-1]}\n')
-
-    result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
-    return result
-
-
-## translation tool
-# tool schema
-
-
-class TranslateSchema(BaseModel):
-    """Returns translated input sentence to desired language"""
-
-    origin_language: str = Field(description='language of the original sentence')
-    final_language: str = Field(description='language to translate the sentence into')
-    input_sentence: str = Field(description='sentence to translate')
-
-
-@tool(args_schema=TranslateSchema)
-def translate(origin_language: str, final_language: str, input_sentence: str) -> str:
-    """Returns translated input sentence to desired language
-
-    Args:
-        origin_language: language of the original sentence
-        final_language: language to translate the sentence into
-        input_sentence: sentence to translate
-    """
-
-    # get tool configs
-    translate_info = get_config_info(CONFIG_PATH)[0]['translate']
-
-    # set the llm based in tool configs
-    prod_mode = get_config_info(CONFIG_PATH)[1]
-    if prod_mode:
-        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
-    llm = APIGateway.load_chat(
-        type=translate_info['llm']['api'],
-        do_sample=translate_info['llm']['do_sample'],
-        max_tokens=translate_info['llm']['max_tokens'],
-        temperature=translate_info['llm']['temperature'],
-        model=translate_info['llm']['model'],
-        sambanova_api_key=sambanova_api_key,
-    )
-    chain = llm | StrOutputParser()
-
-    return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
-
-
-## RAG tool
-# tool schema
-
-
-class RAGSchema(BaseModel):
-    """Returns information from a document knowledge base"""
-
-    query: str = Field(description='input question to solve using the knowledge base')
-
-
-@tool(args_schema=RAGSchema)
-def rag(query: str) -> str:
-    """Returns information from a document knowledge base
-
-    Args:
-        query: str = input question to solve using the knowledge base
-    """
-
-    # get tool configs
-    rag_info = get_config_info(CONFIG_PATH)[0]['rag']
-
-    # set the llm based in tool configs
-    prod_mode = get_config_info(CONFIG_PATH)[1]
-    if prod_mode:
-        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
-    llm = APIGateway.load_chat(
-        type=rag_info['llm']['api'],
-        do_sample=rag_info['llm']['do_sample'],
-        max_tokens=rag_info['llm']['max_tokens'],
-        temperature=rag_info['llm']['temperature'],
-        model=rag_info['llm']['model'],
-        sambanova_api_key=sambanova_api_key,
-    )
-
-    vdb = VectorDb()
-
-    # load embedding model
-    embeddings = APIGateway.load_embedding_model(
-        type=rag_info['embedding_model']['type'],
-        batch_size=rag_info['embedding_model']['batch_size'],
-        coe=rag_info['embedding_model']['coe'],
-        select_expert=rag_info['embedding_model']['select_expert'],
-    )
-
-    # set vectorstore and retriever
-    vectorstore = vdb.load_vdb(os.path.join(kit_dir, rag_info['vector_db']['path']), embeddings, db_type='chroma')
-    retriever = vectorstore.as_retriever(
-        search_type='similarity_score_threshold',
-        search_kwargs={
-            'score_threshold': rag_info['retrieval']['score_treshold'],
-            'k': rag_info['retrieval']['k_retrieved_documents'],
-        },
-    )
-    #  qa_chain definition
-    prompt = [
-        (
-            'system',
-            'You are an assistant for question-answering tasks.\n'
-            'Use the following pieces of retrieved contexts to answer the question. '
-            'If the information that is relevant to answering the question does not appear in the retrieved contexts, '
-            'say "Could not find information.". Provide a concise answer to the question. '
-            'Do not provide any information that is not asked for in the question. ',
-        ),
-        ('human', 'Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'),
-    ]
-    retrieval_qa_prompt = ChatPromptTemplate(prompt)
-    qa_chain = RetrievalQA.from_llm(
-        llm=llm,
-        retriever=retriever,
-        return_source_documents=True,
-        verbose=False,
-        input_key='question',
-        output_key='answer',
-        prompt=retrieval_qa_prompt,
-    )
-
-    response = qa_chain.invoke({'question': query})
-    answer = response['answer']
-
-    source_documents = set([doc.metadata['filename'] for doc in response['source_documents']])
-
-    return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'
+    def get_tool(self):
+        tool = StructuredTool.from_function(
+            func = self.rag,
+            name = "rag",
+            args_schema = self.RAGSchema,
+        )
+        return tool
