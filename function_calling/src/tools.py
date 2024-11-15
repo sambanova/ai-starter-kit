@@ -33,14 +33,14 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
-def get_config_info(config_path: str = CONFIG_PATH) -> Tuple[Dict[str, Any], bool]:
+def get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, Any]:
     """
     Loads json config file
     """
     # Read config file
     with open(config_path, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
-    tools_info = config['tools']
+    tools_info: Dict[str, Any] = config['tools']
 
     return tools_info
 
@@ -49,12 +49,12 @@ class ToolClass(ABC):
     """Default class for creating configurable tools,
     that needs constants or parameters not sent in a tool calling event"""
 
-    def __init__(self, config_path: str = CONFIG_PATH, **kwargs):
+    def __init__(self, config_path: str = CONFIG_PATH, **kwargs: Any) -> None:
         self.kwargs = kwargs
         self.config = get_config_info(config_path)
 
     @abstractmethod
-    def get_tool(self):
+    def get_tool(self) -> StructuredTool:
         pass
 
 
@@ -314,7 +314,7 @@ class QueryDb(ToolClass):
         result = '\n'.join([f'Query {query} executed with result {result}' for query, result in zip(queries, results)])
         return result
 
-    def get_tool(self):
+    def get_tool(self) -> StructuredTool:
         tool = StructuredTool.from_function(
             func=self.query_db,
             name='query_db',
@@ -361,7 +361,7 @@ class Translate(ToolClass):
 
         return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
 
-    def get_tool(self):
+    def get_tool(self) -> StructuredTool:
         tool = StructuredTool.from_function(
             func=self.translate,
             name='translate',
@@ -448,7 +448,7 @@ class Rag(ToolClass):
 
         return f'Answer: {answer}\nSource Document(s): {str(source_documents)}'
 
-    def get_tool(self):
+    def get_tool(self) -> StructuredTool:
         tool = StructuredTool.from_function(
             func=self.rag,
             name='rag',

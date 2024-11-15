@@ -116,7 +116,9 @@ class FunctionCallingLlm:
         self.prod_mode = configs[1]
         self.llm = self.set_llm()
         self.kwargs = kwargs
-        if isinstance(tools, Tool) or isinstance(tools, StructuredTool) or isinstance(tools, str):
+        if tools is None:
+            tools = []
+        if not isinstance(tools, list):
             tools = [tools]
         langchain_tools = []
         for tool in tools:
@@ -129,28 +131,35 @@ class FunctionCallingLlm:
         tools_schemas = self.get_tools_schemas(self.tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
-    def _set_tool(self, tool: Union[str, StructuredTool, Tool, ToolClass]):
+    def _set_tool(self, tool: Union[str, StructuredTool, Tool, ToolClass]) -> Union[Tool, StructuredTool]:
+        # if is a langchain tool
         if isinstance(tool, StructuredTool) or isinstance(tool, Tool):
             return tool
+        # if is a str to map in TOOLS mapping dict
         elif isinstance(tool, str):
             if tool in TOOLS.keys():
-                if isinstance(TOOLS[tool], StructuredTool) or isinstance(TOOLS[tool], Tool):
-                    return TOOLS[tool]
+                mapped_tool = TOOLS[tool]
+                # if mapped is a langchain tool
+                if isinstance(mapped_tool, (StructuredTool, Tool)):
+                    return mapped_tool
+                # if mapped is a ToolClass
                 else:
-                    tool = TOOLS[tool](sambanova_api_key=self.sambanova_api_key, **self.kwargs)
-                    return tool.get_tool()
+                    tool = mapped_tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                    return tool  # type: ignore
             else:
                 raise ValueError(f'Tool {tool} not found in TOOLS mapping dict')
+        # if is a ToolClass
         elif isinstance(tool, type):
             if issubclass(tool, ToolClass):
-                return tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                tool = tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()  # type: ignore
+                return tool  # type: ignore
             else:
-                raise ValueError(
+                raise TypeError(
                     f'Tool {type(tool)}  not supported allowed types: StructuredTool, Tool, '
                     'ToolClass or str with tool name in TOOLS mapping dict'
                 )
         else:
-            raise ValueError(
+            raise TypeError(
                 f'Tool type {type(tool)} not supported allowed types: StructuredTool, Tool '
                 'ToolClass or str with tool name in TOOLS mapping dict'
             )

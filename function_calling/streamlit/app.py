@@ -229,7 +229,7 @@ def setChatInputValue(chat_input_value: str) -> None:
     st.components.v1.html(js)
 
 
-def set_fc_session_state_variables():
+def set_fc_session_state_variables() -> None:
     if 'tools' not in st.session_state:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
