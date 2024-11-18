@@ -1,7 +1,7 @@
 embedding_model: 
     type: "cpu"
     batch_size: 1
-    coe: True
+    bundle: True
     select_expert: "e5-mistral-7b-instruct"
 
 sn_llm:
@@ -50,40 +50,40 @@ bad_format_embeddings_model:
     type:
       - type: "string"
         batch_size: 1
-        coe: True
+        bundle: True
         select_expert: "e5-mistral-7b-instruct"
 
     string:
       - type: "cpu"
         batch_size: 1
-        coe: True
+        bundle: True
         select_expert: 1
       
       - type: "sambastudio"
         batch_size: 1
-        coe: True
+        bundle: True
         select_expert: 1
 
     boolean:
       - type: "cpu"
         batch_size: 1
-        coe: "string"
+        bundle: "string"
         select_expert: "e5-mistral-7b-instruct"
       
       - type: "sambastudio"
         batch_size: 1
-        coe: "string"
+        bundle: "string"
         select_expert: "e5-mistral-7b-instruct"
 
     integer:
       - type: "cpu"
         batch_size: "string"
-        coe: True
+        bundle: True
         select_expert: "e5-mistral-7b-instruct"
       
       - type: "sambastudio"
         batch_size: "string"
-        coe: True
+        bundle: True
         select_expert: "e5-mistral-7b-instruct"
 
 bad_format_llm_model:
@@ -99,7 +99,7 @@ bad_format_llm_model:
         max_tokens: 1024
         temperature: 0.0
         streaming: False
-        coe: True
+        bundle: True
         select_expert: "Meta-Llama-3-70B-Instruct-4096"
     
     boolean:
@@ -114,7 +114,7 @@ bad_format_llm_model:
         max_tokens: 1024
         temperature: 0.0
         streaming: "string"
-        coe: True
+        bundle: True
         select_expert: "Meta-Llama-3-70B-Instruct-4096"
 
     integer:
@@ -129,7 +129,7 @@ bad_format_llm_model:
         max_tokens: "one"
         temperature: 0.0
         streaming: False
-        coe: True
+        bundle: True
         select_expert: "Meta-Llama-3-70B-Instruct-4096"
 
     number:
@@ -144,7 +144,7 @@ bad_format_llm_model:
         max_tokens: 1024
         temperature: "string"
         streaming: False
-        coe: True
+        bundle: True
         select_expert: "Meta-Llama-3-70B-Instruct-4096"
 
 bad_format_chat_model:
