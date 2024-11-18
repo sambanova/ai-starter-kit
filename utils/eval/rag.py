@@ -88,10 +88,10 @@ class RAGChain:
         """
         try:
             embeddings = APIGateway.load_embedding_model(**self.embeddings_params.model_dump())
-            vectordb = VectorStoreManager.load_vectordb('chroma', 'demo', embeddings)
+            vectordb = VectorStoreManager.load_vectordb(embeddings=embeddings, **self.vectordb_params.model_dump())
             return embeddings, vectordb
         except Exception as e:
-            raise Exception('Failed to initialize vector database') from e
+            raise Exception(f'Failed to initialize vector database: {e}') from e
 
     def _init_chain(self) -> None:
         """

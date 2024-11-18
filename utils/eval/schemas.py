@@ -19,3 +19,4 @@ class EmbeddingsSchema(BaseModel):
 
 class VectorDBSchema(BaseModel):
     db_type: Literal['chroma'] = 'chroma'
+    collection_name: str = 'demo'

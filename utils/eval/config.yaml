@@ -30,6 +30,7 @@ llms:
 rag:
   vectordb:
     db_type: "chroma"
+    collection_name: "demo"
   
   embeddings:
     type: "cpu"
@@ -38,6 +39,7 @@ rag:
     select_expert: "e5-mistral-7b-instruct"
 
   llm:
+    name: sncloud-llama3.1-405-chroma-rag
     type: "sncloud"
     model: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024

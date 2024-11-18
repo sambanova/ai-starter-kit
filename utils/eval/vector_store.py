@@ -14,14 +14,14 @@ class VectorStoreManager:
     """
 
     @staticmethod
-    def load_vectordb(db_type: str, collection_name: str, embeddings: Embeddings) -> Chroma:
+    def load_vectordb(embeddings: Embeddings, db_type: str, collection_name: str) -> Chroma:
         """
         Loads a vector database based on the provided type and collection name.
 
         Args:
+            embeddings (Embeddings): The embeddings to use for the vector store.
             db_type (str): The type of vector store to load. Currently, only 'chroma' is supported.
             collection_name (str): The name of the collection to load.
-            embeddings (Embeddings): The embeddings to use for the vector store.
 
         Returns:
             Chroma: The loaded vector store.

@@ -31,18 +31,6 @@ class WeaveEvaluator(ABC):
     ) -> None:
         pass
 
-    # @abstractmethod
-    # def _get_config_info(self, config_path: str) -> Any:
-    #     pass
-
-    # @abstractmethod
-    # def _init_judge(self) -> Any:
-    #     pass
-
-    # @abstractmethod
-    # def _init_dataset_manager(self) -> Any:
-    #     pass
-
 
 class BaseWeaveEvaluator(WeaveEvaluator):
     """
