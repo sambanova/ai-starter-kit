@@ -128,7 +128,7 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             str: adjusted text
         """
-        model = self.model_name.replace('COE/', '').replace('/', '_')
+        model = self.model_name.replace('Bundle/', '').replace('/', '_')
         tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
         tokenized_text_filepath = f'{file_location}/../prompts/{tokenized_text_filename}'
 

@@ -77,7 +77,7 @@ The next step is to set up your environment variables to use one of the inferenc
     Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
 
 - **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sambastudio"`, and set the `CoE` and `select_expert` configs if you are using a CoE endpoint.
+    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sambastudio"`, and set the `bundle` and `select_expert` configs if you are using a bundle endpoint.
 
 ### Set up the embedding model
 
@@ -85,7 +85,7 @@ You have the following options to set up your embedding model:
 
 * **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `coe` and `select_expert` according to your SambaStudio endpoint.
+* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `select_expert` according to your SambaStudio endpoint.
 
 ### Set up the vector database
 
@@ -242,7 +242,7 @@ Several open-source embedding models are available on Hugging Face. [This leader
 
 To change the embedding model, do the following:
 * If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), e5-large-v2 from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
-* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
+* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `bundle` and `select_expert` in the config file. 
 
 ## Store embeddings
 

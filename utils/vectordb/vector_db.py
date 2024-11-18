@@ -342,7 +342,7 @@ class VectorDb:
         urls: Optional[List[str]] = None,
         embedding_type: str = 'cpu',
         batch_size: Optional[int] = None,
-        coe: Optional[bool] = None,
+        bundle: Optional[bool] = None,
         select_expert: Optional[str] = None,
     ) -> Any:
         docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
@@ -353,7 +353,7 @@ class VectorDb:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
         embeddings = APIGateway.load_embedding_model(
-            type=embedding_type, batch_size=batch_size, coe=coe, select_expert=select_expert
+            type=embedding_type, batch_size=batch_size, bundle=bundle, select_expert=select_expert
         )
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
