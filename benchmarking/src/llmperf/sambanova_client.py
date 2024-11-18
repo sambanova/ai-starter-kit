@@ -268,7 +268,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             url: URL being used for the API call
 
         Returns:
-            dict: API call body according to COE and streaming conditions
+            dict: API call body according to Bundle and streaming conditions
         """
         prompt = self.request_config.prompt_tuple[0]
         sampling_params = self.request_config.sampling_params
@@ -303,8 +303,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
     def _get_json_data_for_regular_sambastudio(
         self, url: str, prompt: str, sampling_params: Dict[str, Any]
     ) -> Dict[str, Any]:
-        # Change params whether model is COE or not
-        if 'COE' in self.request_config.model:
+        # Change params whether model is Bundle or not
+        if 'Bundle' in self.request_config.model:
             sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
             sampling_params['process_prompt'] = False
 

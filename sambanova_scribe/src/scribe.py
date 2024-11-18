@@ -105,7 +105,7 @@ class Scribe:
         llm = APIGateway.load_llm(
             type=self.llm_info['type'],
             streaming=False,
-            coe=self.llm_info['coe'],
+            bundle=self.llm_info['bundle'],
             do_sample=self.llm_info['do_sample'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],

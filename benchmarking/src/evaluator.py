@@ -194,7 +194,7 @@ def main() -> None:
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
 
-        # running perf eval for multiple coe models
+        # running perf eval for multiple bundle models
         for model_idx, model_name in enumerate(model_names):
             user_metadata['model_idx'] = model_idx
             # set synthetic evaluator

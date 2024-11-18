@@ -129,8 +129,8 @@ class SambaNovaLLM:
 
         if not isinstance(self.llm_info['api'], str):
             raise TypeError('LLM `api` must be a string.')
-        if not isinstance(self.llm_info['coe'], bool):
-            raise TypeError('LLM `coe` must be a boolean.')
+        if not isinstance(self.llm_info['bundle'], bool):
+            raise TypeError('LLM `bundle` must be a boolean.')
         if not isinstance(self.llm_info['do_sample'], bool):
             raise TypeError('LLM `do_sample` must be a boolean.')
         if not isinstance(self.llm_info['max_tokens_to_generate'], int):
@@ -156,8 +156,8 @@ class SambaNovaLLM:
             raise TypeError(f'LLM API must be a string. Got type{type(self.llm_info["api"])}')
 
         if self.llm_info['api'] in ['sncloud', 'sambastudio']:
-            if not isinstance(self.llm_info['coe'], bool):
-                raise TypeError('`coe` must be a boolean.')
+            if not isinstance(self.llm_info['bundle'], bool):
+                raise TypeError('`bundle` must be a boolean.')
             if not isinstance(self.llm_info['do_sample'], bool):
                 raise TypeError('`do_sample` must be a boolean.')
             if not isinstance(self.llm_info['max_tokens_to_generate'], int):
@@ -173,7 +173,7 @@ class SambaNovaLLM:
             llm = APIGateway.load_llm(
                 type=self.llm_info['api'],
                 streaming=False,
-                coe=self.llm_info['coe'],
+                bundle=self.llm_info['bundle'],
                 do_sample=self.llm_info['do_sample'],
                 max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
                 temperature=self.llm_info['temperature'],
