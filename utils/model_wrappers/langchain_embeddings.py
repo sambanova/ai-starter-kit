@@ -34,7 +34,7 @@ class SambaStudioEmbeddings(BaseModel, Embeddings):
 
             (or)
 
-            # CoE example
+            # bundle example
             embeddings = SambaStudioEmbeddings(
                 batch_size=1,
                 model_kwargs={
