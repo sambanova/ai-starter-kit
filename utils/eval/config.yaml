@@ -8,19 +8,38 @@ llms:
     model_name: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.2-1
     model_type: "sncloud"
     model_name: "Meta-Llama-3.2-1B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.1-70
     model_type: "sncloud"
     model_name: "Meta-Llama-3.1-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.2-3
     model_type: "sncloud"
     model_name: "Meta-Llama-3.2-3B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+
+rag:
+  vectordb:
+    db_type: "chroma"
+  
+  embeddings:
+    type: "cpu"
+    batch_size: 1
+    coe: True
+    select_expert: "e5-mistral-7b-instruct"
+
+  llm:
+    type: "sncloud"
+    model: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
 

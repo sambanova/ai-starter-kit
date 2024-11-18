@@ -155,6 +155,33 @@ class WeaveDatasetManager:
     def __init__(self) -> None:
         self._type = 'weave'
 
+    def create_raw_dataset(self, filepath: str) -> List[Dict[str, str]]:
+        """
+        Creates a raw dataset from the input data file.
+
+        Args:
+            filepath (str): The path to the input data file.
+
+        Returns:
+            List[Dict[str, str]]: The raw dataset data.
+        """
+        converter = DatasetConverterFactory.create_converter(filepath)
+        converted_data = converter.convert()
+        return converted_data
+
+    def to_weave_dataset(self, name: str, data: List[Dict[str, str]]) -> Dataset:
+        """
+        Converts the given data into a Weave dataset.
+
+        Args:
+            name (str): The name of the dataset.
+            data (List[Dict[str, str]]): The data to convert.
+
+        Returns:
+            Dataset: The created Weave dataset.
+        """
+        return Dataset(name=name, rows=data)
+
     def create_dataset(self, name: str, filepath: str) -> Dataset:
         """
          Create a Weave dataset from the input data file.
@@ -166,6 +193,6 @@ class WeaveDatasetManager:
         Returns:
             Dataset: The created Weave dataset.
         """
-        converter = DatasetConverterFactory.create_converter(filepath)
-        converted_data = converter.convert()
-        return Dataset(name=name, rows=converted_data)
+        converted_data = self.create_raw_dataset(filepath)
+
+        return self.to_weave_dataset(name, converted_data)
