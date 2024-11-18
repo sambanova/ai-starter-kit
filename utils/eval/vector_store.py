@@ -12,6 +12,7 @@ class VectorStoreManager:
     Methods:
         load_vectordb: Loads a vector database based on the provided type and collection name.
     """
+
     @staticmethod
     def load_vectordb(db_type: str, collection_name: str, embeddings: Embeddings) -> Chroma:
         """

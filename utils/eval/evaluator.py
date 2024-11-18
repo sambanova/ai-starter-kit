@@ -19,7 +19,7 @@ from weave import Dataset
 from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
 from utils.eval.rag import RAGChain
-from utils.eval.schemas import SNCloudSchema, EmbeddingsSchema, VectorDBSchema
+from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
 
@@ -226,6 +226,7 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
     """
     Base class for evaluating RAG models using the Weave framework.
     """
+
     def __init__(self) -> None:
         super().__init__()
         self.rag_info = self.config_info['rag']
@@ -307,8 +308,4 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
         llm_info = rag_info['llm']
         embeddings_info = rag_info['embeddings']
         vectordb_info = rag_info['vectordb']
-        return RAGChain(
-            SNCloudSchema(**llm_info),
-            EmbeddingsSchema(**embeddings_info),
-            VectorDBSchema(**vectordb_info)
-        )
+        return RAGChain(SNCloudSchema(**llm_info), EmbeddingsSchema(**embeddings_info), VectorDBSchema(**vectordb_info))

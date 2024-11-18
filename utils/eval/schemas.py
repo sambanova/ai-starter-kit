@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from typing import Literal
+
+from pydantic import BaseModel
+
 
 class SNCloudSchema(BaseModel):
     type: str
@@ -9,11 +11,11 @@ class SNCloudSchema(BaseModel):
 
 
 class EmbeddingsSchema(BaseModel):
-    type: Literal["cpu", "sambastudio"] = "cpu"
+    type: Literal['cpu', 'sambastudio'] = 'cpu'
     batch_size: int = 1
     coe: bool = True
     select_expert: str
 
 
 class VectorDBSchema(BaseModel):
-    db_type: Literal["chroma"] = "chroma"
+    db_type: Literal['chroma'] = 'chroma'

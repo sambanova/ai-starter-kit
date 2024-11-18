@@ -9,16 +9,17 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
+from typing import Tuple
+
 from langchain import hub
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_core.embeddings import Embeddings
 from langchain_core.output_parsers import StrOutputParser
 
+from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 from utils.eval.vector_store import VectorStoreManager
 from utils.model_wrappers.api_gateway import APIGateway
-from langchain_core.embeddings import Embeddings
-from langchain_chroma import Chroma
-from utils.eval.schemas import SNCloudSchema, EmbeddingsSchema, VectorDBSchema
-from typing import Tuple
 
 
 class RAGChain:
@@ -35,8 +36,9 @@ class RAGChain:
         rag_chain (object): The RAG chain.
     """
 
-    def __init__(self, llm_params: SNCloudSchema, embeddings_params: EmbeddingsSchema,
-    vectordb_params: VectorDBSchema) -> None:
+    def __init__(
+        self, llm_params: SNCloudSchema, embeddings_params: EmbeddingsSchema, vectordb_params: VectorDBSchema
+    ) -> None:
         self.llm_params = llm_params
         self.embeddings_params = embeddings_params
         self.vectordb_params = vectordb_params
@@ -55,7 +57,7 @@ class RAGChain:
         """
 
         if not os.path.exists(path):
-            raise FileNotFoundError("Path does not exist")
+            raise FileNotFoundError('Path does not exist')
 
         loader = PyPDFLoader(path)
         docs = loader.load()
@@ -85,13 +87,11 @@ class RAGChain:
             Tuple: A tuple containing the embeddings model and the vector database.
         """
         try:
-            embeddings = APIGateway.load_embedding_model(
-                **self.embeddings_params.model_dump()
-            )
+            embeddings = APIGateway.load_embedding_model(**self.embeddings_params.model_dump())
             vectordb = VectorStoreManager.load_vectordb('chroma', 'demo', embeddings)
             return embeddings, vectordb
         except Exception as e:
-            raise Exception("Failed to initialize vector database") from e
+            raise Exception('Failed to initialize vector database') from e
 
     def _init_chain(self) -> None:
         """
@@ -104,15 +104,8 @@ class RAGChain:
         try:
             prompt = hub.pull('rlm/rag-prompt')
             retriever = self.vectordb.as_retriever()
-            llm = APIGateway.load_chat(
-                **self.llm_params.model_dump()
-            )
-            rag_chain = (
-                {'context': retriever, 'question': RunnablePassthrough()} 
-                | prompt 
-                | llm 
-                | StrOutputParser()
-            )
+            llm = APIGateway.load_chat(**self.llm_params.model_dump())
+            rag_chain = {'context': retriever, 'question': RunnablePassthrough()} | prompt | llm | StrOutputParser()
             return rag_chain
         except Exception as e:
-            raise Exception("Failed to initialize RAG chain") from e
+            raise Exception('Failed to initialize RAG chain') from e
