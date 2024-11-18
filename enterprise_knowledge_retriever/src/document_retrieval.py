@@ -308,7 +308,7 @@ class DocumentRetrieval:
         embeddings = APIGateway.load_embedding_model(
             type=self.embedding_model_info['type'],
             batch_size=self.embedding_model_info['batch_size'],
-            coe=self.embedding_model_info['coe'],
+            bundle=self.embedding_model_info['bundle'],
             select_expert=self.embedding_model_info['select_expert'],
         )
         return embeddings

@@ -122,8 +122,8 @@ This option allows you to evaluate the performance of the selected LLM on synthe
      _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `COE/` 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+    - The model name should mirror the name shown in studio, preceded with `Bundle/` 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name.
@@ -170,7 +170,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     1. Dynamic batching speed  
 
         Parameters:
-        - Model name: COE/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 250
         - Number of output tokens: 250
@@ -189,7 +189,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     2. High input and ouput tokens
 
         Parameters:
-        - Model name: COE/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 2000
         - Number of output tokens: 2000
@@ -208,7 +208,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     3. Running multiple concurrent requests
 
         Parameters:
-        - Model name: COE/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 250
         - Number of output tokens: 250
@@ -249,8 +249,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
     _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified.
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `COE/` - 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+    - The model name should mirror the name shown in studio, preceded with `Bundle/` - 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
@@ -296,8 +296,8 @@ This option allows you to measure performance during a multi-turn conversation w
 1. Enter a model name and choose the right API type
 
   - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `COE/` - 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `COE/Meta-Llama-3-8B-Instruct`.
+    - The model name should mirror the name shown in studio, preceded with `Bundle/` - 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
@@ -337,7 +337,7 @@ This method can be ran from a terminal session. Users have this option if they w
 _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
+  - **model-name**: Model name to be used. If it's a Bundle model, add "Bundle/" prefix to the name. Example: "Bundle/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
@@ -384,7 +384,7 @@ sh run_custom_dataset.sh
 _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. If it's a COE model, add "COE/" prefix to the name. Example: "COE/Meta-Llama-3-8B-Instruct"
+  - **model-name**: Model name to be used. If it's a Bundle model, add "Bundle/" prefix to the name. Example: "Bundle/Meta-Llama-3-8B-Instruct"
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
@@ -426,7 +426,7 @@ sh run_synthetic_dataset.sh
 
 ![summary_output_image](./imgs/perf_eval_summary_output.png)
 
-- There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A COE endpoint is meant to be used for this analysis. 
+- There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis. 
 </details>
 
 

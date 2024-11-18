@@ -169,7 +169,7 @@ def main() -> None:
                 st.switch_page('app.py')
 
     try:
-        # Sets LLM based on side bar parameters and COE model selected
+        # Sets LLM based on side bar parameters and bundle model selected
 
         if sidebar_run_option:
             params = _get_params()
