@@ -33,9 +33,9 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from function_calling.src.function_calling import FunctionCallingLlm
-from function_calling.src.tools import calculator, get_time, python_repl, QueryDb
+from function_calling.src.tools import QueryDb, calculator, get_time, python_repl
 
-tools = ["get_time", "calculator", "python_repl", "query_db"]
+tools = ['get_time', 'calculator', 'python_repl', 'query_db']
 
 
 class FCTestCase(unittest.TestCase):
@@ -45,7 +45,7 @@ class FCTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type['FCTestCase']) -> None:
         cls.time_start = time.time()
-        cls.fc = FunctionCallingLlm(tools)
+        cls.fc = FunctionCallingLlm(tools=tools) # type: ignore
 
     # Add assertions
     def test_fc_initialization(self) -> None:
@@ -97,7 +97,7 @@ class FCTestCase(unittest.TestCase):
 
         response = self.fc.function_call_llm(
             'whats the price in colombian pesos of the track "Snowballed" in the db if one usd is equal to 3800 cop?',
-            max_it=5
+            max_it=5,
         )
         logger.info('\nFunction calling pipeline with query_db and calculator:')
         logger.info(response)
