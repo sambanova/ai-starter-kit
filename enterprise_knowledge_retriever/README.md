@@ -22,6 +22,7 @@ Table of Contents:
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the generative model](#set-up-the-generative-model)
         - [Set up the embedding model](#set-up-the-embedding-model)
+        - [Set up the vector database](#set-up-the-vector-database)
     - [Windows requirements](#windows-requirements)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
@@ -85,6 +86,14 @@ You have the following options to set up your embedding model:
 * **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
 * **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `select_expert` according to your SambaStudio endpoint.
+
+### Set up the vector database
+
+Choose your vector database from the accessible integrations to power your RAG performance. Simply access the [config file](./config.yaml), and under the `retrieval` section, set the value of the variable `db_type` with your choice. You have the following supported open-source options:
+
+* **Chroma (default)**: Specifiy this option by setting it to `"db_type": "chroma"`.
+
+* **Milvus by Zilliz**: Specifiy this option by setting it to `"db_type": "milvus"`.
 
 ## Windows requirements
 
