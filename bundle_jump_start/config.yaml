@@ -4,15 +4,15 @@ llm:
     "temperature": 0.0
     "do_sample": False
     "max_tokens_to_generate": 1200
-    "coe": True #set as true if using Sambastudio CoE endpoint
-    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio CoE llm expert
+    "bundle": True #set as true if using Sambastudio Bundle endpoint
+    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio Bundle llm expert
     
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
-    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
-    "coe": False #set true if using Sambastudio embeddings in a CoE endpoint 
-    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
+    "batch_size": 1 #set depending of your endpoint configuration (1 if Bundle embedding expert)
+    "bundle": False #set true if using Sambastudio embeddings in a Bundle endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio Bundle embedding expert
 
 retrieval:
   chunk_size: 1000
@@ -74,7 +74,7 @@ expert_prompt: |
   - Explain your answer
   <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
-coe_name_map:
+bundle_name_map:
   Finance expert: "Meta-Llama-3.1-70B-Instruct"
   Math expert: "Meta-Llama-3.1-70B-Instruct"
   Code expert: "Meta-Llama-3.1-70B-Instruct"

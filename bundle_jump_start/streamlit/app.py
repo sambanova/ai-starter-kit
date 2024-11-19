@@ -22,7 +22,7 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader,
 )
 
-from CoE_jump_start.src.use_CoE_model import (
+from bundle_jump_start.src.use_bundle_model import (
     get_expert,
     get_expert_val,
     run_bulk_routing_eval,
@@ -44,7 +44,7 @@ def save_config() -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title='CoE LLM Router AI Starter Kit',
+        page_title='Bundle LLM Router AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
         layout='wide',
     )
@@ -58,15 +58,15 @@ def main() -> None:
         ['Config', 'Expert', 'Simple', 'E2E With Vector DB', 'Bulk Evaluation'],
     )
 
-    st.title('CoE LLM Router Interface')
+    st.title('Bundle LLM Router Interface')
 
     if page == 'Config':
         st.header('Configuration')
 
-        st.subheader('CoE Name Map')
-        for key, value in config['coe_name_map'].items():
+        st.subheader('Bundle Name Map')
+        for key, value in config['bundle_name_map'].items():
             new_value = st.text_input(f'{key}', value)
-            config['coe_name_map'][key] = new_value
+            config['bundle_name_map'][key] = new_value
 
         st.subheader('Expert Prompt')
         config['expert_prompt'] = st.text_area('Expert Prompt', config['expert_prompt'], height=300)

@@ -30,7 +30,7 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 llm = APIGateway.load_llm(
     type='sambastudio',
     streaming=True,
-    coe=True,
+    bundle=True,
     do_sample=False,
     max_tokens_to_generate=500,
     temperature=0.0,
@@ -41,7 +41,7 @@ llm = APIGateway.load_llm(
 llm_baseline = APIGateway.load_llm(
     type='sambastudio',
     streaming=True,
-    coe=True,
+    bundle=True,
     do_sample=False,
     max_tokens_to_generate=500,
     temperature=0.0,
@@ -109,7 +109,7 @@ if __name__ == '__main__':
             tokenizer=tokenizer,
             embedding_type='sambastudio',
             batch_size=1,
-            coe=True,
+            bundle=True,
             select_expert='e5-mistral-7b-instruct',
         )
 

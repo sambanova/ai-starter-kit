@@ -3,15 +3,15 @@ llm:
   "do_sample": False
   "temperature": 0.01
   "max_tokens_to_generate": 2048
-  "coe": True #set as true if using Sambastudio CoE endpoint
+  "bundle": True #set as true if using Sambastudio Bundle endpoint
   "select_expert": "Meta-Llama-3-70B-Instruct-4096" 
   #sncloud expert name -> "llama3-405b"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
-    "batch_size": 1 #set depending of your endpoint configuration (1 if CoE embedding expert)
-    "coe": True #set true if using Sambastudio embeddings in a CoE endpoint 
-    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio CoE embedding expert
+    "batch_size": 1 #set depending of your endpoint configuration (1 if Bundle embedding expert)
+    "bundle": True #set true if using Sambastudio embeddings in a Bundle endpoint 
+    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio Bundle embedding expert
 
 prompts: 
     "generate_qa_prompt": "prompts/generate_Q&A.yaml"

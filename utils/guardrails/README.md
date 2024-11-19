@@ -30,7 +30,7 @@ This guardrails module is an util that can be used to configure guardrails insid
 
 # Before you begin
 
-To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model from SambaStudio CoE.
+To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model from SambaStudio bundle.
 
 ## Clone this repository
 
@@ -46,7 +46,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 The next step is to set up your environment variables to use the models available from SambaNova, If you're a current SambaNova customer, you can deploy your guardrails models with SambaStudio.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `CoE` and `select_expert` configs if using a CoE endpoint.
+    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `bundle` and `select_expert` configs if using a bundle endpoint.
 
 ###  Install dependencies
 
