@@ -7,8 +7,12 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Set, Union
 
+import jinja2
 import yaml
 from dotenv import load_dotenv
+from jinja2 import meta
+from jinja2.sandbox import ImmutableSandboxedEnvironment
+from packaging import version
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -89,6 +93,57 @@ class BYOC(SnsdkWrapper):
                 with open(self.config_path, 'w') as outfile:
                     yaml.dump(self.config, outfile)
                 logging.info(f'config file updated with checkpoints parameters')
+
+    def check_chat_templates(
+        self, test_messages: List[str], checkpoint_paths: Optional[Union[List[str], str]] = None
+    ) -> None:
+        """
+        Checks the chat templates for the given checkpoint paths.
+
+        Reads the tokenizer config file for each checkpoint path, extracts the chat template,
+        and checks if it can be rendered with the provided test messages.
+
+        Parameters:
+            test_messages (List[str]): A list of test messages to use for rendering the chat template.
+            checkpoint_paths (list of str or str, optional): checkpoint paths.
+                if not set config paths in config.yaml file will be used
+
+        Returns:
+            None
+        """
+        if isinstance(checkpoint_paths, str):
+            checkpoint_paths = [checkpoint_paths]
+
+        if checkpoint_paths is None:
+            self._raise_error_if_config_is_none()
+            checkpoint_paths = [checkpoint['checkpoint_path'] for checkpoint in self.config['checkpoints']]
+
+        for checkpoint_path in checkpoint_paths:
+            with open(os.path.join(checkpoint_path, 'tokenizer_config.json')) as file:
+                tokenizer_config = json.load(file)
+                chat_template = tokenizer_config.get('chat_template')
+            if isinstance(chat_template, str):
+                logging.info(f'Raw chat template for checkpoint in {checkpoint_path}:\n{chat_template}\n')
+                if version.parse(jinja2.__version__) <= version.parse('3.0.0'):
+                    raise ImportError(
+                        'apply_chat_template requires jinja2>=3.0.0 to be installed. Your version is '
+                        f'{jinja2.__version__}.'
+                    )
+                try:
+                    jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+                    undeclared_variables = meta.find_undeclared_variables(jinja_env.parse(chat_template))
+                    special_tokens_map = {'messages': test_messages, **tokenizer_config}
+                    missing_variables = set(undeclared_variables) - set(special_tokens_map.keys())
+                    if len(missing_variables) > 0:
+                        logging.error(f'Missing variables to render template: {missing_variables}')
+                    else:
+                        compiled_template = jinja_env.from_string(chat_template)
+                        rendered = compiled_template.render(**special_tokens_map)
+                        logging.info(f'Rendered template with input test messages:\n\n{rendered}')
+                except Exception as e:
+                    logging.error(f'Failed to render template: {str(e)}')
+            else:
+                logging.error(f'Raw chat template for checkpoint in {checkpoint_path}: is not a string')
 
     def get_suitable_apps(self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
         """
@@ -204,6 +259,7 @@ class BYOC(SnsdkWrapper):
         app_id: str,
         publisher: str = '',
         description: str = '',
+        retries: int = 3,
     ) -> Optional[str]:
         """Upload the checkpoint to Snapi
 
@@ -217,6 +273,8 @@ class BYOC(SnsdkWrapper):
         - app_id (str): id of the application.
         - publisher (str, optional): publisher of the model. Defaults to "".
         - description (str, optional): description of the model. Defaults to "".
+        - retries (int): max number of retries to upload a checkpoint when
+            upload process fails. Defaults to 3.
 
         Raises:
             Exception: If checkpoint upload fails
@@ -251,31 +309,39 @@ class BYOC(SnsdkWrapper):
                 publisher,
                 description,
             )
+            # attempt to upload retries times
+            for i in range(retries + 1):
+                # execute snapi import model create command
+                snapi_response = subprocess.run(command, capture_output=True, text=True)
 
-            # execute snapi import model create command
-            snapi_response = subprocess.run(command, capture_output=True, text=True)
+                # check if errors in execution
+                errors_response = (
+                    ('Aborted' in snapi_response.stdout.lower()) and ('error occured' in snapi_response.stdout.lower())
+                ) or (len(snapi_response.stderr) > 0)
 
-            # check if errors in execution
-            errors_response = (
-                ('Aborted' in snapi_response.stdout.lower()) and ('error occured' in snapi_response.stdout.lower())
-            ) or (len(snapi_response.stderr) > 0)
+                # capture errors coming in response
+                if errors_response:
+                    if len(snapi_response.stderr) > 0:
+                        error_message = snapi_response.stderr
+                    else:
+                        error_search = re.search(r'Upload Error\s*(.*)', snapi_response.stdout)
+                        if error_search:
+                            error_message = error_search[0]
+                    logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
+                    logging.error(error_message)
+                    if i < retries:
+                        logging.info(f'Retrying upload for {i+1} time...')
+                        continue
+                    else:
+                        raise Exception(
+                            f'Error uploading model checkpoint after {retries} attempts\n' 'max retries exceed'
+                        )
 
-            # capture errors coming in response
-            if errors_response:
-                if len(snapi_response.stderr) > 0:
-                    error_message = snapi_response.stderr
+                # if there are no errors in response
                 else:
-                    error_search = re.search(r'Upload Error\s*(.*)', snapi_response.stdout)
-                    if error_search:
-                        error_message = error_search[0]
-                logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
-                logging.error(error_message)
-                raise Exception(f'uploading model checkpoint: {error_message}')
-
-            # if there are no errors in response
-            else:
-                model_id = self.search_model(model_name=model_name)
-                logging.info(f"Model checkpoint with name '{model_name}' created it with id {model_id}")
+                    model_id = self.search_model(model_name=model_name)
+                    logging.info(f"Model checkpoint with name '{model_name}' created it with id {model_id}")
+                    break
 
         # if checkpoint already exists
         else:
@@ -284,7 +350,7 @@ class BYOC(SnsdkWrapper):
         return model_id
 
     def upload_checkpoints(
-        self, checkpoints: Optional[List[Dict[str, Any]]] = None, max_parallel_jobs: int = 4
+        self, checkpoints: Optional[List[Dict[str, Any]]] = None, max_parallel_jobs: int = 4, retries: int = 3
     ) -> None:
         """
         Upload checkpoints to sambastudio
@@ -292,7 +358,9 @@ class BYOC(SnsdkWrapper):
         Parameters:
         - checkpoints (Optional[List[Dict[str, Any]]], optional): list of checkpoints.
             If not provided, all checkpoints from config will be uploaded
-        - max_parallel_jobs (int, optional): maximum number of upload parallel jobs. Defaults to 4.
+        - max_parallel_jobs (int): maximum number of upload parallel jobs. Defaults to 4.
+        - retries (int): max number of retries to upload a checkpoint when
+            upload process fails. Defaults to 3.
         """
 
         if checkpoints is None:
@@ -315,6 +383,7 @@ class BYOC(SnsdkWrapper):
                     checkpoint['app_id'],
                     checkpoint.get('publisher', ''),
                     checkpoint.get('description', ''),
+                    retries,
                 )
                 futures[checkpoint['model_name']] = future  # Add to the futures dictionary
 
