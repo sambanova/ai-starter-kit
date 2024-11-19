@@ -45,7 +45,7 @@ embedding_model_info = config['embedding_model']
 model = APIGateway.load_llm(
     type=llm_info['api'],
     streaming=True,
-    coe=llm_info['coe'],
+    bundle=llm_info['bundle'],
     do_sample=llm_info['do_sample'],
     max_tokens_to_generate=llm_info['max_tokens_to_generate'],
     temperature=llm_info['temperature'],
@@ -290,7 +290,7 @@ def set_retriever(documents_path: str, urls: List[str]) -> Any:
         urls=urls,
         embedding_type=embedding_model_info['type'],
         batch_size=embedding_model_info['batch_size'],
-        coe=embedding_model_info['coe'],
+        bundle=embedding_model_info['bundle'],
         select_expert=embedding_model_info['select_expert'],
     ).as_retriever()
 

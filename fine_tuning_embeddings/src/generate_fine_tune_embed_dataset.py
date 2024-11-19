@@ -212,7 +212,7 @@ def main() -> None:
     llm = APIGateway.load_llm(
         type='sambastudio',
         streaming=True,
-        coe=True,
+        bundle=True,
         do_sample=True,
         max_tokens_to_generate=512,
         temperature=0.01,

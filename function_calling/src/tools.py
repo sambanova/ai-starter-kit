@@ -405,7 +405,7 @@ class Rag(ToolClass):
         embeddings = APIGateway.load_embedding_model(
             type=rag_info['embedding_model']['type'],
             batch_size=rag_info['embedding_model']['batch_size'],
-            coe=rag_info['embedding_model']['coe'],
+            bundle=rag_info['embedding_model']['bundle'],
             select_expert=rag_info['embedding_model']['select_expert'],
         )
 
