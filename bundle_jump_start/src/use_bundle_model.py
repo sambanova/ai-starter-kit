@@ -140,7 +140,7 @@ def run_e2e_vector_database(user_query: str, documents: Any) -> Tuple[str, Any]:
     embeddings = APIGateway.load_embedding_model(
         type=embedding_model_info['type'],
         batch_size=embedding_model_info['batch_size'],
-        coe=embedding_model_info['coe'],
+        bundle=embedding_model_info['bundle'],
         select_expert=embedding_model_info['select_expert'],
     )
 
@@ -168,7 +168,7 @@ def run_e2e_vector_database(user_query: str, documents: Any) -> Tuple[str, Any]:
     expert = get_expert_val(expert_response)
     logger.info(f'Expert: {expert}')
 
-    named_expert = config['coe_name_map'][expert]
+    named_expert = config['bundle_name_map'][expert]
     logger.info(f'Named expert: {named_expert}')
 
     llm = get_llm(named_expert)
@@ -188,7 +188,7 @@ def run_simple_llm_invoke(user_query: str) -> Tuple[str, str]:
     expert = get_expert_val(router_response)
     logger.info(f'Expert: {expert}')
 
-    named_expert = config['coe_name_map'][expert]
+    named_expert = config['bundle_name_map'][expert]
     logger.info(f'Named expert: {named_expert}')
 
     llm = get_llm(named_expert)
@@ -210,7 +210,7 @@ def get_llm(expert: Optional[str] = None) -> LLM:
     return APIGateway.load_llm(
         type=api_info,
         streaming=True,
-        coe=llm_info['coe'],
+        bundle=llm_info['bundle'],
         do_sample=llm_info['do_sample'],
         max_tokens_to_generate=llm_info['max_tokens_to_generate'],
         temperature=llm_info['temperature'],
@@ -381,7 +381,7 @@ def evaluate_experts(examples: List[Dict[str, Any]], config: Dict[str, Any]) -> 
         predicted_expert = get_expert_val(get_expert(prompt, use_wrapper=True))
 
         # Get the actual response from the expert
-        named_expert = config['coe_name_map'][f'{predicted_expert}']
+        named_expert = config['bundle_name_map'][f'{predicted_expert}']
         _, expert_response = run_simple_llm_invoke(prompt)
 
         # Calculate similarity
