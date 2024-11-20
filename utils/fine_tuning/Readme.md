@@ -149,7 +149,7 @@ And the trained checkpoint to promote params
 
 ``` yaml
     model_checkpoint:
-    model_checkpoint_id: "" #set the ID of checkpoint to to promote as model in modelhub (after training)
+    checkpoint_name: "" #set the name of checkpoint to to promote as model in modelhub (after training)
     model_name: "llama2_7b_fine_tuned" # set the name of your trained checkpoint
     model_version: "1"
     model_description: "finetuned llama2_7b model"
@@ -170,7 +170,7 @@ Finally you can set the params required to deploy your fine-tuned model
 
 ## Initializing Fine-tuning wrapper
 
-```python 
+```python
 from src.snsdk_wrapper import SnsdkWrapper
 sambastudio_wrapper = SnsdkWrapper(config_path=os.path.join(current_dir,"config.yaml"))
 
@@ -209,7 +209,7 @@ And check their availability running:
 To start the training job in sambastudio using the configs in your config file run:
 
 ```python
-    sambastudio_wrapper.run_job()
+    sambastudio_wrapper.run_training_job()
 ```
 
 And check the training progress

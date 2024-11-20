@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
@@ -851,7 +852,7 @@ class SnsdkWrapper:
 
     """Job"""
 
-    def run_job(
+    def run_training_job(
         self,
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
@@ -1045,6 +1046,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
+        wait: Optional[bool] = False
     ) -> Dict[str, Any]:
         """
         Check the progress of a job in a specific SambaStudio project.
@@ -1054,7 +1056,9 @@ class SnsdkWrapper:
             If not provided, the project name from the configs file is used.
         job_name (str, optional): The name of the job.
             If not provided, the job name from the configs file is used.
-
+        verbose: (bool, optional): wether to return or not full job progress status 
+        wait: bool, optional): if true the command will loop until job status is completed
+        
         Returns:
         dict: A dictionary containing the job progress status.
 
@@ -1079,31 +1083,42 @@ class SnsdkWrapper:
             raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
         # check job progress
-        check_job_progress_response = self.snsdk_client.job_info(project=project_id, job=job_id)
+        while True:
+            check_job_progress_response = self.snsdk_client.job_info(project=project_id, job=job_id)
 
-        if check_job_progress_response['status_code'] == 200:
-            if verbose:
-                job_progress = {k: v for k, v in check_job_progress_response['data'].items()}
+            if check_job_progress_response['status_code'] == 200:
+                if verbose:
+                    job_progress = {k: v for k, v in check_job_progress_response['data'].items()}
+                else:
+                    job_progress = {
+                        k: v
+                        for k, v in check_job_progress_response['data'].items()
+                        if k
+                        in [
+                            'job_name',
+                            'job_id',
+                            'job_type',
+                            'status',
+                            'time_created',
+                        ]
+                    }
+                logging.info(f'Job `{job_name}` with progress status: {job_progress["status"]}')
             else:
-                job_progress = {
-                    k: v
-                    for k, v in check_job_progress_response['data'].items()
-                    if k
-                    in [
-                        'job_name',
-                        'job_id',
-                        'job_type',
-                        'status',
-                        'time_created',
-                    ]
-                }
-
-            logging.info(f"Job '{job_name}' with progress status: {job_progress}")
-            return job_progress
-        else:
-            logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
-            raise Exception(f'Error message: {check_job_progress_response}')
-
+                logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
+                raise Exception(f'Error message: {check_job_progress_response}')
+            
+            if wait == False:
+                break
+            else:
+                if job_progress["status"]=="EXIT_WITH_0":
+                    break
+                elif job_progress["status"] in  ["EXIT_WITH_1", "FAILED"] :
+                    logging.error(f'Job failed. Details: {job_progress}')
+                    raise Exception(f'Job failed. Details: {job_progress}')
+                time.sleep(60)
+            
+        return job_progress
+    
     def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> List[Dict[str, Any]]:
         """
         List all jobs in a specific SambaStudio project.
@@ -1210,6 +1225,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
+        sort: Optional[bool] = False,
     ) -> List[Dict[str, Any]]:
         """
         List all checkpoints in a specific job within a SambaStudio project.
@@ -1220,6 +1236,7 @@ class SnsdkWrapper:
         job_name (str, optional): The name of the job. If not provided, the job name from the configs file is used.
         verbose (bool, optional): If True, detailed information about each checkpoint is returned.
             If False, only basic information is returned.
+        sort (bool, optional): If True return list will be sorted by train_loss (less training loss first)
 
         Returns:
         list[dict]: A list of dictionaries, where each dictionary represents a checkpoint.
@@ -1257,14 +1274,17 @@ class SnsdkWrapper:
                     checkpoints.append(
                         {k: v for k, v in checkpoint.items() if k in ['checkpoint_name', 'checkpoint_id']}
                     )
-            return checkpoints
+            if sort:
+                return sorted(checkpoints, key=lambda x: x['metrics']['single_value']['train_loss'])
+            else: 
+                return checkpoints
         else:
             logging.error(f'Failed to list checkpoints. Details: {list_checkpoints_response}')
             raise Exception(f'Error message: {list_checkpoints_response}')
 
     def promote_checkpoint(
         self,
-        checkpoint_id: Optional[str] = None,
+        checkpoint_name: Optional[str] = None,
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         model_name: Optional[str] = None,
@@ -1275,7 +1295,7 @@ class SnsdkWrapper:
         Promotes a model checkpoint from a specific training job to a model in SambaStudio model hub.
 
         Parameters:
-        - checkpoint_id (str, optional): The ID of the model checkpoint to be promoted.
+        - checkpoint_name (str, optional): The name of the checkpoint to be promoted as model.
             If not provided, the checkpoint id from the configs file is used.
         - project_name (str, optional): The name of the project where the model checkpoint will be promoted.
             If not provided, the project name from the configs file is used.
@@ -1313,10 +1333,10 @@ class SnsdkWrapper:
         if job_id is None:
             raise Exception(f"Job with name '{job_name}' in project '{project_name}' not found")
 
-        if checkpoint_id is None:
+        if checkpoint_name is None:
             self._raise_error_if_config_is_none()
-            checkpoint_id = self.config['model_checkpoint']['model_checkpoint_id']
-            if not checkpoint_id:
+            checkpoint_name = self.config['model_checkpoint']['checkpoint_name']
+            if not checkpoint_name:
                 raise Exception('No model checkpoint_id provided')
             # TODO: check if checkpoint in list checkpoints list blocked because authorization error
             # in lists checkpoints method
@@ -1337,17 +1357,17 @@ class SnsdkWrapper:
         add_model_response = self.snsdk_client.add_model(
             project=project_name,
             job=job_name,
-            model_checkpoint=checkpoint_id,
+            model_checkpoint=checkpoint_name,
             model_checkpoint_name=model_name,
             description=model_description,
             checkpoint_type=model_type,
         )
 
         if add_model_response['status_code'] == 200:
-            logging.info(f"Model checkpoint '{checkpoint_id}' promoted to model '{model_name}'")
+            logging.info(f"Model checkpoint '{checkpoint_name}' promoted to model '{model_name}'")
             return add_model_response['data']['model_id']
         else:
-            logging.error(f"Failed to promote checkpoint '{checkpoint_id}' to model. Details: {add_model_response}")
+            logging.error(f"Failed to promote checkpoint '{checkpoint_name}' to model. Details: {add_model_response}")
             raise Exception(f'Error message: {add_model_response}')
 
     def delete_checkpoint(self, checkpoint: Optional[str] = None) -> None:
