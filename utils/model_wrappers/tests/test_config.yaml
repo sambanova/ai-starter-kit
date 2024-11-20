@@ -1,8 +1,8 @@
 embedding_model: 
-    type: "cpu"
+    type: "sambastudio"
     batch_size: 1
     bundle: True
-    select_expert: "e5-mistral-7b-instruct"
+    select_expert: "e5-mistral-7b-instruct-8192"
 
 sn_llm:
     model: "Meta-Llama-3.1-70B-Instruct"

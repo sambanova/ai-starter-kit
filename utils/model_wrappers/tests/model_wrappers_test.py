@@ -271,7 +271,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         queries = ['tell me a 50 word tale', 'tell me a joke']
         response = self.embeddings_model.embed_query(query)
         multiple_response = self.embeddings_model.embed_documents(queries)
-        self.assertEqual(len(response), 1024, 'Embeddings dimension should be 1024')
+        self.assertEqual(len(response), 4096, 'Embeddings dimension should be 4096')
         self.assertEqual(len(multiple_response), 2, 'Response length should be 2')
 
     def test_llm_model_response(self) -> None:
@@ -297,7 +297,7 @@ class ModelWrapperTestCase(unittest.TestCase):
 
         sn_cloud_response = self.sn_chat_model.invoke(query)
         ss_response = self.ss_chat_model.invoke(query)
-        sn_cloud_raw_response = self.sn_chat_model._handle_request(format_query)
+        sn_cloud_raw_response = self.sn_chat_model._handle_request(format_query).json()
         ss_raw_response = self.ss_chat_model._handle_request(messages)
         ss_raw_response_dict = ss_raw_response.json()
 

@@ -43,11 +43,11 @@ class SNCloudChatCompletionChunk(BaseModel):
 
 
 class SambaStudioOpenAIResponseMetadata(BaseModel):
-    finish_reason: str
+    finish_reason: Optional[str]
     usage: Optional[Dict[str, Any]]
     model_name: str
     system_fingerprint: str
-    created: str
+    created: int
 
 
 class SambaStudioOpenAIResponse(BaseModel):
