@@ -1380,6 +1380,86 @@ class SnsdkWrapper:
             logging.error(f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}")
             raise Exception(f'Error message: {delete_checkpoint_response}')
 
+    def create_composite_model(
+        self,
+        model_name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_list: Optional[List[str]] = None,
+        rdu_required: Optional[int] = None,
+    ) -> Optional[str]:
+        """Create a composite model in SambaStudio
+
+        Parameters:
+        - model_name (str, optional): name of the composite model.
+            If not provided, the project name from the configuration is used.
+        - description (str, optional): description of the composite model. Defaults to None.
+            If not provided, the project name from the configuration is used.
+        - model_list (List[str], optional): list of models to include in the composite model.
+            If not provided, the models from the configuration are used.
+        - rdu_required (int, optional): minimum required RDU.
+            If not provided, the models from the configuration are used.
+
+        Raises:
+            Exception: If one or more models on list does not exist.
+            Exception: If there is an error in creating the composite model.
+
+        Returns:
+        - str: The ID of the created composite models if successful or the composite model already exists.
+            If unsuccessful, None is returned.
+        """
+
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['composite_model']['model_name']
+
+        if model_list is None:
+            self._raise_error_if_config_is_none()
+            model_list = self.config['composite_model']['model_list']
+
+        if description is None:
+            self._raise_error_if_config_is_none()
+            description = self.config['composite_model']['description']
+
+        if rdu_required is None:
+            self._raise_error_if_config_is_none()
+            rdu_required = self.config['composite_model']['rdu_required']
+
+        # check if selected composite model doesn't exist already
+        model_id = self.search_model(model_name=model_name)
+        if model_id is None:
+            # check if listed models to include in composite exist
+            model_ids = []
+            for model in model_list:
+                model_id = self.search_model(model_name=model)
+                if model_id is not None:
+                    model_ids.append(model_id)
+                else:
+                    raise Exception(f"Model with name '{model}' does not exist.")
+            logging.info(f"Models to include in composite found with ids '{list(zip(model_list,  model_ids))}")
+
+            # create composite model
+            dependencies = [{'name': model} for model in model_list]
+            create_composite_model_response = self.snsdk_client.add_composite_model(
+                name=model_name, description=description, dependencies=dependencies, rdu_required=rdu_required
+            )
+
+            if create_composite_model_response['status_code'] == 200:
+                model_id = create_composite_model_response['model_id']
+                logging.info(f'Composite model with name {model_name} created with id {model_id}')
+            else:
+                logging.error(
+                    f'Failed to create composite model with name "{model_name}".'
+                    f'Message: {create_composite_model_response["message"]}.'
+                    f'Details: {create_composite_model_response["details"]}'
+                )
+                raise Exception(f"Error message: {create_composite_model_response['details']}")
+
+        # if selected composite model already exists
+        else:
+            logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
+
+        return model_id
+
     """endpoint"""
 
     def list_endpoints(
