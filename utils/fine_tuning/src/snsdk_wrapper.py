@@ -1568,7 +1568,10 @@ class SnsdkWrapper:
         # check if model selected exists
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['model_checkpoint']['model_name']
+            if self.config.get("composite_model") is not None:
+                model_name = self.config['composite_model']['model_name']
+            else:
+                model_name = self.config['model_checkpoint']['model_name']
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
             raise Exception(f"Model with name '{model_name}' not found")
@@ -1583,9 +1586,8 @@ class SnsdkWrapper:
             return endpoint_id
 
         # check extra params passed or config file passed
-        if model_version is None:
-            self._raise_error_if_config_is_none()
-            model_version = self.config['model_checkpoint']['model_version']
+        if (model_version := self.config.get('model_checkpoint',{}).get('model_version')) is  None:
+            model_version = '1'
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
             endpoint_description = self.config['endpoint']['endpoint_description']
