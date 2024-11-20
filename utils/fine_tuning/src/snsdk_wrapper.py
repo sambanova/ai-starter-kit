@@ -1046,7 +1046,7 @@ class SnsdkWrapper:
         project_name: Optional[str] = None,
         job_name: Optional[str] = None,
         verbose: Optional[bool] = False,
-        wait: Optional[bool] = False
+        wait: Optional[bool] = False,
     ) -> Dict[str, Any]:
         """
         Check the progress of a job in a specific SambaStudio project.
@@ -1056,9 +1056,9 @@ class SnsdkWrapper:
             If not provided, the project name from the configs file is used.
         job_name (str, optional): The name of the job.
             If not provided, the job name from the configs file is used.
-        verbose: (bool, optional): wether to return or not full job progress status 
+        verbose: (bool, optional): wether to return or not full job progress status
         wait: bool, optional): if true the command will loop until job status is completed
-        
+
         Returns:
         dict: A dictionary containing the job progress status.
 
@@ -1106,19 +1106,19 @@ class SnsdkWrapper:
             else:
                 logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
                 raise Exception(f'Error message: {check_job_progress_response}')
-            
+
             if wait == False:
                 break
             else:
-                if job_progress["status"]=="EXIT_WITH_0":
+                if job_progress['status'] == 'EXIT_WITH_0':
                     break
-                elif job_progress["status"] in  ["EXIT_WITH_1", "FAILED"] :
+                elif job_progress['status'] in ['EXIT_WITH_1', 'FAILED']:
                     logging.error(f'Job failed. Details: {job_progress}')
                     raise Exception(f'Job failed. Details: {job_progress}')
                 time.sleep(60)
-            
+
         return job_progress
-    
+
     def list_jobs(self, project_name: Optional[str] = None, verbose: Optional[bool] = False) -> List[Dict[str, Any]]:
         """
         List all jobs in a specific SambaStudio project.
@@ -1276,7 +1276,7 @@ class SnsdkWrapper:
                     )
             if sort:
                 return sorted(checkpoints, key=lambda x: x['metrics']['single_value']['train_loss'])
-            else: 
+            else:
                 return checkpoints
         else:
             logging.error(f'Failed to list checkpoints. Details: {list_checkpoints_response}')
@@ -1588,7 +1588,7 @@ class SnsdkWrapper:
         # check if model selected exists
         if model_name is None:
             self._raise_error_if_config_is_none()
-            if self.config.get("composite_model") is not None:
+            if self.config.get('composite_model') is not None:
                 model_name = self.config['composite_model']['model_name']
             else:
                 model_name = self.config['model_checkpoint']['model_name']
@@ -1606,7 +1606,7 @@ class SnsdkWrapper:
             return endpoint_id
 
         # check extra params passed or config file passed
-        if (model_version := self.config.get('model_checkpoint',{}).get('model_version')) is  None:
+        if (model_version := self.config.get('model_checkpoint', {}).get('model_version')) is None:
             model_version = '1'
         if endpoint_description is None:
             self._raise_error_if_config_is_none()

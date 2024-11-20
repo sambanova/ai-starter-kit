@@ -69,16 +69,15 @@ def setup_generative_data_prep() -> None:
 
 
 def run_generative_data_prep_pipeline(
-    input_path: str, 
-    output_path: str, 
-    tokenizer: str, 
-    max_seq_length: int, 
-    shuffle: str, 
+    input_path: str,
+    output_path: str,
+    tokenizer: str,
+    max_seq_length: int,
+    shuffle: str,
     input_packing_config: str,
     prompt_keyword: str,
     completion_keyword: str,
     apply_chat_template: bool,
-    
 ) -> None:
     """
     Runs the generative data preparation pipeline to process a JSONL file.
@@ -96,9 +95,9 @@ def run_generative_data_prep_pipeline(
     - prompt_keyword (str):  prompt keyword.
     - completion_keyword (str):  completion keyword.
     - apply_chat_template (bool): Whether to tokenize the data using the tokenizer_config.json chat_template.
-    
+
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
-    
+
     Returns:
     - None
     """
@@ -127,7 +126,7 @@ def run_generative_data_prep_pipeline(
     ]
     if apply_chat_template:
         command.append('--apply_chat_template')
-        
+
     response = subprocess.run(
         command,
         capture_output=True,
@@ -185,17 +184,16 @@ def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] 
 
 
 def gen_data_prep_pipeline(
-    input_files: Union[list, str], 
-    output_path: str, 
-    tokenizer: str, 
+    input_files: Union[list, str],
+    output_path: str,
+    tokenizer: str,
     max_seq_length: int,
-    shuffle: str = 'on_RAM', 
+    shuffle: str = 'on_RAM',
     input_packing_config: str = 'full',
     prompt_keyword: str = 'prompt',
     completion_keyword: str = 'completion',
     apply_chat_template: bool = False,
-    
-    ) -> str:
+) -> str:
     """
     Merges input JSONL files, sets up and runs the generative data preparation pipeline.
 
@@ -209,7 +207,7 @@ def gen_data_prep_pipeline(
     - prompt_keyword (str):  prompt keyword default is 'prompt'
     - completion_keyword (str):  completion keyword default is 'completion'
     - apply_chat_template (bool): Whether to tokenize the data using the tokenizer_config.json chat_template default is False
-    
+
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
 
     Returns:
@@ -218,14 +216,14 @@ def gen_data_prep_pipeline(
     merged_jsonl_file = merge_jsonl_files(input_files)
     setup_generative_data_prep()
     run_generative_data_prep_pipeline(
-        merged_jsonl_file, 
-        output_path, 
-        tokenizer, 
+        merged_jsonl_file,
+        output_path,
+        tokenizer,
         max_seq_length,
         shuffle,
         input_packing_config,
         prompt_keyword,
         completion_keyword,
-        apply_chat_template
-        )
+        apply_chat_template,
+    )
     return output_path
