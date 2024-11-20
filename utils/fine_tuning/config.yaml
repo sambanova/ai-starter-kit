@@ -1,6 +1,6 @@
 sambastudio:
   snapi_path: ""
-  rdu_arch: "sn20"
+  rdu_arch: "sn40"
 
 dataset:
   dataset_name: "smol_sql_dataset"

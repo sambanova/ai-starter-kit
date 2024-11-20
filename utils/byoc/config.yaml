@@ -25,6 +25,7 @@ composite_model:
 project: 
   project_name: "example-byoc-project"
   project_description: "this project will be used to test e2e fine-tuning pipeline implementation"
+
 endpoint:
   endpoint_name: "test-endpoint-byoc"
   endpoint_description: "endpoint for byoc testing"
