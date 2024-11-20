@@ -61,7 +61,7 @@ The following steps are shown in the [usage Notebook](./usage.ipynb), which can 
 
 ## Get your checkpoint
 
-Yo can use your own fine-tuned models or alternatively  you can download and use [Huggingface model checkpoints](https://huggingface.co/models?pipeline_tag=text-generation&sort=trending) for this you should download the checkpoints to an specific location :
+You can use your own fine-tuned models or alternatively  you can download and use [Huggingface model checkpoints](https://huggingface.co/models?pipeline_tag=text-generation&sort=trending) for this you should download the checkpoints to an specific location :
 
 ```python
 import os
@@ -193,9 +193,9 @@ You cna deploy your bundle model in SambaStudio updating the details in `project
 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
-- huggingface-hub                0.25.2
-- Jinja2                         3.1.4
-- python-dotenv                  1.0.1
-- langchain                      0.3.7
-- langchain-community            0.3.7
-- langchain-core                 0.3.15
+- huggingface-hub                (version 0.25.2)
+- Jinja2                         (version 3.1.4)
+- python-dotenv                  (version 1.0.1)
+- langchain                      (version 0.3.7)
+- langchain-community            (version 0.3.7)
+- langchain-core                 (version 0.3.15)
