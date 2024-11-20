@@ -203,10 +203,11 @@ def gen_data_prep_pipeline(
     - tokenizer (str): The name of the pretrained tokenizer to be used for tokenization.
     - max_seq_length (int): The maximum sequence length for the input data.
     - shuffle (str): The shuffle mode for the data. Default is 'on_RAM'.
-    - input_packing_config (str): method of placing text into sequences default is full
-    - prompt_keyword (str):  prompt keyword default is 'prompt'
-    - completion_keyword (str):  completion keyword default is 'completion'
-    - apply_chat_template (bool): Whether to tokenize the data using the tokenizer_config.json chat_template default is False
+    - input_packing_config (str): method of placing text into sequences. Default is full
+    - prompt_keyword (str):  prompt keyword. Default is 'prompt'
+    - completion_keyword (str):  completion keyword. Default is 'completion'
+    - apply_chat_template (bool): Whether to tokenize the data using the 
+        tokenizer_config.json chat_template. Default is False
 
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
 
