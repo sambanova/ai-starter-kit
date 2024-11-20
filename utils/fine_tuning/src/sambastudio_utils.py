@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Optional, Union
+from typing import Any, List, Optional, Union
 
 from dotenv import load_dotenv
 
@@ -143,7 +143,7 @@ def run_generative_data_prep_pipeline(
     logging.info('Gen data preparation pipeline ran successfully')
 
 
-def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] = None) -> str:
+def merge_jsonl_files(input_paths: Union[List[Any], str], output_path: Optional[str] = None) -> str:
     """
     Merges multiple JSONL files into a single JSONL file.
 
@@ -184,7 +184,7 @@ def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] 
 
 
 def gen_data_prep_pipeline(
-    input_files: Union[list, str],
+    input_files: Union[list[Any], str],
     output_path: str,
     tokenizer: str,
     max_seq_length: int,
