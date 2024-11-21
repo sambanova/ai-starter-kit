@@ -12,6 +12,7 @@ embedding_model:
     "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio bundle embedding expert
 
 retrieval:
+    "db_type": "chroma"
     "k_retrieved_documents": 15 #set if rerank enabled 
     "score_threshold": 0.2
     "rerank": False # set if you want to rerank retriever results 

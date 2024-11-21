@@ -235,6 +235,7 @@ class VectorDb:
                 )
         elif db_type == 'milvus':
             if output_db:
+                os.makedirs(output_db, exist_ok=True)
                 uri = os.path.join(output_db, 'milvus.db')
             else:
                 os.makedirs('./data/tmp', exist_ok=True)
