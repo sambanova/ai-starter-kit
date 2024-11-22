@@ -106,7 +106,7 @@ def run_generative_data_prep_pipeline(
         '-m',
         'generative_data_prep',
         'pipeline',
-        '--input_file_path',
+        '--input_path',
         input_path,
         '--output_path',
         output_path,

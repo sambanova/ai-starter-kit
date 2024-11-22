@@ -51,7 +51,7 @@ class SnsdkWrapper:
             see a config file example in ./config.yaml
         """
         self.config_path = config_path
-        self.config = {}
+        self.config = None
         self.snapi_path = SNAPI_PATH
 
         # If config is provided, load it and validate Snapi directory path
@@ -811,7 +811,7 @@ class SnsdkWrapper:
             self._raise_error_if_config_is_none()
             model_name = self.config['job']['model']
 
-        models = self.list_models(filter_job_types=['train', 'deploy'])
+        models = self.list_models(filter_job_types=['train'])
         model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
         if len(model_id) > 0:
             logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
