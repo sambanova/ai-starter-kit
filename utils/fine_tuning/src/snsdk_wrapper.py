@@ -945,7 +945,9 @@ class SnsdkWrapper:
         # check if dataset exist
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config['dataset']['dataset_name']
+            dataset_name = self.config['job'].get('dataset_name')
+            if dataset_name is None:
+                dataset_name = self.config['dataset']['dataset_name']
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")

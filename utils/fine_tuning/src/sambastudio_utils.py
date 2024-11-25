@@ -77,6 +77,7 @@ def run_generative_data_prep_pipeline(
     input_packing_config: str,
     prompt_keyword: str,
     completion_keyword: str,
+    num_training_splits: int,
     apply_chat_template: bool,
 ) -> None:
     """
@@ -94,6 +95,7 @@ def run_generative_data_prep_pipeline(
     - input_packing_config (str): method of placing text into sequences.
     - prompt_keyword (str):  prompt keyword.
     - completion_keyword (str):  completion keyword.
+    - num_training_splits (int): number of training splits to generate
     - apply_chat_template (bool): Whether to tokenize the data using the tokenizer_config.json chat_template.
 
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
@@ -122,6 +124,8 @@ def run_generative_data_prep_pipeline(
         prompt_keyword,
         '--completion_keyword',
         completion_keyword,
+        '--num_training_splits',
+        str(num_training_splits),
         '--keep_split_jsonls',
     ]
     if apply_chat_template:
@@ -192,6 +196,7 @@ def gen_data_prep_pipeline(
     input_packing_config: str = 'full',
     prompt_keyword: str = 'prompt',
     completion_keyword: str = 'completion',
+    num_training_splits: int = 32,
     apply_chat_template: bool = False,
 ) -> str:
     """
@@ -206,6 +211,7 @@ def gen_data_prep_pipeline(
     - input_packing_config (str): method of placing text into sequences. Default is full
     - prompt_keyword (str):  prompt keyword. Default is 'prompt'
     - completion_keyword (str):  completion keyword. Default is 'completion'
+    - num_training_splits (int): number of training splits to generate. Default is 32
     - apply_chat_template (bool): Whether to tokenize the data using the 
         tokenizer_config.json chat_template. Default is False
 
@@ -225,6 +231,7 @@ def gen_data_prep_pipeline(
         input_packing_config,
         prompt_keyword,
         completion_keyword,
+        num_training_splits,
         apply_chat_template,
     )
     return output_path
