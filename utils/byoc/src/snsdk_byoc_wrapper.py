@@ -435,5 +435,4 @@ class BYOC(SnsdkWrapper):
             model_status = self.snsdk_client.import_status(model_id=model)
             model_statuses.append(model_status)
             logging.info(f'model {model} status: \n {model_status}')
-
         return model_statuses
