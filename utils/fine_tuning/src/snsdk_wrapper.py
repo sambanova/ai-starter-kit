@@ -1270,7 +1270,7 @@ class SnsdkWrapper:
         if list_checkpoints_response['status_code'] == 200:
             checkpoints = []
             for checkpoint in list_checkpoints_response['data']['checkpoints']:
-                if verbose:
+                if verbose or sort:
                     checkpoints.append({k: v for k, v in checkpoint.items()})
                 else:
                     checkpoints.append(
@@ -1608,8 +1608,11 @@ class SnsdkWrapper:
             return endpoint_id
 
         # check extra params passed or config file passed
-        if (model_version := self.config.get('model_checkpoint', {}).get('model_version')) is None:
-            model_version = '1'
+        if self.config is not None:
+            if (model_version := self.config.get('model_checkpoint', {}).get('model_version')) is None:
+                model_version = model_version or '1'
+        else:
+            model_version = model_version or '1'
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
             endpoint_description = self.config['endpoint']['endpoint_description']

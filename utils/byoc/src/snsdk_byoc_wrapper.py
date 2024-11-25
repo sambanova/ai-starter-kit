@@ -46,7 +46,7 @@ class BYOC(SnsdkWrapper):
 
     def find_config_params(
         self, checkpoint_paths: Optional[Union[List[str], str]] = None, update_config_file: bool = False
-    ) -> List[Dict[str,Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
         in given checkpoint paths.
@@ -56,9 +56,9 @@ class BYOC(SnsdkWrapper):
                 if not set config paths in config,yaml file will be used
             update_config_file (bool, optional): Whether to update the config file
                 with the found parameters. Defaults to False.
-                
+
         Returns:
-            checkpoint_parameters (list): list of dicts with the model_arch, 
+            checkpoint_parameters (list): list of dicts with the model_arch,
                 seq_length and vocab size found for each model
         """
         if isinstance(checkpoint_paths, str):
@@ -151,7 +151,9 @@ class BYOC(SnsdkWrapper):
             else:
                 logging.error(f'Raw chat template for checkpoint in {checkpoint_path}: is not a string')
 
-    def get_suitable_apps(self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None) -> List[List[Dict[str,Any]]]:
+    def get_suitable_apps(
+        self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None
+    ) -> List[List[Dict[str, Any]]]:
         """
         find suitable sambastudio apps for the given checkpoints
 
@@ -167,8 +169,8 @@ class BYOC(SnsdkWrapper):
 
         sstudio_models = self.list_models(verbose=True)
 
-        checkpoints_suitable_apps=[]
-        
+        checkpoints_suitable_apps = []
+
         for checkpoint in checkpoints:
             assert isinstance(checkpoint, dict)
             suitable_apps: Set[str] = set()
@@ -358,7 +360,10 @@ class BYOC(SnsdkWrapper):
         return model_id
 
     def upload_checkpoints(
-        self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None, max_parallel_jobs: int = 4, retries: int = 3
+        self,
+        checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+        max_parallel_jobs: int = 4,
+        retries: int = 3,
     ) -> str:
         """
         Upload checkpoints to sambastudio
@@ -374,7 +379,7 @@ class BYOC(SnsdkWrapper):
         if checkpoints is None:
             self._raise_error_if_config_is_none()
             checkpoints = self.config['checkpoints']
-            
+
         if isinstance(checkpoints, Dict):
             checkpoints = [checkpoints]
 
@@ -403,24 +408,32 @@ class BYOC(SnsdkWrapper):
             for model_name, future in futures.items():
                 try:
                     result = future.result()  # This will raise the exception if the thread raised one
-                    models.append({'name': model_name, 'id':result})
+                    models.append({'name': model_name, 'id': result})
                     logging.info(f'Checkpoint for model {model_name} finished successfully with result {result} ')
                 except Exception as e:
                     logging.error(f'Error uploading checkpoint for model {model_name}: {e}', exc_info=True)
         return models
 
-    def get_checkpoints_status(self, model_names: Optional[Union[List[str],str]] = None) -> None:
+    def get_checkpoints_status(self, model_names: Optional[Union[List[str], str]] = None) -> List[Dict[str, Any]]:
         """
         Get status of uploaded checkpoints
 
         Parameters:
         - model_names (Optional[List[str]], optional): list of model names.
+
+        Return
+        - model_statuses: list of model checkpoints status
         """
         if model_names is None:
             self._raise_error_if_config_is_none()
             model_names = [checkpoint['model_name'] for checkpoint in self.config['checkpoints']]
         if isinstance(model_names, str):
             model_names = [model_names]
+
+        model_statuses = []
         for model in model_names:
             model_status = self.snsdk_client.import_status(model_id=model)
+            model_statuses.append(model_status)
             logging.info(f'model {model} status: \n {model_status}')
+
+        return model_statuses

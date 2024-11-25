@@ -36,7 +36,7 @@ Install the python dependencies in your previously created environment.
 
 ## Prepare your dataset 
 
-You can use your own dataset (see [synthetic data generation util](../synthetic_data_gen/notebooks/quickstart_synthetic_data_gen.ipynb)) or alternatively you can download and use an existing dataset like[Huggingface datasets](https://huggingface.co/datasets?modality=modality:text&sort=trending), then execute the gen_data_prep_pipeline which will convert your dataset in a suitable format (`hdf5` files) for SambaStudio.   
+You can use your own dataset (see [synthetic data generation util](../synthetic_data_gen/notebooks/quickstart_synthetic_data_gen.ipynb)) or alternatively you can download and use an existing dataset like the ones in[Huggingface datasets](https://huggingface.co/datasets?modality=modality:text&sort=trending), then execute the gen_data_prep_pipeline which will convert your dataset in a suitable format (`hdf5` files) for SambaStudio.
 
 ```python
 from src import sambastudio_utils
@@ -176,7 +176,7 @@ sambastudio_wrapper = SnsdkWrapper(config_path=os.path.join(current_dir,"config.
 
 ```
 
-## Dataset upload #TODO
+## Dataset upload
 
 To upload your dataset using the configs in your config file run:
 
@@ -190,7 +190,7 @@ And check their availability running:
     sambastudio_wrapper.list_datasets()
 ```
 
-## Project creation #TODO
+## Project creation
 
 To create your  training and deploying project using the configs in your config file run:
 
