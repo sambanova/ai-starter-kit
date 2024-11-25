@@ -659,7 +659,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> (
         Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
-        | None
     ):
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
