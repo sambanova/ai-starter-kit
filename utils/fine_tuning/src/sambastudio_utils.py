@@ -206,7 +206,7 @@ def gen_data_prep_pipeline(
     - input_packing_config (str): method of placing text into sequences. Default is full
     - prompt_keyword (str):  prompt keyword. Default is 'prompt'
     - completion_keyword (str):  completion keyword. Default is 'completion'
-    - apply_chat_template (bool): Whether to tokenize the data using the 
+    - apply_chat_template (bool): Whether to tokenize the data using the
         tokenizer_config.json chat_template. Default is False
 
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
