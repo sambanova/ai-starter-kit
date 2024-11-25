@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Optional, Union
+from typing import Any, List, Optional, Union
 
 from dotenv import load_dotenv
 
@@ -69,7 +69,15 @@ def setup_generative_data_prep() -> None:
 
 
 def run_generative_data_prep_pipeline(
-    input_path: str, output_path: str, tokenizer: str, max_seq_length: int, shuffle: str = 'on_RAM'
+    input_path: str,
+    output_path: str,
+    tokenizer: str,
+    max_seq_length: int,
+    shuffle: str,
+    input_packing_config: str,
+    prompt_keyword: str,
+    completion_keyword: str,
+    apply_chat_template: bool,
 ) -> None:
     """
     Runs the generative data preparation pipeline to process a JSONL file.
@@ -82,7 +90,13 @@ def run_generative_data_prep_pipeline(
     - output_path (str): The path to the output directory where the processed files will be saved.
     - tokenizer (str): The name of the pretrained tokenizer to be used for tokenization.
     - max_seq_length (int): The maximum sequence length for the input data.
-    - shuffle (str, optional): The shuffle mode for the data. Default is 'on_RAM'.
+    - shuffle (str): The shuffle mode for the data.
+    - input_packing_config (str): method of placing text into sequences.
+    - prompt_keyword (str):  prompt keyword.
+    - completion_keyword (str):  completion keyword.
+    - apply_chat_template (bool): Whether to tokenize the data using the tokenizer_config.json chat_template.
+
+    see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
 
     Returns:
     - None
@@ -102,8 +116,17 @@ def run_generative_data_prep_pipeline(
         str(max_seq_length),
         '--shuffle',
         shuffle,
+        '--input_packing_config',
+        input_packing_config,
+        '--prompt_keyword',
+        prompt_keyword,
+        '--completion_keyword',
+        completion_keyword,
         '--keep_split_jsonls',
     ]
+    if apply_chat_template:
+        command.append('--apply_chat_template')
+
     response = subprocess.run(
         command,
         capture_output=True,
@@ -120,7 +143,7 @@ def run_generative_data_prep_pipeline(
     logging.info('Gen data preparation pipeline ran successfully')
 
 
-def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] = None) -> str:
+def merge_jsonl_files(input_paths: Union[List[Any], str], output_path: Optional[str] = None) -> str:
     """
     Merges multiple JSONL files into a single JSONL file.
 
@@ -160,7 +183,17 @@ def merge_jsonl_files(input_paths: Union[list, str], output_path: Optional[str] 
     return output_path
 
 
-def gen_data_prep_pipeline(input_files: Union[list, str], output_path: str, tokenizer: str, max_seq_length: int) -> str:
+def gen_data_prep_pipeline(
+    input_files: Union[list[Any], str],
+    output_path: str,
+    tokenizer: str,
+    max_seq_length: int,
+    shuffle: str = 'on_RAM',
+    input_packing_config: str = 'full',
+    prompt_keyword: str = 'prompt',
+    completion_keyword: str = 'completion',
+    apply_chat_template: bool = False,
+) -> str:
     """
     Merges input JSONL files, sets up and runs the generative data preparation pipeline.
 
@@ -169,11 +202,29 @@ def gen_data_prep_pipeline(input_files: Union[list, str], output_path: str, toke
     - output_path (str): The path to the output directory where the processed files will be saved.
     - tokenizer (str): The name of the pretrained tokenizer to be used for tokenization.
     - max_seq_length (int): The maximum sequence length for the input data.
+    - shuffle (str): The shuffle mode for the data. Default is 'on_RAM'.
+    - input_packing_config (str): method of placing text into sequences. Default is full
+    - prompt_keyword (str):  prompt keyword. Default is 'prompt'
+    - completion_keyword (str):  completion keyword. Default is 'completion'
+    - apply_chat_template (bool): Whether to tokenize the data using the 
+        tokenizer_config.json chat_template. Default is False
+
+    see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
 
     Returns:
     - str: The path of the output directory where the processed dataset is stored.
     """
     merged_jsonl_file = merge_jsonl_files(input_files)
     setup_generative_data_prep()
-    run_generative_data_prep_pipeline(merged_jsonl_file, output_path, tokenizer, max_seq_length)
+    run_generative_data_prep_pipeline(
+        merged_jsonl_file,
+        output_path,
+        tokenizer,
+        max_seq_length,
+        shuffle,
+        input_packing_config,
+        prompt_keyword,
+        completion_keyword,
+        apply_chat_template,
+    )
     return output_path
