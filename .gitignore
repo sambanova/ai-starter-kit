@@ -230,7 +230,7 @@ enterprise_knowledge_retriever/output
 
 #financial_assistant
 financial_assistant/streamlit/cache/*
-financial_assistant/streamlit/cache_prod_mode/*
+scratch/financial_assistant/cache/*
 financial_assistant/tests/cache/*
 
 =======
