@@ -283,6 +283,7 @@ utils/eval/weave
 utils/fine_tuning/src/tmp_source_file.json
 utils/fine_tuning/sambastudio_fine_tuning_dataset
 utils/byoc/models
+e2e_fine_tuning/data
 
 # yoda llava_data_prep
 yoda/llava_data_prep/sec_data
