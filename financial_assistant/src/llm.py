@@ -6,7 +6,7 @@ import yaml
 from langchain_core.language_models.llms import LLM
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.tools import StructuredTool, Tool
+from langchain_core.tools import BaseTool, StructuredTool, Tool
 from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
@@ -26,8 +26,8 @@ class SambaNovaLLM:
     def __init__(
         self,
         config_path: str,
-        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
-        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
+        tools: Optional[Union[BaseTool, Tool, StructuredTool, List[Union[BaseTool, Tool, StructuredTool]]]] = None,
+        default_tool: Optional[BaseTool | Tool | StructuredTool | type[BaseModel]] = None,
         system_prompt: Optional[str] = FUNCTION_CALLING_PROMPT_TEMPLATE,
         sambanova_api_key: Optional[str] = None,
     ) -> None:
@@ -63,7 +63,7 @@ class SambaNovaLLM:
         self.system_prompt = system_prompt
 
     @property
-    def tools(self) -> Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]]:
+    def tools(self) -> Optional[Union[BaseTool, Tool, StructuredTool, List[Union[BaseTool, Tool, StructuredTool]]]]:
         """Getter method for tools."""
 
         return self._tools
@@ -71,8 +71,8 @@ class SambaNovaLLM:
     @tools.setter
     def tools(
         self,
-        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
-        default_tool: Optional[StructuredTool | Tool | type[BaseModel]] = None,
+        tools: Optional[Union[BaseTool, Tool, StructuredTool, List[Union[BaseTool, Tool, StructuredTool]]]] = None,
+        default_tool: Optional[BaseTool | Tool | StructuredTool | type[BaseModel]] = None,
     ) -> None:
         """Setter method for tools."""
 
@@ -189,7 +189,7 @@ class SambaNovaLLM:
 
     def get_tools_schemas(
         self,
-        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
+        tools: Optional[Union[BaseTool, Tool, StructuredTool, List[Union[BaseTool, Tool, StructuredTool]]]] = None,
     ) -> List[Dict[str, str]]:
         """
         Get the tools schemas.
