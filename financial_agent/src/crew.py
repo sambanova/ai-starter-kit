@@ -6,7 +6,7 @@ import os
 
 # Check our tools documentations for more information on how to use them
 # from crewai_tools import SerperDevTool
-
+from financial_assistant.src.tools_filings import retrieve_filings
 from crewai import LLM
 # # # Set Up Sambanova
 
@@ -31,12 +31,21 @@ class LatestAiDevelopment:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
+    from crewai_tools import tool, Tool
+
+    tool_filings = Tool(
+        name='retrieve_filings',
+        description=retrieve_filings.description,
+        func=retrieve_filings,
+        args_schema=retrieve_filings.args_schema,
+    )
+
     @agent
     def researcher(self) -> Agent:
         return Agent(
             config=self.agents_config['researcher'],
             llm=llm,
-            # tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
+            tools=[self.tool_filings],  # Example of custom tool, loaded on the beginning of file
             verbose=True,
         )
 

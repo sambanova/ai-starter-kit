@@ -2,7 +2,7 @@
 import sys
 import warnings
 
-from latest_ai_development.crew import LatestAiDevelopment
+from financial_agent.src.crew import LatestAiDevelopment
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 
@@ -16,7 +16,7 @@ def run() -> None:
     """
     Run the crew.
     """
-    inputs = {'topic': 'AI LLMs'}
+    inputs = {'user_query': 'What is the research and development strategy at Meta?'}
     LatestAiDevelopment().crew().kickoff(inputs=inputs)
 
 
