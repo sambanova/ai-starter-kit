@@ -123,7 +123,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
   - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from an endpoint using it's OpenAI compatible URL, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name.
@@ -250,8 +250,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
   - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from an endpoint using it's OpenAI compatible URL, enter the full model name shown on the model card.
-  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
+  - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
@@ -297,8 +297,8 @@ This option allows you to measure performance during a multi-turn conversation w
 
   - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from an endpoint using it's OpenAI compatible URL, enter the full model name shown on the model card.
-  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
+  - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
