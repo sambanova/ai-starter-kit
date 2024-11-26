@@ -5,7 +5,6 @@ import sys
 from pprint import pprint
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-import streamlit as st
 import yaml
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -24,6 +23,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+from function_calling.src.tools import QueryDb, Rag, ToolClass, Translate, calculator, get_time, python_repl
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.visual.env_utils import get_wandb_key
 
@@ -63,6 +63,19 @@ Your answer should be in the same language as the initial query.
 
 """  # noqa E501
 
+# tool mapping of default tools
+TOOLS = {
+    'get_time': get_time,
+    'calculator': calculator,
+    'python_repl': python_repl,
+    'query_db': QueryDb,
+    'translate': Translate,
+    'rag': Rag,
+}
+
+
+ToolType = Union[str, StructuredTool, Tool, ToolClass]
+ToolListType = List[ToolType]
 
 # tool schema
 class ConversationalResponse(BaseModel):
@@ -80,13 +93,15 @@ class FunctionCallingLlm:
     """
     function calling llm class
     """
-
+    
     def __init__(
         self,
-        tools: Optional[Union[StructuredTool, Tool, List[Union[StructuredTool, Tool]]]] = None,
+        tools: Optional[Union[ToolType,ToolListType]] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
+        sambanova_api_key: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         """
         Args:
@@ -96,19 +111,59 @@ class FunctionCallingLlm:
             system_prompt (Optional[str]): The system prompt to use. defaults to FUNCTION_CALLING_SYSTEM_PROMPT
             config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
+        self.sambanova_api_key = sambanova_api_key
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
         self.prod_mode = configs[1]
         self.llm = self.set_llm()
-        if isinstance(tools, Tool) or isinstance(tools, StructuredTool):
+        self.kwargs = kwargs
+        if tools is None:
+            tools = []
+        if not isinstance(tools, list):
             tools = [tools]
-        self.tools = tools
+        langchain_tools = []
+        for tool in tools:
+            langchain_tools.append(self._set_tool(tool))
+        self.tools = langchain_tools
         if system_prompt is None:
             self.system_prompt = FUNCTION_CALLING_SYSTEM_PROMPT
         if default_tool is None:
             default_tool = ConversationalResponse
-        tools_schemas = self.get_tools_schemas(tools, default=default_tool)
+        tools_schemas = self.get_tools_schemas(self.tools, default=default_tool)
         self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
+
+    def _set_tool(self, tool: Union[str, StructuredTool, Tool, ToolClass]) -> Union[Tool, StructuredTool]:
+        # if is a langchain tool
+        if isinstance(tool, StructuredTool) or isinstance(tool, Tool):
+            return tool
+        # if is a str to map in TOOLS mapping dict
+        elif isinstance(tool, str):
+            if tool in TOOLS.keys():
+                mapped_tool = TOOLS[tool]
+                # if mapped is a langchain tool
+                if isinstance(mapped_tool, (StructuredTool, Tool)):
+                    return mapped_tool
+                # if mapped is a ToolClass
+                else:
+                    tool = mapped_tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                    return tool  # type: ignore
+            else:
+                raise ValueError(f'Tool {tool} not found in TOOLS mapping dict')
+        # if is a ToolClass
+        elif isinstance(tool, type):
+            if issubclass(tool, ToolClass):
+                tool = tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()  # type: ignore
+                return tool  # type: ignore
+            else:
+                raise TypeError(
+                    f'Tool {type(tool)}  not supported allowed types: StructuredTool, Tool, '
+                    'ToolClass or str with tool name in TOOLS mapping dict'
+                )
+        else:
+            raise TypeError(
+                f'Tool type {type(tool)} not supported allowed types: StructuredTool, Tool '
+                'ToolClass or str with tool name in TOOLS mapping dict'
+            )
 
     def get_config_info(self, config_path: str) -> Tuple[Dict[str, Any], bool]:
         """
@@ -127,20 +182,13 @@ class FunctionCallingLlm:
         Set the LLM to use.
         sambastudio and sncloud endpoints implemented.
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         llm = APIGateway.load_chat(
             type=self.llm_info['api'],
             max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
             model=self.llm_info['model'],
-            sambanova_api_key=sambanova_api_key,
+            sambanova_api_key=self.sambanova_api_key,
         )
         return llm
 
@@ -165,7 +213,7 @@ class FunctionCallingLlm:
         tools_schemas = []
         if tools is not None:
             for tool in tools:
-                tool_schema = tool.get_input_schema().schema()
+                tool_schema = tool.get_input_schema().model_json_schema()
                 schema = {
                     'name': tool.name,
                     'description': tool_schema['description'],
@@ -177,9 +225,9 @@ class FunctionCallingLlm:
 
         if default is not None:
             if isinstance(default, Tool) or isinstance(default, StructuredTool):
-                tool_schema = default.get_input_schema().schema()
+                tool_schema = default.get_input_schema().model_json_schema()
             elif issubclass(default, BaseModel):
-                tool_schema = default.schema()
+                tool_schema = default.model_json_schema()
             else:
                 raise TypeError('default must be a Tool or a BaseModel')
             schema = {
@@ -257,14 +305,13 @@ class FunctionCallingLlm:
             json_str = json.dumps(dummy_json_response)
         return json_str
 
-    def function_call_llm(self, query: str, max_it: int = 5, debug: bool = False) -> str:
+    def function_call_llm(self, query: str, max_it: int = 5) -> str:
         """
         invocation method for function calling workflow
 
         Args:
             query (str): The query to execute.
             max_it (int, optional): The maximum number of iterations. Defaults to 5.
-            debug (bool, optional): Whether to print debug information. Defaults to False.
         """
         function_calling_chat_template = ChatPromptTemplate.from_messages([('system', self.system_prompt)])
         history = function_calling_chat_template.format_prompt(tools=self.tools_schemas).to_messages()
@@ -281,9 +328,8 @@ class FunctionCallingLlm:
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
                 final_response = tools_msgs[0]
-                if debug:
-                    print('\n\n---\nFinal function calling LLM history: \n')
-                    pprint(f'{history}')
+                print('\n\n---\nFinal function calling LLM history: \n')
+                pprint(f'{history}')
                 return final_response
             else:
                 history.append(ToolMessage('\n'.join(tools_msgs), tool_call_id=tool_call_id))

@@ -51,7 +51,7 @@ class SnsdkWrapper:
             see a config file example in ./config.yaml
         """
         self.config_path = config_path
-        self.config = {}
+        self.config = None
         self.snapi_path = SNAPI_PATH
 
         # If config is provided, load it and validate Snapi directory path
@@ -811,7 +811,7 @@ class SnsdkWrapper:
             self._raise_error_if_config_is_none()
             model_name = self.config['job']['model']
 
-        models = self.list_models(filter_job_types=['train', 'deploy'])
+        models = self.list_models(filter_job_types=['train'])
         model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
         if len(model_id) > 0:
             logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
@@ -945,7 +945,9 @@ class SnsdkWrapper:
         # check if dataset exist
         if dataset_name is None:
             self._raise_error_if_config_is_none()
-            dataset_name = self.config['dataset']['dataset_name']
+            dataset_name = self.config['job'].get('dataset_name')
+            if dataset_name is None:
+                dataset_name = self.config['dataset']['dataset_name']
         dataset_id = self.search_dataset(dataset_name)
         if dataset_id is None:
             raise Exception(f"dataset with name '{dataset_name}' not found")
@@ -1268,7 +1270,7 @@ class SnsdkWrapper:
         if list_checkpoints_response['status_code'] == 200:
             checkpoints = []
             for checkpoint in list_checkpoints_response['data']['checkpoints']:
-                if verbose:
+                if verbose or sort:
                     checkpoints.append({k: v for k, v in checkpoint.items()})
                 else:
                     checkpoints.append(
@@ -1606,8 +1608,11 @@ class SnsdkWrapper:
             return endpoint_id
 
         # check extra params passed or config file passed
-        if (model_version := self.config.get('model_checkpoint', {}).get('model_version')) is None:
-            model_version = '1'
+        if self.config is not None:
+            if (model_version := self.config.get('model_checkpoint', {}).get('model_version')) is None:
+                model_version = model_version or '1'
+        else:
+            model_version = model_version or '1'
         if endpoint_description is None:
             self._raise_error_if_config_is_none()
             endpoint_description = self.config['endpoint']['endpoint_description']
