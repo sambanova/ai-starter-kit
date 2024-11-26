@@ -1,6 +1,6 @@
 sambastudio:
   snapi_path: ""
-  rdu_arch: "sn40"
+  rdu_arch: "SN40L-8"
 
 checkpoints:
   - model_name: "HermesProInstructV10"

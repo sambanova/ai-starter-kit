@@ -3,11 +3,12 @@
  <source media="(prefers-color-scheme: dark)" srcset="../../images/SambaNova-light-logo-1.png" height="60">
   <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
+</a>
 
 BYOC (Bring Your Own Checkpoint)
 ======================
 
-</a><!-- TOC -->
+<!-- TOC -->
 
 - [BYOC Bring Your Own Checkpoint](#byoc-bring-your-own-checkpoint)
 - [Overview](#overview)
@@ -38,8 +39,9 @@ The BYOC (Bring Your Own Checkpoint) utility allows users to upload their local 
 ## Clone this repository
 
 Clone the starter kit repo.
-```
-git clone https://github.com/sambanova/ai-starter-kit.git
+
+``` bash
+  git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
 ## Install dependencies
