@@ -13,7 +13,7 @@ class SNCloudSchema(BaseModel):
 class EmbeddingsSchema(BaseModel):
     type: Literal['cpu', 'sambastudio'] = 'cpu'
     batch_size: int = 1
-    coe: bool = True
+    bundle: bool = True
     select_expert: str
 
 

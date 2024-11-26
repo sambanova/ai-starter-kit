@@ -35,7 +35,7 @@ rag:
   embeddings:
     type: "cpu"
     batch_size: 1
-    coe: True
+    bundle: True
     select_expert: "e5-mistral-7b-instruct"
 
   llm:
