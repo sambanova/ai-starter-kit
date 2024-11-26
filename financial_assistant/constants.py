@@ -67,7 +67,7 @@ DEFAULT_PDF_TITLE = 'Financial Report'
 # Cache directory
 CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache')
 if prod_mode:
-    CACHE_DIR = os.path.join(CACHE_DIR + '_prod_mode', f'cache_{SESSION_ID}')
+    CACHE_DIR = os.path.join(repo_dir, 'scratch/financial_assistant/cache', f'cache_{SESSION_ID}')
 
 # Main cache directories
 HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')
