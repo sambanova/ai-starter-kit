@@ -106,8 +106,8 @@ def main() -> None:
     st.title(':orange[SambaNova] Synthetic Performance Evaluation')
     st.markdown(
         """This performance evaluation assesses the following LLM's performance metrics using concurrent processes.
-        _client represents the metrics computed from the client-side (includes queue and round-trip time from host to server and back) and _server represents the metrics computed
-        from the server-side."""
+        _client represents the metrics computed from the client-side (includes queue and round-trip time 
+        from host to server and back) and _server represents the metrics computed from the server-side."""
     )
     st.markdown(
         """**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then
@@ -115,11 +115,10 @@ def main() -> None:
     )
     st.markdown('**E2E Latency:** TTFT + (Time per Output Token) * (the number of tokens to be generated - 1)')
     st.markdown(
-        """**Tokens/sec/request (Output Throughput)**: Number of output tokens generated per second per request for a given batch-size. Client metric is
-        calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"""
+        """**Tokens/sec/request (Output Throughput)**: Number of output tokens generated per second per request 
+        for a given batch-size. Client metric is calculated as *Number of Output Tokens / (E2E Latency - TTFT)*"""
     )
-    st.markdown("""**Tokens/sec (Throughput)**: Total number of tokens generated per second for a given batch-size."""
-    )
+    st.markdown("""**Tokens/sec (Throughput)**: Total number of tokens generated per second for a given batch-size.""")
 
     with st.sidebar:
         st.title('Configuration')
