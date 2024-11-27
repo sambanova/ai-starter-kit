@@ -202,7 +202,7 @@ To integrate your LLM deployed on SambaStudio with this AI starter kit, update t
 is entered in the `.env` file as:
 
 ``` bash
-SAMBASTUDIO_BASE_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
