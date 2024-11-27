@@ -263,6 +263,7 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
         data = self.dataset_manager.create_raw_dataset(filepath)
 
         for i in range(len(data)):
+            data[i]['context'] = self.rag_chain.retrieve(data[i].get('query', ''))
             data[i]['completion'] = self.rag_chain.predict(data[i].get('query', ''))
 
         weave_data = self.dataset_manager.to_weave_dataset(name, data)

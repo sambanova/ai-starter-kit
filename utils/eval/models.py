@@ -17,8 +17,6 @@ from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
 from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
 from utils.model_wrappers.api_gateway import APIGateway
 
-# from utils.eval.rag import RAGChain
-
 
 class CorrectnessLLMJudge(Scorer):
     """
@@ -52,7 +50,11 @@ class CorrectnessLLMJudge(Scorer):
 
     @weave.op()
     async def score(
-        self, model_output: Dict[str, Any], query: str, expected_answer: Optional[str] = None
+        self,
+        model_output: Dict[str, Any],
+        query: str,
+        context: Optional[str] = None,
+        expected_answer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Score the model output against a query and an expected answer.
@@ -77,7 +79,7 @@ class CorrectnessLLMJudge(Scorer):
             return {'score': -1, 'reason': f'Completion not found:\n{model_output}'}
 
         judge_prompt = JUDGE_PROMPT.format(
-            query=query, generated_answer=generated_answer, expected_answer=expected_answer
+            query=query, generated_answer=generated_answer, context=context, expected_answer=expected_answer
         )
 
         llm = APIGateway.load_chat(
@@ -91,12 +93,7 @@ class CorrectnessLLMJudge(Scorer):
             stream_options={'include_usage': True},
         )
 
-        # fix_parser = OutputFixingParser.from_llm(parser=JsonOutputParser(), llm=llm)
-
-        judge = (
-            llm | JsonOutputParser()
-            # | RunnableLambda(lambda x: fix_parser.parse(x))
-        )
+        judge = llm | JsonOutputParser()
 
         try:
             result = judge.invoke([('system', judge_prompt)])
@@ -214,7 +211,7 @@ class WeaveRAGModel(Model):
     model_kwargs: Optional[Dict[str, Any]] = None
 
     @weave.op()
-    async def predict(self, completion: str) -> Dict[str, Any]:
+    async def predict(self, completion: str, context: Optional[str]) -> Dict[str, Any]:
         """
         Logs predictions of a rag chain.
 
@@ -227,5 +224,6 @@ class WeaveRAGModel(Model):
         Raises:
             Exception: If completion not found.
         """
-
+        if context is not None:
+            return {'completion': completion, 'context': context}
         return {'completion': completion}

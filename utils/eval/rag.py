@@ -9,7 +9,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from typing import Tuple
+from typing import List, Tuple
 
 from langchain import hub
 from langchain_chroma import Chroma
@@ -78,6 +78,11 @@ class RAGChain:
         """
 
         return self.rag_chain.invoke(query)
+
+    def retrieve(self, query: str) -> List[str]:
+        retriever = self.vectordb.as_retriever()
+        docs = retriever.invoke(query)
+        return [i.page_content for i in docs]
 
     def _init_vectordb(self) -> Tuple[Embeddings, Chroma]:
         """
