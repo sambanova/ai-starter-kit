@@ -1,8 +1,6 @@
 research_task:
   description: >
-    Conduct a thorough research about finance.
-    Make sure you find any interesting and relevant information given
-    the current year is 2024.
+    for retrieving a financial filing from SEC Edgar and then answering the original user question.
   expected_output: >
     A list with 10 bullet points of the most relevant information about finance.
   agent: researcher

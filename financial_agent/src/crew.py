@@ -37,7 +37,7 @@ class LatestAiDevelopment:
         name='retrieve_filings',
         description=retrieve_filings.description,
         func=retrieve_filings,
-        args_schema=retrieve_filings.args_schema,
+        pydantic_output=retrieve_filings.args_schema,
     )
 
     @agent
@@ -61,6 +61,8 @@ class LatestAiDevelopment:
     def research_task(self) -> Task:
         return Task(
             config=self.tasks_config['research_task'],
+            tools=[self.tool_filings],
+            pydantic_output=retrieve_filings.args_schema,
         )
 
     @task
