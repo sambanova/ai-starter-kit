@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import streamlit
 from fpdf import FPDF
 from fpdf.fpdf import Align
 from langchain_community.document_loaders import PyPDFLoader
@@ -116,10 +117,10 @@ def read_txt_files(directory: str) -> List[str]:
 
     # Target list of text files, used to order the different sources
     target_list = [
-        Path(STOCK_QUERY_PATH).name,
-        Path(DB_QUERY_PATH).name,
-        Path(YFINANCE_NEWS_PATH).name,
-        Path(FILINGS_PATH).name,
+        Path(streamlit.session_state['STOCK_QUERY_PATH']).name,
+        Path(streamlit.session_state['DB_QUERY_PATH']).name,
+        Path(streamlit.session_state['YFINANCE_NEWS_PATH']).name,
+        Path(streamlit.session_state['FILINGS_PATH']).name,
     ]
 
     # Sort the files of the list following the order of the target list
@@ -511,7 +512,7 @@ def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     # Load PDF files
     documents = []
     for file in pdf_files_names:
-        pdf_path = os.path.join(PDF_GENERATION_DIRECTORY, file)
+        pdf_path = os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], file)
         loader = PyPDFLoader(pdf_path)
         documents.extend(loader.load())
 

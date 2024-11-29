@@ -90,16 +90,16 @@ def include_pdf_report() -> None:
     data_paths = dict()
     if include_stock:
         # Add data from Stock Data Analysis
-        data_paths['stock_query'] = STOCK_QUERY_PATH
+        data_paths['stock_query'] = streamlit.session_state['STOCK_QUERY_PATH']
     if include_database:
         # Add data from Stock Database Analysis
-        data_paths['stock_database'] = DB_QUERY_PATH
+        data_paths['stock_database'] = streamlit.session_state['DB_QUERY_PATH']
     if inlude_yahoo_news:
         # Add data from Yahoo News Analysis
-        data_paths['yfinance_news'] = YFINANCE_NEWS_PATH
+        data_paths['yfinance_news'] = streamlit.session_state['YFINANCE_NEWS_PATH']
     if include_filings:
         # Add data from Financial Filings Analysis
-        data_paths['filings'] = FILINGS_PATH
+        data_paths['filings'] = streamlit.session_state['FILINGS_PATH']
     if generate_from_history:
         # Deselect all other options
         include_stock = False
@@ -108,7 +108,7 @@ def include_pdf_report() -> None:
         include_filings = False
 
         # Add data from chat history
-        data_paths['history'] = HISTORY_PATH
+        data_paths['history'] = streamlit.session_state['HISTORY_PATH']
 
     # Add title name (optional)
     title_name = streamlit.text_input(label='Title Name', value=DEFAULT_PDF_TITLE)
@@ -139,7 +139,7 @@ def include_pdf_report() -> None:
                     stream_time_llm()
 
                     # Delete LLM time json file
-                    os.remove(TIME_LLM_PATH)
+                    os.remove(streamlit.session_state['TIME_LLM_PATH'])
 
                     base64_pdf = b64encode(pdf_handler).decode('utf-8')
                     pdf_display = (
@@ -186,8 +186,9 @@ def include_pdf_report() -> None:
             # Get list of files in the directory
             files = [
                 f
-                for f in os.listdir(PDF_GENERATION_DIRECTORY)
-                if os.path.isfile(os.path.join(PDF_GENERATION_DIRECTORY, f)) and f.endswith('.pdf')
+                for f in os.listdir(streamlit.session_state['PDF_GENERATION_DIRECTORY'])
+                if os.path.isfile(os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], f))
+                and f.endswith('.pdf')
             ]
 
             if len(files) > 0:
@@ -233,7 +234,9 @@ def include_pdf_report() -> None:
                 # Store uploaded files
                 streamlit.session_state.uploaded_files = [file.name for file in uploaded_files]
                 for file_item in uploaded_files:
-                    with open(os.path.join(PDF_GENERATION_DIRECTORY, file_item.name), 'wb') as f:
+                    with open(
+                        os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], file_item.name), 'wb'
+                    ) as f:
                         f.write(file_item.getbuffer())
 
         # The user request
@@ -273,7 +276,7 @@ def include_pdf_report() -> None:
                         if streamlit.button(
                             'Save Answer',
                             on_click=save_output_callback,
-                            args=(content, PDF_RAG_PATH),
+                            args=(content, streamlit.session_state['PDF_RAG_PATH']),
                         ):
                             pass
 
@@ -305,7 +308,7 @@ def include_pdf_report() -> None:
                         if streamlit.button(
                             'Save Answer',
                             on_click=save_output_callback,
-                            args=(content, PDF_RAG_PATH),
+                            args=(content, streamlit.session_state['PDF_RAG_PATH']),
                         ):
                             pass
 
@@ -335,11 +338,11 @@ def handle_pdf_generation(
     """
 
     # Clean the sources directory if it exists
-    if os.path.exists(PDF_SOURCES_DIR):
-        clear_directory(PDF_SOURCES_DIR)
+    if os.path.exists(streamlit.session_state['PDF_SOURCES_DIR']):
+        clear_directory(streamlit.session_state['PDF_SOURCES_DIR'])
 
     # Derive the output file name
-    output_file = os.path.join(PDF_GENERATION_DIRECTORY, report_name)
+    output_file = os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], report_name)
 
     # Check that at least one data source is available
     if not any([data_paths[key] for key in data_paths]):
@@ -355,7 +358,7 @@ def handle_pdf_generation(
 
     for source_file in data_paths.values():
         # Create the full path for the destination file
-        destination_file = os.path.join(PDF_SOURCES_DIR, os.path.basename(source_file))
+        destination_file = os.path.join(streamlit.session_state['PDF_SOURCES_DIR'], os.path.basename(source_file))
 
         try:
             # Copy selected document to the pdf generation directory
@@ -366,7 +369,7 @@ def handle_pdf_generation(
             logger.error('Error while copying file', exc_info=True)
 
     # Extract the documents from the selected files
-    documents = read_txt_files(PDF_SOURCES_DIR)
+    documents = read_txt_files(streamlit.session_state['PDF_SOURCES_DIR'])
 
     # Parse the documents into a list of tuples of text and figure paths
     report_content = parse_documents(documents)
