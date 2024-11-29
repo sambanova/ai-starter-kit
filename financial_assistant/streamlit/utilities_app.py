@@ -54,6 +54,8 @@ def initialize_session(
     # Initialize/Clear the chat history
     if 'chat_history' not in session_state:
         session_state.chat_history = list()
+
+        # In prod mode, at every page refresh, reload the constants with a new `SESSION_ID` and update globals
         if prod_mode:
             # Reload constants from the file and update globals
             reload_constants_and_update_globals(constants)
