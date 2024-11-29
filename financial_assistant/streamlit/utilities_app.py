@@ -1,4 +1,5 @@
 import datetime
+import importlib
 import json
 import os
 import pathlib
@@ -6,8 +7,10 @@ import re
 import shutil
 import sys
 import time
+import types
 from pathlib import Path
 from threading import Thread
+from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
@@ -17,6 +20,7 @@ import streamlit
 from matplotlib.figure import Figure
 from streamlit.elements.widgets.time_widgets import DateWidgetReturn
 
+import financial_assistant.constants as constants
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import get_logger
 from utils.visual.env_utils import initialize_env_variables
@@ -47,9 +51,14 @@ def initialize_session(
     # Initialize credentials
     initialize_env_variables(prod_mode)
 
-    # Initialize the chat history
+    # Initialize/Clear the chat history
     if 'chat_history' not in session_state:
         session_state.chat_history = list()
+        if prod_mode:
+            # Reload constants from the file and update globals
+            reload_constants_and_update_globals(constants)
+            # Reload all the packages that were importing the constants
+            reload_modules_in_package(Path(kit_dir))
 
     # Launch time
     if 'launch_time' not in session_state:
@@ -74,6 +83,47 @@ def initialize_session(
     except:
         pass
     delete_temp_dir(temp_dir=PANDASAI_CACHE, verbose=False)
+
+
+def reload_constants_and_update_globals(module: types.ModuleType) -> None:
+    """
+    Reload a module and update global variables with uppercase attributes.
+
+    Args:
+        module: The module to reload and from which to update globals.
+    """
+    # Reload the module
+    importlib.reload(module)
+
+    # Update globals: Iterate over items in the module's __dict__
+    for name in dir(module):
+        # Check if it is an uppercase variable to consider as a constant
+        if name.isupper():
+            globals()[name] = getattr(module, name)
+
+
+def reload_modules_in_package(package_root: Path) -> None:
+    """
+    Reload all modules in a given file system path if they are already imported.
+
+    Args:
+        package_root: The root directory of the package.
+    """
+    # Get the root package name
+    root_package_name = package_root.name
+
+    # List all Python files and directories in the `package_root`
+    for path in package_root.rglob('*.py'):
+        # Construct the module name by replacing '/' with '.' and removing the .py extension
+        relative_path = path.relative_to(package_root).with_suffix('')
+        module_name = f"{root_package_name}.{str(relative_path).replace('/', '.')}"
+
+        # Check if the module has been imported and reload it
+        if module_name in sys.modules:
+            module = sys.modules[module_name]
+            if isinstance(module, ModuleType):
+                logger.info(f'Reloading module: {module_name}')
+                importlib.reload(module)
 
 
 def submit_sec_edgar_details() -> None:
