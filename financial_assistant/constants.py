@@ -12,9 +12,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-# Session ID
-SESSION_ID = str(uuid4())
-
 # Main config file
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
@@ -28,7 +25,7 @@ prod_mode = config['prod_mode']
 # Initialize SEC EDGAR credentials
 if prod_mode or os.getenv('SEC_API_ORGANIZATION') is None or os.getenv('SEC_API_EMAIL') is None:
     os.environ['SEC_API_ORGANIZATION'] = 'SambaNova'
-    os.environ['SEC_API_EMAIL'] = f'user_{SESSION_ID}@sambanova_cloud.com'
+    os.environ['SEC_API_EMAIL'] = f'user_{str(uuid4())}@sambanova_cloud.com'
 
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
@@ -64,36 +61,6 @@ DEFAULT_FILING_QUARTER = 0
 DEFAULT_FILING_YEAR = datetime.datetime.today().date().year - 1
 DEFAULT_PDF_TITLE = 'Financial Report'
 
-# Cache directory
-CACHE_DIR = os.path.join(kit_dir, 'streamlit/cache')
-if prod_mode:
-    CACHE_DIR = os.path.abspath(os.path.join(kit_dir, '../../scratch/financial_assistant/cache', f'cache_{SESSION_ID}'))
-
-# Main cache directories
-HISTORY_PATH = os.path.join(CACHE_DIR, 'chat_history.txt')
-PDF_GENERATION_DIRECTORY = os.path.join(CACHE_DIR, 'pdf_generation')
-STOCK_QUERY_PATH = os.path.join(CACHE_DIR, 'stock_query.txt')
-DB_QUERY_PATH = os.path.join(CACHE_DIR, 'db_query.txt')
-YFINANCE_NEWS_PATH = os.path.join(CACHE_DIR, 'yfinance_news.txt')
-FILINGS_PATH = os.path.join(CACHE_DIR, 'filings.txt')
-PDF_RAG_PATH = os.path.join(CACHE_DIR, 'pdf_rag.txt')
-WEB_SCRAPING_PATH = os.path.join(CACHE_DIR, 'web_scraping.csv')
-TIME_LLM_PATH = os.path.join(CACHE_DIR, 'time_llm.json')
-
-# Main source directories
-SOURCE_DIR = os.path.join(CACHE_DIR, 'sources')
-DB_PATH = os.path.join(SOURCE_DIR, 'stock_database.db')
-YFINANCE_NEWS_TXT_PATH = os.path.join(SOURCE_DIR, 'yfinance_news_documents.txt')
-YFINANCE_NEWS_CSV_PATH = os.path.join(SOURCE_DIR, 'yfinance_news_documents.csv')
-PDF_SOURCES_DIR = os.path.join(SOURCE_DIR, 'pdf_sources')
-
-# Main figures directories
-STOCK_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'stock_query_figures')
-HISTORY_FIGURES_DIR = os.path.join(CACHE_DIR, 'history_figures')
-DB_QUERY_FIGURES_DIR = os.path.join(CACHE_DIR, 'db_query_figures')
-
-# `pandasai` cache
-PANDASAI_CACHE = os.path.join(os.getcwd(), 'cache')
 
 # Unit tests
 TEST_DIR = os.path.join(kit_dir, 'tests/')

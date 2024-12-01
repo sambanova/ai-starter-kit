@@ -4,9 +4,8 @@ import os
 import time
 from typing import Any, Callable, Dict, TypeVar
 
+import streamlit
 import yaml
-
-from financial_assistant.constants import TIME_LLM_PATH
 
 # Generic function type
 F = TypeVar('F', bound=Callable[..., Any])
@@ -111,9 +110,9 @@ def time_llm(func: F) -> Any:
         # Create a row for the csv file
         row = [func.__name__, duration]
 
-        if os.path.exists(TIME_LLM_PATH):
+        if os.path.exists(streamlit.session_state['TIME_LLM_PATH']):
             # Read the existing data from the JSON file
-            with open(TIME_LLM_PATH, 'r') as file:
+            with open(streamlit.session_state['TIME_LLM_PATH'], 'r') as file:
                 data = json.load(file)
         else:
             # If the file does not exist, start with an empty list
@@ -123,7 +122,7 @@ def time_llm(func: F) -> Any:
         data.append(row)
 
         # Save the new list of rows to a JSON file
-        with open(TIME_LLM_PATH, 'w') as file:
+        with open(streamlit.session_state['TIME_LLM_PATH'], 'w') as file:
             json.dump(data, file, indent=4)
 
         # Return only result

@@ -97,27 +97,27 @@ logger = get_logger()
 def main() -> None:
     with streamlit.sidebar:
         # Create the cache and its main subdirectories
-        if are_credentials_set() and not os.path.exists(CACHE_DIR):
+        if are_credentials_set() and not os.path.exists(streamlit.session_state['CACHE_DIR']):
             # List the main cache subdirectories
             subdirectories = [
-                SOURCE_DIR,
-                PDF_SOURCES_DIR,
-                PDF_GENERATION_DIRECTORY,
+                streamlit.session_state['SOURCE_DIR'],
+                streamlit.session_state['PDF_SOURCES_DIR'],
+                streamlit.session_state['PDF_GENERATION_DIRECTORY'],
             ]
 
             if prod_mode:
                 # In production mode
-                create_temp_dir_with_subdirs(CACHE_DIR, subdirectories)
+                create_temp_dir_with_subdirs(streamlit.session_state['CACHE_DIR'], subdirectories)
 
                 # In production, schedule deletion after EXIT_TIME_DELTA minutes
                 try:
-                    schedule_temp_dir_deletion(CACHE_DIR, delay_minutes=EXIT_TIME_DELTA)
+                    schedule_temp_dir_deletion(streamlit.session_state['CACHE_DIR'], delay_minutes=EXIT_TIME_DELTA)
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
             else:
                 # In development mode
-                create_temp_dir_with_subdirs(CACHE_DIR, subdirectories)
+                create_temp_dir_with_subdirs(streamlit.session_state['CACHE_DIR'], subdirectories)
 
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
@@ -178,11 +178,13 @@ def main() -> None:
                         clear_cache(delete=False)
                         # List the main cache subdirectories
                         subdirectories = [
-                            SOURCE_DIR,
-                            PDF_SOURCES_DIR,
-                            PDF_GENERATION_DIRECTORY,
+                            streamlit.session_state['SOURCE_DIR'],
+                            streamlit.session_state['PDF_SOURCES_DIR'],
+                            streamlit.session_state['PDF_GENERATION_DIRECTORY'],
                         ]
-                        delete_all_subdirectories(directory=CACHE_DIR, exclude=subdirectories)
+                        delete_all_subdirectories(
+                            directory=streamlit.session_state['CACHE_DIR'], exclude=subdirectories
+                        )
 
                         streamlit.sidebar.success('All files have been deleted.')
                     except:
@@ -190,21 +192,25 @@ def main() -> None:
 
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
-                streamlit.session_state.current_path = CACHE_DIR
+                streamlit.session_state.current_path = streamlit.session_state['CACHE_DIR']
 
-            if os.path.exists(CACHE_DIR):
+            if os.path.exists(streamlit.session_state['CACHE_DIR']):
                 # Input to allow user to go back to a parent directory, up to the cache, but not beyond the cache
                 if (
                     streamlit.sidebar.button('⬅️ Back', key=f'back')
-                    and CACHE_DIR in streamlit.session_state.current_path
+                    and streamlit.session_state['CACHE_DIR'] in streamlit.session_state.current_path
                 ):
                     streamlit.session_state.current_path = os.path.dirname(streamlit.session_state.current_path)
 
                     # Display the current directory contents
-                    display_directory_contents(streamlit.session_state.current_path, CACHE_DIR)
+                    display_directory_contents(
+                        streamlit.session_state.current_path, streamlit.session_state['CACHE_DIR']
+                    )
                 else:
                     # Display the current directory contents
-                    display_directory_contents(streamlit.session_state.current_path, CACHE_DIR)
+                    display_directory_contents(
+                        streamlit.session_state.current_path, streamlit.session_state['CACHE_DIR']
+                    )
 
     # Title of the main page
     columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')

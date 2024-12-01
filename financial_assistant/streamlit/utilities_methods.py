@@ -86,7 +86,7 @@ def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
                 stream_time_llm()
 
                 # Delete LLM time json file
-                os.remove(TIME_LLM_PATH)
+                os.remove(streamlit.session_state['TIME_LLM_PATH'])
 
             except LLMException:
                 streamlit.error(LLM_EXCEPTION_MESSAGE)
@@ -112,8 +112,8 @@ def handle_userinput(user_question: str, user_query: str) -> Optional[Any]:
 def stream_time_llm() -> None:
     """Stream LLM call duration."""
 
-    if os.path.exists(TIME_LLM_PATH):
-        with open(TIME_LLM_PATH, 'r') as file:
+    if os.path.exists(streamlit.session_state['TIME_LLM_PATH']):
+        with open(streamlit.session_state['TIME_LLM_PATH'], 'r') as file:
             data = json.load(file)
             while data:
                 streamlit.markdown(
