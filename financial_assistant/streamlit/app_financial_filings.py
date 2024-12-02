@@ -70,13 +70,13 @@ def include_financial_filings() -> None:
                 )
 
                 # Save the query and answer to the history text file
-                save_output_callback(answer, HISTORY_PATH, user_request)
+                save_output_callback(answer, streamlit.session_state['HISTORY_PATH'], user_request)
 
                 # Save the query and answer to the filing text file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(answer, FILINGS_PATH, user_request),
+                    args=(answer, streamlit.session_state['FILINGS_PATH'], user_request),
                 ):
                     pass
 
