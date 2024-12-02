@@ -3,9 +3,37 @@
  <source media="(prefers-color-scheme: dark)" srcset="../../images/SambaNova-light-logo-1.png" height="60">
   <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
+</a>
 
 SambaStudio FineTuning Util
 ======================
+
+<!-- TOC -->
+
+- [SambaStudio FineTuning Util](#sambastudio-finetuning-util)
+- [Overview](#overview)
+- [Before you begin](#before-you-begin)
+    - [Clone this repository](#clone-this-repository)
+    - [Install dependencies](#install-dependencies)
+        - [Install an set up Snapi and Snsdk](#install-an-set-up-snapi-and-snsdk)
+        - [Install requirements](#install-requirements)
+- [Using the FineTuning utility](#using-the-finetuning-utility)
+    - [Prepare your dataset](#prepare-your-dataset)
+    - [Set up the config file](#set-up-the-config-file)
+        - [SambaStudio config](#sambastudio-config)
+        - [Dataset config](#dataset-config)
+        - [Project config](#project-config)
+        - [Job config and Model checkpoint config](#job-config-and-model-checkpoint-config)
+        - [Endpoint config](#endpoint-config)
+    - [Initializing Fine-tuning wrapper](#initializing-fine-tuning-wrapper)
+    - [Dataset upload](#dataset-upload)
+    - [Project creation](#project-creation)
+    - [Training Job creation and checkpoint promotion](#training-job-creation-and-checkpoint-promotion)
+    - [Create a new Composite / Bundle model Optional](#create-a-new-composite--bundle-model-optional)
+    - [Deploy your model](#deploy-your-model)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
 
 # Overview
 This fine-tuning utility for SambaStudio allows users to upload their own datasets, and start training jobs in SambaStudio platform. after this users can do inference over these models in SambaStudio platform.
@@ -15,8 +43,9 @@ This fine-tuning utility for SambaStudio allows users to upload their own datase
 ## Clone this repository
 
 Clone the starter kit repo.
-```
-git clone https://github.com/sambanova/ai-starter-kit.git
+
+```bash
+    git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
 ## Install dependencies
@@ -36,7 +65,7 @@ Install the python dependencies in your previously created environment.
 
 ## Prepare your dataset 
 
-You can use your own dataset (see [synthetic data generation util](../synthetic_data_gen/notebooks/quickstart_synthetic_data_gen.ipynb)) or alternatively you can download and use an existing dataset like[Huggingface datasets](https://huggingface.co/datasets?modality=modality:text&sort=trending), then execute the gen_data_prep_pipeline which will convert your dataset in a suitable format (`hdf5` files) for SambaStudio.   
+You can use your own dataset (see [synthetic data generation util](../synthetic_data_gen/notebooks/quickstart_synthetic_data_gen.ipynb)) or alternatively you can download and use an existing dataset like the ones in[Huggingface datasets](https://huggingface.co/datasets?modality=modality:text&sort=trending), then execute the gen_data_prep_pipeline which will convert your dataset in a suitable format (`hdf5` files) for SambaStudio.
 
 ```python
 from src import sambastudio_utils
@@ -176,7 +205,7 @@ sambastudio_wrapper = SnsdkWrapper(config_path=os.path.join(current_dir,"config.
 
 ```
 
-## Dataset upload #TODO
+## Dataset upload
 
 To upload your dataset using the configs in your config file run:
 
@@ -190,7 +219,7 @@ And check their availability running:
     sambastudio_wrapper.list_datasets()
 ```
 
-## Project creation #TODO
+## Project creation
 
 To create your  training and deploying project using the configs in your config file run:
 
