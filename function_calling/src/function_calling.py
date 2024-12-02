@@ -77,6 +77,7 @@ TOOLS = {
 ToolType = Union[str, StructuredTool, Tool, ToolClass]
 ToolListType = List[ToolType]
 
+
 # tool schema
 class ConversationalResponse(BaseModel):
     (
@@ -93,10 +94,10 @@ class FunctionCallingLlm:
     """
     function calling llm class
     """
-    
+
     def __init__(
         self,
-        tools: Optional[Union[ToolType,ToolListType]] = None,
+        tools: Optional[Union[ToolType, ToolListType]] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
