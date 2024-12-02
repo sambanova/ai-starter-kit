@@ -50,6 +50,7 @@ def load_app_description() -> Any:
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
+llm_type = 'SambaStudio' if config.get('llm', {}).get('api') == 'sambastudio' else 'SambaNova Cloud'
 st_tools = config.get('st_tools', {})
 st_preset_queries = load_preset_queries()
 st_description = load_app_description()
@@ -280,7 +281,7 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(additional_env_vars):
-            api_key, additional_vars = env_input_fields(additional_env_vars)
+            api_key, additional_vars = env_input_fields(additional_env_vars, mode=llm_type)
             if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)

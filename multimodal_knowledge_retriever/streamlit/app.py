@@ -137,6 +137,7 @@ def main() -> None:
         config = yaml.safe_load(yaml_file)
 
     prod_mode = config.get('prod_mode', False)
+    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
 
@@ -187,9 +188,9 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
-            api_key, aditional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
+            api_key, additional_variables = env_input_fields(ADDITIONAL_ENV_VARS, mode=llm_type)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(api_key, aditional_variables, prod_mode)
+                message = save_credentials(api_key, additional_variables, prod_mode)
                 st.session_state.mp_events.api_key_saved()
                 st.rerun()
                 st.success(message)
