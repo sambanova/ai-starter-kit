@@ -86,7 +86,7 @@ def create_stock_database(
 
     # Create SQL database
     company_tables_dict = store_company_dataframes_to_sqlite(
-        db_name=streamlit.session_state['DB_PATH'], company_data_dict=company_data_dict
+        db_name=streamlit.session_state.db_path, company_data_dict=company_data_dict
     )
 
     return company_tables_dict
@@ -108,7 +108,7 @@ def store_company_dataframes_to_sqlite(
         A dictionary with company symbols as keys and a list of SQL table names as values.
     """
     # Connect to the SQLite database
-    engine = create_engine(f'sqlite:///{streamlit.session_state["DB_PATH"]}')
+    engine = create_engine(f'sqlite:///{streamlit.session_state.db_path}')
 
     # Create a dictionary with company names as keys and SQL tables as values
     company_tables: Dict[str, List[str]] = dict()
@@ -245,7 +245,7 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
     queries_list = get_sql_queries(selected_schemas, user_query)
 
     # Create a SQL database engine and connect to it using the selected tables
-    engine = create_engine(f'sqlite:///{streamlit.session_state["DB_PATH"]}')
+    engine = create_engine(f'sqlite:///{streamlit.session_state.db_path}')
     db = SQLDatabase(engine=engine, include_tables=selected_tables)
 
     # TODO: With larger context windows
@@ -365,7 +365,7 @@ def query_stock_database_pandasai(user_query: str, symbol_list: List[str]) -> An
             # Insert table name in the prompt
             final_query = user_query.format(table_name=table)
             # Append the response for the given company symbol
-            response[symbol].append(interrogate_table(streamlit.session_state['DB_PATH'], table, final_query))
+            response[symbol].append(interrogate_table(streamlit.session_state.db_path, table, final_query))
 
     return response
 
@@ -386,7 +386,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     # Instantiate the connector to the SQL database
     connector = SqliteConnector(
         config={
-            'database': streamlit.session_state['DB_PATH'],
+            'database': streamlit.session_state.db_path,
             'table': table,
             'enable_cache': False,
         }
@@ -399,7 +399,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
             'llm': sambanova_llm.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': streamlit.session_state['DB_QUERY_FIGURES_DIR'],
+            'save_charts_path': streamlit.session_state.db_query_figures_dir,
             'enable_cache': False,
         },
     )
@@ -408,7 +408,7 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
 
     # Delete the pandasai cache
-    shutil.rmtree(streamlit.session_state['PANDASAI_CACHE'], ignore_errors=True)
+    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
 
     return response
 
@@ -488,7 +488,7 @@ def get_table_summaries_from_symbols(symbol_list: List[str]) -> str:
         Exception: If there is no SQL table in the database.
     """
     # Instantiate the inspector for the database
-    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state['DB_PATH']))
+    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state.db_path))
 
     # Get the list of SQL tables in the database
     tables_names = inspector.get_table_names()
@@ -531,7 +531,7 @@ def get_table_summaries_from_names(table_names: List[str]) -> str:
     Returns:
         A text summary of SQL tables by their names.
     """
-    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state['DB_PATH']))
+    inspector = Inspector.from_engine(create_engine('sqlite:///' + streamlit.session_state.db_path))
     inspected_tables_names = inspector.get_table_names()
     inspected_tables_names_symbols = [
         inspected_table.split('_')[0].lower() for inspected_table in inspected_tables_names

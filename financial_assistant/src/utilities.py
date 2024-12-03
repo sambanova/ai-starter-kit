@@ -110,9 +110,9 @@ def time_llm(func: F) -> Any:
         # Create a row for the csv file
         row = [func.__name__, duration]
 
-        if os.path.exists(streamlit.session_state['TIME_LLM_PATH']):
+        if os.path.exists(streamlit.session_state.time_llm_path):
             # Read the existing data from the JSON file
-            with open(streamlit.session_state['TIME_LLM_PATH'], 'r') as file:
+            with open(streamlit.session_state.time_llm_path, 'r') as file:
                 data = json.load(file)
         else:
             # If the file does not exist, start with an empty list
@@ -122,7 +122,7 @@ def time_llm(func: F) -> Any:
         data.append(row)
 
         # Save the new list of rows to a JSON file
-        with open(streamlit.session_state['TIME_LLM_PATH'], 'w') as file:
+        with open(streamlit.session_state.time_llm_path, 'w') as file:
             json.dump(data, file, indent=4)
 
         # Return only result

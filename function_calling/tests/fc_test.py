@@ -45,7 +45,7 @@ class FCTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type['FCTestCase']) -> None:
         cls.time_start = time.time()
-        cls.fc = FunctionCallingLlm(tools=tools) # type: ignore
+        cls.fc = FunctionCallingLlm(tools=tools)  # type: ignore
 
     # Add assertions
     def test_fc_initialization(self) -> None:
