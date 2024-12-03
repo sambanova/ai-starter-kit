@@ -4,44 +4,6 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel
 
 
-class Delta(BaseModel):
-    content: Optional[str]
-    role: Optional[str] = None
-
-
-class SNCloudChoice(BaseModel):
-    delta: Delta
-    finish_reason: Optional[str]
-    index: int
-    logprobs: Optional[Dict[str, Any]]
-
-
-class SNCloudUsage(BaseModel):
-    acceptance_rate: float
-    completion_tokens: int
-    completion_tokens_after_first_per_sec: float
-    completion_tokens_after_first_per_sec_first_ten: float
-    completion_tokens_per_sec: float
-    end_time: float
-    is_last_response: bool
-    prompt_tokens: int
-    start_time: float
-    time_to_first_token: float
-    total_latency: float
-    total_tokens: int
-    total_tokens_per_sec: float
-
-
-class SNCloudChatCompletionChunk(BaseModel):
-    choices: List[SNCloudChoice]
-    created: int
-    id: str
-    model: str
-    object: str
-    system_fingerprint: str
-    usage: Optional[SNCloudUsage] = None
-
-
 class SambaStudioOpenAIResponseMetadata(BaseModel):
     finish_reason: Optional[str]
     usage: Optional[Dict[str, Any]]
@@ -69,19 +31,42 @@ class SambaStudioGenericV1Response(BaseModel):
     predictions: List[Dict[str, Any]]
 
 
-class Message(BaseModel):
+class Delta(BaseModel):
+    content: Optional[str]
+    role: Optional[str] = None
+
+
+class SNCloudStreamingChoice(BaseModel):
+    delta: Delta
+    finish_reason: Optional[str]
+    index: int
+    logprobs: Optional[Dict[str, Any]]
+
+
+class ToolCall(BaseModel):
+    function: dict
+    id: str
+    type: str
+
+class ToolMessage(BaseModel):
+    content: Optional[str]
+    role: str
+    tool_calls: List[ToolCall]
+
+
+class BaseMessage(BaseModel):
     content: str
     role: Literal['assistant']
 
 
-class Choice(BaseModel):
+class SNCloudBaseChoice(BaseModel):
     finish_reason: str
     index: int
     logprobs: str | None
-    message: Message
+    message: BaseMessage | ToolMessage
 
 
-class Usage(BaseModel):
+class SNCloudBaseUsage(BaseModel):
     acceptance_rate: float
     completion_tokens: int
     completion_tokens_after_first_per_sec: float
@@ -97,14 +82,24 @@ class Usage(BaseModel):
     total_tokens_per_sec: float
 
 
-class SNCloudResponse(BaseModel):
-    choices: List[Choice]
+class SNCloudChatCompletionChunk(BaseModel):
+    choices: List[SNCloudBaseChoice | SNCloudStreamingChoice]
     created: int
     id: str
     model: str
     object: str
     system_fingerprint: str
-    usage: Usage
+    usage: Optional[SNCloudBaseUsage] = None
+
+
+class SNCloudBaseResponse(BaseModel):
+    choices: List[SNCloudBaseChoice | SNCloudStreamingChoice]
+    created: int
+    id: str
+    model: str
+    object: str
+    system_fingerprint: str
+    usage: Optional[SNCloudBaseUsage] = None
 
 
 class EmbeddingsBaseModel(BaseModel):
