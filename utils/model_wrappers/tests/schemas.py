@@ -48,6 +48,7 @@ class ToolCall(BaseModel):
     id: str
     type: str
 
+
 class ToolMessage(BaseModel):
     content: Optional[str]
     role: str

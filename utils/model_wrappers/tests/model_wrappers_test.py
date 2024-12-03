@@ -43,7 +43,6 @@ from pydantic import ValidationError
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
-from utils.model_wrappers.tests.utils_test import add, multiply
 from utils.model_wrappers.tests.schemas import (
     EmbeddingsBaseModel,
     LLMBaseModel,
@@ -51,9 +50,10 @@ from utils.model_wrappers.tests.schemas import (
     SambaStudioGenericV2Response,
     SambaStudioOpenAIResponse,
     SambaStudioOpenAIResponseMetadata,
-    SNCloudChatCompletionChunk,
     SNCloudBaseResponse,
+    SNCloudChatCompletionChunk,
 )
+from utils.model_wrappers.tests.utils_test import add, multiply
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
@@ -358,47 +358,31 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
 
     def test_function_calling_response(self) -> None:
-
         tools = [add, multiply]
         tools_data = {
-            "tools": [
-            {
-                "type": "function",
-                "function": 
+            'tools': [
                 {
-                    "name": "get_time", 
-                    "description": "Returns current date, current time or both.\n\n Args:\n  kind: date, time or both", 
-                    "parameters": 
-                    {
-                        "properties": 
-                        {
-                            "kind": {
-                                "default": "both",
-                                "type": "string"
-                            }
-                            
-                        }, 
-                        "type": "object"
-                    }
+                    'type': 'function',
+                    'function': {
+                        'name': 'get_time',
+                        'description': 'Returns current date, current time or both.\n\n Args:\n  kind: date, time or\
+                             both',
+                        'parameters': {'properties': {'kind': {'default': 'both', 'type': 'string'}}, 'type': 'object'},
+                    },
                 }
-            }
-        ], 
-            "tool_choice": "auto", 
-            "parallel_tool_calls": False
+            ],
+            'tool_choice': 'auto',
+            'parallel_tool_calls': False,
         }
         query = 'whats time is it?'
         format_query = [{'role': 'user', 'content': query}]
         raw_response = self.sn_chat_model._handle_request(format_query, **tools_data)
 
-        llm = ChatSambaNovaCloud(
-            model="Meta-Llama-3.1-70B-Instruct",
-            max_tokens=1024,
-            temperature=0.0
-        )
+        llm = ChatSambaNovaCloud(model='Meta-Llama-3.1-70B-Instruct', max_tokens=1024, temperature=0.0)
         llm_with_tools = llm.bind_tools(tools)
-        query_2 = "What is 3 * 12? Also, what is 11 + 49?"
+        query_2 = 'What is 3 * 12? Also, what is 11 + 49?'
         response = llm_with_tools.invoke(query_2).tool_calls
-        
+
         for res in response:
             self.assertIn('name', res, "Response 'tool_calls' should have a 'name' key")
             self.assertIn('args', res, "Response 'tool_calls' should have a 'args' key")
@@ -408,8 +392,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         try:
             SNCloudBaseResponse(**raw_response.json())
         except ValidationError as e:
-             self.fail(f'Schema validation failed: {e}')
-
+            self.fail(f'Schema validation failed: {e}')
 
     def test_chat_model_response_streaming(self) -> None:
         query = 'Where is alpha centauri located?'
