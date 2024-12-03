@@ -66,13 +66,13 @@ def get_stock_database() -> None:
                 response_dict = handle_database_query(user_request, query_method)
 
                 # Save the query and answer to the history text file
-                save_output_callback(response_dict, HISTORY_PATH, user_request)
+                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
                 # Save the query and answer to the database query text file
                 if streamlit.button(
                     'Save Query',
                     on_click=save_output_callback,
-                    args=(response_dict, DB_QUERY_PATH, user_request),
+                    args=(response_dict, streamlit.session_state.db_query_path, user_request),
                 ):
                     pass
 

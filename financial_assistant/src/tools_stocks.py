@@ -3,6 +3,7 @@ import shutil
 from typing import Any, Dict, List, Optional
 
 import pandas
+import streamlit
 import yfinance
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -171,7 +172,7 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     )
 
     # Delete the pandasai cache
-    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
+    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
 
     # Answer the user query by symbol
     return interrogate_dataframe_pandasai(yahoo_connector, user_query)
@@ -197,13 +198,13 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
             'llm': sambanova_llm.llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': STOCK_QUERY_FIGURES_DIR,
+            'save_charts_path': streamlit.session_state.stock_query_figures_dir,
             'enable_cache': False,
         },
     )
 
     # Delete the pandasai cache
-    shutil.rmtree(PANDASAI_CACHE, ignore_errors=True)
+    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS

@@ -43,13 +43,13 @@ def get_yfinance_news() -> None:
                 content = answer + '\n\n'.join(url_list)
 
                 # Save the query and answer to the history text file
-                save_output_callback(content, HISTORY_PATH, user_request)
+                save_output_callback(content, streamlit.session_state.history_path, user_request)
 
                 # Save the query and answer to the Yahoo Finance News text file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(content, YFINANCE_NEWS_PATH, user_request),
+                    args=(content, streamlit.session_state.yfinance_news_path, user_request),
                 ):
                     pass
 
