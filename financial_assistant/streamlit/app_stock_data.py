@@ -97,13 +97,13 @@ def get_stock_data_analysis() -> None:
                 response_dict = handle_stock_query(user_request, dataframe_name)
 
                 # Save the output to the history file
-                save_output_callback(response_dict, streamlit.session_state['HISTORY_PATH'], user_request)
+                save_output_callback(response_dict, streamlit.session_state.history_path, user_request)
 
                 # Save the output to the stock query file
                 if streamlit.button(
                     'Save Answer',
                     on_click=save_output_callback,
-                    args=(response_dict, streamlit.session_state['STOCK_QUERY_PATH'], user_request),
+                    args=(response_dict, streamlit.session_state.stock_query_path, user_request),
                 ):
                     pass
 
@@ -131,7 +131,7 @@ def get_stock_data_analysis() -> None:
 
             # Save the output to the history file
             save_historical_price_callback(
-                user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state['HISTORY_PATH']
+                user_request, symbol_list, data, fig, start_date, end_date, streamlit.session_state.history_path
             )
 
             # Save the output to the stock query file
@@ -145,7 +145,7 @@ def get_stock_data_analysis() -> None:
                     fig,
                     start_date,
                     end_date,
-                    streamlit.session_state['STOCK_QUERY_PATH'],
+                    streamlit.session_state.stock_query_path,
                 ),
             ):
                 pass
