@@ -81,6 +81,9 @@ class MultimodalRetrieval:
         self.conversational = conversational
         self.memory: Optional[ConversationSummaryMemory] = None
         self.qa_chain: Optional[Callable[[Any], Dict[str, Any]]] = None
+        # set variables for image padding 
+        os.environ['EXTRACT_IMAGE_BLOCK_CROP_HORIZONTAL_PAD'] = '150'
+        os.environ['EXTRACT_IMAGE_BLOCK_CROP_VERTICAL_PAD'] = '150'
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any], bool]:
         """
