@@ -264,6 +264,7 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    st.session_state.image_sources_history = []
                     st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
 
