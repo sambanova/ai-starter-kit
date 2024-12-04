@@ -127,6 +127,7 @@ def main() -> None:
         config = yaml.safe_load(yaml_file)
 
     prod_mode = config.get('prod_mode', False)
+    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
     conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
 
@@ -171,9 +172,9 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set():
-            url, api_key = env_input_fields()
+            api_key, additional_vars = env_input_fields(mode=llm_type)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
-                message = save_credentials(url, api_key, prod_mode)
+                message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
                 st.success(message)
                 st.rerun()

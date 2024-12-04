@@ -33,6 +33,7 @@ def load_config() -> Any:
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
+llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 additional_env_vars = config.get('additional_env_vars', None)
 
 
@@ -167,7 +168,7 @@ def main() -> None:
         st.markdown('Get your SerpApi key [here]( https://serpapi.com)')
 
         if not are_credentials_set(additional_env_vars):
-            api_key, additional_vars = env_input_fields(additional_env_vars)
+            api_key, additional_vars = env_input_fields(additional_env_vars, mode=llm_type)
             if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
