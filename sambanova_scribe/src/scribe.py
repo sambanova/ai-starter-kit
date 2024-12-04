@@ -1,23 +1,22 @@
+import argparse
+import base64
+import concurrent.futures
 import os
 import sys
-import base64
-import argparse
 from io import BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
-import concurrent.futures
+
 import streamlit as st
 import yaml
 import yt_dlp
 from dotenv import load_dotenv
+from langchain.output_parsers import OutputFixingParser
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import LLM
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from langchain_core.prompts import load_prompt
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain.output_parsers import OutputFixingParser
-from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-from typing import Optional
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -37,29 +36,45 @@ MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB in bytes
 class FileSizeExceededError(Exception):
     pass
 
+
 class Transcript(BaseModel):
-    transcript: str = Field(description="audio transcription")
+    transcript: str = Field(description='audio transcription')
+
 
 class Scribe:
     """Downloading, transcription, question answering and summarization class"""
 
-    def __init__(self, sambanova_api_key: str, qwen2_url: str, qwen2_api_key:str) -> None:
+    def __init__(
+        self,
+        sambanova_api_key: Optional[str] = None,
+        qwen2_url: Optional[str] = None,
+        qwen2_api_key: Optional[str] = None,
+    ) -> None:
         """
         Create a new Scribe class
-        
+
         Args:
         sambanova_api_key (str): sambanova Cloud env api key
         qwen2_url (str): sambanova env with qwen2 url
         qwen2_api_key (str): sambanova env with qwen2 api key
         """
-        
+
         config = self.get_config_info()
         self.llm_info = config[0]
         self.audio_model_info = config[1]
         self.prod_mode = config[2]
-        self.sambanova_api_key = sambanova_api_key
-        self.qwen2_url = qwen2_url
-        self.qwen2_api_key = qwen2_api_key
+        if sambanova_api_key is not None:
+            self.sambanova_api_key: Optional[str] = sambanova_api_key
+        else:
+            self.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+        if qwen2_url is not None:
+            self.qwen2_url: Optional[str] = qwen2_url
+        else:
+            self.qwen2_url = os.environ.get('QWEN2_URL')
+        if qwen2_api_key is not None:
+            self.qwen2_api_key: Optional[str] = qwen2_api_key
+        else:
+            self.qwen2_api_key = os.environ.get('QWEN2_API_KEY')
         self.audio_model = self.set_audio_model()
         self.llm = self.set_llm()
 
@@ -128,28 +143,25 @@ class Scribe:
         chain = prompt_template | self.llm | StrOutputParser()
         summary = chain.invoke({'text': text, 'num': num})
         return summary
-    
-    def query_audio(self, audio_path: str, query:Optional[str]=None):
+
+    def query_audio(self, audio_path: str, query: Optional[str] = None) -> str:
         b64_audio = self.load_encode_audio(audio_path)
         conversation = [
             AIMessage(
-                "You are helpful assistant called Scribe developed by SambaNova Systems, you are helping users in general purpose tasks"
-                ),
-            HumanMessage(
-                content = [{
-                    "type": "audio_content",
-                    "audio_content": {
-                        "content": f"data:audio/mp3;base64,{b64_audio}"
-                    }
-                }]
+                'You are helpful assistant called Scribe developed by SambaNova Systems, you are helping users in general purpose tasks'
             ),
-            HumanMessage(f'{query}, explain your response')
+            HumanMessage(
+                content=[{'type': 'audio_content', 'audio_content': {'content': f'data:audio/mp3;base64,{b64_audio}'}}]
+            ),
+            HumanMessage(f'{query}, explain your response'),
         ]
-        response= self.audio_model.invoke(conversation)
-        return response.content
 
-    def query_audio_pipeline(self, audio_path: str, query:str):
-        
+        chain = self.audio_model | StrOutputParser()
+        response = chain.invoke(conversation)
+
+        return response
+
+    def query_audio_pipeline(self, audio_path: str, query: str) -> str:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             transcription_future = executor.submit(self.transcribe_audio, audio_path)
             audio_result_future = executor.submit(self.query_audio, audio_path, query)
@@ -157,54 +169,46 @@ class Scribe:
         audio_result = audio_result_future.result()
 
         conversation = [
-            SystemMessage('''
+            SystemMessage("""
                         You are helpful assistant called Scribe developed by SambaNova Systems.
                         the user will ask information about an audio.
                         You will get the user query, the audio transcription and an intermediate response generated by a model capable of listening the audio
                         Whit those give a final response to the user query
-                        '''
-                        ),
+                        """),
             HumanMessage(
-                f'''
+                f"""
                 Transcript: {transcription}
                 Intermediate Audio Response: {audio_result}
                 Query: {query}
-                '''
-                )
+                """
+            ),
         ]
         chain = self.llm | StrOutputParser()
         response = chain.invoke(conversation)
         return response
-    
-    def encode_to_base64(self, content: BytesIO) -> str:
+
+    def encode_to_base64(self, content: bytes) -> str:
         """Encode audio file to base64"""
-        return base64.b64encode(content).decode("utf-8")
+        return base64.b64encode(content).decode('utf-8')
 
     def load_encode_audio(self, audio: Union[BytesIO, str]) -> str:
         if isinstance(audio, str):
             with open(audio, 'rb') as file:
-                audio = file.read()
-        else: 
-            audio = audio.read()
-        b64_audio =  self.encode_to_base64(content = audio)
+                audio_bytes = file.read()
+        else:
+            audio_bytes = audio.read()
+        b64_audio = self.encode_to_base64(content=audio_bytes)
         return b64_audio
 
     def transcribe_audio(self, audio_file: Union[BytesIO, str]) -> str:
         b64_audio = self.load_encode_audio(audio_file)
         conversation = [
-            AIMessage(
-                "You are Automatic Speech Recognition tool"
-                ),
+            AIMessage('You are Automatic Speech Recognition tool'),
             HumanMessage(
-                content = [{
-                    "type": "audio_content",
-                    "audio_content": {
-                        "content": f"data:audio/mp3;base64,{b64_audio}"
-                    }
-                }]
+                content=[{'type': 'audio_content', 'audio_content': {'content': f'data:audio/mp3;base64,{b64_audio}'}}]
             ),
             HumanMessage(
-                f'''Please transcribe the previous audio in the following format
+                f"""Please transcribe the previous audio in the following format
                 
                 ```
                     {{
@@ -213,14 +217,14 @@ class Scribe:
                 ```
                 
                 Always return your response enclosed by ``` and using double quotes
-                '''
-                )
+                """
+            ),
         ]
-        parser=PydanticOutputParser(pydantic_object=Transcript)
+        parser = PydanticOutputParser(pydantic_object=Transcript)
         autofix_parser = OutputFixingParser.from_llm(parser=parser, llm=self.llm)
         chain = self.audio_model | autofix_parser
 
-        return chain.invoke(conversation).transcript
+        return chain.invoke(conversation)  # type: ignore
 
     def download_youtube_audio(
         self, url: str, output_path: Optional[str] = None, max_filesize: int = MAX_FILE_SIZE
@@ -310,27 +314,28 @@ class Scribe:
         except Exception as e:
             print(f'An unexpected error occurred: {str(e)}')
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transcribe, summarize, or query audio')
-    parser.add_argument('--task', type=str, choices=['transcribe', 'summarize', 'query'], help='Task to perform', default='transcribe')
+    parser.add_argument(
+        '--task', type=str, choices=['transcribe', 'summarize', 'query'], help='Task to perform', default='transcribe'
+    )
     parser.add_argument('--source', type=str, choices=['youtube', 'local'], help='Source of the audio', default='local')
     parser.add_argument('--audio', type=str, help='Path or YouTube link to the audio', required=True)
     parser.add_argument('--query', type=str, help='query when using query audio task', default=None)
 
     args = parser.parse_args()
-    
-    scribe = Scribe(
-        sambanova_api_key=os.environ.get("SAMBANOVA_API_KEY"),
-        qwen2_url=os.environ.get("QWEN2_URL"),
-        qwen2_api_key=os.environ.get("QWEN2_API_KEY"),
-    )
-    
-    if args.source == "youtube":
+
+    scribe = Scribe()
+
+    if args.source == 'youtube':
         audio_path = scribe.download_youtube_audio(args.audio)
     else:
         audio_path = args.audio
-    
-    if args.task == 'transcribe':     
+
+    assert audio_path is not None
+
+    if args.task == 'transcribe':
         transcript = scribe.transcribe_audio(audio_path)
         print(f'Transcript: {transcript}')
     elif args.task == 'summarize':
@@ -344,5 +349,5 @@ if __name__ == "__main__":
         else:
             response = scribe.query_audio_pipeline(audio_path=audio_path, query=args.query)
             print(f'Response: {response}')
-    if args.source == "youtube":
-        audio_path = scribe.delete_downloaded_file(audio_path)
+    if args.source == 'youtube':
+        scribe.delete_downloaded_file(audio_path)

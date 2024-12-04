@@ -4,6 +4,7 @@ import sys
 import uuid
 from io import BytesIO
 from typing import Any, Optional
+
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
@@ -39,7 +40,7 @@ def load_config() -> Any:
 
 
 config = load_config()
-llm_type = 'SambaStudio' if config.get('llm',{}).get("type")=='sambastudio' else 'SambaNova Cloud'
+llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 prod_mode = config.get('prod_mode', False)
 
 
@@ -67,7 +68,7 @@ def setup_sidebar() -> None:
                 sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
                 qwen2_url = st.session_state.QWEN2_URL
                 qwen2_api_key = st.session_state.QWEN2_API_KEY
-            else: 
+            else:
                 if 'SAMBANOVA_API_KEY' in st.session_state:
                     sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
                 else:
@@ -80,7 +81,7 @@ def setup_sidebar() -> None:
                     qwen2_api_key = os.environ.get('QWEN2_API_KEY') or st.session_state.QWEN2_API_KEY
                 else:
                     qwen2_api_key = os.environ.get('QWEN2_API_KEY')
-            
+
             if st.session_state.sambanova_scribe is None:
                 st.session_state.sambanova_scribe = Scribe(sambanova_api_key, qwen2_url, qwen2_api_key)
 
@@ -116,8 +117,10 @@ def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> 
             raise FileSizeExceededError(f'File size exceeds {MAX_FILE_SIZE/1024/1024:.2f} MB limit')
     return audio_file
 
-def submit():
+
+def submit() -> None:
     st.write('submited')
+
 
 def main() -> None:
     """Main function for Scribe application."""
@@ -145,7 +148,7 @@ def main() -> None:
 
     st.title(':orange[SambaNova] Scribe')
     setup_sidebar()
-    tab1, tab2, tab3 = st.tabs(["Transcribe", "Chat" ,"Audio QA"])
+    tab1, tab2, tab3 = st.tabs(['Transcribe', 'Chat', 'Audio QA'])
     with tab1:
         if st.session_state.sambanova_scribe is not None:
             try:
@@ -171,8 +174,8 @@ def main() -> None:
                             audio_file = process_audio(input_method, audio_file, youtube_link)  # type: ignore
                             if audio_file:
                                 st.write('Transcribing audio in background...')
-                                st.session_state.transcription_text = st.session_state.sambanova_scribe.transcribe_audio(
-                                    audio_file
+                                st.session_state.transcription_text = (
+                                    st.session_state.sambanova_scribe.transcribe_audio(audio_file)
                                 )
                                 st.toast('Transcription complete!')
                 if st.session_state.transcription_text is not None:
@@ -189,26 +192,30 @@ def main() -> None:
                 st.error(str(e))
                 if st.button('Clear'):
                     st.rerun()
-        
-        with tab2: 
-            st.header("Chat")
-            with st.chat_message("user"):
-                st.write("Hello 👋")
-            c1, c2,= st.columns([5, 1])
+
+        with tab2:
+            st.header('Chat')
+            with st.chat_message('user'):
+                st.write('Hello 👋')
+            (
+                c1,
+                c2,
+            ) = st.columns([5, 1])
             with c1:
-                user_query = st.chat_input(on_submit=submit,key='chat')
+                user_query = st.chat_input(on_submit=submit, key='chat')
             with c2:
-                recording = st.audio_input('',label_visibility='collapsed')
-     
-        with tab3: 
-            st.header("Audio QA")
-            with st.chat_message("user"):
-                st.write("Hello 👋")
+                recording = st.audio_input('', label_visibility='collapsed')
+
+        with tab3:
+            st.header('Audio QA')
+            with st.chat_message('user'):
+                st.write('Hello 👋')
             c1, c2 = st.columns([3, 5])
             with c1:
-                audio = st.file_uploader("audio", ("mp3","wav"), True, label_visibility='collapsed')
+                audio = st.file_uploader('audio', ('mp3', 'wav'), True, label_visibility='collapsed')
             with c2:
                 user_query = st.chat_input(on_submit=submit, key='qa')
+
 
 if __name__ == '__main__':
     main()
