@@ -244,7 +244,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             stream_url = self.base_url
         else:
             if 'stream' in self.base_url:
-                stream_url = self.base_url.replace('stream/', '')
+                stream_url = self.base_url
             else:
                 if 'generic' in self.base_url:
                     stream_url = 'generic/stream'.join(self.base_url.split('generic'))
