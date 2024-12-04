@@ -137,7 +137,7 @@ def main() -> None:
         config = yaml.safe_load(yaml_file)
 
     prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['type'] == 'sambastudio' else 'SambaNova Cloud'
+    llm_type = 'SambaStudio' config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
 
