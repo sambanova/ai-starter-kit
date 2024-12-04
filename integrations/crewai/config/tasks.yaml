@@ -1,0 +1,47 @@
+task_breakdown:
+  description: >
+    Carefully analyze the project_requirements for the {project_type}
+    project and break them down into individual tasks. Define each
+    task's scope in detail, set achievable timelines, and ensure that
+    all dependencies are accounted for:
+
+    {project_requirements}
+
+
+    Team members:
+
+    {team_members}
+  expected_output: >
+    A comprehensive list of tasks with detailed descriptions, timelines,
+    dependencies, and deliverables. Your final output MUST include a
+    Gantt chart or similar timeline visualization specific to the
+    {project_type} project.
+
+time_resource_estimation:
+  description: >
+    Thoroughly evaluate each task in the {project_type} project to
+    estimate the time, resources, and effort required.
+    Use historical data, task complexity, and available resources to
+    provide a realistic estimation for each task.
+  expected_output: >
+    A detailed estimation report outlining the time, resources, and
+    effort required for each task in the {project_type} project.
+    Your final report MUST include a summary of any risks or
+    uncertainties associated with the estimations.
+
+resource_allocation:
+  description: >
+    Strategically allocate tasks for the {project_type} project to
+    team members based on their skills, availability, and current
+    workload. Ensure that each task is assigned to the most suitable
+    team member and that the workload is evenly distributed.
+
+
+    Team members:
+
+    {team_members}
+  expected_output: >
+    A resource allocation chart showing which team members are
+    responsible for each task in the {project_type} project, along with
+    start and end dates. Your final output MUST also include a summary
+    explaining the rationale behind each allocation decision.
