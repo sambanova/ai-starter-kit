@@ -27,7 +27,6 @@ class RequestConfig(BaseModel):
     num_concurrent_requests: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
-
 class LLMResponse(BaseModel):
     """The response object created from a response from one of the SambaStudio LLM APIs
 
