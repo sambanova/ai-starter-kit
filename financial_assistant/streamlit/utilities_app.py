@@ -1,5 +1,4 @@
 import datetime
-import importlib
 import json
 import os
 import pathlib
@@ -9,7 +8,6 @@ import sys
 import time
 from pathlib import Path
 from threading import Thread
-from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -43,49 +41,9 @@ def initialize_session(
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
-    # Cache directory
-    if 'SESSION_ID' not in session_state:
-        session_state['SESSION_ID'] = str(uuid4())
-
-    if 'CACHE_DIR' not in session_state:
-        if cache_dir is None:
-            session_state['CACHE_DIR'] = os.path.join(kit_dir, 'streamlit/cache')
-            if prod_mode:
-                session_state['CACHE_DIR'] = os.path.abspath(
-                    os.path.join(
-                        kit_dir,
-                        '../../scratch/financial_assistant/cache',
-                        f'cache_{session_state["SESSION_ID"]}',
-                    )
-                )
-        else:
-            session_state['CACHE_DIR'] = cache_dir
-
-    # Main cache directories
-    session_state['HISTORY_PATH'] = os.path.join(session_state['CACHE_DIR'], 'chat_history.txt')
-    session_state['PDF_GENERATION_DIRECTORY'] = os.path.join(session_state['CACHE_DIR'], 'pdf_generation')
-    session_state['STOCK_QUERY_PATH'] = os.path.join(session_state['CACHE_DIR'], 'stock_query.txt')
-    session_state['DB_QUERY_PATH'] = os.path.join(session_state['CACHE_DIR'], 'db_query.txt')
-    session_state['YFINANCE_NEWS_PATH'] = os.path.join(session_state['CACHE_DIR'], 'yfinance_news.txt')
-    session_state['FILINGS_PATH'] = os.path.join(session_state['CACHE_DIR'], 'filings.txt')
-    session_state['PDF_RAG_PATH'] = os.path.join(session_state['CACHE_DIR'], 'pdf_rag.txt')
-    session_state['WEB_SCRAPING_PATH'] = os.path.join(session_state['CACHE_DIR'], 'web_scraping.csv')
-    session_state['TIME_LLM_PATH'] = os.path.join(session_state['CACHE_DIR'], 'time_llm.json')
-
-    # Main source directories
-    session_state['SOURCE_DIR'] = os.path.join(session_state['CACHE_DIR'], 'sources')
-    session_state['DB_PATH'] = os.path.join(session_state['SOURCE_DIR'], 'stock_database.db')
-    session_state['YFINANCE_NEWS_TXT_PATH'] = os.path.join(session_state['SOURCE_DIR'], 'yfinance_news_documents.txt')
-    session_state['YFINANCE_NEWS_CSV_PATH'] = os.path.join(session_state['SOURCE_DIR'], 'yfinance_news_documents.csv')
-    session_state['PDF_SOURCES_DIR'] = os.path.join(session_state['SOURCE_DIR'], 'pdf_sources')
-
-    # Main figures directories
-    session_state['STOCK_QUERY_FIGURES_DIR'] = os.path.join(session_state['CACHE_DIR'], 'stock_query_figures')
-    session_state['HISTORY_FIGURES_DIR'] = os.path.join(session_state['CACHE_DIR'], 'history_figures')
-    session_state['DB_QUERY_FIGURES_DIR'] = os.path.join(session_state['CACHE_DIR'], 'db_query_figures')
-
-    # `pandasai` cache
-    session_state['PANDASAI_CACHE'] = os.path.join(os.getcwd(), 'cache')
+    # Session ID
+    if 'session_id' not in session_state:
+        session_state.session_id = str(uuid4())
 
     # Initialize the production mode
     if 'prod_mode' not in session_state:
@@ -94,7 +52,7 @@ def initialize_session(
     # Initialize credentials
     initialize_env_variables(prod_mode)
 
-    # Initialize/Clear the chat history
+    # Initialize/clear the chat history
     if 'chat_history' not in session_state:
         session_state.chat_history = list()
 
@@ -102,11 +60,70 @@ def initialize_session(
     if 'launch_time' not in session_state:
         session_state.launch_time = datetime.datetime.now()
 
+    # Cache directory
+    if 'CACHE_DIR' not in session_state:
+        if cache_dir is None:
+            session_state.cache_dir = os.path.join(kit_dir, 'streamlit/cache')
+            if prod_mode:
+                session_state.cache_dir = os.path.abspath(
+                    os.path.join(
+                        kit_dir,
+                        '../../scratch/financial_assistant/cache',
+                        f'cache_{session_state.session_id}',
+                    )
+                )
+        else:
+            session_state.cache_dir = cache_dir
+
+    # Main cache directories
+    if 'history_path' not in session_state:
+        session_state.history_path = os.path.join(session_state.cache_dir, 'chat_history.txt')
+    if 'pdf_generation_dir' not in session_state:
+        session_state.pdf_generation_dir = os.path.join(session_state.cache_dir, 'pdf_generation')
+    if 'stock_query_path' not in session_state:
+        session_state.stock_query_path = os.path.join(session_state.cache_dir, 'stock_query.txt')
+    if 'db_query_path' not in session_state:
+        session_state.db_query_path = os.path.join(session_state.cache_dir, 'db_query.txt')
+    if 'yfinance_news_path' not in session_state:
+        session_state.yfinance_news_path = os.path.join(session_state.cache_dir, 'yfinance_news.txt')
+    if 'filings_path' not in session_state:
+        session_state.filings_path = os.path.join(session_state.cache_dir, 'filings.txt')
+    if 'pdf_rag_path' not in session_state:
+        session_state.pdf_rag_path = os.path.join(session_state.cache_dir, 'pdf_rag.txt')
+    if 'web_scraping_path' not in session_state:
+        session_state.web_scraping_path = os.path.join(session_state.cache_dir, 'web_scraping.csv')
+    if 'time_llm_path' not in session_state:
+        session_state.time_llm_path = os.path.join(session_state.cache_dir, 'time_llm.json')
+
+    # Main source directories
+    if 'sources_dir' not in session_state:
+        session_state.sources_dir = os.path.join(session_state.cache_dir, 'sources')
+    if 'db_path' not in session_state:
+        session_state.db_path = os.path.join(session_state.sources_dir, 'stock_database.db')
+    if 'yfinance_news_txt_path' not in session_state:
+        session_state.yfinance_news_txt_path = os.path.join(session_state.sources_dir, 'yfinance_news_documents.txt')
+    if 'yfinance_news_csv_path' not in session_state:
+        session_state.yfinance_news_csv_path = os.path.join(session_state.sources_dir, 'yfinance_news_documents.csv')
+    if 'pdf_sources_dir' not in session_state:
+        session_state.pdf_sources_dir = os.path.join(session_state.sources_dir, 'pdf_sources')
+
+    # Main figures directories
+    if 'stock_query_figures_dir' not in session_state:
+        session_state.stock_query_figures_dir = os.path.join(session_state.cache_dir, 'stock_query_figures')
+    if 'history_figures_dir' not in session_state:
+        session_state.history_figures_dir = os.path.join(session_state.cache_dir, 'history_figures')
+    if 'db_query_figures_dir' not in session_state:
+        session_state.db_query_figures_dir = os.path.join(session_state.cache_dir, 'db_query_figures')
+
+    # `pandasai` cache
+    if 'pandasai_cache' not in session_state:
+        session_state.pandasai_cache = os.path.join(os.getcwd(), 'cache')
+
     # Mixpanel events
     if 'mp_events' not in session_state:
         session_state.mp_events = MixpanelEvents(
             os.getenv('MIXPANEL_TOKEN'),
-            st_session_id=session_state['SESSION_ID'],
+            st_session_id=session_state.session_id,
             kit_name='financial_assistant',
             track=session_state.prod_mode,
         )
@@ -117,31 +134,7 @@ def initialize_session(
         pandasai.clear_cache()
     except:
         pass
-    delete_temp_dir(temp_dir=session_state['PANDASAI_CACHE'], verbose=False)
-
-
-def reload_modules_in_package(package_root: Path) -> None:
-    """
-    Reload all modules in a given file system path if they are already imported.
-
-    Args:
-        package_root: The root directory of the package.
-    """
-    # Get the root package name
-    root_package_name = package_root.name
-
-    # List all Python files and directories in the `package_root`
-    for path in package_root.rglob('*.py'):
-        # Construct the module name by replacing '/' with '.' and removing the .py extension
-        relative_path = path.relative_to(package_root).with_suffix('')
-        module_name = f"{root_package_name}.{str(relative_path).replace('/', '.')}"
-
-        # Check if the module has been imported and reload it
-        if module_name in sys.modules:
-            module = sys.modules[module_name]
-            if isinstance(module, ModuleType):
-                logger.info(f'Reloading module: {module_name}')
-                importlib.reload(module)
+    delete_temp_dir(temp_dir=session_state.pandasai_cache, verbose=False)
 
 
 def submit_sec_edgar_details() -> None:
@@ -186,7 +179,7 @@ def save_historical_price_callback(
     """Save dataframe and figure callback for streamlit button."""
 
     # Derive the directory name
-    dir_name = streamlit.session_state['HISTORY_FIGURES_DIR']
+    dir_name = streamlit.session_state.history_figures_dir
 
     # Create the directory for storing historical price data
     if not os.path.exists(dir_name):
@@ -442,26 +435,26 @@ def clear_cache(delete: bool = False, verbose: bool = False) -> None:
     """Clear and/or delete the cache."""
 
     try:
-        streamlit.session_state['CACHE_DIR'] = streamlit.session_state['CACHE_DIR']
+        streamlit.session_state.cache_dir = streamlit.session_state.cache_dir
 
-        if not os.path.exists(streamlit.session_state['CACHE_DIR']):
+        if not os.path.exists(streamlit.session_state.cache_dir):
             if verbose:
-                logger.warning(f'Cache directory does not exist: {Path(streamlit.session_state["CACHE_DIR"]).name}')
+                logger.warning(f'Cache directory does not exist: {Path(streamlit.session_state.cache_dir).name}')
             return
 
         # Clear the cache directory recursively
-        clear_directory(streamlit.session_state['CACHE_DIR'], delete)
+        clear_directory(streamlit.session_state.cache_dir, delete)
 
     except Exception as e:
-        logger.warning(f'Error clearing cache directory {Path(streamlit.session_state["CACHE_DIR"]).name}: {e}')
+        logger.warning(f'Error clearing cache directory {Path(streamlit.session_state.cache_dir).name}: {e}')
 
     if delete:
         try:
-            shutil.rmtree(streamlit.session_state['CACHE_DIR'])
+            shutil.rmtree(streamlit.session_state.cache_dir)
             if verbose:
-                logger.info(f'Successfully deleted cache directory: {Path(streamlit.session_state["CACHE_DIR"]).name}')
+                logger.info(f'Successfully deleted cache directory: {Path(streamlit.session_state.cache_dir).name}')
         except Exception as e:
-            logger.warning(f'Error deleting cache directory {Path(streamlit.session_state["CACHE_DIR"]).name}: {e}')
+            logger.warning(f'Error deleting cache directory {Path(streamlit.session_state.cache_dir).name}: {e}')
 
 
 def download_file(filename: str, key: Optional[str] = None) -> None:

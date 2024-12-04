@@ -83,11 +83,11 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Create the cache and its main subdirectories
         subdirectories = [
-            streamlit.session_state['SOURCE_DIR'],
-            streamlit.session_state['PDF_SOURCES_DIR'],
-            streamlit.session_state['PDF_GENERATION_DIRECTORY'],
+            streamlit.session_state.sources_dir,
+            streamlit.session_state.pdf_sources_dir,
+            streamlit.session_state.pdf_generation_dir,
         ]
-        create_temp_dir_with_subdirs(streamlit.session_state['CACHE_DIR'], subdirectories)
+        create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
         # List of available methods for database query
         self.method_list = ['text-to-SQL', 'PandasAI-SqliteConnector']
@@ -134,7 +134,7 @@ class FinancialAssistantTest(unittest.TestCase):
         self.check_get_stock_info(response)
 
         # Save response to cache
-        save_output_callback(response, streamlit.session_state['STOCK_QUERY_PATH'], query)
+        save_output_callback(response, streamlit.session_state.stock_query_path, query)
 
     def test_get_historical_price(self) -> None:
         """Test for the tool `get_historical_price`."""
@@ -175,7 +175,7 @@ class FinancialAssistantTest(unittest.TestCase):
             response[0],
             DEFAULT_START_DATE,
             DEFAULT_END_DATE,
-            streamlit.session_state['STOCK_QUERY_PATH'],
+            streamlit.session_state.stock_query_path,
         )
 
     def test_create_stock_database(self) -> None:
@@ -257,7 +257,7 @@ class FinancialAssistantTest(unittest.TestCase):
             self.check_query_stock_database(response, method)
 
             # Save response to cache
-            save_output_callback(response, streamlit.session_state['DB_QUERY_PATH'], query)
+            save_output_callback(response, streamlit.session_state.db_query_path, query)
 
     def test_scrape_yahoo_finance_news(self) -> None:
         """Test for the tool `scrape_yahoo_finance_news`."""
@@ -289,7 +289,7 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Save response to cache
         content = response + '\n\n'.join(url_list)
-        save_output_callback(content, streamlit.session_state['YFINANCE_NEWS_PATH'], query)
+        save_output_callback(content, streamlit.session_state.yfinance_news_path, query)
 
     def test_retrieve_filings(self) -> None:
         """Test for the tool `retrieve_filings`."""
@@ -327,7 +327,7 @@ class FinancialAssistantTest(unittest.TestCase):
         self.check_retrieve_filings(response)
 
         # Save response to cache
-        save_output_callback(response, streamlit.session_state['FILINGS_PATH'], query)
+        save_output_callback(response, streamlit.session_state.filings_path, query)
 
     def test_handle_pdf_generation(self) -> None:
         """Test the tool `handle_pdf_generation`."""
@@ -336,10 +336,10 @@ class FinancialAssistantTest(unittest.TestCase):
         report_name = report_title.lower().replace(' ', '_') + '.pdf'
 
         data_paths = dict()
-        data_paths['stock_query'] = streamlit.session_state['STOCK_QUERY_PATH']
-        data_paths['stock_database'] = streamlit.session_state['DB_QUERY_PATH']
-        data_paths['yfinance_news'] = streamlit.session_state['YFINANCE_NEWS_PATH']
-        data_paths['filings'] = streamlit.session_state['FILINGS_PATH']
+        data_paths['stock_query'] = streamlit.session_state.stock_query_path
+        data_paths['stock_database'] = streamlit.session_state.db_query_path
+        data_paths['yfinance_news'] = streamlit.session_state.yfinance_news_path
+        data_paths['filings'] = streamlit.session_state.filings_path
 
         # Generate the PDF report
         pdf_handler = handle_pdf_generation(report_title, report_name, data_paths, True)
@@ -357,7 +357,7 @@ class FinancialAssistantTest(unittest.TestCase):
         query = DEFAULT_PDF_RAG_QUERY
 
         # The pdf files names
-        pdf_files_names = [os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], report_name)]
+        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_dir, report_name)]
 
         # Invoke the tool to answer the user query
         response = pdf_rag.invoke(
@@ -380,7 +380,7 @@ class FinancialAssistantTest(unittest.TestCase):
         query = DEFAULT_PDF_RAG_QUERY
 
         # The pdf files names
-        pdf_files_names = [os.path.join(streamlit.session_state['PDF_GENERATION_DIRECTORY'], report_name)]
+        pdf_files_names = [os.path.join(streamlit.session_state.pdf_generation_dir, report_name)]
 
         # Invoke the LLM to answer the user query
         response = handle_pdf_rag(query, pdf_files_names)
