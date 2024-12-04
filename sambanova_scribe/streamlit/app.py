@@ -27,7 +27,7 @@ from utils.visual.env_utils import (
 )
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-ADDITIONAL_ENV_VARS = ['TRANSCRIPTION_BASE_URL', 'TRANSCRIPTION_API_KEY']
+ADDITIONAL_ENV_VARS = ['QWEN2_URL', 'QWEN2_API_KEY']
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
@@ -53,9 +53,8 @@ def setup_sidebar() -> None:
             api_key, additional_vars = env_input_fields(ADDITIONAL_ENV_VARS, mode=llm_type)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
-                st.session_state.sambanova_scribe = Scribe()
-                st.success(message)
                 st.session_state.mp_events.api_key_saved()
+                st.success(message)
                 st.rerun()
         else:
             st.success('Credentials are set')
@@ -64,8 +63,26 @@ def setup_sidebar() -> None:
                 st.rerun()
 
         if are_credentials_set(ADDITIONAL_ENV_VARS):
+            if prod_mode:
+                sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+                qwen2_url = st.session_state.QWEN2_URL
+                qwen2_api_key = st.session_state.QWEN2_API_KEY
+            else: 
+                if 'SAMBANOVA_API_KEY' in st.session_state:
+                    sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+                else:
+                    sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+                if 'QWEN2_URL' in st.session_state:
+                    qwen2_url = os.environ.get('QWEN2_URL') or st.session_state.QWEN2_URL
+                else:
+                    qwen2_url = os.environ.get('QWEN2_URL')
+                if 'QWEN2_API_KEY' in st.session_state:
+                    qwen2_api_key = os.environ.get('QWEN2_API_KEY') or st.session_state.QWEN2_API_KEY
+                else:
+                    qwen2_api_key = os.environ.get('QWEN2_API_KEY')
+            
             if st.session_state.sambanova_scribe is None:
-                st.session_state.sambanova_scribe = Scribe()
+                st.session_state.sambanova_scribe = Scribe(sambanova_api_key, qwen2_url, qwen2_api_key)
 
 
 def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> Optional[BytesIO]:

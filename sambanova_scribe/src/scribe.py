@@ -42,14 +42,23 @@ class Transcript(BaseModel):
 class Scribe:
     """Downloading, transcription, question answering and summarization class"""
 
-    def __init__(self) -> None:
+    def __init__(self, sambanova_api_key: str, qwen2_url: str, qwen2_api_key:str) -> None:
         """
         Create a new Scribe class
+        
+        Args:
+        sambanova_api_key (str): sambanova Cloud env api key
+        qwen2_url (str): sambanova env with qwen2 url
+        qwen2_api_key (str): sambanova env with qwen2 api key
         """
+        
         config = self.get_config_info()
         self.llm_info = config[0]
         self.audio_model_info = config[1]
         self.prod_mode = config[2]
+        self.sambanova_api_key = sambanova_api_key
+        self.qwen2_url = qwen2_url
+        self.qwen2_api_key = qwen2_api_key
         self.audio_model = self.set_audio_model()
         self.llm = self.set_llm()
 
@@ -72,33 +81,14 @@ class Scribe:
         Returns:
         audio_model: The audio model.
         """
-        if self.prod_mode:
-            qwen2_url = st.session_state.QWEN2_URL
-            qwen2_api_key = st.session_state.QWEN2_API_KEY
-
-        else:
-            if 'QWEN2_API_KEY' in st.session_state:
-                qwen2_api_key = (
-                    os.environ.get('QWEN2_API_KEY') or st.session_state.TRANSCRIPTION_API_KEY
-                )
-            else:
-                qwen2_api_key = os.environ.get('QWEN2_API_KEY')
-
-            if 'QWEN2_URL' in st.session_state:
-                qwen2_url = (
-                    os.environ.get('QWEN2_URL') or st.session_state.QWEN2_URL
-                )
-            else:
-                qwen2_url = os.environ.get('QWEN2_URL')
-                
         audio_model = APIGateway.load_chat(
             type=self.audio_model_info['type'],
             streaming=False,
             max_tokens=self.audio_model_info['max_tokens'],
             temperature=self.audio_model_info['temperature'],
             model=self.audio_model_info['model'],
-            sambanova_url=qwen2_url,
-            sambanova_api_key=qwen2_api_key,
+            sambanova_url=self.qwen2_url,
+            sambanova_api_key=self.qwen2_api_key,
         )
 
         return audio_model
@@ -110,15 +100,6 @@ class Scribe:
         Returns:
         LLM: The SambaStudio Cloud or Sambastudio Langchain ChatModel.
         """
-
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
         llm = APIGateway.load_chat(
             type=self.llm_info['type'],
             streaming=False,
@@ -127,7 +108,7 @@ class Scribe:
             temperature=self.llm_info['temperature'],
             model=self.llm_info['model'],
             process_prompt=False,
-            sambanova_api_key=sambanova_api_key,
+            sambanova_api_key=self.sambanova_api_key,
         )
         return llm
 
@@ -282,6 +263,10 @@ class Scribe:
             print(f'An unexpected error occurred: {str(e)}')
 
 if __name__ == "__main__":
-    scribe = Scribe()
+    scribe = Scribe(
+        sambanova_api_key=os.environ.get("SAMBANOVA_API_KEY"),
+        qwen2_url=os.environ.get("QWEN2_URL"),
+        qwen2_api_key=os.environ.get("QWEN2_API_KEY"),
+    )
     transcript = scribe.transcribe_audio(os.path.join(kit_dir,'data','sample.mp3'))
     print(transcript)
