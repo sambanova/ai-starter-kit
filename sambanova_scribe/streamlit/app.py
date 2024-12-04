@@ -4,7 +4,6 @@ import sys
 import uuid
 from io import BytesIO
 from typing import Any, Optional
-
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
@@ -40,6 +39,7 @@ def load_config() -> Any:
 
 
 config = load_config()
+llm_type = 'SambaStudio' if config.get('llm',{}).get("type")=='sambastudio' else 'SambaNova Cloud'
 prod_mode = config.get('prod_mode', False)
 
 
@@ -50,7 +50,7 @@ def setup_sidebar() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(ADDITIONAL_ENV_VARS):
-            api_key, additional_vars = env_input_fields(ADDITIONAL_ENV_VARS)
+            api_key, additional_vars = env_input_fields(ADDITIONAL_ENV_VARS, mode=llm_type)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.sambanova_scribe = Scribe()
@@ -99,6 +99,8 @@ def process_audio(input_method: str, audio_file: BytesIO, youtube_link: str) -> 
             raise FileSizeExceededError(f'File size exceeds {MAX_FILE_SIZE/1024/1024:.2f} MB limit')
     return audio_file
 
+def submit():
+    st.write('submited')
 
 def main() -> None:
     """Main function for Scribe application."""
@@ -126,49 +128,70 @@ def main() -> None:
 
     st.title(':orange[SambaNova] Scribe')
     setup_sidebar()
-    if st.session_state.sambanova_scribe is not None:
-        try:
-            input_method = st.radio('Choose input method:', ['Upload audio file', 'YouTube link'])
+    tab1, tab2, tab3 = st.tabs(["Transcribe", "Chat" ,"Audio QA"])
+    with tab1:
+        if st.session_state.sambanova_scribe is not None:
+            try:
+                input_method = st.radio('Choose input method:', ['Upload audio file', 'YouTube link'])
 
-            with st.form('sambanovaform'):
-                audio_file = (
-                    st.file_uploader('Upload an audio file', type=['mp3', 'm4a', 'wav'])
-                    if input_method == 'Upload audio file'
-                    else None
-                )
-                youtube_link = st.text_input('Enter YouTube link:', '') if input_method == 'YouTube link' else None
+                with st.form('sambanovaform'):
+                    audio_file = (
+                        st.file_uploader('Upload an audio file', type=['mp3', 'm4a', 'wav'])
+                        if input_method == 'Upload audio file'
+                        else None
+                    )
+                    youtube_link = st.text_input('Enter YouTube link:', '') if input_method == 'YouTube link' else None
 
-                submitted = st.form_submit_button('Transcribe')
+                    submitted = st.form_submit_button('Transcribe')
 
-                if submitted:
-                    st.session_state.transcription_text = None
-                    if (input_method == 'Upload audio file' and not audio_file) or (
-                        input_method == 'YouTube link' and not youtube_link
-                    ):
-                        st.error(f'Please {input_method.lower()}')
-                    else:
-                        audio_file = process_audio(input_method, audio_file, youtube_link)  # type: ignore
-                        if audio_file:
-                            st.write('Transcribing audio in background...')
-                            st.session_state.transcription_text = st.session_state.sambanova_scribe.transcribe_audio(
-                                audio_file
-                            )
-                            st.toast('Transcription complete!')
-            if st.session_state.transcription_text is not None:
-                st.markdown(r'$\Large{\textsf{Transcription}}$')
-                st.text_area('', st.session_state.transcription_text, height=150)
-                if st.button('Summarize'):
-                    st.session_state.mp_events.input_submitted('summarize_transcription')
-                    summary = st.session_state.sambanova_scribe.summarize(st.session_state.transcription_text)
-                    st.toast('Summarization complete!')
-                    st.markdown(r'$\Large{\textsf{Bullet Point Summary:}}$')
-                    st.text_area('', f'{summary}', height=150)
+                    if submitted:
+                        st.session_state.transcription_text = None
+                        if (input_method == 'Upload audio file' and not audio_file) or (
+                            input_method == 'YouTube link' and not youtube_link
+                        ):
+                            st.error(f'Please {input_method.lower()}')
+                        else:
+                            audio_file = process_audio(input_method, audio_file, youtube_link)  # type: ignore
+                            if audio_file:
+                                st.write('Transcribing audio in background...')
+                                st.session_state.transcription_text = st.session_state.sambanova_scribe.transcribe_audio(
+                                    audio_file
+                                )
+                                st.toast('Transcription complete!')
+                if st.session_state.transcription_text is not None:
+                    st.markdown(r'$\Large{\textsf{Transcription}}$')
+                    st.text_area('', st.session_state.transcription_text, height=150)
+                    if st.button('Summarize'):
+                        st.session_state.mp_events.input_submitted('summarize_transcription')
+                        summary = st.session_state.sambanova_scribe.summarize(st.session_state.transcription_text)
+                        st.toast('Summarization complete!')
+                        st.markdown(r'$\Large{\textsf{Bullet Point Summary:}}$')
+                        st.text_area('', f'{summary}', height=150)
 
-        except Exception as e:
-            st.error(str(e))
-            if st.button('Clear'):
-                st.rerun()
-
+            except Exception as e:
+                st.error(str(e))
+                if st.button('Clear'):
+                    st.rerun()
+        
+        with tab2: 
+            st.header("Chat")
+            with st.chat_message("user"):
+                st.write("Hello 👋")
+            c1, c2,= st.columns([5, 1])
+            with c1:
+                user_query = st.chat_input(on_submit=submit,key='chat')
+            with c2:
+                recording = st.audio_input('',label_visibility='collapsed')
+     
+        with tab3: 
+            st.header("Audio QA")
+            with st.chat_message("user"):
+                st.write("Hello 👋")
+            c1, c2 = st.columns([3, 5])
+            with c1:
+                audio = st.file_uploader("audio", ("mp3","wav"), True, label_visibility='collapsed')
+            with c2:
+                user_query = st.chat_input(on_submit=submit, key='qa')
 
 if __name__ == '__main__':
     main()
