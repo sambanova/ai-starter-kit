@@ -1,5 +1,6 @@
 import os
 import sys
+import base64
 from io import BytesIO
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -9,20 +10,24 @@ import yt_dlp
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import LLM
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import load_prompt
-from openai import OpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain.output_parsers import OutputFixingParser
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
-from utils.model_wrappers.api_gateway import APIGateway
-
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-load_dotenv(os.path.join(repo_dir, '.env'))
 
+from utils.model_wrappers.api_gateway import APIGateway
+
+load_dotenv(os.path.join(repo_dir, '.env'))
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB in bytes
@@ -31,9 +36,11 @@ MAX_FILE_SIZE = 25 * 1024 * 1024  # 25 MB in bytes
 class FileSizeExceededError(Exception):
     pass
 
+class Transcript(BaseModel):
+    transcript: str = Field(description="audio transcription")
 
 class Scribe:
-    """Downloading, transcription and summarization class"""
+    """Downloading, transcription, question answering and summarization class"""
 
     def __init__(self) -> None:
         """
@@ -43,7 +50,7 @@ class Scribe:
         self.llm_info = config[0]
         self.audio_model_info = config[1]
         self.prod_mode = config[2]
-        self.client = self.set_client()
+        self.audio_model = self.set_audio_model()
         self.llm = self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], bool]:
@@ -58,40 +65,50 @@ class Scribe:
 
         return llm_info, audio_model_info, prod_mode
 
-    def set_client(self) -> OpenAI:
+    def set_audio_model(self) -> BaseChatModel:
         """
-        Sets the transcription client.
+        Sets the audio model.
 
         Returns:
-        client: The transcription client.
+        audio_model: The audio model.
         """
         if self.prod_mode:
-            transcription_base_url = st.session_state.TRANSCRIPTION_BASE_URL
-            transcription_api_key = st.session_state.TRANSCRIPTION_API_KEY
+            qwen2_url = st.session_state.QWEN2_URL
+            qwen2_api_key = st.session_state.QWEN2_API_KEY
 
         else:
-            if 'TRANSCRIPTION_API_KEY' in st.session_state:
-                transcription_api_key = (
-                    os.environ.get('TRANSCRIPTION_API_KEY') or st.session_state.TRANSCRIPTION_API_KEY
+            if 'QWEN2_API_KEY' in st.session_state:
+                qwen2_api_key = (
+                    os.environ.get('QWEN2_API_KEY') or st.session_state.TRANSCRIPTION_API_KEY
                 )
             else:
-                transcription_api_key = os.environ.get('TRANSCRIPTION_API_KEY')
+                qwen2_api_key = os.environ.get('QWEN2_API_KEY')
 
-            if 'TRANSCRIPTION_BASE_URL' in st.session_state:
-                transcription_base_url = (
-                    os.environ.get('TRANSCRIPTION_BASE_URL') or st.session_state.TRANSCRIPTION_BASE_URL
+            if 'QWEN2_URL' in st.session_state:
+                qwen2_url = (
+                    os.environ.get('QWEN2_URL') or st.session_state.QWEN2_URL
                 )
             else:
-                transcription_base_url = os.environ.get('TRANSCRIPTION_BASE_URL')
+                qwen2_url = os.environ.get('QWEN2_URL')
+                
+        audio_model = APIGateway.load_chat(
+            type=self.audio_model_info['type'],
+            streaming=False,
+            max_tokens=self.audio_model_info['max_tokens'],
+            temperature=self.audio_model_info['temperature'],
+            model=self.audio_model_info['model'],
+            sambanova_url=qwen2_url,
+            sambanova_api_key=qwen2_api_key,
+        )
 
-        return OpenAI(base_url=transcription_base_url, api_key=transcription_api_key)
+        return audio_model
 
     def set_llm(self) -> Union[LLM, BaseChatModel]:
         """
         Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
         Returns:
-        LLM: The SambaStudio Cloud or Sambastudio Langchain LLM.
+        LLM: The SambaStudio Cloud or Sambastudio Langchain ChatModel.
         """
 
         if self.prod_mode:
@@ -102,14 +119,13 @@ class Scribe:
             else:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        llm = APIGateway.load_llm(
+        llm = APIGateway.load_chat(
             type=self.llm_info['type'],
             streaming=False,
-            bundle=self.llm_info['bundle'],
             do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            model=self.llm_info['model'],
             process_prompt=False,
             sambanova_api_key=sambanova_api_key,
         )
@@ -131,14 +147,51 @@ class Scribe:
         summary = chain.invoke({'text': text, 'num': num})
         return summary
 
-    def transcribe_audio(self, audio_file: BytesIO) -> str:
-        transcript = self.client.audio.transcriptions.create(
-            model=self.audio_model_info['model'],
-            file=audio_file,
-            language=self.audio_model_info['language'],
-            temperature=self.audio_model_info['temperature'],
-        )
-        return transcript.text
+    def encode_to_base64(self, content: BytesIO) -> str:
+        """Encode audio file to base64"""
+        return base64.b64encode(content).decode("utf-8")
+
+    def load_encode_audio(self, audio: Union[BytesIO, str]) -> str:
+        if isinstance(audio, str):
+            with open(audio, 'rb') as file:
+                audio = file.read()
+        else: 
+            audio = audio.read()
+        b64_audio =  self.encode_to_base64(content = audio)
+        return b64_audio
+
+    def transcribe_audio(self, audio_file: Union[BytesIO, str]) -> str:
+        b64_audio = self.load_encode_audio(audio_file)
+        conversation = [
+            AIMessage(
+                "You are Automatic Speech Recognition tool"
+                ),
+            HumanMessage(
+                content = [{
+                    "type": "audio_content",
+                    "audio_content": {
+                        "content": f"data:audio/mp3;base64,{b64_audio}"
+                    }
+                }]
+            ),
+            HumanMessage(
+                f'''Please transcribe the previous audio in the following format
+                
+                ```
+                    {{
+                        "transcript":"<audio transcription>"
+                    }}
+                ```
+                
+                Always return your response enclosed by ``` and using double quotes
+                '''
+                )
+        ]
+        parser=PydanticOutputParser(pydantic_object=Transcript)
+        autofix_parser = OutputFixingParser.from_llm(parser=parser, llm=self.llm)
+        chain = self.audio_model | autofix_parser
+
+        return chain.invoke(conversation).transcript
 
     def download_youtube_audio(
         self, url: str, output_path: Optional[str] = None, max_filesize: int = MAX_FILE_SIZE
@@ -227,3 +280,8 @@ class Scribe:
             print(f"OSError: Failed to delete the file '{file_path}' due to: {e.strerror}.")
         except Exception as e:
             print(f'An unexpected error occurred: {str(e)}')
+
+if __name__ == "__main__":
+    scribe = Scribe()
+    transcript = scribe.transcribe_audio(os.path.join(kit_dir,'data','sample.mp3'))
+    print(transcript)
