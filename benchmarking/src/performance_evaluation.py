@@ -12,7 +12,7 @@ import joblib
 import yaml
 
 file_location = Path(__file__).parent.resolve()
-kit_location = os.path.join(file_location,'../..')
+kit_location = os.path.join(file_location, '../..')
 
 import logging
 
@@ -136,7 +136,7 @@ class BasePerformanceEvaluator(abc.ABC):
 
         if not Path(tokenized_text_directory).exists():
             Path(tokenized_text_directory).mkdir(parents=True)
-        
+
         if not Path(tokenized_text_filepath).exists():
             tokens = self.tokenizer.tokenize(text)
             joblib.dump(tokens, tokenized_text_filepath)
