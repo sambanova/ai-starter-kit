@@ -50,9 +50,10 @@ from utils.model_wrappers.tests.schemas import (
     SambaStudioGenericV2Response,
     SambaStudioOpenAIResponse,
     SambaStudioOpenAIResponseMetadata,
+    SNCloudBaseResponse,
     SNCloudChatCompletionChunk,
-    SNCloudResponse,
 )
+from utils.model_wrappers.tests.utils_test import add, multiply
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
@@ -281,7 +282,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         sn_raw_response = self.sn_llm_model._handle_request(query).json()
 
         try:
-            SNCloudResponse(**sn_raw_response)
+            SNCloudBaseResponse(**sn_raw_response)
         except ValidationError as e:
             self.fail(f'Schema validation failed: {e}')
 
@@ -337,7 +338,7 @@ class ModelWrapperTestCase(unittest.TestCase):
                 self.fail(f'Invalid SambaStudio Generic V1 response: {e}')
 
         try:
-            SNCloudResponse(**sn_cloud_raw_response)
+            SNCloudBaseResponse(**sn_cloud_raw_response)
         except ValidationError as e:
             self.fail(f'Schema validation failed: {e}')
 
@@ -355,6 +356,43 @@ class ModelWrapperTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(ss_response_dict['content']), 1, 'Content should be a non-empty string')
         self.assertIn('response_metadata', ss_response_dict, "Response should have a 'response_metadata' key")
         self.assertIn('usage', ss_response_dict['response_metadata'], "Response metadata should have a 'usage' key")
+
+    def test_function_calling_response(self) -> None:
+        tools = [add, multiply]
+        tools_data = {
+            'tools': [
+                {
+                    'type': 'function',
+                    'function': {
+                        'name': 'get_time',
+                        'description': 'Returns current date, current time or both.\n\n Args:\n  kind: date, time or\
+                             both',
+                        'parameters': {'properties': {'kind': {'default': 'both', 'type': 'string'}}, 'type': 'object'},
+                    },
+                }
+            ],
+            'tool_choice': 'auto',
+            'parallel_tool_calls': False,
+        }
+        query = 'whats time is it?'
+        format_query = [{'role': 'user', 'content': query}]
+        raw_response = self.sn_chat_model._handle_request(format_query, **tools_data)
+
+        llm = ChatSambaNovaCloud(model='Meta-Llama-3.1-70B-Instruct', max_tokens=1024, temperature=0.0)
+        llm_with_tools = llm.bind_tools(tools)
+        query_2 = 'What is 3 * 12? Also, what is 11 + 49?'
+        response = llm_with_tools.invoke(query_2).tool_calls
+
+        for res in response:
+            self.assertIn('name', res, "Response 'tool_calls' should have a 'name' key")
+            self.assertIn('args', res, "Response 'tool_calls' should have a 'args' key")
+            self.assertIn('id', res, "Response 'tool_calls' should have a 'id' key")
+            self.assertIn('type', res, "Response 'tool_calls' should have a 'type' key")
+
+        try:
+            SNCloudBaseResponse(**raw_response.json())
+        except ValidationError as e:
+            self.fail(f'Schema validation failed: {e}')
 
     def test_chat_model_response_streaming(self) -> None:
         query = 'Where is alpha centauri located?'
