@@ -240,7 +240,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         Returns:
             streaming_url: string with url to do streaming calls
         """
-        if 'openai' in self.base_url:
+        if 'chat/completions' in self.base_url:
             stream_url = self.base_url
         else:
             if 'stream' in self.base_url:
@@ -256,7 +256,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         """Gets headers for API call"""
         assert isinstance(self.api_key, str), 'No API KEY provided'
 
-        if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI request
+        if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI request
             return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
         else:  # Regular SambaStudio request
             return {'key': self.api_key}
@@ -275,7 +275,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
 
-        if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI data payload
+        if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI data payload
             data = self._get_json_data_for_sambastudio_openai_compatible(prompt, sampling_params)
         else:  # Regular SambaStudio data payload
             data = self._get_json_data_for_regular_sambastudio(url, prompt, sampling_params)
@@ -358,7 +358,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     error_details = response.json().get('error', 'No additional error details provided.')
                     raise Exception(f'Error: {response.status_code}, Details: {error_details}')
 
-                if 'openai' in self.base_url:  # SambaStudio compatible with OpenAI data payload
+                if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI data payload
                     chunks_received, chunks_timings, response_dict, generated_text = (
                         self._parse_sambastudio_openai_compatible_response(response, start_time)
                     )
