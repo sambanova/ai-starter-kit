@@ -27,7 +27,8 @@ expected answer: {expected_answer}
 
 **
 IMPORTANT: Please make sure to only return in JSON format, with the "answer_score" and "reason" keys and make sure value
-of "score" is a valid integer. Finally the "context_score" is optional, only add that key if context is provided.
+of "answer_score" is a valid number. Finally the "context_score" is optional and must be a valid number, only add that
+key if context is provided.
 
 
 Example JSON:
