@@ -1,5 +1,5 @@
 PyYAML==6.0.1
-Requests==2.31.0
+Requests>=2.32.2
 ipykernel==6.29.4
 langchain_community==0.2.0
 litellm==1.37.19
@@ -23,6 +23,6 @@ stqdm==0.0.5
 streamlit==1.37.0
 tensorflow==2.16.1
 torch==2.2.2
-tqdm==4.66.1
-transformers==4.41.1
+tqdm>=4.66.3
+transformers==4.41.2
 joblib==1.4.2
