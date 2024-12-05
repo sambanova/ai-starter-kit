@@ -12,6 +12,7 @@ import joblib
 import yaml
 
 file_location = Path(__file__).parent.resolve()
+kit_location = os.path.join(file_location, '../..')
 
 import logging
 
@@ -130,7 +131,11 @@ class BasePerformanceEvaluator(abc.ABC):
         """
         model = self.model_name.replace('Bundle/', '').replace('/', '_')
         tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
-        tokenized_text_filepath = f'{file_location}/../prompts/{tokenized_text_filename}'
+        tokenized_text_directory = f'{kit_location}/../../scratch/benchmarking/prompts'
+        tokenized_text_filepath = f'{tokenized_text_directory}/{tokenized_text_filename}'
+
+        if not Path(tokenized_text_directory).exists():
+            Path(tokenized_text_directory).mkdir(parents=True)
 
         if not Path(tokenized_text_filepath).exists():
             tokens = self.tokenizer.tokenize(text)
@@ -657,9 +662,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> (
-        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
-    ):
+    ) -> Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]:
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:

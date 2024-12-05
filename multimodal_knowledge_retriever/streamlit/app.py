@@ -137,7 +137,7 @@ def main() -> None:
         config = yaml.safe_load(yaml_file)
 
     prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
+    llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
 
@@ -264,6 +264,7 @@ def main() -> None:
                 if st.button('Reset conversation'):
                     st.session_state.chat_history = []
                     st.session_state.sources_history = []
+                    st.session_state.image_sources_history = []
                     st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
 

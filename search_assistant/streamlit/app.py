@@ -33,7 +33,7 @@ def load_config() -> Any:
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
-llm_type = 'SambaStudio' if config.get('llm', {}).get('api') == 'sambastudio' else 'SambaNova Cloud'
+llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 additional_env_vars = config.get('additional_env_vars', None)
 
 
