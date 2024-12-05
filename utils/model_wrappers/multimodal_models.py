@@ -369,7 +369,7 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if self.base_url is not None and 'v1/chat/completions' in self.base_url:
+        if self.base_url is not None and 'chat/completions' in self.base_url:
             response = self._call_openai_api(prompt, images_list)  # type: ignore
             generation = self._process_openai_api_response(response)
         elif self.base_url is not None and 'generic' in self.base_url:
@@ -407,7 +407,7 @@ class SambastudioMultimodal:
         """
         images_list = self._load_images(images)
         # Call the appropriate API based on the host URL
-        if self.base_url is not None and 'v1/chat/completions' in self.base_url:
+        if self.base_url is not None and 'chat/completions' in self.base_url:
             response = self._call_openai_api_stream(prompt, images_list)  # type: ignore
             for chunk in self._process_openai_api_response_stream(response):
                 yield chunk
