@@ -1630,7 +1630,7 @@ class ChatSambaStudio(BaseChatModel):
             base_url: string with url to do non streaming calls
             streaming_url: string with url to do streaming calls
         """
-        if 'openai' in url:
+        if 'chat/completions' in url:
             base_url = url
             stream_url = url
         else:
@@ -1665,7 +1665,7 @@ class ChatSambaStudio(BaseChatModel):
         """
 
         # create request payload for openai compatible API
-        if 'openai' in self.sambastudio_url:
+        if 'chat/completions' in self.sambastudio_url:
             messages_dicts = _create_message_dicts(messages)
             data = {
                 'messages': messages_dicts,
@@ -1779,7 +1779,7 @@ class ChatSambaStudio(BaseChatModel):
         invalid_tool_calls = []
 
         # process response payload for openai compatible API
-        if 'openai' in self.sambastudio_url:
+        if 'chat/completions' in self.sambastudio_url:
             content = response_dict['choices'][0]['message'].get('content', '')
             if content is None:
                 content = ''
@@ -1859,7 +1859,7 @@ class ChatSambaStudio(BaseChatModel):
             raise ImportError('could not import sseclient library' 'Please install it with `pip install sseclient-py`.')
 
         # process response payload for openai compatible API
-        if 'openai' in self.sambastudio_url:
+        if 'chat/completions' in self.sambastudio_url:
             finish_reason = ''
             client = sseclient.SSEClient(response)
             for event in client.events():

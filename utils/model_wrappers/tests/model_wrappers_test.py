@@ -302,7 +302,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         ss_raw_response = self.ss_chat_model._handle_request(messages)
         ss_raw_response_dict = ss_raw_response.json()
 
-        if 'openai' in self.ss_chat_model.sambastudio_url:
+        if 'chat/completions' in self.ss_chat_model.sambastudio_url:
             try:
                 content = ss_raw_response_dict['choices'][0]['message']['content']
                 id = ss_raw_response_dict['id']
