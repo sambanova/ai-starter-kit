@@ -1,14 +1,14 @@
 audio_model:
+    "type": "sncloud" #  set either sambastudio or sncloud
     "temperature": 0.0
-    "language": "en"
-    "model": "whisper-large-v3"
+    "model": "Qwen2-Audio-7B-Instruct"
+    "max_tokens": 1200
 
 llm: 
     "type": "sncloud" #  set either sambastudio or sncloud
-    "temperature": 0.0
+    "temperature": 0.01
     "do_sample": False
-    "max_tokens_to_generate": 1200
-    "bundle": True #set as true if using Sambastudio bundle endpoint
-    "select_expert": "llama3-8b" #set if using sncloud, SambaStudio bundle llm expert
+    "max_tokens": 1200
+    "model": "Meta-Llama-3.1-70B-Instruct" #set if using sncloud, SambaStudio bundle llm expert
 
 prod_mode: False
