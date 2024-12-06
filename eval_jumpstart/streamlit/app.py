@@ -144,8 +144,11 @@ def main() -> None:
         if st.session_state.project_name == '' or st.session_state.project_name is None:
             project_name = st.text_input('wandb project name', value='', type='default')
 
-            if st.button('Enter your wandb project name', key='project_name_sidebar') and project_name is not None \
-                and project_name != '':
+            if (
+                st.button('Enter your wandb project name', key='project_name_sidebar')
+                and project_name is not None
+                and project_name != ''
+            ):
                 with st.spinner('Processing'):
                     st.session_state.project_name = project_name
                     try:
@@ -172,7 +175,7 @@ def main() -> None:
             if not st.session_state.evaluation_option_submitted:
                 evaluation_option = st.selectbox('', options)
 
-                submit_button = st.button('Submit Evaluation Option')
+                submit_button = st.button('Enter Evaluation Option')
 
                 if submit_button:
                     with st.spinner('Processing'):
@@ -241,8 +244,15 @@ def main() -> None:
                     st.toast('App reset.')
                     logging.info('App reset.')
                     st.rerun()
+    col1, col2, col3 = st.columns(3)
 
-    if st.button('Evaluate', disabled=st.session_state.input_disabled):
+    with col1:
+        pass
+    with col3:
+        pass
+    with col2:
+        evaluation_button = st.button('Evaluate', disabled=st.session_state.input_disabled)
+    if evaluation_button:
         st.toast(
             """Evaluation in progress. This could take a while depending on the dataset size and the number of 
             llms."""
