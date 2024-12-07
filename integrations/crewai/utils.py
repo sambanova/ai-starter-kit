@@ -1,7 +1,7 @@
 import os
-from typing import Optional
+from typing import Dict, Optional
 
-from dotenv import find_dotenv, load_dotenv  # type: ignore[import]
+from dotenv import find_dotenv, load_dotenv  # type: ignore
 
 
 def load_env() -> None:
@@ -53,7 +53,9 @@ def pretty_print_result(result: str) -> str:
     return '\n'.join(parsed_result)
 
 
-def update_task_output_format(tasks_config: dict, task_name: str, format_expected: str) -> dict:
+def update_task_output_format(
+    tasks_config: Dict[str, Dict[str, str]], task_name: str, format_expected: str
+) -> Dict[str, Dict[str, str]]:
     """
     Updates the expected_output of a specific task to include structured output formatting.
 
