@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from dotenv import find_dotenv, load_dotenv # type: ignore[import]
+from dotenv import find_dotenv, load_dotenv  # type: ignore[import]
 
 
 def load_env() -> None:
@@ -26,10 +26,10 @@ def get_serper_api_key() -> Optional[str]:
 def pretty_print_result(result: str) -> str:
     """
     Break lines at 80 characters, avoiding word breaks.
-    
+
     Args:
         result: The text to format
-        
+
     Returns:
         Formatted text with appropriate line breaks
     """
@@ -87,10 +87,10 @@ def update_task_output_format(tasks_config: dict, task_name: str, format_expecte
 def escape_format_instructions(format_instructions: str) -> str:
     """
     Escapes curly braces in the format instructions to prevent CrewAI from interpreting them as variables.
-    
+
     Args:
         format_instructions: The format instructions to escape
-        
+
     Returns:
         Escaped format instructions
     """
