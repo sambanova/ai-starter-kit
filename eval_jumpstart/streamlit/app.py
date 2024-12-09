@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 import uuid
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
@@ -22,6 +22,7 @@ import re
 import sys
 
 import weave
+import yaml
 from dotenv import load_dotenv
 
 from utils.eval.evaluator import BaseWeaveEvaluator, BaseWeaveRAGEvaluator, WeaveEvaluator
@@ -31,6 +32,13 @@ load_dotenv('../.env', override=True)
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
+
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
+
+
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
 
 
 def save_files_user(docs: List[UploadedFile]) -> str:
@@ -93,6 +101,9 @@ def initialize_base_evaluator(option: str) -> WeaveEvaluator:
         return BaseWeaveRAGEvaluator()
     else:
         raise ValueError(f'Invalid Evaluation Option: {option}.')
+
+
+st_description = load_app_description()
 
 
 def main() -> None:
@@ -244,6 +255,8 @@ def main() -> None:
                     st.toast('App reset.')
                     logging.info('App reset.')
                     st.rerun()
+
+    st.write(st_description.get('app_overview'))
     col1, col2, col3 = st.columns(3)
 
     with col1:
