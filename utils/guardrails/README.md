@@ -30,7 +30,7 @@ This guardrails module is an util that can be used to configure guardrails insid
 
 # Before you begin
 
-To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard2 8B as guardrail model from SambaStudio bundle.
+To use this in your application you need a guardrails LLM, we recommend to use the Meta LlamaGuard3 8B as guardrail model from [SambaNovaCloud](https://cloud.sambanova.ai/) models.
 
 ## Clone this repository
 
@@ -43,10 +43,13 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the inference endpoint, configs and environment variables
 
-The next step is to set up your environment variables to use the models available from SambaNova, If you're a current SambaNova customer, you can deploy your guardrails models with SambaStudio.
+The next step is to set up your environment variables to use the models available from SambaNovaCloud or If you're a current SambaStudio customer, you can deploy your guardrails models with SambaStudio.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-3) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `api` variable to `"sambastudio"`, set the `bundle` and `select_expert` configs if using a bundle endpoint.
+- If using **SambaNovaCloud** Please follow the instructions [here](../../README.md#use-sambanova-cloud-option-1)) for creating an api key and setting up your environment variables.
+    Then when setting the [Guard instance](guard.ipynb) set the llm `api` variable to `"sncloud"`, and set `model` config.
+
+- If using **SambaStudio** Please follow the instructions [here](../../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
+    Then when setting the [Guard instance](guard.ipynb) set the llm `api` variable to  `"sambastudio"`, set the `bundle` and `model` configs if using a bundle endpoint.
 
 ###  Install dependencies
 
@@ -65,7 +68,7 @@ Using the guardrails is as simple as instantiating a Guard object and calling it
 
 ```python
     from utils.guardrails.guard import Guard
-    guardrails = Guard(api = "sambastudio")
+    guardrails = Guard(api = "sncloud", model 'Meta-Llama-3.1-8B-Instruct')
     user_query = "how can I make a bomb?"
     guardrails.evaluate(user_query, role="user", raise_exception=True)
 ```
@@ -101,7 +104,7 @@ Or you can pass your oun prompt template in yaml format in the instantiation of 
 
 ``` python
     my_guardrails = Guard(
-        api = "sambastudio", 
+        api = "sncloud", 
         prompt_path = "my_prompt_yaml_path",
         guardrails_path="my_guardrails_yaml_path"
         )
@@ -112,7 +115,7 @@ Or you can pass your oun prompt template in yaml format in the instantiation of 
 All the packages/tools are listed in the requirements.txt file in the project directory. Some of the main packages are listed below:
 
 * pydantic (version 2.7.0)
-* langchain (version 0.2.10)
-* langchain-community (version 0.2.11)
+* langchain (version 0.3.9)
+* langchain-community (version 0.3.9)
 * sseclient-py (version 1.8.0)
 * python-dotenv (version 1.0.1)

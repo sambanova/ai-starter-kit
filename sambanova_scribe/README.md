@@ -9,8 +9,6 @@
 
 Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
-Table of Contents:
-
 <!-- TOC -->
 
 - [SambaNova scribe](#sambanova-scribe)
@@ -19,10 +17,20 @@ Table of Contents:
     - [Clone this repository](#clone-this-repository)
     - [Install System Dependencies](#install-system-dependencies)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
-        - [Set up the transcription model](#set-up-the-transcription-model)
+        - [Set up the audio model](#set-up-the-audio-model)
         - [Set up the generative model](#set-up-the-generative-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
 - [Use the starter kit](#use-the-starter-kit)
+    - [Transcribe:](#transcribe)
+    - [Chat](#chat)
+    - [Audio QA](#audio-qa)
+- [Customizing the starter kit](#customizing-the-starter-kit)
+    - [Audio model params](#audio-model-params)
+    - [Generation model parameters](#generation-model-parameters)
+            - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
+- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+
+<!-- /TOC -->
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Transcription params](#transcription-params)
     - [Generation model parameters](#generation-model-parameters)
@@ -69,9 +77,9 @@ this kit requires you to have installed in your system ffmpeg:
 
 ## Set up the models, environment variables and config file
 
-### Set up the transcription model
+### Set up the audio model
 
-The next step is to set up your environment variables to use one of the transcription models available from SambaNova. You can obtain a free API key through SambaNova Cloud.
+The next step is to set up your environment variables to use the Qwen2 audio model available from SambaNova. You can obtain a free API key through SambaNova Cloud.
 
 - **SambaNova Cloud**: To set up your environment variables.
 
@@ -83,8 +91,8 @@ To integrate SambaNova Cloud Transcription models with this AI starter kit, upda
 - Enter the transcription SambaNova Cloud API url and key in the `.env` file, for example:
 
 ```bash
-TRANSCRIPTION_BASE_URL = "https://api.sambanova.ai/v1"
-TRANSCRIPTION_API_KEY = "456789abcdef0123456789abcdef0123"
+QWEN2_BASE_URL = "https://api.sambanova.ai/v1"
+QWEN2_API_KEY = "456789abcdef0123456789abcdef0123"
 ```
 
 ### Set up the generative model
@@ -117,25 +125,57 @@ After deploying the starter kit you see the following user interface:
 
 ![capture of sambanova scribe demo](./docs/sambanova_scribe_app.png)
 
-# Use the starter kit 
+# Use the starter kit
 
 After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
-1. Depending if you have set your env variables you will be prompted or not to set them in the set up bar.
+Depending if you have set your env variables you will be prompted or not to set them in the set up bar.
+
+The kit has 3 different interaction methods, you can select in the top tabs:
+
+## Transcribe:
+
+This interaction method allows you to transcribe and summarize audios from Youtube videos or local sources.
+
+1. Select the Transcribe tab in the main panel top tab selector
 
 2. In the main panel select the input method either a youtube link or a file.
+
     > Audios should be mp3, mp4 or wav format
+
     > Either from youtube download or audio file can not exceed 25MB
 
-3. Click on the Transcribe button this will download the youtube audio or upload your file and generate the transcription of the audio
+2. Click on the Transcribe button this will download the youtube audio or upload your file and generate the transcription of the audio
 
-4. Click on the create summary button to get a bullet point summary of the recording
+3. Click on the create summary button to get a bullet point summary of the recording
+
+## Chat
+
+this interaction method allows you to have a multiturn conversation using both recorded audio inputs or text messages with the model
+
+1. Select the Chat tab in the main panel top tab selector
+
+2. Record or write a message in the chat input
+
+> you can reset the conversation history pressing reset button in the setup bar
+
+## Audio QA
+
+This interaction method allows you upload a local audio and do Question-Answering over the audio, for this the input audio is transcribed and also query using the audio model, then the transcription and intermediate response of the audio model are used to generate a final answer using the llm model.
+
+1. Select the Audio QA tab in the main panel top tab selector
+
+2. Upload the audio to query in the main panel
+
+3. Start queringn the audio using the chat input 
+
+> You can reset the conversation history pressing reset button in the setup bar
 
 # Customizing the starter kit
 
 You can further customize the starter kit based on the use case.
 
-## Transcription params
+## Audio model params
 
 The transcription parameters can be customized in the [config.yaml](./config.yaml) file, the the `audio_model` section you can change the `model` you want to use to transcribe, the `temperature` and the language.
 
@@ -162,6 +202,12 @@ You can make modifications to the prompt template in the following file:
 
 ```
     file: prompts/summary.yaml
+```
+
+Also you can check at the audio model chat prompts defined in:
+
+```
+    file: src/scribe.py
 ```
 
 # Third-party tools and data sources

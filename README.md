@@ -303,7 +303,7 @@ from util..model_wrappers.llms.langchain_llms import SambaNovaCloud
 
 load_dotenv('.env')
 
-llm = SambaNovaCloud(model='llama3-70b')
+llm = SambaNovaCloud(model='Meta-Llama-3.1-70B-Instruct')
 ```
 
 2. Use the model
