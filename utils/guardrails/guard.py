@@ -22,10 +22,11 @@ class Guard:
 
     def __init__(
         self,
-        api: str = 'sambastudio',
+        api: str = 'sncloud',
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
         bundle: Optional[bool] = True,
+        model: Optional[str] = 'Meta-Llama-Guard-3-8B',
         sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
         sambanova_url: Optional[str] = None,
@@ -40,6 +41,8 @@ class Guard:
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is
          'utils/guardrails/guardrails.yaml'.
         - bundle (bool, optional): Whether the llama-guard model is in a SambaStudio bundle endpoint
+        - model (str, optional): guard model to use set if using bundle models or sncloud as api 
+            default is: Meta-Llama-Guard-3-8B
         - sambastudio_base_url (str, optional): URL for SambaStudio API.
         - sambastudio_api_key (str, optional): API key for SambaStudio API.
         - sambanova_url (str, optional): SambaNova Cloud URL.
@@ -61,7 +64,7 @@ class Guard:
             max_tokens_to_generate=1024,
             temperature=0.1,
             bundle=bundle,
-            select_expert='Meta-Llama-Guard-2-8B',
+            model=model,
             process_prompt=False,
             sambastudio_url=sambastudio_url,
             sambastudio_api_key=sambastudio_api_key,
