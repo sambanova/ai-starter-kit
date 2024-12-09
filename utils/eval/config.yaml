@@ -8,19 +8,40 @@ llms:
     model_name: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
-  - name: sambastudio-llama2-70
-    model_type: "sambastudio"
-    model_name: "llama-2-70b-chat-hf"
+
+  - name: sncloud-llama3.2-1
+    model_type: "sncloud"
+    model_name: "Meta-Llama-3.2-1B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.1-70
     model_type: "sncloud"
     model_name: "Meta-Llama-3.1-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.2-3
     model_type: "sncloud"
     model_name: "Meta-Llama-3.2-3B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+
+rag:
+  vectordb:
+    db_type: "chroma"
+    collection_name: "demo"
+  
+  embeddings:
+    type: "cpu"
+    batch_size: 1
+    bundle: True
+    select_expert: "e5-mistral-7b-instruct"
+
+  llm:
+    name: sncloud-llama3.1-405-chroma-rag
+    type: "sncloud"
+    model: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
 
