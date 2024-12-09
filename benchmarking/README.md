@@ -121,9 +121,9 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
      _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `Bundle/` 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
+  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name.
@@ -248,10 +248,10 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
     _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified.
 
-  - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `Bundle/` - 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
+  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
+  - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
@@ -295,10 +295,10 @@ This option allows you to measure performance during a multi-turn conversation w
 
 1. Enter a model name and choose the right API type
 
-  - If the model specified is a CoE, specify the desired expert in the Model Name text box.
-    - The model name should mirror the name shown in studio, preceded with `Bundle/` - 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so my model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model is a standalone model, enter the full model name shown on the model card. I.e. `Llama-2-70b-chat-hf`.
+  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
+    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
+  - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
     - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
 
@@ -337,7 +337,7 @@ This method can be ran from a terminal session. Users have this option if they w
 _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. If it's a Bundle model, add "Bundle/" prefix to the name. Example: "Bundle/Meta-Llama-3-8B-Instruct"
+  - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
@@ -384,7 +384,7 @@ sh run_custom_dataset.sh
 _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral, Deepseek, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. If it's a Bundle model, add "Bundle/" prefix to the name. Example: "Bundle/Meta-Llama-3-8B-Instruct"
+  - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen. If it's a SambaNova Cloud model, double check the right model name spelling because it's shorter than other SambaStudio model names.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
