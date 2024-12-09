@@ -1,7 +1,7 @@
 import os
 from typing import Dict, Optional
 
-from dotenv import find_dotenv, load_dotenv  # type: ignore
+from dotenv import find_dotenv, load_dotenv  # type: ignore[import]
 
 
 def load_env() -> None:
