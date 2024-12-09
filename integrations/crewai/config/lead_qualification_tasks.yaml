@@ -1,0 +1,87 @@
+lead_data_collection:
+  description: >
+    Collect and analyze the following information about the lead:
+
+    - Personal Information:
+      - Name: Obtain the full name of the lead.
+      - Job Title: Determine the lead's current job title.
+      - Role Relevance: Assess how relevant the lead's role is to the decision-making process on a scale from 0 to 10.
+      - Professional Background: Optionally, gather a brief description of the lead's professional background.
+
+    - Company Information:
+      - Company Name: Identify the name of the company the lead works for.
+      - Industry: Determine the industry in which the company operates.
+      - Company Size: Estimate the size of the company in terms of employee count.
+      - Revenue: If available, collect information on the annual revenue of the company.
+      - Market Presence: Evaluate the company's market presence on a scale from 0 to 10.
+
+    - Our Company and Product:
+      - Company Name: CrewAI
+      - Product: Multi-Agent Orchestration Platform
+      - ICP: Enterprise companies looking into Agentic automation.
+      - Pitch: We are a platform that allows you to orchestrate AI Agents for automations to any vertical.
+
+    -Lead Data:
+      {lead_data}
+  expected_output: >
+    A comprehensive data report including:
+    - Personal information (name, job title, role relevance, and optionally, professional background).
+    - Company information (company name, industry, company size, revenue if available, and market presence).
+
+cultural_fit_analysis:
+  description: >
+    Assess the cultural alignment between the lead's company and our organization by considering the following:
+      - Cultural Values: Analyze the company's publicly stated values and internal culture (e.g., innovation, sustainability, employee engagement).
+      - Strategic Alignment: Evaluate how well the company's goals and mission align with our organization's strategic objectives.
+      - Qualitative Scoring: Assign a qualitative score (0-10) representing the overall cultural fit.
+      - Comments: Provide additional comments or observations that support the cultural fit score.
+
+    - Our Company and Product:
+      - Company Name: CrewAI
+      - Product: Multi-Agent Orchestration Platform
+      - ICP: Enterprise companies looking into Agentic automation.
+      - Pitch: We are a platform that allows you to orchestrate AI Agents for automations to any vertical.
+
+    - Lead Data:
+      {lead_data}
+  expected_output: >
+    A detailed assessment report including:
+    - Cultural fit score (0-10) based on the alignment of values and strategic objectives.
+    - Supporting analysis and comments providing context for the cultural fit score.
+
+lead_scoring_and_validation:
+  description: >
+    Aggregate the collected data and perform the following steps:
+    - Score Calculation: Based on predefined criteria, calculate a final lead score (0-100). Consider factors such as:
+      - Role Relevance
+      - Company Size
+      - Market Presence
+      - Cultural Fit
+    - Scoring Criteria Documentation: List the criteria used to determine the score.
+    - Validation: Review the collected data and the calculated score for consistency and accuracy. Make adjustments if necessary.
+    - Final Report: Compile a summary report that includes the final validated lead score, the criteria used, and any validation notes.
+
+    - Our Company and Product:
+      - Company Name: CrewAI
+      - Product: Multi-Agent Orchestration Platform
+      - ICP: Enterprise companies looking into Agentic automation.
+      - Pitch: We are a platform that allows you to orchestrate AI Agents for automations to any vertical.
+
+    - Lead Data:
+      {lead_data}
+  expected_output: >
+    A validated lead score report including:
+    - Final lead score (0-100) with scoring criteria.
+    - A summary report detailing the scoring process, criteria used, and validation notes.
+
+
+
+
+
+
+
+
+
+
+
+    
