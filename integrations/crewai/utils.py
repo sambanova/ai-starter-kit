@@ -1,27 +1,15 @@
 import os
 from typing import Dict, Optional
 
-import dotenv  # type: ignore
-
-find_dotenv = dotenv.find_dotenv
-load_dotenv = dotenv.load_dotenv
-
-
-def load_env() -> None:
-    """Load environment variables from .env file."""
-    _ = load_dotenv(find_dotenv())
-
 
 def get_sambanova_api_key() -> Optional[str]:
     """Get the Sambanova API key from environment variables."""
-    load_env()
     sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
     return sambanova_api_key
 
 
 def get_serper_api_key() -> Optional[str]:
     """Get the Serper API key from environment variables."""
-    load_env()
     serper_api_key = os.getenv('SERPER_API_KEY')
     return serper_api_key
 
