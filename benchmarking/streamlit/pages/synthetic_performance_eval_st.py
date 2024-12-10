@@ -6,6 +6,7 @@
 # sys.path.append(repo_dir)
 
 import warnings
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -21,6 +22,7 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_dataframe_summary,
     plot_requests_gantt_chart,
     set_api_variables,
+    update_progress_bar,
 )
 
 warnings.filterwarnings('ignore')
@@ -50,11 +52,23 @@ def _initialize_session_variables() -> None:
         st.session_state.timeout = None
     if 'llm_api' not in st.session_state:
         st.session_state.llm_api = None
+
+    # Additional initializations
+    if 'run_button' in st.session_state and st.session_state.run_button == True:
+        st.session_state.running = True
+    else:
+        st.session_state.running = False
+    if 'performance_evaluator' not in st.session_state:
+        st.session_state.performance_evaluator = None
+    if 'df_req_info' not in st.session_state:
+        st.session_state.df_req_info = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
+    if 'progress_bar' not in st.session_state:
+        st.session_state.progress_bar = None
 
 
-def _run_performance_evaluation() -> pd.DataFrame:
+def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     """Runs the performance evaluation process for different number of concurrent requests that will run in parallel.
 
     Returns:
@@ -66,7 +80,7 @@ def _run_performance_evaluation() -> pd.DataFrame:
     api_variables = set_api_variables()
 
     # Call benchmarking process
-    performance_evaluator = SyntheticPerformanceEvaluator(
+    st.session_state.performance_evaluator = SyntheticPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
         num_concurrent_requests=st.session_state.number_concurrent_requests,
@@ -76,15 +90,16 @@ def _run_performance_evaluation() -> pd.DataFrame:
         user_metadata={'model_idx': 0},
     )
 
-    performance_evaluator.run_benchmark(
+    st.session_state.performance_evaluator.run_benchmark(
         num_input_tokens=st.session_state.input_tokens,
         num_output_tokens=st.session_state.output_tokens,
         num_requests=st.session_state.number_requests,
         sampling_params={},
+        progress_bar=progress_bar,
     )
 
     # Read generated json and output formatted results
-    df_user = pd.read_json(performance_evaluator.individual_responses_file_path)
+    df_user = pd.read_json(st.session_state.performance_evaluator.individual_responses_file_path)
     df_user['concurrent_requests'] = st.session_state.number_concurrent_requests
     valid_df = df_user[df_user['error_code'].isnull()]
 
@@ -128,6 +143,7 @@ def main() -> None:
             'Model Name',
             value='llama3-8b',
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
+            disabled=st.session_state.running,
         )
         st.session_state.llm = f'{llm_model}'
 
@@ -150,93 +166,129 @@ def main() -> None:
                 )
         else:
             st.session_state.llm_api = st.selectbox(
-                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=0,
+                disabled=st.session_state.running,
             )
 
         st.session_state.input_tokens = st.number_input(
-            'Number of input tokens', min_value=50, max_value=2000, value=1000, step=1
+            'Number of input tokens',
+            min_value=50,
+            max_value=2000,
+            value=1000,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.output_tokens = st.number_input(
-            'Number of output tokens', min_value=50, max_value=2000, value=1000, step=1
+            'Number of output tokens',
+            min_value=50,
+            max_value=2000,
+            value=1000,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.number_requests = st.number_input(
-            'Number of total requests', min_value=10, max_value=1000, value=10, step=1
+            'Number of total requests',
+            min_value=10,
+            max_value=1000,
+            value=10,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.number_concurrent_requests = st.number_input(
-            'Number of concurrent requests', min_value=1, max_value=100, value=1, step=1
+            'Number of concurrent requests',
+            min_value=1,
+            max_value=100,
+            value=1,
+            step=1,
+            disabled=st.session_state.running,
         )
 
-        st.session_state.timeout = st.number_input('Timeout', min_value=60, max_value=1800, value=600, step=1)
+        st.session_state.timeout = st.number_input(
+            'Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running
+        )
 
-        sidebar_option = st.sidebar.button('Run!')
+        st.session_state.running = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button')
+
+        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running)
 
         if st.session_state.prod_mode:
-            if st.button('Back to Setup'):
+            if st.button('Back to Setup', disabled=st.session_state.running):
                 st.session_state.setup_complete = False
                 st.switch_page('app.py')
 
-    if sidebar_option:
+    if sidebar_stop:
+        st.session_state.running = False
+        st.session_state.performance_evaluator.stop_benchmark()
+
+    if st.session_state.running:
         st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
         st.toast('Performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
+            st.session_state.progress_bar = st.progress(0)
             try:
-                df_req_info = _run_performance_evaluation()
-
-                st.subheader('Performance metrics plots')
-                expected_output_tokens = st.session_state.output_tokens
-                generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
-                if not pd.isnull(generated_output_tokens):
-                    st.markdown(
-                        f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
-                        tokens ({generated_output_tokens}) is {abs(expected_output_tokens-generated_output_tokens)}
-                            token(s)"""
-                    )
-
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        df_req_info,
-                        'batch_size_used',
-                        ['server_ttft_s', 'client_ttft_s'],
-                        ['Server', 'Client'],
-                        'Distribution of Time to First Token (TTFT) by batch size',
-                        'TTFT (s), per request',
-                        'Batch size',
-                    )
-                )
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        df_req_info,
-                        'batch_size_used',
-                        ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
-                        ['Server', 'Client'],
-                        'Distribution of end-to-end latency by batch size',
-                        'Latency (s), per request',
-                        'Batch size',
-                    )
-                )
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        df_req_info,
-                        'batch_size_used',
-                        [
-                            'server_output_token_per_s_per_request',
-                            'client_output_token_per_s_per_request',
-                        ],
-                        ['Server', 'Client'],
-                        'Distribution of output throughput by batch size',
-                        'Tokens per second, per request',
-                        'Batch size',
-                    )
-                )
-                # Compute total throughput per batch
-                st.plotly_chart(plot_dataframe_summary(df_req_info))
-                st.plotly_chart(plot_requests_gantt_chart(df_req_info))
+                st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
+                st.session_state.running = False
+                st.rerun()
 
             except Exception as e:
                 st.error(f'Error: {e}.')
+
+    if st.session_state.df_req_info is not None:
+        st.subheader('Performance metrics plots')
+        expected_output_tokens = st.session_state.output_tokens
+        generated_output_tokens = st.session_state.df_req_info.server_number_output_tokens.unique()[0]
+        if not pd.isnull(generated_output_tokens):
+            st.markdown(
+                f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
+                tokens ({generated_output_tokens}) is {abs(expected_output_tokens-generated_output_tokens)}
+                    token(s)"""
+            )
+
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                ['server_ttft_s', 'client_ttft_s'],
+                ['Server', 'Client'],
+                'Distribution of Time to First Token (TTFT) by batch size',
+                'TTFT (s), per request',
+                'Batch size',
+            )
+        )
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
+                ['Server', 'Client'],
+                'Distribution of end-to-end latency by batch size',
+                'Latency (s), per request',
+                'Batch size',
+            )
+        )
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                [
+                    'server_output_token_per_s_per_request',
+                    'client_output_token_per_s_per_request',
+                ],
+                ['Server', 'Client'],
+                'Distribution of output throughput by batch size',
+                'Tokens per second, per request',
+                'Batch size',
+            )
+        )
+        # Compute total throughput per batch
+        st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
+        st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
 
 if __name__ == '__main__':

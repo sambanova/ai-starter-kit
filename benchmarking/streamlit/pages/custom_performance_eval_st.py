@@ -1,4 +1,5 @@
 import warnings
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -14,6 +15,7 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_dataframe_summary,
     plot_requests_gantt_chart,
     set_api_variables,
+    update_progress_bar,
 )
 
 warnings.filterwarnings('ignore')
@@ -26,17 +28,11 @@ with open(CONFIG_PATH) as file:
 
 
 def _initialize_sesion_variables() -> None:
-    # Initialize chat history
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-    if 'perf_metrics_history' not in st.session_state:
-        st.session_state.perf_metrics_history = []
+    # Initialize llm
     if 'llm' not in st.session_state:
         st.session_state.llm = None
     if 'llm_api' not in st.session_state:
         st.session_state.llm_api = None
-    if 'chat_disabled' not in st.session_state:
-        st.session_state.chat_disabled = True
 
     # Initialize llm params
     if 'do_sample' not in st.session_state:
@@ -54,8 +50,22 @@ def _initialize_sesion_variables() -> None:
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
 
+    # Additional initialization
+    if 'run_button' in st.session_state and st.session_state.run_button == True:
+        st.session_state.running = True
+    else:
+        st.session_state.running = False
+    if 'performance_evaluator' not in st.session_state:
+        st.session_state.performance_evaluator = None
+    if 'df_req_info' not in st.session_state:
+        st.session_state.df_req_info = None
+    if 'setup_complete' not in st.session_state:
+        st.session_state.setup_complete = None
+    if 'progress_bar' not in st.session_state:
+        st.session_state.progress_bar = None
 
-def _run_custom_performance_evaluation() -> pd.DataFrame:
+
+def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     """Runs custom performance evaluation
 
     Returns:
@@ -65,7 +75,7 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
     api_variables = set_api_variables()
 
     results_path = './data/results/llmperf'
-    custom_performance_evaluator = CustomPerformanceEvaluator(
+    st.session_state.performance_evaluator = CustomPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
         num_concurrent_requests=st.session_state.number_concurrent_requests,
@@ -78,12 +88,10 @@ def _run_custom_performance_evaluation() -> pd.DataFrame:
 
     # set generic max tokens parameter
     sampling_params = {'max_tokens_to_generate': st.session_state.max_tokens}
-    custom_performance_evaluator.run_benchmark(
-        sampling_params=sampling_params,
-    )
+    st.session_state.performance_evaluator.run_benchmark(sampling_params=sampling_params, progress_bar=progress_bar)
 
-    df_user = pd.read_json(custom_performance_evaluator.individual_responses_file_path)
-    df_user['concurrent_user'] = custom_performance_evaluator.num_concurrent_requests
+    df_user = pd.read_json(st.session_state.performance_evaluator.individual_responses_file_path)
+    df_user['concurrent_user'] = st.session_state.performance_evaluator.num_concurrent_requests
     valid_df = df_user[df_user['error_code'].isnull()]
 
     if valid_df['batch_size_used'].isnull().all():
@@ -112,7 +120,9 @@ def main() -> None:
         # File Selection #
         ##################
         st.title('File Selection')
-        st.text_input('Full File Path', help='', key='file_path')  # TODO: Fill in help
+        st.text_input(
+            'Full File Path', help='', key='file_path', disabled=st.session_state.running
+        )  # TODO: Fill in help
 
         #########################
         # Runtime Configuration #
@@ -124,6 +134,7 @@ def main() -> None:
             value='llama3-8b',
             key='llm',
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
+            disabled=st.session_state.running,
         )
 
         if st.session_state.prod_mode:
@@ -145,7 +156,11 @@ def main() -> None:
                 )
         else:
             st.session_state.llm_api = st.selectbox(
-                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=0,
+                disabled=st.session_state.running,
             )
 
         st.number_input(
@@ -155,15 +170,19 @@ def main() -> None:
             value=1,
             step=1,
             key='number_concurrent_requests',
+            disabled=st.session_state.running,
         )
 
-        st.number_input('Timeout', min_value=60, max_value=1800, value=600, step=1, key='timeout')
+        st.number_input(
+            'Timeout', min_value=60, max_value=1800, value=600, step=1, key='timeout', disabled=st.session_state.running
+        )
 
         st.toggle(
             'Save LLM Responses',
             value=False,
             key='save_llm_responses',
             help='Toggle on if you want to save the llm responses to an output JSONL file',
+            disabled=st.session_state.running,
         )
 
         #####################
@@ -178,16 +197,23 @@ def main() -> None:
             value=256,
             step=1,
             key='max_tokens',
+            disabled=st.session_state.running,
         )
 
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
-        job_submitted = st.sidebar.button('Run!')
+        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button')
+
+        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running)
 
         if st.session_state.prod_mode:
-            if st.button('Back to Setup'):
+            if st.button('Back to Setup', disabled=st.session_state.running):
                 st.session_state.setup_complete = False
                 st.switch_page('app.py')
+
+    if sidebar_stop:
+        st.session_state.running = False
+        st.session_state.performance_evaluator.stop_benchmark()
 
     if job_submitted:
         st.session_state.mp_events.input_submitted('custom_performance_evaluation ')
@@ -196,52 +222,56 @@ def main() -> None:
               setting."""
         )
         with st.spinner('Processing'):
+            st.session_state.progress_bar = st.progress(0)
             try:
-                results_df = _run_custom_performance_evaluation()
-
-                st.subheader('Performance metrics plots')
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        results_df,
-                        'batch_size_used',
-                        ['server_ttft_s', 'client_ttft_s'],
-                        ['Server', 'Client'],
-                        'Distribution of Time to First Token (TTFT) by batch size',
-                        'TTFT (s), per request',
-                        'Batch size',
-                    )
-                )
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        results_df,
-                        'batch_size_used',
-                        ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
-                        ['Server', 'Client'],
-                        'Distribution of end-to-end latency by batch size',
-                        'Latency (s), per request',
-                        'Batch size',
-                    )
-                )
-                st.plotly_chart(
-                    plot_client_vs_server_barplots(
-                        results_df,
-                        'batch_size_used',
-                        [
-                            'server_output_token_per_s_per_request',
-                            'client_output_token_per_s_per_request',
-                        ],
-                        ['Server', 'Client'],
-                        'Distribution of output throughput by batch size',
-                        'Tokens per second, per request',
-                        'Batch size',
-                    )
-                )
-                # Compute total throughput per batch
-                st.plotly_chart(plot_dataframe_summary(results_df))
-                st.plotly_chart(plot_requests_gantt_chart(results_df))
+                st.session_state.df_req_info = _run_custom_performance_evaluation(update_progress_bar)
+                st.session_state.running = False
+                st.rerun()
 
             except Exception as e:
                 st.error(f'Error: {e}.')
+
+    if st.session_state.df_req_info is not None:
+        st.subheader('Performance metrics plots')
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                ['server_ttft_s', 'client_ttft_s'],
+                ['Server', 'Client'],
+                'Distribution of Time to First Token (TTFT) by batch size',
+                'TTFT (s), per request',
+                'Batch size',
+            )
+        )
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
+                ['Server', 'Client'],
+                'Distribution of end-to-end latency by batch size',
+                'Latency (s), per request',
+                'Batch size',
+            )
+        )
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                st.session_state.df_req_info,
+                'batch_size_used',
+                [
+                    'server_output_token_per_s_per_request',
+                    'client_output_token_per_s_per_request',
+                ],
+                ['Server', 'Client'],
+                'Distribution of output throughput by batch size',
+                'Tokens per second, per request',
+                'Batch size',
+            )
+        )
+        # Compute total throughput per batch
+        st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
+        st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
 
 if __name__ == '__main__':
