@@ -76,7 +76,7 @@ yt-dlp==2024.8.6
 # Miscellaneous
 schedule==1.2.2
 tqdm>=4.66.3
-watchdog==4.0.0
+watchdog==4.0.2
 pillow==10.2.0
 pycountry==23.12.11
 omegaconf==2.3.0
