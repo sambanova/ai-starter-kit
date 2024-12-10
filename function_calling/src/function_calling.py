@@ -146,7 +146,7 @@ class FunctionCallingLlm:
                     return mapped_tool
                 # if mapped is a ToolClass
                 else:
-                    tool = mapped_tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                    tool = mapped_tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()  # type: ignore
                     return tool  # type: ignore
             else:
                 raise ValueError(f'Tool {tool} not found in TOOLS mapping dict')
