@@ -226,10 +226,9 @@ def main() -> None:
             try:
                 st.session_state.df_req_info = _run_custom_performance_evaluation(update_progress_bar)
                 st.session_state.running = False
-                st.rerun()
-
             except Exception as e:
                 st.error(f'Error: {e}.')
+            st.rerun()
 
     if st.session_state.df_req_info is not None:
         st.subheader('Performance metrics plots')
