@@ -1,0 +1,12 @@
+app_overview: "This example application for LLM evaluation automates multi-step evaluation analysis. \ 
+  \ This kit implements performance tests for evaluating LLMs and RAG systems, logging the final results to Wandb. \ 
+  \ To use the Evaluation Kit, follow these instructions:\n\ 
+  \ - Make sure to set both your Sambanova Cloud and Wandb API keys before starting the app.\n\ 
+  \ - Enter your Wandb project name. If you enter a project name that does not exist and the credentials are valid,\ 
+  \  a new project will be created in your workspace (empty strings are not allowed).\n\ 
+  \ - Choose an evaluation option: Evaluate multiple LLMs or Evaluate RAG chain.\ 
+  \ If you choose 'Evaluate multiple LLMs', upload a file with questions and answers in the specified format, \
+  \ with 'query' and 'expected_answer' as the main columns.\ 
+  \ If you choose 'Evaluate RAG chain', upload a PDF file along with questions and answers extracted from the PDF file.\n\ 
+  \ - Finally, hit the 'Evaluate' button and wait for the results. When the app finishes logging the results, it will \ 
+  \ display a link to your Wandb workspace, where you can visualize the results."
