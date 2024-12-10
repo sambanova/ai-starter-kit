@@ -282,10 +282,10 @@ class Scribe:
             ],
             'outtmpl': output_path + '/%(title)s.%(ext)s',
             'progress_hooks': [progress_hook],
-            'cookiefile': os.path.join(kit_dir,'data','sample_yt_cookies.txt'),
-            'username':os.environ.get('YOUTUBE_USERNAME'),
-            'password':os.environ.get('YOUTUBE_PASSWORD'),
-            'verbose': True
+            'cookiefile': os.path.join(kit_dir, 'data', 'sample_yt_cookies.txt'),
+            'username': os.environ.get('YOUTUBE_USERNAME'),
+            'password': os.environ.get('YOUTUBE_PASSWORD'),
+            'verbose': True,
         }
 
         try:
