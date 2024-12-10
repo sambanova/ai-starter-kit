@@ -33,6 +33,9 @@ def find_pages_to_hide() -> List[str]:
 
     return pages_to_hide
 
+def update_progress_bar(step, total_steps):
+    """Update the progress bar."""
+    st.session_state.progress_bar.progress(value = step / total_steps, text = f'Running requests: {step}/{total_steps}')
 
 def set_api_variables() -> Dict[str, Any]:
     if st.session_state.prod_mode:
