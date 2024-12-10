@@ -21,7 +21,6 @@ import pandas as pd
 import transformers
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
-from stqdm import stqdm
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
@@ -65,6 +64,9 @@ class BasePerformanceEvaluator(abc.ABC):
         self.is_stream_mode = is_stream_mode
         self.timeout = timeout
         self.tokenizer = get_tokenizer(self.model_name)
+        self.stop_event = threading.Event()
+        self.ui_progress_bar = None
+        self.cli_progress_bar = None
 
         # To be set upon saving of results
         self.summary_file_path: Optional[str] = None
@@ -165,18 +167,23 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         request_config_batch: List[Any],
         completed_requests: List[Any],
-        progress_bars: Dict[str, Any],
+        progress: int,
         start_time: float,
+        num_requests: int,
     ) -> None:
         """Sends multiple requests to LLM and collects results
 
         Args:
             request_config_batch (list): list of request configs for LLM calls
             completed_requests (list): list of completed outputs from requests
-            progress_bar (tqdm): progress bar
+            progress (int): progress value
             start_time (float): start time of the process
+            num_requests (int): number of total requests
         """
         for request_config in request_config_batch:
+            if self.stop_event.is_set():
+                logger.info('Stopping request processing in thread due to stop signal.')
+                break
             if time.monotonic() - start_time >= self.timeout:
                 break
             req_metrics, response_text, request_config = llm_request(request_config, self.tokenizer)
@@ -186,8 +193,13 @@ class BasePerformanceEvaluator(abc.ABC):
                 metrics=req_metrics, response_text=response_text, request_config=request_config
             )
             completed_requests.extend([response_object])
-            progress_bars['stqdm'].update(1)
-            progress_bars['tqdm'].update(1)
+            update_unit = 1
+            progress += update_unit
+
+            if self.cli_progress_bar:
+                self.cli_progress_bar.update(update_unit)
+            if self.ui_progress_bar:
+                self.ui_progress_bar(progress, num_requests)
 
     def build_metrics_summary(
         self,
@@ -435,6 +447,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 logger.error('ERROR SAVING LLM OUTPUTS')
                 raise e
 
+    def stop_benchmark(self) -> None:
+        """Stops the benchmarking process by setting the stop event."""
+        self.stop_event.set()
+        logger.info('Benchmarking process has been stopped.')
+
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> (
@@ -449,6 +466,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             None
         """
+        self.cli_progress_bar = tqdm(total=len(self.dataset), desc='Running Requests')
+        self.ui_progress_bar = kwargs.get('progress_bar', None)
+
         # Calculate performance metrics individually and summary
         summary, individual_responses = self.get_token_throughput_latencies(
             sampling_params=sampling_params,
@@ -507,19 +527,16 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         threads = []
         llm_responses: List[LLMResponse] = []
-        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
-        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
+        progress = 0
 
         for request_config_batch in request_config_batches:
+            if self.stop_event.is_set():
+                logger.info('Stopping thread creation due to stop signal.')
+                break
+
             thread = threading.Thread(
                 target=self.send_requests,
-                args=(
-                    request_config_batch,
-                    llm_responses,
-                    progress_bars,
-                    start_time,
-                ),
+                args=(request_config_batch, llm_responses, progress, start_time, total_request_count),
             )
             threads.append(thread)
             add_script_run_ctx(thread)  # Give Streamlit context to thread
@@ -528,6 +545,10 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         for thread in threads:
             add_script_run_ctx(thread)
             thread.join()
+
+        if self.stop_event.is_set():
+            logger.info('Benchmarking process terminated early due to stop signal.')
+            return {}, []
 
         if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
             raise Exception(
@@ -660,6 +681,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         )
         return self.sanitize_file_prefix(output_file_name)
 
+    def stop_benchmark(self) -> None:
+        """Stops the benchmarking process by setting the stop event."""
+        self.stop_event.set()
+        logger.info('Benchmarking process has been stopped.')
+
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]:
@@ -681,6 +707,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_input_tokens = kwargs.get('num_input_tokens', 1000)
         num_output_tokens = kwargs.get('num_output_tokens', 10)
         num_requests = kwargs.get('num_requests', 1)
+
+        self.cli_progress_bar = tqdm(total=num_requests, desc='Running Requests')
+        self.ui_progress_bar = kwargs.get('progress_bar', None)
+
         if num_input_tokens < 40:
             raise ValueError(
                 'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
@@ -850,20 +880,17 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        stqdm_progress_bar = stqdm(total=total_request_count, desc='Running Requests', mininterval=1)
-        tqdm_progress_bar = tqdm(total=total_request_count, desc='Running Requests')
-        progress_bars = {'stqdm': stqdm_progress_bar, 'tqdm': tqdm_progress_bar}
+        progress = 0
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
+            if self.stop_event.is_set():
+                logger.info('Stopping thread creation due to stop signal.')
+                break
+
             thread = threading.Thread(
                 target=self.send_requests,
-                args=(
-                    request_config_batch,
-                    llm_responses,
-                    progress_bars,
-                    start_time,
-                ),
+                args=(request_config_batch, llm_responses, progress, start_time, num_requests),
             )
             threads.append(thread)
             add_script_run_ctx(thread)  # Add Streamlit context to thread
@@ -873,6 +900,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         for thread in threads:
             add_script_run_ctx(thread)
             thread.join()
+
+        if self.stop_event.is_set():
+            logger.info('Benchmarking process terminated early due to stop signal.')
+            return {}, []
 
         # Error handling
         error_codes = [llm_response.metrics['error_code'] for llm_response in llm_responses]
