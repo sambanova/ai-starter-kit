@@ -1,0 +1,61 @@
+email_drafting:
+  description: >
+    Craft a highly personalized email using the lead's name, job title,
+    company information, and any relevant personal or company achievements.
+    The email should speak directly to the lead's interests and the needs
+    of their company.
+    This is not as cold outreach as it is a follow up to a lead form, so
+    keep it short and to the point.
+    Don't use any salutations or closing remarks, nor too complex sentences.
+
+    Our Company and Product:
+    - Company Name: CrewAI
+    - Product: Multi-Agent Orchestration Platform
+    - ICP: Enterprise companies looking into Agentic automation.
+    - Pitch: We are a platform that allows you to orchestrate AI Agents for
+    automations to any vertical.
+
+    Use the following information:
+    Personal Info: {personal_info}
+    Company Info: {company_info}
+    Lead Score: {lead_score}
+  expected_output: >
+    A personalized email draft that:
+    - Addresses the lead by name
+    - Acknowledges their role and company
+    - Highlights how CrewAI can meet their specific needs or interests
+
+engagement_optimization:
+  description: >
+    Review the personalized email draft and optimize it with strong CTAs
+    and engagement hooks.
+    Keep in mind they reached out and filled a lead form.
+    Keep it short and to the point.
+    Don't use any salutations or closing remarks, nor too complex sentences.
+    Ensure the email encourages the lead to schedule a meeting or take
+    another desired action immediately.
+
+    Our Company and Product:
+    - Company Name: CrewAI
+    - Product: Multi-Agent Orchestration Platform
+    - ICP: Enterprise companies looking into Agentic automation.
+    - Pitch: We are a platform that allows you to orchestrate AI Agents
+    for automations to any vertical.
+  expected_output: >
+    An optimized email ready for sending, complete with:
+    - Strong CTAs
+    - Strategically placed engagement hooks that encourage immediate action
+
+
+
+
+
+
+
+
+
+
+
+
+
+
