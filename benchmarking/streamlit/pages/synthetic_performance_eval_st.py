@@ -6,8 +6,8 @@
 # sys.path.append(repo_dir)
 
 import warnings
-
 from typing import Any
+
 import pandas as pd
 import streamlit as st
 import yaml
@@ -22,7 +22,7 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_dataframe_summary,
     plot_requests_gantt_chart,
     set_api_variables,
-    update_progress_bar
+    update_progress_bar,
 )
 
 warnings.filterwarnings('ignore')
@@ -52,7 +52,7 @@ def _initialize_session_variables() -> None:
         st.session_state.timeout = None
     if 'llm_api' not in st.session_state:
         st.session_state.llm_api = None
-        
+
     # Additional initializations
     if 'run_button' in st.session_state and st.session_state.run_button == True:
         st.session_state.running = True
@@ -95,7 +95,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
         num_output_tokens=st.session_state.output_tokens,
         num_requests=st.session_state.number_requests,
         sampling_params={},
-        progress_bar=progress_bar
+        progress_bar=progress_bar,
     )
 
     # Read generated json and output formatted results
@@ -109,7 +109,8 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
     return valid_df
 
-def main() -> None:    
+
+def main() -> None:
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
@@ -142,7 +143,7 @@ def main() -> None:
             'Model Name',
             value='llama3-8b',
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
-            disabled=st.session_state.running
+            disabled=st.session_state.running,
         )
         st.session_state.llm = f'{llm_model}'
 
@@ -165,40 +166,65 @@ def main() -> None:
                 )
         else:
             st.session_state.llm_api = st.selectbox(
-                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0, disabled=st.session_state.running
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=0,
+                disabled=st.session_state.running,
             )
 
         st.session_state.input_tokens = st.number_input(
-            'Number of input tokens', min_value=50, max_value=2000, value=1000, step=1, disabled=st.session_state.running
+            'Number of input tokens',
+            min_value=50,
+            max_value=2000,
+            value=1000,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.output_tokens = st.number_input(
-            'Number of output tokens', min_value=50, max_value=2000, value=1000, step=1, disabled=st.session_state.running
+            'Number of output tokens',
+            min_value=50,
+            max_value=2000,
+            value=1000,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.number_requests = st.number_input(
-            'Number of total requests', min_value=10, max_value=1000, value=10, step=1, disabled=st.session_state.running
+            'Number of total requests',
+            min_value=10,
+            max_value=1000,
+            value=10,
+            step=1,
+            disabled=st.session_state.running,
         )
 
         st.session_state.number_concurrent_requests = st.number_input(
-            'Number of concurrent requests', min_value=1, max_value=100, value=1, step=1, disabled=st.session_state.running
+            'Number of concurrent requests',
+            min_value=1,
+            max_value=100,
+            value=1,
+            step=1,
+            disabled=st.session_state.running,
         )
 
-        st.session_state.timeout = st.number_input('Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running)
+        st.session_state.timeout = st.number_input(
+            'Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running
+        )
 
         st.session_state.running = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button')
-        
+
         sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running)
 
         if st.session_state.prod_mode:
             if st.button('Back to Setup', disabled=st.session_state.running):
                 st.session_state.setup_complete = False
                 st.switch_page('app.py')
-    
+
     if sidebar_stop:
-       st.session_state.running = False 
-       st.session_state.performance_evaluator.stop_benchmark()
-       
+        st.session_state.running = False
+        st.session_state.performance_evaluator.stop_benchmark()
 
     if st.session_state.running:
         st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
@@ -209,7 +235,7 @@ def main() -> None:
                 st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
                 st.session_state.running = False
                 st.rerun()
-                
+
             except Exception as e:
                 st.error(f'Error: {e}.')
 
@@ -262,7 +288,7 @@ def main() -> None:
         )
         # Compute total throughput per batch
         st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
-        st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))             
+        st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
 
 if __name__ == '__main__':
