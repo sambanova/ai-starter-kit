@@ -205,7 +205,7 @@ def main() -> None:
                 evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
                 if (
                     not (st.session_state.project_name == '' or st.session_state.project_name is None)
-                    and docs is not None
+                    and len(docs) != 0
                 ):
                     if st.sidebar.button('Set!'):
                         with st.spinner('Processing'):
@@ -227,8 +227,8 @@ def main() -> None:
                 evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
                 if (
                     not (st.session_state.project_name == '' or st.session_state.project_name is None)
-                    and docs is not None
-                    and text_docs is not None
+                    and len(docs) != 0
+                    and len(text_docs) != 0
                 ):
                     if st.sidebar.button('Set!'):
                         with st.spinner('Processing'):
@@ -274,7 +274,7 @@ def main() -> None:
         with st.spinner('Processing'):
             asyncio.run(
                 evaluator.evaluate(  # type: ignore
-                    name='general_knowledge_test', filepath=st.session_state.qna_file_path, use_concurrency=True
+                    filepath=st.session_state.qna_file_path, use_concurrency=True
                 )
             )
             if st.session_state.url is not None:
