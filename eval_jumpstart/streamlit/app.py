@@ -143,6 +143,7 @@ def main() -> None:
 
         # Callout to get SambaNova API Key
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
+        st.markdown('Get your WANDB API key [here](https://wandb.ai/authorize)')
 
         if not are_credentials_set():
             api_key, additional_vars = env_input_fields(mode=llm_type)
