@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 import uuid
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
@@ -79,17 +79,21 @@ def save_files_user(docs: List[UploadedFile]) -> str:
     return temp_file
 
 
-def upload_file_options(option: str) -> Tuple[List[UploadedFile], List[UploadedFile]] | List[UploadedFile]:
+def upload_file_options(
+    option: str,
+) -> Tuple[Optional[List[UploadedFile]], Optional[List[UploadedFile]]] | Optional[List[UploadedFile]]:
+    docs: List[UploadedFile] | None
+    text_docs: List[UploadedFile] | None
     docs = st.file_uploader(
         'Add your Q&A dataset',
         accept_multiple_files=True,
         type=['.csv', '.json'],
     )
     if option == 'Evaluate multiple LLMs':
-        return docs  # type: ignore
+        return docs
     elif option == 'Evaluate Rag Chain':
         text_docs = st.file_uploader('Add PDF file', accept_multiple_files=True, type=['pdf'])
-        return docs, text_docs  # type: ignore
+        return docs, text_docs
     else:
         raise ValueError(f'Invalid Evaluation Option: {option}.')
 
@@ -121,8 +125,8 @@ def main() -> None:
         st.session_state.project_name = None
     if 'qna_file_path' not in st.session_state:
         st.session_state.qna_file_path = None
-    if 'input_disabled' not in st.session_state:
-        st.session_state.input_disabled = True
+    if 'enable_evaluation' not in st.session_state:
+        st.session_state.enable_evaluation = False
     if 'url' not in st.session_state:
         st.session_state.url = None
     if 'evaluation_option' not in st.session_state:
@@ -197,24 +201,27 @@ def main() -> None:
             else:
                 st.success('Evaluation Option selected!')
 
+            docs: List[UploadedFile] | None
+            text_docs: List[UploadedFile] | None
+
             if (
                 isinstance(st.session_state.evaluation_option, str)
                 and st.session_state.evaluation_option == 'Evaluate multiple LLMs'
             ):
-                docs = upload_file_options(st.session_state.evaluation_option)
+                docs = upload_file_options(st.session_state.evaluation_option)  # type: ignore
                 evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
                 if (
                     not (st.session_state.project_name == '' or st.session_state.project_name is None)
+                    and docs is not None
                     and len(docs) != 0
                 ):
-                    if st.sidebar.button('Set!'):
+                    if st.sidebar.button('Evaluate!'):
                         with st.spinner('Processing'):
                             try:
                                 assert isinstance(docs, list)
                                 temp_file = save_files_user(docs)
                                 st.session_state.qna_file_path = temp_file
-                                st.toast(f'Evaluation configuration set! Go ahead and hit Evaluation button', icon='🎉')
-                                st.session_state.input_disabled = False
+                                st.session_state.enable_evaluation = True
 
                             except Exception as e:
                                 st.error(f'Error: {e}.')
@@ -227,18 +234,19 @@ def main() -> None:
                 evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
                 if (
                     not (st.session_state.project_name == '' or st.session_state.project_name is None)
+                    and docs is not None
                     and len(docs) != 0
+                    and text_docs is not None
                     and len(text_docs) != 0
                 ):
-                    if st.sidebar.button('Set!'):
+                    if st.sidebar.button('Evaluate!'):
                         with st.spinner('Processing'):
                             try:
-                                temp_pdf_file = save_files_user(text_docs)  # type: ignore
+                                temp_pdf_file = save_files_user(text_docs)
                                 evaluator.populate_vectordb(temp_pdf_file)  # type: ignore
-                                temp_file = save_files_user(docs)  # type: ignore
+                                temp_file = save_files_user(docs)
                                 st.session_state.qna_file_path = temp_file
-                                st.toast(f'Evaluation configuration set! Go ahead and hit Evaluation button', icon='🎉')
-                                st.session_state.input_disabled = False
+                                st.session_state.enable_evaluation = True
                             except Exception as e:
                                 st.error(f'Error: {e}.')
 
@@ -248,7 +256,7 @@ def main() -> None:
                 if st.button('Reset app'):
                     st.session_state.project_name = None
                     st.session_state.qna_file_path = None
-                    st.session_state.input_disabled = True
+                    st.session_state.enable_evaluation = False
                     st.session_state.url = None
                     st.session_state.evaluation_option = None
                     st.session_state.evaluation_option_submitted = False
@@ -257,19 +265,9 @@ def main() -> None:
                     st.rerun()
 
     st.write(st_description.get('app_overview'))
-    col1, col2, col3 = st.columns(3)
 
-    with col1:
-        pass
-    with col3:
-        pass
-    with col2:
-        evaluation_button = st.button('Evaluate', disabled=st.session_state.input_disabled)
-    if evaluation_button:
-        st.toast(
-            """Evaluation in progress. This could take a while depending on the dataset size and the number of 
-            llms."""
-        )
+    if st.session_state.enable_evaluation:
+        st.toast("""Evaluation in progress. This could take a while depending on the dataset size""")
 
         with st.spinner('Processing'):
             asyncio.run(
