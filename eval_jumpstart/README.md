@@ -115,10 +115,23 @@ More use cases are available in the [notebooks](./notebooks/eval_llm.ipynb)
 
 # Deploy the starter kit GUI
 
-You can also run the starter kit using the streamlit app.
+- Before running the app, make sure to log in to [W&B](https://wandb.ai/authorize) and set your `WANDB_API_KEY` in the `.env` file to view the final results. Additionally,
+when evaluating LLMs, the CSV file should follow this structure:
 
-Run the following command:
+   ```csv
+   system_message,query,expected_answer
+   "Some prompt message","some quesstion?","The ground truth answer"
+   ```
+- **Note:** The `system_message` column is optional.
 
+- For evaluating RAG chains, upload a PDF file, and the CSV file should contain questions related to the PDF. The structure should be as follows:
+
+  ```csv
+   query,expected_answer
+   "some quesstion?","The ground truth answer"
+   ```
+
+- Now you can run the starter kit using the streamlit app with the following command:
 
    ```bash
    streamlit run streamlit/app.py --browser.gatherUsageStats false 
