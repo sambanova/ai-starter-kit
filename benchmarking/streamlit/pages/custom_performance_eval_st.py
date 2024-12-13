@@ -131,7 +131,7 @@ def main() -> None:
 
         st.text_input(
             'Model Name',
-            value='llama3-8b',
+            value='Meta-Llama-3.3-70B-Instruct',
             key='llm',
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
             disabled=st.session_state.running,

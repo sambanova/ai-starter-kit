@@ -61,7 +61,7 @@ if __name__ == '__main__':
     load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
-    model_name = 'llama3-405b'
+    model_name = 'Meta-Llama-3.3-70B-Instruct'
     llm_api = 'sncloud'
 
     params = {

@@ -647,7 +647,7 @@ if __name__ == '__main__':
     load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
-    model = 'llama3-405b'
+    model = 'Meta-Llama-3.3-70B-Instruct'
     llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 
