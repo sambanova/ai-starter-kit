@@ -554,6 +554,7 @@ class MultimodalRetrieval:
         upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
+        print('Extracting content from documents')
         for pdf in pdf_files:
             file_path = os.path.join(upload_folder, pdf.name)
             with open(file_path, 'wb') as file:
@@ -570,6 +571,17 @@ class MultimodalRetrieval:
                     file.write(image.read())
             image_paths.append(single_images_folder)
         text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
+        if len(image_paths)>0:
+            print(f'* {len(image_paths)} calls to the multimodal model will be done to summarize and '
+                'ingest images in provided documents\n\n')
+        if summarize_texts and len(text_docs)>0:
+            print(f'* {len(text_docs)} calls to the LLM will be done to summarize and '
+              'ingest texts in provided documents\n\n')
+        if summarize_tables and len(table_docs)>0:
+            print(f'* {len(table_docs)} calls to the LLM will be done to summarize and '
+              'ingest tables in provided documents\n\n')
+        print(f'* **In total {len(image_paths)+len(text_docs)+len(table_docs)} '
+              'chunks will be sent to the embeddings model to ingest**\n')
         self.retriever = self.create_vectorstore()
         self.retriever = self.vectorstore_ingest(
             self.retriever,

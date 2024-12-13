@@ -4,8 +4,10 @@ import shutil
 import sys
 import time
 import uuid
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
 from threading import Thread
-from typing import Any,Optional
+from typing import Any, Callable, Generator, Optional
 
 import yaml
 
@@ -71,6 +73,27 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
 
+@contextmanager
+def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
+    """
+    context manager to catch stdout and send it to an output streamlit element
+
+    Args:
+        output_func (function to write terminal output in
+
+    Yields:
+        Generator:
+    """
+    with StringIO() as stdout, redirect_stdout(stdout):
+        old_write = stdout.write
+
+        def new_write(string: str) -> int:
+            ret = old_write(string)
+            output_func(stdout.getvalue())
+            return ret
+
+        stdout.write = new_write  # type: ignore
+        yield stdout
 
 def handle_user_input(user_question: str) -> None:
     if user_question:
@@ -252,22 +275,24 @@ def main() -> None:
             if st.button('Process'):
                 if docs:
                     st.session_state.mp_events.input_submitted('document_ingest')
-                    with st.spinner('Processing this could take a while...'):
+                    with st.status('Processing this could take a while...', expanded=True):
                         if prod_mode:
                             schedule_temp_dir_deletion(
                                 os.path.join(kit_dir, 'data', st.session_state.session_temp_subfolder), EXIT_TIME_DELTA
                             )
                             st.toast(
                                 """your session will be active for the next 30 minutes, after this time files and
-                                 vectorstores will be deleted"""
+                                vectorstores will be deleted"""
                             )
-                        st.session_state.multimodal_retriever.st_ingest(
-                            docs,
-                            table_summaries,
-                            text_summaries,
-                            raw_image_retrieval,
-                            st.session_state.session_temp_subfolder,
-                        )
+                        execution_scratchpad_output = st.empty()
+                        with st_capture(execution_scratchpad_output.write):  # type: ignore
+                            st.session_state.multimodal_retriever.st_ingest(
+                                docs,
+                                table_summaries,
+                                text_summaries,
+                                raw_image_retrieval,
+                                st.session_state.session_temp_subfolder,
+                            )
                         st.toast('Vector DB successfully created!')
                         st.session_state.input_disabled = False
                         st.rerun()
