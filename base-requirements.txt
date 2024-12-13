@@ -9,7 +9,7 @@ langchain-community==0.3.9
 langchain-experimental==0.3.2
 langchain-huggingface==0.1.2
 langgraph==0.2.28
-pandasai==2.4.0
+pandasai==2.2.15
 pydantic==2.9.2 
 pydantic-core==2.23.4
 python-dotenv==1.0.1
@@ -17,7 +17,7 @@ streamlit==1.40.2
 st-pages==0.5.0
 streamlit-extras==0.3.6
 sseclient-py==1.8.0
-torch==2.5.1
+torch==2.2.2
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1

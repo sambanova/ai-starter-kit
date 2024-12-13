@@ -5,7 +5,7 @@ langchain-community==0.3.9
 langchain-core==0.3.21
 langchain-huggingface==0.1.2
 mypy==1.11.2
-pandasai==2.4.0
+pandasai==2.2.15
 pre-commit==4.0.1
 pydantic==2.9.2
 pypdf>=4.0.1,<5.0.0
