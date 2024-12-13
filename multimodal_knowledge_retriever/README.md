@@ -58,7 +58,7 @@ This sample is ready-to-use. We provide two options:
 https://github.com/sambanova/ai-starter-kit/assets/150964187/21f83d80-c479-4677-9e80-3dcb096f120e
 
 ## Capabilities and Limitations of Image Analysis
-The AI Starter Kit includes capabilities for retrieving and analyzing images contained in your source documents and integrating them with table textual information to generate comprehensive answers. However, it's important to understand the current limitations of the large vision-language model *for this kit LlaVa1.5*:
+The AI Starter Kit includes capabilities for retrieving and analyzing images contained in your source documents and integrating them with table textual information to generate comprehensive answers.
 
 Image Source Retrieval: The system retrieves and shows the image sources used to generate an answer, allowing you to perform further analysis on the original images.
 
@@ -70,7 +70,7 @@ The model is capable of understanding the general content and some specific deta
 
     General Understanding: The model can understand the generalities of charts, including simple and uncluttered charts where it can identify trends.
     Axes Recognition: It usually recognizes what the axes in plots represent.
-    Detailed Data Points: The model has limited ability to retrieve detailed data points from charts.
+    Detailed Data Points:
     Comparative Analysis: It is not proficient at making comparisons between data points or performing detailed analyses of graphs.
 
 - Diagrams and Schematics:
@@ -81,16 +81,14 @@ The model is capable of understanding the general content and some specific deta
 PDF Documents: The model performs well in analyzing PDF documents that include both text and images. It uses tables and images to generate comprehensive answers and provides related images to support its responses.
 
 This overview should help users understand the strengths and limitations of the image analysis capabilities in your AI Starter Kit, enabling them to make better use of the system.
- 
-> In future model checkpoints, which will be available in SambaStudio, you will have access to better-performing models with fewer limitations in image understanding, providing more accurate and detailed analysis capabilities.
 
 # Before you begin
 
 This starter kit, you need both a LVLM and a LLM. 
-* We use the Llava 1.5 LVLM, which is currently available only in SambaStudio. 
-* You can use a LLM of your choice, from SambaStudio. 
+* We use the Llama3.2 90B LVLM, which is currently available in SambaNovaCloud.
+* You can use a LLM of your choice, from SambaStudio or SambaNovaCloud. 
 
-It might make sense to use two SambaStudio models.
+It might make sense to use two SambaNovaCloud models.
 
 ## Clone this repository
 
@@ -103,27 +101,19 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 1. Deploy LVLM of choice (e.g. Llava 1.5) to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/llava-7b.html#_deploy_a_llava_v1_5_7b_endpoint).
 
-2. Update the multimodal model API information in the Starter Kit.
-
-    update the environment variables file in the root repo directory `ai-starter-kit/.env` to point to the SambaStudio endpoint. For example, for an endpoint with the URL https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012 update the env file (with no spaces) as:
-    ```bash
-    LVLM_BASE_URL="https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012"
-    LVLM_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-    ```
-
 ## Set up the inference endpoint, configs and environment variables
 
 The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
 
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm `type` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+    Then in the [config file](./config.yaml) set the llm and lvlm `type` variable to `"sncloud"` and set the `select_expert` config depending on the models you want to use.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm `type` variable to `"sambastudio"`, set the `bundle` and `select_expert` configs if using a bundle endpoint.
+    Then in the [config file](./config.yaml) set the llm and lvlm `type` variable to `"sambastudio"`, set the `bundle` and `select_expert` configs if using bundle endpoints.
 
 ## Update the Embeddings API information
 
-You have these options to specify the embedding API info: 
+You have these options to specify the embedding API info:
 
 * **Option 1: Use a CPU embedding model**
 
@@ -138,7 +128,6 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `bundle` and `select_expert` according your sambastudio endpoint
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
-
 
 ##  Install system dependencies
 
@@ -155,7 +144,6 @@ To increase inference speed, you can use a SambaStudio embedding model endpoint 
 
    - For other linux distributions, follow the [**Tesseract-OCR installation guide**](https://tesseract-ocr.github.io/tessdoc/Installation.html) 
 
-  
 # Deploy the starter kit GUI
 
 We recommend that you run the starter kit in a virtual environment or use a container. 
@@ -173,7 +161,6 @@ NOTE: python 3.10 or higher is required to run this kit.
       source multimodal_knowledge_env/bin/activate
       pip  install  -r  requirements.txt
     ```
-
 
 2. Run the following command:
 ```
@@ -253,7 +240,7 @@ After the relevant information is retrieved, what happens next depends on the se
 
 * If **Answer over raw images** is disabled, the content (table and text documents/summaries, and images summaries) is sent directly to a SambaNova LLM to generate a final response to the user query.
 
-* If **Answer over raw images** is enabled, the retrieved raw images and query are both sent to the LVLM. With eacy image, intermediate answers to the query are received. These intermediate answers are included with relevant text and table documents/summaries to be used as context.
+* If **Answer over raw images** is enabled, the retrieved raw images and query are both sent to the LVLM. With each image, intermediate answers to the query are received. These intermediate answers are included with relevant text and table documents/summaries to be used as context.
 
 The user's query is combined with the retrieved context along with instructions to form the prompt before being sent to the LLM. This process involves prompt engineering, and is an important part of ensuring quality output. In this AI starter kit, customized prompts are provided to the LLM to improve the response quality.
 
