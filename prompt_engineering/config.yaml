@@ -3,7 +3,7 @@ llm:
   max_tokens_to_generate: 500
   temperature: 0.0
   bundle: True
-  select_expert: "llama3-405b"
+  select_expert: "Meta-Llama-3.3-70B-Instruct"
 
 use_cases:
   - General Assistant

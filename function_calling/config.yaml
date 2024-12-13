@@ -3,7 +3,7 @@ llm:
   "do_sample": False
   "temperature": 0.01
   "max_tokens": 1024
-  "model": "Meta-Llama-3.1-405B-Instruct"
+  "model": "Meta-Llama-3.3-70B-Instruct"
 
 tools:
     query_db:
@@ -12,7 +12,7 @@ tools:
         "do_sample": False
         "temperature": 0.01 
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct" 
+        "model": "Meta-Llama-3.3-70B-Instruct" 
       db:
         "path": "data/chinook.db" 
 
@@ -22,7 +22,7 @@ tools:
         "do_sample": False
         "temperature": 0.0
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct" 
+        "model": "Meta-Llama-3.3-70B-Instruct" 
 
     rag:
       llm:
@@ -30,7 +30,7 @@ tools:
         "do_sample": False
         "temperature": 0.0 
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct"
+        "model": "Meta-Llama-3.3-70B-Instruct"
       embedding_model: 
         "type": "cpu" # set either sambastudio or cpu
         "batch_size": 1 #set depending of your endpoint configuration (1 if bundle embedding expert)
