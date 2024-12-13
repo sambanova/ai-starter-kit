@@ -1,0 +1,7 @@
+app_overview: "This example application demonstrates a Retrieval Augmented Generation (RAG) pipeline,\ 
+  \ enabling users to load their documents, and receive answers to questions about their contents. \n\n \
+  \ This pipeline will process the documents, extracting text chunks and store them in a vectorstore. \n\n\
+  \ When a query is submitted the top relevant contents are retrieved, the retrieved contents are reranked (optional) \
+  \ and the used as context to return a final answer. \n\n\
+  \ This application also has conversational capabilities, allowing users to engage in a dialogue with the system. \
+  \ In each turn the user's query is reformulated and refined based on the previous conversation history."

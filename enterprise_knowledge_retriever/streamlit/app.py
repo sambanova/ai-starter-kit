@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 import uuid
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import streamlit as st
 import yaml
@@ -23,11 +23,20 @@ from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
+
+def load_config() -> Any:
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+    
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
 
 def save_files_user(docs: List[UploadedFile]) -> str:
     """
@@ -103,6 +112,14 @@ def handle_userinput(user_question: str) -> None:
                         f'<font size="2" color="grey">{source}</font>',
                         unsafe_allow_html=True,
                     )
+    
+    # show overview message when chat history is empty
+    if len(st.session_state.chat_history) == 0:
+        with st.chat_message(
+            'ai',
+            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        ):
+            st.write(load_app_description().get('app_overview'))
 
 
 def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval]:
@@ -123,8 +140,7 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
 
 
 def main() -> None:
-    with open(CONFIG_PATH, 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
+    config = load_config()
 
     prod_mode = config.get('prod_mode', False)
     llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
@@ -351,7 +367,7 @@ def main() -> None:
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:
         st.session_state.mp_events.input_submitted('chat_input')
-        handle_userinput(user_question)
+    handle_userinput(user_question)
 
 
 if __name__ == '__main__':
