@@ -33,10 +33,12 @@ logging.info('URL: http://localhost:8501')
 def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
-    
+
+
 def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
+
 
 def save_files_user(docs: List[UploadedFile]) -> str:
     """
@@ -112,7 +114,7 @@ def handle_userinput(user_question: str) -> None:
                         f'<font size="2" color="grey">{source}</font>',
                         unsafe_allow_html=True,
                     )
-    
+
     # show overview message when chat history is empty
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(

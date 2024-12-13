@@ -41,13 +41,16 @@ LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Me
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
+
 def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
+
 def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
+
 
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
@@ -73,6 +76,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
 
+
 @contextmanager
 def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
     """
@@ -94,6 +98,7 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, 
 
         stdout.write = new_write  # type: ignore
         yield stdout
+
 
 def handle_user_input(user_question: str) -> None:
     if user_question:
@@ -151,7 +156,7 @@ def handle_user_input(user_question: str) -> None:
                     with c2.expander('Images'):
                         for image in image_source:
                             st.image(image)
-                            
+
     # show overview message when chat history is empty
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
