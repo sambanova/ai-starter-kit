@@ -78,7 +78,7 @@ def save_files_user(docs: List[UploadedFile]) -> str:
     return temp_folder
 
 
-def handle_userinput(user_question: str) -> None:
+def handle_userinput(user_question: Optional[str]) -> None:
     if user_question:
         try:
             with st.spinner('Processing...'):

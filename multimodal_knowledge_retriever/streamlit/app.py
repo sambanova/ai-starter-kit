@@ -100,7 +100,7 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, 
         yield stdout
 
 
-def handle_user_input(user_question: str) -> None:
+def handle_user_input(user_question: Optional[str]) -> None:
     if user_question:
         with st.spinner('Processing...'):
             response = st.session_state.multimodal_retriever.call(user_question)
@@ -290,7 +290,7 @@ def main() -> None:
                                 vectorstores will be deleted"""
                             )
                         execution_scratchpad_output = st.empty()
-                        with st_capture(execution_scratchpad_output.write):  # type: ignore
+                        with st_capture(execution_scratchpad_output.write):
                             st.session_state.multimodal_retriever.st_ingest(
                                 docs,
                                 table_summaries,
