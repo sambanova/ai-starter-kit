@@ -224,13 +224,14 @@ def main() -> None:
             st.markdown('**1. Upload your files**')
             docs = st.file_uploader('Add your files', accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
             st.markdown('**2. Set ingestion steps**')
-            table_summaries = st.toggle('summarize Tables', value=True)
-            text_summaries = st.toggle('summarize Text', value=False)
+            table_summaries = st.toggle('Use summarized Tables for retrieval', value=True)
+            text_summaries = st.toggle('Use summarized Text for retrieval', value=False)
+            st.caption('**Note** *If not enabled retrieval will be done over raw text and table contents*')
             st.markdown('**3. Set retrieval steps**')
             raw_image_retrieval = st.toggle('Answer over raw images', value=True)
             st.caption(
-                '**Note** If selected the kit will use raw images to generate the answers, \
-                if not, image summaries will be used instead'
+                '**Note** *If selected the kit will use raw images to generate the answers, \
+                if not, image summaries will be used instead*'
             )
             # hard setting of llm and lvlm (overwrites models from config.yaml)
             st.markdown('**Optional Set a specific multimodal model and LLM**')
