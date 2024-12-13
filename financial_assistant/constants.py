@@ -65,3 +65,21 @@ DEFAULT_PDF_TITLE = 'Financial Report'
 # Unit tests
 TEST_DIR = os.path.join(kit_dir, 'tests/')
 TEST_CACHE_DIR = os.path.join(TEST_DIR, 'cache/')
+
+# Home Page
+INTRODUCTION_TEXT = """
+    Welcome to the SambaNova Financial Assistant.
+    This app demonstrates the capabilities of Large Language Models (LLMs)
+    in extracting and analyzing financial data using function calling, web scraping,
+    and Retrieval-Augmented Generation (RAG).
+    
+    Use the navigation menu to explore various features including:
+    
+    - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
+    - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
+    - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
+    - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
+    - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
+        or on the whole chat history.
+    - **Print Chat History**: Print the whole chat history.
+"""

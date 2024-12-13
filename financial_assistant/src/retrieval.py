@@ -5,11 +5,11 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
 from langchain_chroma import Chroma
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from financial_assistant.constants import *
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
@@ -73,11 +73,11 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     return embedding_model_info, retrieval_info
 
 
-def load_embedding_model(embedding_model_info: Dict[str, Any]) -> SentenceTransformerEmbeddings | Embeddings:
+def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
     """Load the embedding model following the config information."""
 
     if embedding_model_info['type'] == 'cpu':
-        embeddings_cpu = SentenceTransformerEmbeddings(model_name='paraphrase-mpnet-base-v2')
+        embeddings_cpu = HuggingFaceEmbeddings(model_name='paraphrase-mpnet-base-v2')
         return embeddings_cpu
     elif embedding_model_info['type'] == 'sambastudio':
         embeddings_sambastudio = APIGateway.load_embedding_model(
