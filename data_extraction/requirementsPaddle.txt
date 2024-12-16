@@ -60,9 +60,10 @@ jupyter_client==8.6.0
 jupyter_core==5.7.1
 kiwisolver==1.4.5
 langchain-chroma == 0.1.4
-langchain-community==0.3.1
-langchain-core==0.3.6
-langchain==0.3.1
+langchain-community==0.3.9
+langchain-core==0.3.21
+langchain-huggingface==0.1.2
+langchain==0.3.9
 lazy_loader==0.3
 lmdb==1.4.1
 lxml==5.1.0
@@ -111,7 +112,7 @@ ruff==0.6.9
 scikit-image==0.22.0
 scikit-learn==1.4.0 
 scipy==1.11.4
-sentence_transformers==2.2.2 
+sentence_transformers==3.3.1 
 sentencepiece==0.1.99 
 setuptools==65.5.0
 shapely==2.0.2

@@ -52,6 +52,16 @@ streamlit.logo(
     icon_image=SAMBANOVA_LOGO,
 )
 
+# Title of the main page
+columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
+columns[0].image(SAMBANOVA_LOGO, width=100)
+columns[1].title('SambaNova Financial Assistant')
+
+# Home page
+if not are_credentials_set():
+    streamlit.title('Financial Insights with LLMs')
+    streamlit.write(INTRODUCTION_TEXT)
+
 # Add sidebar
 with streamlit.sidebar:
     if not are_credentials_set():
@@ -207,34 +217,11 @@ def main() -> None:
                     # Display the current directory contents
                     display_directory_contents(streamlit.session_state.current_path, streamlit.session_state.cache_dir)
 
-    # Title of the main page
-    columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
-    columns[0].image(SAMBANOVA_LOGO, width=100)
-    columns[1].title('SambaNova Financial Assistant')
-
     if are_credentials_set():
         # Home page
         if menu == 'Home':
             streamlit.title('Financial Insights with LLMs')
-
-            streamlit.write(
-                """
-                    Welcome to SambaNova Financial Assistant.
-                    This app demonstrates the capabilities of large language models (LLMs)
-                    in extracting and analyzing financial data using function calling, web scraping,
-                    and retrieval-augmented generation (RAG).
-                    
-                    Use the navigation menu to explore various features including:
-                    
-                    - **Stock Data Analysis**: Query and analyze stocks based on Yahoo Finance data.
-                    - **Stock Database**: Create and query an SQL database based on Yahoo Finance data.
-                    - **Financial News Scraping**: Scrape financial news articles from Yahoo Finance News.
-                    - **Financial Filings Analysis**: Query and analyze financial filings based on SEC EDGAR data.
-                    - **Generate PDF Report**: Generate a PDF report based on the saved answered queries
-                        or on the whole chat history.
-                    - **Print Chat History**: Print the whole chat history.
-                """
-            )
+            streamlit.write(INTRODUCTION_TEXT)
 
         # Stock Data Analysis page
         elif menu == 'Stock Data Analysis':
