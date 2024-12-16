@@ -3,7 +3,7 @@
 
 python src/evaluator.py \
 --mode custom \
---model-name "llama3-405b" \
+--model-name "Meta-Llama-3.3-70B-Instruct" \
 --results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \
