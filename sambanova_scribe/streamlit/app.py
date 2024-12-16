@@ -29,7 +29,7 @@ from utils.visual.env_utils import (
 )
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
-ADDITIONAL_ENV_VARS = ['QWEN2_URL', 'QWEN2_API_KEY']
+ADDITIONAL_ENV_VARS = []
 logging.basicConfig(level=logging.INFO)
 
 
@@ -186,24 +186,14 @@ def setup_sidebar() -> None:
         if are_credentials_set(ADDITIONAL_ENV_VARS):
             if prod_mode:
                 sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-                qwen2_url = st.session_state.QWEN2_URL
-                qwen2_api_key = st.session_state.QWEN2_API_KEY
             else:
                 if 'SAMBANOVA_API_KEY' in st.session_state:
                     sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
                 else:
                     sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-                if 'QWEN2_URL' in st.session_state:
-                    qwen2_url = os.environ.get('QWEN2_URL') or st.session_state.QWEN2_URL
-                else:
-                    qwen2_url = os.environ.get('QWEN2_URL')
-                if 'QWEN2_API_KEY' in st.session_state:
-                    qwen2_api_key = os.environ.get('QWEN2_API_KEY') or st.session_state.QWEN2_API_KEY
-                else:
-                    qwen2_api_key = os.environ.get('QWEN2_API_KEY')
 
             if st.session_state.sambanova_scribe is None:
-                st.session_state.sambanova_scribe = Scribe(sambanova_api_key, qwen2_url, qwen2_api_key)
+                st.session_state.sambanova_scribe = Scribe(sambanova_api_key)
             with st.expander('Additional settings', expanded=True):
                 st.markdown('**Reset chat**')
                 st.markdown('**Note:** Resetting the Conversation will clear all tabs history')
