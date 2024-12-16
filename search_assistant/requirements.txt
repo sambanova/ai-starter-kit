@@ -7,20 +7,21 @@ html2text==2024.2.26
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
 langchain-chroma == 0.1.4
-langchain-community==0.3.1
-langchain-core==0.3.6
+langchain-community==0.3.9
+langchain-core==0.3.21
+langchain-huggingface==0.1.2
 langchain-milvus==0.1.7rc2
-langchain==0.3.1
+langchain==0.3.9
 mypy==1.11.2
 pydantic-core==2.23.4
 pydantic==2.9.2 
 python-dotenv==1.0.0
 ruff==0.6.9
 pre-commit==4.0.1
-sentence_transformers==2.2.2
+sentence_transformers==3.3.1
 sseclient-py==1.8.0
 streamlit-extras==0.3.6
-streamlit==1.32.2
+streamlit==1.40.2
 unstructured[pdf]==0.12.4
 watchdog==4.0.0
 weave==0.51.1
