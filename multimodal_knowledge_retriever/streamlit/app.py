@@ -4,8 +4,10 @@ import shutil
 import sys
 import time
 import uuid
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
 from threading import Thread
-from typing import Optional
+from typing import Any, Callable, Generator, Optional
 
 import yaml
 
@@ -27,6 +29,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 ADDITIONAL_ENV_VARS: list[str] = []
 # Available models in dropdown menu
 LVLM_MODELS = [
@@ -37,6 +40,16 @@ LVLM_MODELS = [
 LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
+
+
+def load_config() -> Any:
+    with open(CONFIG_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
 
 
 def delete_temp_dir(temp_dir: str) -> None:
@@ -64,7 +77,30 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     Thread(target=run_scheduler, daemon=True).start()
 
 
-def handle_user_input(user_question: str) -> None:
+@contextmanager
+def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
+    """
+    context manager to catch stdout and send it to an output streamlit element
+
+    Args:
+        output_func (function to write terminal output in
+
+    Yields:
+        Generator:
+    """
+    with StringIO() as stdout, redirect_stdout(stdout):
+        old_write = stdout.write
+
+        def new_write(string: str) -> int:
+            ret = old_write(string)
+            output_func(stdout.getvalue())
+            return ret
+
+        stdout.write = new_write  # type: ignore
+        yield stdout
+
+
+def handle_user_input(user_question: Optional[str]) -> None:
     if user_question:
         with st.spinner('Processing...'):
             response = st.session_state.multimodal_retriever.call(user_question)
@@ -121,6 +157,14 @@ def handle_user_input(user_question: str) -> None:
                         for image in image_source:
                             st.image(image)
 
+    # show overview message when chat history is empty
+    if len(st.session_state.chat_history) == 0:
+        with st.chat_message(
+            'ai',
+            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        ):
+            st.write(load_app_description().get('app_overview'))
+
 
 def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
     if are_credentials_set():
@@ -133,8 +177,7 @@ def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
 
 
 def main() -> None:
-    with open(CONFIG_PATH, 'r') as yaml_file:
-        config = yaml.safe_load(yaml_file)
+    config = load_config()
 
     prod_mode = config.get('prod_mode', False)
     llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
@@ -180,7 +223,7 @@ def main() -> None:
     user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
     if user_question is not None:
         st.session_state.mp_events.input_submitted('chat_input')
-        handle_user_input(user_question)
+    handle_user_input(user_question)
 
     with st.sidebar:
         st.title('Setup')
@@ -209,13 +252,14 @@ def main() -> None:
             st.markdown('**1. Upload your files**')
             docs = st.file_uploader('Add your files', accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
             st.markdown('**2. Set ingestion steps**')
-            table_summaries = st.toggle('summarize Tables', value=True)
-            text_summaries = st.toggle('summarize Text', value=False)
+            table_summaries = st.toggle('Use summarized Tables for retrieval', value=True)
+            text_summaries = st.toggle('Use summarized Text for retrieval', value=False)
+            st.caption('**Note** *If not enabled retrieval will be done over raw text and table contents*')
             st.markdown('**3. Set retrieval steps**')
             raw_image_retrieval = st.toggle('Answer over raw images', value=True)
             st.caption(
-                '**Note** If selected the kit will use raw images to generate the answers, \
-                if not, image summaries will be used instead'
+                '**Note** *If selected the kit will use raw images to generate the answers, \
+                if not, image summaries will be used instead*'
             )
             # hard setting of llm and lvlm (overwrites models from config.yaml)
             st.markdown('**Optional Set a specific multimodal model and LLM**')
@@ -236,22 +280,24 @@ def main() -> None:
             if st.button('Process'):
                 if docs:
                     st.session_state.mp_events.input_submitted('document_ingest')
-                    with st.spinner('Processing this could take a while...'):
+                    with st.status('Processing this could take a while...', expanded=True):
                         if prod_mode:
                             schedule_temp_dir_deletion(
                                 os.path.join(kit_dir, 'data', st.session_state.session_temp_subfolder), EXIT_TIME_DELTA
                             )
                             st.toast(
                                 """your session will be active for the next 30 minutes, after this time files and
-                                 vectorstores will be deleted"""
+                                vectorstores will be deleted"""
                             )
-                        st.session_state.multimodal_retriever.st_ingest(
-                            docs,
-                            table_summaries,
-                            text_summaries,
-                            raw_image_retrieval,
-                            st.session_state.session_temp_subfolder,
-                        )
+                        execution_scratchpad_output = st.empty()
+                        with st_capture(execution_scratchpad_output.write):
+                            st.session_state.multimodal_retriever.st_ingest(
+                                docs,
+                                table_summaries,
+                                text_summaries,
+                                raw_image_retrieval,
+                                st.session_state.session_temp_subfolder,
+                            )
                         st.toast('Vector DB successfully created!')
                         st.session_state.input_disabled = False
                         st.rerun()
@@ -267,6 +313,7 @@ def main() -> None:
                     st.session_state.image_sources_history = []
                     st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
+                    st.rerun()
 
 
 if __name__ == '__main__':
