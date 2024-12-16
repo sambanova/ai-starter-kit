@@ -112,7 +112,7 @@ def main() -> None:
         # Show LLM parameters
         llm_model = st.text_input(
             'Model Name',
-            value='llama3-405b',
+            value='Meta-Llama-3.3-70B-Instruct',
             help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
         )
         llm_selected = f'{llm_model}'

@@ -14,13 +14,14 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 import concurrent.futures
-from typing import Any
+from typing import Any, Optional
 
 from search_assistant.src.search_assistant import SearchAssistant
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
@@ -31,13 +32,19 @@ def load_config() -> Any:
         return yaml.safe_load(yaml_file)
 
 
+def load_app_description() -> Any:
+    with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
 config = load_config()
+st_description = load_app_description()
 prod_mode = config.get('prod_mode', False)
 llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 additional_env_vars = config.get('additional_env_vars', None)
 
 
-def handle_user_input(user_question: str) -> None:
+def handle_user_input(user_question: Optional[str]) -> None:
     if user_question:
         with st.spinner('Processing...'):
             if st.session_state.method == 'rag_query':
@@ -65,6 +72,7 @@ def handle_user_input(user_question: str) -> None:
                 )
                 sources = set(response['sources'])
                 st.session_state.related_queries_history.append(related_querys_future.result())
+
         st.session_state.chat_history.append(user_question)
         st.session_state.chat_history.append(response['answer'])
 
@@ -74,6 +82,14 @@ def handle_user_input(user_question: str) -> None:
             sources_text += f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
 
         st.session_state.sources_history.append(sources_text)
+
+    # Show the app description only if chat history is empty
+    if len(st.session_state.chat_history) == 0:
+        with st.chat_message(
+            'ai',
+            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        ):
+            st.write(st_description.get('app_overview'))
 
     for ques, ans, source, related_queries in zip(
         st.session_state.chat_history[::2],
@@ -262,7 +278,7 @@ def main() -> None:
     )
     if user_question is not None:
         st.session_state.mp_events.input_submitted('chat_input')
-        handle_user_input(user_question)
+    handle_user_input(user_question)
 
 
 if __name__ == '__main__':

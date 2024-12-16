@@ -1,0 +1,11 @@
+app_overview: "This example application for web search allows you to retrieve information \
+  from multiple sources, including current events and data that are not part of the \
+  knowledge base of standard LLMs. By using engines like Google and Bing, users can retrieve \
+  information from the web by leveraging multiple service options like SerAPI, Serper, and OpenSerp.\n\
+  In addition to the features mentioned above, there is the option to choose a retrieval method, where you have \
+  the following choices:\n\
+  - **Search and Answer**: Allows users to retrieve relevant information from the web and \
+  use the search results snippets as context for the LLM to respond to your questions.\n\
+  - **Search and Scrape Sites**: Provides the option to perform web scraping over the pages returned by search results, create a simple RAG chain, \
+  feed the retrieved information to a local vector database, and the app will be able to respond to any query \
+  related to the scraped information.\n"
