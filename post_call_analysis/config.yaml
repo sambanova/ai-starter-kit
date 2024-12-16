@@ -38,7 +38,7 @@ llm:
     "do_sample": False
     "max_tokens_to_generate": 1000
     "bundle": True #set as true if using Sambastudio bundle endpoint
-    "select_expert": "Meta-Llama-3.1-70B-Instruct"
+    "select_expert": "Meta-Llama-3.3-70B-Instruct"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu

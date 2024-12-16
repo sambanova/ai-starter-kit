@@ -126,7 +126,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
   - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
-    - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name.
+    - For example, the Llama-3-8B model in SambaNova Cloud is titled `Meta-Llama-3.1-8B-Instruct` so that will be the model name.
 
 2. Set the configuration parameters
 
@@ -253,7 +253,7 @@ This option allows you to evaluate the performance of the selected LLM on your o
   - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
-    - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
+    - For example, the Llama-3-8B model in SambaNova Cloud is titled `Meta-Llama-3.1-8B-Instruct` so that will be the model name
 
 4. Set the configuration and tuning parameters
 
@@ -300,7 +300,7 @@ This option allows you to measure performance during a multi-turn conversation w
   - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL, enter the full model name shown on the model card.
   - If the model is a standalone model, enter the full model name shown on the model card. E.g. `Llama-2-70b-chat-hf`.
   - If the model is a SambaNova Cloud one, then be aware of the right model names used. Then, choose `SambaNova Cloud` in the API type dropdown option.
-    - For example, the Llama-3-8B model in SambaNova Cloud is titled `llama3-8b` so that will be the model name
+    - For example, the Llama-3-8B model in SambaNova Cloud is titled `Meta-Llama-3.1-8B-Instruct` so that will be the model name
 
 2. Set the configuration parameters
 
