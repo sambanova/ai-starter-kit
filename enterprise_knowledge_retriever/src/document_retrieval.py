@@ -322,15 +322,19 @@ class DocumentRetrieval:
     ) -> Any:
         logger.info(f'Created collection, name is {collection_name}')
         vectorstore = self.vectordb.create_vector_store(
-            text_chunks, embeddings, output_db=output_db, collection_name=collection_name,
-            db_type=self.retrieval_info['db_type']
+            text_chunks,
+            embeddings,
+            output_db=output_db,
+            collection_name=collection_name,
+            db_type=self.retrieval_info['db_type'],
         )
         return vectorstore
 
     def load_vdb(self, db_path: str, embeddings: Any, collection_name: Optional[str] = None) -> Any:
         logger.info(f'Loading collection, name is {collection_name}')
-        vectorstore = self.vectordb.load_vdb(db_path, embeddings, db_type=self.retrieval_info['db_type'],
-        collection_name=collection_name)
+        vectorstore = self.vectordb.load_vdb(
+            db_path, embeddings, db_type=self.retrieval_info['db_type'], collection_name=collection_name
+        )
         return vectorstore
 
     def init_retriever(self, vectorstore: Any) -> None:
