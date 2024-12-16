@@ -5,7 +5,7 @@ llm:
     "top_p": 1
     "do_sample": false
     "bundle": True #set as true if using Sambastudio bundle endpoint
-    "select_expert": "Meta-Llama-3.3-70B-Instruct"
+    "select_expert": "Meta-Llama-3.1-70B-Instruct"
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
