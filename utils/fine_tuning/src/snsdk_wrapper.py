@@ -1104,15 +1104,17 @@ class SnsdkWrapper:
                             'time_created',
                         ]
                     }
+                if job_progress.get('status') == 'EXIT_WITH_0':
+                    job_progress['status'] = 'Completed' 
                 logging.info(f'Job `{job_name}` with progress status: {job_progress["status"]}')
             else:
                 logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
                 raise Exception(f'Error message: {check_job_progress_response}')
-
+            
             if wait == False:
                 break
             else:
-                if job_progress['status'] == 'EXIT_WITH_0':
+                if job_progress['status'] == 'Completed':
                     break
                 elif job_progress['status'] in ['EXIT_WITH_1', 'FAILED']:
                     logging.error(f'Job failed. Details: {job_progress}')
