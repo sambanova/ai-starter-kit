@@ -8,6 +8,7 @@ sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
 import asyncio
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
@@ -16,21 +17,22 @@ import yaml
 from weave import Dataset
 
 from utils.eval.dataset import WeaveDatasetManager
-from utils.eval.llm import CorrectnessLLMJudge, WeaveChatModel
-from utils.visual.env_utils import get_wandb_key
-
-wandb_api_key = get_wandb_key()
-
-if wandb_api_key:
-    import weave
-else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
-
+from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
+from utils.eval.rag import RAGChain
+from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
 
 
-class BaseWeaveEvaluator:
+class WeaveEvaluator(ABC):
+    @abstractmethod
+    def evaluate(
+        self, name: Optional[str] = None, filepath: Optional[str] = None, use_concurrency: bool = False
+    ) -> None:
+        pass
+
+
+class BaseWeaveEvaluator(WeaveEvaluator):
     """
     Base class for evaluating LLM configurations using the Weave framework.
 
@@ -206,3 +208,93 @@ class BaseWeaveEvaluator:
             WeaveDatasetManager: An initialized instance.
         """
         return WeaveDatasetManager()
+
+
+class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
+    """
+    Base class for evaluating RAG models using the Weave framework.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.rag_info = self.config_info['rag']
+        self.rag_chain = self._init_chain()
+
+    def populate_vectordb(self, path: str) -> None:
+        """
+        Populate the VectorDB with documents from the specified path.
+
+        Args:
+            path (str): The path to the directory containing the documents to be uploaded.
+        """
+        self.rag_chain.upload_docs(path)
+
+    async def evaluate(
+        self, name: Optional[str] = None, filepath: Optional[str] = None, use_concurrency: bool = False
+    ) -> None:
+        """
+        Evaluate a list of data using multiple LLM configurations.
+
+        This asynchronous method iterates over the LLM configurations specified in
+        self.config_info['llms'], creating a WeaveChatModel for each configuration.
+        It then sets up an evaluation using the provided data and a judge, executing
+        the evaluation for each model configuration.
+
+        Args:
+            name (str, optional): Name of the dataset. Defaults to the value specified
+                in self.config_info['eval_dataset']['name'].
+            filepath (str, optional): Path to the dataset file. Defaults to the value
+                specified in self.config_info['eval_dataset']['path'].
+
+        Returns:
+            None: This method does not return any value. It performs the evaluation
+                asynchronously and logs the results to wnb.
+
+        Raises:
+            KeyError: If 'llms' is not present in self.config_info.
+            Exception: If an error occurs during model evaluation or if the
+                parameters provided to WeaveChatModel are invalid.
+        """
+        if name is None:
+            name = self.config_info['eval_dataset']['name']
+        if filepath is None:
+            filepath = self.config_info['eval_dataset']['path']
+
+        data = self.dataset_manager.create_raw_dataset(filepath)
+
+        for i in range(len(data)):
+            data[i]['context'] = self.rag_chain.retrieve(data[i].get('query', ''))
+            data[i]['completion'] = self.rag_chain.predict(data[i].get('query', ''))
+
+        weave_data = self.dataset_manager.to_weave_dataset(name, data)
+
+        rag_model = WeaveRAGModel(**self.rag_info['llm'])
+
+        evaluation = weave.Evaluation(
+            name=' '.join(str(value) for value in self.rag_info.values()), dataset=weave_data, scorers=[self.judge]
+        )
+
+        await evaluation.evaluate(rag_model)
+
+    def _init_chain(self) -> RAGChain:
+        """
+        Initialize and return an instance of RAGChain.
+
+        This method retrieves configuration information for the RAG model
+        from the internal state and creates an instance of `RAGChain`
+        using the extracted parameters.
+
+        Returns:
+            RAGChain: An initialized instance of the RAGChain
+                based on the configuration settings specified in `self.config_info['rag']`.
+
+        Raises:
+            KeyError: If 'rag' is not present in `self.config_info`.
+            TypeError: If the parameters provided to `RAGChain`
+                do not match its constructor signature.
+        """
+        rag_info = self.config_info['rag']
+        llm_info = rag_info['llm']
+        embeddings_info = rag_info['embeddings']
+        vectordb_info = rag_info['vectordb']
+        return RAGChain(SNCloudSchema(**llm_info), EmbeddingsSchema(**embeddings_info), VectorDBSchema(**vectordb_info))

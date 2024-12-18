@@ -13,7 +13,7 @@ A tool for evaluating the performance of LLM APIs using the RAG Evaluation metho
   ```
 
 ## Basic Usage
-We implement performance tests for evaluating LLMs.
+We implement performance tests for evaluating LLMs and RAG systems.
 
 ### Config File
 
@@ -32,19 +32,40 @@ llms:
     model_name: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
-  - name: sambastudio-llama2-70
-    model_type: "sambastudio"
-    model_name: "llama-2-70b-chat-hf"
+
+  - name: sncloud-llama3.2-1
+    model_type: "sncloud"
+    model_name: "Meta-Llama-3.2-1B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.1-70
     model_type: "sncloud"
     model_name: "Meta-Llama-3.1-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
+
   - name: sncloud-llama3.2-3
     model_type: "sncloud"
     model_name: "Meta-Llama-3.2-3B-Instruct"
+    max_tokens: 1024
+    temperature: 0.0
+
+rag:
+  vectordb:
+    db_type: "chroma"
+    collection_name: "demo"
+  
+  embeddings:
+    type: "cpu"
+    batch_size: 1
+    bundle: True
+    select_expert: "e5-mistral-7b-instruct"
+
+  llm:
+    name: sncloud-llama3.1-405-chroma-rag
+    type: "sncloud"
+    model: "Meta-Llama-3.1-405B-Instruct"
     max_tokens: 1024
     temperature: 0.0
 
@@ -55,7 +76,7 @@ eval_llm:
   temperature: 0.0
 ```
 
-## Evaluation Use Cases
+## Evaluation Use Cases for LLMs
 
 ```python
 from dotenv import load_dotenv
@@ -73,13 +94,7 @@ load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 import asyncio
 import time
 from utils.eval.evaluator import BaseWeaveEvaluator
-from utils.visual.env_utils import get_wandb_key
-
-wandb_api_key = get_wandb_key()
-if wandb_api_key:
-    import weave
-else:
-    raise ValueError('WANDB_API_KEY is not set.')
+import weave
 
 
 weave.init('your-project-name')
@@ -96,7 +111,31 @@ elapsed_time = end_time - start_time
 print(f"Elapsed time: {elapsed_time:.2f} seconds")
 ```
 
-More use cases are available in the [notebooks](./notebooks)
+More use cases are available in the [notebooks](./notebooks/eval_llm.ipynb)
+
+# Deploy the starter kit GUI
+
+- Before running the app, make sure to log in to [W&B](https://wandb.ai/authorize) and set your `WANDB_API_KEY` in the `.env` file to view the final results. Additionally,
+when evaluating LLMs, the CSV file should follow this structure:
+
+   ```csv
+   system_message,query,expected_answer
+   "Some prompt message","some quesstion?","The ground truth answer"
+   ```
+- **Note:** The `system_message` column is optional.
+
+- For evaluating RAG chains, upload a PDF file, and the CSV file should contain questions related to the PDF. The structure should be as follows:
+
+  ```csv
+   query,expected_answer
+   "some quesstion?","The ground truth answer"
+   ```
+
+- Now you can run the starter kit using the streamlit app with the following command:
+
+   ```bash
+   streamlit run streamlit/app.py --browser.gatherUsageStats false 
+   ```
 
 ## Metrics
 
