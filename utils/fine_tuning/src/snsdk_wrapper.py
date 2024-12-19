@@ -852,6 +852,56 @@ class SnsdkWrapper:
 
     """Job"""
 
+    def get_default_hyperparms(self, model_name: Optional[str], job_type: Optional[str]) -> Dict[str, Any]:
+        """
+        Get hyperparameters required to run a job in a SambaStudio model.
+
+        Parameters:
+        model_name (str, optional): The name of the model to check hyperparameters.
+            If not provided, the name from the configs file will be used.
+        job_type (str, optional): The job type to check hyperparameters.
+            If not provided, the job_Type from the configs file will be used.
+
+        Returns:
+        architecture_hyper_params (dict): list of hyper parameters per RDU
+        available architecture
+
+        Raises:
+        Exception: If the model or job type is not found or if there is an error
+        getting the hyperparameters.
+        """
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['model_checkpoint']['model_name']
+        if job_type is None:
+            self._raise_error_if_config_is_none()
+            job_type = self.config['job']['job_type']
+        model_info_response = self.snsdk_client.model_info(model_name, job_type)
+        if model_info_response['status_code'] == 200:
+            hyperparams = model_info_response.get('hyperparams').get(job_type)
+            architecture_hyper_params = {}
+            user_hyperparams_list = []
+            for architecture, params in hyperparams.items():
+                for param in params['user_params']:
+                    param_dict = {
+                        'field_name': param.get('FIELD_NAME'),
+                        'description': param.get('DESCRIPTION'),
+                        'settings': param.get('TYPE_SPECIFIC_SETTINGS').get(job_type),
+                        'constrains': param.get('CONSTRAINTS'),
+                    }
+                    user_hyperparams_list.append(param_dict)
+                architecture_hyper_params[architecture] = user_hyperparams_list
+                logging.info(
+                    f'Default Hyperparameters for {job_type} in {architecture} for {model_name}: \n'
+                    f'{[param["field_name"]+":`"+param["settings"]["DEFAULT"]+"`" for param in user_hyperparams_list]}\n'
+                )
+            return architecture_hyper_params
+        else:
+            logging.error(
+                f'Failed to get "{job_type}" job hyperparameters for {model_name}. Details: {model_info_response}'
+            )
+            raise Exception(f'Error message: {model_info_response}')
+
     def run_training_job(
         self,
         project_name: Optional[str] = None,
@@ -1105,12 +1155,12 @@ class SnsdkWrapper:
                         ]
                     }
                 if job_progress.get('status') == 'EXIT_WITH_0':
-                    job_progress['status'] = 'Completed' 
+                    job_progress['status'] = 'Completed'
                 logging.info(f'Job `{job_name}` with progress status: {job_progress["status"]}')
             else:
                 logging.error(f'Failed to check job progress. Details: {check_job_progress_response}')
                 raise Exception(f'Error message: {check_job_progress_response}')
-            
+
             if wait == False:
                 break
             else:
