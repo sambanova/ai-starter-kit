@@ -1,17 +1,9 @@
 import os
 import sys
-
-from langchain_core.output_parsers import JsonOutputParser
-
-from utils.visual.env_utils import get_wandb_key
-
-wandb_api_key = get_wandb_key()
-if wandb_api_key:
-    import weave
-else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
 from typing import Any, Dict, Optional
 
+import weave
+from langchain_core.output_parsers import JsonOutputParser
 from weave import Model
 from weave.flow.scorer import Scorer
 
@@ -22,6 +14,7 @@ sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
 from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
+from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
 from utils.model_wrappers.api_gateway import APIGateway
 
 
@@ -57,7 +50,11 @@ class CorrectnessLLMJudge(Scorer):
 
     @weave.op()
     async def score(
-        self, model_output: Dict[str, Any], query: str, expected_answer: Optional[str] = None
+        self,
+        model_output: Dict[str, Any],
+        query: str,
+        context: Optional[str] = None,
+        expected_answer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Score the model output against a query and an expected answer.
@@ -82,7 +79,7 @@ class CorrectnessLLMJudge(Scorer):
             return {'score': -1, 'reason': f'Completion not found:\n{model_output}'}
 
         judge_prompt = JUDGE_PROMPT.format(
-            query=query, generated_answer=generated_answer, expected_answer=expected_answer
+            query=query, generated_answer=generated_answer, context=context, expected_answer=expected_answer
         )
 
         llm = APIGateway.load_chat(
@@ -92,15 +89,11 @@ class CorrectnessLLMJudge(Scorer):
             temperature=self.temperature,
             top_k=self.top_k,
             top_p=self.top_p,
+            streaming=self.streaming,
             stream_options={'include_usage': True},
         )
 
-        # fix_parser = OutputFixingParser.from_llm(parser=JsonOutputParser(), llm=llm)
-
-        judge = (
-            llm | JsonOutputParser()
-            # | RunnableLambda(lambda x: fix_parser.parse(x))
-        )
+        judge = llm | JsonOutputParser()
 
         try:
             result = judge.invoke([('system', judge_prompt)])
@@ -143,7 +136,7 @@ class WeaveChatModel(Model):
     model_kwargs: Optional[Dict[str, Any]] = None
 
     @weave.op()
-    async def predict(self, query: str, system_message: str) -> Dict[str, Any]:
+    async def predict(self, query: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate a response for a given query and system message.
 
@@ -169,8 +162,12 @@ class WeaveChatModel(Model):
             temperature=self.temperature,
             top_k=self.top_k,
             top_p=self.top_p,
+            streaming=self.streaming,
             stream_options={'include_usage': True},
         )
+
+        if system_message is None:
+            system_message = SYSTEM_PROMPT
 
         try:
             messages = [
@@ -185,3 +182,48 @@ class WeaveChatModel(Model):
             completion = f'<Error>: {type(e).__name__} - {str(e)}'
             usage = {}
         return {'completion': completion, 'usage': usage}
+
+
+class WeaveRAGModel(Model):
+    """
+    A class representing a Weave RAG model.
+
+    Attributes:
+        type (str): The type of the model (e.g., 'sncloud').
+        model (str): The specific name of the model to be used.
+        temperature (float): Sampling temperature for the model.
+        max_tokens (int): Maximum number of tokens to generate.
+        top_k (Optional[int]): Number of top tokens to consider (default is 10).
+        top_p (Optional[float]): Nucleus sampling parameter (default is 0.1).
+        streaming (bool): Whether to use streaming (default is False).
+        include_usage (Optional[bool]): Flag to include usage information (default is False).
+        model_kwargs (Optional[Dict[str, Any]]): Additional model-specific parameters.
+    """
+
+    type: str
+    model: str
+    temperature: float
+    max_tokens: int
+    top_k: Optional[int] = 10
+    top_p: Optional[float] = 0.1
+    streaming: bool = False
+    include_usage: Optional[bool] = False
+    model_kwargs: Optional[Dict[str, Any]] = None
+
+    @weave.op()
+    async def predict(self, completion: str, context: Optional[str]) -> Dict[str, Any]:
+        """
+        Logs predictions of a rag chain.
+
+        Args:
+        completion (str): The input completion.
+
+        Returns:
+        Dict[str, Any]: A dictionary containing the completion.
+
+        Raises:
+            Exception: If completion not found.
+        """
+        if context is not None:
+            return {'completion': completion, 'context': context}
+        return {'completion': completion}
