@@ -15,11 +15,6 @@ composite_model:
     - "Suzume-Llama-3-8B-Multilingual"
     - "Suzume-Llama-3-8B-Multilingual-Publichealth"
 
-#deployment:
-project: 
-  project_name: "example-byoc-project"
-  project_description: "this project will be used to test e2e fine-tuning pipeline implementation"
-
 endpoint:
   endpoint_name: "suzume-multilingual-endpoint"
   endpoint_description: "endpoint for suzume multilingual bundle"

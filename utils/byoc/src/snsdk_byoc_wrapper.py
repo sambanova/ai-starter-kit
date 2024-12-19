@@ -322,11 +322,12 @@ class BYOC(SnsdkWrapper):
             # attempt to upload retries times
             for i in range(retries + 1):
                 # execute snapi import model create command
+                logging.info(f'running snapi upload command:\n {"".join(command)}')
                 snapi_response = subprocess.run(command, capture_output=True, text=True)
 
                 # check if errors in execution
                 errors_response = (
-                    ('Aborted' in snapi_response.stdout.lower()) and ('error occured' in snapi_response.stdout.lower())
+                    ('aborted' in snapi_response.stdout.lower()) and ('error occurred' in snapi_response.stdout.lower())
                 ) or (len(snapi_response.stderr) > 0)
 
                 # capture errors coming in response
@@ -337,6 +338,7 @@ class BYOC(SnsdkWrapper):
                         error_search = re.search(r'Upload Error\s*(.*)', snapi_response.stdout)
                         if error_search:
                             error_message = error_search[0]
+                    logging.error(snapi_response.stdout)
                     logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
                     logging.error(error_message)
                     if i < retries:
