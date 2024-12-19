@@ -852,7 +852,9 @@ class SnsdkWrapper:
 
     """Job"""
 
-    def get_default_hyperparms(self, model_name: Optional[str], job_type: Optional[str]) -> Dict[str, Any]:
+    def get_default_hyperparms(
+        self, model_name: Optional[str] = None, job_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Get hyperparameters required to run a job in a SambaStudio model.
 
@@ -893,7 +895,13 @@ class SnsdkWrapper:
                 architecture_hyper_params[architecture] = user_hyperparams_list
                 logging.info(
                     f'Default Hyperparameters for {job_type} in {architecture} for {model_name}: \n'
-                    f'{[param["field_name"]+":`"+param["settings"]["DEFAULT"]+"`" for param in user_hyperparams_list]}\n'
+                    f'''
+                    {[
+                        param["field_name"]+":`"+param["settings"]["DEFAULT"]+"`" 
+                        for param 
+                        in user_hyperparams_list
+                    ]}\n
+                    '''
                 )
             return architecture_hyper_params
         else:
