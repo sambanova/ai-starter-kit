@@ -17,8 +17,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
     - [Clone this repository](#clone-this-repository)
     - [Install System Dependencies](#install-system-dependencies)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
-        - [Set up the audio model](#set-up-the-audio-model)
-        - [Set up the generative model](#set-up-the-generative-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
 - [Use the starter kit](#use-the-starter-kit)
     - [Transcribe:](#transcribe)
@@ -26,13 +24,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
     - [Audio QA](#audio-qa)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Audio model params](#audio-model-params)
-    - [Generation model parameters](#generation-model-parameters)
-            - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
-- [Third-party tools and data sources](#third-party-tools-and-data-sources)
-
-<!-- /TOC -->
-- [Customizing the starter kit](#customizing-the-starter-kit)
-    - [Transcription params](#transcription-params)
     - [Generation model parameters](#generation-model-parameters)
             - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -76,7 +67,6 @@ this kit requires you to have installed in your system ffmpeg:
 4. On Windows, you may need to install these dependencies manually from the [ffmpeg site](https://ffmpeg.org/download.html) and ensure they are in your system PATH.
 
 ## Set up the models, environment variables and config file
-
 
 You should set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
