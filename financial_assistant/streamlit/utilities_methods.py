@@ -221,7 +221,7 @@ def stream_single_response(response: Any) -> None:
                             # Load the image
                             image = Image.open(path)
                             # Display the image
-                            streamlit.image(image, use_column_width=True)
+                            streamlit.image(image, use_container_width=True)
                         except FileNotFoundError:
                             logger.error(f'Image file not found: {path}.')
                         except Exception as e:

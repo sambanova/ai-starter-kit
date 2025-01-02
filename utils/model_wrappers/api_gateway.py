@@ -3,10 +3,10 @@ import os
 import sys
 from typing import Any, Dict, Optional
 
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import LLM
+from langchain_huggingface import HuggingFaceEmbeddings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -82,12 +82,13 @@ class APIGateway:
                     batch_size = 32
                 embeddings = SambaStudioEmbeddings(**envs, batch_size=batch_size)
         elif type == 'cpu':
-            encode_kwargs = {'normalize_embeddings': NORMALIZE_EMBEDDINGS}
+            encode_kwargs = {
+                'normalize_embeddings': NORMALIZE_EMBEDDINGS,
+                'prompt': 'Represent this sentence for searching relevant passages: ',
+            }
             embedding_model = EMBEDDING_MODEL
-            embeddings = HuggingFaceInstructEmbeddings(
+            embeddings = HuggingFaceEmbeddings(
                 model_name=embedding_model,
-                embed_instruction='',  # no instruction is needed for candidate passages
-                query_instruction='Represent this sentence for searching relevant passages: ',
                 encode_kwargs=encode_kwargs,
             )
         else:
