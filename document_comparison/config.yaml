@@ -1,0 +1,10 @@
+llm: 
+    "temperature": 0.0
+    "streaming": False
+    "max_tokens": 1200
+    "top_k": 10
+    "top_p": 0.1    
+    "model": "Meta-Llama-3.1-70B-Instruct" 
+
+pdf_only_mode: True  # Set to true for PDF-only lite parsing mode (use PyMuPdf instead of Sambaparse)
+prod_mode: False
