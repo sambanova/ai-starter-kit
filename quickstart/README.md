@@ -39,7 +39,7 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
    - Model ID: `Llama-3.2-11B-Vision-Instruct`
    - Context length: 16k
 4. Llama 3.2 90B:
-   - Model ID: `Llama-3.2-11B-Vision-Instruct`
+   - Model ID: `Llama-3.2-90B-Vision-Instruct`
    - Context length: 16k
 
 **Model details for Llama 3.1 family**:
