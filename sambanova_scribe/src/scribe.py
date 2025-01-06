@@ -47,34 +47,19 @@ class Scribe:
     def __init__(
         self,
         sambanova_api_key: Optional[str] = None,
-        qwen2_url: Optional[str] = None,
-        qwen2_api_key: Optional[str] = None,
     ) -> None:
         """
         Create a new Scribe class
 
         Args:
         sambanova_api_key (str): sambanova Cloud env api key
-        qwen2_url (str): sambanova env with qwen2 url
-        qwen2_api_key (str): sambanova env with qwen2 api key
         """
 
         config = self.get_config_info()
         self.llm_info = config[0]
         self.audio_model_info = config[1]
         self.prod_mode = config[2]
-        if sambanova_api_key is not None:
-            self.sambanova_api_key: Optional[str] = sambanova_api_key
-        else:
-            self.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-        if qwen2_url is not None:
-            self.qwen2_url: Optional[str] = qwen2_url
-        else:
-            self.qwen2_url = os.environ.get('QWEN2_URL')
-        if qwen2_api_key is not None:
-            self.qwen2_api_key: Optional[str] = qwen2_api_key
-        else:
-            self.qwen2_api_key = os.environ.get('QWEN2_API_KEY')
+        self.sambanova_api_key: Optional[str] = sambanova_api_key
         self.audio_model = self.set_audio_model()
         self.llm = self.set_llm()
         self.reset_query_audio_conversation()
@@ -104,8 +89,7 @@ class Scribe:
             max_tokens=self.audio_model_info['max_tokens'],
             temperature=self.audio_model_info['temperature'],
             model=self.audio_model_info['model'],
-            sambanova_url=self.qwen2_url,
-            sambanova_api_key=self.qwen2_api_key,
+            sambanova_api_key=self.sambanova_api_key,
         )
 
         return audio_model

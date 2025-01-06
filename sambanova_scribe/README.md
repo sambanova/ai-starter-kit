@@ -17,8 +17,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
     - [Clone this repository](#clone-this-repository)
     - [Install System Dependencies](#install-system-dependencies)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
-        - [Set up the audio model](#set-up-the-audio-model)
-        - [Set up the generative model](#set-up-the-generative-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
 - [Use the starter kit](#use-the-starter-kit)
     - [Transcribe:](#transcribe)
@@ -26,13 +24,6 @@ Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us
     - [Audio QA](#audio-qa)
 - [Customizing the starter kit](#customizing-the-starter-kit)
     - [Audio model params](#audio-model-params)
-    - [Generation model parameters](#generation-model-parameters)
-            - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
-- [Third-party tools and data sources](#third-party-tools-and-data-sources)
-
-<!-- /TOC -->
-- [Customizing the starter kit](#customizing-the-starter-kit)
-    - [Transcription params](#transcription-params)
     - [Generation model parameters](#generation-model-parameters)
             - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
@@ -77,30 +68,13 @@ this kit requires you to have installed in your system ffmpeg:
 
 ## Set up the models, environment variables and config file
 
-### Set up the audio model
-
-The next step is to set up your environment variables to use the Qwen2 audio model available from SambaNova. You can obtain a free API key through SambaNova Cloud.
-
-- **SambaNova Cloud**: To set up your environment variables.
-
-For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
-
-To integrate SambaNova Cloud Transcription models with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
-
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the transcription SambaNova Cloud API url and key in the `.env` file, for example:
-
-```bash
-QWEN2_BASE_URL = "https://api.sambanova.ai/v1"
-QWEN2_API_KEY = "456789abcdef0123456789abcdef0123"
-```
-
-### Set up the generative model
-
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
+You should set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
 
 - **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
-    Then, in the [config file](./config.yaml), set the llm `type` variable to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+    Then, in the [config file](./config.yaml), set the llm and audio model `type` variable to `"sncloud"` and set the `model` config depending on the models you want to use.
+
+- **SambaStudio (Option 2)**: follow the instructions [here](../README.md#use-sambastudio-option-2) to deploy your model and set up your environment variables.
+    Then, in the [config file](./config.yaml), set the llm and audio model `type` variable to `"sambastudio"` and set the `model` config depending on the models you want to use.
 
 # Deploy the starter kit GUI
 
