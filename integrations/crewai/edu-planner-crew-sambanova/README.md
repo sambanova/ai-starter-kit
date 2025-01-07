@@ -14,14 +14,6 @@ Welcome to the Edu-Research Crew project, a powerful collaboration between [crew
 Ensure you have Python >=3.10 <=3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
 
 First, navigate to the *edu-planner-crew-sambanova* folder and pip install uv:
-```bash
-
-python -m venv venv
-source venv/bin/activate
-python -m pip install --upgrade pip
-```
-
-Next, install uv:
 
 ```bash
 pip install uv
