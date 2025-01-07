@@ -1,7 +1,16 @@
-import os
+"""
+Configuration module for the educational content generation system.
 
-# Existing SambaNova models
-SAMBANOVA_MODELS = [
+This module defines all configuration settings, including available models,
+provider configurations, and default settings for the content generation system.
+It centralizes configuration management for the entire application.
+"""
+
+import os
+from typing import Any, Dict, List
+
+# Available SambaNova models configuration
+SAMBANOVA_MODELS: List[str] = [
     'Meta-Llama-3.1-70B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
     'Meta-Llama-3.1-405B-Instruct',
@@ -13,13 +22,13 @@ SAMBANOVA_MODELS = [
     'LLama-3.2-90B-Vision-Instruct',
 ]
 
-# Combined available models with provider prefixes
-AVAILABLE_MODELS = {
+# Provider-specific model configurations
+AVAILABLE_MODELS: Dict[str, List[str]] = {
     'sambanova': SAMBANOVA_MODELS,
 }
 
-# Provider configurations
-PROVIDER_CONFIGS = {
+# Detailed provider configurations
+PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
     'sambanova': {
         'model_prefix': 'sambanova/',
         'api_key_env': 'SAMBANOVA_API_KEY',
@@ -29,12 +38,12 @@ PROVIDER_CONFIGS = {
     },
 }
 
-# Default configurations
-DEFAULT_PROVIDER = 'sambanova'
-DEFAULT_MODEL = PROVIDER_CONFIGS[DEFAULT_PROVIDER]['models'][0]
+# Default configuration settings
+DEFAULT_PROVIDER: str = 'sambanova'
+DEFAULT_MODEL: str = PROVIDER_CONFIGS[DEFAULT_PROVIDER]['models'][0]
 
-# LLM configurations - generated from PROVIDER_CONFIGS
-LLM_CONFIGS = {
+# LLM configuration settings
+LLM_CONFIGS: Dict[str, Dict[str, str]] = {
     provider: {
         'model': f"{config['model_prefix']}{config['models'][6]}",
         'api_key': os.getenv(config['api_key_env']),
@@ -43,10 +52,11 @@ LLM_CONFIGS = {
     for provider, config in PROVIDER_CONFIGS.items()
 }
 
-# Default LLM config
-LLM_CONFIG = LLM_CONFIGS[DEFAULT_PROVIDER]
+# Default LLM configuration
+LLM_CONFIG: Dict[str, str] = LLM_CONFIGS[DEFAULT_PROVIDER]
 
-EDU_FLOW_INPUT_VARIABLES = {
+# Educational flow input variables
+EDU_FLOW_INPUT_VARIABLES: Dict[str, str] = {
     'audience_level': 'intermediate',
     'topic': 'Speculative Decoding',
 }

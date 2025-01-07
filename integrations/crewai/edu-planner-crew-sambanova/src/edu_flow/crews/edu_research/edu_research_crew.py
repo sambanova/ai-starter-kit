@@ -1,7 +1,8 @@
 import os
+import sys
+
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-import sys
 
 current_dir = os.getcwd()
 repo_dir = os.path.abspath(os.path.join(current_dir, '../..'))
@@ -9,15 +10,11 @@ sys.path.append(repo_dir)
 
 from typing import List
 
-
 # Uncomment the following line to use an example of a custom tool
 # from edu_research.tools.custom_tool import MyCustomTool
-
 # Check our tools documentations for more information on how to use them
 from crewai_tools import SerperDevTool
-
 from pydantic import BaseModel
-from typing import List
 
 # Define the LLM instance at the top level
 from src.edu_flow.llm_config import llm

@@ -1,25 +1,33 @@
-import streamlit as st
+"""
+Streamlit web application for educational content generation.
+
+This module provides a web interface for generating educational content using
+the SambaNova AI models and CrewAI framework. It handles user input, content
+generation, and result display.
+"""
+
 import os
-import sys
-from dotenv import load_dotenv
-from contextlib import contextmanager
-from io import StringIO
-from contextlib import redirect_stdout
-from typing import Callable, Generator
-import time
 import re
+import sys
+import time
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
+from typing import Any, Callable, Generator
+
+import streamlit as st
+from dotenv import load_dotenv
 
 # Quick fix: Add parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(parent_dir)
 
-from src.edu_flow.main import EduFlow
 from src.edu_flow.config import (
-    LLM_CONFIG,
     DEFAULT_PROVIDER,
+    LLM_CONFIG,
     PROVIDER_CONFIGS,
 )
+from src.edu_flow.main import EduFlow
 
 # Load environment variables
 load_dotenv()
@@ -27,7 +35,15 @@ load_dotenv()
 
 @contextmanager
 def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, None]:
-    """Context manager to catch stdout and send it to streamlit output"""
+    """
+    Context manager for capturing stdout and redirecting to Streamlit.
+
+    Args:
+        output_func (Callable[[str], None]): Function to handle captured output.
+
+    Yields:
+        StringIO: String buffer containing captured output.
+    """
     with StringIO() as stdout, redirect_stdout(stdout):
         old_write = stdout.write
 
@@ -40,8 +56,8 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, 
         yield stdout
 
 
-def init_session_state():
-    """Initialize session state variables"""
+def init_session_state() -> None:
+    """Initialize Streamlit session state variables."""
     if 'running' not in st.session_state:
         st.session_state.running = False
     if 'final_content' not in st.session_state:
@@ -51,16 +67,41 @@ def init_session_state():
 
 
 def clean_markdown_content(content: str) -> str:
-    """Clean and format markdown content for better rendering"""
-    # Remove extra newlines at the end of the content
+    """
+    Clean and format markdown content for better rendering.
+
+    Args:
+        content (str): Raw markdown content.
+
+    Returns:
+        str: Cleaned and formatted markdown content.
+    """
     content = content.rstrip()
-    # Ensure headers have proper spacing
     content = re.sub(r'(#+ .*?)\n', r'\1\n\n', content)
     return content
 
 
-def run_edu_flow(topic, audience_level, provider, model):
-    """Run the education flow with given parameters"""
+def run_edu_flow(
+    topic: str,
+    audience_level: str,
+    provider: str,
+    model: str,
+) -> Any:
+    """
+    Run the educational content generation flow.
+
+    Args:
+        topic (str): The subject to generate content about.
+        audience_level (str): Target audience expertise level.
+        provider (str): AI provider identifier.
+        model (str): Model identifier.
+
+    Returns:
+        Any: Generated content and metadata.
+
+    Raises:
+        ValueError: If required API key is missing.
+    """
     provider_config = PROVIDER_CONFIGS[provider]
 
     api_key = os.getenv(provider_config['api_key_env'])
@@ -88,7 +129,8 @@ def run_edu_flow(topic, audience_level, provider, model):
     return edu_flow.kickoff()
 
 
-def main():
+def main() -> None:
+    """Main entry point for the Streamlit application."""
     init_session_state()
 
     # Page config
@@ -141,72 +183,21 @@ def main():
             line-height: 1.6;
             padding: 0 10px;
         }
-        .markdown-content h1 {
-            font-size: 1.8em;
-            font-weight: 600;
-            margin: 0.5em 0;
-            padding: 0;
-            text-align: left;
+        .markdown-content h1, h2, h3 {
+            color: #1f3d7a;
+            margin: 1rem 0;
         }
-        .markdown-content h2 {
-            font-size: 1.5em;
-            font-weight: 600;
-            margin: 0.5em 0;
-            padding: 0;
-        }
-        .markdown-content h3 {
-            font-size: 1.3em;
-            font-weight: 600;
-            margin: 0.5em 0;
-            padding: 0;
-        }
-        .markdown-content p {
-            margin: 0.8em 0;
-            text-align: justify;
-        }
-        .markdown-content ul, .markdown-content ol {
-            margin: 0.8em 0;
-            padding-left: 2em;
-        }
-        .markdown-content li {
-            margin: 0.3em 0;
-        }
-        .input-section {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-        }
-        .stSelectbox {
-            margin-bottom: 1rem;
-        }
-        /* Responsive adjustments */
         @media (max-width: 1200px) {
             .output-container, pre {
                 height: 400px !important;
             }
-        }
-        /* Improved scrollbar styling */
-        .markdown-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        .markdown-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        .markdown-content::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        .markdown-content::-webkit-scrollbar-thumb:hover {
-            background: #666;
         }
         </style>
     """,
         unsafe_allow_html=True,
     )
 
-    # Title with improved styling
+    # Title and description
     st.markdown(
         """
         <h1 style='text-align: center; color: #1f3d7a; margin-bottom: 2rem;'>
@@ -219,14 +210,14 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # Input section with improved layout
+    # Input section configuration
     with st.container():
         st.markdown(
             """
             <h3 style='color: #1f3d7a; margin-bottom: 1rem;'>
                 📝 Configuration
             </h3>
-        """,
+            """,
             unsafe_allow_html=True,
         )
 
@@ -262,7 +253,7 @@ def main():
                     index=0,
                 )
 
-    # API Key section with improved error handling
+    # API Key configuration
     provider_config = PROVIDER_CONFIGS[provider]
     if not os.getenv(provider_config['api_key_env']):
         with st.expander('🔑 API Configuration', expanded=True):
@@ -275,7 +266,7 @@ def main():
             if api_key:
                 os.environ[provider_config['api_key_env']] = api_key
 
-    # Generate button moved up
+    # Generate button
     generate_button = st.button(
         '🚀 Generate Research Content',
         type='primary',
@@ -289,7 +280,7 @@ def main():
         <h3 style='color: #1f3d7a; margin: 2rem 0 1rem;'>
             📊 Output
         </h3>
-    """,
+        """,
         unsafe_allow_html=True,
     )
 
@@ -316,7 +307,7 @@ def main():
                             {cleaned_content}
                         </div>
                     </div>
-                """,
+                    """,
                     unsafe_allow_html=True,
                 )
             else:
@@ -329,7 +320,7 @@ def main():
                             Configure the parameters above and click 'Generate Research Content' to begin.
                         </div>
                     </div>
-                """,
+                    """,
                     unsafe_allow_html=True,
                 )
 
@@ -351,7 +342,8 @@ def main():
                 """
                 <div class="output-container">
                     <div class="markdown-content">
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                        <div style="display: flex; flex-direction: column; 
+                        align-items: center; justify-content: center; height: 100%;">
                             <div class="stSpinner">
                                 <div class="st-spinner-border" role="status"></div>
                             </div>
@@ -363,7 +355,7 @@ def main():
                         </div>
                     </div>
                 </div>
-            """,
+                """,
                 unsafe_allow_html=True,
             )
 
@@ -379,7 +371,6 @@ def main():
 
             time_msg = f'⚡ Generated in {minutes}m {seconds}s' if minutes > 0 else f'⚡ Generated in {seconds}s'
 
-            # Show success message
             st.success('✨ Content generated successfully!')
             st.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
 
@@ -396,7 +387,7 @@ def main():
                                 {cleaned_content}
                             </div>
                         </div>
-                    """,
+                        """,
                         unsafe_allow_html=True,
                     )
 
