@@ -307,8 +307,11 @@ def main() -> None:
                                 )
                             embeddings = st.session_state.document_retrieval.load_embedding_model()
                             collection_name = default_collection if not prod_mode else None
+                            save_location = temp_folder+'_db'
+                            if prod_mode:
+                                schedule_temp_dir_deletion(save_location, EXIT_TIME_DELTA)
                             vectorstore = st.session_state.document_retrieval.create_vector_store(
-                                text_chunks, embeddings, output_db=None, collection_name=collection_name
+                                text_chunks, embeddings, output_db=save_location, collection_name=collection_name
                             )
                             st.session_state.vectorstore = vectorstore
                             st.session_state.document_retrieval.init_retriever(vectorstore)
