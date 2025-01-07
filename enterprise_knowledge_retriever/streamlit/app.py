@@ -43,6 +43,7 @@ def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
+
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
 
@@ -52,7 +53,8 @@ def delete_temp_dir(temp_dir: str) -> None:
             logging.info(f'Temporary directory {temp_dir} deleted.')
         except:
             logging.info(f'Could not delete temporary directory {temp_dir}.')
-            
+
+
 def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     """Schedule the deletion of the temporary directory after a delay."""
 
@@ -65,6 +67,7 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
+
 
 def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) -> str:
     """
@@ -102,13 +105,13 @@ def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) ->
         temp_file = os.path.join(temp_folder, doc.name)
         with open(temp_file, 'wb') as f:
             f.write(doc.getvalue())
-            
+
     if schedule_deletion:
         schedule_temp_dir_deletion(temp_folder, EXIT_TIME_DELTA)
         st.toast(
             """your session will be active for the next 30 minutes, after this time files 
             will be deleted"""
-        )       
+        )
 
     return temp_folder
 
@@ -307,7 +310,7 @@ def main() -> None:
                                 )
                             embeddings = st.session_state.document_retrieval.load_embedding_model()
                             collection_name = default_collection if not prod_mode else None
-                            save_location = temp_folder+'_db'
+                            save_location = temp_folder + '_db'
                             if prod_mode:
                                 schedule_temp_dir_deletion(save_location, EXIT_TIME_DELTA)
                             vectorstore = st.session_state.document_retrieval.create_vector_store(
