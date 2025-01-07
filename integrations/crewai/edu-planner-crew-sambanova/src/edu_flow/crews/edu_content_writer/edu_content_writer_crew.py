@@ -5,8 +5,8 @@ This module implements a CrewAI-based content generation system with multiple ag
 working together to create, edit, and review educational content.
 """
 
-
 import os
+from typing import Any, Dict, List
 
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
@@ -14,7 +14,8 @@ from src.edu_flow.config import EDU_FLOW_INPUT_VARIABLES
 from src.edu_flow.llm_config import llm
 
 
-class EduContentWriterCrew(CrewBase):
+@CrewBase
+class EduContentWriterCrew:
     """
     A crew of AI agents specialized in creating educational content.
 
@@ -28,6 +29,19 @@ class EduContentWriterCrew(CrewBase):
     """
 
     input_variables = EDU_FLOW_INPUT_VARIABLES
+    agents_config: Dict[str, Any]  # Type hint for the config attribute
+    tasks_config: Dict[str, Any]  # Type hint for the tasks config
+    agents: List[Any]  # Type hint for the agents list
+    tasks: List[Any]  # Type hint for the tasks list
+
+    def __init__(self) -> None:
+        """Initialize the content writer crew."""
+        super().__init__()
+        self.agents_config = {}
+        self.tasks_config = {}
+        self.agents = []
+        self.tasks = []
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         """Initialize the crew by ensuring required directories exist."""
@@ -124,8 +138,8 @@ class EduContentWriterCrew(CrewBase):
             Crew: A configured crew with all necessary agents and tasks.
         """
         return Crew(
-            agents=self.agents,  # Automatically created by the @agent decorator
-            tasks=self.tasks,  # Automatically created by the @task decorator
+            agents=self.agents,
+            tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
         )

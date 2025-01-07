@@ -6,9 +6,14 @@ the educational content generation system. It uses configuration settings from
 the main config module.
 """
 
-from crewai import LLM
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from crewai import LLM
+else:
+    from crewai import LLM
 
 from .config import LLM_CONFIG
 
 # Initialize the Language Model with configuration settings
-llm = LLM(model=LLM_CONFIG['model'], api_key=LLM_CONFIG['api_key'])
+llm: LLM = cast(LLM, LLM(model=LLM_CONFIG['model'], api_key=LLM_CONFIG['api_key']))

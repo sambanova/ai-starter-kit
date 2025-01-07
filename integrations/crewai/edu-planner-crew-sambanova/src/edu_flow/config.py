@@ -7,7 +7,7 @@ It centralizes configuration management for the entire application.
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Available SambaNova models configuration
 SAMBANOVA_MODELS: List[str] = [
@@ -40,10 +40,10 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
 
 # Default configuration settings
 DEFAULT_PROVIDER: str = 'sambanova'
-DEFAULT_MODEL: str = PROVIDER_CONFIGS[DEFAULT_PROVIDER]['models'][0]
+DEFAULT_MODEL: str = PROVIDER_CONFIGS[DEFAULT_PROVIDER]['models'][6]
 
 # LLM configuration settings
-LLM_CONFIGS: Dict[str, Dict[str, str]] = {
+LLM_CONFIGS: Dict[str, Dict[str, Optional[str]]] = {
     provider: {
         'model': f"{config['model_prefix']}{config['models'][6]}",
         'api_key': os.getenv(config['api_key_env']),
@@ -53,7 +53,7 @@ LLM_CONFIGS: Dict[str, Dict[str, str]] = {
 }
 
 # Default LLM configuration
-LLM_CONFIG: Dict[str, str] = LLM_CONFIGS[DEFAULT_PROVIDER]
+LLM_CONFIG: Dict[str, Optional[str]] = LLM_CONFIGS[DEFAULT_PROVIDER]
 
 # Educational flow input variables
 EDU_FLOW_INPUT_VARIABLES: Dict[str, str] = {

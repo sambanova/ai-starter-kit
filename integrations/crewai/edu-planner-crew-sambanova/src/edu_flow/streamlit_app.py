@@ -12,22 +12,30 @@ import sys
 import time
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
-from typing import Any, Callable, Generator
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator
 
-import streamlit as st
 from dotenv import load_dotenv
+
+if TYPE_CHECKING:
+    import streamlit as st
+else:
+    import streamlit as st
 
 # Quick fix: Add parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(parent_dir)
 
-from src.edu_flow.config import (
-    DEFAULT_PROVIDER,
-    LLM_CONFIG,
-    PROVIDER_CONFIGS,
-)
-from src.edu_flow.main import EduFlow
+try:
+    from src.edu_flow.config import (
+        DEFAULT_PROVIDER,
+        LLM_CONFIG,
+        PROVIDER_CONFIGS,
+    )
+    from src.edu_flow.main import EduFlow
+except ImportError as e:
+    print(f'Error importing modules: {e}')
+    sys.exit(1)
 
 # Load environment variables
 load_dotenv()
@@ -113,7 +121,7 @@ def run_edu_flow(
     LLM_CONFIG.clear()
     LLM_CONFIG.update({'model': model_name, 'api_key': api_key, 'base_url': provider_config['base_url']})
 
-    input_vars = {
+    input_vars: Dict[str, str] = {
         'audience_level': audience_level,
         'topic': topic,
     }
@@ -250,7 +258,7 @@ def main() -> None:
                     'Model',
                     options=PROVIDER_CONFIGS[provider]['models'],
                     help=f"Select the {PROVIDER_CONFIGS[provider]['display_name']} model",
-                    index=0,
+                    index=6,
                 )
 
     # API Key configuration
@@ -343,7 +351,7 @@ def main() -> None:
                 <div class="output-container">
                     <div class="markdown-content">
                         <div style="display: flex; flex-direction: column; 
-                        align-items: center; justify-content: center; height: 100%;">
+                             align-items: center; justify-content: center; height: 100%;">
                             <div class="stSpinner">
                                 <div class="st-spinner-border" role="status"></div>
                             </div>
