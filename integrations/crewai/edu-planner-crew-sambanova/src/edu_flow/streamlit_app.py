@@ -146,13 +146,11 @@ def main():
         </style>
     """, unsafe_allow_html=True)
     
-
     
     # Title with improved styling
     st.markdown("""
-    
         <h1 style='text-align: center; color: #1f3d7a; margin-bottom: 2rem;'>
-            🤖 SambaNova Research Agent 
+            🤖 SambaNova x CrewAI Research Agent 
         </h1>
         <p style='text-align: center; color: #666; margin-bottom: 3rem;'>
             Powered by SambaNova's state-of-the-art LLMs
@@ -303,11 +301,12 @@ def main():
             
             time_msg = f"⚡ {minutes}m {seconds}s" if minutes > 0 else f"⚡ {seconds}s"
             
-            st.success(f"""
-                ✨ Content generated successfully! {time_msg}
-                <br>
-                Using SambaNova's lightning-fast inference engine
-            """, unsafe_allow_html=True)
+            # Show success message
+            st.success("✨ Content generated successfully!")
+            # Show timing message separately
+            st.markdown(f"""
+                {time_msg} using SambaNova's lightning-fast inference engine
+            """)
             
             output_file = f"output/{topic}_{audience_level}.md".replace(" ", "_")
             if os.path.exists(output_file):
