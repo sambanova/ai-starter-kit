@@ -1,0 +1,1 @@
+haystack-ai==2.8.0
