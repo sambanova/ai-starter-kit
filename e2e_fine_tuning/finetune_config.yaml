@@ -19,16 +19,16 @@ job:
   hyperparams:
     batch_size: 8
     do_eval: false
-    eval_steps: 50
+    eval_steps: 5
     evaluation_strategy: "no"
     learning_rate: 0.00001
     logging_steps: 1
     lr_schedule: "fixed_lr"
     max_sequence_length: 8192
-    num_iterations: 100
+    num_iterations: 10
     prompt_loss_weight: 0.0
     save_optimizer_state: True
-    save_steps: 50
+    save_steps: 5
     skip_checkpoint: False
     subsample_eval: 0.01
     subsample_eval_seed: 123
@@ -39,6 +39,6 @@ job:
 
 model_checkpoint: 
   checkpoint_name: "" #set after listing the generated checkpoints after training
-  model_name: "llama2_7b_fine_tuned"
-  model_description: "finetuned llama2_7b model"
+  model_name: "Suzume-Llama-3-8B-Multilingual-Publichealth"
+  model_description: "finetuned suzume multilingual in public health qa dataset"
   model_type: "finetuned"
