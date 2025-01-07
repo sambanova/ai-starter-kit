@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 from typing import Callable, Generator
 import time
 from datetime import datetime
+import re
 
 # Quick fix: Add parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +43,14 @@ def init_session_state():
         st.session_state.final_content = None
     if 'show_api_warning' not in st.session_state:
         st.session_state.show_api_warning = False
+
+def clean_markdown_content(content: str) -> str:
+    """Clean and format markdown content for better rendering"""
+    # Remove extra newlines at the end of the content
+    content = content.rstrip()
+    # Ensure headers have proper spacing
+    content = re.sub(r'(#+ .*?)\n', r'\1\n\n', content)
+    return content
 
 def run_edu_flow(topic, audience_level, provider, model):
     """Run the education flow with given parameters"""
@@ -127,6 +136,37 @@ def main():
             white-space: pre-wrap;
             word-wrap: break-word;
             line-height: 1.6;
+            padding: 0 10px;
+        }
+        .markdown-content h1 {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin: 0.5em 0;
+            padding: 0;
+            text-align: left;
+        }
+        .markdown-content h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0.5em 0;
+            padding: 0;
+        }
+        .markdown-content h3 {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin: 0.5em 0;
+            padding: 0;
+        }
+        .markdown-content p {
+            margin: 0.8em 0;
+            text-align: justify;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.8em 0;
+            padding-left: 2em;
+        }
+        .markdown-content li {
+            margin: 0.3em 0;
         }
         .input-section {
             background-color: #f8f9fa;
@@ -143,9 +183,23 @@ def main():
                 height: 400px !important;
             }
         }
+        /* Improved scrollbar styling */
+        .markdown-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .markdown-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .markdown-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .markdown-content::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
         </style>
     """, unsafe_allow_html=True)
-    
     
     # Title with improved styling
     st.markdown("""
@@ -240,10 +294,11 @@ def main():
             content_output = st.empty()
             
             if st.session_state.final_content:
+                cleaned_content = clean_markdown_content(st.session_state.final_content)
                 content_output.markdown(f"""
                     <div class="output-container">
                         <div class="markdown-content">
-                            {st.session_state.final_content}
+                            {cleaned_content}
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -299,36 +354,36 @@ def main():
             minutes = int(elapsed_time // 60)
             seconds = int(elapsed_time % 60)
             
-            time_msg = f"⚡ {minutes}m {seconds}s" if minutes > 0 else f"⚡ {seconds}s"
+            time_msg = f"⚡ Generated in {minutes}m {seconds}s" if minutes > 0 else f"⚡ Generated in {seconds}s"
             
             # Show success message
             st.success("✨ Content generated successfully!")
-            # Show timing message separately
-            st.markdown(f"""
-                {time_msg} using SambaNova's lightning-fast inference engine
-            """)
+            st.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
             
             output_file = f"output/{topic}_{audience_level}.md".replace(" ", "_")
             if os.path.exists(output_file):
                 with open(output_file, 'r') as f:
                     content = f.read()
                     st.session_state.final_content = content
+                    cleaned_content = clean_markdown_content(content)
                     content_output.markdown(f"""
                         <div class="output-container">
                             <div class="markdown-content">
-                                {content}
+                                {cleaned_content}
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
                 
-                st.download_button(
-                    label="📥 Download as Markdown",
-                    data=content,
-                    file_name=f"{topic}_{audience_level}.md",
-                    mime="text/markdown",
-                    help="Download your generated content as a markdown file",
-                    key="download_button"
-                )
+                col1, col2 = st.columns([3, 1])
+                with col2:
+                    st.download_button(
+                        label="📥 Download as Markdown",
+                        data=content,
+                        file_name=f"{topic}_{audience_level}.md",
+                        mime="text/markdown",
+                        help="Download your generated content as a markdown file",
+                        key="download_button"
+                    )
             
         except Exception as e:
             st.error(f"❌ An error occurred: {str(e)}")
