@@ -278,7 +278,7 @@ def main() -> None:
                  alt="CrewAI Logo">
         </div>
         <h2 style='text-align: center; color: #1f3d7a; margin: 0.5rem 0;'>
-            SambaNova x CrewAI Research Agent Crew
+            SambaNova & CrewAI: Research Agent Crew
         </h2>
         """,
         unsafe_allow_html=True,
