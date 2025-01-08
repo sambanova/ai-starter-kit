@@ -4,11 +4,17 @@ import shutil
 import sys
 import uuid
 from typing import Any, List, Optional, Dict
-
+import time
+import json
 import streamlit as st
 import yaml
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
+import tiktoken
+tokenizer = tiktoken.get_encoding("cl100k_base")
+
+from threading import Thread
+import schedule
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -25,6 +31,8 @@ CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
+EXIT_TIME_DELTA = 30
+
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
 
@@ -36,17 +44,109 @@ def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
-def save_files_user(docs: List[UploadedFile]) -> str:
+class DocumentAnalyzer:
+    def __init__(self, sambanova_api_key: str) -> None:
+        self.get_config_info()
+        self.sambanova_api_key = sambanova_api_key
+        self.set_llm()
+
+    def get_config_info(self):
+        """
+        Loads json config file
+        """
+        # Read config file
+        with open(CONFIG_PATH, 'r') as yaml_file:
+            config = yaml.safe_load(yaml_file)
+        self.llm_info = config['llm']
+        self.pdf_only_mode = config['pdf_only_mode']
+        self.system_message = config['system_message']
+        self.max_retries = config['max_retries']
+        with open(os.path.join(repo_dir, config['templates']), "r") as ifile:
+            self.templates = json.load(ifile)
+
+
+    def set_llm(self):
+        self.llm = ChatSambaNovaCloud(
+                sambanova_api_key=self.sambanova_api_key,
+                model=self.llm_info['model'],
+                max_tokens=self.llm_info['max_tokens'],
+                temperature=self.llm_info['temperature'],
+                top_k=self.llm_info['top_k'],
+                top_p=self.llm_info['top_p'],
+                streaming=self.llm_info['streaming'],
+                stream_options={'include_usage':True}
+            )
+    
+    def get_analysis(self, document1_text, document2_text, instruction):
+        prompt = f"""-----Begin Document 1-----
+{document1_text}
+-----End Document 1-----
+-----Begin Document 2-----
+{document2_text}
+-----End Document 2-----
+{instruction}
+"""
+        messages = [
+            ["system", self.system_message],
+            ["user", prompt]
+        ]
+
+        retries = 0
+        error_message = ""
+        while retries < self.max_retries:
+            try:
+                response = self.llm.invoke(messages).content
+                break
+            except Exception as e:
+                retries += 1
+                time.sleep(10)
+                error_message = str(e)
+                pass
+        
+        if retries == self.max_retries:            
+            response = f"The model endpoint returned the following error: {error_message}"
+        return response
+
+def delete_temp_dir(temp_dir: str) -> None:
+    """Delete the temporary directory and its contents."""
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            logging.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logging.info(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """Schedule the deletion of the temporary directory after a delay."""
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
+def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     """
     Save all user uploaded files in Streamlit to the tmp dir with their file names
 
     Args:
-        docs (List[UploadFile]): A list of uploaded files in Streamlit
+        docs (List[UploadFile]): A list of uploaded files in Streamlit.
+        schedule_deletion (bool): wether or not to schedule the deletion of the uploaded files
+            temporal folder. default to True.
 
     Returns:
         str: path where the files are saved.
     """
-    temp_folder = os.path.join(kit_dir, 'data/tmp')
+
+    # Create the temporal folder to this session if it doesn't exist
+    temp_folder = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder, doc.name)
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
     else:
@@ -61,60 +161,39 @@ def save_files_user(docs: List[UploadedFile]) -> str:
             except Exception as e:
                 print(f'Failed to delete {file_path}. Reason: {e}')
 
-    # Save all selected files to the tmp dir with their file names
-    for doc in docs:
-        assert hasattr(doc, 'name'), 'doc has no attribute name.'
-        assert callable(doc.getvalue), 'doc has no method getvalue.'
-        temp_file = os.path.join(temp_folder, doc.name)
-        with open(temp_file, 'wb') as f:
-            f.write(doc.getvalue())
+    assert hasattr(doc, 'name'), 'doc has no attribute name.'
+    assert callable(doc.getvalue), 'doc has no method getvalue.'
+    temp_file = os.path.join(temp_folder, doc.name)
+    with open(temp_file, 'wb') as f:
+        f.write(doc.getvalue())
+
+    if schedule_deletion:
+        schedule_temp_dir_deletion(temp_folder, EXIT_TIME_DELTA)
+        st.toast(
+            """your session will be active for the next 30 minutes, after this time files 
+            will be deleted"""
+        )
 
     return temp_folder
 
-def handle_userinput(user_question: Optional[str]) -> None:
-    if user_question:
-        try:
-            with st.spinner('Processing...'):
-                response = st.session_state.conversation.invoke({'question': user_question})
-            st.session_state.chat_history.append(user_question)
-            st.session_state.chat_history.append(response['answer'])
 
-            sources = set([f'{sd.metadata["filename"]}' for sd in response['source_documents']])
-            sources_text = ''
-            for index, source in enumerate(sources, start=1):
-                source_link = source
-                sources_text += f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
-            st.session_state.sources_history.append(sources_text)
-        except Exception as e:
-            st.error(f'An error occurred while processing your question: {str(e)}')
+def handle_userinput(document1_text: str, document2_text: str, instruction: str) -> None:   
+    logging.info(f'Handling document 1; length of text = {len(document1_text)}')
+    logging.info(f'Handling document 2; length of text = {len(document2_text)}')    
+    try:
+        with st.spinner('Processing...'):
+            response = st.session_state.document_analyzer.get_analysis(document1_text, document2_text, instruction)        
+    except Exception as e:
+        st.error(f'An error occurred while processing your instruction: {str(e)}')
+    
+    with st.chat_message('user'):
+        st.write(instruction)
 
-    for ques, ans, source in zip(
-        st.session_state.chat_history[::2],
-        st.session_state.chat_history[1::2],
-        st.session_state.sources_history,
+    with st.chat_message(
+        'ai',
+        avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     ):
-        with st.chat_message('user'):
-            st.write(f'{ques}')
-
-        with st.chat_message(
-            'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-        ):
-            st.write(f'{ans}')
-            if st.session_state.show_sources:
-                with st.expander('Sources'):
-                    st.markdown(
-                        f'<font size="2" color="grey">{source}</font>',
-                        unsafe_allow_html=True,
-                    )
-
-    # show overview message when chat history is empty
-    if len(st.session_state.chat_history) == 0:
-        with st.chat_message(
-            'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-        ):
-            st.write(load_app_description().get('app_overview'))
+        st.write(response)        
 
 def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
     if prod_mode:
@@ -132,16 +211,17 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
             return None
     return None
 
-def get_document_text(pdf_only_mode=False, document_name="Document 1"):
-    datasource_options = ['Choose a file', 'Enter plain text']
-    datasource = st.selectbox('', datasource_options)
-
+def get_document_text(pdf_only_mode=False, document_name="Document 1", prod_mode=True):
+    st.markdown('Do you want to enter the text or upload a file?')
+    datasource_options = ['Enter plain text', 'Upload a file']
+    datasource = st.selectbox('', datasource_options, key="SB - " + document_name)
+    document_text = ""
     if isinstance(datasource, str):
-        if 'Choose' in datasource:
+        if 'Upload' in datasource:
             if pdf_only_mode:
-                document_path = st.file_uploader('Add PDF files', accept_multiple_files=False, type=['pdf'])
+                doc = st.file_uploader('Add PDF files', accept_multiple_files=False, type=['pdf'], key="FU - " + document_name)
             else:
-                document_path = st.file_uploader(
+                doc = st.file_uploader(
                     'Add files',
                     accept_multiple_files=False,
                     type=[
@@ -152,15 +232,22 @@ def get_document_text(pdf_only_mode=False, document_name="Document 1"):
                         '.csv',
                         '.tsv',
                     ],
+                    key="FU - " + document_name
                 )
-            if st.button('Parse Document 1'):
+            if st.button(f'Parse {document_name}', key="Button - " + document_name):
+                temp_folder = save_files_user(doc, schedule_deletion=prod_mode)
                 document_text, _, _ = parse_doc_universal(
-                        doc=document_path, lite_mode=pdf_only_mode
+                        doc=temp_folder, lite_mode=pdf_only_mode
                     )
                 document_text = "\n".join(document_text)
-        else:
-            document_text = st.text_input(f'Copy {document_name} text here', value=st.session_state.get(document_name, ''), type="default")
-        st.session_state.documents[document_name] = document_text
+                logging.info(f'{document_name} parsed. Length of text = {len(document_text)}')
+        else:            
+            document_text = st.text_area(f'Enter {document_name} text here and hit Command + Enter to save your input', value=st.session_state.get(document_name, ''), key="TA - " + document_name)
+        if document_text != "":
+            st.session_state.documents[document_name] = document_text
+        if document_name in st.session_state.documents:
+            token_count = len(tokenizer.encode(st.session_state.documents[document_name]))
+            st.markdown(f"{document_name} token count: {token_count}")            
     return document_text
 
 def main() -> None:
@@ -168,8 +255,6 @@ def main() -> None:
 
     prod_mode = config.get('prod_mode', False)
     llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
-    conversational = config['retrieval'].get('conversational', False)
-    default_collection = 'ekr_default_collection'
 
     initialize_env_variables(prod_mode)
 
@@ -192,11 +277,13 @@ def main() -> None:
         st.session_state.input_disabled = True
     if 'st_session_id' not in st.session_state:
         st.session_state.st_session_id = str(uuid.uuid4())
+    if 'session_temp_subfolder' not in st.session_state:
+        st.session_state.session_temp_subfolder = 'upload_' + st.session_state.st_session_id    
     if 'mp_events' not in st.session_state:
         st.session_state.mp_events = MixpanelEvents(
             os.getenv('MIXPANEL_TOKEN'),
             st_session_id=st.session_state.st_session_id,
-            kit_name='enterprise_knowledge_retriever',
+            kit_name='document_comparison',
             track=prod_mode,
         )
         st.session_state.mp_events.demo_launch()
@@ -227,46 +314,30 @@ def main() -> None:
 
     pdf_only_mode = config.get('pdf_only_mode', False)
 
-    st.markdown('**1. Select Document 1**')
-    document_1_text = get_document_text(pdf_only_mode, document_name="Document 1")
+    st.markdown('#### 1. Provide Document 1')    
+    document_1_text = get_document_text(pdf_only_mode, document_name="Document 1", prod_mode=prod_mode)            
 
-    st.markdown('**2. Select Document 2**')
-    document_2_text = get_document_text(pdf_only_mode, document_name="Document 2")
+    st.markdown('#### 2. Provide Document 2')    
+    document_2_text = get_document_text(pdf_only_mode, document_name="Document 2", prod_mode=prod_mode)    
 
-    st.markdown('**3. Enter your instruction here:**')
-        
-    user_question = st.chat_input('Describe the differences between the contents of the above two documents')
-    if user_question is not None:
-        st.session_state.mp_events.input_submitted('chat_input')
-    handle_userinput(user_question)
+    st.markdown('#### 3. Provide your comparison instruction')    
+    template_default = "<Type out your own instruction below>"
+    template_options = [template_default] + st.session_state.document_analyzer.templates
+    template = st.selectbox('Templates', template_options, key="SB - templates")    
+    user_instruction = st.chat_input(template)
+    
+    if user_instruction is None and template != template_default:
+        user_instruction = template
 
-class DocumentAnalyzer:
-    def __init__(self, sambanova_api_key: str) -> None:
-        self.get_config_info()
-        self.sambanova_api_key = sambanova_api_key
-        self.set_llm()
+    if user_instruction is not None \
+        and "Document 1" in st.session_state.documents \
+        and "Document 2" in st.session_state.documents:
+        st.session_state.mp_events.input_submitted('chat_input')       
+        handle_userinput(st.session_state.documents["Document 1"], 
+                         st.session_state.documents["Document 2"], 
+                         user_instruction)
 
-    def get_config_info(self):
-        """
-        Loads json config file
-        """
-        # Read config file
-        with open(CONFIG_PATH, 'r') as yaml_file:
-            config = yaml.safe_load(yaml_file)
-        self.llm_info = config['llm']
-        self.pdf_only_mode = config['pdf_only_mode']
 
-    def set_llm(self):
-        self.llm = ChatSambaNovaCloud(
-                sambanova_api_key=self.sambanova_api_key,
-                model=self.llm_info['model'],
-                max_tokens=self.llm_info['max_tokens'],
-                temperature=self.llm_info['temperature'],
-                top_k=self.llm_info['top_k'],
-                top_p=self.llm_info['top_p'],
-                streaming=self.llm_info['streaming'],
-                stream_options={'include_usage':True}
-            )
 
 if __name__ == '__main__':
     main()
