@@ -57,6 +57,8 @@ def st_capture(output_func: Callable[[str], None]) -> Generator[StringIO, None, 
 
         def new_write(string: str) -> int:
             ret = old_write(string)
+            # Each time something is written to stdout,
+            # we send it to Streamlit via `output_func`.
             output_func(stdout.getvalue() + '\n#####\n')
             return ret
 
@@ -85,6 +87,7 @@ def clean_markdown_content(content: str) -> str:
         str: Cleaned and formatted markdown content.
     """
     content = content.rstrip()
+    # Ensure a blank line after headings for readability
     content = re.sub(r'(#+ .*?)\n', r'\1\n\n', content)
     return content
 
@@ -111,7 +114,6 @@ def run_edu_flow(
         ValueError: If required API key is missing.
     """
     provider_config = PROVIDER_CONFIGS[provider]
-
     api_key = os.getenv(provider_config['api_key_env'])
     if not api_key:
         raise ValueError(f"Missing API key for {provider_config['display_name']}")
@@ -119,7 +121,13 @@ def run_edu_flow(
     model_name = f"{provider_config['model_prefix']}{model}"
 
     LLM_CONFIG.clear()
-    LLM_CONFIG.update({'model': model_name, 'api_key': api_key, 'base_url': provider_config['base_url']})
+    LLM_CONFIG.update(
+        {
+            'model': model_name,
+            'api_key': api_key,
+            'base_url': provider_config['base_url'],
+        }
+    )
 
     input_vars: Dict[str, str] = {
         'audience_level': audience_level,
@@ -150,54 +158,109 @@ def main() -> None:
     st.markdown(
         """
         <style>
-        .main > div {
-            padding-top: 2rem;
-        }
+        /* Base layout padding */
+        .main > div { padding-top: 1rem; }
+        .block-container { padding-top: 1rem; }
+
+        /* Logo container styling */
         .logo-container {
-            text-align: center;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 1rem;
+            margin-left: 0;
         }
+        .logo-container img {
+            max-height: 100px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* Bold all text input / select labels, remove extra margin */
+        .stTextInput label, .stSelectbox label {
+            font-weight: bold !important;
+            margin-bottom: 0.35rem !important;
+        }
+
+        /* Button styling */
         .stButton > button {
             width: 100%;
-            margin-top: 1rem;
+            margin-top: 1.5rem;  /* roughly aligns with input fields if they are short */
         }
-        .output-container {
+
+        /* We use .custom-panel to unify both agent and content panels at same height */
+        .custom-panel {
             height: 600px;
             overflow-y: auto !important;
             border: 1px solid #e0e0e0;
-            padding: 15px;
             border-radius: 8px;
             background-color: #ffffff;
+            padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        /* The placeholder with same .custom-panel height */
+        .custom-placeholder {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #666;
+        }
+
+        /* Code block styling for real-time logs */
         pre {
-            height: 600px !important;
+            height: auto;
+            max-height: 530px !important;  /* just a bit less than 600 so the scrollbar is fully visible */
             overflow-y: auto !important;
             white-space: pre-wrap !important;
             background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
             margin: 0;
+            padding: 10px;
             font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            border-radius: 4px;
         }
+        /* Scrollbar styling in the code block */
+        pre::-webkit-scrollbar {
+            width: 8px;
+        }
+        pre::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        pre::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        pre::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        /* Markdown styling in final content */
         .markdown-content {
             height: 100%;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
             line-height: 1.6;
-            padding: 0 10px;
         }
-        .markdown-content h1, h2, h3 {
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
             color: #1f3d7a;
             margin: 1rem 0;
+            font-weight: bold;
         }
+
+        /* Adjust container heights for smaller screens */
         @media (max-width: 1200px) {
-            .output-container, pre {
+            .custom-panel {
                 height: 400px !important;
+            }
+            pre {
+                max-height: 330px !important;
             }
         }
         </style>
@@ -205,153 +268,158 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    # Title and description
+    # Logos + Title
     st.markdown(
         """
-        <h1 style='text-align: center; color: #1f3d7a; margin-bottom: 2rem;'>
-            🤖 SambaNova x CrewAI Research Agent 
-        </h1>
-        <p style='text-align: center; color: #666; margin-bottom: 3rem;'>
-            Powered by SambaNova's state-of-the-art LLMs
-        </p>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # Input section configuration
-    with st.container():
-        st.markdown(
-            """
-            <h3 style='color: #1f3d7a; margin-bottom: 1rem;'>
-                📝 Configuration
-            </h3>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        with st.expander('🎯 Input Parameters', expanded=True):
-            col1, col2 = st.columns(2)
-
-            with col1:
-                topic = st.text_input(
-                    'Research Topic',
-                    placeholder='E.g., Quantum Computing, Machine Learning, Climate Change',
-                    help='Enter the main subject for content generation',
-                )
-
-                audience_level = st.selectbox(
-                    'Target Audience',
-                    options=['beginner', 'intermediate', 'advanced'],
-                    index=1,  # Default to intermediate
-                    help="Select your audience's expertise level",
-                )
-
-            with col2:
-                provider = st.selectbox(
-                    'AI Provider',
-                    options=list(PROVIDER_CONFIGS.keys()),
-                    index=list(PROVIDER_CONFIGS.keys()).index(DEFAULT_PROVIDER),
-                    help='Select the AI provider',
-                )
-
-                model = st.selectbox(
-                    'Model',
-                    options=PROVIDER_CONFIGS[provider]['models'],
-                    help=f"Select the {PROVIDER_CONFIGS[provider]['display_name']} model",
-                    index=6,
-                )
-
-    # API Key configuration
-    provider_config = PROVIDER_CONFIGS[provider]
-    if not os.getenv(provider_config['api_key_env']):
-        with st.expander('🔑 API Configuration', expanded=True):
-            st.warning(f"⚠️ {provider_config['display_name']} API Key required!")
-            api_key = st.text_input(
-                f"{provider_config['display_name']} API Key",
-                type='password',
-                help=f"Enter your {provider_config['display_name']} API key",
-            )
-            if api_key:
-                os.environ[provider_config['api_key_env']] = api_key
-
-    # Generate button
-    generate_button = st.button(
-        '🚀 Generate Research Content',
-        type='primary',
-        disabled=st.session_state.running,
-        help='Click to start generating content',
-    )
-
-    # Output section
-    st.markdown(
-        """
-        <h3 style='color: #1f3d7a; margin: 2rem 0 1rem;'>
-            📊 Output
-        </h3>
+        <div class="logo-container">
+            <img src="https://s3.amazonaws.com/media.ventureloop.com/images/SambaNovaSystems_paint.png" 
+                 alt="SambaNova Logo">
+            <img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/1*Ulg1BjUIxIdmOw63J5gF1Q.png" 
+                 alt="CrewAI Logo">
+        </div>
+        <h2 style='text-align: center; color: #1f3d7a; margin: 0.5rem 0;'>
+            Educational Content Generator
+        </h2>
         """,
         unsafe_allow_html=True,
     )
 
+    # -------------------- FORM --------------------
+    with st.form('generation_form'):
+        col1, col2, col3, col4, col5 = st.columns([5, 2, 2, 2, 2])
+
+        with col1:
+            st.write('**Research Topic**')
+            topic = st.text_input(
+                label='Enter research topic (hidden)',
+                placeholder='E.g., Quantum Computing, Machine Learning, Climate Change',
+                help='Enter the main subject for content generation',
+                key='compact_topic',
+                label_visibility='collapsed',
+            )
+
+        with col2:
+            st.write('**Target Audience**')
+            audience_level = st.selectbox(
+                label='Select target audience (hidden)',
+                options=['beginner', 'intermediate', 'advanced'],
+                index=1,
+                help="Select your audience's expertise level",
+                key='compact_audience',
+                label_visibility='collapsed',
+            )
+
+        with col3:
+            st.write('**Model**')
+            model = st.selectbox(
+                label='Select model (hidden)',
+                options=PROVIDER_CONFIGS[DEFAULT_PROVIDER]['models'],
+                help='Select the model',
+                index=6,
+                key='compact_model',
+                label_visibility='collapsed',
+            )
+
+        with col4:
+            if not os.getenv(PROVIDER_CONFIGS[DEFAULT_PROVIDER]['api_key_env']):
+                st.write('**API Key**')
+                api_key = st.text_input(
+                    label='Enter API key (hidden)',
+                    type='password',
+                    help='Enter your API key',
+                    key='compact_api',
+                    label_visibility='collapsed',
+                )
+                if api_key:
+                    os.environ[PROVIDER_CONFIGS[DEFAULT_PROVIDER]['api_key_env']] = api_key
+
+        with col5:
+            st.write('&nbsp;')
+            generate_button = st.form_submit_button(
+                label='🚀 Generate',
+                type='primary',
+                disabled=st.session_state.running,
+                help='Click to start generating content',
+            )
+
+    # -------------------- OUTPUT COLUMNS --------------------
     output_col1, output_col2 = st.columns(2)
 
+    # Left panel: Agent Progress
     with output_col1:
-        st.markdown('#### 🔄 Agent Progress')
-        execution_container = st.container()
-        with execution_container:
-            execution_output = st.empty()
+        st.markdown("<h4 style='margin: 0 0 0.5rem;'>🔄 Agent Progress</h4>", unsafe_allow_html=True)
+        # We keep an empty container that we'll fill with logs or a placeholder
+        execution_output = st.empty()
 
+        if not st.session_state.running and not st.session_state.final_content:
+            # Show placeholder (same .custom-panel style)
+            execution_output.markdown(
+                """
+                <div class="custom-panel">
+                    <div class="custom-placeholder">
+                        Agent progress will appear here...
+                        <br/><br/>
+                        Click 'Generate' to begin.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # Right panel: Generated Content
     with output_col2:
-        st.markdown('#### 📑 Generated Content')
-        content_container = st.container()
-        with content_container:
-            content_output = st.empty()
+        st.markdown("<h4 style='margin: 0 0 0.5rem;'>📑 Generated Content</h4>", unsafe_allow_html=True)
+        content_output = st.empty()
 
-            if st.session_state.final_content:
-                cleaned_content = clean_markdown_content(st.session_state.final_content)
-                content_output.markdown(
-                    f"""
-                    <div class="output-container">
-                        <div class="markdown-content">
-                            {cleaned_content}
-                        </div>
+        if st.session_state.final_content:
+            cleaned_content = clean_markdown_content(st.session_state.final_content)
+            content_output.markdown(
+                f"""
+                <div class="custom-panel">
+                    <div class="markdown-content">
+                        {cleaned_content}
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                content_output.markdown(
-                    """
-                    <div class="output-container">
-                        <div class="markdown-content" style="text-align: center; color: #666; padding-top: 2rem;">
-                            Your generated content will appear here...
-                            <br><br>
-                            Configure the parameters above and click 'Generate Research Content' to begin.
-                        </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # Placeholder in the content box
+            content_output.markdown(
+                """
+                <div class="custom-panel">
+                    <div class="markdown-content" style="text-align: center; color: #666; padding-top: 2rem;">
+                        Your generated content will appear here...
+                        <br><br>
+                        Configure the parameters above and click 'Generate' to begin.
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
+    # -------------------- ACTIONS ON SUBMIT --------------------
     if generate_button:
         if not topic:
             st.error('❌ Please enter a research topic!')
             return
 
-        if not os.getenv(provider_config['api_key_env']):
-            st.error(f"❌ Please provide a {provider_config['display_name']} API key!")
+        if not os.getenv(PROVIDER_CONFIGS[DEFAULT_PROVIDER]['api_key_env']):
+            st.error('❌ Please provide an API key!')
             return
 
         try:
             start_time = time.time()
             st.session_state.running = True
-
             st.session_state.final_content = None
+
+            # Update the right panel with spinner while generating
             content_output.markdown(
                 """
-                <div class="output-container">
+                <div class="custom-panel">
                     <div class="markdown-content">
                         <div style="display: flex; flex-direction: column; 
-                             align-items: center; justify-content: center; height: 100%;">
+                                   align-items: center; justify-content: center; height: 100%;">
                             <div class="stSpinner">
                                 <div class="st-spinner-border" role="status"></div>
                             </div>
@@ -367,30 +435,31 @@ def main() -> None:
                 unsafe_allow_html=True,
             )
 
+            # Show real-time logs in the left panel
             with st.spinner('🤖 Our research agents are working on your content...'):
-                with execution_container:
-                    with st_capture(execution_output.code):
-                        run_edu_flow(topic, audience_level, provider, model)
+                with st_capture(execution_output.code):
+                    run_edu_flow(topic, audience_level, DEFAULT_PROVIDER, model)
 
             end_time = time.time()
             elapsed_time = end_time - start_time
             minutes = int(elapsed_time // 60)
             seconds = int(elapsed_time % 60)
-
             time_msg = f'⚡ Generated in {minutes}m {seconds}s' if minutes > 0 else f'⚡ Generated in {seconds}s'
 
             st.success('✨ Content generated successfully!')
             st.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
 
+            # If the output file was written, show it
             output_file = f'output/{topic}_{audience_level}.md'.replace(' ', '_')
             if os.path.exists(output_file):
                 with open(output_file, 'r') as f:
-                    content = f.read()
-                    st.session_state.final_content = content
-                    cleaned_content = clean_markdown_content(content)
+                    final_md = f.read()
+                    st.session_state.final_content = final_md
+                    cleaned_content = clean_markdown_content(final_md)
+
                     content_output.markdown(
                         f"""
-                        <div class="output-container">
+                        <div class="custom-panel">
                             <div class="markdown-content">
                                 {cleaned_content}
                             </div>
@@ -399,15 +468,15 @@ def main() -> None:
                         unsafe_allow_html=True,
                     )
 
-                col1, col2 = st.columns([3, 1])
-                with col2:
+                # Download button
+                col_dl1, col_dl2 = st.columns([3, 1])
+                with col_dl2:
                     st.download_button(
                         label='📥 Download as Markdown',
-                        data=content,
+                        data=final_md,
                         file_name=f'{topic}_{audience_level}.md',
                         mime='text/markdown',
                         help='Download your generated content as a markdown file',
-                        key='download_button',
                     )
 
         except Exception as e:

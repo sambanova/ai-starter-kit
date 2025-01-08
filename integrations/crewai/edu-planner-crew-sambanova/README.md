@@ -25,8 +25,12 @@ Next, install the dependencies (this will create a .venv automatically via the c
 crewai install
 ```
 
+### API Key Setup 
+**Before you begin Add your `SAMBANOVA_API_KEY` and `SERPER_API_KEY` into the `.env` file in the main starter kit repo folder**
+- You can get your SambaNova API Key [here](https://docs.astral.sh/uv/)
+- You can get your Serper API Key [here](https://serper.dev/)
+
 ### Customizing
-**Add your `SAMBANOVA_API_KEY` into the `.env` file in the main starter kit repo folder**
 - Modify `src/edu_flow/config/agents.yaml` to define your agents
 - Modify `src/edu_flow/config/tasks.yaml` to define your tasks
 - Modify `src/edu_flow/crew.py` to add your own logic, tools and specific args
@@ -34,11 +38,11 @@ crewai install
 
 ## Running the Project
 You can run the project in two ways:
-1. Command Line Interface:
+1. Command Line Interface (change config.py to set parameters):
 ```bash
 crewai flow kickoff
 ```
-2. Streamlit Interface:
+2. Streamlit Interface (preferred):
 ```bash
 streamlit run src/edu_flow/streamlit_app.py
 ```
