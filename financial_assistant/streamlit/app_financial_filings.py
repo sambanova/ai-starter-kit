@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict, Optional
 
 import streamlit
@@ -36,11 +37,11 @@ def include_financial_filings() -> None:
     )
 
     # Define the range of years
-    start_year = 2020
-    end_year = 2024
+    start_year = datetime.datetime.today().date().year - 5
+    end_year = datetime.datetime.today().date().year
     years = list(range(start_year, end_year + 1))
     # Set the default year (e.g., 2023)
-    default_year = 2023
+    default_year = DEFAULT_FILING_YEAR
     default_index = years.index(default_year)
     # Create the selectbox with the default year
     selected_year = streamlit.selectbox('Select a year:', years, index=default_index)

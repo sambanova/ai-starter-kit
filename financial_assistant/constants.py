@@ -58,7 +58,7 @@ DEFAULT_START_DATE = datetime.datetime.today().date() - datetime.timedelta(days=
 DEFAULT_END_DATE = datetime.datetime.today().date()
 DEFAULT_FILING_TYPE = '10-K'
 DEFAULT_FILING_QUARTER = 0
-DEFAULT_FILING_YEAR = datetime.datetime.today().date().year - 1
+DEFAULT_FILING_YEAR = datetime.datetime.today().date().year - 2
 DEFAULT_PDF_TITLE = 'Financial Report'
 
 
