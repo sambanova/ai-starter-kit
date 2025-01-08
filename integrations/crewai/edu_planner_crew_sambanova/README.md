@@ -13,17 +13,37 @@ Welcome to the Edu-Research Crew project, a powerful collaboration between [crew
 ## Installation
 Ensure you have Python >=3.10 <=3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
 
-First, navigate to the *edu-planner-crew-sambanova* folder and pip install uv:
+
+Clone the start kit repo.
+
+```
+git clone https://github.com/sambanova/ai-starter-kit.git
+```
+
+
+First, navigate to the *edu-planner-crew-sambanova* folder and pip install uv and crewai:
 
 ```bash
-pip install uv
+cd integrations/crewai/edu_planner_crew_sambanova
 ```
+
+
+```bash
+pip install uv crewai
+```
+
 
 Next, install the dependencies (this will create a .venv automatically via the crewai command line):
 (Optional) Lock the dependencies and install them by using the CLI command:
 ```bash
 crewai install
 ```
+
+Next, activiate the .venv in the project repo that was created by the previous step, you should see an edu-flow env activated:
+```bash
+source .venv/bin/activate
+```
+
 
 ### API Key Setup 
 **Before you begin Add your `SAMBANOVA_API_KEY` and `SERPER_API_KEY` into the `.env` file in the main starter kit repo folder**

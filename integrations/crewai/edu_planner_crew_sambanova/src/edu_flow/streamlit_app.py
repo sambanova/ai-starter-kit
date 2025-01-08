@@ -194,7 +194,6 @@ def main() -> None:
             overflow-y: auto !important;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            background-color: #ffffff;
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
