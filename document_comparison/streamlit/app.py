@@ -60,7 +60,7 @@ class DocumentAnalyzer:
         self.llm_info = config['llm']
         self.pdf_only_mode = config['pdf_only_mode']
         self.system_message = config['system_message']
-        self.max_retries = config['max_retries']
+        self.max_retries = config['max_retries']        
         with open(os.path.join(repo_dir, config['templates']), "r") as ifile:
             self.templates = json.load(ifile)
 
@@ -77,15 +77,7 @@ class DocumentAnalyzer:
                 stream_options={'include_usage':True}
             )
     
-    def get_analysis(self, document1_text, document2_text, instruction):
-        prompt = f"""-----Begin Document 1-----
-{document1_text}
------End Document 1-----
------Begin Document 2-----
-{document2_text}
------End Document 2-----
-{instruction}
-"""
+    def get_analysis(self, prompt):
         messages = [
             ["system", self.system_message],
             ["user", prompt]
@@ -95,7 +87,9 @@ class DocumentAnalyzer:
         error_message = ""
         while retries < self.max_retries:
             try:
-                response = self.llm.invoke(messages).content
+                response = self.llm.invoke(messages)
+                completion = response.content.strip()
+                usage = response.response_metadata["usage"]
                 break
             except Exception as e:
                 retries += 1
@@ -104,8 +98,9 @@ class DocumentAnalyzer:
                 pass
         
         if retries == self.max_retries:            
-            response = f"The model endpoint returned the following error: {error_message}"
-        return response
+            completion = f"The model endpoint returned the following error: {error_message}"
+            usage = None
+        return completion, usage
 
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
@@ -176,15 +171,27 @@ def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
 
     return temp_folder
 
+def generate_prompt(instruction):
+    doc1_title =  st.session_state.document_titles[0]
+    doc2_title =  st.session_state.document_titles[1]
+    return f"""-----Begin {doc1_title}-----
+{st.session_state.documents[doc1_title]}
+-----End {doc1_title}-----
+-----Begin {doc2_title}-----
+{st.session_state.documents[doc2_title]}
+-----End {doc2_title}-----
+{instruction}
+"""    
 
-def handle_userinput(document1_text: str, document2_text: str, instruction: str) -> None:   
-    logging.info(f'Handling document 1; length of text = {len(document1_text)}')
-    logging.info(f'Handling document 2; length of text = {len(document2_text)}')    
+def handle_userinput(instruction: str) -> None:   
+    prompt = generate_prompt(instruction)
+    start = time.time()    
     try:
         with st.spinner('Processing...'):
-            response = st.session_state.document_analyzer.get_analysis(document1_text, document2_text, instruction)        
+            completion, usage = st.session_state.document_analyzer.get_analysis(prompt)        
     except Exception as e:
         st.error(f'An error occurred while processing your instruction: {str(e)}')
+    latency = time.time()-start
     
     with st.chat_message('user'):
         st.write(instruction)
@@ -193,7 +200,16 @@ def handle_userinput(document1_text: str, document2_text: str, instruction: str)
         'ai',
         avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     ):
-        st.write(response)        
+        st.write(completion)
+        st.markdown(
+                        '<font size="2" color="grey">Latency: %.1fs | Throughput: %d t/s | TTFT: %.2fs | Output Tokens: %d</font>'%(
+                            latency,
+                            usage["completion_tokens_per_sec"],
+                            usage["time_to_first_token"],
+                            usage["completion_tokens"]
+                        ),
+                        unsafe_allow_html=True,
+                    )        
 
 def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
     if prod_mode:
@@ -250,6 +266,23 @@ def get_document_text(pdf_only_mode=False, document_name="Document 1", prod_mode
             st.markdown(f"{document_name} token count: {token_count}")            
     return document_text
 
+def initialize_application_template():
+    #st.markdown('#### Application Template') 
+    app_templates = st.session_state.document_analyzer.templates
+    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key="SB - App Template")
+    st.session_state.selected_app_template = selected_app_template
+    if "document_1_title" in app_templates[selected_app_template]:
+        st.session_state.document_titles[0] = app_templates[selected_app_template]["document_1_title"]
+    else:
+        st.session_state.document_titles[0] = "Document 1"
+
+    if "document_2_title" in app_templates[selected_app_template]:
+        st.session_state.document_titles[1] = app_templates[selected_app_template]["document_2_title"]
+    else:
+        st.session_state.document_titles[1] = "Document 2"
+    st.session_state.prompts = app_templates[selected_app_template]["prompts"]
+    
+
 def main() -> None:
     config = load_config()
 
@@ -289,6 +322,10 @@ def main() -> None:
         st.session_state.mp_events.demo_launch()
     if 'documents' not in st.session_state:
         st.session_state.documents = {}
+    if 'document_titles' not in st.session_state:
+        st.session_state.document_titles = {}   
+    if 'selected_app_template' not in st.session_state:
+        st.selected_app_template = None    
 
     st.title(':orange[SambaNova] Document Comparison')
 
@@ -314,15 +351,20 @@ def main() -> None:
 
     pdf_only_mode = config.get('pdf_only_mode', False)
 
-    st.markdown('#### 1. Provide Document 1')    
-    document_1_text = get_document_text(pdf_only_mode, document_name="Document 1", prod_mode=prod_mode)            
+    initialize_application_template()
 
-    st.markdown('#### 2. Provide Document 2')    
-    document_2_text = get_document_text(pdf_only_mode, document_name="Document 2", prod_mode=prod_mode)    
+    doc1_title = st.session_state.document_titles[0]
+    st.markdown(f'#### 1. {doc1_title}')    
+    get_document_text(pdf_only_mode, document_name=doc1_title, prod_mode=prod_mode)            
+
+    doc2_title = st.session_state.document_titles[1]
+    st.markdown(f'#### 2. {doc2_title}')    
+    get_document_text(pdf_only_mode, document_name=doc2_title, prod_mode=prod_mode)    
+    #document_name = st.text_input('name', value=)
 
     st.markdown('#### 3. Provide your comparison instruction')    
     template_default = "<Type out your own instruction below>"
-    template_options = [template_default] + st.session_state.document_analyzer.templates
+    template_options = [template_default] + st.session_state.prompts
     template = st.selectbox('Templates', template_options, key="SB - templates")    
     user_instruction = st.chat_input(template)
     
@@ -330,12 +372,10 @@ def main() -> None:
         user_instruction = template
 
     if user_instruction is not None \
-        and "Document 1" in st.session_state.documents \
-        and "Document 2" in st.session_state.documents:
+        and st.session_state.document_titles[0] in st.session_state.documents \
+        and st.session_state.document_titles[1] in st.session_state.documents:
         st.session_state.mp_events.input_submitted('chat_input')       
-        handle_userinput(st.session_state.documents["Document 1"], 
-                         st.session_state.documents["Document 2"], 
-                         user_instruction)
+        handle_userinput(user_instruction)
 
 
 
