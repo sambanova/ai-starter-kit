@@ -62,15 +62,17 @@ class ToolClass(ABC):
 
 # tool schema
 class GetTimeSchema(BaseModel):
-    """Returns current date, current time or both."""
+    """Returns current date, current time or both in dd/mm/yyyy format."""
 
-    kind: Optional[str] = Field(description='kind of information to retrieve "date", "time" or "both"')
+    kind: Optional[str] = Field(
+        description='kind of information to retrieve "date" in dd/mm/yyyy format, "time" or "both"'
+    )
 
 
 # definition using @tool decorator
 @tool(args_schema=GetTimeSchema)
 def get_time(kind: str = 'both') -> str:
-    """Returns current date, current time or both.
+    """Returns current date, current time or both in dd/mm/yyyy format.
 
     Args:
         kind: date, time or both
