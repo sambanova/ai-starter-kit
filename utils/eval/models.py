@@ -99,6 +99,8 @@ class CorrectnessLLMJudge(Scorer):
         try:
             result = judge.invoke([('system', judge_prompt)])
             result['answer_score'] = result['answer_score'] / self.normalize_score
+            if result.get('context_score'):
+                result['context_score'] = result['context_score'] / self.normalize_score
         except Exception as e:
             return {'score': -1, 'reason': f'Completion not completed:\n{e}'}
 

@@ -2,6 +2,7 @@ import os
 import sys
 
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnableParallel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -110,7 +111,17 @@ class RAGChain:
             prompt = hub.pull('rlm/rag-prompt')
             retriever = self.vectordb.as_retriever()
             llm = APIGateway.load_chat(**self.llm_params.model_dump())
-            rag_chain = {'context': retriever, 'question': RunnablePassthrough()} | prompt | llm | StrOutputParser()
-            return rag_chain
+
+            rag_chain = (
+                prompt
+                | llm
+                | StrOutputParser()
+            )
+
+            rag_chain_with_source = RunnableParallel(
+                {"context": retriever, "question": RunnablePassthrough()}
+            ).assign(answer=rag_chain)
+
+            return rag_chain_with_source
         except Exception as e:
             raise Exception('Failed to initialize RAG chain') from e
