@@ -691,7 +691,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 'model': self.model,
                 'temperature': self.temperature,
                 'top_p': self.top_p,
-                #'top_k': self.top_k,
+                'top_k': self.top_k,
                 'stream': True,
                 'stream_options': self.stream_options,
                 **kwargs,
@@ -704,7 +704,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 'model': self.model,
                 'temperature': self.temperature,
                 'top_p': self.top_p,
-                #'top_k': self.top_k,
+                'top_k': self.top_k,
                 **kwargs,
             }
         http_session = requests.Session()
