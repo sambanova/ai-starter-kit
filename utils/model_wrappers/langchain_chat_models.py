@@ -610,7 +610,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 # }
 
         """  # noqa: E501
-        if kwargs is not None:
+        if kwargs:
             raise ValueError(f'Received unsupported arguments {kwargs}')
         is_pydantic_schema = _is_pydantic_class(schema)
         if method == 'function_calling':
@@ -691,7 +691,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 'model': self.model,
                 'temperature': self.temperature,
                 'top_p': self.top_p,
-                'top_k': self.top_k,
+                #'top_k': self.top_k,
                 'stream': True,
                 'stream_options': self.stream_options,
                 **kwargs,
@@ -704,7 +704,7 @@ class ChatSambaNovaCloud(BaseChatModel):
                 'model': self.model,
                 'temperature': self.temperature,
                 'top_p': self.top_p,
-                'top_k': self.top_k,
+                #'top_k': self.top_k,
                 **kwargs,
             }
         http_session = requests.Session()
@@ -819,27 +819,46 @@ class ChatSambaNovaCloud(BaseChatModel):
                             f'{response.status_code}.'
                             f'{event.data}.'
                         )
-                    if len(data['choices']) > 0:
+                    metadata = {}
+                    tool_calls = []
+                    invalid_tool_calls = []
+                    additional_kwargs = {}
+                    if len(data['choices']) > 0 and data['choices'][0].get('delta', {}) != {}:
                         finish_reason = data['choices'][0].get('finish_reason')
-                        content = data['choices'][0]['delta']['content']
+                        content = data['choices'][0]['delta'].get('content', '')
+                        if content is None:
+                            content = ''
                         id = data['id']
-                        chunk = AIMessageChunk(content=content, id=id, additional_kwargs={})
+                        raw_tool_calls = data['choices'][0]['delta'].get('tool_calls')
+                        if raw_tool_calls:
+                            additional_kwargs['tool_calls'] = raw_tool_calls
+                            for raw_tool_call in raw_tool_calls:
+                                if isinstance(raw_tool_call['function']['arguments'], dict):
+                                    raw_tool_call['function']['arguments'] = json.dumps(
+                                        raw_tool_call['function'].get('arguments', {})
+                                    )
+                                try:
+                                    tool_calls.append(parse_tool_call(raw_tool_call, return_id=True))
+                                except Exception as e:
+                                    invalid_tool_calls.append(make_invalid_tool_call(raw_tool_call, str(e)))
                     else:
                         content = ''
                         id = data['id']
                         metadata = {
-                            'finish_reason': finish_reason,
+                            'finish_reason': finish_reason or data['choices'][0].get('finish_reason'),
                             'usage': data.get('usage'),
-                            'model_name': data['model'],
-                            'system_fingerprint': data['system_fingerprint'],
-                            'created': data['created'],
+                            'model_name': data.get('model'),
+                            'system_fingerprint': data.get('system_fingerprint'),
+                            'created': data.get('created'),
                         }
-                        chunk = AIMessageChunk(
-                            content=content,
-                            id=id,
-                            response_metadata=metadata,
-                            additional_kwargs={},
-                        )
+                    chunk = AIMessageChunk(
+                        content=content,
+                        id=id,
+                        tool_calls=tool_calls,
+                        invalid_tool_calls=invalid_tool_calls,
+                        additional_kwargs=additional_kwargs,
+                        response_metadata=metadata,
+                    )
                     yield chunk
 
             except Exception as e:
@@ -1860,15 +1879,16 @@ class ChatSambaStudio(BaseChatModel):
 
         # process response payload for openai compatible API
         if 'chat/completions' in self.sambastudio_url:
-            finish_reason = ''
             client = sseclient.SSEClient(response)
+
             for event in client.events():
                 if event.event == 'error_event':
                     raise RuntimeError(
                         f'Sambanova /complete call failed with status code ' f'{response.status_code}.' f'{event.data}.'
                     )
                 try:
-                    # check if the response is not a final event ("[DONE]")
+                    # check if the response is a final event
+                    # in that case event data response is '[DONE]'
                     if event.data != '[DONE]':
                         if isinstance(event.data, str):
                             data = json.loads(event.data)
@@ -1884,37 +1904,47 @@ class ChatSambaStudio(BaseChatModel):
                                 f'{response.status_code}.'
                                 f'{event.data}.'
                             )
-                        if len(data['choices']) > 0:
+                        metadata = {}
+                        tool_calls = []
+                        invalid_tool_calls = []
+                        additional_kwargs = {}
+                        if len(data['choices']) > 0 and data['choices'][0].get('delta', {}) != {}:
                             finish_reason = data['choices'][0].get('finish_reason')
-                            content = data['choices'][0]['delta']['content']
+                            content = data['choices'][0]['delta'].get('content', '')
+                            if content is None:
+                                content = ''
                             id = data['id']
-                            metadata = {}
+                            raw_tool_calls = data['choices'][0]['delta'].get('tool_calls')
+                            if raw_tool_calls:
+                                additional_kwargs['tool_calls'] = raw_tool_calls
+                                for raw_tool_call in raw_tool_calls:
+                                    if isinstance(raw_tool_call['function']['arguments'], dict):
+                                        raw_tool_call['function']['arguments'] = json.dumps(
+                                            raw_tool_call['function'].get('arguments', {})
+                                        )
+                                    try:
+                                        tool_calls.append(parse_tool_call(raw_tool_call, return_id=True))
+                                    except Exception as e:
+                                        invalid_tool_calls.append(make_invalid_tool_call(raw_tool_call, str(e)))
                         else:
                             content = ''
                             id = data['id']
                             metadata = {
-                                'finish_reason': finish_reason,
+                                'finish_reason': finish_reason or data['choices'][0].get('finish_reason'),
                                 'usage': data.get('usage'),
-                                'model_name': data['model'],
-                                'system_fingerprint': data['system_fingerprint'],
-                                'created': data['created'],
+                                'model_name': data.get('model'),
+                                'system_fingerprint': data.get('system_fingerprint'),
+                                'created': data.get('created'),
                             }
-                        if data.get('usage') is not None:
-                            content = ''
-                            id = data['id']
-                            metadata = {
-                                'finish_reason': finish_reason,
-                                'usage': data.get('usage'),
-                                'model_name': data['model'],
-                                'system_fingerprint': data['system_fingerprint'],
-                                'created': data['created'],
-                            }
-                        yield AIMessageChunk(
+                        chunk = AIMessageChunk(
                             content=content,
                             id=id,
+                            tool_calls=tool_calls,
+                            invalid_tool_calls=invalid_tool_calls,
+                            additional_kwargs=additional_kwargs,
                             response_metadata=metadata,
-                            additional_kwargs={},
                         )
+                        yield chunk
 
                 except Exception as e:
                     raise RuntimeError(f'Error getting content chunk raw streamed response: {e}' f'data: {event.data}')
@@ -1923,9 +1953,25 @@ class ChatSambaStudio(BaseChatModel):
         elif 'api/v2/predict/generic' in self.sambastudio_url:
             for line in response.iter_lines():
                 try:
+                    metadata = {}
+                    tool_calls = []
+                    invalid_tool_calls = []
+                    additional_kwargs = {}
                     data = json.loads(line)
                     content = data['result']['items'][0]['value']['stream_token']
                     id = data['result']['items'][0]['id']
+                    raw_tool_calls = data['items'][0]['value'].get('tool_calls')
+                    if raw_tool_calls:
+                        additional_kwargs['tool_calls'] = raw_tool_calls
+                        for raw_tool_call in raw_tool_calls:
+                            if isinstance(raw_tool_call['function']['arguments'], dict):
+                                raw_tool_call['function']['arguments'] = json.dumps(
+                                    raw_tool_call['function'].get('arguments', {})
+                                )
+                            try:
+                                tool_calls.append(parse_tool_call(raw_tool_call, return_id=True))
+                            except Exception as e:
+                                invalid_tool_calls.append(make_invalid_tool_call(raw_tool_call, str(e)))
                     if data['result']['items'][0]['value']['is_last_response']:
                         metadata = {
                             'finish_reason': data['result']['items'][0]['value'].get('stop_reason'),
@@ -1946,13 +1992,13 @@ class ChatSambaStudio(BaseChatModel):
                                 'batch_size_used': data['result']['items'][0]['value'].get('batch_size_used'),
                             },
                         }
-                    else:
-                        metadata = {}
                     yield AIMessageChunk(
                         content=content,
                         id=id,
+                        tool_calls=tool_calls,
+                        invalid_tool_calls=invalid_tool_calls,
                         response_metadata=metadata,
-                        additional_kwargs={},
+                        additional_kwargs=additional_kwargs,
                     )
 
                 except Exception as e:
