@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
 
 warnings.filterwarnings('ignore')
@@ -474,10 +474,10 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
-            self.base_url = SAMBANOVA_URL
+            self.base_url = self.request_config.api_variables['SAMBANOVA_URL']
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
+            self.base_url = os.environ.get('SAMBANOVA_URL', '')
             self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:
@@ -490,7 +490,10 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+        if 'together' in self.base_url:
+            return {'Authorization': f'Bearer {self.api_key}', 'accept': 'application/json', 'Content-Type': 'application/json'}
+        else:
+            return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
     def _get_json_data(self) -> Dict[str, Any]:
         """Gets json body for API call
@@ -558,13 +561,14 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
                             if data['choices'][0]['finish_reason'] is None:
-                                # log s timings
-                                events_timings.append(time.monotonic() - event_start_time)
-                                event_start_time = time.monotonic()
-                                # concatenate streaming text pieces
-                                stream_content = data['choices'][0]['delta']['content']
-                                events_received.append(stream_content)
-                                generated_text += stream_content
+                                if data['choices'][0]['delta'].get('content') is not None:
+                                    # log s timings
+                                    events_timings.append(time.monotonic() - event_start_time)
+                                    event_start_time = time.monotonic()
+                                    # concatenate streaming text pieces
+                                    stream_content = data['choices'][0]['delta']['content']
+                                    events_received.append(stream_content)
+                                    generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
@@ -671,5 +675,4 @@ if __name__ == '__main__':
     metrics, generated_text, request_config = llm_request(request_config, tokenizer)
 
     print(f'Metrics collected: {metrics}')
-    # print(f'Completion text: {generated_text}')
     print(f'Request config: {request_config}')
