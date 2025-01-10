@@ -1,3 +1,5 @@
+![sambanova_logo](../../images/SambaNova-dark-logo-1.png)
+
 # LlamaCloud integrations with SambaNova
 
 This repository contains a collection of cookbooks to show you how to build LLM applications using SambaNova Cloud to help manage your data pipelines, and LlamaIndex as the core orchestration framework.
