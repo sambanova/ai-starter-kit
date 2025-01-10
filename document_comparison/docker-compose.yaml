@@ -1,10 +1,10 @@
 version: '1'
 services:
-  enterprice_knowledge_retriever_service:
+  document_comparison_service:
     build: 
       context: ../
-      dockerfile: enterprise_knowledge_retriever/docker/Dockerfile
+      dockerfile: document_comparison/docker/Dockerfile
     ports:
       - "8501:8501"
     volumes:
-      - ./data:/app/enterprise_knowledge_retriever/data
+      - ./data:/app/document_comparison/data
