@@ -42,7 +42,7 @@ Table of Contents:
 
 # Overview
 
-This AI Starter Kit allows users to compare text documents and run custom analyses on them. You send two PDF files to the SambaNova server, and get analyses based on your instructions. The Kit includes:
+This AI Starter Kit allows users to compare text documents and run custom analyses on them. You send two PDF files or blobs of text to the SambaNova server, and get analyses based on your instructions. The Kit includes:
 
 - A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
 - Templates for 

@@ -3,18 +3,14 @@ import os
 import shutil
 import sys
 import uuid
-from typing import Any, List, Optional, Dict
+from typing import Any, Optional
 import time
-import json
 import streamlit as st
 import yaml
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
 import tiktoken
-tokenizer = tiktoken.get_encoding("cl100k_base")
 
-from threading import Thread
-import schedule
+tokenizer = tiktoken.get_encoding('cl100k_base')
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -26,81 +22,25 @@ sys.path.append(repo_dir)
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 from utils.parsing.sambaparse import parse_doc_universal
+from document_comparison.src.document_analyzer import DocumentAnalyzer
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
-EXIT_TIME_DELTA = 30
-
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
+
 
 def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
+
 def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
-class DocumentAnalyzer:
-    def __init__(self, sambanova_api_key: str) -> None:
-        self.get_config_info()
-        self.sambanova_api_key = sambanova_api_key
-        self.set_llm()
-
-    def get_config_info(self):
-        """
-        Loads json config file
-        """
-        # Read config file
-        with open(CONFIG_PATH, 'r') as yaml_file:
-            config = yaml.safe_load(yaml_file)
-        self.llm_info = config['llm']
-        self.pdf_only_mode = config['pdf_only_mode']
-        self.system_message = config['system_message']
-        self.max_retries = config['max_retries']        
-        with open(os.path.join(repo_dir, config['templates']), "r") as ifile:
-            self.templates = json.load(ifile)
-
-
-    def set_llm(self):
-        self.llm = ChatSambaNovaCloud(
-                sambanova_api_key=self.sambanova_api_key,
-                model=self.llm_info['model'],
-                max_tokens=self.llm_info['max_tokens'],
-                temperature=self.llm_info['temperature'],
-                top_k=self.llm_info['top_k'],
-                top_p=self.llm_info['top_p'],
-                streaming=self.llm_info['streaming'],
-                stream_options={'include_usage':True}
-            )
-    
-    def get_analysis(self, prompt):
-        messages = [
-            ["system", self.system_message],
-            ["user", prompt]
-        ]
-
-        retries = 0
-        error_message = ""
-        while retries < self.max_retries:
-            try:
-                response = self.llm.invoke(messages)
-                completion = response.content.strip()
-                usage = response.response_metadata["usage"]
-                break
-            except Exception as e:
-                retries += 1
-                time.sleep(10)
-                error_message = str(e)
-                pass
-        
-        if retries == self.max_retries:            
-            completion = f"The model endpoint returned the following error: {error_message}"
-            usage = None
-        return completion, usage
 
 def delete_temp_dir(temp_dir: str) -> None:
     """Delete the temporary directory and its contents."""
@@ -111,6 +51,7 @@ def delete_temp_dir(temp_dir: str) -> None:
             logging.info(f'Temporary directory {temp_dir} deleted.')
         except:
             logging.info(f'Could not delete temporary directory {temp_dir}.')
+
 
 def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     """
@@ -129,7 +70,7 @@ def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     temp_dir = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder, doc.name)
     if os.path.exists(temp_dir):
         delete_temp_dir(temp_dir)
-    os.makedirs(temp_dir)    
+    os.makedirs(temp_dir)
 
     assert hasattr(doc, 'name'), 'doc has no attribute name.'
     assert callable(doc.getvalue), 'doc has no method getvalue.'
@@ -139,9 +80,10 @@ def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
 
     return temp_dir
 
-def generate_prompt(instruction):
-    doc1_title =  st.session_state.document_titles[0]
-    doc2_title =  st.session_state.document_titles[1]
+
+def generate_prompt(instruction: str) -> None:
+    doc1_title = st.session_state.document_titles[0]
+    doc2_title = st.session_state.document_titles[1]
     return f"""-----Begin {doc1_title}-----
 {st.session_state.documents[doc1_title]}
 -----End {doc1_title}-----
@@ -149,18 +91,19 @@ def generate_prompt(instruction):
 {st.session_state.documents[doc2_title]}
 -----End {doc2_title}-----
 {instruction}
-"""    
+"""
 
-def handle_userinput(instruction: str) -> None:   
+
+def handle_userinput(instruction: str) -> None:
     prompt = generate_prompt(instruction)
-    start = time.time()    
+    start = time.time()
     try:
         with st.spinner('Processing...'):
-            completion, usage = st.session_state.document_analyzer.get_analysis(prompt)        
+            completion, usage = st.session_state.document_analyzer.get_analysis(prompt)
     except Exception as e:
         st.error(f'An error occurred while processing your instruction: {str(e)}')
-    latency = time.time()-start
-    
+    latency = time.time() - start
+
     with st.chat_message('user'):
         st.write(instruction)
 
@@ -170,14 +113,11 @@ def handle_userinput(instruction: str) -> None:
     ):
         st.write(completion)
         st.markdown(
-                        '<font size="2" color="grey">Latency: %.1fs | Throughput: %d t/s | TTFT: %.2fs | Output Tokens: %d</font>'%(
-                            latency,
-                            usage["completion_tokens_per_sec"],
-                            usage["time_to_first_token"],
-                            usage["completion_tokens"]
-                        ),
-                        unsafe_allow_html=True,
-                    )        
+            '<font size="2" color="grey">Latency: %.1fs | Throughput: %d t/s | TTFT: %.2fs | Output Tokens: %d</font>'
+            % (latency, usage['completion_tokens_per_sec'], usage['time_to_first_token'], usage['completion_tokens']),
+            unsafe_allow_html=True,
+        )
+
 
 def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
     if prod_mode:
@@ -195,15 +135,18 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
             return None
     return None
 
-def get_document_text(pdf_only_mode=False, document_name="Document 1", prod_mode=True):
+
+def get_document_text(pdf_only_mode=False, document_name='Document 1', prod_mode=True):
     st.markdown('Do you want to enter the text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
-    datasource = st.selectbox('', datasource_options, key="SB - " + document_name)
-    document_text = ""
+    datasource = st.selectbox('', datasource_options, key='SB - ' + document_name)
+    document_text = ''
     if isinstance(datasource, str):
         if 'Upload' in datasource:
             if pdf_only_mode:
-                doc = st.file_uploader('Add PDF files', accept_multiple_files=False, type=['pdf'], key="FU - " + document_name)
+                doc = st.file_uploader(
+                    'Add PDF files', accept_multiple_files=False, type=['pdf'], key='FU - ' + document_name
+                )
             else:
                 doc = st.file_uploader(
                     'Add files',
@@ -216,46 +159,49 @@ def get_document_text(pdf_only_mode=False, document_name="Document 1", prod_mode
                         '.csv',
                         '.tsv',
                     ],
-                    key="FU - " + document_name
+                    key='FU - ' + document_name,
                 )
-            if doc: #st.button(f'Parse {document_name}', key="Button - " + document_name):
+            if doc:  # st.button(f'Parse {document_name}', key="Button - " + document_name):
                 temp_dir = save_files_user(doc, schedule_deletion=prod_mode)
-                document_text, _, _ = parse_doc_universal(
-                        doc=temp_dir, lite_mode=pdf_only_mode
-                    )
-                document_text = "\n".join(document_text)
+                document_text, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
+                document_text = '\n'.join(document_text)
                 try:
                     shutil.rmtree(temp_dir)
                     logging.info(f'Temporary directory {temp_dir} deleted.')
                 except:
                     logging.info(f'Could not delete temporary directory {temp_dir}.')
                 logging.info(f'{document_name} parsed. Length of text = {len(document_text)}')
-                st.markdown(f"Your document has been parsed and deleted from the remote server.")
-        else:            
-            document_text = st.text_area(f'Enter {document_name} text here and hit Command + Enter to save your input', value=st.session_state.get(document_name, ''), key="TA - " + document_name)
-        if document_text != "":
+                st.markdown(f'Your document has been parsed and deleted from the remote server.')
+        else:
+            document_text = st.text_area(
+                f'Enter {document_name} text here and hit Command + Enter to save your input',
+                value=st.session_state.get(document_name, ''),
+                key='TA - ' + document_name,
+            )
+        if document_text != '':
             st.session_state.documents[document_name] = document_text
         if document_name in st.session_state.documents:
             token_count = len(tokenizer.encode(st.session_state.documents[document_name]))
-            st.markdown(f"{document_name} token count: {token_count}")            
+            st.markdown(f'{document_name} token count: {token_count}')
     return document_text
 
-def initialize_application_template():
-    #st.markdown('#### Application Template') 
-    app_templates = st.session_state.document_analyzer.templates
-    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key="SB - App Template")
-    st.session_state.selected_app_template = selected_app_template
-    if "document_1_title" in app_templates[selected_app_template]:
-        st.session_state.document_titles[0] = app_templates[selected_app_template]["document_1_title"]
-    else:
-        st.session_state.document_titles[0] = "Document 1"
 
-    if "document_2_title" in app_templates[selected_app_template]:
-        st.session_state.document_titles[1] = app_templates[selected_app_template]["document_2_title"]
+def initialize_application_template():
+    # st.markdown('#### Application Template')
+    app_templates = st.session_state.document_analyzer.templates
+    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template')
+    st.session_state.selected_app_template = selected_app_template
+    if 'document_1_title' in app_templates[selected_app_template]:
+        st.session_state.document_titles[0] = app_templates[selected_app_template]['document_1_title']
     else:
-        st.session_state.document_titles[1] = "Document 2"
-    st.session_state.prompts = app_templates[selected_app_template]["prompts"]
-    
+        st.session_state.document_titles[0] = 'Document 1'
+
+    if 'document_2_title' in app_templates[selected_app_template]:
+        st.session_state.document_titles[1] = app_templates[selected_app_template]['document_2_title']
+    else:
+        st.session_state.document_titles[1] = 'Document 2'
+    st.session_state.prompts = app_templates[selected_app_template]['prompts']
+
 
 def main() -> None:
     config = load_config()
@@ -285,7 +231,7 @@ def main() -> None:
     if 'st_session_id' not in st.session_state:
         st.session_state.st_session_id = str(uuid.uuid4())
     if 'session_temp_subfolder' not in st.session_state:
-        st.session_state.session_temp_subfolder = 'upload_' + st.session_state.st_session_id    
+        st.session_state.session_temp_subfolder = 'upload_' + st.session_state.st_session_id
     if 'mp_events' not in st.session_state:
         st.session_state.mp_events = MixpanelEvents(
             os.getenv('MIXPANEL_TOKEN'),
@@ -297,9 +243,9 @@ def main() -> None:
     if 'documents' not in st.session_state:
         st.session_state.documents = {}
     if 'document_titles' not in st.session_state:
-        st.session_state.document_titles = {}   
+        st.session_state.document_titles = {}
     if 'selected_app_template' not in st.session_state:
-        st.selected_app_template = None    
+        st.selected_app_template = None
 
     st.title(':orange[SambaNova] Document Comparison')
 
@@ -323,34 +269,35 @@ def main() -> None:
         if st.session_state.document_analyzer is None:
             st.session_state.document_analyzer = initialize_document_analyzer(prod_mode)
 
-    pdf_only_mode = config.get('pdf_only_mode', False)
+        pdf_only_mode = config.get('pdf_only_mode', False)
 
-    initialize_application_template()
+        initialize_application_template()
 
-    doc1_title = st.session_state.document_titles[0]
-    st.markdown(f'#### 1. {doc1_title}')    
-    get_document_text(pdf_only_mode, document_name=doc1_title, prod_mode=prod_mode)            
+        doc1_title = st.session_state.document_titles[0]
+        st.markdown(f'#### 1. {doc1_title}')
+        get_document_text(pdf_only_mode, document_name=doc1_title, prod_mode=prod_mode)
 
-    doc2_title = st.session_state.document_titles[1]
-    st.markdown(f'#### 2. {doc2_title}')    
-    get_document_text(pdf_only_mode, document_name=doc2_title, prod_mode=prod_mode)    
-    #document_name = st.text_input('name', value=)
+        doc2_title = st.session_state.document_titles[1]
+        st.markdown(f'#### 2. {doc2_title}')
+        get_document_text(pdf_only_mode, document_name=doc2_title, prod_mode=prod_mode)
+        # document_name = st.text_input('name', value=)
 
-    st.markdown('#### 3. Provide your comparison instruction')    
-    template_default = "<Type out your own instruction below>"
-    template_options = [template_default] + st.session_state.prompts
-    template = st.selectbox('Templates', template_options, key="SB - templates")    
-    user_instruction = st.chat_input(template)
-    
-    if user_instruction is None and template != template_default:
-        user_instruction = template
+        st.markdown('#### 3. Provide your comparison instruction')
+        template_default = '<Type out your own instruction below>'
+        template_options = [template_default] + st.session_state.prompts
+        template = st.selectbox('Templates', template_options, key='SB - templates')
+        user_instruction = st.chat_input(template)
 
-    if user_instruction is not None \
-        and st.session_state.document_titles[0] in st.session_state.documents \
-        and st.session_state.document_titles[1] in st.session_state.documents:
-        st.session_state.mp_events.input_submitted('chat_input')       
-        handle_userinput(user_instruction)
+        if user_instruction is None and template != template_default:
+            user_instruction = template
 
+        if (
+            user_instruction is not None
+            and st.session_state.document_titles[0] in st.session_state.documents
+            and st.session_state.document_titles[1] in st.session_state.documents
+        ):
+            st.session_state.mp_events.input_submitted('chat_input')
+            handle_userinput(user_instruction)
 
 
 if __name__ == '__main__':
