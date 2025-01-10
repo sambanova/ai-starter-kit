@@ -112,21 +112,6 @@ def delete_temp_dir(temp_dir: str) -> None:
         except:
             logging.info(f'Could not delete temporary directory {temp_dir}.')
 
-
-def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
-    """Schedule the deletion of the temporary directory after a delay."""
-
-    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
-
-    def run_scheduler() -> None:
-        while schedule.get_jobs(temp_dir):
-            schedule.run_pending()
-            time.sleep(1)
-
-    # Run scheduler in a separate thread to be non-blocking
-    Thread(target=run_scheduler, daemon=True).start()
-
-
 def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     """
     Save all user uploaded files in Streamlit to the tmp dir with their file names
@@ -141,35 +126,18 @@ def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     """
 
     # Create the temporal folder to this session if it doesn't exist
-    temp_folder = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder, doc.name)
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
-    else:
-        # If there are already files there, delete them
-        for filename in os.listdir(temp_folder):
-            file_path = os.path.join(temp_folder, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(f'Failed to delete {file_path}. Reason: {e}')
+    temp_dir = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder, doc.name)
+    if os.path.exists(temp_dir):
+        delete_temp_dir(temp_dir)
+    os.makedirs(temp_dir)    
 
     assert hasattr(doc, 'name'), 'doc has no attribute name.'
     assert callable(doc.getvalue), 'doc has no method getvalue.'
-    temp_file = os.path.join(temp_folder, doc.name)
+    temp_file = os.path.join(temp_dir, doc.name)
     with open(temp_file, 'wb') as f:
         f.write(doc.getvalue())
 
-    if schedule_deletion:
-        schedule_temp_dir_deletion(temp_folder, EXIT_TIME_DELTA)
-        st.toast(
-            """your session will be active for the next 30 minutes, after this time files 
-            will be deleted"""
-        )
-
-    return temp_folder
+    return temp_dir
 
 def generate_prompt(instruction):
     doc1_title =  st.session_state.document_titles[0]
@@ -250,13 +218,19 @@ def get_document_text(pdf_only_mode=False, document_name="Document 1", prod_mode
                     ],
                     key="FU - " + document_name
                 )
-            if st.button(f'Parse {document_name}', key="Button - " + document_name):
-                temp_folder = save_files_user(doc, schedule_deletion=prod_mode)
+            if doc: #st.button(f'Parse {document_name}', key="Button - " + document_name):
+                temp_dir = save_files_user(doc, schedule_deletion=prod_mode)
                 document_text, _, _ = parse_doc_universal(
-                        doc=temp_folder, lite_mode=pdf_only_mode
+                        doc=temp_dir, lite_mode=pdf_only_mode
                     )
                 document_text = "\n".join(document_text)
+                try:
+                    shutil.rmtree(temp_dir)
+                    logging.info(f'Temporary directory {temp_dir} deleted.')
+                except:
+                    logging.info(f'Could not delete temporary directory {temp_dir}.')
                 logging.info(f'{document_name} parsed. Length of text = {len(document_text)}')
+                st.markdown(f"Your document has been parsed and deleted from the remote server.")
         else:            
             document_text = st.text_area(f'Enter {document_name} text here and hit Command + Enter to save your input', value=st.session_state.get(document_name, ''), key="TA - " + document_name)
         if document_text != "":
