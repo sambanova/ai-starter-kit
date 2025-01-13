@@ -42,7 +42,7 @@ class DocumentAnalyzer:
             stream_options={'include_usage': True},
         )
 
-    def get_analysis(self, prompt) -> None:
+    def get_analysis(self, prompt: str) -> None:
         messages = [['system', self.system_message], ['user', prompt]]
 
         retries = 0

@@ -136,7 +136,7 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
     return None
 
 
-def get_document_text(pdf_only_mode=False, document_name='Document 1', prod_mode=True):
+def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> None:
     st.markdown('Do you want to enter the text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
     datasource = st.selectbox('', datasource_options, key='SB - ' + document_name)
@@ -176,7 +176,7 @@ def get_document_text(pdf_only_mode=False, document_name='Document 1', prod_mode
             document_text = st.text_area(
                 f'Enter {document_name} text here and hit Command + Enter to save your input',
                 value=st.session_state.get(document_name, ''),
-                key='TA - ' + document_name,
+                key='TA - ' + document_name, height=400
             )
         if document_text != '':
             st.session_state.documents[document_name] = document_text
@@ -186,7 +186,7 @@ def get_document_text(pdf_only_mode=False, document_name='Document 1', prod_mode
     return document_text
 
 
-def initialize_application_template():
+def initialize_application_template() -> None:
     # st.markdown('#### Application Template')
     app_templates = st.session_state.document_analyzer.templates
     selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template')
@@ -214,6 +214,7 @@ def main() -> None:
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        layout="wide"
     )
 
     # if 'conversation' not in st.session_state:
