@@ -1,7 +1,7 @@
 import json
 import os
 import time
-
+from typing import Tuple
 import yaml
 from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
 
@@ -43,7 +43,7 @@ class DocumentAnalyzer:
             stream_options={'include_usage': True},
         )
 
-    def get_analysis(self, prompt: str) -> None:
+    def get_analysis(self, prompt: str) -> Tuple[str, str]:
         messages = [['system', self.system_message], ['user', prompt]]
 
         retries = 0
@@ -51,7 +51,7 @@ class DocumentAnalyzer:
         while retries < self.max_retries:
             try:
                 response = self.llm.invoke(messages)
-                completion = response.content.strip()
+                completion = str(response.content).strip()
                 usage = response.response_metadata['usage']
                 break
             except Exception as e:

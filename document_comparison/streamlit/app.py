@@ -82,7 +82,7 @@ def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
     return temp_dir
 
 
-def generate_prompt(instruction: str) -> None:
+def generate_prompt(instruction: str) -> str:
     doc1_title = st.session_state.document_titles[0]
     doc2_title = st.session_state.document_titles[1]
     return f"""-----Begin {doc1_title}-----
@@ -137,7 +137,7 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
     return None
 
 
-def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> None:
+def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> str:
     st.markdown('Do you want to enter the text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
     datasource = st.selectbox('', datasource_options, key='SB - ' + document_name)
@@ -164,8 +164,8 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
                 )
             if doc:  # st.button(f'Parse {document_name}', key="Button - " + document_name):
                 temp_dir = save_files_user(doc, schedule_deletion=prod_mode)
-                document_text, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
-                document_text = '\n'.join(document_text)
+                document_text_lst, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
+                document_text = '\n'.join(document_text_lst)
                 try:
                     shutil.rmtree(temp_dir)
                     logging.info(f'Temporary directory {temp_dir} deleted.')
@@ -191,7 +191,7 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
 def initialize_application_template() -> None:
     # st.markdown('#### Application Template')
     app_templates = st.session_state.document_analyzer.templates
-    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template')
+    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template') # type: str
     st.session_state.selected_app_template = selected_app_template
     if 'document_1_title' in app_templates[selected_app_template]:
         st.session_state.document_titles[0] = app_templates[selected_app_template]['document_1_title']
@@ -246,7 +246,7 @@ def main() -> None:
     if 'document_titles' not in st.session_state:
         st.session_state.document_titles = {}
     if 'selected_app_template' not in st.session_state:
-        st.selected_app_template = None
+        st.session_state.selected_app_template = None
 
     st.title(':orange[SambaNova] Document Comparison')
 
@@ -286,7 +286,7 @@ def main() -> None:
         st.markdown('#### 3. Provide your comparison instruction')
         template_default = '<Type out your own instruction below>'
         template_options = [template_default] + st.session_state.prompts
-        template = st.selectbox('Templates', template_options, key='SB - templates')
+        template = st.selectbox('Templates', template_options, key='SB - templates') # type: str
         user_instruction = st.chat_input(template)
 
         if user_instruction is None and template != template_default:
