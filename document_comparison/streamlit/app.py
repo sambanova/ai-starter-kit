@@ -2,13 +2,14 @@ import logging
 import os
 import shutil
 import sys
+import time
 import uuid
 from typing import Any, Optional
-import time
+
 import streamlit as st
+import tiktoken
 import yaml
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-import tiktoken
 
 tokenizer = tiktoken.get_encoding('cl100k_base')
 
@@ -19,10 +20,10 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.events.mixpanel import MixpanelEvents
-from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
-from utils.parsing.sambaparse import parse_doc_universal
 from document_comparison.src.document_analyzer import DocumentAnalyzer
+from utils.events.mixpanel import MixpanelEvents
+from utils.parsing.sambaparse import parse_doc_universal
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
@@ -176,7 +177,8 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
             document_text = st.text_area(
                 f'Enter {document_name} text here and hit Command + Enter to save your input',
                 value=st.session_state.get(document_name, ''),
-                key='TA - ' + document_name, height=400
+                key='TA - ' + document_name,
+                height=400,
             )
         if document_text != '':
             st.session_state.documents[document_name] = document_text
@@ -212,9 +214,7 @@ def main() -> None:
     initialize_env_variables(prod_mode)
 
     st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-        layout="wide"
+        page_title='AI Starter Kit', page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png', layout='wide'
     )
 
     # if 'conversation' not in st.session_state:
