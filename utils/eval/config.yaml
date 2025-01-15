@@ -50,3 +50,4 @@ eval_llm:
   model_name: "Meta-Llama-3.1-405B-Instruct"
   max_tokens: 1024
   temperature: 0.0
+  normalize_score: 3
