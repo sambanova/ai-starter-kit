@@ -84,6 +84,7 @@ def upload_file_options(
 ) -> Tuple[Optional[List[UploadedFile]], Optional[List[UploadedFile]]] | Optional[List[UploadedFile]]:
     docs: List[UploadedFile] | None
     text_docs: List[UploadedFile] | None
+    st.markdown('Example of a Q&A dataset [here](https://github.com/sambanova/ai-starter-kit/blob/main/eval_jumpstart/data/rag_data.csv)')
     docs = st.file_uploader(
         'Add your Q&A dataset',
         accept_multiple_files=True,
