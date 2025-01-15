@@ -1,17 +1,14 @@
 import logging
 import os
-import shutil
 import sys
 import time
 import uuid
 from typing import Any, Optional
 
 import streamlit as st
-import tiktoken
+
 import yaml
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-
-tokenizer = tiktoken.get_encoding('cl100k_base')
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -22,7 +19,6 @@ sys.path.append(repo_dir)
 
 from document_comparison.src.document_analyzer import DocumentAnalyzer
 from utils.events.mixpanel import MixpanelEvents
-from utils.parsing.sambaparse import parse_doc_universal
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -41,46 +37,6 @@ def load_config() -> Any:
 def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
-
-
-def delete_temp_dir(temp_dir: str) -> None:
-    """Delete the temporary directory and its contents."""
-
-    if os.path.exists(temp_dir):
-        try:
-            shutil.rmtree(temp_dir)
-            logging.info(f'Temporary directory {temp_dir} deleted.')
-        except:
-            logging.info(f'Could not delete temporary directory {temp_dir}.')
-
-
-def save_files_user(doc: UploadedFile, schedule_deletion: bool = True) -> str:
-    """
-    Save all user uploaded files in Streamlit to the tmp dir with their file names
-
-    Args:
-        docs (List[UploadFile]): A list of uploaded files in Streamlit.
-        schedule_deletion (bool): wether or not to schedule the deletion of the uploaded files
-            temporal folder. default to True.
-
-    Returns:
-        str: path where the files are saved.
-    """
-
-    # Create the temporal folder to this session if it doesn't exist
-    temp_dir = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder, doc.name)
-    if os.path.exists(temp_dir):
-        delete_temp_dir(temp_dir)
-    os.makedirs(temp_dir)
-
-    assert hasattr(doc, 'name'), 'doc has no attribute name.'
-    assert callable(doc.getvalue), 'doc has no method getvalue.'
-    temp_file = os.path.join(temp_dir, doc.name)
-    with open(temp_file, 'wb') as f:
-        f.write(doc.getvalue())
-
-    return temp_dir
-
 
 def generate_prompt(instruction: str) -> str:
     doc1_title = st.session_state.document_titles[0]
@@ -138,9 +94,9 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
 
 
 def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> str:
-    st.markdown('Do you want to enter the text or upload a file?')
+    st.markdown('Do you want to enter plain text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
-    datasource = st.selectbox('', datasource_options, key='SB - ' + document_name)
+    datasource = st.selectbox('File entry option', datasource_options, key='SB - ' + document_name, label_visibility="collapsed")
     document_text = ''
     if isinstance(datasource, str):
         if 'Upload' in datasource:
@@ -162,15 +118,8 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
                     ],
                     key='FU - ' + document_name,
                 )
-            if doc:  # st.button(f'Parse {document_name}', key="Button - " + document_name):
-                temp_dir = save_files_user(doc, schedule_deletion=prod_mode)
-                document_text_lst, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
-                document_text = '\n'.join(document_text_lst)
-                try:
-                    shutil.rmtree(temp_dir)
-                    logging.info(f'Temporary directory {temp_dir} deleted.')
-                except:
-                    logging.info(f'Could not delete temporary directory {temp_dir}.')
+            if doc:
+                document_text = st.session_state.document_analyzer.parse_document(doc, st.session_state.session_temp_subfolder, pdf_only_mode)
                 logging.info(f'{document_name} parsed. Length of text = {len(document_text)}')
                 st.markdown(f'Your document has been parsed and deleted from the remote server.')
         else:
@@ -183,7 +132,7 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
         if document_text != '':
             st.session_state.documents[document_name] = document_text
         if document_name in st.session_state.documents:
-            token_count = len(tokenizer.encode(st.session_state.documents[document_name]))
+            token_count = st.session_state.document_analyzer.get_token_count(st.session_state.documents[document_name])
             st.markdown(f'{document_name} token count: {token_count}')
     return document_text
 
