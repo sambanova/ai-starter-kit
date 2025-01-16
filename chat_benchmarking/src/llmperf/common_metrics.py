@@ -1,0 +1,32 @@
+# General metrics
+ERROR_MSG = 'error_msg'
+ERROR_CODE = 'error_code'
+ERROR_CODE_FREQ = 'error_code_frequency'
+NUM_ERRORS = 'number_errors'
+NUM_COMPLETED_REQUESTS = 'num_completed_requests'
+COMPLETED_REQUESTS_PER_MIN = 'num_completed_requests_per_min'
+ERROR_RATE = 'error_rate'
+NUM_REQ_STARTED = 'num_requests_started'
+REQ_START_TIME = 'start_time'
+REQ_END_TIME = 'end_time'
+BATCH_SIZE_USED = 'batch_size_used'
+QUEUE_TIME = 'queue_time'
+
+# Client-side metrics
+TTFT = 'client_ttft_s'
+E2E_LAT = 'client_end_to_end_latency_s'
+REQ_OUTPUT_THROUGHPUT = 'client_output_token_per_s_per_request'
+TOTAL_TOKEN_THROUGHPUT = 'client_total_tokens_per_sec_s_per_request'
+OUTPUT_THROUGHPUT = 'client_mean_output_token_per_s'
+NUM_INPUT_TOKENS = 'number_input_tokens'
+NUM_OUTPUT_TOKENS = 'number_output_tokens'
+NUM_TOTAL_TOKENS = 'number_total_tokens'
+
+# Server-side metrics
+TTFT_SERVER = 'server_ttft_s'
+E2E_LAT_SERVER = 'server_end_to_end_latency_s'
+REQ_OUTPUT_THROUGHPUT_SERVER = 'server_output_token_per_s_per_request'
+TOTAL_TOKEN_THROUGHPUT_SERVER = 'server_total_tokens_per_sec_per_request'
+NUM_OUTPUT_TOKENS_SERVER = 'server_number_output_tokens'
+NUM_INPUT_TOKENS_SERVER = 'server_number_input_tokens'
+NUM_TOTAL_TOKENS_SERVER = 'server_number_total_tokens'

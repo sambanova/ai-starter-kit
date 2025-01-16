@@ -1,0 +1,16 @@
+providers:
+  - nickname: "SambaNova Cloud"
+    api_url: "https://api.sambanova.ai/v1/chat/completions"
+    api_key: "66b92009-0107-46c3-8bcf-e41e4e07c378"
+    models:
+      - "Meta-Llama-3.1-70B-Instruct"
+  - nickname: "Provider1"
+    api_url: "https://api.together.xyz/v1/chat/completions"
+    api_key: "0a93167064b5bbad28e936be6da892bd7063325f726328f625bb9c339c4c39b5"
+    models:
+      - "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+  - nickname: "Provider2"
+    api_url: "https://api.fireworks.ai/inference/v1/chat/completions"
+    api_key: "fw_3ZGJL9eUHcjt4WnYxMHqFqEo"
+    models:
+      - "accounts/fireworks/models/llama-v3p1-70b-instruct"

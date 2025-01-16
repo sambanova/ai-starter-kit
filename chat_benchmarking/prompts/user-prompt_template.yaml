@@ -1,0 +1,17 @@
+_type: prompt
+input_types: {}
+input_variables: []
+metadata: null
+name: null
+optional_variables: []
+output_parser: null
+partial_variables: {}
+tags: null
+template: "Generate a detailed,\
+  \ extensive and complex movie script of the Star Wars movie The Empire strikes back,\
+  \ describing how every character felt, environment details and onomatopoeias. After\
+  \ that, generate a complete and extensive end-to-end plot of the movie. Finally,\
+  \ generate a detailed explanation of each character biograhy in multiple paragraphs.\
+  \ "
+template_format: f-string
+validate_template: false
