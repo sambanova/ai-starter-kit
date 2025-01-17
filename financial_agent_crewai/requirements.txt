@@ -1,0 +1,10 @@
+docling==2.15.1
+langchain-chroma==0.1.4
+langchain-huggingface==0.1.2
+crewai==0.95.0
+crewai-tools==0.25.8
+pre-commit==4.0.1
+python-dotenv==1.0.1
+sec-downloader==0.11.1
+streamlit==1.40.2
+unstructured==0.16.13

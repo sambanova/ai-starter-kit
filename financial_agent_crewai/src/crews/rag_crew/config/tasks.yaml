@@ -1,0 +1,9 @@
+research_task:
+  description: >
+    Conduct a thorough research about the user query: {query}.
+    Make sure you find any interesting and relevant information given
+    the current year is 2024.
+  expected_output: >
+    The answer to the user query.
+  agent: researcher
+
