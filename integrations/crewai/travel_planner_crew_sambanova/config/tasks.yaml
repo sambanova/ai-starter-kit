@@ -1,0 +1,107 @@
+personalized_activity_planning_task:
+  description: >
+    Research and find cool things to do at {destination}.
+    Focus on activities and events that match the traveler's interests and age group.
+    Utilize internet search tools and recommendation engines to gather the information.
+
+    Traveler's information:
+
+    - origin: {origin}
+
+    - destination: {destination}
+
+    - Approximate age of the adult travelers: {age}
+
+    - Are children accompanying the trip: {children}
+
+    - how long is the trip: {trip_duration}
+
+    - budget for entire trip in dollars: {budget}
+  expected_output: >
+    A list of recommended activities and events for each day of the trip.
+    Each entry should include the activity name, location including a , a brief description, and why it's suitable for the traveler.
+    The location should have the full address so that it can be easily found using a map.
+    And potential reviews and ratings of the activities.
+
+restaurant_scenic_location_scout_task:
+  description: >
+    Find highly-rated restaurants and dining experiences at {destination}.
+    Recommend scenic locations and fun activities that align with the traveler's preferences.
+    Use internet search tools, restaurant review sites, and travel guides.
+    Make sure to find a variety of options to suit different tastes and budgets, and ratings for them.
+    Extract the address of he restaurant so that the same can be displayed to the user.
+
+    Traveler's information:
+
+    - origin: {origin}
+
+    - destination: {destination}
+
+    - age of the traveler: {age}
+
+    - how long is the trip: {trip_duration}
+
+    - budget for entire trip in dollars: {budget}
+  expected_output: >
+    A list of recommended restaurants for each day of the trip.
+    Each entry should include the name, location including a detailed address, type of cuisine or activity, and a brief description and ratings.
+
+museum_scout_task:
+  description: >
+    Find popular and off-the-beat museums at {destination}. Consider the {age} of the traveller while recommending museums. Check if children are accompanying in the trip. {children}
+    If children are accompanying, find museums that might be more appealing to children.
+    Use internet search tools, museum review sites, feedback from users, and travel guides.
+    Extract the address of the museum so that the same can be displayed to the user.
+
+    Traveler's information:
+
+    - origin: {origin}
+
+    - destination: {destination}
+
+    - age of the traveler: {age}
+
+    - Are children accompanying the trip: {children}
+
+    - how long is the trip: {trip_duration}
+
+    - budget for entire trip in dollars: {budget}
+  expected_output: >
+    A list of recommended museums. There need not be a museum for each day of the trip.
+    Each entry should include the name, location including a detailed address, type of cuisine or activity, and a brief description and ratings.
+
+shopping_scout_task:
+  description: >
+    Find popular shopping  at {destination}. Check if children are accompanying in the trip. {children}
+    If children are accompanying, find shopping areas that might be more appealing to children.
+    Use internet search tools, feedback from users, and travel guides to make the decision.
+    Extract the address of the shopping area so that the same can be displayed to the user.
+
+    Traveler's information:
+
+    - origin: {origin}
+
+    - destination: {destination}
+
+    - age of the traveler: {age}
+
+    - Are children accompanying the trip: {children}
+
+    - how long is the trip: {trip_duration}
+
+    - budget for entire trip in dollars: {budget}
+  expected_output: >
+    A list of recommended shopping areas for each day of the trip. Shopping options need not be provided for each day of the trip.
+    Each entry should include the name, location including a detailed address, type of cuisine or activity, and a brief description and ratings.
+
+
+itinerary_compilation_task:
+  description: >
+    Compile all researched information into a comprehensive day-by-day itinerary for the trip to {destination}.
+    Ensure the itinerary integrates hotel information and all planned activities and dining experiences.
+    Make sure that you do not recommend the same restaurant for both lunch and dinner.
+    Use text formatting and document creation tools to organize the information.
+    Do a great job so that you can be proud of your work.
+  expected_output: >
+    A detailed itinerary document, the itinerary should include a day-by-day
+    plan with activities, restaurants, and scenic locations. Include the address for each location so that an user can easily go to the address. A day can contain multiple activities. In such a case a recommened mode of transport should be provided to help move from one activity location to another.
