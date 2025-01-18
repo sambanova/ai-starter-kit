@@ -6,9 +6,7 @@ import uuid
 from typing import Any, Optional
 
 import streamlit as st
-
 import yaml
-from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -38,15 +36,17 @@ def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
+
 def handle_userinput(instruction: str) -> None:
     doc1_title = st.session_state.document_titles[0]
     doc2_title = st.session_state.document_titles[1]
-    prompt = st.session_state.document_analyzer(instruction, 
-                             doc1_title,
-                             st.session_state.documents[doc1_title],
-                             doc2_title,
-                             st.session_state.documents[doc2_title]
-                             )
+    prompt = st.session_state.document_analyzer(
+        instruction,
+        doc1_title,
+        st.session_state.documents[doc1_title],
+        doc2_title,
+        st.session_state.documents[doc2_title],
+    )
     start = time.time()
     try:
         with st.spinner('Processing...'):
@@ -90,7 +90,9 @@ def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
 def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> str:
     st.markdown('Do you want to enter plain text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
-    datasource = st.selectbox('File entry option', datasource_options, key='SB - ' + document_name, label_visibility="collapsed")
+    datasource = st.selectbox(
+        'File entry option', datasource_options, key='SB - ' + document_name, label_visibility='collapsed'
+    )
     document_text = ''
     if isinstance(datasource, str):
         if 'Upload' in datasource:
@@ -113,7 +115,9 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
                     key='FU - ' + document_name,
                 )
             if doc:
-                document_text = st.session_state.document_analyzer.parse_document(doc, st.session_state.session_temp_subfolder, pdf_only_mode)
+                document_text = st.session_state.document_analyzer.parse_document(
+                    doc, st.session_state.session_temp_subfolder, pdf_only_mode
+                )
                 logging.info(f'{document_name} parsed. Length of text = {len(document_text)}')
                 st.markdown(f'Your document has been parsed and deleted from the remote server.')
         else:
@@ -134,7 +138,7 @@ def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Documen
 def initialize_application_template() -> None:
     # st.markdown('#### Application Template')
     app_templates = st.session_state.document_analyzer.templates
-    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template') # type: str
+    selected_app_template = st.selectbox('Application Template', app_templates.keys(), key='SB - App Template')  # type: str
     st.session_state.selected_app_template = selected_app_template
     if 'document_1_title' in app_templates[selected_app_template]:
         st.session_state.document_titles[0] = app_templates[selected_app_template]['document_1_title']
@@ -229,7 +233,7 @@ def main() -> None:
         st.markdown('#### 3. Provide your comparison instruction')
         template_default = '<Type out your own instruction below>'
         template_options = [template_default] + st.session_state.prompts
-        template = st.selectbox('Templates', template_options, key='SB - templates') # type: str
+        template = st.selectbox('Templates', template_options, key='SB - templates')  # type: str
         user_instruction = st.chat_input(template)
 
         if user_instruction is None and template != template_default:

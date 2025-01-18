@@ -1,19 +1,22 @@
 import json
 import os
+import shutil
 import time
+from io import BytesIO
 from typing import Tuple
+
 import tiktoken
 import yaml
-import shutil
 from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
+
 from utils.parsing.sambaparse import parse_doc_universal
-from io import BytesIO
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 tokenizer = tiktoken.get_encoding('cl100k_base')
+
 
 class DocumentAnalyzer:
     def __init__(self, sambanova_api_key: str) -> None:
@@ -51,8 +54,7 @@ class DocumentAnalyzer:
         """Delete the temporary directory and its contents."""
 
         if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir) # throw an error if this fails                           
-
+            shutil.rmtree(temp_dir)  # throw an error if this fails
 
     def save_temp_dir(self, doc: BytesIO, temp_subfolder: str) -> str:
         """
@@ -82,16 +84,18 @@ class DocumentAnalyzer:
         return temp_dir
 
     def parse_document(self, document: BytesIO, temp_subfolder: str, pdf_only_mode: bool = True) -> str:
-        temp_dir = self.save_temp_dir(document, temp_subfolder)                
+        temp_dir = self.save_temp_dir(document, temp_subfolder)
         document_text_lst, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
-        document_text = '\n'.join(document_text_lst)                
-        self.delete_temp_dir(temp_dir=temp_dir)        
+        document_text = '\n'.join(document_text_lst)
+        self.delete_temp_dir(temp_dir=temp_dir)
         return document_text
-    
+
     def get_token_count(self, input_text: str) -> int:
         return len(tokenizer.encode(input_text))
-    
-    def generate_prompt(self, instruction: str, doc1_title: str, doc1_text: str, doc2_title: str, doc2_text:str) -> str:
+
+    def generate_prompt(
+        self, instruction: str, doc1_title: str, doc1_text: str, doc2_title: str, doc2_text: str
+    ) -> str:
         return f"""-----Begin {doc1_title}-----
     {doc1_text}
     -----End {doc1_title}-----
