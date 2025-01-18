@@ -7,7 +7,7 @@ import yaml
 import shutil
 from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
 from utils.parsing.sambaparse import parse_doc_universal
-from streamlit.runtime.uploaded_file_manager import UploadedFile
+from io import BytesIO
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -54,7 +54,7 @@ class DocumentAnalyzer:
             shutil.rmtree(temp_dir) # throw an error if this fails                           
 
 
-    def save_temp_dir(self, doc: UploadedFile, temp_subfolder: str) -> str:
+    def save_temp_dir(self, doc: BytesIO, temp_subfolder: str) -> str:
         """
         Save user uploaded file to the tmp dir with their file names
 
@@ -81,7 +81,7 @@ class DocumentAnalyzer:
 
         return temp_dir
 
-    def parse_document(self, document: UploadedFile, temp_subfolder: str, pdf_only_mode: bool = True) -> str:
+    def parse_document(self, document: BytesIO, temp_subfolder: str, pdf_only_mode: bool = True) -> str:
         temp_dir = self.save_temp_dir(document, temp_subfolder)                
         document_text_lst, _, _ = parse_doc_universal(doc=temp_dir, lite_mode=pdf_only_mode)
         document_text = '\n'.join(document_text_lst)                
@@ -90,6 +90,16 @@ class DocumentAnalyzer:
     
     def get_token_count(self, input_text: str) -> int:
         return len(tokenizer.encode(input_text))
+    
+    def generate_prompt(self, instruction: str, doc1_title: str, doc1_text: str, doc2_title: str, doc2_text:str) -> str:
+        return f"""-----Begin {doc1_title}-----
+    {doc1_text}
+    -----End {doc1_title}-----
+    -----Begin {doc2_title}-----
+    {doc2_text}
+    -----End {doc2_title}-----
+    {instruction}
+    """
 
     def get_analysis(self, prompt: str) -> Tuple[str, str]:
         messages = [['system', self.system_message], ['user', prompt]]

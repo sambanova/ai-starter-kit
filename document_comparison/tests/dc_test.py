@@ -18,7 +18,8 @@ import shutil
 import sys
 import time
 import unittest
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, Tuple
+import yaml
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -35,80 +36,83 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from langchain.docstore.document import Document
-from langchain_core.embeddings import Embeddings
 
 from document_comparison.src.document_analyzer import DocumentAnalyzer
+from io import BytesIO
 
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'tmp')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data')
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+TEST_CASE_FILE_PATH = os.path.join(TEST_DATA_PATH, 'test_case.yaml')
 
-
-# Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class DCTestCase(unittest.TestCase):
     time_start: float
     sambanova_api_key: str
     document_analyzer: DocumentAnalyzer
-    additional_metadata: Dict[str, Any]
-    text_chunks: List[Document]
-    embeddings: Embeddings
-    vectorstore: Any
-    conversation: RetrievalQAChain
+    test_case: Dict
+    document1_text: str
+    document2_text: str
 
     @classmethod
     def setUpClass(cls: Type['DCTestCase']) -> None:
+        if not os.path.exists(PERSIST_DIRECTORY):
+            os.makedirs(PERSIST_DIRECTORY)
         cls.time_start = time.time()
         cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
-        cls.document_analyzer = DocumentAnalyzer(sambanova_api_key=cls.sambanova_api_key)
-        cls.additional_metadata = {}
-        cls.text_chunks = cls.parse_documents()
-        cls.embeddings = cls.document_retrieval.load_embedding_model()
-        cls.vectorstore = cls.create_vectorstore()
-        cls.conversation = cls.create_conversation_chain()
+        cls.document_analyzer = DocumentAnalyzer(sambanova_api_key=cls.sambanova_api_key)        
+        with open(TEST_CASE_FILE_PATH, 'r') as yaml_file:
+            cls.test_case = yaml.safe_load(yaml_file)
+        cls.document1_text = cls.parse_document("document1")
+        cls.document2_text = cls.parse_document("document2")
+        cls.user_input = cls.test_case["user_input"]
+        cls.prompt = cls.document_analyzer.generate_prompt(cls.user_input, 
+                                                           "document1", 
+                                                           cls.document1_text, 
+                                                           "document2", 
+                                                           cls.document2_text, 
+                                                           )
+        cls.llm_output, cls.llm_usage = cls.document_analyzer.get_analysis(cls.prompt)
 
     @classmethod
-    def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
-        text_chunks = cls.document_retrieval.parse_doc(doc_folder=TEST_DATA_PATH)
-        logger.info(f'Number of chunks: {len(text_chunks)}')
-        return text_chunks
-
-    @classmethod
-    def create_vectorstore(cls: Type['EKRTestCase']) -> Any:
-        if os.path.exists(PERSIST_DIRECTORY):
-            shutil.rmtree(PERSIST_DIRECTORY)
-            logger.info('The directory Chroma has been deleted.')
-        return cls.document_retrieval.create_vector_store(cls.text_chunks, cls.embeddings, output_db=PERSIST_DIRECTORY)
-
-    @classmethod
-    def create_conversation_chain(cls: Type['EKRTestCase']) -> RetrievalQAChain:
-        cls.document_retrieval.init_retriever(cls.vectorstore)
-        return cls.document_retrieval.get_qa_retrieval_chain()
+    def parse_document(cls: Type['DCTestCase'], document_name="document1") -> Tuple[str, str]:        
+        if document_name + "_file_name" in cls.test_case:
+            file_name = cls.test_case[document_name + "_file_name"]
+            with open(os.path.join(TEST_DATA_PATH, file_name), 'rb') as doc_file:                
+                doc = BytesIO(doc_file.read())
+                doc.name = file_name
+                return cls.document_analyzer.parse_document(doc, document_name)
+        else:
+            return cls.test_case[document_name + "_text"]            
 
     # Add assertions
     def test_document_parsing(self) -> None:
-        self.assertGreaterEqual(len(self.text_chunks), 1, 'There should be at least one parsed chunk')
+        token_count_1 = self.document_analyzer.get_token_count(self.document1_text)
+        token_count_2 = self.document_analyzer.get_token_count(self.document2_text)
+        self.assertGreaterEqual(token_count_1, 1, 'Document 1 should parse to at least 1 token')
+        self.assertGreaterEqual(token_count_2, 1, 'Document 2 should parse to at least 1 token')
 
-    def test_vector_store_creation(self) -> None:
-        self.assertIsNotNone(self.vectorstore, 'Vector store could not be created')
+    def test_folder_deletion(self) -> None:
+        results = os.listdir(PERSIST_DIRECTORY)
+        self.assertEqual(len(results), 0, f'tmp folder should be empty. It contains the following: {results}')
 
-    def test_conversation_chain_creation(self) -> None:
-        self.assertIsNotNone(self.conversation, 'Conversation chain could not be created')
+    def test_prompt_generation(self) -> None:        
+        self.assertGreaterEqual(len(self.prompt), 1, 'Generated prompt should be at least 1 character in length')        
 
-    def test_question_answering(self) -> None:
-        user_question = 'What is a composition of experts?'
-        response = self.conversation.invoke({'question': user_question})
+    def test_llm_response(self) -> None:
+        self.assertEqual(self.test_case["expected_output"].strip(), 
+                         self.llm_output.strip(),
+                         f"LLM output '{self.llm_output.strip()}' does not match expected output '{self.test_case['expected_output'].strip()}'")
 
-        self.assertIn('source_documents', response, "Response should have a 'source_documents' key")
-        self.assertGreaterEqual(len(response['source_documents']), 1, 'There should be at least one source document')
-        self.assertIn('answer', response, "Response should have an 'answer' key")
-        self.assertTrue(response['answer'], 'The response should not be empty')
+    def test_llm_usage(self) -> None:        
+        self.assertIn('completion_tokens_per_sec', self.llm_usage, 'LLM usage does not completion_tokens_per_sec')
+        self.assertIn('time_to_first_token', self.llm_usage, 'LLM usage does not time_to_first_token')
+        self.assertIn('completion_tokens', self.llm_usage, 'LLM usage does not completion_tokens')
 
     @classmethod
-    def tearDownClass(cls: Type['EKRTestCase']) -> None:
+    def tearDownClass(cls: Type['DCTestCase']) -> None:
         time_end = time.time()
         total_time = time_end - cls.time_start
         logger.info(f'Total execution time: {total_time:.2f} seconds')
-
 
 class CustomTextTestResult(unittest.TextTestResult):
     test_results: List[Dict[str, Any]]
@@ -129,17 +133,17 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
-
 def main() -> int:
-    suite = unittest.TestLoader().loadTestsFromTestCase(EKRTestCase)
-    test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(DCTestCase)
+    #test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
+    test_result = unittest.TextTestRunner().run(suite)
 
-    logger.info('\nTest Results:')
-    assert hasattr(test_result, 'test_results')
-    for result in test_result.test_results:
-        logger.info(f"{result['name']}: {result['status']}")
-        if 'message' in result:
-            logger.info(f"  Message: {result['message']}")
+    # logger.info('\nTest Results:')
+    # assert hasattr(test_result, 'test_results')
+    # for result in test_result.test_results:
+    #     logger.info(f"{result['name']}: {result['status']}")
+    #     if 'message' in result:
+    #         logger.info(f"  Message: {result['message']}")
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
     logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
@@ -150,7 +154,6 @@ def main() -> int:
     else:
         logger.info('All tests passed successfully!')
         return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())

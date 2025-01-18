@@ -38,21 +38,15 @@ def load_app_description() -> Any:
     with open(APP_DESCRIPTION_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
 
-def generate_prompt(instruction: str) -> str:
+def handle_userinput(instruction: str) -> None:
     doc1_title = st.session_state.document_titles[0]
     doc2_title = st.session_state.document_titles[1]
-    return f"""-----Begin {doc1_title}-----
-{st.session_state.documents[doc1_title]}
------End {doc1_title}-----
------Begin {doc2_title}-----
-{st.session_state.documents[doc2_title]}
------End {doc2_title}-----
-{instruction}
-"""
-
-
-def handle_userinput(instruction: str) -> None:
-    prompt = generate_prompt(instruction)
+    prompt = st.session_state.document_analyzer(instruction, 
+                             doc1_title,
+                             st.session_state.documents[doc1_title],
+                             doc2_title,
+                             st.session_state.documents[doc2_title]
+                             )
     start = time.time()
     try:
         with st.spinner('Processing...'):

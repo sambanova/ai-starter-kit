@@ -1,0 +1,4 @@
+document1_file_name: "SN40LPaper2Pages.pdf"
+document2_text: "Varun Krishna, Sumti Jairath, Amit Kushwaha"
+user_input: "Identify the name from Document 2 that is mentioned in Document 1. State just the name with no text preceeding or succeeding it"
+expected_output: "Sumti Jairath"
