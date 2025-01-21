@@ -43,7 +43,8 @@ def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figur
     return fig
 
 
-def run(origin: str, destination: str, age: int, trip_duration: int, interests: List, children: bool, budget: int) -> (str, go.Figure):
+def run(origin: str, destination: str, age: int, trip_duration: int,
+        interests: List, cuisine_preferences: List,  children: bool, budget: int) -> (str, go.Figure):
     """
     Run the specfied query using Crew AI agents
 
@@ -52,6 +53,7 @@ def run(origin: str, destination: str, age: int, trip_duration: int, interests: 
         destination: Destination that traveller is going to
         age: Age profile of traveller
         interests: Specific interests of the traveller
+        cuisine_preferences: Specific cuisine preferences of the traveller
         children: Whether traveller has children travelling with them
         budget: Total budget of traveller in US Dollars
 
@@ -60,7 +62,7 @@ def run(origin: str, destination: str, age: int, trip_duration: int, interests: 
     """
     logger.info(
         f'Origin: {origin}, Destination: {destination}, Age: {age}, Duration: {trip_duration},'
-        f' Interests: {interests}, Children: {children}, Daily Budget: {budget}'
+        f' Interests: {interests}, Cuisines: {cuisine_preferences}, Children: {children}, Daily Budget: {budget}'
     )
     inputs = {
         'origin': origin,
@@ -68,6 +70,7 @@ def run(origin: str, destination: str, age: int, trip_duration: int, interests: 
         'age': age,
         'trip_duration': trip_duration,
         'interests': interests,
+        'cuisine_preferences': cuisine_preferences,
         'children': children,
         'budget': budget,
     }
@@ -109,7 +112,8 @@ demo = gr.Interface(
         gr.Textbox(label='Where are you going?'),
         gr.Slider(label='Your age?', value=30, minimum=15, maximum=90, step=5),
         gr.Slider(label='How many days are you travelling?', value=5, minimum=1, maximum=14, step=1),
-        gr.CheckboxGroup(["Museums", "Shopping", "Entertainment"], label="Checkbox your specific interests."),
+        gr.CheckboxGroup(["Museums", "Shopping", "Entertainment", "Nightlife", "Outdoor Adventures"], label="Checkbox your specific interests."),
+        gr.CheckboxGroup(["Ethnic", "American", "Italian", "Mexican", "Chinese", "Japanese", "Indian", "Thai", "French", "Vietnamese", "Vegan"], label="Checkbox your cuisine preferences."),
         gr.Checkbox(label='Check if children are travelling with you'),
         gr.Slider(
             label='Total budget of trip in USD', show_label=True, value=1000, minimum=500, maximum=10000, step=500

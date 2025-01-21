@@ -46,30 +46,14 @@ class TravelCrew:
         )
 
     @agent
-    def museum_scout(self) -> Agent:
+    def interest_scout(self) -> Agent:
         """
-        An agent specialized to scout for museums
+        An agent specialized to scout for specific interests
 
         Returns: The agent
         """
         return Agent(
-            config=self.agents_config['museum_scout'],
-            llm=llm,
-            max_iter=1,
-            tools=[SerperDevTool(), ScrapeWebsiteTool()],
-            allow_delegation=False,
-        )
-
-    @agent
-    def shopping_scout(self) -> Agent:
-        """
-        An agent specialized to scout for sopping options
-
-        Returns: The agent
-        """
-
-        return Agent(
-            config=self.agents_config['shopping_scout'],
+            config=self.agents_config['interest_scout'],
             llm=llm,
             max_iter=1,
             tools=[SerperDevTool(), ScrapeWebsiteTool()],
@@ -105,6 +89,16 @@ class TravelCrew:
         )
 
     @task
+    def interest_scout_task(self) -> Task:
+        """
+        A task that plans for specific interests of the traveller.
+
+        Returns: A task
+        """
+        return Task(config=self.tasks_config['interest_scout_task'], llm=llm, max_iter=1, agent=self.interest_scout())
+
+
+    @task
     def restaurant_scenic_location_scout_task(self) -> Task:
         """
         A task that picks restaurants.
@@ -117,24 +111,6 @@ class TravelCrew:
             max_iter=1,
             agent=self.restaurant_scout(),
         )
-
-    @task
-    def museum_scout_task(self) -> Task:
-        """
-        A task that plans for museums.
-
-        Returns: A task
-        """
-        return Task(config=self.tasks_config['museum_scout_task'], llm=llm, max_iter=1, agent=self.museum_scout())
-
-    @task
-    def shopping_scout_task(self) -> Task:
-        """
-        A task that plans for shopping.
-
-        Returns: A task
-        """
-        return Task(config=self.tasks_config['shopping_scout_task'], llm=llm, max_iter=1, agent=self.shopping_scout())
 
     @task
     def itinerary_compilation_task(self) -> Task:
@@ -158,7 +134,6 @@ class TravelCrew:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            # process=Process.hierarchical, # In case you want to use that instead https://docs.crewai.com/how-to/Hierarchical/
         )
 
 
