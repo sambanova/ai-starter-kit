@@ -1,0 +1,42 @@
+#!/bin/bash
+# run_real_workload_dataset.sh
+
+python src/evaluator.py \
+--mode real_workload \
+--model-names "Meta-Llama-3.1-8B-Instruct" \
+--results-dir "./data/results/llmperf" \
+--qps 0.5 \
+--qps-distribution "exponential" \
+--timeout 60 \
+--num-input-tokens 100 \
+--num-output-tokens 100 \
+--num-requests 20 \
+--llm-api sncloud
+
+
+# Notes:
+# 1. For Bundle Models, make sure to include the prefix "Bundle/" before each expert name.
+#   For example:
+#      --model-names "Bundle/llama-2-7b-chat-hf"
+#          OR
+#      --model-names "Bundle/llama-2-7b-chat-hf Bundle/llama-2-13b-chat-hf"
+#          OR
+#      --model-names "Bundle/llama-2-7b-chat-hf Bundle/Mistral-7B-Instruct-v0.2"
+#          OR
+#      --model-names "Bundle/Meta-Llama-3-8B-Instruct"
+#
+# 2. For Non-Bundle models, use the model name directly and remember to update and source the `.env` file for a new endpoint.
+#   For example:
+#      --model-names "llama-2-7b-chat-hf"
+#          OR
+#      --model-names "llama-2-13b-chat-hf"
+#          OR
+#      --model-names "Mistral-7B-Instruct-v0.2"
+#          OR
+#      --model-names "Meta-Llama-3-8B-Instruct"
+#
+# 3. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
+#   For example:
+#      --model-names "llama3-8b"
+#          OR
+#      --model-names "llama3-8b llama3-70b"
