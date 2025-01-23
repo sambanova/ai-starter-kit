@@ -41,7 +41,7 @@ from langchain_community.chat_models import ChatSambaNovaCloud
 from langchain_core.messages import HumanMessage
 from openai import OpenAI
 
-from utils.tests.utils_test import image_to_base64
+from utils.tests.utils_test import audio_requests, image_to_base64, load_encode_audio
 
 load_dotenv()
 
@@ -50,31 +50,38 @@ CONFIG_PATH = os.path.join(os.getcwd(), 'tests', 'config.yaml')
 with open(CONFIG_PATH, 'r') as yaml_file:
     config = yaml.safe_load(yaml_file)
 
+client_base_url = config['urls']['base_client_url']
+
 text_models = config['models']['text']
 image_models = config['models']['text-image']
+audio_models = config['models']['text-audio']
 
 image_path = 'tests/data/sample.png'
 base64_image = image_to_base64(image_path)
 
+audio_path = 'tests/data/samplerecord.mp3'
+base64_audio = load_encode_audio(audio_path)
+
 text_prompt = 'Translate this sentence from English to French: I love programming.'
 image_prompt = 'What is in this image?'
+audio_prompt = 'what is the previous audio about?'
 
 
 class TestAPIModel(unittest.TestCase):
     time_start: float
+    client: OpenAI
+    sambanova_api_key: str
 
     @classmethod
     def setUpClass(cls: Type['TestAPIModel']) -> None:
         cls.time_start = time.time()
-        cls.client_url = os.environ.get('OPENAI_URL', '')
-        cls.sambanova_base_url = os.environ.get('SAMBANOVA_URL', '')
         cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
         cls.client = cls.setup_client()
 
     @classmethod
     def setup_client(cls: Type['TestAPIModel']) -> OpenAI:
         client = OpenAI(
-            base_url=cls.client_url,
+            base_url=client_base_url,
             api_key=cls.sambanova_api_key,
         )
         return client
@@ -141,6 +148,46 @@ class TestAPIModel(unittest.TestCase):
             self.assertEqual(response.model, model)
             self.assertTrue(hasattr(response, 'usage'))
 
+    def test_client_chat_completion_audio(self) -> None:
+        for model in audio_models:
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        'role': 'user',
+                        'content': [
+                            {
+                                'type': 'text',
+                                'text': audio_prompt,
+                            },
+                            {
+                                'type': 'audio_content',
+                                'audio_content': {'content': f'data:audio/mp3;base64,{load_encode_audio(audio_path)}'},
+                            },
+                        ],
+                    }
+                ],
+                stream=False,
+            )
+
+            self.assertTrue(hasattr(response, 'id'))
+            self.assertTrue(hasattr(response, 'choices'))
+            self.assertIsInstance(response.choices[0].message.content, str)
+            self.assertGreater(len(response.choices[0].message.content), 0)
+            self.assertTrue(hasattr(response, 'model'))
+            self.assertEqual(response.model, model)
+            self.assertTrue(hasattr(response, 'usage'))
+
+    def test_request_audio(self) -> None:
+        for model in audio_models:
+            for url in ['transcription_url', 'translation_url']:
+                response = audio_requests(
+                    config['urls'][url], self.sambanova_api_key, file_path=audio_path, model=model
+                )
+                self.assertIn('text', response)
+                self.assertIsInstance(response.get('text'), str)
+                self.assertGreater(len(response.get('text')), 0)
+
     def test_client_bad_model(self) -> None:
         model = 'parrot'
         with self.assertRaises(openai.BadRequestError) as context:
@@ -184,6 +231,25 @@ class TestAPIModel(unittest.TestCase):
         for model in image_models:
             llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
             response = llm_model.invoke(message)
+
+            self.assertTrue(hasattr(response, 'content'))
+            self.assertIsInstance(response.content, str)
+            self.assertGreater(len(response.content), 0)
+            self.assertTrue(hasattr(response, 'response_metadata'))
+            self.assertIn('usage', response.response_metadata)
+
+    def test_langchain_chat_completion_audio(self) -> None:
+        messages = [
+            HumanMessage(
+                content=[
+                    {'type': 'audio_content', 'audio_content': {'content': f'data:audio/mp3;base64,{base64_audio}'}}
+                ]
+            ),
+            HumanMessage(audio_prompt),
+        ]
+        for model in audio_models:
+            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+            response = llm_model.invoke(messages)
 
             self.assertTrue(hasattr(response, 'content'))
             self.assertIsInstance(response.content, str)
