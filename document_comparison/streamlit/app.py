@@ -40,7 +40,7 @@ def load_app_description() -> Any:
 def handle_userinput(instruction: str) -> None:
     doc1_title = st.session_state.document_titles[0]
     doc2_title = st.session_state.document_titles[1]
-    prompt = st.session_state.document_analyzer(
+    prompt = st.session_state.document_analyzer.generate_prompt(
         instruction,
         doc1_title,
         st.session_state.documents[doc1_title],
