@@ -240,7 +240,7 @@ def main() -> None:
             except Exception as e:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
-                st.session_state.df_req_info=None
+                st.session_state.df_req_info = None
             if do_rerun:
                 st.rerun()
 
@@ -297,6 +297,7 @@ def main() -> None:
 
         # Once results are given, reset running state and ending threads just in case.
         sidebar_stop = True
+
 
 if __name__ == '__main__':
     st.set_page_config(

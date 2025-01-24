@@ -232,7 +232,7 @@ def main() -> None:
             except Exception as e:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
-                st.session_state.df_req_info=None
+                st.session_state.df_req_info = None
             if do_rerun:
                 st.rerun()
 
@@ -277,9 +277,10 @@ def main() -> None:
         # Compute total throughput per batch
         st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
         st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
-        
+
         # Once results are given, reset running state and ending threads just in case.
         sidebar_stop = True
+
 
 if __name__ == '__main__':
     st.set_page_config(

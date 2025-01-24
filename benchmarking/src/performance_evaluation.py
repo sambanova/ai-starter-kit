@@ -167,7 +167,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         request_config_batch: List[Any],
         completed_requests: List[Any],
-        progress: list,
+        progress: List[Any],
         start_time: float,
         num_requests: int,
     ) -> None:
@@ -195,7 +195,7 @@ class BasePerformanceEvaluator(abc.ABC):
             completed_requests.extend([response_object])
             update_unit = 1
             progress.append(update_unit)
-            
+
             if self.cli_progress_bar:
                 self.cli_progress_bar.update(update_unit)
             if self.ui_progress_bar:
@@ -525,9 +525,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
-        threads = []
+        threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress = []
+        progress: List[Any] = []
 
         for request_config_batch in request_config_batches:
             if self.stop_event.is_set():
@@ -902,7 +902,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress = []
+        progress: List[Any] = []
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
