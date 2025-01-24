@@ -3,14 +3,14 @@
 
 python src/evaluator.py \
 --mode real_workload \
---model-names "Meta-Llama-3.1-8B-Instruct" \
+--model-name "Meta-Llama-3.3-70B-Instruct" \
 --results-dir "./data/results/llmperf" \
---qps 0.5 \
---qps-distribution "exponential" \
---timeout 60 \
---num-input-tokens 100 \
---num-output-tokens 100 \
---num-requests 20 \
+--qps 1 \
+--qps-distribution "constant" \
+--timeout 600 \
+--num-input-tokens 1000 \
+--num-output-tokens 1000 \
+--num-requests 10 \
 --llm-api sncloud
 
 
@@ -37,6 +37,6 @@ python src/evaluator.py \
 #
 # 3. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
 #   For example:
-#      --model-names "llama3-8b"
+#      --model-names "Meta-Llama-3.1-8B-Instruct"
 #          OR
-#      --model-names "llama3-8b llama3-70b"
+#      --model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.1-70B-Instruct"
