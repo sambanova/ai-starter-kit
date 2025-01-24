@@ -215,7 +215,7 @@ def main() -> None:
             disabled=st.session_state.running,
         )
         
-        st.selectbox(
+        st.session_state.qps_distribution = st.selectbox(
             'Queries per second distribution',
             options=list(QPS_DISTRIBUTION_OPTIONS.keys()),
             format_func=lambda x: QPS_DISTRIBUTION_OPTIONS[x],
@@ -245,12 +245,18 @@ def main() -> None:
         st.toast('Performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             st.session_state.progress_bar = st.progress(0)
+            do_rerun = False
             try:
                 st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
                 st.session_state.running = False
+                # workareound to avoid rerun within try block
+                do_rerun = True
             except Exception as e:
-                st.error(f'Error: {e}.')
-            st.rerun()
+                st.error(f'Error:\n{e}.')
+                # Cleaning df results in case of error
+                st.session_state.df_req_info=None
+            if do_rerun:
+                st.rerun()
 
     if st.session_state.df_req_info is not None:
         st.subheader('Performance metrics plots')
@@ -303,6 +309,8 @@ def main() -> None:
         st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
         st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
+        # Once results are given, reset running state and ending threads just in case.
+        sidebar_stop = True
 
 if __name__ == '__main__':
     st.set_page_config(

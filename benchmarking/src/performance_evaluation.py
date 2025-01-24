@@ -364,6 +364,11 @@ class BasePerformanceEvaluator(abc.ABC):
         except Exception as e:
             logger.error(individual_responses)
             raise e
+    
+    def stop_benchmark(self) -> None:
+        """Stops the benchmarking process by setting the stop event."""
+        self.stop_event.set()
+        logger.info('Benchmarking process has been stopped.')
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
@@ -447,11 +452,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             except Exception as e:
                 logger.error('ERROR SAVING LLM OUTPUTS')
                 raise e
-
-    def stop_benchmark(self) -> None:
-        """Stops the benchmarking process by setting the stop event."""
-        self.stop_event.set()
-        logger.info('Benchmarking process has been stopped.')
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
@@ -704,11 +704,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             f'_{num_output_tokens}_{self.num_concurrent_requests}_syntheticdataset_{generation_mode}'
         )
         return self.sanitize_file_prefix(output_file_name)
-
-    def stop_benchmark(self) -> None:
-        """Stops the benchmarking process by setting the stop event."""
-        self.stop_event.set()
-        logger.info('Benchmarking process has been stopped.')
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
@@ -1134,7 +1129,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         elif self.qps_distribution == "constant":
             wait = mean_wait
         else:
-            raise f"Unknown distribution {self.qps_distribution}"
+            raise ValueError(f"Unknown distribution {self.qps_distribution}")
         return wait
 
     def get_token_throughput_latencies(
@@ -1179,7 +1174,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress = 0
+        progress = []
 
         # Send request threads and add to the threads array
         for request_config in request_configs:
