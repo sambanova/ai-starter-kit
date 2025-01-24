@@ -1077,8 +1077,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             summary (dict): structure with performance metrics and stats for the run
             individual_responses (tuple): list of performance metrics per request
         """
-        qps = kwargs.get('qps', 0.5)
-        qps_distribution = kwargs.get('qps_distribution', "constant")
         num_input_tokens = kwargs.get('num_input_tokens', 1000)
         num_output_tokens = kwargs.get('num_output_tokens', 10)
         num_requests = kwargs.get('num_requests', 1)
@@ -1093,8 +1091,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Calculate performance metrics individually and summary
         summary, individual_responses = self.get_token_throughput_latencies(
-            qps=qps,
-            qps_distribution=qps_distribution,
             num_input_tokens=num_input_tokens,
             num_output_tokens=num_output_tokens,
             num_requests=num_requests,
@@ -1121,8 +1117,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
 
     def get_token_throughput_latencies(
         self,
-        qps: float,
-        qps_distribution: str,
         num_input_tokens: int,
         num_output_tokens: int,
         num_requests: int,
