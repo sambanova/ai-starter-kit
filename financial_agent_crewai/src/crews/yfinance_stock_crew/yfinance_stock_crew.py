@@ -1,48 +1,52 @@
-from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
+from financial_agent_crewai.src.tools.general_tools import FilenameOutput
+from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput
 from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
 
 
 @CrewBase
-class RAGCrew:
-    """FinancialAgentCrewai crew."""
+class YFinanceStockCrew:
+    """SECEdgarCrew crew."""
 
     agents_config: Dict[str, Any]  # Type hint for the config attribute
     tasks_config: Dict[str, Any]  # Type hint for the tasks config
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self, input_variables: SecEdgarFilingsInput) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
-        self.filename = filename
+        self.input_variables = input_variables
 
     @agent  # type: ignore
-    def rag_researcher(self) -> Agent:
+    def yfinance_stock_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['rag_researcher'],
+            config=self.agents_config['yfinance_stock_analyst'],
             verbose=True,
             llm=llm,
-            tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename))],
+            task='yfinance_stock_analysis',
+            # tools=[
+            #     SecEdgarFilingRetriever(filing_metadata=self.input_variables),
+            # ],
+            memory=True,
         )
 
     @task  # type: ignore
-    def rag_esearch_task(self) -> Task:
+    def yfinance_stock_analysis(self) -> Task:
         return Task(
-            config=self.tasks_config['rag_research_task'],
-            output_file=str(Path(self.filename).parent / ('report_' + Path(self.filename).name)),
+            config=self.tasks_config['yfinance_stock_analysis'],
+            output_pydantic=FilenameOutput,
         )
 
     @crew  # type: ignore

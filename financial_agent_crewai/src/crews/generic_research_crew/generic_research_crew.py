@@ -5,7 +5,8 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.llm import llm
+from financial_agent_crewai.src.utils.constants import CACHE_DIR
+from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
 
@@ -52,7 +53,7 @@ class GenericResearchCrew:
 
     @task  # type: ignore
     def reporting_task(self) -> Task:
-        return Task(config=self.tasks_config['reporting_task'], output_file='report.md')
+        return Task(config=self.tasks_config['reporting_task'], output_file=str(CACHE_DIR / 'report.txt'))
 
     @crew  # type: ignore
     def crew(self) -> Crew:

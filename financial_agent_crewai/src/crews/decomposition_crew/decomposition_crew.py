@@ -8,8 +8,8 @@ from crewai.project import CrewBase, agent, crew, task
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.llm import llm
-from financial_agent_crewai.src.tools.custom_tools import SecEdgarFilingsInputsList
+from financial_agent_crewai.src.tools.general_tools import SubQueriesList
+from financial_agent_crewai.src.utils.llm import llm
 
 # Set up your SERPER_API_KEY key in an .env file, eg:
 # SERPER_API_KEY=<your api key>
@@ -34,9 +34,9 @@ class DecompositionCrew:
         self.tasks = []
 
     @agent  # type: ignore
-    def extractor(self) -> Agent:
+    def reformulator(self) -> Agent:
         return Agent(
-            config=self.agents_config['extractor'],
+            config=self.agents_config['reformulator'],
             verbose=True,
             llm=llm,
             task='extraction_task',
@@ -44,10 +44,10 @@ class DecompositionCrew:
         )
 
     @task  # type: ignore
-    def extraction_task(self) -> Task:
+    def reformulation_task(self) -> Task:
         return Task(
-            config=self.tasks_config['extraction_task'],
-            output_pydantic=SecEdgarFilingsInputsList,
+            config=self.tasks_config['reformulation_task'],
+            output_pydantic=SubQueriesList,
         )
 
     @crew  # type: ignore

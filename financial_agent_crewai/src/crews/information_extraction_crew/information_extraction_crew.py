@@ -1,48 +1,53 @@
-from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+
+# If you want to run a snippet of code before or after the crew starts,
+# you can use the @before_kickoff and @after_kickoff decorators
+# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
+from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInputsList
 from financial_agent_crewai.src.utils.llm import llm
 
+# Set up your SERPER_API_KEY key in an .env file, eg:
+# SERPER_API_KEY=<your api key>
 load_dotenv()
 
 
 @CrewBase
-class RAGCrew:
-    """FinancialAgentCrewai crew."""
+class InformationExtractionCrew:
+    """SECEdgarCrew crew."""
 
     agents_config: Dict[str, Any]  # Type hint for the config attribute
     tasks_config: Dict[str, Any]  # Type hint for the tasks config
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
-        self.filename = filename
 
     @agent  # type: ignore
-    def rag_researcher(self) -> Agent:
+    def extractor(self) -> Agent:
         return Agent(
-            config=self.agents_config['rag_researcher'],
+            config=self.agents_config['extractor'],
             verbose=True,
             llm=llm,
-            tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename))],
+            task='extraction_task',
+            memory=True,
         )
 
     @task  # type: ignore
-    def rag_esearch_task(self) -> Task:
+    def extraction_task(self) -> Task:
         return Task(
-            config=self.tasks_config['rag_research_task'],
-            output_file=str(Path(self.filename).parent / ('report_' + Path(self.filename).name)),
+            config=self.tasks_config['extraction_task'],
+            output_pydantic=SecEdgarFilingsInputsList,
         )
 
     @crew  # type: ignore

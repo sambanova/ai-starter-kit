@@ -1,22 +1,3 @@
-#!/usr/bin/env python
-import warnings
-from typing import Any, List
-
-from financial_agent_crewai.src.crews.decomposition_crew.decomposition_crew import (
-    DecompositionCrew,
-)
-from financial_agent_crewai.src.crews.generic_research_crew.generic_research_crew import GenericResearchCrew
-from financial_agent_crewai.src.crews.rag_crew.rag_crew import RAGCrew
-from financial_agent_crewai.src.tools.custom_tools import SecEdgarFilingsInputsList
-
-warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
-
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
-
-#!/usr/bin/env python
 """
 Main module for the Educational Content Generation Flow.
 
@@ -25,19 +6,37 @@ multiple specialized AI crews. It handles the coordination between research
 and content creation phases.
 """
 
+import logging
+import os
+import warnings
+from typing import Any, List
 
-from crewai.flow.flow import Flow, listen, start
+from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.crews.decomposition_crew.decomposition_crew import DecompositionCrew
+from financial_agent_crewai.src.crews.decomposition_crew.decomposition_crew import (
+    DecompositionCrew,
+)
 
 # from .config import EDU_FLOW_INPUT_VARIABLES
 # from .crews.edu_content_writer.edu_content_writer_crew import EduContentWriterCrew
 # from .crews.edu_research.edu_research_crew import EducationalPlan, EduResearchCrew
 from financial_agent_crewai.src.crews.generic_research_crew.generic_research_crew import GenericResearchCrew
+from financial_agent_crewai.src.crews.information_extraction_crew.information_extraction_crew import (
+    InformationExtractionCrew,
+)
+from financial_agent_crewai.src.crews.rag_crew.rag_crew import RAGCrew
+from financial_agent_crewai.src.crews.report_crew.report_crew import ReportCrew
 from financial_agent_crewai.src.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
+from financial_agent_crewai.src.crews.yfinance_stock_crew.yfinance_stock_crew import YFinanceStockCrew
+from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInputsList
+from financial_agent_crewai.src.utils.constants import CACHE_DIR, COMPARISON_QUERY, USER_QUERY
+from financial_agent_crewai.src.utils.utilities import clear_directory
 
+warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class FinancialFlow(Flow):  # type: ignore
@@ -55,117 +54,246 @@ class FinancialFlow(Flow):  # type: ignore
 
     # input_variables = EDU_FLOW_INPUT_VARIABLES
 
-    def __init__(self) -> None:
-        """Initialize the educational flow with research and content creation crews."""
+    def __init__(self, query: str) -> None:
+        """Initialize the finance flow with research, RAG, and content creation crews."""
         super().__init__()
         self.research_crew = GenericResearchCrew().crew()
+        self.query = query
         # self.content_crew = EduContentWriterCrew().crew()
+        # Create the cache directory if it does not exist
+        os.makedirs(str(CACHE_DIR), exist_ok=True)
+
+        # Empty cache directory
+        clear_directory(str(CACHE_DIR))
 
     @start()  # type: ignore
-    def extract_information(self) -> Any:
+    def query_decomposition(self) -> Any:
         """
-        Begin the content generation process with research.
-
-        Returns:
-            EducationalPlan: A structured plan for educational content based on research.
+        Decompose the user query.
         """
 
-        return (
-            DecompositionCrew()
-            .crew()
-            .kickoff(inputs={'query': 'What are the conclusions of the latest 10-K filings for Meta in 2023?'})
-            .pydantic.inputs_list
+        query_list = DecompositionCrew().crew().kickoff(inputs={'query': self.query}).pydantic.queries_list
+
+        return query_list
+
+    @listen(query_decomposition)  # type: ignore
+    def information_extraction(self, query_list: List[str]) -> Any:
+        """
+        Decompose the user query.
+        """
+        # Concatenate the sub-queries into a long query
+        decomposed_query = '.'.join(query_list)
+
+        company_input_list = (
+            InformationExtractionCrew().crew().kickoff(inputs={'query': decomposed_query}).pydantic.inputs_list
         )
 
-    @listen(extract_information)  # type: ignore
-    def sec_edgar_research(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> Any:
-        """xxx"""
+        return company_input_list
 
-        sec_edgar_filenames_list = list()
+    # @start()  # type: ignore
+    # def generic_research(self) -> Any:
+    #     """
+    #     Perform a generic research on the user query.
+    #     """
+
+    #     return self.research_crew.kickoff(inputs={'topic': self.query})
+
+    @listen(information_extraction)  # type: ignore
+    def sec_edgar(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
+        """
+        Retrieve the relevant SEC Edgar filings and perform RAG on the user query.
+        """
+        # Initialize an empty text file
+        global_sec_filename = 'global_report_sec.txt'
+
+        sec_reports_list = list()
         for filing_metadata in sec_edgar_inputs_list:
-            sec_edgar_filenames_list.append(
+            filename = (
                 SECEdgarCrew(input_variables=filing_metadata)  # type: ignore
                 .crew()
                 .kickoff(
                     {
-                        'query': 'What are the conclusions of the latest 10-K filings for Meta in 2023?',
+                        'query': filing_metadata.query,  # type: ignore
                     },
                 )
                 .pydantic.filename
             )
-        return sec_edgar_filenames_list
 
-    @listen(sec_edgar_research)  # type: ignore
-    def sec_edgar_rag(self, sec_edgar_filenames_list: List[str]) -> Any:
-        """xxx"""
-
-        sec_reports_list = list()
-        for filename in sec_edgar_filenames_list:
             sec_reports_list.append(
                 RAGCrew(filename=filename)
                 .crew()
                 .kickoff(
                     {
-                        'query': 'What are the conclusions of the latest 10-K filings for Meta in 2023?',
+                        'query': filing_metadata.query,  # type: ignore
                     },
                 )
             )
 
+            try:
+                # Open the source file in read mode and target file in append mode
+                with open(filename, 'r') as source:
+                    content = source.read()
+
+                # Concatenate the text from the SEC reports
+                with open(global_sec_filename, 'a') as target:
+                    target.write(content)
+
+            except FileNotFoundError:
+                logger.warning('One of the files was not found. Please check the file paths.')
+            except Exception as e:
+                logger.warning(f'An error occurred: {e}')
+
+        if len(sec_reports_list) > 0:
+            RAGCrew(filename=global_sec_filename).crew().kickoff(
+                {
+                    'query': COMPARISON_QUERY,
+                },
+            )
+            sec_reports_list.append(global_sec_filename)
+
         return sec_reports_list
 
-    # @listen(generate_reseached_content)  # type: ignore
-    # def generate_educational_content(self, plan: str) -> List[str]:
+    # @listen(information_extraction)  # type: ignore
+    # def yfinance_news(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
     #     """
-    #     Generate educational content based on the research plan.
-
-    #     Args:
-    #         plan (EducationalPlan): The structured content plan from research phase.
-
-    #     Returns:
-    #         List[str]: List of generated content sections.
+    #     Retrieve relevant news articles from Yahoo Finance for a particular company
     #     """
-    #     final_content: List[str] = []
 
-    #     for section in plan.sections:  # type: ignore
-    #         writer_inputs = self.input_variables.copy()
-    #         writer_inputs['section'] = section.model_dump_json()
-    #         final_content.append(self.content_crew.kickoff(writer_inputs).raw)
+    #     symbol_list = [filing_metadata.ticker_symbol for filing_metadata in sec_edgar_inputs_list]  # type: ignore
+    #     query_list = [filing_metadata.query for filing_metadata in sec_edgar_inputs_list]  # type: ignore
 
-    #     return final_content
+    #     symbol_list_yfinance_news: List[str] = list()
+    #     yfinace_news_reports_list: List[str] = list()
+    #     global_yfinance_filename = 'global_report_yfinance_news.txt'
+    #     for symbol, query in zip(symbol_list, query_list):
+    #         if symbol not in symbol_list_yfinance_news:
+    #             symbol_list_yfinance_news.append(symbol)
+    #         else:
+    #             continue
 
-    # @listen(generate_educational_content)  # type: ignore
-    # def save_to_markdown(self, content: List[str]) -> None:
-    #     """
-    #     Save the generated content to a markdown file.
+    #             filenames_list = (
+    #                 YahooFinanceNewsCrew(ticker_symbol=symbol)
+    #                 .crew()
+    #                 .kickoff(
+    #                     {
+    #                         'query': query,
+    #                     },
+    #                 )
+    #                 .pydantic.filenames
+    #             )
 
-    #     Args:
-    #         content (List[str]): List of content sections to save.
-    #     """
-    #     output_dir = 'output'
-    #     os.makedirs(output_dir, exist_ok=True)  # Ensure the directory exists
+    #             for filename in filenames_list:
+    #                 yfinace_news_reports_list.append(
+    #                     RAGCrew(filename=filename)
+    #                     .crew()
+    #                     .kickoff(
+    #                         {
+    #                             'query': query,
+    #                         },
+    #                     )
+    #                 )
 
-    #     topic = self.input_variables.get('topic')
-    #     audience_level = self.input_variables.get('audience_level')
-    #     file_name = f'{topic}_{audience_level}.md'.replace(' ', '_')
+    #                 try:
+    #                     # Open the source file in read mode and target file in append mode
+    #                     with open(filename, 'r') as source:
+    #                         content = source.read()
 
-    #     output_path = os.path.join(output_dir, file_name)
+    #                     # Concatenate the text from the SEC reports
+    #                     with open(global_yfinance_filename, 'a') as target:
+    #                         target.write(content)
 
-    #     with open(output_path, 'w') as f:
-    #         for section in content:
-    #             f.write(section)
-    #             f.write('\n\n')  # Add space between sections
+    #                 except FileNotFoundError:
+    #                     logger.warning('One of the files was not found. Please check the file paths.')
+    #                 except Exception as e:
+    #                     logger.warning(f'An error occurred: {e}')
+
+    #     if len(yfinace_news_reports_list) > 0:
+    #         RAGCrew(filename=global_yfinance_filename).crew().kickoff(
+    #             {
+    #                 'query': COMPARISON_QUERY,
+    #             },
+    #         )
+    #         yfinace_news_reports_list.append(global_yfinance_filename)
+
+    #     return yfinace_news_reports_list
+
+    @listen(information_extraction)  # type: ignore
+    def yfinance_stock_analysis(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
+        """
+        Retrieve the relevant SEC Edgar filings and perform RAG on the user query.
+        """
+        # Initialize an empty text file
+        global_sec_filename = 'global_report_yfinance.txt'
+
+        yfinance_reports_list: List[str] = list()
+        for filing_metadata in sec_edgar_inputs_list:
+            filename = (
+                YFinanceStockCrew(input_variables=filing_metadata)  # type: ignore
+                .crew()
+                .kickoff(
+                    {
+                        'query': filing_metadata.query,  # type: ignore
+                    },
+                )
+                .pydantic.filename
+            )
+
+            try:
+                # Open the source file in read mode and target file in append mode
+                with open(filename, 'r') as source:
+                    content = source.read()
+
+                # Concatenate the text from the SEC reports
+                with open(global_sec_filename, 'a') as target:
+                    target.write(content)
+
+            except FileNotFoundError:
+                logger.warning('One of the files was not found. Please check the file paths.')
+            except Exception as e:
+                logger.warning(f'An error occurred: {e}')
+
+        if len(yfinance_reports_list) > 0:
+            RAGCrew(filename=global_sec_filename).crew().kickoff(
+                {
+                    'query': COMPARISON_QUERY,
+                },
+            )
+            yfinance_reports_list.append(global_sec_filename)
+
+        return yfinance_reports_list
+
+    @listen(and_('generic_research', 'sec_edgar', 'yfinance_news', 'yfinance_stock_analysis'))  # type: ignore
+    def report_writing(
+        self,
+        generic_report: str,
+        sec_reports_list: List[str],
+        yfinace_news_reports_list: List[str],
+        yfinance_reports_list: List[str],
+    ) -> Any:
+        return (
+            ReportCrew(source_path='xxx')
+            .crew()
+            .kickoff(
+                {
+                    'query': self.query,
+                },
+            )
+        )
 
 
 def kickoff() -> None:
     """Initialize and start the educational content generation process."""
-    edu_flow = FinancialFlow()
-    edu_flow.kickoff()
+    finance_flow = FinancialFlow(
+        query=USER_QUERY,
+    )
+    finance_flow.kickoff()
 
 
 def plot() -> None:
     """Generate and display a visualization of the flow structure."""
-    edu_flow = FinancialFlow()
-    edu_flow.plot()
+    finance_flow = FinancialFlow(query=USER_QUERY)
+    plot_filename = str(CACHE_DIR / 'flow')
+    finance_flow.plot(filename=plot_filename)
 
 
 if __name__ == '__main__':

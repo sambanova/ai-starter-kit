@@ -1,6 +1,6 @@
-extraction_task:
+reformulation_task:
   description: >
-   Extract the most important information from the user query.
+    Reason and decompose the query into sub-queries corresponding to subsequent steps.
   expected_output:  >
-   The most important information about the user query: {query}.
-  agent: extractor
+    A minimal list of subsequent sub-queries for each invividual company and year.
+  agent: reformulator

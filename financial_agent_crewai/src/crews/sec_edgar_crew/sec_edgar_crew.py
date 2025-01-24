@@ -3,18 +3,12 @@ from typing import Any, Dict, List
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
 
-from financial_agent_crewai.src.llm import llm
-from financial_agent_crewai.src.tools.custom_tools import SecEdgarFilingRetriever, SecEdgarFilingsInput
+from financial_agent_crewai.src.tools.general_tools import FilenameOutput
+from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingRetriever, SecEdgarFilingsInput
+from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
-
-
-class SECEdgarFilename(BaseModel):
-    """SECEdgarFilename model."""
-
-    filename: str = Field(default='', description='The full file path of the SEC Edgar filing.')
 
 
 @CrewBase
@@ -36,21 +30,23 @@ class SECEdgarCrew:
         self.input_variables = input_variables
 
     @agent  # type: ignore
-    def researcher(self) -> Agent:
+    def sec_researcher(self) -> Agent:
         return Agent(
             config=self.agents_config['sec_researcher'],
             verbose=True,
             llm=llm,
+            task='sec_research_task',
             tools=[
                 SecEdgarFilingRetriever(filing_metadata=self.input_variables),
             ],
+            memory=True,
         )
 
     @task  # type: ignore
-    def research_task(self) -> Task:
+    def sec_research_task(self) -> Task:
         return Task(
-            config=self.tasks_config['research_task'],
-            output_pydantic=SECEdgarFilename,
+            config=self.tasks_config['sec_research_task'],
+            output_pydantic=FilenameOutput,
         )
 
     @crew  # type: ignore

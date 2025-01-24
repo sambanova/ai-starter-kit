@@ -1,0 +1,9 @@
+yfinance_stock_analysis:
+  description: >
+    Conduct a thorough research about the user query: {query}.
+    Make sure you find any interesting and relevant information given
+    the current year is 2024.
+  expected_output: >
+    The full path of the saved SEC Edgar text file.
+  agent: yfinance_stock_analyst
+

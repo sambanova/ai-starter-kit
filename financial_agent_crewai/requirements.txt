@@ -8,3 +8,4 @@ python-dotenv==1.0.1
 sec-downloader==0.11.1
 streamlit==1.40.2
 unstructured==0.16.13
+yfinance==0.2.43
