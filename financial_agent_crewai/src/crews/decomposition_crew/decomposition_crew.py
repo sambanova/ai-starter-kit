@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
 # If you want to run a snippet of code before or after the crew starts,
@@ -9,7 +9,6 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList
-from financial_agent_crewai.src.utils.llm import llm
 
 # Set up your SERPER_API_KEY key in an .env file, eg:
 # SERPER_API_KEY=<your api key>
@@ -25,20 +24,21 @@ class DecompositionCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self) -> None:
+    def __init__(self, llm: LLM) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
+        self.llm = llm
 
     @agent  # type: ignore
     def reformulator(self) -> Agent:
         return Agent(
             config=self.agents_config['reformulator'],
             verbose=True,
-            llm=llm,
+            llm=self.llm,
             task='extraction_task',
             memory=True,
         )

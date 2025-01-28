@@ -9,11 +9,9 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInputsList
-from financial_agent_crewai.src.utils.llm import llm
 
-# Set up your SERPER_API_KEY key in an .env file, eg:
-# SERPER_API_KEY=<your api key>
 load_dotenv()
+from crewai import LLM
 
 
 @CrewBase
@@ -25,20 +23,21 @@ class InformationExtractionCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self) -> None:
+    def __init__(self, llm: LLM) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
+        self.llm = llm
 
     @agent  # type: ignore
     def extractor(self) -> Agent:
         return Agent(
             config=self.agents_config['extractor'],
             verbose=True,
-            llm=llm,
+            llm=self.llm,
             task='extraction_task',
             memory=True,
         )

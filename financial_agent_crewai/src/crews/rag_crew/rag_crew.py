@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
+from langchain_core.language_models.llms import LLM as LangChain_LLM
 
 from financial_agent_crewai.src.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
-from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
 
@@ -20,7 +20,12 @@ class RAGCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, filename: str) -> None:
+    def __init__(
+        self,
+        filename: str,
+        llm: LLM,
+        rag_llm: LangChain_LLM,
+    ) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
@@ -28,21 +33,23 @@ class RAGCrew:
         self.agents = []
         self.tasks = []
         self.filename = filename
+        self.llm = llm
+        self.rag_llm = rag_llm
 
     @agent  # type: ignore
     def rag_researcher(self) -> Agent:
         return Agent(
             config=self.agents_config['rag_researcher'],
             verbose=True,
-            llm=llm,
-            tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename))],
+            llm=self.llm,
+            tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename), rag_llm=self.rag_llm)],
         )
 
     @task  # type: ignore
     def rag_esearch_task(self) -> Task:
         return Task(
             config=self.tasks_config['rag_research_task'],
-            output_file=str(Path(self.filename).parent / ('report_' + Path(self.filename).name)),
+            output_file=str(Path(self.filename).parent / ('report_' + Path(self.filename).name.strip('.csv') + '.txt')),
         )
 
     @crew  # type: ignore

@@ -1,6 +1,6 @@
 yfinance_stock_analyst:
   role: >
-    Senior Finance Researcher
+    Yahoo Finance Stock Analyst
   goal: >
     Uncover cutting-edge developments about the user query: {query}.
   backstory: >

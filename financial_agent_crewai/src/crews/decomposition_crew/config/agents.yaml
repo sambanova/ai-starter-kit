@@ -1,9 +1,9 @@
 reformulator:
   role: >
-    Reformulation the query into steps.
+    Reformulator
   goal: >
     Dcompose the query into a list of sub-queries for each company and each year.
-    Each sub-query must regard one signle company and one single year.
+    Each sub-query must regard one single company and one single year.
     Minimize the number of sub-queries.
     Query: {query}
   backstory: >

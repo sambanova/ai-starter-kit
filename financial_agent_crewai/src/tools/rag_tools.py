@@ -9,13 +9,13 @@ from langchain.schema import Document
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from langchain_core.language_models.llms import LLM
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.base import RunnableBinding
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_huggingface import HuggingFaceEmbeddings
 from pydantic import BaseModel, Field
 
-from financial_agent_crewai.src.utils.llm import rag_llm
 from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
 from financial_assistant.src.exceptions import VectorStoreException
 
@@ -50,7 +50,11 @@ QA_RETRIEVAL_PROMPT_TEMPLATE = """
 """
 
 
-def get_qa_response(user_request: str, documents: List[Document]) -> Any:
+def get_qa_response(
+    user_query: str,
+    documents: List[Document],
+    rag_llm: LLM,
+) -> Any:
     """
     Elaborate an answer to user request using RetrievalQA chain.
 
@@ -64,7 +68,7 @@ def get_qa_response(user_request: str, documents: List[Document]) -> Any:
     Raises:
         TypeError: If `user_request` is not a string or `documents` is not a list of `langchain.schema.Document`.
     """
-    if not isinstance(user_request, str):
+    if not isinstance(user_query, str):
         raise TypeError('user_request must be a string.')
     if not isinstance(documents, list):
         raise TypeError(f'documents must be a list of strings. Got {type(documents)}.')
@@ -72,18 +76,21 @@ def get_qa_response(user_request: str, documents: List[Document]) -> Any:
         raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry
-    vectorstore, retriever = get_vectorstore_retriever(documents)
+    vectorstore, retriever = get_vectorstore_retriever(documents=documents)
 
     # Get the QA chain from the retriever
-    qa_chain = get_qa_chain(retriever)
+    qa_chain = get_qa_chain(retriever, rag_llm=rag_llm)
 
     # Invoke the QA chain to get an answer to the user
-    response = invoke_qa_chain(qa_chain, user_request)
+    response = invoke_qa_chain(qa_chain=qa_chain, user_query=user_query)
 
     return response
 
 
-def invoke_qa_chain(qa_chain: RunnableBinding[Dict[str, Any], Dict[str, Any]], user_query: str) -> Dict[str, Any]:
+def invoke_qa_chain(
+    qa_chain: RunnableBinding[Dict[str, Any], Dict[str, Any]],
+    user_query: str,
+) -> Dict[str, Any]:
     """Invoke the chain to answer the question using RAG."""
     return qa_chain.invoke({'input': user_query})
 
@@ -136,7 +143,7 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
     return vectorstore, retriever
 
 
-def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
+def get_qa_chain(retriever: VectorStoreRetriever, rag_llm: LLM) -> Any:
     """
     Get a retrieval QA chain using the provided vectorstore `as retriever`.
 
@@ -177,6 +184,7 @@ class TXTSearchTool(BaseTool):  # type: ignore
     name: str = "Search a txt's content."
     description: str = "A tool that can be used to semantic search a query from a txt's content."
     txt_path: TXTSearchToolSchema
+    rag_llm: LLM
 
     def _run(self, search_query: str) -> Any:
         """Execute the search query and return results"""
@@ -188,6 +196,6 @@ class TXTSearchTool(BaseTool):  # type: ignore
             documents.append(document)
 
         # Get QA response
-        answer = get_qa_response(user_request=search_query, documents=documents)['answer']
+        answer = get_qa_response(user_query=search_query, documents=documents, rag_llm=self.rag_llm)['answer']
 
         return answer

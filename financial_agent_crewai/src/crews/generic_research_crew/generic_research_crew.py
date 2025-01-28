@@ -1,12 +1,11 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.utils.constants import CACHE_DIR
-from financial_agent_crewai.src.utils.llm import llm
+from financial_agent_crewai.src.utils.config import CACHE_DIR
 
 load_dotenv()
 
@@ -20,20 +19,22 @@ class GenericResearchCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self) -> None:
+    def __init__(self, llm: LLM, filename: Optional[str] = None) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
+        self.llm = llm
+        self.filename = filename if filename is not None else str(CACHE_DIR / 'report.txt')
 
     @agent  # type: ignore
     def researcher(self) -> Agent:
         return Agent(
             config=self.agents_config['researcher'],
             verbose=True,
-            llm=llm,
+            llm=self.llm,
             tools=[SerperDevTool()],
         )
 
@@ -42,7 +43,7 @@ class GenericResearchCrew:
         return Agent(
             config=self.agents_config['reporting_analyst'],
             verbose=True,
-            llm=llm,
+            llm=self.llm,
         )
 
     @task  # type: ignore
@@ -53,7 +54,7 @@ class GenericResearchCrew:
 
     @task  # type: ignore
     def reporting_task(self) -> Task:
-        return Task(config=self.tasks_config['reporting_task'], output_file=str(CACHE_DIR / 'report.txt'))
+        return Task(config=self.tasks_config['reporting_task'], output_file=self.filename)
 
     @crew  # type: ignore
     def crew(self) -> Crew:

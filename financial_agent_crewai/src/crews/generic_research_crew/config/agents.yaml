@@ -1,6 +1,6 @@
 researcher:
   role: >
-    Senior Finance Researcher
+    Generic Senior Finance Researcher
   goal: >
     Uncover the latest developments in finance to answer the user query.
     Query: {query}.
@@ -11,7 +11,7 @@ researcher:
 
 reporting_analyst:
   role: >
-    Finance Reporting Analyst
+    Generic Finance Reporting Analyst
   goal: >
     Create detailed reports based on financial data analysis and financial research findings
     to answer the user query.

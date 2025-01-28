@@ -1,6 +1,7 @@
 reporting_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
+    Review the context you got and expand each topic into a full section for a report,
+    with a summary and a title.
     Make sure the report is detailed and contains any and all relevant information.
   expected_output: >
     A fully detailed report with the main topics, each with a full section of information.

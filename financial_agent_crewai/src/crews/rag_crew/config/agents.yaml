@@ -1,6 +1,6 @@
 rag_researcher:
   role: >
-    Senior Finance Researcher
+    RAG Agent
   goal: >
     Uncover the latest developments in financial documents to answer the user query.
     Query: {query}.

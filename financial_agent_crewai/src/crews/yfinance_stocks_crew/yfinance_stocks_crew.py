@@ -1,12 +1,11 @@
 from typing import Any, Dict, List
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput
 from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput
-from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
 
@@ -20,7 +19,7 @@ class YFinanceStockCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, input_variables: SecEdgarFilingsInput) -> None:
+    def __init__(self, input_variables: SecEdgarFilingsInput, llm: LLM) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
@@ -28,13 +27,14 @@ class YFinanceStockCrew:
         self.agents = []
         self.tasks = []
         self.input_variables = input_variables
+        self.llm = llm
 
     @agent  # type: ignore
     def yfinance_stock_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['yfinance_stock_analyst'],
             verbose=True,
-            llm=llm,
+            llm=self.llm,
             task='yfinance_stock_analysis',
             # tools=[
             #     SecEdgarFilingRetriever(filing_metadata=self.input_variables),

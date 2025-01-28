@@ -1,12 +1,11 @@
 from typing import Any, Dict, List
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.general_tools import FilenameOutputList
 from financial_agent_crewai.src.tools.yahoo_finance_news import YahooFinanceNewsTool
-from financial_agent_crewai.src.utils.llm import llm
 
 load_dotenv()
 
@@ -20,22 +19,22 @@ class YahooFinanceNewsCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, ticker_symbol: str) -> None:
+    def __init__(self, llm: LLM) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
-        self.ticker_symbol = ticker_symbol
+        self.llm = llm
 
     @agent  # type: ignore
     def yahoo_finance_researcher(self) -> Agent:
         return Agent(
             config=self.agents_config['yahoo_finance_researcher'],
             verbose=True,
-            llm=llm,
-            tools=[YahooFinanceNewsTool(ticker_symbol=self.ticker_symbol)],
+            llm=self.llm,
+            tools=[YahooFinanceNewsTool()],
         )
 
     @task  # type: ignore

@@ -1,6 +1,6 @@
 sec_researcher:
   role: >
-    Senior Finance Researcher
+    SEC Edgar Curator
   goal: >
     Retrieve the SEC Edgar financial filings that are relevant to the user query.
   backstory: >
