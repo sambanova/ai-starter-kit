@@ -405,7 +405,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
+        output_file_name = f'custom_{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -700,8 +700,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f'{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.num_concurrent_requests}_syntheticdataset_{generation_mode}'
+            f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
         )
         return self.sanitize_file_prefix(output_file_name)
 
@@ -1068,8 +1068,8 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f'{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_realworkload_{generation_mode}'
+            f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}'
         )
         return self.sanitize_file_prefix(output_file_name)
 
