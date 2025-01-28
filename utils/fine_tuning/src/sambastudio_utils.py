@@ -212,7 +212,7 @@ def gen_data_prep_pipeline(
     - prompt_keyword (str):  prompt keyword. Default is 'prompt'
     - completion_keyword (str):  completion keyword. Default is 'completion'
     - num_training_splits (int): number of training splits to generate. Default is 32
-    - apply_chat_template (bool): Whether to tokenize the data using the 
+    - apply_chat_template (bool): Whether to tokenize the data using the
         tokenizer_config.json chat_template. Default is False
 
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags

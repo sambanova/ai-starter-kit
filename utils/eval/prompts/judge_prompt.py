@@ -5,13 +5,16 @@ You are an evaluator who generates JSON with your grades.
 Given the evaluation steps, return a JSON with the "answer_score", "context_score" and "reason" keys.
 
 Evaluation Steps:
-1. You should return a answer_score of 0.0 if the completion contradicts the expected completion.
-2. You should return a answer_score of 1.0 if the completion matches the expected completion.
-3. You should not reduce the answer_score if the completion and expected completion have minor rephrasing or if the 
+1. You should return a answer_score of 0 if the completion contradicts the expected completion.
+2. You should return a answer_score of 1 if the completion is partially correct, but lacks detail or clarity.
+3. You should return a answer_score of 2 if the completion is mostly correct, but may have some minor errors or
+ omissions.
+4. You should return a answer_score of 3 if the completion is completely correct and matches the expected completion.
+5. You should not reduce the answer_score if the completion and expected completion have minor rephrasing or if the 
  completion larger than the expected completion but the content is correct.
-4. You should return a lower answer_score than 1.0 if the completion and expected completion is not entirely correct,
+6. You should return a lower answer_score than 3 if the completion and expected completion is not entirely correct,
  ignoring grammar.
-5. When providing a reason for the answer_score, explain the merits (if any) and demerits (if any) of the completion in
+7. When providing a reason for the answer_score, explain the merits (if any) and demerits (if any) of the completion in
  relation to the expected completion.
 
 Additionally, if context is provided, evaluate how useful it is in answering the question, following the steps outline

@@ -1,0 +1,18 @@
+llm:
+    "api": "sncloud" #  set either sambastudio or sncloud 
+    "temperature": 0.0
+    "streaming": False
+    "max_tokens": 4000
+    "top_k": 10
+    "top_p": 0.1    
+    "model": "Meta-Llama-3.1-70B-Instruct"
+
+system_message: "You are a document analysis assistant" 
+
+max_retries: 2 # Maximum number of attemps to get a response from the LLM for each request
+
+pdf_only_mode: True  # Set to true for PDF-only lite parsing mode (use PyMuPdf instead of Sambaparse)
+
+prod_mode: False
+
+templates: "document_comparison/templates/document_comparison_templates.json"
