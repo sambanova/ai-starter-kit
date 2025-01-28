@@ -634,6 +634,7 @@ class SnsdkWrapper:
                 dataset_url,
                 dataset_language,
             )
+            logging.info(f'running snapi add dataset command:\n {" ".join(command)}\nThis could take a while')
             echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
             snapi_response = subprocess.run(command, input=echo_response.stdout, capture_output=True, text=True)
 
