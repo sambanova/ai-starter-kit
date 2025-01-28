@@ -167,7 +167,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         request_config_batch: List[Any],
         completed_requests: List[Any],
-        progress: int,
+        progress: List[Any],
         start_time: float,
         num_requests: int,
     ) -> None:
@@ -194,12 +194,12 @@ class BasePerformanceEvaluator(abc.ABC):
             )
             completed_requests.extend([response_object])
             update_unit = 1
-            progress += update_unit
+            progress.append(update_unit)
 
             if self.cli_progress_bar:
                 self.cli_progress_bar.update(update_unit)
             if self.ui_progress_bar:
-                self.ui_progress_bar(progress, num_requests)
+                self.ui_progress_bar(len(progress), num_requests)
 
     def build_metrics_summary(
         self,
@@ -525,9 +525,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
-        threads = []
+        threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress = 0
+        progress: List[Any] = []
 
         for request_config_batch in request_config_batches:
             if self.stop_event.is_set():
@@ -550,10 +550,33 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             logger.info('Benchmarking process terminated early due to stop signal.')
             return {}, []
 
-        if llm_responses[0].metrics[common_metrics.ERROR_CODE]:
+        # Error handling
+        error_codes = [llm_response.metrics['error_code'] for llm_response in llm_responses]
+
+        if not any([pd.isnull(error_code) for error_code in error_codes]):
+            unique_error_codes = list(
+                set(
+                    [
+                        llm_response.metrics['error_code']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            unique_error_msgs = list(
+                set(
+                    [
+                        llm_response.metrics['error_msg']
+                        for llm_response in llm_responses
+                        if not pd.isnull(llm_response.metrics['error_code'])
+                    ]
+                )
+            )
+            nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests: {llm_responses[0].metrics['error_code']}.
-                  Additional message: {llm_responses[0].metrics['error_msg']}"""
+                f"""Unexpected error happened when executing requests:{nl}\
+                {f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
+                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         end_time = time.monotonic()
@@ -880,7 +903,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # completed requests respectively
         threads: List[threading.Thread] = []
         llm_responses: List[LLMResponse] = []
-        progress = 0
+        progress: List[Any] = []
 
         # Send request threads and add to the threads array
         for request_config_batch in request_config_batches:
@@ -929,8 +952,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             )
             nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""
-                + f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
+                f"""Unexpected error happened when executing requests:\
+                {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
+                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user

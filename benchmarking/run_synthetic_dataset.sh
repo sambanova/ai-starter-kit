@@ -35,6 +35,6 @@ python src/evaluator.py \
 #
 # 3. For SambaNovaCloud endpoints, change the llm-api parameter to "sncloud" and use the model name directly.
 #   For example:
-#      --model-names "llama3-8b"
+#      --model-names "Meta-Llama-3.1-8B-Instruct"
 #          OR
-#      --model-names "llama3-8b llama3-70b"
+#      --model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.1-70B-Instruct"
