@@ -2,7 +2,7 @@
 """
 Enterprise Knowledge Retriever (EKR) Test Script
 
-This script tests the functionality of the Enterprise Knowledge Retriever using unittest.
+This script tests the functionality and quality of the Enterprise Knowledge Retriever using unittest.
 It parses documents using the SambaParse service, creates a vector store, and tests the question-answering capabilities.
 
 Usage:
@@ -12,6 +12,7 @@ Returns:
     0 if all tests pass, or a positive integer representing the number of failed tests.
 """
 
+import asyncio
 import logging
 import os
 import shutil
@@ -19,6 +20,9 @@ import sys
 import time
 import unittest
 from typing import Any, Dict, List, Type
+
+import weave
+import yaml
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,16 +42,29 @@ from langchain.docstore.document import Document
 from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
+from utils.eval.dataset import WeaveDatasetManager
+from utils.eval.models import CorrectnessLLMJudge, WeaveRAGModel
 
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
-CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+CONFIG_PATH = os.path.join(repo_dir, 'utils', 'eval', 'config.yaml')
+
+with open(CONFIG_PATH, 'r') as yaml_file:
+    config = yaml.safe_load(yaml_file)
+
+judge_info = config['eval_llm']
+
+rag_info = config['rag']['llm']
 
 
 # Let's use this as a template for further CLI tests. setup, tests, teardown and assert at the end.
 class EKRTestCase(unittest.TestCase):
     time_start: float
     sambanova_api_key: str
+    judge: CorrectnessLLMJudge
+    rag_model: WeaveRAGModel
+    data_manager: WeaveDatasetManager
+    dataset: List[Dict[str, str]]
     document_retrieval: DocumentRetrieval
     additional_metadata: Dict[str, Any]
     text_chunks: List[Document]
@@ -59,12 +76,21 @@ class EKRTestCase(unittest.TestCase):
     def setUpClass(cls: Type['EKRTestCase']) -> None:
         cls.time_start = time.time()
         cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.judge = CorrectnessLLMJudge(**judge_info)
+        cls.rag_model = WeaveRAGModel(**rag_info)
+        cls.data_manager = WeaveDatasetManager()
+        cls.dataset = cls.get_data()
         cls.document_retrieval = DocumentRetrieval(sambanova_api_key=cls.sambanova_api_key)
         cls.additional_metadata = {}
         cls.text_chunks = cls.parse_documents()
         cls.embeddings = cls.document_retrieval.load_embedding_model()
         cls.vectorstore = cls.create_vectorstore()
         cls.conversation = cls.create_conversation_chain()
+
+    @classmethod
+    def get_data(cls: Type['EKRTestCase']) -> List[Dict[str, str]]:
+        data = cls.data_manager.create_raw_dataset(os.path.join(kit_dir, 'tests', 'data', 'rag_data.csv'))
+        return data
 
     @classmethod
     def parse_documents(cls: Type['EKRTestCase']) -> List[Document]:
@@ -102,6 +128,24 @@ class EKRTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(response['source_documents']), 1, 'There should be at least one source document')
         self.assertIn('answer', response, "Response should have an 'answer' key")
         self.assertTrue(response['answer'], 'The response should not be empty')
+
+    def test_quality_context_answer(self) -> None:
+        for i in range(len(self.dataset)):
+            response = self.conversation.invoke({'question': self.dataset[i].get('query', '')})
+            self.dataset[i]['context'] = response.get('source_documents', '')
+            self.dataset[i]['completion'] = response.get('answer', '')
+
+        evaluation = weave.Evaluation(
+            name=' '.join(str(value) for value in judge_info.values()), dataset=self.dataset, scorers=[self.judge]
+        )
+
+        evaluation_results = asyncio.run(evaluation.evaluate(self.rag_model))
+        judge_results = evaluation_results.get('CorrectnessLLMJudge')
+        answer_results = judge_results.get('answer_score')
+        context_results = judge_results.get('context_score')
+
+        self.assertGreaterEqual(answer_results.get('mean'), 0.7, 'Quality of the answer should be greater than 0.7')
+        self.assertGreaterEqual(context_results.get('mean'), 0.7, 'Quality of the context should be greater than 0.7')
 
     @classmethod
     def tearDownClass(cls: Type['EKRTestCase']) -> None:
