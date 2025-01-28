@@ -492,7 +492,11 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
         if 'together' in self.base_url:
-            return {'Authorization': f'Bearer {self.api_key}', 'accept': 'application/json', 'Content-Type': 'application/json'}
+            return {
+                'Authorization': f'Bearer {self.api_key}',
+                'accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
         else:
             return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
 
