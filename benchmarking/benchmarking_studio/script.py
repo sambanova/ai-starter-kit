@@ -37,27 +37,21 @@ from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluato
 # To run the script, go to the kit's root and run:
 
 # General parameters:
-# sambanova
-model_names = ['Meta-Llama-3.1-70B-Instruct']  # add more models if necessary
-# fireworks
-# model_names = ['accounts/fireworks/models/llama-v3p1-70b-instruct']  # add more models if necessary
-# togetherai
-# model_names = ['meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo']  # add more models if necessary
-
+model_names = ['Meta-Llama-3.1-8B-Instruct', 'Meta-Llama-3.1-70B-Instruct']  # add more models if necessary
 llm_api = 'sncloud'  # it could be sncloud or sambastudio
-results_dir = 'data/results/sambanova/'  # set the path where results will be saved
+results_dir = 'data/results/path/'  # set the path where results will be saved
 
 # Additional parameters:
 timeout = 60000
 sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
-time_delay = 60  # delayed time in seconds between runs
+time_delay = 10  # delayed time in seconds between runs
 
 # Perf parameters:
-num_input_tokens = [100, 1_000, 10_000]  # add more input token numbers if needed
+num_input_tokens = [1_000]  # add more input token numbers if needed
 num_output_tokens = [1_000]  # add more output token numbers if needed
-num_concurrent_requests = [1, 10]  # add more concurrent requests token numbers if needed
-ratio = 1  # ratio between num_requests/concurrent_requests
+num_concurrent_requests = [1]  # add more concurrent requests token numbers if needed
+ratio = 3  # ratio between num_requests/concurrent_requests
 # e.g. means: for num_concurrent_requests = 10, there will be num_requests = 50
 
 df_all_summary_results = pd.DataFrame()
