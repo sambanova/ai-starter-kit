@@ -11,6 +11,7 @@ import os
 import warnings
 from typing import Any, List, Optional
 
+import agentops  # type: ignore
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
@@ -32,6 +33,7 @@ from financial_agent_crewai.src.crews.sec_edgar_crew.sec_edgar_crew import SECEd
 from financial_agent_crewai.src.crews.yfinance_news_crew.yfinance_news_crew import YahooFinanceNewsCrew
 from financial_agent_crewai.src.crews.yfinance_stocks_crew.yfinance_stocks_crew import YFinanceStockCrew
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList
+from financial_agent_crewai.src.tools.report_tools import ReportSection
 from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput, SecEdgarFilingsInputsList
 from financial_agent_crewai.src.utils.config import *
 from financial_agent_crewai.src.utils.utilities import clear_directory
@@ -39,7 +41,7 @@ from utils.model_wrappers.api_gateway import APIGateway
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
-
+agentops.init(os.getenv('AGENTOPS_API_KEY'))
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +65,6 @@ class FinancialFlow(Flow):  # type: ignore
         source_sec_filings: Optional[bool] = None,
         source_yfinance_news: Optional[bool] = None,
         source_yfinance_stocks: Optional[bool] = None,
-        model_name: str = 'sambanova/Meta-Llama-3.1-70B-Instruct',
         cache_path: Optional[str] = None,
     ) -> None:
         """Initialize the finance flow with research, RAG, and content creation crews."""
@@ -74,11 +75,12 @@ class FinancialFlow(Flow):  # type: ignore
         self.source_sec_filings = source_sec_filings
         self.source_yfinance_news = source_yfinance_news
         self.source_yfinance_stocks = source_yfinance_stocks
-        self.model_name = model_name
+        self.final_report_path = str(CACHE_DIR / 'final_report.md')
         self.report_list: List[str] = list()
         self.generic_report_name = str(CACHE_DIR / 'report_generic_search.txt')
+        self.cache_path = cache_path if cache_path is not None else str(CACHE_DIR)
 
-        self.llm = LLM(model=f'sambanova/{model_name}', temperature=TEMPERATURE)
+        self.llm = LLM(model=GENERAL_MODEL, temperature=TEMPERATURE)
 
         self.rag_llm = APIGateway.load_llm(
             type='sncloud',
@@ -98,10 +100,10 @@ class FinancialFlow(Flow):  # type: ignore
 
         # self.content_crew = EduContentWriterCrew().crew()
         # Create the cache directory if it does not exist
-        os.makedirs(str(CACHE_DIR), exist_ok=True)
+        os.makedirs(self.cache_path, exist_ok=True)
 
         # Empty cache directory
-        clear_directory(str(CACHE_DIR))
+        clear_directory(self.cache_path)
 
     @start()  # type: ignore
     def generic_research(self) -> Any:
@@ -109,7 +111,7 @@ class FinancialFlow(Flow):  # type: ignore
         Perform a generic research on the user query.
         """
         if self.source_generic_search:
-            self.report_list.extend(self.generic_report_name)
+            self.report_list.append(self.generic_report_name)
             return self.research_crew.kickoff(inputs={'query': self.query})
         else:
             return ''
@@ -349,17 +351,38 @@ class FinancialFlow(Flow):  # type: ignore
         self,
     ) -> Any:
         """Write the final financial report."""
+        section_list: List[ReportSection] = list()
         for report in self.report_list:
             # Load the text file
             with open(report, 'r') as f:
                 report_txt = f.read()
-            ReportCrew(
-                llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
-            ).crew().kickoff(
-                {
-                    'section': self.query,
-                },
+            section_list.append(
+                ReportCrew(
+                    llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                )
+                .crew()
+                .kickoff(
+                    {
+                        'section': report_txt,
+                    },
+                )
+                .pydantic
             )
+
+        # Write the title of the final report
+        with open(self.final_report_path, 'a') as f:
+            f.write('# ' + self.query + '\n\n')
+
+        # Append each section to the final report
+        for section in section_list:
+            # Open the markdown file
+            with open(self.final_report_path, 'a') as f:
+                # Append the section title
+                f.write(section.title + '\n')
+                # Append the section content
+                f.write(section.content + '\n')
+                # Append the summary
+                f.write(section.summary + '\n\n')
 
 
 def run() -> None:
@@ -370,7 +393,6 @@ def run() -> None:
         source_sec_filings=SOURCE_SEC_FILINGS,
         source_yfinance_news=SOURCE_YFINANCE_NEWS,
         source_yfinance_stocks=SOURCE_YFINANCE_STOCK,
-        model_name='Meta-Llama-3.1-70B-Instruct',
     )
     finance_flow.kickoff()
 
@@ -384,4 +406,11 @@ def plot() -> None:
 
 if __name__ == '__main__':
     plot()
+
+    # # Start AgentOps
+    # agentops.start_session()
+
     run()
+
+    # # End AgentOps
+    # agentops.end_session('Success')

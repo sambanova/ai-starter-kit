@@ -20,6 +20,7 @@ SOURCE_SEC_FILINGS = False
 SOURCE_YFINANCE_NEWS = False
 SOURCE_YFINANCE_STOCK = False
 
+GENERAL_MODEL = 'sambanova/Meta-Llama-3.1-70B-Instruct'
 DECOMPOSITION_MODEL = 'sambanova/Meta-Llama-3.1-70B-Instruct'
 GENERIC_RESEARCH_MODEL = 'sambanova/Meta-Llama-3.1-70B-Instruct'
 INFORMATION_EXTRACTION_MODEL = 'sambanova/Meta-Llama-3.1-70B-Instruct'

@@ -4,6 +4,8 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
+from financial_agent_crewai.src.tools.report_tools import ReportSection
+
 load_dotenv()
 
 
@@ -35,7 +37,7 @@ class ReportCrew:
 
     @task  # type: ignore
     def reporting_task(self) -> Task:
-        return Task(config=self.tasks_config['reporting_task'])
+        return Task(config=self.tasks_config['reporting_task'], output_pydantic=ReportSection)
 
     @crew  # type: ignore
     def crew(self) -> Crew:

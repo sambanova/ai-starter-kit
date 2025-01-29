@@ -38,23 +38,12 @@ class GenericResearchCrew:
             tools=[SerperDevTool()],
         )
 
-    @agent  # type: ignore
-    def reporting_analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config['reporting_analyst'],
-            verbose=True,
-            llm=self.llm,
-        )
-
     @task  # type: ignore
     def research_task(self) -> Task:
         return Task(
             config=self.tasks_config['research_task'],
+            output_file=self.filename,
         )
-
-    @task  # type: ignore
-    def reporting_task(self) -> Task:
-        return Task(config=self.tasks_config['reporting_task'], output_file=self.filename)
 
     @crew  # type: ignore
     def crew(self) -> Crew:
