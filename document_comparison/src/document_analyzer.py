@@ -4,7 +4,7 @@ import time
 from typing import Tuple
 
 import yaml
-from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
+from langchain_sambanova import ChatSambaNovaCloud
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -38,7 +38,6 @@ class DocumentAnalyzer:
             model=self.llm_info['model'],
             max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            top_k=self.llm_info['top_k'],
             top_p=self.llm_info['top_p'],
             streaming=self.llm_info['streaming'],
             stream_options={'include_usage': True},
