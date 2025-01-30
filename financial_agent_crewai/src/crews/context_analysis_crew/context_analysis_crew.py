@@ -1,16 +1,14 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.tools.report_tools import ReportSectionSummary
-
 load_dotenv()
 
 
 @CrewBase
-class ReportCrew:
+class ContextAnalysisCrew:
     """FinancialAgentCrewai crew."""
 
     agents_config: Dict[str, Any]  # Type hint for the config attribute
@@ -18,7 +16,7 @@ class ReportCrew:
     agents: List[Any]  # Type hint for the agents list
     tasks: List[Any]  # Type hint for the tasks list
 
-    def __init__(self, llm: LLM) -> None:
+    def __init__(self, llm: LLM, output_file: Optional[str] = None) -> None:
         """Initialize the research crew."""
         super().__init__()
         self.agents_config = {}
@@ -26,33 +24,19 @@ class ReportCrew:
         self.agents = []
         self.tasks = []
         self.llm = llm
+        self.output_file = output_file if output_file else 'context_analysis.txt'
 
     @agent  # type: ignore
-    def reporting_analyst(self) -> Agent:
+    def context_analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['reporting_analyst'],
+            config=self.agents_config['context_analyst'],
             verbose=True,
             llm=self.llm,
         )
 
     @task  # type: ignore
-    def reporting_task(self) -> Task:
-        return Task(config=self.tasks_config['reporting_task'])
-
-    @agent  # type: ignore
-    def summarizer(self) -> Agent:
-        return Agent(
-            config=self.agents_config['summarizer'],
-            verbose=True,
-            llm=self.llm,
-        )
-
-    @task  # type: ignore
-    def summarization(self) -> Task:
-        return Task(
-            config=self.tasks_config['summarization'],
-            output_pydantic=ReportSectionSummary,
-        )
+    def context_analysis_task(self) -> Task:
+        return Task(config=self.tasks_config['context_analysis_task'], output_file=self.output_file)
 
     @crew  # type: ignore
     def crew(self) -> Crew:

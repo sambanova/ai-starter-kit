@@ -1,8 +1,7 @@
 rag_research_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Answer the user question based solely on the provided context.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
+    A fully detailed answer to the user question, divided in paragraphs.
   agent: rag_researcher
 

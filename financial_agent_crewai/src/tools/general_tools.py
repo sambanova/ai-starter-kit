@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from typing import List
 
 import pandas
@@ -21,12 +22,6 @@ class FilenameOutput(BaseModel):
     """SECEdgarFilename model."""
 
     filename: str = Field(default='', description='The full file path of the SEC Edgar filing.')
-
-
-class FilenameOutputList(BaseModel):
-    """SECEdgarFilename model."""
-
-    filenames: List[str] = Field([], description='The full file path of the SEC Edgar filing.')
 
 
 def get_html_text(html_text: bytes, filename: str) -> None:
@@ -68,7 +63,7 @@ def get_html_text(html_text: bytes, filename: str) -> None:
     os.makedirs(CACHE_DIR, exist_ok=True)
 
     # Save chunks as csv
-    df.to_csv(filename, index=False)
+    df.to_csv(filename, mode='a', index=False, header=False)
 
     return
 
@@ -81,3 +76,19 @@ class SubQueriesList(BaseModel):
         description='List of subsequent sub-queries, reformulated from the decomposition of the original user query. '
         'Each sub-query relates to a single company for a single year.',
     )
+    is_comparison: bool = Field(
+        ...,
+        description='Whether the original user query involves a comparison '
+        'between two companies or two different years.',
+    )
+
+
+def convert_csv_source_to_txt_report_filename(source_filename: str) -> str:
+    """Convert source to report filename."""
+
+    if source_filename.endswith('.csv'):
+        return str(Path(Path(source_filename).parent) / ('report_' + Path(source_filename).name.strip('.csv') + '.txt'))
+    elif source_filename.endswith('.txt'):
+        return str(Path(Path(source_filename).parent) / ('report_' + Path(source_filename).name.strip('.csv') + '.txt'))
+    else:
+        raise ValueError('Source filename must end with either ".csv" or ".txt".')

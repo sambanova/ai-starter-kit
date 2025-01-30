@@ -1,9 +1,10 @@
 import os
 import shutil
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 
-def clear_directory(directory: str) -> Optional[str]:
+def clear_directory(directory: Union[str, Path]) -> Optional[str]:
     """
     Clears all contents of the specified directory, including all files
     and subdirectories.

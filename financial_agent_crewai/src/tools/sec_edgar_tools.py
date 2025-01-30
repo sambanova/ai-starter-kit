@@ -21,9 +21,7 @@ class SecEdgarFilingsInput(BaseModel):
     """
 
     ticker_symbol: str = Field(..., description='The company ticker symbol.')
-    is_relevant_sec: bool = Field(
-        ..., description='Whether the user query is relevant to the SEC Edgar financial filings.'
-    )
+    company: str = Field(..., description='The company name.')
     filing_type: str = Field(
         default='10-K',
         description='The type of filing (either "10-K" for yearly filings or "10-Q" for quarterly filings). '
@@ -37,9 +35,9 @@ class SecEdgarFilingsInput(BaseModel):
     year: int = Field(default=2024, description='The year of the filing. If not specified, the default is 2024.')
     query: str = Field(
         ...,
-        description='The relevant information that we need to extract from the company filing '
-        'in order to answer the original user query. Only one company at a time. '
-        'If too general, just ask for the filing summary.',
+        description='A reformulation and generalisation of the user query, cleaned of any SEC Edgar filings metadata.'
+        'The query should not include any filing metadata, e.g. filing type, filing_quarter, and filing year.'
+        'If the original query is too general, just ask for a summary of the main points.',
     )
 
 

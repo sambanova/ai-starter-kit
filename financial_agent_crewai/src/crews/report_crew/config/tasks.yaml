@@ -8,3 +8,10 @@ reporting_task:
     a summary, and a title.
     All the elements should be formatted as markdown without '```': ## for title, ### for subtitle, etc.
   agent: reporting_analyst
+
+summarization:
+  description: >
+    Summarize the provided section into a few paragraphs (at most 3).
+  expected_output: >
+    A concise summary.
+  agent: summarizer

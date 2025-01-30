@@ -192,7 +192,7 @@ class TXTSearchTool(BaseTool):  # type: ignore
         # Convert DataFrame rows into Document objects
         documents = list()
         for _, row in df.iterrows():
-            document = Document(page_content=row['text'])
+            document = Document(page_content=row.values[0])
             documents.append(document)
 
         # Get QA response

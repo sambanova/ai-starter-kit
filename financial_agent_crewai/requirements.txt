@@ -1,7 +1,9 @@
-agentops==0.3.26
+# agentops==0.3.26
 langchain-chroma==0.2.1
 langchain-core==0.3.32
 langchain-huggingface==0.1.2
+langchain-sambanova==0.1.0
+langtrace-python-sdk==3.5.1
 crewai==0.100.0
 crewai-tools==0.33.0
 Markdown==3.7

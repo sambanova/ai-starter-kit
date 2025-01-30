@@ -1,0 +1,6 @@
+context_analysis_task:
+  description: >
+    Review the context you got and answer the user query solely based on the provided context.
+  expected_output: >
+    A fully detailed answer.
+  agent: context_analyst

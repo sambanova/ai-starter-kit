@@ -1,7 +1,7 @@
 """
-Streamlit web application for educational content generation.
+Streamlit web application for financial content generation.
 
-This module provides a web interface for generating educational content using
+This module provides a web interface for generating financial content using
 the SambaNova AI models and CrewAI framework. It handles user input, content
 generation, and result display.
 """

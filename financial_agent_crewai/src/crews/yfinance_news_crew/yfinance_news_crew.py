@@ -4,8 +4,8 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.tools.general_tools import FilenameOutputList
-from financial_agent_crewai.src.tools.yahoo_finance_news import YahooFinanceNewsTool
+from financial_agent_crewai.src.tools.general_tools import FilenameOutput
+from financial_agent_crewai.src.tools.yahoo_finance_news_tools import YahooFinanceNewsTool
 
 load_dotenv()
 
@@ -41,7 +41,7 @@ class YahooFinanceNewsCrew:
     def yahoo_finance_research_task(self) -> Task:
         return Task(
             config=self.tasks_config['yahoo_finance_research_task'],
-            output_pydantic=FilenameOutputList,
+            output_pydantic=FilenameOutput,
         )
 
     @crew  # type: ignore

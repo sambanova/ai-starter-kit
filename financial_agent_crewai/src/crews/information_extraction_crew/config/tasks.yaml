@@ -1,6 +1,9 @@
 extraction_task:
   description: >
     Extract information items from the user query and organize them in a structured output.
+    Also, simplify the user query
+    by removing any mention of SEC Edgar Filings
+    and making it more general.
   expected_output:  >
     A structured output.
   agent: extractor

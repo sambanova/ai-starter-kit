@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
@@ -6,6 +5,7 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 from langchain_core.language_models.llms import LLM as LangChain_LLM
 
+from financial_agent_crewai.src.tools.general_tools import convert_csv_source_to_txt_report_filename
 from financial_agent_crewai.src.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
 
 load_dotenv()
@@ -43,13 +43,14 @@ class RAGCrew:
             verbose=True,
             llm=self.llm,
             tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename), rag_llm=self.rag_llm)],
+            allow_delegation=False,
         )
 
     @task  # type: ignore
     def rag_esearch_task(self) -> Task:
         return Task(
             config=self.tasks_config['rag_research_task'],
-            output_file=str(Path(self.filename).parent / ('report_' + Path(self.filename).name.strip('.csv') + '.txt')),
+            output_file=convert_csv_source_to_txt_report_filename(self.filename),
         )
 
     @crew  # type: ignore
