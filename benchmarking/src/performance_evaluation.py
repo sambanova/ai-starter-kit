@@ -22,6 +22,7 @@ import transformers
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
@@ -526,26 +527,60 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
 
-        threads: List[threading.Thread] = []
+        # threads: List[threading.Thread] = []
+        # llm_responses: List[LLMResponse] = []
+        # progress: List[Any] = []
+
+        # for request_config_batch in request_config_batches:
+        #     if self.stop_event.is_set():
+        #         logger.info('Stopping thread creation due to stop signal.')
+        #         break
+
+        #     thread = threading.Thread(
+        #         target=self.send_requests,
+        #         args=(request_config_batch, llm_responses, progress, start_time, total_request_count),
+        #     )
+        #     threads.append(thread)
+        #     add_script_run_ctx(thread)  # Give Streamlit context to thread
+        #     thread.start()
+
+        # for thread in threads:
+        #     add_script_run_ctx(thread)
+        #     thread.join()
+
+        # if self.stop_event.is_set():
+        #     logger.info('Benchmarking process terminated early due to stop signal.')
+        #     return {}, []
+        
+        # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
-        for request_config_batch in request_config_batches:
-            if self.stop_event.is_set():
-                logger.info('Stopping thread creation due to stop signal.')
-                break
+        # Use ThreadPoolExecutor to handle threads
+        with ThreadPoolExecutor() as executor:
+            # Store futures for the tasks
+            futures = []
 
-            thread = threading.Thread(
-                target=self.send_requests,
-                args=(request_config_batch, llm_responses, progress, start_time, total_request_count),
-            )
-            threads.append(thread)
-            add_script_run_ctx(thread)  # Give Streamlit context to thread
-            thread.start()
+            for request_config_batch in request_config_batches:
+                if self.stop_event.is_set():
+                    logger.info('Stopping task submission due to stop signal.')
+                    break
 
-        for thread in threads:
-            add_script_run_ctx(thread)
-            thread.join()
+                # Submit the task to the executor
+                future = executor.submit(
+                    self.send_requests, request_config_batch, llm_responses, progress, start_time, total_request_count
+                )
+                futures.append(future)
+                for t in executor._threads:
+                    add_script_run_ctx(t)
+
+            # Wait for all tasks to complete
+            for future in as_completed(futures):
+                try:
+                    # Retrieve result if needed
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error occurred in a thread: {e}")
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')
@@ -895,31 +930,36 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx += num_requests_for_thread
             request_config_batches.append(request_config_batch)
-
-        # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
-        # completed requests respectively
-        threads: List[threading.Thread] = []
+        
+        # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
-        # Send request threads and add to the threads array
-        for request_config_batch in request_config_batches:
-            if self.stop_event.is_set():
-                logger.info('Stopping thread creation due to stop signal.')
-                break
+        # Use ThreadPoolExecutor to handle threads
+        with ThreadPoolExecutor() as executor:
+            # Store futures for the tasks
+            futures = []
 
-            thread = threading.Thread(
-                target=self.send_requests,
-                args=(request_config_batch, llm_responses, progress, start_time, num_requests),
-            )
-            threads.append(thread)
-            add_script_run_ctx(thread)  # Add Streamlit context to thread
-            thread.start()
+            for request_config_batch in request_config_batches:
+                if self.stop_event.is_set():
+                    logger.info('Stopping task submission due to stop signal.')
+                    break
 
-        # Wait for all threads to complete
-        for thread in threads:
-            add_script_run_ctx(thread)
-            thread.join()
+                # Submit the task to the executor
+                future = executor.submit(
+                    self.send_requests, request_config_batch, llm_responses, progress, start_time, num_requests
+                )
+                futures.append(future)
+                for t in executor._threads:
+                    add_script_run_ctx(t)
+
+            # Wait for all tasks to complete
+            for future in as_completed(futures):
+                try:
+                    # Retrieve result if needed
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error occurred in a thread: {e}")
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')
@@ -1172,34 +1212,39 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
 
-        # Create empty `threads` and `completed_requests` arrays to be populated with execution threads and
-        # completed requests respectively
-        threads: List[threading.Thread] = []
+        # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
-        progress = []
+        progress: List[Any] = []
 
-        # Send request threads and add to the threads array
-        for request_config in request_configs:
-            if self.stop_event.is_set():
-                logger.info('Stopping thread creation due to stop signal.')
-                break
+        # Use ThreadPoolExecutor to handle threads
+        with ThreadPoolExecutor() as executor:
+            # Store futures for the tasks
+            futures = []
 
-            thread = threading.Thread(
-                target=self.send_requests,
-                args=([request_config], llm_responses, progress, start_time, num_requests),
-            )
-            threads.append(thread)
-            add_script_run_ctx(thread)  # Add Streamlit context to thread
-            thread.start()
-            
-            # Get wait time based on the distribution
-            wait_time = self._get_wait_time()
-            time.sleep(wait_time)
+            for request_config in request_configs:
+                if self.stop_event.is_set():
+                    logger.info('Stopping task submission due to stop signal.')
+                    break
 
-        # Wait for all threads to complete
-        for thread in threads:
-            add_script_run_ctx(thread)
-            thread.join()
+                # Submit the task to the executor
+                future = executor.submit(
+                    self.send_requests, [request_config], llm_responses, progress, start_time, num_requests
+                )
+                futures.append(future)
+                for t in executor._threads:
+                    add_script_run_ctx(t)
+
+                # Get wait time based on the distribution
+                wait_time = self._get_wait_time()
+                time.sleep(wait_time)
+
+            # Wait for all tasks to complete
+            for future in as_completed(futures):
+                try:
+                    # Retrieve result if needed
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error occurred in a thread: {e}")
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')
