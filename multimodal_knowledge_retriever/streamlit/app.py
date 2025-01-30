@@ -37,7 +37,14 @@ LVLM_MODELS = [
     'Llama-3.2-90B-Vision-Instruct',
 ]
 # Available models in dropdown menu
-LLM_MODELS = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-405B-Instruct', 'Meta-Llama-3.1-8B-Instruct']
+LLM_MODELS = [
+    'Meta-Llama-3.1-70B-Instruct',
+    ' Meta-Llama-3.3-70B-Instruct',
+    'Meta-Llama-3.1-405B-Instruct',
+    'Meta-Llama-3.1-8B-Instruct',
+    'Qwen2.5-72B-Instruct',
+    'QwQ-32B-Preview',
+]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 

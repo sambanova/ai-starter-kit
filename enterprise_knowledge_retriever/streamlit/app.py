@@ -28,6 +28,15 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
+# Available models in dropdown menu
+LLM_MODELS = [
+    'Meta-Llama-3.1-70B-Instruct',
+    'Meta-Llama-3.3-70B-Instruct',
+    'Meta-Llama-3.1-405B-Instruct',
+    'Meta-Llama-3.1-8B-Instruct',
+    'Qwen2.5-72B-Instruct',
+    'QwQ-32B-Preview',
+]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
@@ -292,6 +301,15 @@ def main() -> None:
                             '.xlsx',
                         ],
                     )
+                st.markdown('**Optional Set a specific multimodal model and LLM**')
+                llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
+                if st.button('set_model'):
+                    st.session_state.document_retrieval.set_llm(llm_model)
+                    # set again qa chain with out ingestion in case step 2 was done previously to avoid re ingestion
+                    if st.session_state.conversation is not None:
+                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                            conversational=conversational
+                        )
                 st.markdown('**2. Process your documents and create vector store**')
                 st.markdown(
                     '**Note:** Depending on the size and number of your documents, this could take several minutes'
