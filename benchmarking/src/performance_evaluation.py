@@ -526,31 +526,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
             idx = idx + num_requests_for_thread
             request_config_batches.append(request_config_batch)
-
-        # threads: List[threading.Thread] = []
-        # llm_responses: List[LLMResponse] = []
-        # progress: List[Any] = []
-
-        # for request_config_batch in request_config_batches:
-        #     if self.stop_event.is_set():
-        #         logger.info('Stopping thread creation due to stop signal.')
-        #         break
-
-        #     thread = threading.Thread(
-        #         target=self.send_requests,
-        #         args=(request_config_batch, llm_responses, progress, start_time, total_request_count),
-        #     )
-        #     threads.append(thread)
-        #     add_script_run_ctx(thread)  # Give Streamlit context to thread
-        #     thread.start()
-
-        # for thread in threads:
-        #     add_script_run_ctx(thread)
-        #     thread.join()
-
-        # if self.stop_event.is_set():
-        #     logger.info('Benchmarking process terminated early due to stop signal.')
-        #     return {}, []
         
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
