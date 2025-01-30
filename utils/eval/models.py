@@ -31,7 +31,6 @@ class CorrectnessLLMJudge(Scorer):
         model_name (str): The specific name of the model to be used.
         temperature (float): Sampling temperature for the model.
         max_tokens (int): Maximum number of tokens to generate.
-        top_k (Optional[int]): Number of top tokens to consider (default is 10).
         top_p (Optional[float]): Nucleus sampling parameter (default is 0.1).
         streaming (bool): Whether to use streaming (default is False).
         include_usage (Optional[bool]): Flag to include usage information (default is False).
@@ -42,7 +41,6 @@ class CorrectnessLLMJudge(Scorer):
     model_name: str
     temperature: float
     max_tokens: int
-    top_k: Optional[int] = 10
     top_p: Optional[float] = 0.1
     streaming: bool = False
     include_usage: Optional[bool] = False
@@ -88,7 +86,6 @@ class CorrectnessLLMJudge(Scorer):
             model=self.model_name,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
-            top_k=self.top_k,
             top_p=self.top_p,
             streaming=self.streaming,
             stream_options={'include_usage': True},
@@ -122,7 +119,6 @@ class WeaveChatModel(Model):
         model_name (str): The specific name of the model to be used.
         temperature (float): Sampling temperature for the model.
         max_tokens (int): Maximum number of tokens to generate.
-        top_k (Optional[int]): Number of top tokens to consider (default is 10).
         top_p (Optional[float]): Nucleus sampling parameter (default is 0.1).
         streaming (bool): Whether to use streaming (default is False).
         include_usage (Optional[bool]): Flag to include usage information (default is False).
@@ -133,7 +129,6 @@ class WeaveChatModel(Model):
     model_name: str
     temperature: float
     max_tokens: int
-    top_k: Optional[int] = 10
     top_p: Optional[float] = 0.1
     streaming: bool = False
     include_usage: Optional[bool] = False
@@ -164,7 +159,6 @@ class WeaveChatModel(Model):
             model=self.model_name,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
-            top_k=self.top_k,
             top_p=self.top_p,
             streaming=self.streaming,
             stream_options={'include_usage': True},
@@ -197,7 +191,6 @@ class WeaveRAGModel(Model):
         model (str): The specific name of the model to be used.
         temperature (float): Sampling temperature for the model.
         max_tokens (int): Maximum number of tokens to generate.
-        top_k (Optional[int]): Number of top tokens to consider (default is 10).
         top_p (Optional[float]): Nucleus sampling parameter (default is 0.1).
         streaming (bool): Whether to use streaming (default is False).
         include_usage (Optional[bool]): Flag to include usage information (default is False).
@@ -208,7 +201,6 @@ class WeaveRAGModel(Model):
     model: str
     temperature: float
     max_tokens: int
-    top_k: Optional[int] = 10
     top_p: Optional[float] = 0.1
     streaming: bool = False
     include_usage: Optional[bool] = False
