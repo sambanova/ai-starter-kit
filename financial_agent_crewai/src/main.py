@@ -25,12 +25,12 @@ from financial_agent_crewai.src.crews.decomposition_crew.decomposition_crew impo
     DecompositionCrew,
 )
 from financial_agent_crewai.src.crews.generic_research_crew.generic_research_crew import GenericResearchCrew
-from financial_agent_crewai.src.crews.information_extraction_crew.information_extraction_crew import (
-    InformationExtractionCrew,
-)
 from financial_agent_crewai.src.crews.rag_crew.rag_crew import RAGCrew
 from financial_agent_crewai.src.crews.report_crew.report_crew import ReportCrew
 from financial_agent_crewai.src.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
+from financial_agent_crewai.src.crews.sorting_hat_crew.sorting_hat_crew import (
+    SortingHatCrew,
+)
 from financial_agent_crewai.src.crews.yfinance_news_crew.yfinance_news_crew import YahooFinanceNewsCrew
 
 # from financial_agent_crewai.src.crews.yfinance_stocks_crew.yfinance_stocks_crew import YFinanceStockCrew
@@ -158,7 +158,7 @@ class FinancialFlow(Flow):  # type: ignore
             decomposed_query = '.'.join(query_list)
 
             company_input_list = (
-                InformationExtractionCrew(llm=LLM(model=INFORMATION_EXTRACTION_MODEL, temperature=TEMPERATURE))
+                SortingHatCrew(llm=LLM(model=INFORMATION_EXTRACTION_MODEL, temperature=TEMPERATURE))
                 .crew()
                 .kickoff(inputs={'query': decomposed_query})
                 .pydantic.inputs_list
@@ -221,15 +221,15 @@ class FinancialFlow(Flow):  # type: ignore
 
                     # Concatenate the text from the SEC reports
                     with open(global_sec_filename, 'a') as target:
+                        # Add delimiter
+                        target.write('<start>---\n')
                         target.write(
                             f'Context for the company {filing_metadata.company} and year {filing_metadata.year}.\n'  # type: ignore
                         )
-                        # Add delimiter
-                        target.write('---\n')
                         # Add the content of the SEC
                         target.write(content)
                         # Add delimiter
-                        target.write('---\n')
+                        target.write('\n<end>---\n\n')
 
                 except FileNotFoundError:
                     logger.warning('One of the files was not found. Please check the file paths.')
@@ -298,14 +298,16 @@ class FinancialFlow(Flow):  # type: ignore
 
                     # Concatenate the text from the SEC reports
                     with open(global_yfinance_news_filename, 'a') as target:
+                        # Add delimiter
+                        target.write('<start>---\n')
+
                         # Add title
                         target.write(company + '\n')
-                        # Add delimiter
-                        target.write('---\n')
+
                         # Add the content of the SEC
                         target.write(content)
                         # Add delimiter
-                        target.write('---\n')
+                        target.write('\n<end>---\n')
 
                 except FileNotFoundError:
                     logger.warning('One of the files was not found. Please check the file paths.')
@@ -372,14 +374,14 @@ class FinancialFlow(Flow):  # type: ignore
             f.write('# ' + self.query + '\n\n')
 
             for section in section_list:
-                f.write(section.summary + '\n')
+                f.write(section.summary + '\n\n')
 
         # Append each section to the final report
         for section in section_list:
             # Open the markdown file
             with open(self.final_report_path, 'a') as f:
-                # Append the section title
-                f.write(section.title + '\n\n')
+                # Append the section content
+                f.write(section.title + '\n')
 
                 # Append the section content
                 f.write(section.content + '\n\n')
@@ -391,8 +393,6 @@ class FinancialFlow(Flow):  # type: ignore
 
         # Convert the HTML content to a PDF file
         HTML(string=html_content).write_pdf(CACHE_DIR / 'output.pdf')
-
-        return
 
 
 def run() -> None:

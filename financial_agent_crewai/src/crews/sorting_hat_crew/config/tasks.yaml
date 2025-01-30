@@ -1,3 +1,10 @@
+# sorting_task:
+#   description: >
+#     Determine which financial data sources to use for the user query.
+#   expected_output:  >
+#     A structured output.
+#   agent: sorting_hat
+
 extraction_task:
   description: >
     Extract information items from the user query and organize them in a structured output.

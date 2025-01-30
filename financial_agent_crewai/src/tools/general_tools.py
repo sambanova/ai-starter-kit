@@ -89,6 +89,6 @@ def convert_csv_source_to_txt_report_filename(source_filename: str) -> str:
     if source_filename.endswith('.csv'):
         return str(Path(Path(source_filename).parent) / ('report_' + Path(source_filename).name.strip('.csv') + '.txt'))
     elif source_filename.endswith('.txt'):
-        return str(Path(Path(source_filename).parent) / ('report_' + Path(source_filename).name.strip('.csv') + '.txt'))
+        return str(Path(Path(source_filename).parent) / ('report_' + Path(source_filename).name))
     else:
         raise ValueError('Source filename must end with either ".csv" or ".txt".')

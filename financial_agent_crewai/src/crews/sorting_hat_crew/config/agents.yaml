@@ -1,3 +1,12 @@
+# sorting_hat:
+#   role: >
+#     Sorting Hat
+#   goal: >
+#     Determine which data source to use based on the user query.
+#     Query: {query}
+#   backstory: >
+#     You are a financial researcher who is tasked with determining which data source to use based on the user query.
+
 extractor:
   role: >
     Information Extractor

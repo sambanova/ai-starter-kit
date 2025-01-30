@@ -6,4 +6,4 @@ class ReportSectionSummary(BaseModel):
 
     title: str = Field(..., description='The section title.')
     summary: str = Field(..., description='The section summary')
-    content: str = Field(..., description='The fully detailed section, formatted in markdown.')
+    content: str = Field(..., description='The fully detailed and expanded section, formatted in markdown.')

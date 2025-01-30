@@ -2,16 +2,10 @@ from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-
-# If you want to run a snippet of code before or after the crew starts,
-# you can use the @before_kickoff and @after_kickoff decorators
-# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList
 
-# Set up your SERPER_API_KEY key in an .env file, eg:
-# SERPER_API_KEY=<your api key>
 load_dotenv()
 
 

@@ -35,9 +35,8 @@ class SecEdgarFilingsInput(BaseModel):
     year: int = Field(default=2024, description='The year of the filing. If not specified, the default is 2024.')
     query: str = Field(
         ...,
-        description='A reformulation and generalisation of the user query, cleaned of any SEC Edgar filings metadata.'
-        'The query should not include any filing metadata, e.g. filing type, filing_quarter, and filing year.'
-        'If the original query is too general, just ask for a summary of the main points.',
+        description='A reformulation of the user query, tailored to correspond '
+        'to the particular company and (if mentioned in the original query) year.',
     )
 
 

@@ -1,12 +1,11 @@
 reporting_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report,
-    and then add a section summary and a title.
+    Review the context you got and expand each topic into a full section for a report.
     Make sure the report is detailed and contains any and all relevant information.
   expected_output: >
-    A fully detailed report section with the main topics expanded as subsections,
-    a summary, and a title.
-    All the elements should be formatted as markdown without '```': ## for title, ### for subtitle, etc.
+    A fully detailed report section with the main topics expanded as subsections.
+    All the elements should be formatted as markdown without '```':
+    ## for section title (only one per section), ### for subsection, etc.
   agent: reporting_analyst
 
 summarization:

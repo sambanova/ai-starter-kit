@@ -2,7 +2,7 @@ reporting_analyst:
   role: >
     Finance Reporting Analyst
   goal: >
-    Create a fully detailed report section, preceded by the corresponding summary and title,
+    Create a fully detailed report section,
     based on the provided financial data analysis and financial research findings.
     Section: {section}.
   backstory: >
