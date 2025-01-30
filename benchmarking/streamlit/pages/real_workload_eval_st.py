@@ -13,10 +13,11 @@ import streamlit as st
 import yaml
 from st_pages import hide_pages
 
-from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
     APP_PAGES,
     LLM_API_OPTIONS,
+    QPS_DISTRIBUTION_OPTIONS,
     find_pages_to_hide,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
@@ -52,6 +53,10 @@ def _initialize_session_variables() -> None:
         st.session_state.timeout = None
     if 'llm_api' not in st.session_state:
         st.session_state.llm_api = None
+    if 'qps' not in st.session_state:
+        st.session_state.qps = None
+    if 'qps_distribution' not in st.session_state:
+        st.session_state.qps_distribution = None
 
     # Additional initializations
     if 'run_button' in st.session_state and st.session_state.run_button == True:
@@ -80,10 +85,11 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     api_variables = set_api_variables()
 
     # Call benchmarking process
-    st.session_state.performance_evaluator = SyntheticPerformanceEvaluator(
+    st.session_state.performance_evaluator = RealWorkLoadPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
-        num_concurrent_requests=st.session_state.number_concurrent_requests,
+        qps=st.session_state.qps,
+        qps_distribution=st.session_state.qps_distribution,
         timeout=st.session_state.timeout,
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
@@ -118,9 +124,9 @@ def main() -> None:
     else:
         hide_pages([APP_PAGES['setup']['page_label']])
 
-    st.title(':orange[SambaNova] Synthetic Performance Evaluation')
+    st.title(':orange[SambaNova] Real Workload Performance Evaluation')
     st.markdown(
-        """This performance evaluation assesses the following LLM's performance metrics using concurrent processes.
+        """This performance evaluation assesses the following LLM's performance metrics using requests sent as close as real workload scenarios.
         _client represents the metrics computed from the client-side (includes queue and round-trip time 
         from host to server and back) and _server represents the metrics computed from the server-side."""
     )
@@ -200,12 +206,20 @@ def main() -> None:
             disabled=st.session_state.running,
         )
 
-        st.session_state.number_concurrent_requests = st.number_input(
-            'Number of concurrent requests',
-            min_value=1,
-            max_value=100,
-            value=1,
-            step=1,
+        st.session_state.qps = st.number_input(
+            'Queries per second',
+            min_value=0.5,
+            max_value=10.0,
+            value=1.0,
+            step=0.5,
+            disabled=st.session_state.running,
+        )
+        
+        st.session_state.qps_distribution = st.selectbox(
+            'Queries per second distribution',
+            options=list(QPS_DISTRIBUTION_OPTIONS.keys()),
+            format_func=lambda x: QPS_DISTRIBUTION_OPTIONS[x],
+            index=0,
             disabled=st.session_state.running,
         )
 
@@ -227,7 +241,7 @@ def main() -> None:
         st.session_state.performance_evaluator.stop_benchmark()
 
     if st.session_state.running:
-        st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
+        st.session_state.mp_events.input_submitted('real_workload_evaluation')
         st.toast('Performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             st.session_state.progress_bar = st.progress(0)
@@ -240,7 +254,7 @@ def main() -> None:
             except Exception as e:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
-                st.session_state.df_req_info = None
+                st.session_state.df_req_info=None
             if do_rerun:
                 st.rerun()
 
@@ -297,7 +311,6 @@ def main() -> None:
 
         # Once results are given, reset running state and ending threads just in case.
         sidebar_stop = True
-
 
 if __name__ == '__main__':
     st.set_page_config(

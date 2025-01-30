@@ -8,10 +8,15 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
+QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
     'synthetic_eval': {
         'file_path': 'streamlit/pages/synthetic_performance_eval_st.py',
         'page_label': 'Synthetic Performance Evaluation',
+    },
+    'real_workload_eval': {
+        'file_path': 'streamlit/pages/real_workload_eval_st.py',
+        'page_label': 'Real Workload Evaluation',
     },
     'custom_eval': {
         'file_path': 'streamlit/pages/custom_performance_eval_st.py',
