@@ -24,7 +24,7 @@ class SecEdgarFilingsInput(BaseModel):
     company: str = Field(..., description='The company name.')
     filing_type: str = Field(
         default='10-K',
-        description='The type of filing (either "10-K" for yearly filings or "10-Q" for quarterly filings). '
+        description='Either "10-K" for yearly filings or "10-Q" for quarterly filings. '
         'If not specified, always choose "10-K".',
     )
     filing_quarter: Optional[int] = Field(

@@ -16,6 +16,7 @@ import markdown
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
+from langtrace_python_sdk import langtrace  # type: ignore
 
 # Must precede any llm module imports
 from weasyprint import HTML  # type: ignore
@@ -35,7 +36,7 @@ from financial_agent_crewai.src.crews.yfinance_news_crew.yfinance_news_crew impo
 
 # from financial_agent_crewai.src.crews.yfinance_stocks_crew.yfinance_stocks_crew import YFinanceStockCrew
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList, convert_csv_source_to_txt_report_filename
-from financial_agent_crewai.src.tools.report_tools import ReportSectionSummary
+from financial_agent_crewai.src.tools.report_tools import ReportSection
 from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput, SecEdgarFilingsInputsList
 from financial_agent_crewai.src.utils.config import *
 from financial_agent_crewai.src.utils.utilities import clear_directory
@@ -45,7 +46,7 @@ warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
 
 # agentops.init(api_key=os.getenv('AGENTOPS_API_KEY'), auto_start_session=False)
-# langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
+langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
 
@@ -351,7 +352,7 @@ class FinancialFlow(Flow):  # type: ignore
         self,
     ) -> Any:
         """Write the final financial report."""
-        section_list: List[ReportSectionSummary] = list()
+        section_list: List[ReportSection] = list()
         for report in self.report_list:
             # Load the text file
             with open(report, 'r') as f:
@@ -381,8 +382,7 @@ class FinancialFlow(Flow):  # type: ignore
             # Open the markdown file
             with open(self.final_report_path, 'a') as f:
                 # Append the section content
-                f.write(section.title + '\n')
-
+                f.write(section.title + '\n\n')
                 # Append the section content
                 f.write(section.content + '\n\n')
 

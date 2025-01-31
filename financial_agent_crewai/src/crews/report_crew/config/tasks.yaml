@@ -1,16 +1,12 @@
 reporting_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Review the provided context and expand each topic into a full section for a report.
+    Make sure the report is detailed and organised in paragraphs/subsections, and contains all relevant information.
+    Do not exceed 1000 words.
   expected_output: >
     A fully detailed report section with the main topics expanded as subsections.
     All the elements should be formatted as markdown without '```':
     ## for section title (only one per section), ### for subsection, etc.
   agent: reporting_analyst
 
-summarization:
-  description: >
-    Summarize the provided section into a few paragraphs (at most 3).
-  expected_output: >
-    A concise summary.
-  agent: summarizer
+
