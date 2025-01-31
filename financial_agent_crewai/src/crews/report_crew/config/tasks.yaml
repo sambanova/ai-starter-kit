@@ -5,6 +5,7 @@ reporting_task:
   expected_output: >
     Provide a fully detailed report section with main topics developed into subsections. 
     Format your submission in Markdown (without triple backticks) as follows:
-    - Use "##" for the section title (only one per section).
-    - Use "###" for subsections (for each main topic and subtopic).
+    • Use "##" for the overall section title (only one per section).
+    • Use "###" for each main topic and subtopic. 
+    • Place a blank line before and after each "###" heading.
   agent: reporting_analyst

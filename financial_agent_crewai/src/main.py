@@ -121,17 +121,16 @@ class FinancialFlow(Flow):  # type: ignore
         clear_directory(self.cache_path)
 
     @start()  # type: ignore
-    def generic_research(self) -> Any:
+    def generic_research(self) -> str:
         """Perform a generic research on the user query."""
 
         if self.source_generic_search:
+            self.report_list.append(self.generic_report_name)
             GenericResearchCrew(
                 llm=LLM(model=GENERIC_RESEARCH_MODEL, temperature=TEMPERATURE), filename=self.generic_report_name
-            ).crew()
+            ).crew().kickoff(inputs={'query': self.query})
 
-            self.report_list.append(self.generic_report_name)
-            return self.research_crew.kickoff(inputs={'query': self.query})
-
+            return self.generic_report_name
         else:
             return ''
 
@@ -190,7 +189,7 @@ class FinancialFlow(Flow):  # type: ignore
 
         if self.source_sec_filings:
             # Initialize an empty text file
-            global_sec_filename = str(self.cache_path / 'sec_filings.txt')
+            global_sec_filename = str(self.cache_path / 'comparison_sec_filings.txt')
 
             sec_reports_list = list()
             for filing_metadata in sec_edgar_inputs_list:
@@ -274,7 +273,7 @@ class FinancialFlow(Flow):  # type: ignore
             company_list = [filing_metadata.company for filing_metadata in sec_edgar_inputs_list]  # type: ignore
 
             yfinace_news_reports_list: List[str] = list()
-            global_yfinance_news_filename = str(self.cache_path / 'yfinance_news.txt')
+            global_yfinance_news_filename = str(self.cache_path / 'comparison_yfinance_news.txt')
             for symbol, query, company in zip(symbol_list, query_list, company_list):
                 filename = (
                     YahooFinanceNewsCrew(llm=LLM(model=YFINANCE_NEWS_MODEL, temperature=TEMPERATURE))

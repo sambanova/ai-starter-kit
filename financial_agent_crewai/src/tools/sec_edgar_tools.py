@@ -43,9 +43,13 @@ class SecEdgarFilingsInput(BaseModel):
     )
     year: int = Field(
         default_factory=lambda: date.today().year,
-        description='The year of the filing. If a user query is about a given year, '
-        'the corresponding annual filing (10-K) year might be the next year. '
-        'If not specified, the default is the current calendar year.',
+        ge=1900,
+        description=(
+            'Year of the filing. '
+            # 'If a user references a specific year, the filing year corresponds '
+            # 'to that year plus one (e.g., a request for 2023 implies a 2024 10-K). '
+            # 'If not specified, the default is the current calendar year.'
+        ),
     )
     query: str = Field(
         ...,
@@ -71,6 +75,8 @@ class SecEdgarFilingRetriever(BaseTool):  # type: ignore
         # Check the filing type
         if self.filing_metadata.filing_type not in ['10-K', '10-Q']:
             self.filing_metadata.filing_type = '10-K'
+        if self.filing_metadata.filing_type == '10-K':
+            self.filing_metadata.year += 1
 
         # Retrieve the filing text from SEC Edgar
         try:
