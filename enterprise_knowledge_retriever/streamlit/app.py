@@ -105,7 +105,7 @@ def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) ->
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print(f'Failed to delete {file_path}. Reason: {e}')
+                logging.error(f'Failed to delete {file_path}. Reason: {e}')
 
     # Save all selected files to the tmp dir with their file names
     for doc in docs:
@@ -140,6 +140,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
                 sources_text += f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
             st.session_state.sources_history.append(sources_text)
         except Exception as e:
+            logging.error(f'An error occurred while processing your question: {str(e)}')
             st.error(f'An error occurred while processing your question: {str(e)}')
 
     for ques, ans, source in zip(
@@ -184,6 +185,7 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
         try:
             return DocumentRetrieval(sambanova_api_key=sambanova_api_key)
         except Exception as e:
+            logging.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
             st.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
             return None
     return None
@@ -343,6 +345,7 @@ def main() -> None:
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
+                            logging.error(f'An error occurred while processing: {str(e)}')
                             if prod_mode:
                                 st.error(f'An error occurred while processing')
                             else:
@@ -375,6 +378,7 @@ def main() -> None:
                                 )
                                 st.session_state.input_disabled = False
                             except Exception as e:
+                                logging.error(f'An error occurred while processing and saving: {str(e)}')
                                 st.error(f'An error occurred while processing and saving: {str(e)}')
 
             elif isinstance(datasource, str) and not prod_mode and 'Use existing' in datasource:
@@ -409,6 +413,7 @@ def main() -> None:
                                     )
                                     st.session_state.input_disabled = False
                                 except Exception as e:
+                                    logging.error(f'An error occurred while loading the database: {str(e)}')
                                     st.error(f'An error occurred while loading the database: {str(e)}')
                             else:
                                 st.error('Database not present at ' + db_path, icon='🚨')
