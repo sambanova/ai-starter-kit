@@ -271,13 +271,21 @@ class DocumentRetrieval:
 
         return llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
-    def set_llm(self) -> BaseChatModel:
+    def set_llm(self, model: Optional[str] = None) -> BaseChatModel:
+        """
+        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
+
+        Parameters:
+        Model (str): The name of the model to use for the LVLM (overwrites the param set in config).
+        """
+        if model is None:
+            model = self.llm_info['model']
         llm = APIGateway.load_chat(
             type=self.llm_info['api'],
             do_sample=self.llm_info['do_sample'],
             max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            model=self.llm_info['model'],
+            model=model,
             process_prompt=False,
             sambanova_api_key=self.sambanova_api_key,
         )
