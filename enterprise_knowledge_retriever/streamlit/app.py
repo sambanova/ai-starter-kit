@@ -343,7 +343,10 @@ def main() -> None:
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
-                            st.error(f'An error occurred while processing: {str(e)}')
+                            if prod_mode:
+                                st.error(f'An error occurred while processing')
+                            else:
+                                st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')
