@@ -1,9 +1,8 @@
 """
 Main module for the Finanicial Flow.
 
-This module implements a workflow for generating financial content using
-multiple specialized AI crews. It handles the coordination between research
-and content creation phases.
+This module implements a workflow for generating financial content using multiple specialized AI crews.
+It handles the coordination between research and content creation phases.
 """
 
 import logging
@@ -17,8 +16,6 @@ from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langtrace_python_sdk import langtrace  # type: ignore
-
-# Must precede any llm module imports
 from weasyprint import HTML  # type: ignore
 
 from financial_agent_crewai.src.crews.context_analysis_crew.context_analysis_crew import ContextAnalysisCrew
@@ -45,7 +42,7 @@ from utils.model_wrappers.api_gateway import APIGateway
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
 
-# agentops.init(api_key=os.getenv('AGENTOPS_API_KEY'), auto_start_session=False)
+
 langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
@@ -76,27 +73,24 @@ class FinancialFlow(Flow):  # type: ignore
         """Initialize the finance flow with research, RAG, and content creation crews."""
         super().__init__()
 
+        # User query
         self.query = query
+
+        # Data sources
         self.source_generic_search = source_generic_search
         self.source_sec_filings = source_sec_filings
         self.source_yfinance_news = source_yfinance_news
         self.source_yfinance_stocks = source_yfinance_stocks
+
+        # Report paths
         self.final_report_path = str(CACHE_DIR / 'final_report.md')
         self.report_list: List[str] = list()
         self.generic_report_name = str(CACHE_DIR / 'report_generic_search.txt')
 
-        if cache_path is not None:
-            if isinstance(cache_path, Path):
-                self.cache_path = cache_path
-            elif isinstance(cache_path, str):
-                self.cache_path = Path(cache_path)
-            else:
-                raise TypeError(f'`cache_path` must be a Path or str. Got {type(cache_path)}')
-        else:
-            self.cache_path = CACHE_DIR if isinstance(CACHE_DIR, Path) else Path(CACHE_DIR)
-
+        # General LLM
         self.llm = LLM(model=GENERAL_MODEL, temperature=TEMPERATURE)
 
+        # RAG LLM
         self.rag_llm = APIGateway.load_llm(
             type='sncloud',
             streaming=False,
@@ -109,9 +103,16 @@ class FinancialFlow(Flow):  # type: ignore
             sambanova_api_key=os.getenv('SAMBANOVA_API_KEY'),
         )
 
-        self.research_crew = GenericResearchCrew(
-            llm=LLM(model=GENERIC_RESEARCH_MODEL, temperature=TEMPERATURE), filename=self.generic_report_name
-        ).crew()
+        # Create cache path
+        if cache_path is not None:
+            if isinstance(cache_path, Path):
+                self.cache_path = cache_path
+            elif isinstance(cache_path, str):
+                self.cache_path = Path(cache_path)
+            else:
+                raise TypeError(f'`cache_path` must be a Path or str. Got {type(cache_path)}')
+        else:
+            self.cache_path = CACHE_DIR if isinstance(CACHE_DIR, Path) else Path(CACHE_DIR)
 
         # Create the cache directory if it does not exist
         os.makedirs(self.cache_path, exist_ok=True)
@@ -121,10 +122,13 @@ class FinancialFlow(Flow):  # type: ignore
 
     @start()  # type: ignore
     def generic_research(self) -> Any:
-        """
-        Perform a generic research on the user query.
-        """
+        """Perform a generic research on the user query."""
+
         if self.source_generic_search:
+            GenericResearchCrew(
+                llm=LLM(model=GENERIC_RESEARCH_MODEL, temperature=TEMPERATURE), filename=self.generic_report_name
+            ).crew()
+
             self.report_list.append(self.generic_report_name)
             return self.research_crew.kickoff(inputs={'query': self.query})
 
@@ -133,9 +137,8 @@ class FinancialFlow(Flow):  # type: ignore
 
     @start()  # type: ignore
     def query_decomposition(self) -> Any:
-        """
-        Decompose the user query.
-        """
+        """Decompose the user query into a list of sub-queries."""
+
         if self.source_sec_filings or self.source_yfinance_news or self.source_yfinance_stocks:
             query_list = (
                 DecompositionCrew(llm=LLM(model=DECOMPOSITION_MODEL, temperature=TEMPERATURE))
@@ -143,6 +146,8 @@ class FinancialFlow(Flow):  # type: ignore
                 .kickoff(inputs={'query': self.query})
                 .pydantic
             )
+
+            # Whether the original query entails a comparison
             self.is_comparison = query_list.is_comparison
 
             return query_list.queries_list
@@ -151,9 +156,8 @@ class FinancialFlow(Flow):  # type: ignore
 
     @listen(query_decomposition)  # type: ignore
     def information_extraction(self, query_list: List[str]) -> Any:
-        """
-        Decompose the user query.
-        """
+        """Extract the relevant information from the user query."""
+
         if self.source_sec_filings or self.source_yfinance_news or self.source_yfinance_stocks:
             # Concatenate the sub-queries into a long query
             decomposed_query = '.'.join(query_list)
@@ -182,9 +186,8 @@ class FinancialFlow(Flow):  # type: ignore
 
     @listen(information_extraction)  # type: ignore
     def sec_edgar(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
-        """
-        Retrieve the relevant SEC Edgar filings and perform RAG on the user query.
-        """
+        """Retrieve the relevant SEC Edgar filings and perform RAG on the user query."""
+
         if self.source_sec_filings:
             # Initialize an empty text file
             global_sec_filename = str(self.cache_path / 'sec_filings.txt')
@@ -237,6 +240,7 @@ class FinancialFlow(Flow):  # type: ignore
                 except Exception as e:
                     logger.warning(f'An error occurred: {e}')
 
+            # Document comparison
             if len(sec_reports_list) > 1 and self.is_comparison:
                 # Extract the text from the global text file
                 with open(global_sec_filename, 'r') as source:
@@ -262,9 +266,8 @@ class FinancialFlow(Flow):  # type: ignore
 
     @listen(information_extraction)  # type: ignore
     def yfinance_news(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
-        """
-        Retrieve relevant news articles from Yahoo Finance for a particular company
-        """
+        """Retrieve relevant news articles from Yahoo Finance News for a particular company."""
+
         if self.source_yfinance_news:
             symbol_list = [filing_metadata.ticker_symbol for filing_metadata in sec_edgar_inputs_list]  # type: ignore
             query_list = [filing_metadata.query for filing_metadata in sec_edgar_inputs_list]  # type: ignore
@@ -315,6 +318,7 @@ class FinancialFlow(Flow):  # type: ignore
                 except Exception as e:
                     logger.warning(f'An error occurred: {e}')
 
+            # Document comparison
             if len(yfinace_news_reports_list) > 1 and self.is_comparison:
                 # Extract the text from the global text file
                 with open(global_yfinance_news_filename, 'r') as source:
@@ -342,9 +346,8 @@ class FinancialFlow(Flow):  # type: ignore
 
     @listen(information_extraction)  # type: ignore
     def yfinance_stocks(self, sec_edgar_inputs_list: SecEdgarFilingsInputsList) -> List[str]:
-        """
-        Analyse the yfinance stock information for a list of companies.
-        """
+        """Analyse the yfinance stock information for a list of companies."""
+
         pass
 
     @listen(and_(generic_research, sec_edgar, yfinance_news, yfinance_stocks))  # type: ignore
@@ -352,6 +355,7 @@ class FinancialFlow(Flow):  # type: ignore
         self,
     ) -> Any:
         """Write the final financial report."""
+
         section_list: List[ReportSection] = list()
         for report in self.report_list:
             # Load the text file
@@ -397,6 +401,7 @@ class FinancialFlow(Flow):  # type: ignore
 
 def run() -> None:
     """Initialize and start the financial content generation process."""
+
     finance_flow = FinancialFlow(
         query=USER_QUERY,
         source_generic_search=SOURCE_GENERIC_SEARCH,
@@ -409,6 +414,7 @@ def run() -> None:
 
 def plot() -> None:
     """Generate and display a visualization of the flow structure."""
+
     finance_flow = FinancialFlow(query=USER_QUERY)
     plot_filename = str(CACHE_DIR / 'flow')
     finance_flow.plot(filename=plot_filename)
@@ -416,5 +422,4 @@ def plot() -> None:
 
 if __name__ == '__main__':
     plot()
-
     run()

@@ -12,15 +12,15 @@ from crewai import LLM
 
 @CrewBase
 class SortingHatCrew:
-    """SECEdgarCrew crew."""
+    """SortingHatCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, llm: LLM) -> None:
-        """Initialize the research crew."""
+        """Initialize the SortingHatCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -30,16 +30,16 @@ class SortingHatCrew:
 
     @agent  # type: ignore
     def extractor(self) -> Agent:
+        """Add the Information Extractor Agent."""
         return Agent(
             config=self.agents_config['extractor'],
             verbose=True,
             llm=self.llm,
-            task='extraction_task',
-            memory=True,
         )
 
     @task  # type: ignore
     def extraction_task(self) -> Task:
+        """Add the Extraction Task."""
         return Task(
             config=self.tasks_config['extraction_task'],
             output_pydantic=SecEdgarFilingsInputsList,
@@ -47,7 +47,7 @@ class SortingHatCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
+        """Create the SortingHatCrew crew."""
 
         return Crew(
             agents=self.agents,

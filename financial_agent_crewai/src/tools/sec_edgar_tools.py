@@ -1,6 +1,8 @@
 import datetime
 import logging
 import os
+from datetime import date
+from enum import Enum
 from typing import Dict, List, Optional
 
 import requests
@@ -15,33 +17,45 @@ from financial_agent_crewai.src.utils.config import CACHE_DIR
 logger = logging.getLogger(__name__)
 
 
+class FilingType(str, Enum):
+    TEN_K = '10-K'
+    TEN_Q = '10-Q'
+
+
 class SecEdgarFilingsInput(BaseModel):
     """
-    Tool for retrieving a single financial filing from SEC Edgar about a given company and a given year.
+    Model for retrieving a single financial filing from SEC Edgar
+    about a given company and a given year.
     """
 
-    ticker_symbol: str = Field(..., description='The company ticker symbol.')
-    company: str = Field(..., description='The company name.')
+    ticker_symbol: str = Field(..., min_length=1, description='The company ticker symbol.')
+    company: str = Field(..., min_length=1, description='The company name.')
     filing_type: str = Field(
-        default='10-K',
+        default=FilingType.TEN_K,
         description='Either "10-K" for yearly filings or "10-Q" for quarterly filings. '
         'If not specified, always choose "10-K".',
     )
     filing_quarter: Optional[int] = Field(
         None,
-        description='The quarter of the filing (1, 2, 3, or 4). Defaults to None for no quarter, '
-        'if the information is relevant to financial quarterly filings.',
+        ge=1,
+        le=4,
+        description='The quarter of the filing, if any (1, 2, 3, or 4). Defaults to None for annual filings (10-K).',
     )
-    year: int = Field(default=2024, description='The year of the filing. If not specified, the default is 2024.')
+    year: int = Field(
+        default_factory=lambda: date.today().year,
+        description='The year of the filing. If a user query is about a given year, '
+        'the corresponding annual filing (10-K) year might be the next year. '
+        'If not specified, the default is the current calendar year.',
+    )
     query: str = Field(
         ...,
         description='A reformulation of the user query, tailored to correspond '
-        'to the particular company and (if mentioned in the original query) year.',
+        'to the given company and (if mentioned) year.',
     )
 
 
 class SecEdgarFilingsInputsList(BaseModel):
-    """List of filing metadata."""
+    """Model representing a list of filing metadata."""
 
     inputs_list: List[SecEdgarFilingsInput] = Field(..., description='The list of filing metadata.')
 

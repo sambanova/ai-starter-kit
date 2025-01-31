@@ -1,6 +1,8 @@
 context_analysis_task:
   description: >
-    Review the context you got and answer the user query solely based on the provided context.
+    Review the provided context thoroughly and answer the user’s query
+    solely based on that context. 
+    Your response should reflect the depth of your expertise and attention to detail.
   expected_output: >
-    A fully detailed answer.
+    A comprehensive and fully detailed answer that strictly adheres to the given context.
   agent: context_analyst

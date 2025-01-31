@@ -1,6 +1,8 @@
 reformulation_task:
   description: >
-    Reason and decompose the query into sub-queries corresponding to subsequent steps.
-  expected_output:  >
-    A minimal list of subsequent sub-queries for each invividual company and year.
+    Analyze and decompose the query into sub-queries 
+    corresponding to each company-year pair.
+  expected_output: >
+    A minimal, comprehensive list of sub-queries, 
+    each focusing on only one company and one year.
   agent: reformulator

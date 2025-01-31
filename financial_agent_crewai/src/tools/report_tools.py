@@ -2,10 +2,11 @@ from pydantic import BaseModel, Field
 
 
 class ReportSection(BaseModel):
-    """Class to write a fully detailed report section."""
+    """
+    Model representing a fully detailed report section
+    with title, summary, and content.
+    """
 
-    title: str = Field(..., description='The section title, preceded by ##.')
-    summary: str = Field(..., description='The section summary')
-    content: str = Field(
-        ..., description='The fully detailed and expanded section, formatted in markdown, no more than 1000 words.'
-    )
+    title: str = Field(..., description="The section title. Must start with '##'.")
+    summary: str = Field(..., description='A concise summary of the section.')
+    content: str = Field(..., description='A fully detailed section in Markdown format, limited to 1000 words.')

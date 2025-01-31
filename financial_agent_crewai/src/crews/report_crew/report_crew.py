@@ -11,15 +11,15 @@ load_dotenv()
 
 @CrewBase
 class ReportCrew:
-    """FinancialAgentCrewai crew."""
+    """ReportCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, llm: LLM) -> None:
-        """Initialize the research crew."""
+        """Initialize the ReportCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -29,6 +29,7 @@ class ReportCrew:
 
     @agent  # type: ignore
     def reporting_analyst(self) -> Agent:
+        """Add the Finance Reporting Analyst Agent."""
         return Agent(
             config=self.agents_config['reporting_analyst'],
             verbose=True,
@@ -37,6 +38,7 @@ class ReportCrew:
 
     @task  # type: ignore
     def reporting_task(self) -> Task:
+        """Add the Reporting Task."""
         return Task(
             config=self.tasks_config['reporting_task'],
             output_pydantic=ReportSection,
@@ -44,7 +46,7 @@ class ReportCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
+        """Create the ReportCrew crew."""
 
         return Crew(
             agents=self.agents,

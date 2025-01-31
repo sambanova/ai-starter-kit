@@ -6,16 +6,15 @@ from typing import Optional, Union
 
 def clear_directory(directory: Union[str, Path]) -> Optional[str]:
     """
-    Clears all contents of the specified directory, including all files
-    and subdirectories.
+    Clears all contents of the specified directory,
+    including all files and subdirectories.
 
     Args:
-        directory (str): The path to the directory to clear.
+        directory: The path to the directory to clear.
 
     Returns:
-        Optional[str]: An error message if the directory does not exist or
-                       is not a directory, otherwise None if the operation
-                       is successful.
+        An error message if the directory does not exist or is not a directory,
+        otherwise None if the operation is successful.
 
     Raises:
         OSError: If an error occurs while deleting files or directories.

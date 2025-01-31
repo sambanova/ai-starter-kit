@@ -1,12 +1,10 @@
 reporting_task:
   description: >
-    Review the provided context and expand each topic into a full section for a report.
-    Make sure the report is detailed and organised in paragraphs/subsections, and contains all relevant information.
-    Do not exceed 1000 words.
+    Evaluate the provided context and expand each topic into a thorough report section. 
+    Ensure you include all essential details, maintain a logical structure, and limit the content to 1000 words.
   expected_output: >
-    A fully detailed report section with the main topics expanded as subsections.
-    All the elements should be formatted as markdown without '```':
-    ## for section title (only one per section), ### for subsection, etc.
+    Provide a fully detailed report section with main topics developed into subsections. 
+    Format your submission in Markdown (without triple backticks) as follows:
+    - Use "##" for the section title (only one per section).
+    - Use "###" for subsections (for each main topic and subtopic).
   agent: reporting_analyst
-
-

@@ -1,8 +1,8 @@
 yahoo_finance_research_task:
   description: >
-    Perform web sraping of the Yahoo Finance News website
-    and extract the top news articles that are relevant to the desired company.
+    Perform web scraping of Yahoo Finance News
+    to gather the most relevant articles about the specified company
+    and store them for review.
   expected_output: >
-    The list of full paths of the saved text retrieved from the Yahoo Finance News web pages.
+    A list of the file paths where the retrieved article texts have been saved.
   agent: yahoo_finance_researcher
-

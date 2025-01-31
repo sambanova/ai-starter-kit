@@ -1,7 +1,9 @@
 rag_research_task:
   description: >
-    Answer the user question based solely on the provided context.
+    Based solely on the provided context,
+    craft a comprehensive answer to the user's question.
   expected_output: >
-    A fully detailed answer to the user question, divided in paragraphs.
+    Present a detailed and structured answer,
+    divided into coherent paragraphs
+    that fully satisfy the user’s inquiry.
   agent: rag_researcher
-

@@ -12,15 +12,15 @@ load_dotenv()
 
 @CrewBase
 class YahooFinanceNewsCrew:
-    """FinancialAgentCrewai crew."""
+    """YahooFinanceNewsCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, llm: LLM) -> None:
-        """Initialize the research crew."""
+        """Initialize the YahooFinanceNewsCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -30,6 +30,7 @@ class YahooFinanceNewsCrew:
 
     @agent  # type: ignore
     def yahoo_finance_researcher(self) -> Agent:
+        """Add the Yahoo Finance News Curator Agent."""
         return Agent(
             config=self.agents_config['yahoo_finance_researcher'],
             verbose=True,
@@ -39,6 +40,7 @@ class YahooFinanceNewsCrew:
 
     @task  # type: ignore
     def yahoo_finance_research_task(self) -> Task:
+        """Add the Yahoo Finance Research Task."""
         return Task(
             config=self.tasks_config['yahoo_finance_research_task'],
             output_pydantic=FilenameOutput,
@@ -46,7 +48,7 @@ class YahooFinanceNewsCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
+        """Create the YahooFinanceNewsCrew crew."""
 
         return Crew(
             agents=self.agents,

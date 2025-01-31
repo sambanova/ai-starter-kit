@@ -14,13 +14,13 @@ load_dotenv()
 class SECEdgarCrew:
     """SECEdgarCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, input_variables: SecEdgarFilingsInput, llm: LLM) -> None:
-        """Initialize the research crew."""
+        """Initialize the SECEdgarCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -31,17 +31,17 @@ class SECEdgarCrew:
 
     @agent  # type: ignore
     def sec_researcher(self) -> Agent:
+        """Add the SEC EDGAR Curator Agent."""
         return Agent(
             config=self.agents_config['sec_researcher'],
             verbose=True,
             llm=self.llm,
-            task='sec_research_task',
             tools=[SecEdgarFilingRetriever(filing_metadata=self.input_variables)],
-            memory=True,
         )
 
     @task  # type: ignore
     def sec_research_task(self) -> Task:
+        """Add the SEC Research Task."""
         return Task(
             config=self.tasks_config['sec_research_task'],
             output_pydantic=FilenameOutput,
@@ -49,8 +49,7 @@ class SECEdgarCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
-
+        """Create the SECEdgarCrew crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

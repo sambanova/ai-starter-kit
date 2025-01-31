@@ -1,9 +1,9 @@
 research_task:
   description: >
-    Conduct a thorough research about finance to answer the user query.
-    Make sure you find any interesting and relevant information given
-    the current year is 2024.
+    Conduct a thorough investigation into contemporary finance topics to answer the user’s query.
+    Incorporate emerging data and trends relevant to the year 2025.
   expected_output: >
-    A fully detailed answer to the user query.
-    Each argument is expanded as a full section of information.
+    A comprehensive, detailed answer to the user’s query,
+    with each main point expanded into its
+    own fully developed section.
   agent: researcher

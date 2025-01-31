@@ -9,15 +9,15 @@ load_dotenv()
 
 @CrewBase
 class ContextAnalysisCrew:
-    """FinancialAgentCrewai crew."""
+    """ContextAnalysisCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, llm: LLM, output_file: Optional[str] = None) -> None:
-        """Initialize the research crew."""
+        """Initialize the ContextAnalysisCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -28,6 +28,7 @@ class ContextAnalysisCrew:
 
     @agent  # type: ignore
     def context_analyst(self) -> Agent:
+        """Add the Finance Reporting Analyst Agent."""
         return Agent(
             config=self.agents_config['context_analyst'],
             verbose=True,
@@ -36,12 +37,15 @@ class ContextAnalysisCrew:
 
     @task  # type: ignore
     def context_analysis_task(self) -> Task:
-        return Task(config=self.tasks_config['context_analysis_task'], output_file=self.output_file)
+        """Add the Context Analysis Task."""
+        return Task(
+            config=self.tasks_config['context_analysis_task'],
+            output_file=self.output_file,
+        )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
-
+        """Create the ContextAnalysisCrew crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

@@ -12,15 +12,15 @@ load_dotenv()
 
 @CrewBase
 class GenericResearchCrew:
-    """FinancialAgentCrewai crew."""
+    """GenericResearchCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, llm: LLM, filename: Optional[str] = None) -> None:
-        """Initialize the research crew."""
+        """Initialize the GenericResearchCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -31,6 +31,7 @@ class GenericResearchCrew:
 
     @agent  # type: ignore
     def researcher(self) -> Agent:
+        """Add the Specialized Finance Researcher Agent."""
         return Agent(
             config=self.agents_config['researcher'],
             verbose=True,
@@ -40,6 +41,7 @@ class GenericResearchCrew:
 
     @task  # type: ignore
     def research_task(self) -> Task:
+        """Add the Research Task."""
         return Task(
             config=self.tasks_config['research_task'],
             output_file=self.filename,
@@ -47,8 +49,7 @@ class GenericResearchCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
-
+        """Create the GenericResearchCrew crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

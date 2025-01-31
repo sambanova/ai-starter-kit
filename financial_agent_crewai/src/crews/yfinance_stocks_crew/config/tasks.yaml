@@ -7,3 +7,4 @@ yfinance_stock_analysis:
     The full path of the saved SEC Edgar text file.
   agent: yfinance_stock_analyst
 
+# Finetune

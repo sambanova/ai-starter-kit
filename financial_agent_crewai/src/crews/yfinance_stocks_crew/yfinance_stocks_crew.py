@@ -12,15 +12,16 @@ load_dotenv()
 
 @CrewBase
 class YFinanceStockCrew:
-    """SECEdgarCrew crew."""
+    """YFinanceStockCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(self, input_variables: SecEdgarFilingsInput, llm: LLM) -> None:
-        """Initialize the research crew."""
+        """Initialize the YFinanceStockCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -31,6 +32,7 @@ class YFinanceStockCrew:
 
     @agent  # type: ignore
     def yfinance_stock_analyst(self) -> Agent:
+        """Add the Yahoo Finance Stock Analyst Agent."""
         return Agent(
             config=self.agents_config['yfinance_stock_analyst'],
             verbose=True,
@@ -39,11 +41,11 @@ class YFinanceStockCrew:
             # tools=[
             #     SecEdgarFilingRetriever(filing_metadata=self.input_variables),
             # ],
-            memory=True,
         )
 
     @task  # type: ignore
     def yfinance_stock_analysis(self) -> Task:
+        """Add the YFinance Stock Analysis Task."""
         return Task(
             config=self.tasks_config['yfinance_stock_analysis'],
             output_pydantic=FilenameOutput,
@@ -51,8 +53,7 @@ class YFinanceStockCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
-
+        """Create the YFinanceStockCrew crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

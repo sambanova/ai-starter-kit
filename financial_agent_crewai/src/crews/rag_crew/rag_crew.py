@@ -13,12 +13,12 @@ load_dotenv()
 
 @CrewBase
 class RAGCrew:
-    """FinancialAgentCrewai crew."""
+    """RAGCrew crew."""
 
-    agents_config: Dict[str, Any]  # Type hint for the config attribute
-    tasks_config: Dict[str, Any]  # Type hint for the tasks config
-    agents: List[Any]  # Type hint for the agents list
-    tasks: List[Any]  # Type hint for the tasks list
+    agents_config: Dict[str, Any]
+    tasks_config: Dict[str, Any]
+    agents: List[Any]
+    tasks: List[Any]
 
     def __init__(
         self,
@@ -26,7 +26,7 @@ class RAGCrew:
         llm: LLM,
         rag_llm: LangChain_LLM,
     ) -> None:
-        """Initialize the research crew."""
+        """Initialize the RAGCrew crew."""
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -38,16 +38,23 @@ class RAGCrew:
 
     @agent  # type: ignore
     def rag_researcher(self) -> Agent:
+        """Add the RAG Agent."""
         return Agent(
             config=self.agents_config['rag_researcher'],
             verbose=True,
             llm=self.llm,
-            tools=[TXTSearchTool(txt_path=TXTSearchToolSchema(txt=self.filename), rag_llm=self.rag_llm)],
+            tools=[
+                TXTSearchTool(
+                    txt_path=TXTSearchToolSchema(txt=self.filename),
+                    rag_llm=self.rag_llm,
+                )
+            ],
             allow_delegation=False,
         )
 
     @task  # type: ignore
     def rag_esearch_task(self) -> Task:
+        """Add the RAG Research Task."""
         return Task(
             config=self.tasks_config['rag_research_task'],
             output_file=convert_csv_source_to_txt_report_filename(self.filename),
@@ -55,8 +62,7 @@ class RAGCrew:
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Creates the FinancialAgentCrewai crew"""
-
+        """Create the RAGCrew crew."""
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
