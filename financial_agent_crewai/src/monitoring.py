@@ -10,7 +10,7 @@ def main() -> None:
     duration_count = 0
     for count, item in enumerate(monitoring_data):
         for elem in item:
-            if elem['start_time'] >= '2025-01-31T13:52:15Z':
+            if elem['start_time'] >= '2025-01-31T22:40:00Z':
                 if elem['name'] == 'Crew.kickoff':
                     duration_count += int(elem['duration'])
             else:
