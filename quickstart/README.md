@@ -23,8 +23,13 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 Access Meta and Qwen families of models at **full precision** via the SambaNova Cloud API!
 
+**Model details for DeepSeek R1 family**:
+   1. DeepSeek R1 Distill Llama 70B:
+   - Model ID: `DeepSeek-R1-Distill-Llama-70B`
+   - Context length: 4k, 8k, 16k, 32k
+
 **Model details for Llama 3.3 family**:
-2. Llama 3.1 70B:
+1. Llama 3.3 70B:
    - Model ID: `Meta-Llama-3.3-70B-Instruct`
    - Context length: 4k, 8k, 16k, 32k, 64k, 128k
 
