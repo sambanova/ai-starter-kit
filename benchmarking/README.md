@@ -254,8 +254,8 @@ This option allows you to evaluate the performance of the selected LLM on real w
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
 - **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-- **Queries per second**: lorem
-- **Queries per second distribution**: lorem
+- **Queries per second**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits. *Default*: 1
+- **Queries per second distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. *Default*: constant.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
 3. Run the performance evaluation
@@ -455,8 +455,8 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral,
   - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen. 
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **qps**: lorem _Default_: 1
-  - **qps-distribution**: lorem _Default_: constant
+  - **qps**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits._Default_: 1
+  - **qps-distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. _Default_: constant
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
