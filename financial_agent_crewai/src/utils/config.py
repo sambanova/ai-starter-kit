@@ -16,6 +16,8 @@ COMPARISON_QUERY = (
     f'{USER_QUERY}.\n'
     f'Do not exceed {MAX_SECTION_WORDS/2} words.'
 )
+# Number of documents to use for RAG
+NUM_RAG_SOURCES = 5
 # Maximum number of urls in generic Google web search or Yahoo Finance web search
 MAX_NEWS = 5
 # Maximum news per ticker symbol
@@ -39,7 +41,6 @@ DECOMPOSITION_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameter
 GENERIC_RESEARCH_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 INFORMATION_EXTRACTION_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 RAG_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
-QA_MODEL = f'Meta-Llama-3.1-{BILLION_PARAMETERS}B-Instruct'
 REPORT_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 SEC_EDGAR_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 YFINANCE_NEWS_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)

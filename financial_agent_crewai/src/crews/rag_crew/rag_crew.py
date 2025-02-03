@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
-from langchain_core.language_models.llms import LLM as LangChain_LLM
 
 from financial_agent_crewai.src.tools.general_tools import convert_csv_source_to_txt_report_filename
 from financial_agent_crewai.src.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
@@ -24,7 +23,6 @@ class RAGCrew:
         self,
         filename: str,
         llm: LLM,
-        rag_llm: LangChain_LLM,
     ) -> None:
         """Initialize the RAGCrew crew."""
         super().__init__()
@@ -34,7 +32,6 @@ class RAGCrew:
         self.tasks = []
         self.filename = filename
         self.llm = llm
-        self.rag_llm = rag_llm
 
     @agent  # type: ignore
     def rag_researcher(self) -> Agent:
@@ -46,7 +43,7 @@ class RAGCrew:
             tools=[
                 TXTSearchTool(
                     txt_path=TXTSearchToolSchema(txt=self.filename),
-                    rag_llm=self.rag_llm,
+                    rag_llm=self.llm,
                 )
             ],
             allow_delegation=False,

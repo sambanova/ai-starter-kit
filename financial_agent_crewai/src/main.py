@@ -37,7 +37,6 @@ from financial_agent_crewai.src.tools.report_tools import ReportSection
 from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput, SecEdgarFilingsInputsList
 from financial_agent_crewai.src.utils.config import *
 from financial_agent_crewai.src.utils.utilities import clear_directory
-from utils.model_wrappers.api_gateway import APIGateway
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
@@ -89,19 +88,6 @@ class FinancialFlow(Flow):  # type: ignore
 
         # General LLM
         self.llm = LLM(model=GENERAL_MODEL, temperature=TEMPERATURE)
-
-        # RAG LLM
-        self.rag_llm = APIGateway.load_llm(
-            type='sncloud',
-            streaming=False,
-            bundle=True,
-            do_sample=False,
-            max_tokens_to_generate=1024,
-            temperature=TEMPERATURE,
-            select_expert=QA_MODEL,
-            process_prompt=False,
-            sambanova_api_key=os.getenv('SAMBANOVA_API_KEY'),
-        )
 
         # Create cache path
         if cache_path is not None:
@@ -212,7 +198,6 @@ class FinancialFlow(Flow):  # type: ignore
                 RAGCrew(
                     filename=filename,
                     llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
-                    rag_llm=self.rag_llm,
                 ).crew().kickoff(
                     {'query': filing_metadata.query},  # type: ignore
                 )
@@ -287,7 +272,6 @@ class FinancialFlow(Flow):  # type: ignore
                 RAGCrew(
                     filename=filename,
                     llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
-                    rag_llm=self.rag_llm,
                 ).crew().kickoff(
                     {'query': query},
                 )
