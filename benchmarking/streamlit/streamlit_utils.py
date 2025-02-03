@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
+SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
@@ -48,7 +49,10 @@ def set_api_variables() -> Dict[str, Any]:
     if st.session_state.prod_mode:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
-            api_variables = {'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY}
+            api_variables = {
+                'SAMBANOVA_URL': SAMBANOVA_URL,
+                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY
+            }
         # SambaStudio
         elif st.session_state.llm_api == 'sambastudio':
             api_variables = {
