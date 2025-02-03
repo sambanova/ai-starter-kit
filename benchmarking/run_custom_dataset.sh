@@ -37,6 +37,5 @@ python src/evaluator.py \
 #
 # 4. For SambaNovaCloud endpoints, change the llm-api parameter to "snloud" and use the model name directly.
 #   For example:
-#   For example:
 #      --model-names "Meta-Llama-3.1-8B-Instruct"
 #
