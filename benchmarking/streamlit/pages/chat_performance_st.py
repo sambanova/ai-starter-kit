@@ -113,7 +113,8 @@ def main() -> None:
         llm_model = st.text_input(
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
-            help='If using SambaStudio, look at your model card and introduce the same name of the model/expert here following the Readme.',
+            help='If using SambaStudio, look at your model card and introduce the same name \
+                of the model/expert here following the Readme.',
         )
         llm_selected = f'{llm_model}'
         if st.session_state.prod_mode:

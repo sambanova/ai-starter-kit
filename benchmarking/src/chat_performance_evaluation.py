@@ -49,7 +49,7 @@ class ChatPerformanceEvaluator:
         output = llm_request(request_config, tokenizer)
 
         if output[0]['error_code']:
-            nl='\n'
+            nl = '\n'
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{nl}- {output[0]['error_code']}\

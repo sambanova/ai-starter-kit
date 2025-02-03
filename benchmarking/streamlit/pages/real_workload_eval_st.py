@@ -126,9 +126,10 @@ def main() -> None:
 
     st.title(':orange[SambaNova] Real Workload Performance Evaluation')
     st.markdown(
-        """This performance evaluation assesses the following LLM's performance metrics using requests sent as close as real workload scenarios.
-        _client represents the metrics computed from the client-side (includes queue and round-trip time 
-        from host to server and back) and _server represents the metrics computed from the server-side."""
+        """This performance evaluation assesses the following LLM's performance metrics using requests sent 
+        as close as real workload scenarios. _client represents the metrics computed from the client-side 
+        (includes queue and round-trip time from host to server and back) 
+        and _server represents the metrics computed from the server-side."""
     )
     st.markdown(
         """**Time to first token (TTFT):** This metric is driven by the time required to process the prompt and then
@@ -148,7 +149,8 @@ def main() -> None:
         llm_model = st.text_input(
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
-            help='If using SambaStudio, look at your model card and introduce the same name of the model/expert here following the Readme.',
+            help='If using SambaStudio, look at your model card and introduce the same name \
+                of the model/expert here following the Readme.',
             disabled=st.session_state.running,
         )
         st.session_state.llm = f'{llm_model}'
@@ -214,7 +216,7 @@ def main() -> None:
             step=0.5,
             disabled=st.session_state.running,
         )
-        
+
         st.session_state.qps_distribution = st.selectbox(
             'Queries per second distribution',
             options=list(QPS_DISTRIBUTION_OPTIONS.keys()),
@@ -254,7 +256,7 @@ def main() -> None:
             except Exception as e:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
-                st.session_state.df_req_info=None
+                st.session_state.df_req_info = None
             if do_rerun:
                 st.rerun()
 
@@ -311,6 +313,7 @@ def main() -> None:
 
         # Once results are given, reset running state and ending threads just in case.
         sidebar_stop = True
+
 
 if __name__ == '__main__':
     st.set_page_config(

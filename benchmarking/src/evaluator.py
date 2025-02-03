@@ -37,7 +37,11 @@ def str2bool(value: str) -> bool:
 
 
 def main() -> None:
-    from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator, RealWorkLoadPerformanceEvaluator
+    from benchmarking.src.performance_evaluation import (
+        CustomPerformanceEvaluator,
+        RealWorkLoadPerformanceEvaluator,
+        SyntheticPerformanceEvaluator,
+    )
 
     parser = argparse.ArgumentParser(
         description="""Run a token throughput and latency benchmark. You have the option of running in two different 
@@ -55,7 +59,8 @@ def main() -> None:
         '--mode',
         choices=['custom', 'synthetic', 'real_workload'],
         required=True,
-        help="""Run mode for the performance evaluation. You have three options to choose from - 'custom', 'synthetic' or 'real workload'.
+        help="""Run mode for the performance evaluation. You have three options to choose from - 'custom', 'synthetic'\
+            or 'real workload'.
             
             Custom: You provide your own dataset via the `input-file-path argument. We will run the performance 
                     evaluation with the provided dataset.
@@ -79,8 +84,7 @@ def main() -> None:
         help="The LLM API type. It could be either 'sambastudio' or 'sncloud'. Default value: 'sncloud'",
     )
 
-    # Optional Common Arguments    
-
+    # Optional Common Arguments
 
     parser.add_argument(
         '--timeout',
@@ -168,7 +172,7 @@ def main() -> None:
             type=int,
             default=10,
             help='The number of concurrent requests used to send requests. (default: %(default)s)',
-        )    
+        )
         parser.add_argument(
             '--model-names',
             type=str,
@@ -205,7 +209,7 @@ def main() -> None:
         for model_idx, model_name in enumerate(model_names):
             user_metadata['model_idx'] = model_idx
             # set synthetic evaluator
-            evaluator = SyntheticPerformanceEvaluator(
+            synthetic_evaluator = SyntheticPerformanceEvaluator(
                 model_name=model_name,
                 results_dir=args.results_dir,
                 num_concurrent_requests=args.num_concurrent_requests,
@@ -215,13 +219,13 @@ def main() -> None:
             )
 
             # Run performance evaluation
-            evaluator.run_benchmark(
+            synthetic_evaluator.run_benchmark(
                 num_input_tokens=args.num_input_tokens,
                 num_output_tokens=args.num_output_tokens,
                 num_requests=args.num_requests,
                 sampling_params=json.loads(args.sampling_params),
             )
-    
+
     # Real workload evaluation path
     elif args.mode == 'real_workload':
         parser.add_argument(
@@ -230,21 +234,22 @@ def main() -> None:
             default=0.5,
             help='The number of queries per second processed for a real workload. (default: %(default)s)',
         )
-        
+
         parser.add_argument(
             '--qps-distribution',
             type=str,
-            default="constant",
-            help='The name of the distribution to use for a real workload. Possible values are "constant", "uniform", "exponential". (default: %(default)s)',
+            default='constant',
+            help='The name of the distribution to use for a real workload. Possible values are "constant",\
+                "uniform", "exponential". (default: %(default)s)',
         )
-        
+
         parser.add_argument(
             '--model-names',
             type=str,
             required=True,
             help='The name of the models to use for this performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--num-input-tokens',
             type=int,
@@ -266,15 +271,15 @@ def main() -> None:
             help="""The number of requests to make. Note that it is possible for the test 
                 to timeout first. (default: %(default)s)""",
         )
-        
+
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
 
         # running perf eval for multiple bundle models
         for model_idx, model_name in enumerate(model_names):
             user_metadata['model_idx'] = model_idx
-            # # set real workload evaluator
-            evaluator = RealWorkLoadPerformanceEvaluator(
+            # set real workload evaluator
+            real_workload_evaluator = RealWorkLoadPerformanceEvaluator(
                 model_name=model_name,
                 results_dir=args.results_dir,
                 qps=args.qps,
@@ -284,8 +289,8 @@ def main() -> None:
                 llm_api=args.llm_api,
             )
 
-            # # Run performance evaluation
-            evaluator.run_benchmark(
+            # Run performance evaluation
+            real_workload_evaluator.run_benchmark(
                 num_input_tokens=args.num_input_tokens,
                 num_output_tokens=args.num_output_tokens,
                 num_requests=args.num_requests,
@@ -293,7 +298,7 @@ def main() -> None:
             )
 
     else:
-        raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic'")
+        raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic', 'real_workload'")
 
 
 if __name__ == '__main__':

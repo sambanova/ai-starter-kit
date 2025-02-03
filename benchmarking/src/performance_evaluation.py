@@ -15,6 +15,7 @@ file_location = Path(__file__).parent.resolve()
 kit_location = os.path.join(file_location, '../..')
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 import pandas as pd
@@ -22,7 +23,6 @@ import transformers
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
@@ -58,7 +58,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.model_name = model_name
         self.results_dir = results_dir
         self.user_metadata = user_metadata
-        self.num_concurrent_requests = None
+        self.num_concurrent_requests: Optional[int] = None
         self.llm_api = llm_api
         self.api_variables = api_variables
         self.is_stream_mode = is_stream_mode
@@ -97,8 +97,7 @@ class BasePerformanceEvaluator(abc.ABC):
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> (
-        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
-        | None
+        Tuple[Dict[str, Any], List[LLMResponse]]
     ):
         pass
 
@@ -365,7 +364,7 @@ class BasePerformanceEvaluator(abc.ABC):
         except Exception as e:
             logger.error(individual_responses)
             raise e
-    
+
     def stop_benchmark(self) -> None:
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
@@ -373,7 +372,14 @@ class BasePerformanceEvaluator(abc.ABC):
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, num_concurrent_requests: int, input_file_path: str, save_response_texts: bool = False, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        num_concurrent_requests: int,
+        input_file_path: str,
+        save_response_texts: bool = False,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
         self.file_name = os.path.basename(input_file_path)
@@ -457,8 +463,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> (
-        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
-        | None
+        Tuple[Dict[str, Any], List[LLMResponse]]
     ):
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
@@ -484,13 +489,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 summary,
                 individual_responses,
             )
-        return None
+        return summary, individual_responses
 
     def get_token_throughput_latencies(
         self, sampling_params: Dict[str, Any]
     ) -> (
-        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
-        | Tuple[dict[str, object], List[LLMResponse]]
+        Tuple[dict[str, Any], List[LLMResponse]]
     ):
         """This function is used to measure the token throughput and latencies.
 
@@ -516,17 +520,20 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get batch size details
         total_request_count = len(request_configs)
-        requests_per_thread = total_request_count // self.num_concurrent_requests
-        remainder = total_request_count % self.num_concurrent_requests
-
-        request_config_batches = []
-        idx = 0
-        for concurrent_requests in range(self.num_concurrent_requests):
-            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
-            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
-            idx = idx + num_requests_for_thread
-            request_config_batches.append(request_config_batch)
+        request_config_batches: List[List[RequestConfig]]  = []
         
+        if self.num_concurrent_requests:
+            requests_per_thread = total_request_count // self.num_concurrent_requests
+            remainder = total_request_count % self.num_concurrent_requests
+
+            idx = 0
+            # Create batches of requests for each concurrent request
+            for concurrent_requests in range(self.num_concurrent_requests):
+                num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
+                request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
+                idx = idx + num_requests_for_thread
+                request_config_batches.append(request_config_batch)
+
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
@@ -555,7 +562,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                     # Retrieve result if needed
                     future.result()
                 except Exception as e:
-                    logger.error(f"Error occurred in a thread: {e}")
+                    logger.error(f'Error occurred in a thread: {e}')
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')
@@ -718,7 +725,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]:
+    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
         """Run a benchmark test for the specified LLM using synthetically generated data.
 
         Args:
@@ -861,8 +868,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_requests: int,
         sampling_params: Dict[str, Any],
     ) -> (
-        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
-        | Tuple[Dict[str, object], list[LLMResponse]]
+        Tuple[dict[str, Any], List[LLMResponse]]
     ):
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
@@ -892,20 +898,20 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
-        requests_per_thread = (total_request_count) // self.num_concurrent_requests
-        remainder = (total_request_count) % self.num_concurrent_requests
-
-        # Set up empty batch array and index for a sliding window of request selection
-        request_config_batches = []
-        idx = 0
-
-        # Create batches of requests for each concurrent request
-        for concurrent_requests in range(self.num_concurrent_requests):
-            num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
-            request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
-            idx += num_requests_for_thread
-            request_config_batches.append(request_config_batch)
+        request_config_batches: List[List[RequestConfig]] = []
         
+        if self.num_concurrent_requests:
+            requests_per_thread = (total_request_count) // self.num_concurrent_requests
+            remainder = (total_request_count) % self.num_concurrent_requests
+
+            idx = 0
+            # Create batches of requests for each concurrent request
+            for concurrent_requests in range(self.num_concurrent_requests):
+                num_requests_for_thread = requests_per_thread + (1 if concurrent_requests < remainder else 0)
+                request_config_batch = request_configs[idx : idx + num_requests_for_thread].copy()
+                idx += num_requests_for_thread
+                request_config_batches.append(request_config_batch)
+
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
@@ -934,7 +940,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     # Retrieve result if needed
                     future.result()
                 except Exception as e:
-                    logger.error(f"Error occurred in a thread: {e}")
+                    logger.error(f'Error occurred in a thread: {e}')
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')
@@ -1068,6 +1074,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return (full_input_prompt, self.get_token_length(full_input_prompt))
 
+
 class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(self, qps: float, qps_distribution: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -1093,8 +1100,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
     ) -> (
-        Tuple[Dict[str, Any] | Dict[str, object], List[Tuple[Dict[str, Any], str, RequestConfig]] | List[LLMResponse]]
-        | None
+        Tuple[Dict[str, Any], List[LLMResponse]]
     ):
         """Run a benchmark test for the specified LLM using real workload synthetic data.
 
@@ -1136,17 +1142,17 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             self.save_results(filename, summary, individual_responses)
 
         return summary, individual_responses
-    
+
     def _get_wait_time(self) -> float:
         mean_wait = 1 / self.qps
-        if self.qps_distribution == "exponential":
+        if self.qps_distribution == 'exponential':
             wait = random.expovariate(1 / mean_wait)
-        elif self.qps_distribution == "uniform":
+        elif self.qps_distribution == 'uniform':
             wait = random.uniform(0, 2 * mean_wait)
-        elif self.qps_distribution == "constant":
+        elif self.qps_distribution == 'constant':
             wait = mean_wait
         else:
-            raise ValueError(f"Unknown distribution {self.qps_distribution}")
+            raise ValueError(f'Unknown distribution {self.qps_distribution}')
         return wait
 
     def get_token_throughput_latencies(
@@ -1156,8 +1162,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         num_requests: int,
         sampling_params: Dict[str, Any],
     ) -> (
-        Tuple[Dict[str, Any], List[Tuple[Dict[str, Any], str, RequestConfig]]]
-        | Tuple[Dict[str, object], list[LLMResponse]]
+        Tuple[dict[str, Any], List[LLMResponse]]
     ):
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
@@ -1219,7 +1224,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
                     # Retrieve result if needed
                     future.result()
                 except Exception as e:
-                    logger.error(f"Error occurred in a thread: {e}")
+                    logger.error(f'Error occurred in a thread: {e}')
 
         if self.stop_event.is_set():
             logger.info('Benchmarking process terminated early due to stop signal.')

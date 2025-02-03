@@ -51,11 +51,13 @@ time_delay = 0  # delayed time in seconds between runs
 # Perf parameters:
 num_input_tokens = [1_000]  # add more input token numbers if needed
 num_output_tokens = [1_000]  # add more output token numbers if needed
-qps_list = [0.5, 2] # should be the same number of queries per second items as num_requests
-qps_distribution = 'exponential' # queries per second distribution. Available options: 'constant', 'uniform' or 'exponential'
+qps_list = [0.5, 2]  # should be the same number of queries per second items as num_requests
+qps_distribution = (
+    'exponential'  # queries per second distribution. Available options: 'constant', 'uniform' or 'exponential'
+)
 num_requests_list = [10, 120]  # should be the same number or requests items as qps
 
-assert len(qps_list)==len(num_requests_list), 'qps_list and num_requests_list should have the same length'
+assert len(qps_list) == len(num_requests_list), 'qps_list and num_requests_list should have the same length'
 
 df_all_summary_results = pd.DataFrame()
 for model_idx, model_name in enumerate(model_names):

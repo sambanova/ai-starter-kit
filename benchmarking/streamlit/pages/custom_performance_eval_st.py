@@ -133,7 +133,8 @@ def main() -> None:
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
             key='llm',
-            help='If using SambaStudio, look at your model card and introduce the same name of the model/expert here following the Readme.',
+            help='If using SambaStudio, look at your model card and introduce the same name \
+                of the model/expert here following the Readme.',
             disabled=st.session_state.running,
         )
 
