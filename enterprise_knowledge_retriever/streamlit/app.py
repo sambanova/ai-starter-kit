@@ -28,6 +28,15 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
+# Available models in dropdown menu
+LLM_MODELS = [
+    'Meta-Llama-3.1-70B-Instruct',
+    'Meta-Llama-3.3-70B-Instruct',
+    'Meta-Llama-3.1-405B-Instruct',
+    'Meta-Llama-3.1-8B-Instruct',
+    'Qwen2.5-72B-Instruct',
+    'QwQ-32B-Preview',
+]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
@@ -96,7 +105,7 @@ def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) ->
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print(f'Failed to delete {file_path}. Reason: {e}')
+                logging.error(f'Failed to delete {file_path}. Reason: {e}')
 
     # Save all selected files to the tmp dir with their file names
     for doc in docs:
@@ -131,6 +140,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
                 sources_text += f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
             st.session_state.sources_history.append(sources_text)
         except Exception as e:
+            logging.error(f'An error occurred while processing your question: {str(e)}')
             st.error(f'An error occurred while processing your question: {str(e)}')
 
     for ques, ans, source in zip(
@@ -175,6 +185,7 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
         try:
             return DocumentRetrieval(sambanova_api_key=sambanova_api_key)
         except Exception as e:
+            logging.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
             st.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
             return None
     return None
@@ -292,6 +303,15 @@ def main() -> None:
                             '.xlsx',
                         ],
                     )
+                st.markdown('**Optional Set a specific multimodal model and LLM**')
+                llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
+                if st.button('set_model'):
+                    st.session_state.document_retrieval.set_llm(llm_model)
+                    # set again qa chain with out ingestion in case step 2 was done previously to avoid re ingestion
+                    if st.session_state.conversation is not None:
+                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                            conversational=conversational
+                        )
                 st.markdown('**2. Process your documents and create vector store**')
                 st.markdown(
                     '**Note:** Depending on the size and number of your documents, this could take several minutes'
@@ -325,7 +345,11 @@ def main() -> None:
                             st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
                             st.session_state.input_disabled = False
                         except Exception as e:
-                            st.error(f'An error occurred while processing: {str(e)}')
+                            logging.error(f'An error occurred while processing: {str(e)}')
+                            if prod_mode:
+                                st.error(f'An error occurred while processing')
+                            else:
+                                st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')
@@ -354,6 +378,7 @@ def main() -> None:
                                 )
                                 st.session_state.input_disabled = False
                             except Exception as e:
+                                logging.error(f'An error occurred while processing and saving: {str(e)}')
                                 st.error(f'An error occurred while processing and saving: {str(e)}')
 
             elif isinstance(datasource, str) and not prod_mode and 'Use existing' in datasource:
@@ -388,6 +413,7 @@ def main() -> None:
                                     )
                                     st.session_state.input_disabled = False
                                 except Exception as e:
+                                    logging.error(f'An error occurred while loading the database: {str(e)}')
                                     st.error(f'An error occurred while loading the database: {str(e)}')
                             else:
                                 st.error('Database not present at ' + db_path, icon='🚨')
