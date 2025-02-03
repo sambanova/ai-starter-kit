@@ -585,8 +585,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
             nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests:{nl}\
-                {f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
+                f"""Unexpected error happened when executing requests:\
+                {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
                 {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
@@ -1249,8 +1249,9 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             )
             nl = '\n'
             raise Exception(
-                f"""Unexpected error happened when executing requests: {f'{nl}-'.join(unique_error_codes)}{nl}"""
-                + f"""Additional messages: {f'{nl}-'.join(unique_error_msgs)}"""
+                f"""Unexpected error happened when executing requests:\
+                {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
+                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user
