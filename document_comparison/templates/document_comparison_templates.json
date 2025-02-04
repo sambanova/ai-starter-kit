@@ -29,7 +29,7 @@
         "document_1_title": "Job Description",
         "document_2_title": "Resume",
         "prompts": [
-            "Evaluate the given Resume against the Job Description. Use the following headers: Responsibilities Match, Basic Qualifications, Additional Required Qualifications, Preferred Qualifications, Company Fit, Overall Recommendation. Each section should have a 'Score' and a 'Reason', where the score ranges from 0 to 5 (5 being the highest score) and the reason may have multiply sentences that justify the score."            
+            "Evaluate the given Resume against the Job Description. Use the following headers: Responsibilities Match, Basic Qualifications, Additional Required Qualifications, Preferred Qualifications, Company Fit, Overall Recommendation. Each section should have a 'Score' and a 'Reason' as separate bullets, where the score ranges from 0 to 5 (5 being the highest score) and the reason may have multiply sentences that justify the score."            
         ]
     }
 }
