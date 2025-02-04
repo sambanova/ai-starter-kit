@@ -57,13 +57,12 @@ class Guard:
         self.guardrails, self.parsed_guardrails = self.load_guardrails(guardrails_path)
 
         # pass the parameters from Guard to the model gateway to instance de guardrails models
-        self.llm = APIGateway.load_llm(
+        self.llm = APIGateway.load_chat(
             type=api,
             streaming=False,
             do_sample=False,
-            max_tokens_to_generate=1024,
-            temperature=0.1,
-            bundle=bundle,
+            max_tokens=1024,
+            temperature=0.1, 
             model=model,
             process_prompt=False,
             sambastudio_url=sambastudio_url,
@@ -109,8 +108,8 @@ class Guard:
          message or a list of dictionaries representing a conversation.
             Example conversation input
             [
-             {"message_id":0,"role":"user", "content":"this is an user message"},
-             {"message_id":1,"role":"assistant","content":"this is an assistant response"},
+             {"role":"user", "content":"this is an user message"},
+             {"role":"assistant","content":"this is an assistant response"},
             ]
         - role (str): The role of the message to analyse. It can be either 'user' or 'assistant'.
         - error_message (str, optional): The error message to be displayed when the message violates the guardrails.
@@ -161,8 +160,8 @@ class Guard:
         result = self.llm.invoke(formatted_input)
 
         # check if the message violates the guardrails
-        if 'unsafe' in result:
-            violated_categories = result.split('\n')[-1].split(',')
+        if 'unsafe' in result.content:
+            violated_categories = result.content.split('\n')[-1].split(',')
             violated_categories = [
                 f'{k}: {v.get("name")}' for k, v in self.guardrails.items() if k in violated_categories
             ]
