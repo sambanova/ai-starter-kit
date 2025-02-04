@@ -48,15 +48,16 @@ def handle_userinput(instruction: str) -> None:
         st.session_state.documents[doc2_title],
     )
     start = time.time()
+
+    with st.chat_message('user'):
+        st.write(instruction)
+
     try:
         with st.spinner('Processing...'):
             completion, usage = st.session_state.document_analyzer.get_analysis(prompt)
     except Exception as e:
         st.error(f'An error occurred while processing your instruction: {str(e)}')
     latency = time.time() - start
-
-    with st.chat_message('user'):
-        st.write(instruction)
 
     with st.chat_message(
         'ai',
