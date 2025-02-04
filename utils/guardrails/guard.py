@@ -25,7 +25,6 @@ class Guard:
         api: str = 'sncloud',
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
-        bundle: Optional[bool] = True,
         model: Optional[str] = 'Meta-Llama-Guard-3-8B',
         sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
@@ -40,7 +39,6 @@ class Guard:
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is
          'utils/guardrails/guardrails.yaml'.
-        - bundle (bool, optional): Whether the llama-guard model is in a SambaStudio bundle endpoint
         - model (str, optional): guard model to use set if using bundle models or sncloud as api
             default is: Meta-Llama-Guard-3-8B
         - sambastudio_base_url (str, optional): URL for SambaStudio API.
