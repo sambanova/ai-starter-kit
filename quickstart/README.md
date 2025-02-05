@@ -56,7 +56,12 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
    - Context length: 4k, 8k, 16k, 32k, 64k, 128k
 3. Llama 3.1 405B:
    - Model ID: `Meta-Llama-3.1-405B-Instruct`
-   - Context length: 4k, 8k
+   - Context length: 4k, 8k, 16k
+
+**Model details for Tulu 3 family**:
+1. Llama 3.1 Tulu 3 405B:
+   - Model ID: `Llama-3.1-Tulu-3-405B`
+   - Context length: 4k, 8k, 16k
 
 **Model details for Qwen2  family**
 1. Qwen 2.5 Coder 32B:
@@ -72,7 +77,7 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
 **Model details for Llama Guard family**:
 1. Llama Guard 3 8B:
    - Model ID: `Meta-Llama-Guard-3-8B`
-   - Context length: 16k
+   - Context length: 8k
 
 ## Query the API
 

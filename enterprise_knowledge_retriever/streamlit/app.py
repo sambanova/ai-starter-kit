@@ -33,6 +33,7 @@ LLM_MODELS = [
     'Meta-Llama-3.1-70B-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-R1-Distill-Llama-70B',
+    'Llama-3.1-Tulu-3-405B',
     'Meta-Llama-3.1-405B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
     'Qwen2.5-72B-Instruct',
