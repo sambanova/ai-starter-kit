@@ -49,6 +49,7 @@ STARTER_KITS: List[str] = [
     'post_call_analysis',
     'prompt_engineering',
     'utils'
+    'document_comparison'
 ]
 
 # Dictionary to store CLI test commands for each kit
@@ -74,6 +75,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'search_assistant': 'python tests/search_assistant_test.py',
     'image_search': 'python tests/image_search_test.py',
     'utils': 'python tests/api_testing.py'
+    'document_comparison': 'python tests/dc_test.py'
 }
 
 
