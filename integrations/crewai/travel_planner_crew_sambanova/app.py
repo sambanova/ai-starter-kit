@@ -11,7 +11,7 @@ A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip
 
 import json
 import logging
-from typing import List
+from typing import List, Tuple
 
 import gradio as gr
 import plotly.graph_objects as go
@@ -48,11 +48,11 @@ def run(
     destination: str,
     age: int,
     trip_duration: int,
-    interests: List,
-    cuisine_preferences: List,
+    interests: List[str],
+    cuisine_preferences: List[str],
     children: bool,
     budget: int,
-) -> (str, go.Figure):
+) -> Tuple[str, go.Figure]:
     """
     Run the specfied query using Crew AI agents
 

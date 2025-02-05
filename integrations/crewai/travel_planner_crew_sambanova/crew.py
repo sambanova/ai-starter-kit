@@ -13,8 +13,11 @@ llm = LLM(model='sambanova/Meta-Llama-3.1-70B-Instruct')
 class TravelCrew:
     """Crew to do travel planning"""
 
-    agents_config = 'config/agents.yaml'
-    tasks_config = 'config/tasks.yaml'
+    def __init__(self) -> None:
+        """Initialize the crew."""
+        super().__init__()
+        self.agents_config = 'config/agents.yaml'
+        self.tasks_config = 'config/tasks.yaml'
 
     @agent
     def personalized_activity_planner(self) -> Agent:
