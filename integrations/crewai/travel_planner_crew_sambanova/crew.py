@@ -8,6 +8,7 @@ from crewai_tools import ScrapeWebsiteTool, SerperDevTool
 # Currently, we use the Llama 3.1 70B model because it seems the most versatile
 llm = LLM(model='sambanova/Meta-Llama-3.1-70B-Instruct')
 
+
 @CrewBase
 class TravelCrew:
     """Crew to do travel planning"""
@@ -96,7 +97,6 @@ class TravelCrew:
         Returns: A task
         """
         return Task(config=self.tasks_config['interest_scout_task'], llm=llm, max_iter=1, agent=self.interest_scout())
-
 
     @task
     def restaurant_scenic_location_scout_task(self) -> Task:
