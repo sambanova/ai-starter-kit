@@ -7,7 +7,7 @@ from typing import Tuple
 
 import tiktoken
 import yaml
-from langchain_community.chat_models.sambanova import ChatSambaNovaCloud
+from langchain_sambanova import ChatSambaNovaCloud
 
 from utils.parsing.sambaparse import parse_doc_universal
 
@@ -44,7 +44,6 @@ class DocumentAnalyzer:
             model=self.llm_info['model'],
             max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            top_k=self.llm_info['top_k'],
             top_p=self.llm_info['top_p'],
             streaming=self.llm_info['streaming'],
             stream_options={'include_usage': True},
