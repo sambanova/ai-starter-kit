@@ -25,7 +25,6 @@ class Guard:
         api: str = 'sncloud',
         prompt_path: Optional[str] = None,
         guardrails_path: Optional[str] = None,
-        bundle: Optional[bool] = True,
         model: Optional[str] = 'Meta-Llama-Guard-3-8B',
         sambastudio_url: Optional[str] = None,
         sambastudio_api_key: Optional[str] = None,
@@ -40,8 +39,7 @@ class Guard:
         - prompt_path (str, optional): Path to the prompt YAML file. Default is 'utils/guardrails/prompt.yaml'.
         - guardrails_path (str, optional): Path to the guardrails YAML file. Default is
          'utils/guardrails/guardrails.yaml'.
-        - bundle (bool, optional): Whether the llama-guard model is in a SambaStudio bundle endpoint
-        - model (str, optional): guard model to use set if using bundle models or sncloud as api 
+        - model (str, optional): guard model to use set if using bundle models or sncloud as api
             default is: Meta-Llama-Guard-3-8B
         - sambastudio_base_url (str, optional): URL for SambaStudio API.
         - sambastudio_api_key (str, optional): API key for SambaStudio API.
@@ -57,13 +55,12 @@ class Guard:
         self.guardrails, self.parsed_guardrails = self.load_guardrails(guardrails_path)
 
         # pass the parameters from Guard to the model gateway to instance de guardrails models
-        self.llm = APIGateway.load_llm(
+        self.llm = APIGateway.load_chat(
             type=api,
             streaming=False,
             do_sample=False,
-            max_tokens_to_generate=1024,
-            temperature=0.1,
-            bundle=bundle,
+            max_tokens=1024,
+            temperature=0.1, 
             model=model,
             process_prompt=False,
             sambastudio_url=sambastudio_url,
@@ -109,8 +106,8 @@ class Guard:
          message or a list of dictionaries representing a conversation.
             Example conversation input
             [
-             {"message_id":0,"role":"user", "content":"this is an user message"},
-             {"message_id":1,"role":"assistant","content":"this is an assistant response"},
+             {"role":"user", "content":"this is an user message"},
+             {"role":"assistant","content":"this is an assistant response"},
             ]
         - role (str): The role of the message to analyse. It can be either 'user' or 'assistant'.
         - error_message (str, optional): The error message to be displayed when the message violates the guardrails.
@@ -161,8 +158,8 @@ class Guard:
         result = self.llm.invoke(formatted_input)
 
         # check if the message violates the guardrails
-        if 'unsafe' in result:
-            violated_categories = result.split('\n')[-1].split(',')
+        if 'unsafe' in result.content:
+            violated_categories = result.content.split('\n')[-1].split(',')
             violated_categories = [
                 f'{k}: {v.get("name")}' for k, v in self.guardrails.items() if k in violated_categories
             ]

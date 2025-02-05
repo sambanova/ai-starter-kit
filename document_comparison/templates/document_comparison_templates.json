@@ -3,6 +3,13 @@
         "prompts": [
             "Briefly state the differences between the contents of the above two documents"
         ]
+    },
+    "Legal Terms Differences": {
+        "document_1_title": "Terms 1",
+        "document_2_title": "Terms 2",        
+        "prompts": [
+            "Describe the differences between the clauses in the above two documents. Answer with three sections: 'Clauses in Terms 1 that do not exist in Terms 2', 'Clauses in Terms 2 that do not exist in Terms 1', and 'Clauses that are common to both documents'. Highlight any minor differences in the clauses that are common to both documents."
+        ]
     }, 
     "Compliance Assessment": {
         "document_1_title": "Criteria Document",
@@ -10,5 +17,19 @@
         "prompts": [
             "Identify all the requirements in the Criteria document. For each requirement in the Criteria document, provide an 'Assessment' that states whether the Proposal document either 'Meets', 'Partially Meets', or 'Does Not Meet' meet that requirement. Also include an 'Explanation' that contains evidence from the Proposal to justify the 'Assessment' or explains why the requirements are not met or are partially met. The 'Assessment' and 'Explanation' should be indented as sub-bullets for each numbered requirement. Limit the output to 2000 words."
         ]
-    }       
+    },
+    "Submission Guidelines": {
+        "document_1_title": "Guidelines",
+        "document_2_title": "Submission",
+        "prompts": [
+            "Check if the Submission meets the formatting guidelines in the Guidelines document and provide a detailed analysis of any formatting discrepancies or missing content."
+        ]
+    },
+    "Resume Review": {
+        "document_1_title": "Job Description",
+        "document_2_title": "Resume",
+        "prompts": [
+            "Evaluate the given Resume against the Job Description. Use the following headers: Responsibilities Match, Basic Qualifications, Additional Required Qualifications, Preferred Qualifications, Company Fit, Overall Recommendation. Each section should have a 'Score' and a 'Reason' as separate bullets, where the score ranges from 0 to 5 (5 being the highest score) and the reason may have multiply sentences that justify the score."            
+        ]
+    }
 }
