@@ -74,7 +74,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
     'image_search': 'python tests/image_search_test.py',
-    'utils': 'python tests/api_testing.py'
+    'utils': 'python tests/api_testing.py',
     'document_comparison': 'python tests/dc_test.py'
 }
 
