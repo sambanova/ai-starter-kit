@@ -9,6 +9,8 @@ langchain-community==0.3.9
 langchain-experimental==0.3.2
 langchain-huggingface==0.1.2
 langgraph==0.2.28
+crewai==0.100.1
+crewai-tools==0.0.1
 pandasai==2.2.15
 pydantic==2.9.2 
 pydantic-core==2.23.4
@@ -35,7 +37,7 @@ pandas==1.5.3
 numpy==1.26.0
 sqlitedict==2.1.0
 faiss-cpu==1.7.4
-chromadb==0.4.24
+chromadb==0.5.23
 PyMuPDF==1.23.4
 PyMuPDFb==1.23.3
 pypandoc==1.13
