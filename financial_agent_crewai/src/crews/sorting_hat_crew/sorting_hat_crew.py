@@ -4,7 +4,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInputsList
+from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInputsList
 
 load_dotenv()
 from crewai import LLM
@@ -19,30 +19,38 @@ class SortingHatCrew:
     agents: List[Any]
     tasks: List[Any]
 
-    def __init__(self, llm: LLM) -> None:
+    def __init__(
+        self,
+        llm: LLM,
+        verbose: bool = True,
+    ) -> None:
         """Initialize the SortingHatCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
         self.llm = llm
+        self.verbose = verbose
 
     @agent  # type: ignore
     def extractor(self) -> Agent:
         """Add the Information Extractor Agent."""
+
         return Agent(
             config=self.agents_config['extractor'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
     def extraction_task(self) -> Task:
         """Add the Extraction Task."""
+
         return Task(
             config=self.tasks_config['extraction_task'],
-            output_pydantic=SecEdgarFilingsInputsList,
+            output_pydantic=FilingsInputsList,
         )
 
     @crew  # type: ignore
@@ -53,5 +61,5 @@ class SortingHatCrew:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

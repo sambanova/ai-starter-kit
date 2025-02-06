@@ -1,10 +1,8 @@
 yfinance_stock_analysis:
   description: >
-    Conduct a thorough research about the user query: {query}.
-    Make sure you find any interesting and relevant information given
-    the current year is 2024.
+    Conduct a thorough financial investigation into the user’s query: {query},
+    emphasizing recent developments, notable trends, and the context of the year 2024.
+    Ensure your findings reflect the most up-to-date market conditions.
   expected_output: >
-    The full path of the saved SEC Edgar text file.
+    Provide the full file paths where your comprehensive analysis is stored.
   agent: yfinance_stock_analyst
-
-# Finetune

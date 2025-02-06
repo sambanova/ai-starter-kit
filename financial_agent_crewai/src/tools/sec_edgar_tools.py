@@ -1,67 +1,18 @@
 import datetime
 import logging
 import os
-from datetime import date
-from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput, get_html_text
+from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInput
 from financial_agent_crewai.src.utils.config import CACHE_DIR
 
 logger = logging.getLogger(__name__)
-
-
-class FilingType(str, Enum):
-    TEN_K = '10-K'
-    TEN_Q = '10-Q'
-
-
-class SecEdgarFilingsInput(BaseModel):
-    """
-    Model for retrieving a single financial filing from SEC Edgar
-    about a given company and a given year.
-    """
-
-    ticker_symbol: str = Field(..., min_length=1, description='The company ticker symbol.')
-    company: str = Field(..., min_length=1, description='The company name.')
-    filing_type: str = Field(
-        default=FilingType.TEN_K,
-        description='Either "10-K" for yearly filings or "10-Q" for quarterly filings. '
-        'If not specified, always choose "10-K".',
-    )
-    filing_quarter: Optional[int] = Field(
-        None,
-        ge=1,
-        le=4,
-        description='The quarter of the filing, if any (1, 2, 3, or 4). Defaults to None for annual filings (10-K).',
-    )
-    year: int = Field(
-        default_factory=lambda: date.today().year,
-        ge=1900,
-        description=(
-            'Year of the filing. '
-            # 'If a user references a specific year, the filing year corresponds '
-            # 'to that year plus one (e.g., a request for 2023 implies a 2024 10-K). '
-            # 'If not specified, the default is the current calendar year.'
-        ),
-    )
-    query: str = Field(
-        ...,
-        description='A reformulation of the user query, tailored to correspond '
-        'to the given company and (if mentioned) year.',
-    )
-
-
-class SecEdgarFilingsInputsList(BaseModel):
-    """Model representing a list of filing metadata."""
-
-    inputs_list: List[SecEdgarFilingsInput] = Field(..., description='The list of filing metadata.')
 
 
 class SecEdgarFilingRetriever(BaseTool):  # type: ignore
@@ -69,7 +20,7 @@ class SecEdgarFilingRetriever(BaseTool):  # type: ignore
 
     name: str = 'SEC Edgar Filing Retriever'
     description: str = 'Retrieve a financial filing from SEC Edgar and then answer the original user question.'
-    filing_metadata: SecEdgarFilingsInput
+    filing_metadata: FilingsInput
 
     def _run(self) -> FilenameOutput:
         # Check the filing type

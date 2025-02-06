@@ -18,27 +18,35 @@ class ReportCrew:
     agents: List[Any]
     tasks: List[Any]
 
-    def __init__(self, llm: LLM) -> None:
+    def __init__(
+        self,
+        llm: LLM,
+        verbose: bool = True,
+    ) -> None:
         """Initialize the ReportCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
         self.llm = llm
+        self.verbose = verbose
 
     @agent  # type: ignore
     def reporting_analyst(self) -> Agent:
         """Add the Finance Reporting Analyst Agent."""
+
         return Agent(
             config=self.agents_config['reporting_analyst'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
     def reporting_task(self) -> Task:
         """Add the Reporting Task."""
+
         return Task(
             config=self.tasks_config['reporting_task'],
             output_pydantic=ReportSection,
@@ -52,5 +60,5 @@ class ReportCrew:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

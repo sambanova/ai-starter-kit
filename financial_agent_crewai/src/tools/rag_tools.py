@@ -22,16 +22,6 @@ CHUNK_OVERLAP = 256
 logger = logging.getLogger(__name__)
 
 
-class VectorStoreException(Exception):
-    """Exception raised when the vector store cannot be retrieved."""
-
-    def __init__(self, message: str) -> None:
-        self.message = message
-
-    def __str__(self) -> str:
-        return f'VectorStoreException({self.message})'
-
-
 RETRIEVAL_QA_PROMPT_TEMPLATE = """
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
@@ -55,8 +45,38 @@ RETRIEVAL_QA_PROMPT_TEMPLATE = """
 """
 
 
+class TXTSearchToolSchema(BaseModel):
+    """Input for TXTSearchTool."""
+
+    txt: str = Field(..., description='Mandatory txt path you want to search.')
+
+
+class TXTSearchTool(BaseTool):  # type: ignore
+    name: str = "Search a txt's content."
+    description: str = "A tool that can be used to semantic search a query from a txt's content."
+    txt_path: TXTSearchToolSchema
+    rag_llm: Any
+
+    def _run(self, query: str) -> Any:
+        """Execute the search query and return results"""
+
+        # Extract the datafrane from the txt path
+        df = pandas.read_csv(self.txt_path.txt)
+
+        # Convert the dataframe rows into Document objects
+        documents = list()
+        for _, row in df.iterrows():
+            document = Document(page_content=row.values[0])
+            documents.append(document)
+
+        # Get QA response
+        answer = get_qa_response(query=query, documents=documents, rag_llm=self.rag_llm)
+
+        return answer
+
+
 def get_qa_response(
-    user_query: str,
+    query: str,
     documents: List[Document],
     rag_llm: LLM,
 ) -> Any:
@@ -64,16 +84,16 @@ def get_qa_response(
     Elaborate an answer to user request using RetrievalQA chain.
 
     Args:
-        user_request: User request to answer.
+        query: User request to answer.
         documents: List of documents to use for retrieval.
 
     Returns:
         Answer to the user request.
 
     Raises:
-        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain.schema.Document`.
+        TypeError: If `query` is not a string or `documents` is not a list of `langchain.schema.Document`.
     """
-    if not isinstance(user_query, str):
+    if not isinstance(query, str):
         raise TypeError('user_request must be a string.')
     if not isinstance(documents, list):
         raise TypeError(f'documents must be a list of strings. Got {type(documents)}.')
@@ -81,10 +101,10 @@ def get_qa_response(
         raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry
-    vectorstore = get_vectorstore_retriever(documents=documents)
+    vectorstore = get_vectorstore(documents=documents)
 
     # Retrieve the most relevant docs
-    retrieved_docs = vectorstore.similarity_search(query=user_query, k=NUM_RAG_SOURCES)
+    retrieved_docs = vectorstore.similarity_search(query=query, k=NUM_RAG_SOURCES)
 
     # Extract the content of the retrieved docs
     docs_content = '\n\n'.join(doc.page_content for doc in retrieved_docs)
@@ -93,7 +113,7 @@ def get_qa_response(
     retrieval_qa_chat_prompt_template = PromptTemplate.from_template(RETRIEVAL_QA_PROMPT_TEMPLATE)
 
     # Prompt
-    retrieval_qa_chat_prompt = retrieval_qa_chat_prompt_template.format(input=user_query, context=docs_content)
+    retrieval_qa_chat_prompt = retrieval_qa_chat_prompt_template.format(input=query, context=docs_content)
 
     # Call the LLM
     response = rag_llm.call(retrieval_qa_chat_prompt)
@@ -108,20 +128,18 @@ def load_embedding_model() -> HuggingFaceEmbeddings | Embeddings:
     return embeddings_cpu
 
 
-def get_vectorstore_retriever(documents: List[Document]) -> Chroma:
+def get_vectorstore(documents: List[Document]) -> Chroma:
     """
     Get the retriever for a given session id and documents.
 
     Args:
         documents: List of documents to be used for retrieval.
-        vectorstore_registry: Registry of vectorstores to be used in retrieval.
-            Defaults to an empty registry.
 
     Returns:
-        A tuple with the vectorstore registry and the current session id.
+        The vectorstore.
 
-    Raisese:
-        Exception: If a vectorstore and a retriever cannot be instantiated.
+    Raises:
+        Exception: If a vectorstore cannot be instantiated.
     """
 
     # Instantiate the embedding model
@@ -131,36 +149,9 @@ def get_vectorstore_retriever(documents: List[Document]) -> Chroma:
     try:
         vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
-        raise VectorStoreException('Could not instantiate the vectorstore.')
+        raise Exception('Could not instantiate the vectorstore.')
 
     if not isinstance(vectorstore, Chroma):
-        raise VectorStoreException('Could not instantiate the vectorstore.')
+        raise Exception('Could not instantiate the vectorstore.')
 
     return vectorstore
-
-
-class TXTSearchToolSchema(BaseModel):
-    """Input for TXTSearchTool."""
-
-    txt: str = Field(..., description='Mandatory txt path you want to search.')
-
-
-class TXTSearchTool(BaseTool):  # type: ignore
-    name: str = "Search a txt's content."
-    description: str = "A tool that can be used to semantic search a query from a txt's content."
-    txt_path: TXTSearchToolSchema
-    rag_llm: Any
-
-    def _run(self, search_query: str) -> Any:
-        """Execute the search query and return results"""
-        df = pandas.read_csv(self.txt_path.txt)
-        # Convert DataFrame rows into Document objects
-        documents = list()
-        for _, row in df.iterrows():
-            document = Document(page_content=row.values[0])
-            documents.append(document)
-
-        # Get QA response
-        answer = get_qa_response(user_query=search_query, documents=documents, rag_llm=self.rag_llm)['answer']
-
-        return answer

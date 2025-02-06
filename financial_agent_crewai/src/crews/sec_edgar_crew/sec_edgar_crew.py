@@ -5,7 +5,8 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput
-from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingRetriever, SecEdgarFilingsInput
+from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingRetriever
+from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInput
 
 load_dotenv()
 
@@ -19,8 +20,14 @@ class SECEdgarCrew:
     agents: List[Any]
     tasks: List[Any]
 
-    def __init__(self, input_variables: SecEdgarFilingsInput, llm: LLM) -> None:
+    def __init__(
+        self,
+        input_variables: FilingsInput,
+        llm: LLM,
+        verbose: bool = True,
+    ) -> None:
         """Initialize the SECEdgarCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -28,13 +35,15 @@ class SECEdgarCrew:
         self.tasks = []
         self.input_variables = input_variables
         self.llm = llm
+        self.verbose = verbose
 
     @agent  # type: ignore
     def sec_researcher(self) -> Agent:
         """Add the SEC EDGAR Curator Agent."""
+
         return Agent(
             config=self.agents_config['sec_researcher'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
             tools=[SecEdgarFilingRetriever(filing_metadata=self.input_variables)],
         )
@@ -42,6 +51,7 @@ class SECEdgarCrew:
     @task  # type: ignore
     def sec_research_task(self) -> Task:
         """Add the SEC Research Task."""
+
         return Task(
             config=self.tasks_config['sec_research_task'],
             output_pydantic=FilenameOutput,
@@ -50,9 +60,10 @@ class SECEdgarCrew:
     @crew  # type: ignore
     def crew(self) -> Crew:
         """Create the SECEdgarCrew crew."""
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

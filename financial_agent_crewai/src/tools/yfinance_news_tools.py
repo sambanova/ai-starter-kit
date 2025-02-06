@@ -68,7 +68,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
         filename_list = list()
 
         # Create the filename
-        filename = str(CACHE_DIR / f'yahoo_news_{ticker_symbol}.csv')
+        filename = str(CACHE_DIR / f'yfinance_news_{ticker_symbol}.csv')
 
         # Webscraping by url
         report_count = 0

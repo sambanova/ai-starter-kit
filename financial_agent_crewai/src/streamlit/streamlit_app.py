@@ -6,18 +6,17 @@ the SambaNova AI models and CrewAI framework. It handles user input, content
 generation, and result display.
 """
 
+import base64
 import os
-import re
 import sys
 import time
-from contextlib import contextmanager, redirect_stdout
-from io import StringIO
-from typing import Any, Generator
 
 import streamlit
 from dotenv import load_dotenv
 
 from financial_agent_crewai.src.main import FinancialFlow
+from financial_agent_crewai.src.utils.config import *
+from financial_agent_crewai.src.utils.utilities import *
 
 # Quick fix: Add parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -169,7 +168,7 @@ def main() -> None:
 
     # -------------------- FORM --------------------
     with streamlit.form('generation_form'):
-        col1, col2, col3 = streamlit.columns([7, 3, 4])
+        col1, col2, col3 = streamlit.columns([0.4, 0.4, 0.2])
 
         with col1:
             streamlit.write('**User query**')
@@ -190,94 +189,40 @@ def main() -> None:
             )
 
         with col2:
-            streamlit.write('**Sources**')
             # Checkboxes for user options
-            generic_research_option = streamlit.checkbox('Generic Google Search', value=True)
-            sec_edgar_option = streamlit.checkbox('SEC Edgar Filings', value=True)
-            yfinance_news_option = streamlit.checkbox('Yahoo Finance News', value=True)
-            yfinance_stocks_option = streamlit.checkbox('Yahoo Finance Stocks', value=True)
+            col20, col21, col22 = streamlit.columns([0.33, 0.33, 0.33], vertical_alignment='center')
+            with col21:
+                generic_research_option = streamlit.checkbox('Generic Google Search', value=False)
+                sec_edgar_option = streamlit.checkbox('SEC Edgar Filings', value=False)
+            with col22:
+                yfinance_news_option = streamlit.checkbox('Yahoo Finance News', value=False)
+                yfinance_stocks_option = streamlit.checkbox('Yahoo Finance Stocks', value=False)
 
         with col3:
-            # if not os.getenv('SAMBANOVA_API_KEY'):
-            streamlit.write('**SAMBANOVA_API_KEY**')
-            sambanova_api_key = streamlit.text_input(
-                label='Enter API key (hidden)',
-                type='password',
-                help='Enter your API key',
-                key='sambanova_api_key',
-                label_visibility='collapsed',
-            )
-            if sambanova_api_key:
-                os.environ['SAMBANOVA_API_KEY'] = sambanova_api_key
+            if not os.getenv('SAMBANOVA_API_KEY'):
+                streamlit.write('**SAMBANOVA_API_KEY**')
+                sambanova_api_key = streamlit.text_input(
+                    label='Enter API key (hidden)',
+                    type='password',
+                    help='Enter your API key',
+                    key='sambanova_api_key',
+                    label_visibility='collapsed',
+                )
+                if sambanova_api_key:
+                    os.environ['SAMBANOVA_API_KEY'] = sambanova_api_key
 
-            # if not os.getenv('SAMBANOVA_API_KEY'):
-            streamlit.write('**SERPER_API_KEY (Optional)**')
-            serper_api_key = streamlit.text_input(
-                label='Enter API key (hidden)',
-                type='password',
-                help='Enter your API key',
-                key='serper_api_key',
-                label_visibility='collapsed',
-            )
-            if serper_api_key:
-                os.environ['SERPER_API_KEY'] = serper_api_key
+            if not os.getenv('SERPER_API_KEY'):
+                streamlit.write('**SERPER_API_KEY (Optional)**')
+                serper_api_key = streamlit.text_input(
+                    label='Enter API key (hidden)',
+                    type='password',
+                    help='Enter your API key',
+                    key='serper_api_key',
+                    label_visibility='collapsed',
+                )
+                if serper_api_key:
+                    os.environ['SERPER_API_KEY'] = serper_api_key
             pass
-
-    # -------------------- OUTPUT COLUMNS --------------------
-    output_col1, output_col2 = streamlit.columns(2)
-
-    # Left panel: Agent Progress
-    with output_col1:
-        streamlit.markdown("<h4 style='margin: 0 0 0.5rem;'>🔄 Agent Progress</h4>", unsafe_allow_html=True)
-        # We keep an empty container that we'll fill with logs or a placeholder
-        execution_output = streamlit.empty()
-
-        if not streamlit.session_state.running and not streamlit.session_state.final_content:
-            # Show placeholder (same .custom-panel style)
-            execution_output.markdown(
-                """
-                <div class="custom-panel">
-                    <div class="custom-placeholder">
-                        Agent progress will appear here...
-                        <br/><br/>
-                        Click 'Generate' to begin.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    # Right panel: Generated Content
-    with output_col2:
-        streamlit.markdown("<h4 style='margin: 0 0 0.5rem;'>📑 Financial Report</h4>", unsafe_allow_html=True)
-        content_output = streamlit.empty()
-
-        if streamlit.session_state.final_content:
-            cleaned_content = clean_markdown_content(streamlit.session_state.final_content)
-            content_output.markdown(
-                f"""
-                <div class="custom-panel">
-                    <div class="markdown-content">
-                        {cleaned_content}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        else:
-            # Placeholder in the content box
-            content_output.markdown(
-                """
-                <div class="custom-panel">
-                    <div class="custom-placeholder">
-                        Your Financial Report will appear here...
-                        <br><br>
-                        Click 'Generate' to begin.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
 
     # -------------------- ACTIONS ON SUBMIT --------------------
     if generate_button:
@@ -289,89 +234,100 @@ def main() -> None:
             streamlit.error('❌ Please provide an API key.')
             return
 
-        try:
-            start_time = time.time()
-            streamlit.session_state.running = True
-            streamlit.session_state.final_content = None
+        if (
+            not generic_research_option
+            and not sec_edgar_option
+            and not yfinance_news_option
+            and not yfinance_stocks_option
+        ):
+            streamlit.error('❌ Please provide data source.')
+        else:
+            try:
+                start_time = time.time()
+                streamlit.session_state.running = True
+                streamlit.session_state.final_content = None
 
-            # Update the right panel with spinner while generating
-            content_output.markdown(
-                """
-                <div class="custom-panel">
-                    <div class="markdown-content">
-                        <div style="display: flex; flex-direction: column; 
-                                   align-items: center; justify-content: center; height: 100%;">
-                            <div class="stSpinner">
-                                <div class="st-spinner-border" role="status"></div>
-                            </div>
-                            <p style="margin-top: 15px; color: #ee7624;">
-                                🔄 Generating comprehensive research content...
-                                <br/>
-                                This may take a few minutes. Track progress in the left panel.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                if streamlit.session_state.running:
+                    streamlit.markdown("<h4 style='margin: 0 0 0.5rem;'>🔄 Agent Progress</h4>", unsafe_allow_html=True)
+                    # We keep an empty container that we'll fill with logs or a placeholder
+                    execution_output = streamlit.empty()
 
-            # Show real-time logs in the left panel
-            with streamlit.spinner('💸 Our financial agents are working on your query...'):
-                with st_capture(execution_output.code):
-                    financial_flow = FinancialFlow(
-                        query=query,
-                        source_generic_search=generic_research_option,
-                        source_sec_filings=sec_edgar_option,
-                        source_yfinance_news=yfinance_news_option,
-                        source_yfinance_stocks=yfinance_stocks_option,
-                    )
-                    financial_flow.kickoff()
+                    # Show real-time logs
+                    with streamlit.spinner('💸 Our financial agents are working on your query...'):
+                        with st_capture(execution_output.code):
+                            financial_flow = FinancialFlow(
+                                query=query,
+                                source_generic_search=generic_research_option,
+                                source_sec_filings=sec_edgar_option,
+                                source_yfinance_news=yfinance_news_option,
+                                source_yfinance_stocks=yfinance_stocks_option,
+                            )
+                            financial_flow.kickoff()
 
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            minutes = int(elapsed_time // 60)
-            seconds = int(elapsed_time % 60)
-            time_msg = f'⚡ Generated in {minutes}m {seconds}s' if minutes > 0 else f'⚡ Generated in {seconds}s'
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                minutes = int(elapsed_time // 60)
+                seconds = int(elapsed_time % 60)
+                time_msg = f'⚡ Generated in {minutes}m {seconds}s' if minutes > 0 else f'⚡ Generated in {seconds}s'
 
-            streamlit.success('✨ Content generated successfully!')
-            streamlit.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
+                output_file = CACHE_DIR / f'final_report.md'
+                streamlit.session_state.running = False
+                streamlit.session_state.final_content = output_file
+                streamlit.success('✨ Content generated successfully!')
+                streamlit.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
 
-            # If the output file was written, show it
-            output_file = f'output/.md'.replace(' ', '_')
-            if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    final_md = f.read()
-                    streamlit.session_state.final_content = final_md
-                    cleaned_content = clean_markdown_content(final_md)
+                # If the output file was written, show it
 
-                    content_output.markdown(
-                        f"""
-                        <div class="custom-panel">
-                            <div class="markdown-content">
-                                {cleaned_content}
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                if os.path.exists(output_file):
+                    output_col1, output_col2 = streamlit.columns([0.5, 0.5], gap='large')
+                    with output_col1:
+                        with open(output_file, 'r', encoding='utf-8') as f:
+                            final_md = f.read()
+                            streamlit.session_state.final_content = final_md
+                            # Clean the Markdown (base64 images, table classes) -> HTML
+                            cleaned_html = clean_markdown_content(final_md)
+                            content_output = streamlit.empty()
+                            content_output.markdown(
+                                f"""
+                                <div class="custom-panel">
+                                    <div class="markdown-content">
+                                        {cleaned_html}
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
 
-                # Download button
-                col_dl1, col_dl2 = streamlit.columns([3, 1])
-                with col_dl2:
-                    streamlit.download_button(
-                        label='📥 Download as Markdown',
-                        data=final_md,
-                        file_name=f'financial_report.md',
-                        mime='text/markdown',
-                        help='Download your generated content as a markdown file',
-                    )
+                        streamlit.download_button(
+                            label='📥 Download Markdown',
+                            data=final_md,
+                            file_name=f'financial_report.md',
+                            mime='text/markdown',
+                        )
 
-        except Exception as e:
-            streamlit.error(f'❌ An error occurred: {str(e)}')
-            streamlit.info('🔄 Please try again or contact support if the issue persists.')
-        finally:
-            streamlit.session_state.running = False
+                    with output_col2:
+                        # Convert the cleaned HTML to a PDF
+                        pdf_data = convert_html_to_pdf(cleaned_html)
+
+                        # Encode the PDF to Base64
+                        base64_pdf = base64.b64encode(pdf_data).decode('utf-8')
+                        pdf_display = (
+                            f'<embed src="data:application/pdf;base64,{base64_pdf}"'
+                            ' width="700" height="400" type="application/pdf">'
+                        )
+                        streamlit.markdown(pdf_display, unsafe_allow_html=True)
+                        streamlit.download_button(
+                            label='📥 Download PDF',
+                            data=pdf_data,
+                            file_name='report.pdf',
+                            mime='application/pdf',
+                        )
+
+            except Exception as e:
+                streamlit.error(f'❌ An error occurred: {str(e)}')
+                streamlit.info('🔄 Please try again or contact support if the issue persists.')
+            finally:
+                streamlit.session_state.running = False
 
 
 def init_session_state() -> None:
@@ -382,47 +338,6 @@ def init_session_state() -> None:
         streamlit.session_state.final_content = None
     if 'show_api_warning' not in streamlit.session_state:
         streamlit.session_state.show_api_warning = False
-
-
-def clean_markdown_content(content: str) -> str:
-    """
-    Clean and format markdown content for better rendering.
-
-    Args:
-        content (str): Raw markdown content.
-
-    Returns:
-        str: Cleaned and formatted markdown content.
-    """
-    content = content.rstrip()
-    # Ensure a blank line after headings for readability
-    content = re.sub(r'(#+ .*?)\n', r'\1\n\n', content)
-    return content
-
-
-@contextmanager
-def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
-    """
-    Context manager for capturing stdout and redirecting to Streamlit.
-
-    Args:
-        output_func (Callable[[str], None]): Function to handle captured output.
-
-    Yields:
-        StringIO: String buffer containing captured output.
-    """
-    with StringIO() as stdout, redirect_stdout(stdout):
-        old_write = stdout.write
-
-        def new_write(string: str) -> int:
-            ret = old_write(string)
-            # Each time something is written to stdout,
-            # we send it to Streamlit via `output_func`.
-            output_func(stdout.getvalue() + '\n#####\n')
-            return ret
-
-        stdout.write = new_write  # type: ignore
-        yield stdout
 
 
 if __name__ == '__main__':

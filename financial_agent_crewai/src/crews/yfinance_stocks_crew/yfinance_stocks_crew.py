@@ -1,17 +1,19 @@
+import datetime
 from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
+from langchain_core.language_models.chat_models import BaseChatModel
 
-from financial_agent_crewai.src.tools.general_tools import FilenameOutput
-from financial_agent_crewai.src.tools.sec_edgar_tools import SecEdgarFilingsInput
+from financial_agent_crewai.src.tools.general_tools import FilenameOutputList
+from financial_agent_crewai.src.tools.yfinance_stocks_tools import YFinanceStocksTool
 
 load_dotenv()
 
 
 @CrewBase
-class YFinanceStockCrew:
+class YFinanceStocksCrew:
     """YFinanceStockCrew crew."""
 
     agents_config: Dict[str, Any]
@@ -19,7 +21,15 @@ class YFinanceStockCrew:
     agents: List[Any]
     tasks: List[Any]
 
-    def __init__(self, input_variables: SecEdgarFilingsInput, llm: LLM) -> None:
+    def __init__(
+        self,
+        ticker_symbol: str,
+        llm: LLM,
+        pandasai_llm: BaseChatModel,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        verbose: bool = True,
+    ) -> None:
         """Initialize the YFinanceStockCrew crew."""
 
         super().__init__()
@@ -27,36 +37,48 @@ class YFinanceStockCrew:
         self.tasks_config = {}
         self.agents = []
         self.tasks = []
-        self.input_variables = input_variables
+        self.ticker_symbol = ticker_symbol
         self.llm = llm
+        self.pandasai_llm = pandasai_llm
+        self.start_date = start_date
+        self.end_date = end_date
+        self.verbose = verbose
 
     @agent  # type: ignore
     def yfinance_stock_analyst(self) -> Agent:
         """Add the Yahoo Finance Stock Analyst Agent."""
+
         return Agent(
             config=self.agents_config['yfinance_stock_analyst'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
             task='yfinance_stock_analysis',
-            # tools=[
-            #     SecEdgarFilingRetriever(filing_metadata=self.input_variables),
-            # ],
+            tools=[
+                YFinanceStocksTool(
+                    llm=self.pandasai_llm,
+                    ticker_symbol=self.ticker_symbol,
+                    start_date=self.start_date,
+                    end_date=self.end_date,
+                ),
+            ],
         )
 
     @task  # type: ignore
     def yfinance_stock_analysis(self) -> Task:
         """Add the YFinance Stock Analysis Task."""
+
         return Task(
             config=self.tasks_config['yfinance_stock_analysis'],
-            output_pydantic=FilenameOutput,
+            output_pydantic=FilenameOutputList,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
         """Create the YFinanceStockCrew crew."""
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

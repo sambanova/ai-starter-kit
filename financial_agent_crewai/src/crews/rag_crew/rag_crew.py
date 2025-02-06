@@ -23,8 +23,10 @@ class RAGCrew:
         self,
         filename: str,
         llm: LLM,
+        verbose: bool = True,
     ) -> None:
         """Initialize the RAGCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -32,13 +34,15 @@ class RAGCrew:
         self.tasks = []
         self.filename = filename
         self.llm = llm
+        self.verbose = verbose
 
     @agent  # type: ignore
     def rag_researcher(self) -> Agent:
         """Add the RAG Agent."""
+
         return Agent(
             config=self.agents_config['rag_researcher'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
             tools=[
                 TXTSearchTool(
@@ -52,6 +56,7 @@ class RAGCrew:
     @task  # type: ignore
     def rag_esearch_task(self) -> Task:
         """Add the RAG Research Task."""
+
         return Task(
             config=self.tasks_config['rag_research_task'],
             output_file=convert_csv_source_to_txt_report_filename(self.filename),
@@ -60,9 +65,10 @@ class RAGCrew:
     @crew  # type: ignore
     def crew(self) -> Crew:
         """Create the RAGCrew crew."""
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

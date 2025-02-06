@@ -19,8 +19,14 @@ class GenericResearchCrew:
     agents: List[Any]
     tasks: List[Any]
 
-    def __init__(self, llm: LLM, filename: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        llm: LLM,
+        filename: Optional[str] = None,
+        verbose: bool = True,
+    ) -> None:
         """Initialize the GenericResearchCrew crew."""
+
         super().__init__()
         self.agents_config = {}
         self.tasks_config = {}
@@ -28,13 +34,15 @@ class GenericResearchCrew:
         self.tasks = []
         self.llm = llm
         self.filename = filename if filename is not None else str(CACHE_DIR / 'report.txt')
+        self.verbose = verbose
 
     @agent  # type: ignore
     def researcher(self) -> Agent:
         """Add the Specialized Finance Researcher Agent."""
+
         return Agent(
             config=self.agents_config['researcher'],
-            verbose=True,
+            verbose=self.verbose,
             llm=self.llm,
             tools=[SerperDevTool()],
         )
@@ -42,6 +50,7 @@ class GenericResearchCrew:
     @task  # type: ignore
     def research_task(self) -> Task:
         """Add the Research Task."""
+
         return Task(
             config=self.tasks_config['research_task'],
             output_file=self.filename,
@@ -50,9 +59,10 @@ class GenericResearchCrew:
     @crew  # type: ignore
     def crew(self) -> Crew:
         """Create the GenericResearchCrew crew."""
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
+            verbose=self.verbose,
         )

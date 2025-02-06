@@ -19,9 +19,17 @@ logger = logging.getLogger(__name__)
 
 
 class FilenameOutput(BaseModel):
-    """Model representing a SEC Edgar filing's full file path."""
+    """Model representing a saved full file path."""
 
-    filename: str = Field(..., description='The full, non-empty file path of the SEC Edgar filing.')
+    filename: str = Field(..., description='The full, non-empty file path of the saved file.')
+
+
+class FilenameOutputList(BaseModel):
+    """Model representing a list of saved full file paths."""
+
+    file_output_list: List[FilenameOutput] = Field(
+        ..., description='The list of the full, non-empty file paths of the saved files.'
+    )
 
 
 def get_html_text(html_text: bytes, filename: str) -> None:
@@ -75,15 +83,17 @@ class SubQueriesList(BaseModel):
         ...,
         min_length=1,
         description=(
-            'A list of subsequent sub-queries derived from the decomposition of the original user query. '
-            'Each sub-query relates to a single company for a single year.'
+            'A list of sub-queries derived from the original user query. '
+            'Each sub-query relates to a single company. '
+            'If the user explicitly mentions comparing two or more years, '
+            'then each sub-query focuses on one company-year pair.'
         ),
     )
     is_comparison: bool = Field(
         ...,
         description=(
-            'Indicates whether the original user query involves a comparison between two '
-            'companies or two different years.'
+            'Indicates whether the original user query involves a comparison '
+            '(e.g., between multiple companies or multiple years).'
         ),
     )
 

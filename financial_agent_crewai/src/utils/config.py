@@ -1,14 +1,20 @@
 from pathlib import Path
 
+# Level of verbosity
+VERBOSE = False
+
 # Specify the directory and file path
 CACHE_DIR = Path('financial_agent_crewai/cache/')
+YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
+PANDASAI_CAHE_DIR = Path('cache')
 
 # Maximum number of words per section
 MAX_SECTION_WORDS = 1000
 
 # User query
-USER_QUERY = 'What were Google expenditures for 2023 according to its SEC Edgar filings?'
+USER_QUERY = 'Can you give me a breakdown analysis of Google expenditures for the last quarter of 2024?'
 # USER_QUERY = 'What were the main differences in expenditure records between Apple and Google in 2023?'
+# USER_QUERY = 'What are the latest close value for Google for the last 3 months?'
 
 # Comparison query
 COMPARISON_QUERY = (
@@ -33,6 +39,7 @@ SOURCE_YFINANCE_STOCK = False
 BILLION_PARAMETERS = '70'
 PROVIDER = 'sambanova'
 MODEL_TEMPLATE = '{provider}/Meta-Llama-3.1-{billion_parameters}B-Instruct'
+MODEL_NAME_TEMPLATE = 'Meta-Llama-3.1-{billion_parameters}B-Instruct'
 
 GENERAL_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 
@@ -45,6 +52,7 @@ REPORT_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLI
 SEC_EDGAR_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 YFINANCE_NEWS_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
 YFINANCE_STOCKS_MODEL = MODEL_TEMPLATE.format(provider=PROVIDER, billion_parameters=BILLION_PARAMETERS)
+PANDASAI_MODEL = MODEL_NAME_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 
 # LLM temperature
 TEMPERATURE = 0
