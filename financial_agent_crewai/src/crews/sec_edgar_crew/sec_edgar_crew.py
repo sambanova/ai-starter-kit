@@ -29,10 +29,10 @@ class SECEdgarCrew:
         """Initialize the SECEdgarCrew crew."""
 
         super().__init__()
-        self.agents_config = {}
-        self.tasks_config = {}
-        self.agents = []
-        self.tasks = []
+        self.agents_config = dict()
+        self.tasks_config = dict()
+        self.agents = list()
+        self.tasks = list()
         self.input_variables = input_variables
         self.llm = llm
         self.verbose = verbose

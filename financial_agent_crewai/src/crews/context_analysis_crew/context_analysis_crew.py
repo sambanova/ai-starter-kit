@@ -25,10 +25,10 @@ class ContextAnalysisCrew:
         """Initialize the ContextAnalysisCrew crew."""
 
         super().__init__()
-        self.agents_config = {}
-        self.tasks_config = {}
-        self.agents = []
-        self.tasks = []
+        self.agents_config = dict()
+        self.tasks_config = dict()
+        self.agents = list()
+        self.tasks = list()
         self.llm = llm
         self.output_file = output_file if output_file else 'context_analysis.txt'
         self.verbose = verbose

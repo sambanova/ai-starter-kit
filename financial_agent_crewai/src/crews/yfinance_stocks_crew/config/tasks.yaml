@@ -1,7 +1,7 @@
 yfinance_stock_analysis:
   description: >
-    Conduct a thorough financial investigation into the user’s query: {query},
-    emphasizing recent developments, notable trends, and the context of the year 2024.
+    Conduct a thorough financial investigation into the user’s query,
+    emphasizing recent developments, notable trends, given the current year is 2025.
     Ensure your findings reflect the most up-to-date market conditions.
   expected_output: >
     Provide the full file paths where your comprehensive analysis is stored.

@@ -25,52 +25,65 @@ FILENAME = 'report_yfinance_stocks'
 
 # Prompt template
 SOURCES_PROMPT_TEMPLATE = """
-    Please consider the following data sources and determine
-    the minimal set of data sources (and the corresponding original columns)
-    that are the most relevant to the user query.
+    Please review the following data sources and determine the minimal set of sources
+    (including their exact column names) that best address the user query.
 
     Query: {query}
 
-    \n\n
-    Please preserve the original data source names and their corresponding column names listed below.
-    Never invent new column names if you can't find a good match for the user query.
-    \n
+    • Do not invent or modify any data source names or column names.
+    • Only provide the columns that precisely match the query requirements.
+    • Preserve the original data source and column names exactly as listed.
 
-    Data sources: \n\n
-"""
+    Data sources:\n\n
+    """
+PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = """
+    Please provide a clear, well-detailed, and conversational response consisting of at least a few sentences. 
+    Ensure that your explanation is both thorough and approachable, while addressing all relevant points.
+    """
 
-PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = (
-    '\nPlease provide a well detailed conversational response of at least a few sentences.'
-)
-
-PANDASAI_FORMAT_INSTRUCTIONS_PLOT = '\nPlease provide PNG plots that illustrate the answer.'
+PANDASAI_FORMAT_INSTRUCTIONS_PLOT = """
+    Please include one or more PNG plots that visually illustrate your answer or findings. 
+    Make sure the plots are clearly labeled and relevant to the discussion.
+    """
 
 
 class YFinanceSource(BaseModel):
-    """A data source and the columns that is the most relevant to the user query."""
+    """
+    Represents a relevant data source from Yahoo Finance (YFinance) and
+    the columns related to the user's query.
+    """
 
-    name: str = Field(..., description='The relevant data source.')
+    name: str = Field(..., description='The name or identifier of the data source.')
     columns: List[str] = Field(
-        ..., description='The list of relevant columns of the data source (in their original name and spelling).'
+        ..., description='The list of column names that are relevant for the query, in their original spelling/casing.'
     )
 
 
 class YFinanceSourceList(BaseModel):
-    """The list of the data sources that are the most relevant to the user query."""
+    """
+    A collection of YFinanceSource objects, each specifying a data source
+    and its relevant columns, pertinent to the user's query.
+    """
 
-    sources: List[YFinanceSource] = Field(..., description='The list of relevant data sources.')
+    sources: List[YFinanceSource] = Field(
+        ..., description='A list of YFinanceSource objects representing relevant data sources and columns.'
+    )
 
 
 class YFinanceStocksTool(BaseTool):  # type: ignore
-    name: str = "Search a txt's content."
-    description: str = "A tool that can be used to semantic search a query from a txt's content."
+    name: str = 'Yahoo Finance Stocks Tool'
+    description: str = (
+        'A tool that leverages the Yahoo Finance API '
+        "to collect and analyze a company's financial and market data, "
+        'enabling insight-driven decision-making.'
+    )
     llm: BaseChatModel
     ticker_symbol: str
     start_date: datetime.date
     end_date: datetime.date
 
     def _run(self, query: str) -> FilenameOutputList:
-        """Execute the search query and return results"""
+        """Execute the search query and return results."""
 
         # Extract data from yfinance
         data = extract_yfinance_data(
@@ -79,7 +92,9 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
             end_date=self.end_date,
         )
 
+        # Create a prompt template
         PROMPT_TEMPLATE = SOURCES_PROMPT_TEMPLATE.format(query=query)
+        # Append the data sources and their corresponding columns
         for data_source in list(data):
             PROMPT_TEMPLATE += f'Data source: {data_source}.'
             PROMPT_TEMPLATE += data[data_source][1] + '\n\n'
@@ -97,18 +112,21 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         for source in structured_output.sources:  # type: ignore
             # Coerce the retrieved data to a `pandas.DataFrame`
             dataframe = convert_data_to_frame(data[source.name][0], source.name)
+            # Retrieve the columns
             columns = [column for column in source.columns]
+            # Retrieve the dataframe description, without the list of columns
             meta_data_dict[source.name] = data[source.name][1].strip('columns')
-
+            # Store only the relevant columns
             dataframe_dict[source.name] = dataframe[columns]
+            # Convert the selected dataframe columns to JSON
             answer_data_dict[source.name] = dataframe[columns].to_json(orient='split')
 
-        # Dump all DataFrame JSON strings into one file
+        # Dump all the dataframe JSON strings into one file
         filename_json = CACHE_DIR / f'{FILENAME}_{self.ticker_symbol}.json'
         with open(filename_json, 'w') as f:
             json.dump(answer_data_dict, f, indent=2)
 
-        # Answer the user query by symbol
+        # Answer the user query for the given ticker symbol
         answer = interrogate_dataframe_pandasai(dataframe_dict, query, self.llm, self.ticker_symbol)
 
         # Save the answer to a text file
@@ -116,6 +134,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         with open(filename_txt, 'w') as f:
             f.write(answer)
 
+        # Return both the PandasAI answer and the JSON file with the dataframe
         return FilenameOutputList(
             file_output_list=[FilenameOutput(filename=str(filename_txt)), FilenameOutput(filename=str(filename_json))]
         )
@@ -128,16 +147,21 @@ def interrogate_dataframe_pandasai(
     ticker_symbol: str,
 ) -> Any:
     """
-    Interrogate a dataframe via `pandasai` with the user query.
+    Interrogate multiple dataframes via `pandasai` with the user query.
 
     Args:
-        df_pandas: The dataframe to interrogate.
+        dataframe_dict: A dictionary containing the dataframes to interrogate.
         query: The user query to answer with information from the dataframe.
+        llm: The LLM to use when answering the user query.
+        ticker_symbol: The ticker symbol to use to generate the output folder.
 
     Returns:
         The response to the user query, generated by the LLM via `pandasai`.
     """
+    # Extract the list of dataframes
     pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
+
+    # Create a new pandasai agent
     pandasai_agent = Agent(
         pandasai_dataframes_list,
         config={
@@ -149,23 +173,17 @@ def interrogate_dataframe_pandasai(
         },
     )
 
-    # Delete the pandasai cache
+    # Delete any pandasai cache
     shutil.rmtree(PANDASAI_CAHE_DIR, ignore_errors=True)
 
+    # Generate the response to the user query in a conversational style
     answer_conversational = pandasai_agent.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL)
 
+    # Generate the response to the user query with a plot
     answer_plot = pandasai_agent.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_PLOT)
 
+    # Return the concatenation of the two answers
     return answer_conversational + '\n\n' + answer_plot
-
-
-def convert_index_to_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
-    """
-    Simple helper function that moves the index of a DataFrame into a new column.
-    """
-    df = df.reset_index()
-    df.rename(columns={'index': column_name}, inplace=True)
-    return df
 
 
 def extract_yfinance_data(
@@ -173,21 +191,22 @@ def extract_yfinance_data(
 ) -> Dict[str, Tuple[Union[pd.DataFrame, Dict[Any, Any], str, List[Any]], str]]:
     """
     Extracts all the data of a given company using Yahoo Finance for specified dates.
-    Now each entry of the returned dictionary is a tuple consisting of:
-      - The extracted object (DataFrame, dict, string, list, etc.)
-      - A brief description of what information that object contains, ending with
-        a guessed list of columns/key-names.
 
-    Args:
-        symbol: The ticker symbol of the company to extract data from.
+    Each entry of the returned dictionary is a tuple consisting of:
+        - The extracted object (DataFrame, dict, string, list, etc.)
+        - A brief description of what information that object contains,
+            ending with the corresponding list of columns/key-names.
+
+     Args:
+        ticker_symbol: The ticker symbol of the company to extract data from.
         start_date: The start date of the historical price data to retrieve.
         end_date: The end date of the historical price data to retrieve.
 
-    Returns:
-        A dictionary where each key is a data-type label (e.g. "history", "info")
+     Returns:
+        A dictionary where each key is a data-type label (e.g. "info", "history")
         and each value is a tuple (data_object, description_with_columns).
 
-    Raises:
+     Raises:
         TypeError: If `symbol` is not a string or `start_date` and `end_date` are not of type `datetime.date`.
     """
     # Check inputs
@@ -202,7 +221,7 @@ def extract_yfinance_data(
     company = yfinance.Ticker(ticker=ticker_symbol)
 
     # Initialize the return dictionary
-    company_dict: Dict[str, Tuple[Union[pd.DataFrame, Dict[Any, Any], str, List[Any]], str]] = {}
+    company_dict: Dict[str, Tuple[Union[pd.DataFrame, Dict[Any, Any], str, List[Any]], str]] = dict()
 
     def get_columns(data: Any) -> List[str]:
         """Get the names of the keys of a dictionary or of the columns of a dataframe."""
@@ -214,14 +233,15 @@ def extract_yfinance_data(
         elif isinstance(data, dict):
             return list(data.keys())
         else:
-            raise TypeError('Data must be of type dict or pd.DataFrame.')
+            raise TypeError('Data must be of type `pandas.DataFrame`, or `pandas.Series`, or `dict`.')
 
     # 1) Get all the stock information
     try:
+        # Dictionary
         data = company.info
         description = (
-            'This dictionary contains general metadata about the company, including name, '
-            'sector, industry, and contact details. '
+            'This data source contains general metadata about the company, '
+            'including name, sector, industry, and contact details. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['info'] = (data, description)
@@ -230,28 +250,31 @@ def extract_yfinance_data(
 
     # 2) Get historical market data
     try:
+        # DataFrame
         data = company.history(start=start_date, end=end_date)
         description = (
-            'This DataFrame contains the historical stock price data for the requested date range. '
+            'This data source contains the historical stock price data for the requested date range. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['history'] = (data, description)
     except Exception:
         logger.warning('Could not retrieve the `history` dataframe.')
 
-    # 3) Get meta information about the history
+    # 3) Get metadata about the history
+    # Dictionary
     data = company.history_metadata
     description = (
-        'This dictionary contains metadata about the retrieved historical data (e.g., refresh times, extents). '
+        'This data source contains metadata about the retrieved historical data (e.g., refresh times, extents). '
         f'Columns: {get_columns(data)}.'
     )
     company_dict['history_metadata'] = (data, description)
 
     # 4) Get actions
     try:
+        # DataFrame
         data = company.actions
         description = (
-            'This DataFrame shows the timeline of corporate actions (dividends and splits) if available, '
+            'This data source shows the timeline of corporate actions (dividends and splits) if available, '
             'indexed by date. '
             f'Columns: {get_columns(data)}.'
         )
@@ -261,9 +284,11 @@ def extract_yfinance_data(
 
     # 5) Get dividends
     try:
+        # Series
         data = company.dividends
         description = (
-            'This Series shows the dividend distribution history, indexed by date. ' f'Columns: {get_columns(data)}.'
+            'This data source shows the dividend distribution history, indexed by date. '
+            f'Columns: {get_columns(data)}.'
         )
         company_dict['dividends'] = (data, description)
     except Exception:
@@ -271,9 +296,10 @@ def extract_yfinance_data(
 
     # 6) Get splits
     try:
+        # Series
         data = company.splits
         description = (
-            'This Series shows stock split events for the requested date range, indexed by date. '
+            'This data source shows stock split events for the requested date range, indexed by date. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['splits'] = (data, description)
@@ -282,9 +308,11 @@ def extract_yfinance_data(
 
     # 7) Get capital gains
     try:
+        # Series
         data = company.capital_gains  # only for mutual funds & etfs
         description = (
-            'This Series shows the capital gains distributions for mutual funds or ETFs if available, indexed by date. '
+            'This data source shows the capital gains distributions for mutual funds or ETFs if available, '
+            'indexed by date. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['capital_gains'] = (data, description)
@@ -293,9 +321,10 @@ def extract_yfinance_data(
 
     # 8) Get share count
     try:
+        # DataFrame
         data = company.get_shares_full(start=start_date, end=end_date)
         description = (
-            'This DataFrame shows the number of shares outstanding over time (if provided). '
+            'This data source shows the number of shares outstanding over time (if provided). '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['shares'] = (data, description)
@@ -304,9 +333,10 @@ def extract_yfinance_data(
 
     # 9) Get financials - income statement
     try:
+        # DataFrame
         data = company.income_stmt.T
         description = (
-            'This DataFrame contains the annual income statement data, transposed to display each year/period. '
+            'This data source contains the annual income statement data, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['income_stmt'] = (data, description)
@@ -315,9 +345,10 @@ def extract_yfinance_data(
 
     # 10) Get quarterly income statement
     try:
+        # DataFrame
         data = company.quarterly_income_stmt.T
         description = (
-            'This DataFrame contains the quarterly income statement data, transposed to display each period. '
+            'This data source contains the quarterly income statement data, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['quarterly_income_stmt'] = (data, description)
@@ -326,9 +357,10 @@ def extract_yfinance_data(
 
     # 11) Get balance sheet
     try:
+        # DataFrame
         data = company.balance_sheet.T
         description = (
-            'This DataFrame shows the annual balance sheet data, transposed per year/period. '
+            'This data source shows the annual balance sheet data, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['balance_sheet'] = (data, description)
@@ -337,9 +369,10 @@ def extract_yfinance_data(
 
     # 12) Get quarterly balance sheet
     try:
+        # DataFrame
         data = company.quarterly_balance_sheet.T
         description = (
-            'This DataFrame shows the quarterly balance sheet data, transposed per period. '
+            'This data source shows the quarterly balance sheet data, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['quarterly_balance_sheet'] = (data, description)
@@ -348,9 +381,10 @@ def extract_yfinance_data(
 
     # 13) Get cash flow statement
     try:
+        # DataFrame
         data = company.cashflow.T
         description = (
-            'This DataFrame shows the annual cash flow statement, transposed per year/period. '
+            'This data source shows the annual cash flow statement, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['cashflow'] = (data, description)
@@ -359,9 +393,10 @@ def extract_yfinance_data(
 
     # 14) Get quarterly cash flow
     try:
+        # DataFrame
         data = company.quarterly_cashflow.T
         description = (
-            'This DataFrame shows the quarterly cash flow statement, transposed per period. '
+            'This data source shows the quarterly cash flow statement, transposed per year/period. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['quarterly_cashflow'] = (data, description)
@@ -370,9 +405,10 @@ def extract_yfinance_data(
 
     # 15) Get major holders
     try:
+        # DataFrame
         data = company.major_holders
         description = (
-            "This DataFrame shows major direct holders of the company's stock if available. "
+            "This data source shows the major direct holders of the company's stocks if available. "
             f'Columns: {get_columns(data)}.'
         )
         company_dict['major_holders'] = (data, description)
@@ -381,9 +417,10 @@ def extract_yfinance_data(
 
     # 16) Get institutional holders
     try:
+        # DataFrame
         data = company.institutional_holders
         description = (
-            "This DataFrame lists institutional holders of the company's stock if available. "
+            "This data source lists institutional holders of the company's stocks if available. "
             f'Columns: {get_columns(data)}.'
         )
         company_dict['institutional_holders'] = (data, description)
@@ -392,9 +429,10 @@ def extract_yfinance_data(
 
     # 17) Get mutual fund holders
     try:
+        # DataFrame
         data = company.mutualfund_holders
         description = (
-            "This DataFrame lists mutual fund holders of the company's stock if available. "
+            "This data source lists mutual fund holders of the company's stocks if available. "
             f'Columns: {get_columns(data)}.'
         )
         company_dict['mutualfund_holders'] = (data, description)
@@ -403,9 +441,11 @@ def extract_yfinance_data(
 
     # 18) Get insider transactions
     try:
+        # DataFrame
         data = company.insider_transactions
         description = (
-            "This DataFrame shows insider transactions for the company's stock. " f'Columns: {get_columns(data)}.'
+            "This data source shows the insider transactions for the company's stocks. "
+            f'Columns: {get_columns(data)}.'
         )
         company_dict['insider_transactions'] = (data, description)
     except Exception:
@@ -413,17 +453,19 @@ def extract_yfinance_data(
 
     # 19) Get insider purchases
     try:
+        # DataFrame
         data = company.insider_purchases
-        description = 'This DataFrame shows insider purchase activities. ' f'Columns: {get_columns(data)}.'
+        description = f'This data source shows insider purchase activities. Columns: {get_columns(data)}.'
         company_dict['insider_purchases'] = (data, description)
     except Exception:
         logger.warning('Could not retrieve the `insider_purchases` dataframe.')
 
     # 20) Get insider sales
     try:
+        # DataFrame
         data = company.insider_roster_holders
         description = (
-            'This DataFrame shows the roster of insiders or insider holders if available. '
+            'This data source shows the roster of insiders or insider holders if available. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['insider_roster_holders'] = (data, description)
@@ -432,9 +474,10 @@ def extract_yfinance_data(
 
     # 21) Get sustainability
     try:
+        # DataFrame
         data = company.sustainability
         description = (
-            'This DataFrame contains environmental, social, and governance (ESG) metrics for the company. '
+            'This data source contains environmental, social, and governance (ESG) metrics for the company. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['sustainability'] = (data, description)
@@ -443,17 +486,19 @@ def extract_yfinance_data(
 
     # 22) Get recommendations
     try:
+        # DataFrame
         data = company.recommendations
-        description = 'This DataFrame shows broker recommendations for the company. ' f'Columns: {get_columns(data)}.'
+        description = 'This data source shows broker recommendations for the company. ' f'Columns: {get_columns(data)}.'
         company_dict['recommendations'] = (data, description)
     except Exception:
         logger.warning('Could not retrieve the `recommendations` dataframe.')
 
     # 23) Get recommendations summary
     try:
+        # DataFrame
         data = company.recommendations_summary
         description = (
-            'This DataFrame provides a summary of broker recommendations for the company. '
+            'This data source provides a summary of broker recommendations for the company. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['recommendations_summary'] = (data, description)
@@ -462,17 +507,19 @@ def extract_yfinance_data(
 
     # 24) Get upgrades/downgrades
     try:
+        # DataFrame
         data = company.upgrades_downgrades
-        description = 'This DataFrame tracks analyst upgrades and downgrades. ' f'Columns: {get_columns(data)}.'
+        description = f'This data source tracks analyst upgrades and downgrades. Columns: {get_columns(data)}.'
         company_dict['upgrades_downgrades'] = (data, description)
     except Exception:
         logger.warning('Could not retrieve the `upgrades_downgrades` dataframe.')
 
     # 25) Get future and historic earnings dates
     try:
+        # DataFrame
         data = company.earnings_dates
         description = (
-            'This DataFrame shows upcoming and past earnings dates, including reported EPS and estimates. '
+            'This data source shows the upcoming and past earnings dates, including reported EPS and estimates. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['earnings_dates'] = (data, description)
@@ -481,6 +528,7 @@ def extract_yfinance_data(
 
     # 26) Get ISIN code
     try:
+        # String
         data = company.isin
         description = "This string represents the company's International Securities Identification Number (ISIN). "
         company_dict['isin'] = (data, description)
@@ -489,14 +537,18 @@ def extract_yfinance_data(
 
     # 27) Get options expirations
     try:
+        # List
         data = list(company.options)
-        description = "This list shows the available option expiration dates for the company's stock, indexed by date. "
+        description = (
+            "This list shows the available option expiration dates for the company's stocks, indexed by date. "
+        )
         company_dict['options'] = (data, description)
     except Exception:
         logger.warning('Could not retrieve the `options` list.')
 
     # 28) Get news
     try:
+        # List
         data = company.news
         description = 'This list shows recent news stories related to the company. '
         company_dict['news'] = (data, description)
@@ -505,6 +557,7 @@ def extract_yfinance_data(
 
     # 29) Get option chain for specific expiration
     try:
+        # Object
         data = company.option_chain()
         description = (
             'This object contains the calls and puts DataFrames for the specified (default/latest) option expiration. '
@@ -518,7 +571,7 @@ def extract_yfinance_data(
 
 def convert_data_to_frame(data: Any, df_name: str) -> pandas.DataFrame:
     """
-    Converts data to pandas DataFrame.
+    Converts data to `pandas.DataFrame`.
 
     Args:
         data: Data to be converted to DataFrame.
@@ -554,60 +607,7 @@ def convert_data_to_frame(data: Any, df_name: str) -> pandas.DataFrame:
     else:
         raise TypeError(f'Data type {type(data)} not supported.')
 
-    # # Sort the dataframe by date
-    # df = sort_dataframe_by_date(df)
-
     return df
-
-
-# def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = None) -> pandas.DataFrame:
-#     """
-#     Sort a pandas DataFrame by chronological dates.
-
-#     This function checks if the `datetime` format is present in any of the DataFrame's columns.
-#     If more than one column follows the datetime format, it prioritizes the column named DATE_COLUMN.
-#     If DATE_COLUMN is not present, it takes the first occurrence among the columns.
-#     The function then orders the rows by chronological dates from the earliest to the latest.
-
-#     Args:
-#         df: The input dataframe.
-#         column_name (Optional): The name of the datetime column to sort by. Defaults to None.
-
-#     Returns:
-#         The dataframe ordered by the specified datetime column.
-#     """
-#     # Initialize the variable to store the name of the datetime column to sort by
-#     datetime_col = column_name
-
-#     if datetime_col is None:
-#         # Iterate through the DataFrame columns to find datetime columns
-#         for col in df.columns:
-#             # Check if the column is of any datetime dtype
-#             if (
-#                 pandas.api.types.is_datetime64_any_dtype(df[col])
-#                 or pandas.to_datetime(df[col], errors='coerce').notna().any()
-#             ):
-#                 # If the DATE_COLUMN column is found, select it
-#                 if col == DATE_COLUMN:
-#                     datetime_col = col
-#                     break
-#                 # Otherwise, set the first datetime column found
-#                 elif datetime_col is None:
-#                     datetime_col = col
-#                     break
-
-#     # If no datetime columns were found, log a message and return the original dataframe
-#     if datetime_col is None:
-#         logger.info('No datetime columns found in the DataFrame.')
-#         return df
-
-#     # Convert the selected datetime column to datetime type
-#     df[datetime_col] = pandas.to_datetime(df[datetime_col], errors='coerce')
-
-#     # Order the DataFrame by the datetime column
-#     df_sorted = df.sort_values(by=datetime_col).reset_index(drop=True)
-
-#     return df_sorted
 
 
 def is_unhashable(input_object: Any) -> bool:

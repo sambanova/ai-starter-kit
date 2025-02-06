@@ -91,12 +91,12 @@ def dict_to_markdown_table(table_data: Dict[str, Any], title: str) -> str:
         A string containing the table in Markdown format.
     """
     # Extract the table data
-    columns = table_data.get('columns', [])
-    index = table_data.get('index', [])
-    data = table_data.get('data', [])
+    columns = table_data.get('columns', list())
+    index = table_data.get('index', list())
+    data = table_data.get('data', list())
 
     # Start building Markdown
-    lines: List[str] = []
+    lines: List[str] = list()
 
     # Title as a second-level heading
     lines.append(f'## {title}')
@@ -218,7 +218,7 @@ def clean_markdown_content(content: str) -> str:
     soup = BeautifulSoup(html, 'html.parser')
     for table in soup.find_all('table'):
         # Add styling classes or IDs as needed
-        table['class'] = (table.get('class') or []) + ['table', 'table-striped', 'table-bordered']
+        table['class'] = (table.get('class') or list()) + ['table', 'table-striped', 'table-bordered']
 
     return str(soup)
 

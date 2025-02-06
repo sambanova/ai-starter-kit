@@ -33,10 +33,10 @@ class YFinanceStocksCrew:
         """Initialize the YFinanceStockCrew crew."""
 
         super().__init__()
-        self.agents_config = {}
-        self.tasks_config = {}
-        self.agents = []
-        self.tasks = []
+        self.agents_config = dict()
+        self.tasks_config = dict()
+        self.agents = list()
+        self.tasks = list()
         self.ticker_symbol = ticker_symbol
         self.llm = llm
         self.pandasai_llm = pandasai_llm
