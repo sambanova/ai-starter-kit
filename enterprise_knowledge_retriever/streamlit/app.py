@@ -269,39 +269,57 @@ def main() -> None:
             datasource = st.selectbox('', datasource_options)
 
             if isinstance(datasource, str) and 'Upload' in datasource:
+                hide_label = """
+                    <style>
+                        div[data-testid="stFileUploaderDropzoneInstructions"]>div>small {
+                        visibility:hidden;
+                        }
+                        div[data-testid="stFileUploaderDropzoneInstructions"]>div>small::before {
+                        content:"limit FILE_LIMITS per file • FILE_TYPES";
+                        visibility:visible;
+                        display:block;
+                        }
+                    </style>
+                    """
                 if config.get('pdf_only_mode', False):
+                    filetypes = ['pdf']
+                    hide_label = hide_label.replace('FILE_LIMITS', '20 MB').replace('FILE_TYPES', ', '.join(filetypes))
+                    st.markdown(hide_label, unsafe_allow_html=True)
                     docs = st.file_uploader('Add PDF files', accept_multiple_files=True, type=['pdf'])
                 else:
+                    filetypes = [
+                        'eml',
+                        'html',
+                        'json',
+                        'md',
+                        'msg',
+                        'rst',
+                        'rtf',
+                        'txt',
+                        'xml',
+                        'png',
+                        'jpg',
+                        'jpeg',
+                        'tiff',
+                        'bmp',
+                        'heic',
+                        'csv',
+                        'doc',
+                        'docx',
+                        'epub',
+                        'odt',
+                        'pdf',
+                        'ppt',
+                        'pptx',
+                        'tsv',
+                        'xlsx',
+                    ]
+                    hide_label = hide_label.replace('FILE_LIMITS', '20 MB').replace('FILE_TYPES', ', '.join(filetypes))
+                    st.markdown(hide_label, unsafe_allow_html=True)
                     docs = st.file_uploader(
                         'Add files',
                         accept_multiple_files=True,
-                        type=[
-                            '.eml',
-                            '.html',
-                            '.json',
-                            '.md',
-                            '.msg',
-                            '.rst',
-                            '.rtf',
-                            '.txt',
-                            '.xml',
-                            '.png',
-                            '.jpg',
-                            '.jpeg',
-                            '.tiff',
-                            '.bmp',
-                            '.heic',
-                            '.csv',
-                            '.doc',
-                            '.docx',
-                            '.epub',
-                            '.odt',
-                            '.pdf',
-                            '.ppt',
-                            '.pptx',
-                            '.tsv',
-                            '.xlsx',
-                        ],
+                        type=filetypes,
                     )
                 st.markdown('**Optional Set a specific multimodal model and LLM**')
                 llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
