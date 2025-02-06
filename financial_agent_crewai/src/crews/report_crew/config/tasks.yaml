@@ -1,0 +1,11 @@
+reporting_task:
+  description: >
+    Evaluate the provided context and expand each topic into a thorough report section. 
+    Ensure you include all essential details, maintain a logical structure, and limit the content to 1000 words.
+  expected_output: >
+    Provide a fully detailed report section with main topics developed into subsections. 
+    Format your submission in Markdown (without triple backticks) as follows:
+    • Use "##" for the overall section title (only one per section).
+    • Use "###" for each main topic and subtopic. 
+    • Place a blank line before and after each "###" heading.
+  agent: reporting_analyst

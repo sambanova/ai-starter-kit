@@ -1,0 +1,9 @@
+research_task:
+  description: >
+    Conduct a thorough investigation into contemporary finance topics to answer the user’s query.
+    Incorporate emerging data and trends relevant to the year 2025.
+  expected_output: >
+    A comprehensive, detailed answer to the user’s query,
+    with each main point expanded into its
+    own fully developed section.
+  agent: researcher

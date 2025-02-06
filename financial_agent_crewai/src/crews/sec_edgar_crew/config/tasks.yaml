@@ -1,0 +1,6 @@
+sec_research_task:
+  description: >
+    Retrieve and save the relevant SEC EDGAR financial filings in response to a user's query.
+  expected_output: >
+    The complete file path to the saved SEC EDGAR text file.
+  agent: sec_researcher
