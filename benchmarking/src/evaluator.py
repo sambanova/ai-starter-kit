@@ -37,7 +37,11 @@ def str2bool(value: str) -> bool:
 
 
 def main() -> None:
-    from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator, SyntheticPerformanceEvaluator
+    from benchmarking.src.performance_evaluation import (
+        CustomPerformanceEvaluator,
+        RealWorkLoadPerformanceEvaluator,
+        SyntheticPerformanceEvaluator,
+    )
 
     parser = argparse.ArgumentParser(
         description="""Run a token throughput and latency benchmark. You have the option of running in two different 
@@ -53,15 +57,20 @@ def main() -> None:
     # Distinguish between custom and synthetic dataset runs
     parser.add_argument(
         '--mode',
-        choices=['custom', 'synthetic'],
+        choices=['custom', 'synthetic', 'real_workload'],
         required=True,
-        help="""Run mode for the performance evaluation. You have two options to choose from - 'custom' or 'synthetic'.
+        help="""Run mode for the performance evaluation. You have three options to choose from - 'custom', 'synthetic'\
+            or 'real workload'.
             
             Custom: You provide your own dataset via the `input-file-path argument. We will run the performance 
                     evaluation with the provided dataset.
                 
             Synthetic: You provide the number of input tokens, number of output tokens, and number of requests. We 
-                    will generate n input prompts for you where n is the number of requests specified.""",
+                    will generate n input prompts for you where n is the number of requests specified.
+            
+            Real Workload: You provide the queries per second (QPS), QPS distribution, number of requests, number of
+                    input and output tokens. We will generate requests randomly according to the distribution specified
+                    and rest of parameters.""",
     )
 
     # Required Common Argurments
@@ -76,12 +85,6 @@ def main() -> None:
     )
 
     # Optional Common Arguments
-    parser.add_argument(
-        '--num-concurrent-requests',
-        type=int,
-        default=10,
-        help='The number of concurrent requests used to send requests. (default: %(default)s)',
-    )
 
     parser.add_argument(
         '--timeout',
@@ -108,7 +111,7 @@ def main() -> None:
         help='Sampling parameters to send with the each request to the LLM API. (default: %(default)s)',
     )
 
-    args, unknown = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
 
     # Parse user metadata.
     user_metadata = {}
@@ -121,19 +124,23 @@ def main() -> None:
     if args.mode == 'custom':
         # Custom dataset specific arguments
         parser.add_argument(
+            '--num-concurrent-requests',
+            type=int,
+            default=10,
+            help='The number of concurrent requests used to send requests. (default: %(default)s)',
+        )
+        parser.add_argument(
             '--model-name',
             type=str,
             required=True,
             help='The name of the model to use for this performance evaluation.',
         )
-
         parser.add_argument(
             '--input-file-path',
             type=str,
             required=True,
             help='The absolute path to the dataset to be used for running the custom performance evaluation.',
         )
-
         parser.add_argument(
             '--save-llm-responses',
             type=str2bool,
@@ -141,7 +148,6 @@ def main() -> None:
             default=False,
             help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
         )
-
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         custom_evaluator = CustomPerformanceEvaluator(
@@ -162,12 +168,17 @@ def main() -> None:
     elif args.mode == 'synthetic':
         # Synthetic dataset specific arguments
         parser.add_argument(
+            '--num-concurrent-requests',
+            type=int,
+            default=10,
+            help='The number of concurrent requests used to send requests. (default: %(default)s)',
+        )
+        parser.add_argument(
             '--model-names',
             type=str,
             required=True,
             help='The name of the models to use for this performance evaluation.',
         )
-
         parser.add_argument(
             '--num-input-tokens',
             type=int,
@@ -198,7 +209,7 @@ def main() -> None:
         for model_idx, model_name in enumerate(model_names):
             user_metadata['model_idx'] = model_idx
             # set synthetic evaluator
-            evaluator = SyntheticPerformanceEvaluator(
+            synthetic_evaluator = SyntheticPerformanceEvaluator(
                 model_name=model_name,
                 results_dir=args.results_dir,
                 num_concurrent_requests=args.num_concurrent_requests,
@@ -208,7 +219,78 @@ def main() -> None:
             )
 
             # Run performance evaluation
-            evaluator.run_benchmark(
+            synthetic_evaluator.run_benchmark(
+                num_input_tokens=args.num_input_tokens,
+                num_output_tokens=args.num_output_tokens,
+                num_requests=args.num_requests,
+                sampling_params=json.loads(args.sampling_params),
+            )
+
+    # Real workload evaluation path
+    elif args.mode == 'real_workload':
+        parser.add_argument(
+            '--qps',
+            type=float,
+            default=0.5,
+            help='The number of queries per second processed for a real workload. (default: %(default)s)',
+        )
+
+        parser.add_argument(
+            '--qps-distribution',
+            type=str,
+            default='constant',
+            help='The name of the distribution to use for a real workload. Possible values are "constant",\
+                "uniform", "exponential". (default: %(default)s)',
+        )
+
+        parser.add_argument(
+            '--model-names',
+            type=str,
+            required=True,
+            help='The name of the models to use for this performance evaluation.',
+        )
+
+        parser.add_argument(
+            '--num-input-tokens',
+            type=int,
+            default=550,
+            help="""The number of synthetic tokens to include in the prompt for each request made. 
+                (default: %(default)s)""",
+        )
+        parser.add_argument(
+            '--num-output-tokens',
+            type=int,
+            default=150,
+            help="""The number of tokens to generate from each llm request. This is the `max_tokens` param for the 
+                completions API. (default: %(default)s)""",
+        )
+        parser.add_argument(
+            '--num-requests',
+            type=int,
+            default=10,
+            help="""The number of requests to make. Note that it is possible for the test 
+                to timeout first. (default: %(default)s)""",
+        )
+
+        args = parser.parse_args()
+        model_names = args.model_names.strip().split()
+
+        # running perf eval for multiple bundle models
+        for model_idx, model_name in enumerate(model_names):
+            user_metadata['model_idx'] = model_idx
+            # set real workload evaluator
+            real_workload_evaluator = RealWorkLoadPerformanceEvaluator(
+                model_name=model_name,
+                results_dir=args.results_dir,
+                qps=args.qps,
+                qps_distribution=args.qps_distribution,
+                timeout=args.timeout,
+                user_metadata=user_metadata,
+                llm_api=args.llm_api,
+            )
+
+            # Run performance evaluation
+            real_workload_evaluator.run_benchmark(
                 num_input_tokens=args.num_input_tokens,
                 num_output_tokens=args.num_output_tokens,
                 num_requests=args.num_requests,
@@ -216,7 +298,7 @@ def main() -> None:
             )
 
     else:
-        raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic'")
+        raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic', 'real_workload'")
 
 
 if __name__ == '__main__':

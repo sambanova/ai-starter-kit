@@ -56,6 +56,7 @@ def main() -> None:
         [
             Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),
             Page(APP_PAGES['synthetic_eval']['file_path'], APP_PAGES['synthetic_eval']['page_label']),
+            Page(APP_PAGES['real_workload_eval']['file_path'], APP_PAGES['real_workload_eval']['page_label']),
             Page(APP_PAGES['custom_eval']['file_path'], APP_PAGES['custom_eval']['page_label']),
             Page(APP_PAGES['chat_eval']['file_path'], APP_PAGES['chat_eval']['page_label']),
         ]
@@ -68,6 +69,7 @@ def main() -> None:
             hide_pages(
                 [
                     APP_PAGES['synthetic_eval']['page_label'],
+                    APP_PAGES['real_workload_eval']['page_label'],
                     APP_PAGES['custom_eval']['page_label'],
                     APP_PAGES['chat_eval']['page_label'],
                 ]
