@@ -81,7 +81,7 @@ After installing Continue you will need to do the basic setup
 
 ## Add SambaNovaCloud default models
 
-You should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ bottom right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file, and update the `apiKey` model fields with your SambaNovaCloud API Key
+You should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ top right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file, and update the `apiKey` model fields with your SambaNovaCloud API Key
 
 This will add to ***Continue*** the following models
 

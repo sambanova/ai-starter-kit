@@ -2,6 +2,24 @@
   "models": [
     {
       "apiKey": "your-SambaNovaCloud-api-key",
+      "title": "SambaNovaCloud Qwen2.5 Coder 32B ",
+      "model": "Qwen2.5-Coder-32B-Instruct" ,
+      "provider": "sambanova"
+    },
+    {
+      "apiKey": "your-SambaNovaCloud-api-key",
+      "title": "SambaNovaCloud Llama3.3 Chat 70b",
+      "model": "Meta-Llama-3.3-70B-Instruct" ,
+      "provider": "sambanova"
+    },
+    {
+      "apiKey": "your-SambaNovaCloud-api-key",
+      "title": "SambaNovaCloud DeepSeek R1 distilled Llama 70b",
+      "model": "DeepSeek-R1-Distill-Llama-70B" ,
+      "provider": "sambanova"
+    },
+    {
+      "apiKey": "your-SambaNovaCloud-api-key",
       "title": "SambaNovaCloud Llama3.1 Chat 8b",
       "model": "Meta-Llama-3.1-8B-Instruct" ,
       "provider": "sambanova"
@@ -17,6 +35,18 @@
       "title": "SambaNovaCloud Llama3.1 Chat 405b",
       "model": "Meta-Llama-3.1-405B-Instruct" ,
       "provider": "sambanova"
+    },
+    {
+      "apiKey": "your-SambaNovaCloud-api-key",
+      "title": "SambaNovaCloud Qwen2.5 72B",
+      "model": "Qwen2.5-72B-Instruct" ,
+      "provider": "sambanova"
+    },
+    {
+      "apiKey": "your-SambaNovaCloud-api-key",
+      "title": "SambaNovaCloud QwQ 32B preview",
+      "model": "QwQ-32B-Preview" ,
+      "provider": "sambanova"
     }
   ],
   "tabAutocompleteModel": {
@@ -26,7 +56,7 @@
     "apiKey": "your-SambaNovaCloud-api-key"
   },
   "tabAutocompleteOptions": {
-    "debounceDelay": 100,
+    "debounceDelay": 200,
     "maxPromptTokens": 1000,
     "disableInFiles": []
   },
