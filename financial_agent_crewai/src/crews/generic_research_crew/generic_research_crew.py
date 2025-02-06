@@ -5,7 +5,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.utils.config import CACHE_DIR
+from financial_agent_crewai.src.config import CACHE_DIR
 
 load_dotenv()
 

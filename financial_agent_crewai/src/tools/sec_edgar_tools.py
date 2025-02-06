@@ -8,9 +8,9 @@ from crewai.tools import BaseTool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
+from financial_agent_crewai.src.config import CACHE_DIR
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput, get_html_text
 from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInput
-from financial_agent_crewai.src.utils.config import CACHE_DIR
 
 logger = logging.getLogger(__name__)
 

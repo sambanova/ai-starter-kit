@@ -14,8 +14,8 @@ import time
 import streamlit
 from dotenv import load_dotenv
 
+from financial_agent_crewai.src.config import *
 from financial_agent_crewai.src.main import FinancialFlow
-from financial_agent_crewai.src.utils.config import *
 from financial_agent_crewai.src.utils.utilities import *
 
 # Quick fix: Add parent directory to Python path

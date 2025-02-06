@@ -17,6 +17,7 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
 
+from financial_agent_crewai.src.config import *
 from financial_agent_crewai.src.crews.context_analysis_crew.context_analysis_crew import ContextAnalysisCrew
 from financial_agent_crewai.src.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
@@ -33,7 +34,6 @@ from financial_agent_crewai.src.crews.yfinance_stocks_crew.yfinance_stocks_crew 
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList, convert_csv_source_to_txt_report_filename
 from financial_agent_crewai.src.tools.report_tools import ReportSection
 from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInputsList
-from financial_agent_crewai.src.utils.config import *
 from financial_agent_crewai.src.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')

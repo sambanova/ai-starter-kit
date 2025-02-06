@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field
 
-from financial_agent_crewai.src.utils.config import CACHE_DIR
+from financial_agent_crewai.src.config import CACHE_DIR
 
 # Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4

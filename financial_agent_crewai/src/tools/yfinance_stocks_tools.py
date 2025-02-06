@@ -13,8 +13,8 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from pandasai import Agent
 from pydantic import BaseModel, Field
 
+from financial_agent_crewai.src.config import *
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput, FilenameOutputList
-from financial_agent_crewai.src.utils.config import *
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -183,7 +183,7 @@ def interrogate_dataframe_pandasai(
     answer_plot = pandasai_agent.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_PLOT)
 
     # Return the concatenation of the two answers
-    return answer_conversational + '\n\n' + answer_plot
+    return str(answer_conversational) + '\n\n' + str(answer_plot)
 
 
 def extract_yfinance_data(

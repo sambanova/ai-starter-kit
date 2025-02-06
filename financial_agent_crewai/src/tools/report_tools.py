@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from financial_agent_crewai.src.utils.config import MAX_SECTION_WORDS
+from financial_agent_crewai.src.config import MAX_SECTION_WORDS
 
 
 class ReportSection(BaseModel):

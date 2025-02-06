@@ -8,8 +8,8 @@ from crewai.tools import BaseTool
 from requests.exceptions import HTTPError, ReadTimeout
 from urllib3.exceptions import ConnectionError
 
+from financial_agent_crewai.src.config import *
 from financial_agent_crewai.src.tools.general_tools import FilenameOutput, get_html_text
-from financial_agent_crewai.src.utils.config import *
 
 logger = logging.getLogger(__name__)
 
