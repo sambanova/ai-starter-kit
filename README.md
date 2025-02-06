@@ -42,10 +42,10 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="yoda/README.md">YoDA: Your Data Your model</a></td>
-<td width="40%">Sample training recipe to train a Language Model (LLM) using a customer's private data. </td>
+<td width="20%"><a href="e2e_fine_tuning/README.md">End to End Fine-tuning</a></td>
+<td width="40%"> Recipe to upload and train a Language Model (LLM) using your own data in SambaStudio platform. </td>
 <td width="20%"> SambaStudio </td>
-<td width="20%"> Data Ingestion & Preparation </td>   
+<td width="20%"> Data Ingestion & Preparation </td>
 </tr>
 
 <tr>
@@ -59,7 +59,7 @@ The table belows lists the available kits, which are grouped into four categorie
 <td width="20%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a></td>
 <td width="40%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
 <td width="20%">SambaStudio</td>
-<td width="20%"> Model Development & Optimization </td>   
+<td width="20%"> Model Development & Optimization </td>
 </tr>
 
 <tr>
