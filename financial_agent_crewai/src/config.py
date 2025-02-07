@@ -18,9 +18,7 @@ SOURCE_YFINANCE_NEWS = False
 SOURCE_YFINANCE_STOCK = True
 
 # # User query
-USER_QUERY = "What was NVIDIA's stock price on Jan 27, 2025?"
-# USER_QUERY = "By how much did NVIDIA's stock price crash on Jan 27, 2025?"
-# USER_QUERY = 'Please give me a breakdown analysis of Google expenditures for the last 6 months?'
+USER_QUERY = 'Please give me a breakdown analysis of Google expenditures for the last 6 months?'
 # USER_QUERY = 'What were the main differences in expenditure records between Apple and Google in 2023?'
 # USER_QUERY = 'What are the latest close value for Google for the last 3 months?'
 
