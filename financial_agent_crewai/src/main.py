@@ -488,7 +488,7 @@ class FinancialFlow(Flow):  # type: ignore
 
                 f.write('\n\n')
                 # Append the section content
-                f.write(section_filename + '\n\n')
+                f.write(section + '\n\n')
 
             if 'report_yfinance_stocks' in report:
                 # Append tables to the text files
