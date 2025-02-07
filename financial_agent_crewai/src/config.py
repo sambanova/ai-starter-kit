@@ -12,13 +12,15 @@ PANDASAI_CAHE_DIR = Path('cache')
 MAX_SECTION_WORDS = 1000
 
 # Data sources
-SOURCE_GENERIC_SEARCH = True
-SOURCE_SEC_FILINGS = True
-SOURCE_YFINANCE_NEWS = True
+SOURCE_GENERIC_SEARCH = False
+SOURCE_SEC_FILINGS = False
+SOURCE_YFINANCE_NEWS = False
 SOURCE_YFINANCE_STOCK = True
 
 # # User query
-USER_QUERY = 'Please give me a breakdown analysis of Google expenditures for the last 6 months?'
+USER_QUERY = "What was NVIDIA's stock price on Jan 27, 2025?"
+USER_QUERY = "By how much did NVIDIA's stock price crash on Jan 27, 2025?"
+# USER_QUERY = 'Please give me a breakdown analysis of Google expenditures for the last 6 months?'
 # USER_QUERY = 'What were the main differences in expenditure records between Apple and Google in 2023?'
 # USER_QUERY = 'What are the latest close value for Google for the last 3 months?'
 
@@ -56,7 +58,7 @@ MAX_NEWS_PER_TICKER = 2
 # LLMs by crew
 BILLION_PARAMETERS = '70'
 BILLION_PARAMETERS_PANDASAI = '405'
-MODEL_TEMPLATE = 'sambanova/Meta-Llama-3.1-{billion_parameters}B-Instruct'
+MODEL_TEMPLATE = 'sambanova/Meta-Llama-3.3-{billion_parameters}B-Instruct'
 MODEL_NAME_TEMPLATE = 'Meta-Llama-3.1-{billion_parameters}B-Instruct'
 
 GENERAL_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
@@ -64,7 +66,7 @@ GENERAL_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 CONTEXT_ANALYSIS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 DECOMPOSITION_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 GENERIC_RESEARCH_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
-INFORMATION_EXTRACTION_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
+INFORMATION_EXTRACTION_MODEL = 'sambanova/Meta-Llama-3.1-405B-Instruct'
 RAG_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 REPORT_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 SEC_EDGAR_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)

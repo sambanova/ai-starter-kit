@@ -1,7 +1,7 @@
 import datetime
 import logging
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from dateutil.relativedelta import relativedelta
 from pydantic import BaseModel, Field
@@ -35,15 +35,21 @@ class FilingsInput(BaseModel):
     about a given company and a given year.
     """
 
-    ticker_symbol: str = Field(..., min_length=1, description='The company ticker symbol.')
+    ticker_symbol: str = Field(
+        ...,
+        min_length=1,
+        description='The company official ticker symbol, '
+        'i.e. the abbreviation used to uniquely identify '
+        'publicly traded company shares on a particular stock exchange.',
+    )
     company: str = Field(..., min_length=1, description='The company name.')
-    filing_type: str = Field(
+    filing_type: Optional[str] = Field(
         default=FilingType.TEN_K,
         description='The relevant SEC EDGAR filing type. '
         'Either "10-K" for yearly/annual filings or "10-Q" for quarterly filings. '
         'If not specified, always choose "10-K".',
     )
-    filing_quarter: int = Field(
+    filing_quarter: Optional[int] = Field(
         CURRENT_QUARTER,
         ge=1,
         le=4,

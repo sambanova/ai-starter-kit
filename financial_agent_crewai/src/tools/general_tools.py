@@ -77,7 +77,7 @@ def get_html_text(html_text: bytes, filename: str) -> None:
 
 
 class SubQueriesList(BaseModel):
-    """Model representing a list of subsequent sub-queries, derived from the original user query."""
+    """Model representing a minimal list of subsequent sub-queries, derived from the original user query."""
 
     queries_list: List[str] = Field(
         ...,
@@ -85,14 +85,14 @@ class SubQueriesList(BaseModel):
         description=(
             'A list of sub-queries derived from the original user query. '
             'Each sub-query relates to a single company. '
-            'If the user explicitly mentions comparing two or more years, '
-            'then each sub-query focuses on one company-year pair.'
+            'If the user explicitly mentions comparing two or more different periods, '
+            'then each sub-query focuses on one company-period pair.'
         ),
     )
     is_comparison: bool = Field(
         ...,
         description=(
-            'Indicates whether the original user query involves a comparison '
+            'Indicates whether the original user query involves an explicit comparison '
             '(e.g., between multiple companies or multiple years).'
         ),
     )
