@@ -11,8 +11,8 @@ extractor:
   role: >
     Information Extractor
   goal: >
-    Parse the provided user query to identify and extract key information
-    about a specific company and year.
+    Parse the provided user query to identify and extract key information,
+    given that the current year is 2025 and the current month is February.
     Convert these insights into a clear, structured format.
     User Query: {query}
   backstory: >

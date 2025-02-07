@@ -29,16 +29,16 @@ from financial_agent_crewai.src.crews.sec_edgar_crew.sec_edgar_crew import SECEd
 from financial_agent_crewai.src.crews.sorting_hat_crew.sorting_hat_crew import (
     SortingHatCrew,
 )
+from financial_agent_crewai.src.crews.summarization_crew.summarization_crew import SummarizationCrew
 from financial_agent_crewai.src.crews.yfinance_news_crew.yfinance_news_crew import YahooFinanceNewsCrew
 from financial_agent_crewai.src.crews.yfinance_stocks_crew.yfinance_stocks_crew import YFinanceStocksCrew
 from financial_agent_crewai.src.tools.general_tools import SubQueriesList, convert_csv_source_to_txt_report_filename
-from financial_agent_crewai.src.tools.report_tools import ReportSection
+from financial_agent_crewai.src.tools.report_tools import ReportSummary
 from financial_agent_crewai.src.tools.sorting_hat_tools import FilingsInputsList
 from financial_agent_crewai.src.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
-
 
 # langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
@@ -49,13 +49,17 @@ class FinancialFlow(Flow):  # type: ignore
     """
     Financial content generation workflow manager.
 
-    This class orchestrates the process of researching topics and generating
-    financial content through multiple specialized AI crews.
+    This class orchestrates the process of researching financial topics
+    and generating financial content through multiple specialized crews.
 
-    Attributes:
-        input_variables (dict): Configuration for the financial content generation
-        research_crew (Crew): Crew responsible for research phase
-        content_crew (Crew): Crew responsible for content creation phase
+    Args:
+        query: The user query.
+        source_generic_search: Whether to use generic search.
+        source_sec_filings: Whether to use SEC filings.
+        source_yfinance_news: Whether to use YFinance news.
+        source_yfinance_stocks: Whether to use YFinance stocks.
+        cache_path: The cache path.
+        verbose: The level of verbosity.
     """
 
     def __init__(
@@ -68,7 +72,7 @@ class FinancialFlow(Flow):  # type: ignore
         cache_path: Optional[Union[str, Path]] = None,
         verbose: bool = True,
     ) -> None:
-        """Initialize the finance flow with research, RAG, and content creation crews."""
+        """Initialize the Finance Flow."""
         super().__init__()
 
         # User query
@@ -104,6 +108,9 @@ class FinancialFlow(Flow):  # type: ignore
 
         # Empty cache directory
         clear_directory(self.cache_path)
+
+        # Set the level of verbosity
+        self.verbose = verbose
 
     @start()  # type: ignore
     def generic_research(self) -> Optional[str]:
@@ -418,13 +425,28 @@ class FinancialFlow(Flow):  # type: ignore
     ) -> Any:
         """Write the final financial report."""
 
-        section_dict: Dict[str, ReportSection] = dict()
+        summary_dict: Dict[str, ReportSummary] = dict()
         for report in self.report_list:
             # Load the text file
             with open(report, 'r') as f:
                 report_txt = f.read()
-            section_dict[report] = (
-                ReportCrew(
+
+            # Create the section filename
+            section_filename = str(CACHE_DIR / ('section_' + str(Path(report).name)))
+
+            # Call the Report Crew
+            ReportCrew(
+                llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                filename=section_filename,
+            ).crew().kickoff(
+                {
+                    'section': report_txt,
+                },
+            )
+
+            # Call the Summarization Crew
+            summary_dict[report] = (
+                SummarizationCrew(
                     llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
                 )
                 .crew()
@@ -435,20 +457,26 @@ class FinancialFlow(Flow):  # type: ignore
                 )
                 .pydantic
             )
-
         # Write the title of the final report
         with open(self.final_report_path, 'a') as f:
             f.write('# ' + self.query + '\n\n')
 
-            for section in section_dict.values():
-                f.write(section.summary + '\n\n')
+            for summary in summary_dict.values():
+                f.write(summary.summary + '\n\n')
 
         # Append each section to the final report
-        for report, section in section_dict.items():
+        for report, summary in summary_dict.items():
+            # Create the section filename
+            section_filename = str(CACHE_DIR / ('section_' + str(Path(report).name)))
+
+            # Open the section file
+            with open(section_filename, 'r') as f:
+                section = f.read()
+
             # Open the markdown file
             with open(self.final_report_path, 'a') as f:
                 # Append the section content
-                f.write(section.title)
+                f.write(summary.title)
                 if 'generic' in report.lower():
                     f.write('\n(Source: Google Search)')
                 elif 'filing' in report.lower():
@@ -460,7 +488,7 @@ class FinancialFlow(Flow):  # type: ignore
 
                 f.write('\n\n')
                 # Append the section content
-                f.write(section.content + '\n\n')
+                f.write(section_filename + '\n\n')
 
             if 'report_yfinance_stocks' in report:
                 # Append tables to the text files

@@ -8,9 +8,9 @@
 extraction_task:
   description: >
     From the user query, identify and extract relevant information
-    regarding the company, year, and any other details. 
+    regarding the company, year, and any other required details.
     Then, produce a simplified version of the query
-    that removes references to SEC Edgar Filings, making it more general.
+    that removes references to SEC Edgar Filings or other sources, making it more general.
   expected_output: >
     • A structured output with the extracted data.  
     • A simplified user query with no mention of SEC Edgar Filings.

@@ -7,5 +7,5 @@ reporting_task:
     Format your submission in Markdown (without triple backticks) as follows:
     • Use "##" for the overall section title (only one per section).
     • Use "###" for each main topic and subtopic. 
-    • Place a blank line before and after each "###" heading.
+    • Place a blank line, i.e. "\n" before and after each "###" heading.
   agent: reporting_analyst

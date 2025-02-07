@@ -10,6 +10,7 @@ import base64
 import os
 import sys
 import time
+from typing import Any
 
 import streamlit
 from dotenv import load_dotenv
@@ -174,7 +175,7 @@ def main() -> None:
             streamlit.write('**User query**')
             query = streamlit.text_input(
                 label='Enter research topic (hidden)',
-                placeholder='E.g., What is the research and development trend for Google in 2024?',
+                placeholder='E.g., Give me the breakdown of Goole financials in 2025?',
                 help='Enter the main subject for content generation',
                 key='compact_topic',
                 label_visibility='collapsed',
@@ -298,7 +299,8 @@ def main() -> None:
                                 unsafe_allow_html=True,
                             )
 
-                        streamlit.download_button(
+                        # Download the Markdown report
+                        download_section(
                             label='📥 Download Markdown',
                             data=final_md,
                             file_name=f'financial_report.md',
@@ -316,7 +318,8 @@ def main() -> None:
                             ' width="700" height="400" type="application/pdf">'
                         )
                         streamlit.markdown(pdf_display, unsafe_allow_html=True)
-                        streamlit.download_button(
+                        # Download the PDF report
+                        download_section(
                             label='📥 Download PDF',
                             data=pdf_data,
                             file_name='report.pdf',
@@ -338,6 +341,24 @@ def init_session_state() -> None:
         streamlit.session_state.final_content = None
     if 'show_api_warning' not in streamlit.session_state:
         streamlit.session_state.show_api_warning = False
+
+
+@streamlit.fragment
+def download_section(
+    label: str = '📥 Download',
+    data: Any = '',
+    file_name: str = 'file.txt',
+    mime: str = 'text/plain',
+) -> None:
+    """This function prevents streamlit from refreshing the page when the download button is clicked."""
+
+    if streamlit.download_button(
+        label=label,
+        data=data,
+        file_name=file_name,
+        mime=mime,
+    ):
+        pass
 
 
 if __name__ == '__main__':

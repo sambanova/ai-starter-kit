@@ -4,11 +4,13 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
+from financial_agent_crewai.src.tools.report_tools import ReportSummary
+
 load_dotenv()
 
 
 @CrewBase
-class ReportCrew:
+class SummarizationCrew:
     """ReportCrew crew."""
 
     agents_config: Dict[str, Any]
@@ -19,7 +21,6 @@ class ReportCrew:
     def __init__(
         self,
         llm: LLM,
-        filename: str = 'report_section.txt',
         verbose: bool = True,
     ) -> None:
         """Initialize the ReportCrew crew."""
@@ -30,26 +31,25 @@ class ReportCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
-        self.filename = filename
         self.verbose = verbose
 
     @agent  # type: ignore
-    def reporting_analyst(self) -> Agent:
+    def summarizer(self) -> Agent:
         """Add the Finance Reporting Analyst Agent."""
 
         return Agent(
-            config=self.agents_config['reporting_analyst'],
+            config=self.agents_config['summarizer'],
             verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
-    def reporting_task(self) -> Task:
+    def summarization(self) -> Task:
         """Add the Reporting Task."""
 
         return Task(
-            config=self.tasks_config['reporting_task'],
-            output_file=self.filename,
+            config=self.tasks_config['summarization'],
+            output_pydantic=ReportSummary,
         )
 
     @crew  # type: ignore
