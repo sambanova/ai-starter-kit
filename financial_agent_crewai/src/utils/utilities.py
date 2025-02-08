@@ -251,6 +251,25 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
 
     return pdf_data
 
+def extract_entities(input: str):
+    # Remove escape sequences (ANSI codes for formatting) first
+    cleaned_input = re.sub(r'\[[0-9;]*m', '', input)
+    
+    # Now use regex to extract the agent name and the final answers
+    pattern = re.compile(r'# (.*?)\n.*?## (Final Answer|Task):\s*(\{.*?\})', re.DOTALL)
+    
+    matches = pattern.findall(cleaned_input)
+
+    result = []
+    
+    for match in matches:
+        agent_name = match[0].strip()  # Extract agent name
+        agent_output = match[2].strip()  # Extract agent's output (JSON or content)
+        
+        # Format the result string for each agent
+        result.append(f"{agent_name} output:\n{agent_output}\n")
+
+    return "\n".join(result)
 
 @contextmanager
 def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
@@ -270,7 +289,8 @@ def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
             ret = old_write(string)
             # Each time something is written to stdout,
             # we send it to Streamlit via `output_func`.
-            output_func(stdout.getvalue() + '\n#####\n')
+            output_string = extract_entities(stdout.getvalue())            
+            output_func(output_string + '\n#####\n')
             return ret
 
         stdout.write = new_write  # type: ignore

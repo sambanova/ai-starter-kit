@@ -15,15 +15,14 @@ from typing import Any
 import streamlit
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.config import *
-from financial_agent_crewai.src.main import FinancialFlow
-from financial_agent_crewai.src.utils.utilities import *
-
-# Quick fix: Add parent directory to Python path
+# Add parent directory to Python path before importing from financial_agent_crewai
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(parent_dir)
 
+from financial_agent_crewai.src.config import *
+from financial_agent_crewai.src.main import FinancialFlow
+from financial_agent_crewai.src.utils.utilities import *
 
 # Load environment variables
 load_dotenv()
@@ -50,14 +49,17 @@ def main() -> None:
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 2rem;
-            padding: 1rem;
-            margin-left: 0;
+            justify-content: center;
+            margin: 0.5rem 0;
         }
         .logo-container img {
-            max-height: 100px;
-            width: auto;
-            object-fit: contain;
+            height: 2rem; /* Adjust the height to control the size of the logo */
+            margin-right: 0.5rem;
+        }
+        .logo-container h2 {
+            color: #ee7624;
+            margin: 0;
+            text-align: center;
         }
 
         /* Bold all text input / select labels, remove extra margin */
@@ -155,43 +157,31 @@ def main() -> None:
     streamlit.markdown(
         """
         <div class="logo-container">
-            <img src="https://s3.amazonaws.com/media.ventureloop.com/images/SambaNovaSystems_paint.png" 
-                 alt="SambaNova Logo">
-            <img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/1*Ulg1BjUIxIdmOw63J5gF1Q.png" 
-                 alt="CrewAI Logo">
+            <img src="https://sambanova.ai/hubfs/logotype_sambanova_orange.png" 
+                alt="SambaNova Logo">
+            <h2>SambaNova Financial Agent</h2>
         </div>
-        <h2 style='text-align: center; color: #ee7624; margin: 0.5rem 0;'>
-            SambaNova Financial Agent
-        </h2>
         """,
         unsafe_allow_html=True,
     )
 
     # -------------------- FORM --------------------
     with streamlit.form('generation_form'):
-        col1, col2, col3 = streamlit.columns([0.4, 0.4, 0.2])
+        
 
-        with col1:
-            streamlit.write('**User query**')
-            query = streamlit.text_input(
-                label='Enter research topic (hidden)',
-                placeholder='E.g., Give me the breakdown of Goole financials in 2025?',
-                help='Enter the main subject for content generation',
-                key='compact_topic',
-                label_visibility='collapsed',
-            )
+        
+        streamlit.write('**User query**')
+        query = streamlit.text_input(
+            label='Enter research topic (hidden)',
+            placeholder='E.g., Give me the breakdown of Goole financials in 2025?',
+            help='Enter the main subject for content generation',
+            key='compact_topic',
+            label_visibility='collapsed',
+        )
 
-            streamlit.write('&nbsp;')
-            generate_button = streamlit.form_submit_button(
-                label='🚀 Generate',
-                type='secondary',
-                disabled=streamlit.session_state.running,
-                help='Click to start generating content',
-            )
-
-        with col2:
-            # Checkboxes for user options
-            col20, col21, col22 = streamlit.columns([0.33, 0.33, 0.33], vertical_alignment='center')
+        with streamlit.expander('Sources'):
+                        
+            col21, col22 = streamlit.columns([0.5, 0.5], vertical_alignment='center')
             with col21:
                 generic_research_option = streamlit.checkbox('Generic Google Search', value=False)
                 sec_edgar_option = streamlit.checkbox('SEC Edgar Filings', value=False)
@@ -199,7 +189,7 @@ def main() -> None:
                 yfinance_news_option = streamlit.checkbox('Yahoo Finance News', value=False)
                 yfinance_stocks_option = streamlit.checkbox('Yahoo Finance Stocks', value=False)
 
-        with col3:
+            
             if not os.getenv('SAMBANOVA_API_KEY'):
                 streamlit.write('**SAMBANOVA_API_KEY**')
                 sambanova_api_key = streamlit.text_input(
@@ -222,8 +212,14 @@ def main() -> None:
                     label_visibility='collapsed',
                 )
                 if serper_api_key:
-                    os.environ['SERPER_API_KEY'] = serper_api_key
-            pass
+                    os.environ['SERPER_API_KEY'] = serper_api_key 
+        
+        generate_button = streamlit.form_submit_button(
+            label='🚀 Generate',
+            type='secondary',
+            disabled=streamlit.session_state.running,
+            help='Click to start generating content',
+        )               
 
     # -------------------- ACTIONS ON SUBMIT --------------------
     if generate_button:
