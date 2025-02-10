@@ -30,7 +30,7 @@ MAX_DATA_SOURCES = 5
 
 # Prompt template
 SOURCES_PROMPT_TEMPLATE = """
-Please review the following data sources and determine the minimal set of the most relevant sources
+Please review the following data sources and determine the optimal set of the most relevant sources
 (including their exact column names) that best address the user query.
 
 Query: {query}
@@ -821,6 +821,9 @@ def auto_plot(df: pandas.DataFrame, df_name: str, output_path: Union[str, Path])
             # Single numeric column
             col = numeric_cols[0]
             total = df_filtered[col].sum()
+            # If only one element
+            if len(df_filtered[col]) == 1:
+                return
             # If sum is near 1 or 100, make a pie chart. Otherwise, bar chart
             if abs(total - 1) < 1e-7 or abs(total - 100) < 1e-7:
                 df_filtered[col].plot(kind='pie', title=df_name, autopct='%1.1f%%', ax=ax, ylabel='')
