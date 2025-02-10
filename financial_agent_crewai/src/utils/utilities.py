@@ -1,5 +1,4 @@
 import base64
-import datetime
 import json
 import os
 import re
@@ -10,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Generator, List, Match, Optional, Union
 
 import markdown
+import pandas
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
 
@@ -69,10 +69,11 @@ def parse_table_str(table_str: str) -> Any:
 
 
 def timestamp_to_date_string(ts_millis: float) -> str:
-    """Convert a millisecond-based Unix timestamp into a human-readable YYYY-MM-DD date string in UTC."""
-
-    dt = datetime.datetime.utcfromtimestamp(ts_millis / 1000.0)
-    return dt.strftime('%Y-%m-%d')
+    """
+    Convert a millisecond-based Unix timestamp into a human-readable YYYY-MM-DD date string in UTC.
+    """
+    dt = pandas.to_datetime(ts_millis, unit='ms', utc=True)
+    return str(dt.strftime('%Y-%m-%d'))
 
 
 def dict_to_markdown_table(table_data: Dict[str, Any], title: str) -> str:
@@ -102,18 +103,25 @@ def dict_to_markdown_table(table_data: Dict[str, Any], title: str) -> str:
     lines.append(f'## {title}')
 
     # Header row
-    header = ['Date'] + columns
+    if pandas.to_datetime(pandas.Series(index[0]), unit='ms')[0].to_pydatetime().year >= 2000:
+        header = ['Date'] + columns
+    else:
+        header = ['Index'] + columns
     lines.append('| ' + ' | '.join(header) + ' |')
     # Markdown requires a separator row of dashes
     lines.append('| ' + ' | '.join(['---'] * len(header)) + ' |')
 
     # Populate each row
     for row_idx, row_data in enumerate(data):
-        # Convert the timestamp in 'index' to a date string
-        date_str = timestamp_to_date_string(index[row_idx])
+        if pandas.to_datetime(pandas.Series(index[row_idx]), unit='ms')[0].to_pydatetime().year >= 2000:
+            # Convert the timestamp in 'index' to a date string
+            index_str = timestamp_to_date_string(index[row_idx])
+        else:
+            index_str = index[row_idx] if len(data) > 1 else ''
+
         # Convert each value in row_data to a string
         row_cells = [str(val) for val in row_data]
-        lines.append('| ' + date_str + ' | ' + ' | '.join(row_cells) + ' |')
+        lines.append('| ' + index_str + ' | ' + ' | '.join(row_cells) + ' |')
 
     # Combine all lines into a single string
     return '\n'.join(lines)
@@ -138,7 +146,9 @@ def convert_image_path_to_markdown(image_path: str, alt_text: str = 'Image') -> 
     return f'![{alt_text}]({image_path})'
 
 
-def convert_file_of_image_paths_to_markdown(input_file: str, output_file: str, alt_text: str = 'Image') -> None:
+def convert_file_of_image_paths_to_markdown(
+    input_file: str | List[str], output_file: str | Path, alt_text: str = 'Image'
+) -> None:
     """
     Reads an input text file, searches for any .png paths embedded in the text,
     and writes the resulting text to an output file. In the resulting text,
@@ -149,6 +159,9 @@ def convert_file_of_image_paths_to_markdown(input_file: str, output_file: str, a
         input_file: Path to the input text file.
         output_file: Path to the output file where Markdown statements will be written.
         alt_text: The alt text to use for each image (defaults to "Image").
+
+    Raises:
+        TypeError if `input_file` is not a string or a list of strings.
 
     Example:
         Suppose 'input.txt' has the following content:
@@ -162,15 +175,26 @@ def convert_file_of_image_paths_to_markdown(input_file: str, output_file: str, a
             Here is a reference to ![My Image](financial_agent_crewai/cache/yfinance_stocks/262ae6f5.png)
             Additional text is here! Also, ![My Image](path/to/another/image.png) is included.
     """
-    # Read entire file contents
-    with open(input_file, 'r', encoding='utf-8') as infile:
-        text = infile.read()
+    # For images embedded in a text file
+    if isinstance(input_file, str):
+        # Read entire file contents
+        with open(input_file, 'r', encoding='utf-8') as infile:
+            text = infile.read()
 
-    # Regex pattern for any sequence of non-whitespace characters ending in .png
-    pattern = r'(\S+\.png)'
+        # Regex pattern for any sequence of non-whitespace characters ending in .png
+        pattern = r'(\S+\.png)'
 
-    # Replace each .png path with the Markdown image reference
-    transformed_text = re.sub(pattern, lambda match: f'![{alt_text}]({match.group(1)})', text)
+        # Replace each .png path with the Markdown image reference
+        transformed_text = re.sub(pattern, lambda match: f'![{alt_text}]({match.group(1)})', text)
+    # For list of strings
+    elif isinstance(input_file, list) and all(isinstance(image_path, str) for image_path in input_file):
+        transformed_text = ''
+        for image_path in input_file:
+            image_name = Path(image_path).name.strip('.png')
+            transformed_text += f'![{alt_text} {image_name}]({image_path})\n\n'
+
+    else:
+        raise TypeError(f'Only strings or lists of strings are supported. Got type {type(input_file)}.')
 
     # Write the transformed text to the output file
     with open(output_file, 'a', encoding='utf-8') as outfile:
@@ -216,9 +240,17 @@ def clean_markdown_content(content: str) -> str:
 
     # 3) Use BeautifulSoup to add classes or further tweak the HTML
     soup = BeautifulSoup(html, 'html.parser')
+
+    # Render the tables
     for table in soup.find_all('table'):
-        # Add styling classes or IDs as needed
-        table['class'] = (table.get('class') or list()) + ['table', 'table-striped', 'table-bordered']
+        # Get whatever classes the table already has, or an empty list if none
+        existing_classes = table.get('class') or list()
+
+        # Use a set so we don't add duplicates
+        updated_classes = set(existing_classes).union({'table', 'table-striped', 'table-bordered'})
+
+        # Assign the updated classes back to the table
+        table['class'] = list(updated_classes)
 
     return str(soup)
 
@@ -233,13 +265,34 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
     # Define CSS that scales images and applies basic page sizing
     style = """
     @page {
-        size: A4;        /* Adjust if you'd like a different format */
-        margin: 2cm;     /* Adjust margins as desired */
+        size: A4;             /* Adjust if you'd like a different format */
+        margin: 2cm;          /* Adjust margins as desired */
     }
+
+
     img {
-        max-width: 100%; /* Scale down images that exceed page width */
-        height: auto;    /* Preserve aspect ratio */
-        display: block;  /* Avoid text wrapping around large images */
+        max-width: 100%;      /* Scale down images that exceed page width */
+        height: auto;         /* Preserve aspect ratio */
+        display: block;       /* Avoid text wrapping around large images */
+    }
+
+    /* Optional supplemental table styling in addition to Bootstrap classes */
+    table {
+        width: 100%;
+        margin-bottom: 1em;   /* Nice spacing after tables */
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid #dee2e6;  /* Lightweight border for tables in PDF */
+        vertical-align: top;
+        padding: 0.75rem;
+    }
+
+    /* Example: if you want consistent header background in PDF */
+    thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
     }
     """
 
@@ -251,25 +304,27 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
 
     return pdf_data
 
-def extract_entities(input: str):
+
+def extract_entities(input: str) -> str:
     # Remove escape sequences (ANSI codes for formatting) first
     cleaned_input = re.sub(r'\[[0-9;]*m', '', input)
-    
+
     # Now use regex to extract the agent name and the final answers
     pattern = re.compile(r'# (.*?)\n.*?## (Final Answer|Task):\s*(\{.*?\})', re.DOTALL)
-    
+
     matches = pattern.findall(cleaned_input)
 
-    result = []
-    
+    result = list()
+
     for match in matches:
         agent_name = match[0].strip()  # Extract agent name
         agent_output = match[2].strip()  # Extract agent's output (JSON or content)
-        
-        # Format the result string for each agent
-        result.append(f"{agent_name} output:\n{agent_output}\n")
 
-    return "\n".join(result)
+        # Format the result string for each agent
+        result.append(f'{agent_name} output:\n{agent_output}\n')
+
+    return '\n'.join(result)
+
 
 @contextmanager
 def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
@@ -289,9 +344,173 @@ def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
             ret = old_write(string)
             # Each time something is written to stdout,
             # we send it to Streamlit via `output_func`.
-            output_string = extract_entities(stdout.getvalue())            
+            output_string = extract_entities(stdout.getvalue())
             output_func(output_string + '\n#####\n')
             return ret
 
         stdout.write = new_write  # type: ignore
         yield stdout
+
+
+def list_first_order_subfolders(directory: str | Path) -> list[str]:
+    """
+    Retrieves the immediate subfolders (first order) within a specified directory.
+
+    Args:
+        directory (str): The path to the directory to scan.
+
+    Returns:
+        list[str]: A list of the full paths to the immediate subfolders.
+    """
+    subfolders: list[str] = list()
+    for entry in os.listdir(directory):
+        entry_path = os.path.join(directory, entry)
+        if os.path.isdir(entry_path):
+            subfolders.append(entry_path)
+
+    return subfolders
+
+
+def gather_png_files_in_subfolder_dataframes(root_dir: str | Path) -> List[str]:
+    """
+    Search for all dataframe PNG images.
+
+    Recursively searches the specified root directory for subfolders named "dataframes"
+    and collects all the ".png" file names found within them.
+
+    Args:
+        root_dir: The path to the root directory to start the search.
+
+    Returns:
+        A list of full paths to the PNG files found.
+
+    Example:
+        >>> result = gather_png_files_in_subfolder_dataframes("/path/to/folder")
+        >>> for file_path in result:
+        ...     print(file_path)
+    """
+    png_files: List[str] = list()
+
+    # Walk through the directory structure starting from root_dir
+    for current_root, dirs, files in os.walk(root_dir):
+        # Identify the name of the current folder to check if it ends with "dataframes"
+        folder_name: str = os.path.basename(current_root)
+        if folder_name == 'dataframes':
+            # Filter PNG files in the current folder
+            for file_name in files:
+                if file_name.lower().endswith('.png'):
+                    # Store the absolute path to the PNG file
+                    full_path: str = os.path.join(current_root, file_name)
+                    png_files.append(full_path)
+    return png_files
+
+
+def generate_final_report(
+    final_report_path: Union[str, Path],
+    query: str,
+    summary_dict: Dict[str, Any],
+    cache_dir: Union[str, Path],
+    yfinance_stocks_dir: Union[str, Path],
+) -> None:
+    """
+    Generate a final report in Markdown format.
+
+    The report is generated by appending content and data from multiple sections, summaries, images, and tables.
+
+    Args:
+        final_report_path: The path to the final Markdown report file to write or append to.
+        query: The main query or title for the report.
+        summary_dict: A dictionary with:
+            - Keys: file/report identifiers.
+            - Values: objects containing at least:
+            -- summary: a summary for the section.
+            -- title: a title for the section.
+        cache_dir: A directory where intermediate Markdown sections are cached.
+        finance_stocks_dir: A directory containing data for Yahoo Finance stocks.
+    """
+
+    final_report_path = Path(final_report_path)
+    cache_dir = Path(cache_dir)
+    yfinance_stocks_dir = Path(yfinance_stocks_dir)
+
+    # 1. Write the title of the final report and the high-level summaries.
+    with final_report_path.open('a', encoding='utf-8') as f:
+        f.write('# ' + query + '\n\n')
+        for summary in summary_dict.values():
+            f.write(summary.summary + '\n\n')
+
+    # 2. Append each detailed section to the final report.
+    for report, summary in summary_dict.items():
+        # Create the section filename.
+        section_filename = cache_dir / f'section_{Path(report).name}'
+
+        # Read the section text from the cached file.
+        with section_filename.open('r', encoding='utf-8') as f_section:
+            section_content = f_section.read()
+
+        # Append this section to the final Markdown report.
+        with final_report_path.open('a', encoding='utf-8') as f_report:
+            # Section title
+            f_report.write('# ' + summary.title)
+            # Source information based on the report name
+            lower_report = report.lower()
+            if 'generic' in lower_report:
+                f_report.write('\n(Source: Google Search)')
+            elif 'filing' in lower_report:
+                f_report.write('\n(Source: SEC EDGAR)')
+            elif 'yfinance_news' in lower_report:
+                f_report.write('\n(Source: Yahoo Finance News)')
+            elif 'yfinance_stocks' in lower_report:
+                f_report.write('\n(Source: YFinance Stocks)')
+
+            f_report.write('\n\n')
+            # Section content
+            f_report.write(section_content + '\n\n')
+
+        # 3. If it's a YFinance stocks report, append images, tables, and an appendix.
+        if 'report_yfinance_stocks' in report:
+            # Append images in Markdown format to the final report.
+            convert_file_of_image_paths_to_markdown(report, final_report_path, f'Image {summary.title}')
+
+            # Read table data from the matching JSON file
+            json_path = report.replace('txt', 'json')
+            with open(json_path, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+
+            table_dict = dict()
+            table_markdown_dict = dict()
+            try:
+                # Ticker symbol is assumed to be part of the filename, split by underscores.
+                ticker_symbol = report.split('_')[5]
+            except IndexError:
+                ticker_symbol = 'UNKNOWN'
+
+            # Write a heading for the appended tables.
+            with final_report_path.open('a', encoding='utf-8') as target:
+                target.write(f'\n## Appendix - Data Sources Tables - {ticker_symbol}\n\n')
+
+            for table_name, table_str in data.items():
+                # Extract the nested JSON strings and parse them.
+                table_dict[table_name] = parse_table_str(table_str)
+                # Convert parsed data to a Markdown table.
+                table_markdown_dict[table_name] = dict_to_markdown_table(table_dict[table_name], table_name)
+                with final_report_path.open('a', encoding='utf-8') as target:
+                    target.write(table_markdown_dict[table_name])
+                    target.write('\n\n')
+
+            # Collect additional data frames (PNG images) from all subfolders for an appendix.
+            company_tickers_dict = list_first_order_subfolders(yfinance_stocks_dir)
+            appendix_images_dict = dict()
+
+            for image_path in company_tickers_dict:
+                # The dictionary key is the subfolder name, value is a list of PNG files in that subfolder.
+                appendix_images_dict[Path(image_path).name] = gather_png_files_in_subfolder_dataframes(
+                    yfinance_stocks_dir
+                )
+
+            # If any images were found, write them to the final report as an appendix.
+            if len(appendix_images_dict) > 0:
+                for company_ticker, images_list in appendix_images_dict.items():
+                    with final_report_path.open('a', encoding='utf-8') as target:
+                        target.write(f'\n## Appendix - Data Sources Images - {company_ticker}\n\n')
+                    convert_file_of_image_paths_to_markdown(images_list, final_report_path, f'Image {company_ticker}')

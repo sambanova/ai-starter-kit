@@ -1,13 +1,13 @@
 import datetime
 import json
 import logging
+import os
 import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-# from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
-
-# import matplotlib.dates as mdates
-# import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import pandas
 import yfinance
 from crewai.tools import BaseTool
@@ -27,28 +27,36 @@ FILENAME = 'report_yfinance_stocks'
 # How many days we extend the start date and end date for data retrieval
 DATE_OFFSET = 3
 
+MAX_DATA_SOURCES = 5
+
 # Prompt template
 SOURCES_PROMPT_TEMPLATE = """
-    Please review the following data sources and determine the optimal set of sources
-    (including their exact column names) that best address the user query.
+Please review the following data sources and determine the optimal set of the most relevant sources
+(including their exact column names) that best address the user query.
 
-    Query: {query}
+Query: {query}
 
-    • Do not invent or modify any data source names or column names.
-    • Only provide the columns that could match the query requirements.
-    • Preserve the original data source and column names exactly as listed.
+• Return a minimum of 1 data source and a maximum of {max_data_sources} data sources.
+• Sort the selected data source from the most relevant to the least relevant.
+• Do not invent or modify any data source names or column names.
+• Only provide the columns that could match the query requirements.
+• Preserve the original data source and column names exactly as listed.
 
-    Data sources:\n\n
-    """
+Data sources:\n\n
+"""
+
 PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = """
-    Please provide a clear, well-detailed, and conversational response consisting of at least a few sentences. 
-    Ensure that your explanation is both thorough and approachable, while addressing all relevant points.
-    """
+Please provide a clear, well-detailed, and conversational response consisting of at least a few sentences. 
+Ensure that your explanation is both thorough and approachable, while addressing all relevant points.
+"""
 
 PANDASAI_FORMAT_INSTRUCTIONS_PLOT = """
-    Please produce one or more PNG plots that visually illustrate your answer or findings. 
-    Make sure the plots are clearly labeled and relevant to the discussion.
-    """
+Please generate one PNG plot to illustrate your findings.
+Ensure that your plot has a clear title, labeled axes, and is directly relevant to the discussion.
+"""
+
+# Define short-scale suffixes and their thresholds in descending order
+SUFFIXES = [('T', 1e12), ('B', 1e9), ('M', 1e6), ('K', 1e3)]
 
 
 class YFinanceSource(BaseModel):
@@ -71,7 +79,10 @@ class YFinanceSourceList(BaseModel):
     """
 
     sources: List[YFinanceSource] = Field(
-        ..., description='A list of YFinanceSource objects representing potentially relevant data sources and columns.'
+        ...,
+        min_length=1,
+        max_length=MAX_DATA_SOURCES,
+        description='A list of YFinanceSource objects representing potentially relevant data sources and columns.',
     )
 
 
@@ -98,7 +109,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         )
 
         # Create a prompt template
-        PROMPT_TEMPLATE = SOURCES_PROMPT_TEMPLATE.format(query=query)
+        PROMPT_TEMPLATE = SOURCES_PROMPT_TEMPLATE.format(query=query, max_data_sources=MAX_DATA_SOURCES)
         # Append the data sources and their corresponding columns
         for data_source in list(data):
             PROMPT_TEMPLATE += f'Data source: {data_source}.'
@@ -114,7 +125,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         answer_data_dict = dict()
         dataframe_dict = dict()
         meta_data_dict = dict()
-        for source in list(structured_output.sources):  # type: ignore
+        for count, source in enumerate(list(structured_output.sources)):  # type: ignore
             # Coerce the retrieved data to a `pandas.DataFrame`
             dataframe = convert_data_to_frame(data[source.name][0], source.name)
             # Retrieve the columns and exclude the columns that are not present in the data
@@ -125,11 +136,17 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
             dataframe_dict[source.name] = dataframe[columns]
             # Convert the selected dataframe columns to JSON
             answer_data_dict[source.name] = dataframe[columns].to_json(orient='split')
+            # Break if we exceed the maximum number of data sources
+            if count > MAX_DATA_SOURCES:
+                break
 
         # Dump all the dataframe JSON strings into one file
         filename_json = CACHE_DIR / f'{FILENAME}_{self.ticker_symbol}_{self.start_date}_{self.end_date}.json'
+        answer_data_dict_json = dict()
+        for key, value in dataframe_dict.items():
+            answer_data_dict_json[key] = apply_short_notation(value).to_json(orient='split')
         with open(filename_json, 'w') as f:
-            json.dump(answer_data_dict, f, indent=2)
+            json.dump(answer_data_dict_json, f, indent=2)
 
         # Answer the user query for the given ticker symbol
         answer = interrogate_dataframe_pandasai(dataframe_dict, query, self.llm, self.ticker_symbol)
@@ -195,12 +212,32 @@ def interrogate_dataframe_pandasai(
     if max_data_length <= 1:
         return str(answer_conversational)
     else:
-        # Generate the response to the user query with a plot
-        answer_plot = pandasai_agent.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_PLOT)
+        answer_plot = ''
+        for dataframe in pandasai_dataframes_list:
+            # Create a new pandasai agent for every dataframe of the list
+            pandasai_agent_plot = Agent(
+                dataframe,
+                config={
+                    'llm': llm,
+                    'open_charts': False,
+                    'save_charts': True,
+                    'save_charts_path': str(output_folder),
+                    'enable_cache': False,
+                },
+            )
 
-        # # Plot the dataframes: TO DO
-        # for data_source, dataframe in dataframe_dict.items():
-        #     auto_plot(dataframe, data_source, output_folder / data_source)
+            # Generate the response to the user query with a plot
+            answer_plot += pandasai_agent_plot.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_PLOT) + ', '
+        # Remove the last comma
+        answer_plot = answer_plot[:-2]
+
+        # Creat the dataframe folder
+        dataframe_folder = output_folder / 'dataframes'
+        os.makedirs(dataframe_folder, exist_ok=True)
+
+        # Plot the dataframes
+        for data_source, dataframe in dataframe_dict.items():
+            auto_plot(dataframe, data_source, dataframe_folder / data_source)
 
         # Return the concatenation of the two answers
         return str(answer_conversational) + '\n\n' + str(answer_plot)
@@ -632,7 +669,72 @@ def convert_data_to_frame(data: Any, df_name: str) -> pandas.DataFrame:
     else:
         raise TypeError(f'Data type {type(data)} not supported.')
 
+    # Drom NA
+    df.dropna(axis=1, how='all', inplace=True)
+
+    # Sort values by date
+    df = sort_dataframe_by_date(df)
+
     return df
+
+
+def sort_dataframe_by_date(df: pandas.DataFrame, column_name: Optional[str] = None) -> pandas.DataFrame:
+    """
+    Sort a pandas DataFrame by chronological dates.
+
+    This function checks if the provided `column_name` is a datetime column.
+    If no column_name is provided, it will:
+      1. Check if the index is a datetime index and sort by the index if so.
+      2. If the index is not a datetime index, it looks through the columns
+        to find a suitable datetime column to sort by. It will prioritize
+        a column named 'Date', if present, otherwise it uses the first
+        column that can be parsed as datetime.
+
+    Args:
+        df: The input DataFrame to sort.
+        column_name: The name of a specific datetime column to sort by. Defaults to None.
+
+    Returns:
+        A new DataFrame sorted chronologically either by the specified column,
+        the datetime index, or a detected datetime column.
+    """
+    # If a specific column was provided, try sorting by that
+    if column_name is not None:
+        if column_name not in df.columns:
+            logger.info(f"The specified column '{column_name}' does not exist in the DataFrame.")
+            return df
+        # Attempt to convert to datetime
+        df[column_name] = pandas.to_datetime(df[column_name], errors='coerce')
+        if df[column_name].notna().any():
+            return df.sort_values(by=column_name).reset_index(drop=True)
+        else:
+            logger.info(f"The specified column '{column_name}' cannot be converted to datetime.")
+            return df
+
+    # If no column_name was provided, check if the index is a datetime index
+    if isinstance(df.index, pandas.DatetimeIndex):
+        return df.sort_index()
+
+    # Otherwise, look for a suitable datetime column (prioritizing "Date")
+    datetime_col = None
+    for col in df.columns:
+        # Check if the column is of any datetime dtype or can be coerced to datetime
+        if pandas.api.types.is_datetime64_any_dtype(df[col]):
+            if col == 'Date':
+                datetime_col = col
+                break
+            elif datetime_col is None:
+                datetime_col = col
+
+    # If no datetime columns were found, log a message and return the original DataFrame
+    if datetime_col is None:
+        logger.info('No datetime columns found in the DataFrame, and index is not a datetime index.')
+        return df
+
+    # Convert the selected column to datetime and sort
+    df[datetime_col] = pandas.to_datetime(df[datetime_col], errors='coerce')
+    df_sorted = df.sort_values(by=datetime_col).reset_index(drop=True)
+    return df_sorted
 
 
 def is_unhashable(input_object: Any) -> bool:
@@ -645,3 +747,199 @@ def is_unhashable(input_object: Any) -> bool:
         # If a TypeError occurs, the object is unhashable
         return True
     return False
+
+
+def auto_plot(df: pandas.DataFrame, df_name: str, output_path: Union[str, Path]) -> None:
+    """
+    Automatically choose and create a Matplotlib plot based on the contents of a DataFrame.
+
+    Logic Overview:
+    1. Identify all columns that contain numeric data. This is done by attempting to convert
+       their non-null values to numeric (do not rely solely on the data type).
+       Exclude any columns detected as datetimes.
+    2. Check if the DataFrame's index is datetime-like, or if there is a column with
+       datetime values:
+       a) If yes, plot the numeric columns against that datetime data (line plot).
+          The x-axis is formatted for dates in a human-readable way.
+    3. When there is no date in the index or columns:
+        a) If only one numeric column is found:
+            - If its sum is approximately 1 or 100, make a pie chart (indicating proportions).
+            - Otherwise, make a bar plot.
+        b) If multiple numeric columns are found:
+            - Make a line plot if multiple rows are detected.
+            - Make a barplot if a single row is detected.
+    4. The figure is titled using 'df_name' and saved to 'output_path'.
+
+    Args:
+        df: The DataFrame to plot.
+        df_name: A descriptive name or title for the DataFrame; used as the plot's title.
+        output_path: File path (including file extension) where the plot is saved.
+    """
+    # Check if the index is datetime-like
+    is_index_datetime = pandas.api.types.is_datetime64_any_dtype(df.index)
+
+    # Identify a datetime column if the index is not datetime
+    date_col = None
+    if not is_index_datetime:
+        for col in df.columns:
+            if pandas.api.types.is_datetime64_any_dtype(df[col]):
+                date_col = col
+                break
+
+    # Identify numeric columns (by attempting conversion), excluding datetime columns
+    numeric_cols = [
+        col
+        for col in df.columns
+        if is_numeric_series(df[col]) and not pandas.api.types.is_datetime64_any_dtype(df[col])
+    ]
+
+    # If there are no truly numeric columns, do nothing
+    if not numeric_cols:
+        return
+
+    df_filtered = df.dropna(how='all')
+
+    fig, ax = plt.subplots()
+
+    # If there's a date index or a date column, make a line plot using dates on x-axis
+    if is_index_datetime or date_col is not None:
+        if is_index_datetime:
+            # Plot numeric columns against the datetime index
+            df_filtered[numeric_cols].plot(ax=ax, title=df_name)
+            ax.set_xlabel('Date')
+            # Enforce that the x-axis starts at the minimum x-value (and ends at max)
+            ax.set_xlim(left=min(df_filtered.index), right=max(df_filtered.index))
+        else:
+            # Plot numeric columns using the identified date column as x-axis
+            df_filtered[[*numeric_cols, date_col]].plot(x=date_col, ax=ax, title=df_name)
+            # Enforce that the x-axis starts at the minimum x-value (and ends at max)
+            ax.set_xlim(left=min(df_filtered[date_col]), right=max(df_filtered[date_col].index))
+            ax.set_xlabel('Date')
+
+        # Specify an AutoDateLocator
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())  # type: ignore
+
+        # Set the date format
+        ax.set_xticklabels(df_filtered.index.strftime('%Y-%m-%d'), rotation=30)
+
+    else:
+        # No date in index or columns
+        if len(numeric_cols) == 1:
+            # Single numeric column
+            col = numeric_cols[0]
+            total = df_filtered[col].sum()
+            # If sum is near 1 or 100, make a pie chart. Otherwise, bar chart
+            if abs(total - 1) < 1e-7 or abs(total - 100) < 1e-7:
+                df_filtered[col].plot(kind='pie', title=df_name, autopct='%1.1f%%', ax=ax, ylabel='')
+            else:
+                df_filtered[col].plot(kind='bar', title=df_name, ax=ax)
+
+        else:
+            if df_filtered.shape[0] > 1:
+                # Multiple rows => line plot
+                df_filtered[numeric_cols].plot(kind='line', title=df_name, ax=ax)
+            else:
+                # Single row => bar plot
+                df_filtered[numeric_cols].plot(kind='bar', title=df_name, ax=ax)
+
+    # Save the figure and close
+    plt.savefig(output_path)
+    plt.close(fig)
+
+
+def is_numeric_series(series: pandas.Series) -> bool:
+    """
+    Determine if a pandas Series can be interpreted as numeric (float or int).
+    ignoring missing values by attempting to convert its non-null entries to numbers.
+
+    Args:
+        series: The input Series to check.
+
+    Returns:
+        True if the non-null entries can all be converted to numeric, False otherwise.
+    """
+    try:
+        pandas.to_numeric(series.dropna(), errors='raise')
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def apply_short_notation(df: pandas.DataFrame, columns: Optional[List[str]] = None) -> pandas.DataFrame:
+    """
+    Convert all numeric values in specified columns of a `pandas.DataFrame` to a short notation if they are ≥ 1000.
+
+    E.g. 1500000 → 1.5M.
+    Returns a copy of the DataFrame with updated string representations.
+
+    Args.
+        df: The DataFrame whose numeric values will be converted.
+        columns: The columns to convert. If None, all numeric columns will be used.
+
+    Returns:
+        A copy of the original DataFrame with converted string values in the specified columns.
+    """
+
+    # Define short-scale suffixes and their numeric thresholds (descending).
+    SUFFIXES = [
+        ('T', 1e12),
+        ('B', 1e9),
+        ('M', 1e6),
+        ('K', 1e3),
+    ]
+
+    def human_format(value: float) -> str:
+        """
+        Convert a single numeric value to a short notation string if its absolute
+        value is ≥ 1000, otherwise return the string representation of the value.
+
+        Args:
+            value: The value to format. If non-numeric or NaN, it returns the string
+            representation as-is.
+
+        Returns:
+            Short-notation formatted string (e.g., '1.5M') if abs(value) ≥ 1000,
+            otherwise the plain string representation of the value.
+        """
+        # Check for NaN or non-numeric
+        if pandas.isnull(value):
+            return ''
+
+        try:
+            num = float(value)
+        except (ValueError, TypeError):
+            # If not convertible to float, return as string
+            return str(value)
+
+        # If it's below 1000 in absolute value, just return as-is
+        if abs(num) < 1000:
+            return str(num)
+
+        # Handle negativity separately for cleaner output
+        negative = num < 0
+        num = abs(num)
+
+        # Check thresholds
+        for suffix, threshold in SUFFIXES:
+            if num >= threshold:
+                # Calculate scaled value and format to one decimal place
+                short_val = round(num / threshold, 1)
+                # Combine with suffix
+                out = f'{short_val}{suffix}'
+                return f'-{out}' if negative else out
+
+        # Fallback (should not normally be reached with the defined suffixes)
+        return str(value)
+
+    # Make a copy so the original DataFrame is not modified.
+    df_copy = df.copy()
+
+    # If no columns are specified, use all numeric columns via is_numeric_dtype.
+    if columns is None:
+        columns = [col for col in df.columns if is_numeric_series(df[col])]
+
+    # Apply the short-notation function to the specified columns.
+    for col in columns:
+        df_copy[col] = df_copy[col].apply(human_format)
+
+    return df_copy

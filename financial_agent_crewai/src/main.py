@@ -360,6 +360,7 @@ class FinancialFlow(Flow):  # type: ignore
                 table_dict = dict()
                 table_markdown_dict = dict()
                 with open(filename_txt, 'a', encoding='utf-8') as target:
+                    target.write('<begin data tables>')
                     target.write('\n\n')
                 for table_name in data:
                     # Extract the nested JSON strings and parse them
@@ -370,6 +371,8 @@ class FinancialFlow(Flow):  # type: ignore
                     with open(filename_txt, 'a', encoding='utf-8') as target:
                         target.write(table_markdown_dict[table_name])
                         target.write('\n\n')
+                with open(filename_txt, 'a', encoding='utf-8') as target:
+                    target.write('<end data table>')
 
                 try:
                     # Open the source file in read mode and target file in append mode
@@ -426,6 +429,7 @@ class FinancialFlow(Flow):  # type: ignore
         """Write the final financial report."""
 
         summary_dict: Dict[str, ReportSummary] = dict()
+        appendix_images_dict: Dict[str, List[str]] = dict()
         for report in self.report_list:
             # Load the text file
             with open(report, 'r') as f:
@@ -457,56 +461,15 @@ class FinancialFlow(Flow):  # type: ignore
                 )
                 .pydantic
             )
-        # Write the title of the final report
-        with open(self.final_report_path, 'a') as f:
-            f.write('# ' + self.query + '\n\n')
 
-            for summary in summary_dict.values():
-                f.write(summary.summary + '\n\n')
-
-        # Append each section to the final report
-        for report, summary in summary_dict.items():
-            # Create the section filename
-            section_filename = str(CACHE_DIR / ('section_' + str(Path(report).name)))
-
-            # Open the section file
-            with open(section_filename, 'r') as f:
-                section = f.read()
-
-            # Open the markdown file
-            with open(self.final_report_path, 'a') as f:
-                # Append the section content
-                f.write(summary.title)
-                if 'generic' in report.lower():
-                    f.write('\n(Source: Google Search)')
-                elif 'filing' in report.lower():
-                    f.write('\n(Source: SEC EDGAR)')
-                elif 'yfinance_news' in report.lower():
-                    f.write('\n(Source: Yahoo Finance News)')
-                elif 'yfinance_stocks' in report.lower():
-                    f.write('\n(Source: YFinance Stocks)')
-
-                f.write('\n\n')
-                # Append the section content
-                f.write(section + '\n\n')
-
-            if 'report_yfinance_stocks' in report:
-                # Append tables to the text files
-                with open(report.replace('txt', 'json'), 'r', encoding='utf-8') as file:
-                    data = json.load(file)
-                table_dict = dict()
-                table_markdown_dict = dict()
-                for table_name in data:
-                    # Extract the nested JSON strings and parse them
-                    table_dict[table_name] = parse_table_str(data[table_name])
-                    # Convert parsed data to Markdown tables
-                    table_markdown_dict[table_name] = dict_to_markdown_table(table_dict[table_name], table_name)
-                    with open(self.final_report_path, 'a', encoding='utf-8') as target:
-                        target.write(table_markdown_dict[table_name])
-                        target.write('\n\n')
-
-                # Append images to the text file in markdown format
-                convert_file_of_image_paths_to_markdown(report, self.final_report_path, f'Image {section.title}')
+        # Generate the final Markdown report
+        generate_final_report(
+            final_report_path=self.final_report_path,
+            query=self.query,
+            summary_dict=summary_dict,
+            cache_dir=CACHE_DIR,
+            yfinance_stocks_dir=YFINANCE_STOCKS_DIR,
+        )
 
         # Read the Markdown file and convert it to HTML
         with open(self.final_report_path, 'r') as md_file:

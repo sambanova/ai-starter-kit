@@ -167,9 +167,6 @@ def main() -> None:
 
     # -------------------- FORM --------------------
     with streamlit.form('generation_form'):
-        
-
-        
         streamlit.write('**User query**')
         query = streamlit.text_input(
             label='Enter research topic (hidden)',
@@ -180,7 +177,6 @@ def main() -> None:
         )
 
         with streamlit.expander('Sources'):
-                        
             col21, col22 = streamlit.columns([0.5, 0.5], vertical_alignment='center')
             with col21:
                 generic_research_option = streamlit.checkbox('Generic Google Search', value=False)
@@ -189,7 +185,6 @@ def main() -> None:
                 yfinance_news_option = streamlit.checkbox('Yahoo Finance News', value=False)
                 yfinance_stocks_option = streamlit.checkbox('Yahoo Finance Stocks', value=False)
 
-            
             if not os.getenv('SAMBANOVA_API_KEY'):
                 streamlit.write('**SAMBANOVA_API_KEY**')
                 sambanova_api_key = streamlit.text_input(
@@ -212,14 +207,15 @@ def main() -> None:
                     label_visibility='collapsed',
                 )
                 if serper_api_key:
-                    os.environ['SERPER_API_KEY'] = serper_api_key 
-        
+                    os.environ['SERPER_API_KEY'] = serper_api_key
+
+        # Generate button
         generate_button = streamlit.form_submit_button(
             label='🚀 Generate',
             type='secondary',
             disabled=streamlit.session_state.running,
             help='Click to start generating content',
-        )               
+        )
 
     # -------------------- ACTIONS ON SUBMIT --------------------
     if generate_button:

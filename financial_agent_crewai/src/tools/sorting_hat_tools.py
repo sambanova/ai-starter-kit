@@ -30,10 +30,7 @@ class FilingType(str, Enum):
 
 
 class FilingsInput(BaseModel):
-    """
-    Model for retrieving a single financial filing from SEC Edgar
-    about a given company and a given year.
-    """
+    """Model for retrieving a single financial filing from SEC Edgar about a given company and a given year."""
 
     ticker_symbol: str = Field(
         ...,

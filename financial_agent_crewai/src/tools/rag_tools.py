@@ -23,25 +23,25 @@ logger = logging.getLogger(__name__)
 
 
 RETRIEVAL_QA_PROMPT_TEMPLATE = """
-    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-    Answer any use questions based solely on the context below:
+Answer any use questions based solely on the context below:
 
-    <context>
+<context>
 
-    {context}
+{context}
 
-    </context>
+</context>
 
-    <|eot_id|>
+<|eot_id|>
 
-    <|start_header_id|>user<|end_header_id|>
+<|start_header_id|>user<|end_header_id|>
 
-    {input}
+{input}
 
-    <|eot_id|>
+<|eot_id|>
 
-    <|start_header_id|>assistant<|end_header_id|>
+<|start_header_id|>assistant<|end_header_id|>
 """
 
 
