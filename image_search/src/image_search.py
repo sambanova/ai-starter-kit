@@ -116,17 +116,17 @@ class ImageSearch:
             )
         elif ingestion_mode == 'online_inference':
             paths, images = self.get_images(path)
-            self.collection.add(images=images, metadatas=[{'source': path} for path in paths], ids=paths, uris=paths)
+            self.collection.add(images=images, metadatas=[{'source': path} for path in paths], ids=paths)
         else:
             raise Exception(f'ingestion mode {ingestion_mode} not supported')
 
     def search_image_by_text(self, query: str, n: int = 5) -> Any:
         result = self.collection.query(query_texts=[query], include=['uris', 'distances'], n_results=n)
-        assert result['uris'] is not None and result['distances'] is not None
-        return result['uris'][0], result['distances'][0]
+        assert result['ids'] is not None and result['distances'] is not None
+        return result['ids'][0], result['distances'][0]
 
     def search_image_by_image(self, path: str, n: int = 5) -> Any:
         image = np.array(Image.open(path))
         result = self.collection.query(query_images=[image], include=['uris', 'distances'], n_results=n)
-        assert result['uris'] is not None and result['distances'] is not None
-        return result['uris'][0], result['distances'][0]
+        assert result['ids'] is not None and result['distances'] is not None
+        return result['ids'][0], result['distances'][0]
