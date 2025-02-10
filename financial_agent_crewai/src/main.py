@@ -373,7 +373,7 @@ class FinancialFlow(Flow):  # type: ignore
                         target.write(table_markdown_dict[table_name])
                         target.write('\n\n')
                 with open(filename_txt, 'a', encoding='utf-8') as target:
-                    target.write('<end data table>')
+                    target.write('<end data tables>')
 
                 try:
                     # Open the source file in read mode and target file in append mode
