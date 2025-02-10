@@ -30,7 +30,7 @@ MAX_DATA_SOURCES = 5
 
 # Prompt template
 SOURCES_PROMPT_TEMPLATE = """
-Please review the following data sources and determine the optimal set of the most relevant sources
+Please review the following data sources and determine the minimal set of the most relevant sources
 (including their exact column names) that best address the user query.
 
 Query: {query}
@@ -136,7 +136,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
             # Convert the selected dataframe columns to JSON
             answer_data_dict[source.name] = dataframe[columns].to_json(orient='split')
             # Break if we exceed the maximum number of data sources
-            if count > MAX_DATA_SOURCES:
+            if count >= MAX_DATA_SOURCES:
                 break
 
         # Dump all the dataframe JSON strings into one file
