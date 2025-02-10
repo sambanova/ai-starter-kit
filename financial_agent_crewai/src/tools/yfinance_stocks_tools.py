@@ -6,7 +6,6 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 import yfinance
@@ -815,12 +814,6 @@ def auto_plot(df: pandas.DataFrame, df_name: str, output_path: Union[str, Path])
             # Enforce that the x-axis starts at the minimum x-value (and ends at max)
             ax.set_xlim(left=min(df_filtered[date_col]), right=max(df_filtered[date_col].index))
             ax.set_xlabel('Date')
-
-        # Specify an AutoDateLocator
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())  # type: ignore
-
-        # Set the date format
-        ax.set_xticklabels(df_filtered.index.strftime('%Y-%m-%d'), rotation=30)
 
     else:
         # No date in index or columns
