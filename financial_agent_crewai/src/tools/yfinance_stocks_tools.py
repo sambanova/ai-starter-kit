@@ -30,7 +30,7 @@ MAX_DATA_SOURCES = 5
 
 # Prompt template
 SOURCES_PROMPT_TEMPLATE = """
-Please review the following data sources and determine the optimal set of the most relevant sources
+Please review the following data sources and determine the minimal set of the most relevant sources
 (including their exact column names) that best address the user query.
 
 Query: {query}

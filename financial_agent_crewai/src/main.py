@@ -360,6 +360,7 @@ class FinancialFlow(Flow):  # type: ignore
                 table_dict = dict()
                 table_markdown_dict = dict()
                 with open(filename_txt, 'a', encoding='utf-8') as target:
+                    target.write('\n\n')
                     target.write('<begin data tables>')
                     target.write('\n\n')
                 for table_name in data:
