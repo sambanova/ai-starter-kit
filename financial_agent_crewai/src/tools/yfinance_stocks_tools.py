@@ -14,7 +14,6 @@ import yfinance
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
-from pandas.api.types import is_numeric_dtype
 from pandasai import Agent
 from pydantic import BaseModel, Field
 
@@ -194,20 +193,6 @@ def interrogate_dataframe_pandasai(
     """
     # Create the output folder name
     output_folder = YFINANCE_STOCKS_DIR / f'{ticker_symbol}'
-
-    # Reset indexes in the dataframes, so that the dates are visible as columns
-    for dataframe in dataframe_dict.values():
-        dataframe.reset_index(inplace=True)
-
-        # Convert the column 'Date' to string in 'YYYY-MM-DD' format
-        if 'Date' in dataframe.columns:
-            dataframe['Date'] = pandas.to_datetime(dataframe['Date']).dt.strftime('%Y-%m-%d')
-
-        for column in dataframe.columns:
-            # Check if the column has a datetime dtype
-            if pandas.api.types.is_datetime64_any_dtype(dataframe[column]):
-                # Convert to string in 'YYYY-MM-DD' format
-                dataframe[column] = dataframe[column].dt.strftime('%Y-%m-%d')
 
     # Extract the list of dataframes
     pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
@@ -917,7 +902,7 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
     def format_scientific(value: float, decimals: int = 2) -> str:
         """
         Convert a number to scientific notation (e.g., 0.002 → “2e-3”)
-        with up to 'decimals' in the mantissa (trailing zeros removed).
+        with up to 'decimals' digits in the mantissa (trailing zeros removed).
         """
         if value == 0:
             return '0.00'
@@ -937,17 +922,17 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
     def human_format(x: float) -> str:
         """
         Convert a single numeric value to:
-          - Short notation if ≥ 1000,
-          - Two-decimal “regular” representation if ≥ 0.01 and < 1000,
-          - Scientific notation if < 0.01,
-          - Empty string if NaN or non-numeric.
+          • Short notation if abs(x) ≥ 1000,
+          • Two-decimal “regular” representation if 0.01 ≤ abs(x) < 1000,
+          • Scientific notation if abs(x) < 0.01,
+          • Empty string if NaN or non-numeric.
         """
-        # NaN or non-numeric → empty or str(x)
         if pd.isnull(x):
             return ''
         try:
             num = float(x)
         except (ValueError, TypeError):
+            # Non-numeric => original string
             return str(x)
 
         # If zero, just return with two decimals
@@ -964,19 +949,13 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
         # Large → short notation
         for suffix, threshold in SUFFIXES:
             if abs_num >= threshold:
-                # Scale and round to two decimals, e.g. 1500000 => 1.50M
                 scaled = abs_num / threshold
-                # Always keep two decimals in the suffix form,
-                # but you can trim trailing zeros if desired.
                 scaled_str = f'{scaled:.2f}'
                 out = f'{scaled_str}{suffix}'
                 return f'-{out}' if negative else out
 
         # Otherwise, regular two-decimal format
         rounded_str = f'{abs_num:.2f}'
-        # If you want to preserve exactly two decimals, keep it as is.
-        # If you want to remove trailing zeros, you can do:
-        #    rounded_str = rounded_str.rstrip('0').rstrip('.')
         return f'-{rounded_str}' if negative else rounded_str
 
     # Make a copy so the original DataFrame is unmodified
@@ -984,9 +963,9 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
 
     # If no columns are specified, pick all numeric columns
     if columns is None:
-        columns = [col for col in df_copy.columns if is_numeric_dtype(df_copy[col])]
+        columns = [col for col in df_copy.columns if is_numeric_series(df_copy[col])]
 
-    # Apply the formatting function
+    # Apply the formatting function to each specified column
     for col in columns:
         df_copy[col] = df_copy[col].apply(human_format)
 
