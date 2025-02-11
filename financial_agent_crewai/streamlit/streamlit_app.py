@@ -247,7 +247,7 @@ def main() -> None:
 
                     # Show real-time logs
                     with streamlit.spinner('💸 Our financial agents are working on your query...'):
-                        with st_capture(execution_output.code):
+                        with st_capture(execution_output.json):
                             financial_flow = FinancialFlow(
                                 query=query,
                                 source_generic_search=generic_research_option,

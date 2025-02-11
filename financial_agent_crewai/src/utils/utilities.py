@@ -304,27 +304,39 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
 
     return pdf_data
 
-
-def extract_entities(input: str) -> str:
+def extract_entities(input: str) -> Dict:
     # Remove escape sequences (ANSI codes for formatting) first
     cleaned_input = re.sub(r'\[[0-9;]*m', '', input)
 
     # Now use regex to extract the agent name and the final answers
-    pattern = re.compile(r'# (.*?)\n.*?## (Final Answer|Task):\s*(\{.*?\})', re.DOTALL)
-
+    pattern = re.compile(r'# (.*?)\n.*?## (Final Answer):\s*(\{.*?\})', re.DOTALL)
+    
     matches = pattern.findall(cleaned_input)
 
     result = list()
 
     for match in matches:
-        agent_name = match[0].strip()  # Extract agent name
-        agent_output = match[2].strip()  # Extract agent's output (JSON or content)
+        agent_name = match[0].split(':')[-1].strip()  # Extract agent name
 
+        # Extract full JSON output (with nested JSON objects)
+        i = cleaned_input.index(match[2])
+        stack = cleaned_input[i]
+        json_result = cleaned_input[i]
+        i += 1
+        while (len(stack) > 0) and (i < len(cleaned_input)):        
+            json_result += cleaned_input[i]
+            stack += '{' if cleaned_input[i] == '{' else ''
+            if cleaned_input[i] == '}':
+                stack = stack[:-1]
+            i += 1    
+        
         # Format the result string for each agent
-        result.append(f'{agent_name} output:\n{agent_output}\n')
+        result.append({
+            "agent_name": agent_name,
+            "agent_output": json.loads(json_result)
+        }) 
 
-    return '\n'.join(result)
-
+    return result
 
 @contextmanager
 def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
@@ -332,7 +344,7 @@ def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
     Context manager for capturing stdout and redirecting to Streamlit.
 
     Args:
-        output_func (Callable[[str], None]): Function to handle captured output.
+        output_func (Callable[str]): Function to handle captured output.
 
     Yields:
         StringIO: String buffer containing captured output.
@@ -344,8 +356,9 @@ def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
             ret = old_write(string)
             # Each time something is written to stdout,
             # we send it to Streamlit via `output_func`.
-            output_string = extract_entities(stdout.getvalue())
-            output_func(output_string + '\n#####\n')
+            agent_outputs = extract_entities(stdout.getvalue())            
+            output_func(json.dumps(agent_outputs), expanded=2)                    
+            
             return ret
 
         stdout.write = new_write  # type: ignore
