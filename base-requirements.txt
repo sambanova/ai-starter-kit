@@ -98,6 +98,9 @@ ruamel.yaml==0.18.6
 # Schedule
 schedule==1.2.2
 
-#llm-eval
+# llm-eval
 weave==0.51.1
 wandb==0.18.5
+
+# client
+openai==1.59.7
