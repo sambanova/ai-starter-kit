@@ -6,7 +6,7 @@ import shutil
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Match, Optional, Union
+from typing import Any, Dict, Generator, List, Match, Optional
 
 import markdown
 import pandas
@@ -14,7 +14,7 @@ import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
 
 
-def clear_directory(directory: Union[str, Path]) -> Optional[str]:
+def clear_directory(directory: str | Path) -> Optional[str]:
     """
     Clears all contents of the specified directory,
     including all files and subdirectories.
@@ -304,13 +304,14 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
 
     return pdf_data
 
-def extract_entities(input: str) -> Dict:
+
+def extract_entities(input: str) -> List[Dict[str, Any]]:
     # Remove escape sequences (ANSI codes for formatting) first
     cleaned_input = re.sub(r'\[[0-9;]*m', '', input)
 
     # Now use regex to extract the agent name and the final answers
     pattern = re.compile(r'# (.*?)\n.*?## (Final Answer):\s*(\{.*?\})', re.DOTALL)
-    
+
     matches = pattern.findall(cleaned_input)
 
     result = list()
@@ -323,20 +324,18 @@ def extract_entities(input: str) -> Dict:
         stack = cleaned_input[i]
         json_result = cleaned_input[i]
         i += 1
-        while (len(stack) > 0) and (i < len(cleaned_input)):        
+        while (len(stack) > 0) and (i < len(cleaned_input)):
             json_result += cleaned_input[i]
             stack += '{' if cleaned_input[i] == '{' else ''
             if cleaned_input[i] == '}':
                 stack = stack[:-1]
-            i += 1    
-        
+            i += 1
+
         # Format the result string for each agent
-        result.append({
-            "agent_name": agent_name,
-            "agent_output": json.loads(json_result)
-        }) 
+        result.append({'agent_name': agent_name, 'agent_output': json.loads(json_result)})
 
     return result
+
 
 @contextmanager
 def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
@@ -356,9 +355,9 @@ def st_capture(output_func: Any) -> Generator[StringIO, None, None]:
             ret = old_write(string)
             # Each time something is written to stdout,
             # we send it to Streamlit via `output_func`.
-            agent_outputs = extract_entities(stdout.getvalue())            
-            output_func(json.dumps(agent_outputs), expanded=2)                    
-            
+            agent_outputs = extract_entities(stdout.getvalue())
+            output_func(json.dumps(agent_outputs), expanded=2)
+
             return ret
 
         stdout.write = new_write  # type: ignore
@@ -384,15 +383,16 @@ def list_first_order_subfolders(directory: str | Path) -> list[str]:
     return subfolders
 
 
-def gather_png_files_in_subfolder_dataframes(root_dir: str | Path) -> List[str]:
+def gather_png_files_in_subfolder_dataframes(root_dir: str | Path, subfolder: str | Path) -> List[str]:
     """
-    Search for all dataframe PNG images.
+    Search for all dataframe PNG images within the subfolder of a given directory.
 
-    Recursively searches the specified root directory for subfolders named "dataframes"
+    Recursively searches the specified root directory for a given subfolder
     and collects all the ".png" file names found within them.
 
     Args:
         root_dir: The path to the root directory to start the search.
+        subfolder: The subfolder within root directory that contains the PNG images.
 
     Returns:
         A list of full paths to the PNG files found.
@@ -408,7 +408,7 @@ def gather_png_files_in_subfolder_dataframes(root_dir: str | Path) -> List[str]:
     for current_root, dirs, files in os.walk(root_dir):
         # Identify the name of the current folder to check if it ends with "dataframes"
         folder_name: str = os.path.basename(current_root)
-        if folder_name == 'dataframes':
+        if folder_name == subfolder:
             # Filter PNG files in the current folder
             for file_name in files:
                 if file_name.lower().endswith('.png'):
@@ -419,11 +419,11 @@ def gather_png_files_in_subfolder_dataframes(root_dir: str | Path) -> List[str]:
 
 
 def generate_final_report(
-    final_report_path: Union[str, Path],
+    final_report_path: str | Path,
     query: str,
     summary_dict: Dict[str, Any],
-    cache_dir: Union[str, Path],
-    yfinance_stocks_dir: Union[str, Path],
+    cache_dir: str | Path,
+    yfinance_stocks_dir: str | Path,
 ) -> None:
     """
     Generate a final report in Markdown format.
@@ -512,13 +512,13 @@ def generate_final_report(
                     target.write('\n\n')
 
             # Collect additional data frames (PNG images) from all subfolders for an appendix.
-            company_tickers_dict = list_first_order_subfolders(yfinance_stocks_dir)
+            company_tickers_list = list_first_order_subfolders(yfinance_stocks_dir)
             appendix_images_dict = dict()
 
-            for image_path in company_tickers_dict:
+            for image_path in company_tickers_list:
                 # The dictionary key is the subfolder name, value is a list of PNG files in that subfolder.
                 appendix_images_dict[Path(image_path).name] = gather_png_files_in_subfolder_dataframes(
-                    yfinance_stocks_dir
+                    yfinance_stocks_dir / Path(image_path).name, subfolder='dataframes'
                 )
 
             # If any images were found, write them to the final report as an appendix.

@@ -62,8 +62,14 @@ class FilingsInput(BaseModel):
     )
     query: str = Field(
         ...,
-        description='A reformulation of the user query, tailored to correspond '
-        'to the given company and (if mentioned) year.',
+        min_length=1,
+        max_length=512,
+        description=(
+            'A refined and clarified version of the user’s original query, '
+            'ensuring all relevant details are included. '
+            'This query will serve as the primary foundation for drafting a financial report.'
+        ),
+        examples=['Analyze the quarterly earnings of XYZ Corp and provide insights into future growth opportunities.'],
     )
     start_date: datetime.date = Field(
         RECENT_DATE,

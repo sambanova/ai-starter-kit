@@ -5,7 +5,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.config import CACHE_DIR
+from financial_agent_crewai.src.config import CACHE_DIR, MAX_NEWS
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ class GenericResearchCrew:
             config=self.agents_config['researcher'],
             verbose=self.verbose,
             llm=self.llm,
-            tools=[SerperDevTool()],
+            tools=[SerperDevTool(n_results=MAX_NEWS)],
         )
 
     @task  # type: ignore

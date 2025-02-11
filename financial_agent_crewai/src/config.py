@@ -48,29 +48,27 @@ COMPARISON_QUERY = (
 # Number of documents to use for RAG
 NUM_RAG_SOURCES = 5
 # Maximum number of urls in generic Google web search or Yahoo Finance web search
-MAX_NEWS = 5
+MAX_NEWS = 10
 # Maximum news per ticker symbol
-MAX_NEWS_PER_TICKER = 2
+MAX_NEWS_PER_TICKER = 10
 
 
 # LLMs by crew
 BILLION_PARAMETERS = '70'
-BILLION_PARAMETERS_PANDASAI = '405'
 MODEL_TEMPLATE = 'sambanova/Meta-Llama-3.3-{billion_parameters}B-Instruct'
-MODEL_NAME_TEMPLATE = 'Meta-Llama-3.1-{billion_parameters}B-Instruct'
 
 GENERAL_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 
 CONTEXT_ANALYSIS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 DECOMPOSITION_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 GENERIC_RESEARCH_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
-INFORMATION_EXTRACTION_MODEL = 'sambanova/Meta-Llama-3.1-405B-Instruct'
+INFORMATION_EXTRACTION_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 RAG_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 REPORT_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 SEC_EDGAR_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 YFINANCE_NEWS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 YFINANCE_STOCKS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
-PANDASAI_MODEL = MODEL_NAME_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
+PANDASAI_MODEL = 'Meta-Llama-3.3-70B-Instruct'
 
 # LLM temperature
 TEMPERATURE = 0

@@ -54,7 +54,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
 
             # Check if the request was successful
             if response.status_code == 200:
-                max_news_per_ticker = MAX_NEWS
+                max_news_per_ticker = MAX_NEWS_PER_TICKER
 
                 # Parse the HTML content
                 soup = BeautifulSoup(response.content, 'html.parser')

@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import math
 import os
 import shutil
 from pathlib import Path
@@ -8,10 +9,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas
+import pandas as pd
 import yfinance
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
+from pandas.api.types import is_numeric_dtype
 from pandasai import Agent
 from pydantic import BaseModel, Field
 
@@ -38,7 +41,7 @@ Query: {query}
 • Return a minimum of 1 data source and a maximum of {max_data_sources} data sources.
 • Sort the selected data source from the most relevant to the least relevant.
 • Do not invent or modify any data source names or column names.
-• Only provide the columns that could match the query requirements.
+• Only provide the data sources and the columns that exactly match the query requirements.
 • Preserve the original data source and column names exactly as listed.
 
 Data sources:\n\n
@@ -47,15 +50,25 @@ Data sources:\n\n
 PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = """
 Please provide a clear, well-detailed, and conversational response consisting of at least a few sentences. 
 Ensure that your explanation is both thorough and approachable, while addressing all relevant points.
+
+Query: {query}
 """
 
 PANDASAI_FORMAT_INSTRUCTIONS_PLOT = """
-Please generate one PNG plot to illustrate your findings.
-Ensure that your plot has a clear title, labeled axes, and is directly relevant to the discussion.
-"""
+Generate one or more PNG plots to illustrate your findings in response to the user’s query.
 
-# Define short-scale suffixes and their thresholds in descending order
-SUFFIXES = [('T', 1e12), ('B', 1e9), ('M', 1e6), ('K', 1e3)]
+For each plot:
+• Provide a clear, descriptive title.
+• Label both axes (including units, if applicable).
+• Ensure the plot directly addresses the user’s question or discussion.
+
+If the user requests details about a specific data point:
+• Include its exact value.
+• Provide relevant context (e.g., neighboring values or dates) to offer a complete picture.
+• Always plot more that one data point.
+
+Query: {query}
+"""
 
 
 class YFinanceSource(BaseModel):
@@ -182,6 +195,20 @@ def interrogate_dataframe_pandasai(
     # Create the output folder name
     output_folder = YFINANCE_STOCKS_DIR / f'{ticker_symbol}'
 
+    # Reset indexes in the dataframes, so that the dates are visible as columns
+    for dataframe in dataframe_dict.values():
+        dataframe.reset_index(inplace=True)
+
+        # Convert the column 'Date' to string in 'YYYY-MM-DD' format
+        if 'Date' in dataframe.columns:
+            dataframe['Date'] = pandas.to_datetime(dataframe['Date']).dt.strftime('%Y-%m-%d')
+
+        for column in dataframe.columns:
+            # Check if the column has a datetime dtype
+            if pandas.api.types.is_datetime64_any_dtype(dataframe[column]):
+                # Convert to string in 'YYYY-MM-DD' format
+                dataframe[column] = dataframe[column].dt.strftime('%Y-%m-%d')
+
     # Extract the list of dataframes
     pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
 
@@ -201,7 +228,7 @@ def interrogate_dataframe_pandasai(
     shutil.rmtree(PANDASAI_CAHE_DIR, ignore_errors=True)
 
     # Generate the response to the user query in a conversational style
-    answer_conversational = pandasai_agent.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL)
+    answer_conversational = str(pandasai_agent.chat(PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL.format(query=query)))
 
     # Calculate the maximum number of rows in the data lake
     max_data_length = 0
@@ -226,9 +253,10 @@ def interrogate_dataframe_pandasai(
             )
 
             # Generate the response to the user query with a plot
-            answer_plot += pandasai_agent_plot.chat(query + PANDASAI_FORMAT_INSTRUCTIONS_PLOT) + ', '
+            answer_plot += pandasai_agent_plot.chat(PANDASAI_FORMAT_INSTRUCTIONS_PLOT.format(query=query)) + ', '
+
         # Remove the last comma
-        answer_plot = answer_plot[:-2]
+        answer_plot = answer_plot[:-2] if len(answer_plot) > 2 else ''
 
         # Creat the dataframe folder
         dataframe_folder = output_folder / 'dataframes'
@@ -303,6 +331,7 @@ def extract_yfinance_data(
         description = (
             'This data source contains general metadata about the company, '
             'including name, sector, industry, and contact details. '
+            "It also has information about the current stock prices (i.e. today's date or the latest date only)."
             f'Columns: {get_columns(data)}.'
         )
         company_dict['info'] = (data, description)
@@ -314,7 +343,7 @@ def extract_yfinance_data(
         # DataFrame
         data = company.history(start=start_date, end=end_date)
         description = (
-            'This data source contains the historical stock price data for the requested date range. '
+            'This data source contains all the historical stock prices for the requested date range. '
             f'Columns: {get_columns(data)}.'
         )
         company_dict['history'] = (data, description)
@@ -748,7 +777,7 @@ def is_unhashable(input_object: Any) -> bool:
     return False
 
 
-def auto_plot(df: pandas.DataFrame, df_name: str, output_path: Union[str, Path]) -> None:
+def auto_plot(df: pandas.DataFrame, df_name: str, output_path: str | Path) -> None:
     """
     Automatically choose and create a Matplotlib plot based on the contents of a DataFrame.
 
@@ -861,22 +890,23 @@ def is_numeric_series(series: pandas.Series) -> bool:
         return False
 
 
-def apply_short_notation(df: pandas.DataFrame, columns: Optional[List[str]] = None) -> pandas.DataFrame:
+def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) -> pd.DataFrame:
     """
-    Convert all numeric values in specified columns of a `pandas.DataFrame` to a short notation if they are ≥ 1000.
+    Convert numeric values in specified columns of a `pandas.DataFrame` to:
+      • Short notation (e.g. “1.50K”, “3.20M”) if abs(value) ≥ 1000,
+      • Two-decimal standard form if 0.01 ≤ abs(value) < 1000,
+      • Scientific notation if abs(value) < 0.01 (e.g. “0.002” → “2e-3”).
 
-    E.g. 1500000 → 1.5M.
     Returns a copy of the DataFrame with updated string representations.
 
-    Args.
+    Args:
         df: The DataFrame whose numeric values will be converted.
-        columns: The columns to convert. If None, all numeric columns will be used.
+        columns: The columns to convert. If None, all numeric columns are used.
 
     Returns:
-        A copy of the original DataFrame with converted string values in the specified columns.
+        A copy of the DataFrame with converted string values.
     """
 
-    # Define short-scale suffixes and their numeric thresholds (descending).
     SUFFIXES = [
         ('T', 1e12),
         ('B', 1e9),
@@ -884,57 +914,79 @@ def apply_short_notation(df: pandas.DataFrame, columns: Optional[List[str]] = No
         ('K', 1e3),
     ]
 
-    def human_format(value: float) -> str:
+    def format_scientific(value: float, decimals: int = 2) -> str:
         """
-        Convert a single numeric value to a short notation string if its absolute
-        value is ≥ 1000, otherwise return the string representation of the value.
-
-        Args:
-            value: The value to format. If non-numeric or NaN, it returns the string
-            representation as-is.
-
-        Returns:
-            Short-notation formatted string (e.g., '1.5M') if abs(value) ≥ 1000,
-            otherwise the plain string representation of the value.
+        Convert a number to scientific notation (e.g., 0.002 → “2e-3”)
+        with up to 'decimals' in the mantissa (trailing zeros removed).
         """
-        # Check for NaN or non-numeric
-        if pandas.isnull(value):
+        if value == 0:
+            return '0.00'
+        negative = value < 0
+        value = abs(value)
+
+        exp = math.floor(math.log10(value))
+        mantissa = value / 10**exp
+
+        # Round mantissa, then strip trailing zeros (if any)
+        mantissa_rounded = round(mantissa, decimals)
+        mantissa_str = f'{mantissa_rounded}'.rstrip('0').rstrip('.')
+
+        sign_str = '-' if negative else ''
+        return f'{sign_str}{mantissa_str}e{exp}'
+
+    def human_format(x: float) -> str:
+        """
+        Convert a single numeric value to:
+          - Short notation if ≥ 1000,
+          - Two-decimal “regular” representation if ≥ 0.01 and < 1000,
+          - Scientific notation if < 0.01,
+          - Empty string if NaN or non-numeric.
+        """
+        # NaN or non-numeric → empty or str(x)
+        if pd.isnull(x):
             return ''
-
         try:
-            num = float(value)
+            num = float(x)
         except (ValueError, TypeError):
-            # If not convertible to float, return as string
-            return str(value)
+            return str(x)
 
-        # If it's below 1000 in absolute value, just return as-is
-        if abs(num) < 1000:
-            return str(num)
+        # If zero, just return with two decimals
+        if num == 0:
+            return '0.00'
 
-        # Handle negativity separately for cleaner output
+        abs_num = abs(num)
         negative = num < 0
-        num = abs(num)
 
-        # Check thresholds
+        # Very small → scientific notation
+        if abs_num < 0.01:
+            return format_scientific(num, 2)
+
+        # Large → short notation
         for suffix, threshold in SUFFIXES:
-            if num >= threshold:
-                # Calculate scaled value and format to one decimal place
-                short_val = round(num / threshold, 1)
-                # Combine with suffix
-                out = f'{short_val}{suffix}'
+            if abs_num >= threshold:
+                # Scale and round to two decimals, e.g. 1500000 => 1.50M
+                scaled = abs_num / threshold
+                # Always keep two decimals in the suffix form,
+                # but you can trim trailing zeros if desired.
+                scaled_str = f'{scaled:.2f}'
+                out = f'{scaled_str}{suffix}'
                 return f'-{out}' if negative else out
 
-        # Fallback (should not normally be reached with the defined suffixes)
-        return str(value)
+        # Otherwise, regular two-decimal format
+        rounded_str = f'{abs_num:.2f}'
+        # If you want to preserve exactly two decimals, keep it as is.
+        # If you want to remove trailing zeros, you can do:
+        #    rounded_str = rounded_str.rstrip('0').rstrip('.')
+        return f'-{rounded_str}' if negative else rounded_str
 
-    # Make a copy so the original DataFrame is not modified.
+    # Make a copy so the original DataFrame is unmodified
     df_copy = df.copy()
 
-    # If no columns are specified, use all numeric columns via is_numeric_dtype.
+    # If no columns are specified, pick all numeric columns
     if columns is None:
-        columns = [col for col in df.columns if is_numeric_series(df[col])]
+        columns = [col for col in df_copy.columns if is_numeric_dtype(df_copy[col])]
 
-    # Apply the short-notation function to the specified columns.
+    # Apply the formatting function
     for col in columns:
         df_copy[col] = df_copy[col].apply(human_format)
 

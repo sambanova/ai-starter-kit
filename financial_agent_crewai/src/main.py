@@ -10,7 +10,7 @@ import logging
 import os
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
@@ -69,7 +69,7 @@ class FinancialFlow(Flow):  # type: ignore
         source_sec_filings: Optional[bool] = None,
         source_yfinance_news: Optional[bool] = None,
         source_yfinance_stocks: Optional[bool] = None,
-        cache_path: Optional[Union[str, Path]] = None,
+        cache_path: Optional[str | Path] = None,
         verbose: bool = True,
     ) -> None:
         """Initialize the Finance Flow."""

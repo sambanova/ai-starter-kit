@@ -3,8 +3,6 @@ reporting_task:
     Review the provided context and expand each topic into a comprehensive report section.
     Include all key details, maintain a coherent structure, and limit the content to 1000 words.
     Omit any references to an inability to generate a response due to an error.
-    Derive insights from the data tables enclosed between <begin data tables> and <end data tables>.
-    but do not include the tables themselves in the final content.
   expected_output: >
     Present a detailed report section with each main topic developed into smaller subsections.
     Format your answer in Markdown without using triple backticks as follows:
