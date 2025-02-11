@@ -10,5 +10,5 @@ class ReportSection(BaseModel):
 class ReportSummary(BaseModel):
     """Model representing the summary of a report section."""
 
-    title: str = Field(..., description='The section title.')
+    title: str = Field(..., description='The short and descriptive title of the section.')
     summary: str = Field(..., description='A concise summary of the section, limited to three sentences.')

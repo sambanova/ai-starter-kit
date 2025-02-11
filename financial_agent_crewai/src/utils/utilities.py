@@ -482,8 +482,15 @@ def generate_final_report(
 
         # 3. If it's a YFinance stocks report, append images, tables, and an appendix.
         if 'report_yfinance_stocks' in report:
-            # Append images in Markdown format to the final report.
-            convert_file_of_image_paths_to_markdown(report, final_report_path, f'Image {summary.title}')
+            # Collect the data frames (PNG images) from all subfolders for an appendix.
+            company_tickers_list = list_first_order_subfolders(yfinance_stocks_dir)
+            appendix_images_dict = dict()
+
+            for image_path in company_tickers_list:
+                # The dictionary key is the subfolder name, value is a list of PNG files in that subfolder.
+                appendix_images_dict[Path(image_path).name] = gather_png_files_in_subfolder_dataframes(
+                    yfinance_stocks_dir / Path(image_path).name, subfolder='dataframes'
+                )
 
             # Read table data from the matching JSON file
             json_path = report.replace('txt', 'json')
@@ -510,16 +517,6 @@ def generate_final_report(
                 with final_report_path.open('a', encoding='utf-8') as target:
                     target.write(table_markdown_dict[table_name])
                     target.write('\n\n')
-
-            # Collect additional data frames (PNG images) from all subfolders for an appendix.
-            company_tickers_list = list_first_order_subfolders(yfinance_stocks_dir)
-            appendix_images_dict = dict()
-
-            for image_path in company_tickers_list:
-                # The dictionary key is the subfolder name, value is a list of PNG files in that subfolder.
-                appendix_images_dict[Path(image_path).name] = gather_png_files_in_subfolder_dataframes(
-                    yfinance_stocks_dir / Path(image_path).name, subfolder='dataframes'
-                )
 
             # If any images were found, write them to the final report as an appendix.
             if len(appendix_images_dict) > 0:

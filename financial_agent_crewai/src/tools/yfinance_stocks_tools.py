@@ -47,9 +47,7 @@ Data sources:\n\n
 """
 
 PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = """
-Please provide a clear, well-detailed, and conversational response consisting of at least a few sentences. 
-Ensure that your explanation is both thorough and approachable, while addressing all relevant points.
-
+Please provide a clear conversational answer to the user query.
 Query: {query}
 """
 
@@ -64,7 +62,7 @@ For each plot:
 If the user requests details about a specific data point:
 • Include its exact value.
 • Provide relevant context (e.g., neighboring values or dates) to offer a complete picture.
-• Always plot more that one data point.
+• Always plot more than one data point.
 
 Query: {query}
 """
@@ -197,9 +195,13 @@ def interrogate_dataframe_pandasai(
     # Extract the list of dataframes
     pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
 
+    # PandasAI do not read the dataframe index
+    dataframe_list_conversational = list()
+    for dataframe in pandasai_dataframes_list:
+        dataframe_list_conversational.append(dataframe.reset_index(inplace=False))
     # Create a new pandasai agent
     pandasai_agent = Agent(
-        pandasai_dataframes_list,
+        dataframe_list_conversational,
         config={
             'llm': llm,
             'open_charts': False,
@@ -213,7 +215,11 @@ def interrogate_dataframe_pandasai(
     shutil.rmtree(PANDASAI_CAHE_DIR, ignore_errors=True)
 
     # Generate the response to the user query in a conversational style
-    answer_conversational = str(pandasai_agent.chat(PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL.format(query=query)))
+    answer_conversational = (
+        query
+        + '\nResponse: '
+        + str(pandasai_agent.chat(PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL.format(query=query)))
+    )
 
     # Calculate the maximum number of rows in the data lake
     max_data_length = 0
@@ -221,28 +227,8 @@ def interrogate_dataframe_pandasai(
         max_data_length = max(max_data_length, dataframe.shape[0])
     # If there are no dataframes with more than 2 lines, we do no need plots
     if max_data_length <= 1:
-        return str(answer_conversational)
+        return answer_conversational
     else:
-        answer_plot = ''
-        for dataframe in pandasai_dataframes_list:
-            # Create a new pandasai agent for every dataframe of the list
-            pandasai_agent_plot = Agent(
-                dataframe,
-                config={
-                    'llm': llm,
-                    'open_charts': False,
-                    'save_charts': True,
-                    'save_charts_path': str(output_folder),
-                    'enable_cache': False,
-                },
-            )
-
-            # Generate the response to the user query with a plot
-            answer_plot += pandasai_agent_plot.chat(PANDASAI_FORMAT_INSTRUCTIONS_PLOT.format(query=query)) + ', '
-
-        # Remove the last comma
-        answer_plot = answer_plot[:-2] if len(answer_plot) > 2 else ''
-
         # Creat the dataframe folder
         dataframe_folder = output_folder / 'dataframes'
         os.makedirs(dataframe_folder, exist_ok=True)
@@ -252,7 +238,7 @@ def interrogate_dataframe_pandasai(
             auto_plot(dataframe, data_source, dataframe_folder / data_source)
 
         # Return the concatenation of the two answers
-        return str(answer_conversational) + '\n\n' + str(answer_plot)
+        return answer_conversational
 
 
 def extract_yfinance_data(
