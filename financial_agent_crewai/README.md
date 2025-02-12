@@ -4,9 +4,16 @@ Welcome to the FinancialAgentCrewai Crew project, powered by [crewAI](https://cr
 
 ## Installation
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+First, install `glib` and `pango` on your system:
 
-First, if you haven't already, install uv:
+```bash
+brew install glib
+brew install pango
+```
+
+Then, ensure you have Python >=3.10 <3.13 installed on your system.
+
+This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience. So if you haven't already, install uv:
 
 ```bash
 pip install uv
@@ -15,9 +22,11 @@ pip install uv
 Next, navigate to your project directory and install the dependencies:
 
 (Optional) Lock the dependencies and install them by using the CLI command:
+
 ```bash
 crewai install
 ```
+
 ### Customizing
 
 **Add your `OPENAI_API_KEY` into the `.env` file**
@@ -46,6 +55,7 @@ The financial_agent_crewai Crew is composed of multiple AI agents, each with uni
 ## Support
 
 For support, questions, or feedback regarding the FinancialAgentCrewai Crew or crewAI.
+
 - Visit our [documentation](https://docs.crewai.com)
 - Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
 - [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
