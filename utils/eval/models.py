@@ -16,6 +16,9 @@ sys.path.append(repo_dir)
 from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
 from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.eval.rag import RAGChain
+from utils.eval.eval_utils import calculate_cost
+from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 
 
 class CorrectnessLLMJudge(Scorer):
@@ -54,7 +57,6 @@ class CorrectnessLLMJudge(Scorer):
         self,
         model_output: Dict[str, Any],
         query: str,
-        context: Optional[str] = None,
         expected_answer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
@@ -76,6 +78,7 @@ class CorrectnessLLMJudge(Scorer):
             Exception: If there is an error during the invocation of the judge model.
         """
         generated_answer = model_output.get('completion', None)
+        context = model_output.get('context', None)
         if generated_answer is None:
             return {'score': -1, 'reason': f'Completion not found:\n{model_output}'}
 
@@ -182,6 +185,11 @@ class WeaveChatModel(Model):
             response = client.invoke(messages)
             completion = response.content.strip()
             usage = response.response_metadata.get('usage', None)
+            input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
+            if self.model_kwargs:
+                input_token_cost, ouput_token_cost = self.model_kwargs.get('input_token_cost'),\
+                 self.model_kwargs.get('ouput_token_cost')
+                usage['cost'] = calculate_cost(input_tokens, output_tokens, input_token_cost, ouput_token_cost)
         except Exception as e:
             completion = f'<Error>: {type(e).__name__} - {str(e)}'
             usage = {}
@@ -204,18 +212,26 @@ class WeaveRAGModel(Model):
         model_kwargs (Optional[Dict[str, Any]]): Additional model-specific parameters.
     """
 
-    type: str
-    model: str
-    temperature: float
-    max_tokens: int
-    top_k: Optional[int] = 10
-    top_p: Optional[float] = 0.1
-    streaming: bool = False
-    include_usage: Optional[bool] = False
+    llm_params: Optional[Dict[str, Any]] = None
+    embeddings_params: Optional[Dict[str, Any]] = None
+    rag_params: Optional[Dict[str, Any]] = None
     model_kwargs: Optional[Dict[str, Any]] = None
+    rag_chain: Optional[RAGChain] = None
+
+    def __init__(self, **kwargs: Dict[str, Any]) -> None:
+        super().__init__(**kwargs)
+
+        self._initialize_rag()
+    
+    def _initialize_rag(self) -> None:
+        self.rag_chain = RAGChain(SNCloudSchema(**self.llm_params),
+         EmbeddingsSchema(**self.embeddings_params), VectorDBSchema(**self.rag_params))
+    
+    def upload_docs(self, path: str) -> None:
+        self.rag_chain.upload_docs(path)
 
     @weave.op()
-    async def predict(self, completion: str, context: Optional[str]) -> Dict[str, Any]:
+    async def predict(self, query: str) -> Dict[str, Any]:
         """
         Logs predictions of a rag chain.
 
@@ -228,6 +244,16 @@ class WeaveRAGModel(Model):
         Raises:
             Exception: If completion not found.
         """
-        if context is not None:
-            return {'completion': completion, 'context': context}
-        return {'completion': completion}
+
+        response = self.rag_chain.predict(query)
+        context = [i.page_content for i in response['context']]
+        completion = response['response']['content']
+        usage = response['response']['metadata']['usage']
+        input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
+        if self.model_kwargs:
+            input_token_cost, ouput_token_cost = self.model_kwargs.get('input_token_cost'),\
+                self.model_kwargs.get('ouput_token_cost')
+            usage['cost'] = calculate_cost(input_tokens, output_tokens, input_token_cost, ouput_token_cost)
+
+        return {'completion': completion, 'context': context, 'usage': usage}
+
