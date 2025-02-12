@@ -121,12 +121,12 @@ class ImageSearch:
             raise Exception(f'ingestion mode {ingestion_mode} not supported')
 
     def search_image_by_text(self, query: str, n: int = 5) -> Any:
-        result = self.collection.query(query_texts=[query], include=['uris', 'distances'], n_results=n)
+        result = self.collection.query(query_texts=[query], include=['uris', 'distances'], n_results=n)  # type: ignore
         assert result['ids'] is not None and result['distances'] is not None
         return result['ids'][0], result['distances'][0]
 
     def search_image_by_image(self, path: str, n: int = 5) -> Any:
         image = np.array(Image.open(path))
-        result = self.collection.query(query_images=[image], include=['uris', 'distances'], n_results=n)
+        result = self.collection.query(query_images=[image], include=['uris', 'distances'], n_results=n)  # type: ignore
         assert result['ids'] is not None and result['distances'] is not None
         return result['ids'][0], result['distances'][0]
