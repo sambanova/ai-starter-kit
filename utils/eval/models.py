@@ -13,12 +13,12 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
+from utils.eval.eval_utils import calculate_cost
 from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
 from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
-from utils.model_wrappers.api_gateway import APIGateway
 from utils.eval.rag import RAGChain
-from utils.eval.eval_utils import calculate_cost
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
+from utils.model_wrappers.api_gateway import APIGateway
 
 
 class CorrectnessLLMJudge(Scorer):
@@ -187,8 +187,10 @@ class WeaveChatModel(Model):
             usage = response.response_metadata.get('usage', None)
             input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
             if self.model_kwargs:
-                input_token_cost, ouput_token_cost = self.model_kwargs.get('input_token_cost'),\
-                 self.model_kwargs.get('ouput_token_cost')
+                input_token_cost, ouput_token_cost = (
+                    self.model_kwargs.get('input_token_cost'),
+                    self.model_kwargs.get('ouput_token_cost'),
+                )
                 usage['cost'] = calculate_cost(input_tokens, output_tokens, input_token_cost, ouput_token_cost)
         except Exception as e:
             completion = f'<Error>: {type(e).__name__} - {str(e)}'
@@ -222,11 +224,14 @@ class WeaveRAGModel(Model):
         super().__init__(**kwargs)
 
         self._initialize_rag()
-    
+
     def _initialize_rag(self) -> None:
-        self.rag_chain = RAGChain(SNCloudSchema(**self.llm_params),
-         EmbeddingsSchema(**self.embeddings_params), VectorDBSchema(**self.rag_params))
-    
+        self.rag_chain = RAGChain(
+            SNCloudSchema(**self.llm_params),
+            EmbeddingsSchema(**self.embeddings_params),
+            VectorDBSchema(**self.rag_params),
+        )
+
     def upload_docs(self, path: str) -> None:
         self.rag_chain.upload_docs(path)
 
@@ -251,9 +256,10 @@ class WeaveRAGModel(Model):
         usage = response['response']['metadata']['usage']
         input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
         if self.model_kwargs:
-            input_token_cost, ouput_token_cost = self.model_kwargs.get('input_token_cost'),\
-                self.model_kwargs.get('ouput_token_cost')
+            input_token_cost, ouput_token_cost = (
+                self.model_kwargs.get('input_token_cost'),
+                self.model_kwargs.get('ouput_token_cost'),
+            )
             usage['cost'] = calculate_cost(input_tokens, output_tokens, input_token_cost, ouput_token_cost)
 
         return {'completion': completion, 'context': context, 'usage': usage}
-

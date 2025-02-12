@@ -129,7 +129,7 @@ class BaseWeaveEvaluator(WeaveEvaluator):
 
             await asyncio.gather(*evaluation_tasks)
 
-    def _evaluate_model(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+    def _evaluate_model(self, params: Dict[str, Any], data: Dataset) -> None:
         """
         Evaluate a model using the provided parameters in a separate thread.
         This method runs in a thread pool. It creates a `WeaveChatModel` using the
@@ -296,5 +296,5 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
             llm_params=llm_info,
             embeddings_params=embeddings_info,
             rag_params=vectordb_info,
-            model_kwargs=model_kwargs
+            model_kwargs=model_kwargs,
         )

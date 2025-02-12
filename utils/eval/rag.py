@@ -16,10 +16,10 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.embeddings import Embeddings
 
+from utils.eval.eval_utils import custom_parser
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 from utils.eval.vector_store import VectorStoreManager
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.eval.eval_utils import custom_parser
 
 
 class RAGChain:
