@@ -4,12 +4,12 @@ import { BrowserRouter } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fas } from "@fortawesome/free-solid-svg-icons";
+import { fab } from "@fortawesome/free-brands-svg-icons";
 
 import App from "./App.tsx";
+import { PUBLISHABLE_KEY } from "./Constants.ts";
 
 import "./index.css";
-
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -21,4 +21,4 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>
 );
 
-library.add(fas);
+library.add(fas, fab);
