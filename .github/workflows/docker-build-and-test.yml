@@ -66,6 +66,7 @@ jobs:
           echo "Creating .env file with secrets..."
           set +x  # Disable command echoing to protect secrets
           {
+            echo "SAMBASTUDIO_URL=${{ secrets.SAMBASTUDIO_URL }}"
             echo "SAMBASTUDIO_BASE_URL=${{ secrets.SAMBASTUDIO_BASE_URL }}"
             echo "SAMBASTUDIO_PROJECT_ID=${{ secrets.SAMBASTUDIO_PROJECT_ID }}"
             echo "SAMBASTUDIO_ENDPOINT_ID=${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}"
@@ -103,6 +104,7 @@ jobs:
             python tests/test_framework.py --env docker --skip-streamlit
         env:
           # Pass secrets as environment variables
+          SAMBASTUDIO_URL: ${{ secrets.SAMBASTUDIO_URL }}
           SAMBASTUDIO_BASE_URL: ${{ secrets.SAMBASTUDIO_BASE_URL }}
           SAMBASTUDIO_PROJECT_ID: ${{ secrets.SAMBASTUDIO_PROJECT_ID }}
           SAMBASTUDIO_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}
