@@ -102,3 +102,6 @@ schedule==1.2.2
 #llm-eval
 weave==0.51.31
 wandb==0.19.4
+
+# client
+openai==1.59.7
