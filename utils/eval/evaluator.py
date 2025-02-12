@@ -19,7 +19,6 @@ from weave import Dataset
 from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
 from utils.eval.rag import RAGChain
-from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
 
