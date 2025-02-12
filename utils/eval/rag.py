@@ -15,11 +15,11 @@ from langchain import hub
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.embeddings import Embeddings
-from langchain_core.output_parsers import StrOutputParser
 
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 from utils.eval.vector_store import VectorStoreManager
 from utils.model_wrappers.api_gateway import APIGateway
+from utils.eval.eval_utils import custom_parser
 
 
 class RAGChain:
@@ -111,12 +111,12 @@ class RAGChain:
             retriever = self.vectordb.as_retriever()
             llm = APIGateway.load_chat(**self.llm_params.model_dump())
 
-            rag_chain = prompt | llm | StrOutputParser()
+            rag_chain = prompt | llm | custom_parser
 
             rag_chain_with_source = RunnableParallel({'context': retriever, 'question': RunnablePassthrough()}).assign(
-                answer=rag_chain
+                response=rag_chain
             )
 
             return rag_chain_with_source
         except Exception as e:
-            raise Exception('Failed to initialize RAG chain') from e
+            raise Exception(f'Failed to initialize RAG chain: {e}') from e
