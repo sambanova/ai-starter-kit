@@ -400,7 +400,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         events_received = []
         events_timings = []
 
-        client = sseclient.SSEClient(response)
+        client = sseclient.SSEClient(response)  # type: ignore
 
         for event in client.events():
             try:
@@ -546,7 +546,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response)
+            client = sseclient.SSEClient(response)  # type: ignore
             generated_text = ''
 
             for event in client.events():
