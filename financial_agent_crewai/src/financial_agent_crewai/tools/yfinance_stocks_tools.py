@@ -13,6 +13,7 @@ import yfinance
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
+from pandas.api.types import is_datetime64_any_dtype
 from pandasai import Agent
 from pydantic import BaseModel, Field
 
@@ -46,23 +47,8 @@ Data sources:\n\n
 """
 
 PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL = """
-Please provide a clear conversational answer to the user query.
-Query: {query}
-"""
-
-PANDASAI_FORMAT_INSTRUCTIONS_PLOT = """
-Generate one or more PNG plots to illustrate your findings in response to the user’s query.
-
-For each plot:
-• Provide a clear, descriptive title.
-• Label both axes (including units, if applicable).
-• Ensure the plot directly addresses the user’s question or discussion.
-
-If the user requests details about a specific data point:
-• Include its exact value.
-• Provide relevant context (e.g., neighboring values or dates) to offer a complete picture.
-• Always plot more than one data point.
-
+Please respond to the user's query in a clear, conversational manner.
+Provide any necessary explanations and details, but do not include any plots or visualizations.
 Query: {query}
 """
 
@@ -194,18 +180,14 @@ def interrogate_dataframe_pandasai(
     # Extract the list of dataframes
     pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
 
-    # PandasAI do not read the dataframe index
-    dataframe_list_conversational = list()
-    for dataframe in pandasai_dataframes_list:
-        dataframe_list_conversational.append(dataframe.reset_index(inplace=False))
     # Create a new pandasai agent
     pandasai_agent = Agent(
-        dataframe_list_conversational,
+        pandasai_dataframes_list,
         config={
             'llm': llm,
             'open_charts': False,
             'save_charts': True,
-            'save_charts_path': str(output_folder),
+            'save_charts_path': str(output_folder / 'dataframes'),
             'enable_cache': False,
         },
     )
@@ -862,7 +844,9 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
     Convert numeric values in specified columns of a `pandas.DataFrame` to:
       • Short notation (e.g. “1.50K”, “3.20M”) if abs(value) ≥ 1000,
       • Two-decimal standard form if 0.01 ≤ abs(value) < 1000,
-      • Scientific notation if abs(value) < 0.01 (e.g. “0.002” → “2e-3”).
+      • Scientific notation if abs(value) < 0.01 (e.g. “0.002” -> “2e-3”).
+
+    Datetime columns are left unchanged.
 
     Returns a copy of the DataFrame with updated string representations.
 
@@ -894,7 +878,7 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
         exp = math.floor(math.log10(value))
         mantissa = value / 10**exp
 
-        # Round mantissa, then strip trailing zeros (if any)
+        # Round mantissa, then strip trailing zeros
         mantissa_rounded = round(mantissa, decimals)
         mantissa_str = f'{mantissa_rounded}'.rstrip('0').rstrip('.')
 
@@ -914,21 +898,20 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
         try:
             num = float(x)
         except (ValueError, TypeError):
-            # Non-numeric => original string
+            # Non-numeric -> return original as string
             return str(x)
 
-        # If zero, just return with two decimals
         if num == 0:
             return '0.00'
 
         abs_num = abs(num)
         negative = num < 0
 
-        # Very small → scientific notation
+        # Very small -> scientific notation
         if abs_num < 0.01:
             return format_scientific(num, 2)
 
-        # Large → short notation
+        # Large -> short notation
         for suffix, threshold in SUFFIXES:
             if abs_num >= threshold:
                 scaled = abs_num / threshold
@@ -936,18 +919,22 @@ def apply_short_notation(df: pd.DataFrame, columns: Optional[List[str]] = None) 
                 out = f'{scaled_str}{suffix}'
                 return f'-{out}' if negative else out
 
-        # Otherwise, regular two-decimal format
+        # Otherwise, two-decimal format
         rounded_str = f'{abs_num:.2f}'
         return f'-{rounded_str}' if negative else rounded_str
 
     # Make a copy so the original DataFrame is unmodified
     df_copy = df.copy()
 
-    # If no columns are specified, pick all numeric columns
+    # If no columns are specified, pick all numeric (and non-datetime) columns
     if columns is None:
-        columns = [col for col in df_copy.columns if is_numeric_series(df_copy[col])]
+        columns = [
+            col
+            for col in df_copy.columns
+            if is_numeric_series(df_copy[col]) and not is_datetime64_any_dtype(df_copy[col])
+        ]
 
-    # Apply the formatting function to each specified column
+    # Apply the formatting function to the specified columns
     for col in columns:
         df_copy[col] = df_copy[col].apply(human_format)
 

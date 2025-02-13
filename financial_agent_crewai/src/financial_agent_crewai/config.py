@@ -1,10 +1,15 @@
 from pathlib import Path
+import os
 
 # Level of verbosity
 VERBOSE = False
 
 # Specify the directory and file path
-CACHE_DIR = Path('cache/')
+if Path(os.getcwd()).name == 'ai-starter-kit':
+    CACHE_DIR = Path('financial_agent_crewai') / 'cache/'
+else:
+    suffix = Path('cache')
+
 YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
 
 # Maximum number of words per section
