@@ -307,7 +307,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         if 'Bundle' in self.request_config.model:
             sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
             sampling_params['process_prompt'] = False
-            sampling_params['top_k'] = 1.0
+            sampling_params['top_k'] = 1
 
         # build payload for api v2
         if '/api/v2' in url.lower().strip():
