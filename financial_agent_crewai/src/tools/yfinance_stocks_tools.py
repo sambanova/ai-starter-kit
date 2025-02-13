@@ -38,7 +38,7 @@ Please review the following data sources and determine the minimal set of the mo
 Query: {query}
 
 • Return a minimum of 1 data source and a maximum of {max_data_sources} data sources.
-• Sort the selected data source from the most relevant to the least relevant.
+• Sort the selected data sources from the most relevant to the least relevant.
 • Do not invent or modify any data source names or column names.
 • Only provide the data sources and the columns that exactly match the query requirements.
 • Preserve the original data source and column names exactly as listed.
