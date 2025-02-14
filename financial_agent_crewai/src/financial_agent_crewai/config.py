@@ -22,7 +22,7 @@ SOURCE_YFINANCE_NEWS = True
 SOURCE_YFINANCE_STOCK = True
 
 # User query
-USER_QUERY = 'What was the research and development trend for Google in 2024?'
+USER_QUERY = 'What was the research and development spending trend for Google in 2024?'
 
 # Comparison query
 COMPARISON_QUERY = (

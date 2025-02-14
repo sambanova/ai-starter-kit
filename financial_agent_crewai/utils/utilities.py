@@ -295,7 +295,6 @@ def convert_html_to_pdf(html_str: str, output_file: Optional[str | Path] = None)
         border-bottom: 2px solid #dee2e6;
     }
     """
-
     # Create a WeasyPrint CSS object from the style string
     stylesheet = weasyprint.CSS(string=style)
 

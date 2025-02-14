@@ -100,7 +100,7 @@ class FinancialFlow(Flow):  # type: ignore
         self.source_yfinance_stocks = source_yfinance_stocks
 
         # Report paths
-        self.final_report_path = str(CACHE_DIR / 'final_report.md')
+        self.final_report_path = str(CACHE_DIR / 'report.md')
         self.report_list: List[str] = list()
         self.generic_report_name = str(CACHE_DIR / 'report_generic_search.txt')
 
@@ -498,7 +498,7 @@ class FinancialFlow(Flow):  # type: ignore
         cleaned_html = clean_markdown_content(md_content)
 
         # Convert the cleaned HTML to a PDF
-        pdf_data = convert_html_to_pdf(cleaned_html, output_file=CACHE_DIR / 'output.pdf')
+        pdf_data = convert_html_to_pdf(cleaned_html, output_file=self.final_report_path.replace('md', 'pdf'))
 
 
 def kickoff() -> None:

@@ -17,16 +17,16 @@ Welcome to the FinancialFlow project, powered by [crewAI](https://crewai.com)!
 
 Table of Contents:
 
-- [Overview](#overview)
-- [Setup](#setup)
-- [Installation](#installation)
-    - [Using UV and the CrewAI commands](#uv-crewai-commands)
-    - [Using pip and venv](#pip-venv)
-    - [The Streamlit app](#streamlit)
-- [Customization](#customization)
-- [Understanding and monitoring your crews](#understanding-monitoring)
+- [1. Overview](#overview)
+- [2. Setup](#setup)
+- [3. Installation](#installation)
+    - [3.1 Using UV and the CrewAI commands](#uv-crewai-commands)
+    - [3.2 Using pip and venv](#pip-venv)
+    - [3.3 The Streamlit app](#streamlit)
+- [4. Customization](#customization)
+- [5. Understanding and monitoring your crews](#understanding-monitoring)
 
-## Overview
+## 1. Overview
 
 The Financial Flow project is a comprehensive template designed to facilitate the setup of a multi-agent AI system.
 By leveraging the robust and adaptable framework offered by crewAI,
@@ -39,7 +39,7 @@ and retrieval-augmented generation (RAG).
 
 Use the navigation menu to explore various features including:
 
--- **Generic Google Search**: Scrape the web using Google Search API. 
+-- **Generic Google Search**: Scrape the web using
     <a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
 - **Stock Data Analysis**: Query and analyze stocks based on
     <a href="https://pypi.org/project/yfinance/" target="_blank">Yahoo Finance</a> data.
@@ -48,7 +48,7 @@ Use the navigation menu to explore various features including:
 - **Financial News Scraping**: Scrape financial news articles from 
     <a href="https://uk.finance.yahoo.com/" target="_blank">Yahoo Finance</a> News.
 
-## Setup
+## 2. Setup
 
 1. Add your `SAMBANOVA_API_KEY` to the `.env` file.
 
@@ -69,11 +69,13 @@ Use the navigation menu to explore various features including:
 4. (Optional, only if you want to use `LangTrace`)
     Add your `LANGTRACE_API_KEY` to the `.env` file.
     
-## Installation
+## 3. Installation
 
 Ensure you have Python `>=3.11 <3.13` installed on your system.
+All the packages/tools are listed in the `requirements.txt` file,
+as well as in the `pyproject.toml` file, in the project root directory.
 
-### Using UV and the CrewAI commands
+### 3.1 Using UV and the CrewAI commands
 
 This project supports [UV](https://docs.astral.sh/uv/) for dependency management and package handling,
 offering a seamless setup and execution experience.
@@ -111,7 +113,7 @@ This command initializes the `FinancialFLow` Flow, assembling the agents and ass
 This example, unmodified, will generate a `report.md` file and a `report.pdf` file
 as the outputs of a financial research and analyais in the `cache` folder.
 
-### Using `pip` and `venv`
+### 3.2 Using `pip` and `venv`
 
 If you want to create a Python virtual environment with its built-in module `venv`
 and then install the dependencies using `pip`,
@@ -137,7 +139,7 @@ This command initializes the `FinancialFLow` Flow, assembling the agents and ass
 This example, unmodified, will generate a `report.md` file and a `report.pdf` file
 as the outputs of a financial research and analyais in the `cache` folder.
 
-### The `Streamlit` app
+### 3.3 The `Streamlit` app
 After building your virtual environment, either using `uv` or using `pip`,
 you can run our `streamlit` app for an interactive interface and monitoring.
 
@@ -153,7 +155,7 @@ You can now enter your query and select which data sources you want to use among
 3. Yahoo Finance News.
 4. Yahoo Finance Stocks.
 
-## Customization
+## 4. Customization
 You can modify the following hyperparameters of the flow and of the crews,
 as well as the corresponding agents and tasks of the latter,
 in the `config.py` file.
@@ -190,7 +192,7 @@ in the `config.py` file.
 - LLM temperature
     `TEMPERATURE`
 
-## Understanding and monitoring your crews
+## 5. Understanding and monitoring your crews
 
 The `FinancialFlow`, defined in `main.py`, is a `crewai.flow.flow.Flow` pipeline orchestrating several crews.
 
@@ -207,7 +209,4 @@ from langtrace_python_sdk import langtrace
 langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 ```
 
-## Third-party tools and data sources
-
-All the packages/tools are listed in the `requirements.txt` file in the project directory.
 

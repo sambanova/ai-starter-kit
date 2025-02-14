@@ -170,7 +170,7 @@ def main() -> None:
         streamlit.write('**User query**')
         query = streamlit.text_input(
             label='Enter research topic (hidden)',
-            placeholder='E.g., Give me the breakdown of Goole financials in 2025?',
+            placeholder='E.g., What was the research and development spending trend for Google in 2024?',
             help='Enter the main subject for content generation',
             key='compact_topic',
             label_visibility='collapsed',
@@ -263,7 +263,7 @@ def main() -> None:
                 seconds = int(elapsed_time % 60)
                 time_msg = f'⚡ Generated in {minutes}m {seconds}s' if minutes > 0 else f'⚡ Generated in {seconds}s'
 
-                output_file = CACHE_DIR / f'final_report.md'
+                output_file = CACHE_DIR / f'report.md'
                 streamlit.session_state.running = False
                 streamlit.session_state.final_content = output_file
                 streamlit.success('✨ Content generated successfully!')
@@ -275,10 +275,10 @@ def main() -> None:
                     output_col1, output_col2 = streamlit.columns([0.5, 0.5], gap='large')
                     with output_col1:
                         with open(output_file, 'r', encoding='utf-8') as f:
-                            final_md = f.read()
-                            streamlit.session_state.final_content = final_md
+                            report_md = f.read()
+                            streamlit.session_state.final_content = report_md
                             # Clean the Markdown (base64 images, table classes) -> HTML
-                            cleaned_html = clean_markdown_content(final_md)
+                            cleaned_html = clean_markdown_content(report_md)
                             content_output = streamlit.empty()
                             content_output.markdown(
                                 f"""
@@ -294,8 +294,8 @@ def main() -> None:
                         # Download the Markdown report
                         download_section(
                             label='📥 Download Markdown',
-                            data=final_md,
-                            file_name=f'financial_report.md',
+                            data=report_md,
+                            file_name=f'report.md',
                             mime='text/markdown',
                         )
 
