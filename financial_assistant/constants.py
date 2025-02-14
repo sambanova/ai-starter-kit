@@ -46,14 +46,14 @@ SAMBANOVA_ORANGE = (238, 118, 36)
 YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')
 
 # Define default values for text inputs
-DEFAULT_COMPANY_NAME = 'Meta'
+DEFAULT_COMPANY_NAME = 'Google'
 DEFAULT_DATAFRAME_NAME = 'income_stmt'
-DEFAULT_STOCK_QUERY = 'What is the research and development spending trend for Meta?'
-DEFAULT_HISTORICAL_STOCK_PRICE_QUERY = 'Meta close value'
+DEFAULT_STOCK_QUERY = 'What is the research and development spending trend for Google?'
+DEFAULT_HISTORICAL_STOCK_PRICE_QUERY = 'Google close value'
 DEFAULT_RAG_QUERY = (
-    'Have there been changes in strategy, products, and research for Meta? Can you provide some examples?'
+    'Have there been changes in strategy, products, and research for Google? Can you provide some examples?'
 )
-DEFAULT_PDF_RAG_QUERY = "What conclusions can we draw about Meta's strategy?"
+DEFAULT_PDF_RAG_QUERY = "What conclusions can we draw about Google's strategy?"
 DEFAULT_START_DATE = datetime.datetime.today().date() - datetime.timedelta(days=365)
 DEFAULT_END_DATE = datetime.datetime.today().date()
 DEFAULT_FILING_TYPE = '10-K'

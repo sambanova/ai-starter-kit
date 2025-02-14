@@ -199,8 +199,19 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
         for symbol in symbol_list:
             try:
                 general_urls.append(f'https://finance.yahoo.com/quote/{symbol}/')
-                news = yfinance.Ticker(symbol).news
-                singular_urls.extend([news[i]['link'] for i, _ in enumerate(news)])
+
+                # Get the YFinance ticker object
+                company = yfinance.Ticker(symbol)
+
+                # Get the news articles from Yahoo Finance
+                yfinance_url_list = [
+                    item['content']['canonicalUrl']['url']
+                    for item in company.news
+                    if item['content']['contentType'] == 'STORY'
+                ]
+
+                # Extend the list of singular URLs
+                singular_urls.extend(yfinance_url_list)
             except:
                 pass
     else:
@@ -222,7 +233,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
             if url in general_urls:
                 # Find all the links mentioned in the webpage
                 links = soup.find_all('a')
-                link_urls.extend([link['href'] for link in links])
+                link_urls.extend([link['href'] for link in links])  # type: ignore
             else:
                 link_urls.append(url)
         else:
@@ -234,11 +245,11 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
     link_urls = [
         link_url
         for link_url in link_urls
-        if link_url.startswith('https://finance.yahoo.com/news/')
-        or link_url.startswith('https://finance.yahoo.com/quote/')
+        if link_url.startswith('https://finance.yahoo.com/')  # type: ignore
+        or link_url.startswith('https://www.yahoo.com')  # type: ignore
     ]
 
-    return link_urls[0:MAX_URLS]
+    return link_urls[0:MAX_URLS]  # type: ignore
 
 
 def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[str, List[str]]:
