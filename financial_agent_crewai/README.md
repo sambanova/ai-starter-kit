@@ -6,14 +6,14 @@
 </picture>
 </a>
 
-SambaNova Financial Agent using CrewAI
+SambaNova Financial Agent using CrewAI (Financial Flow)
 ======================
 
 Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
-# Financial Flow Crew
+# Financial Flow
 
-Welcome to the FinancialFlow project, powered by [crewAI](https://crewai.com)!
+Welcome to the Financial Flow project, powered by [crewAI](https://crewai.com)!
 
 Table of Contents:
 
