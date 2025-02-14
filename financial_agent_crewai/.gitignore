@@ -1,6 +1,7 @@
-.env
 __pycache__/
 lib/
 .DS_Store
-.venv
+.env
 .lock
+.venv
+financial_agent_crewai/cache/*
