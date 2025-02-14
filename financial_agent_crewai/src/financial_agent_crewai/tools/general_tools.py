@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 
 
 class FilenameOutput(BaseModel):
-    """Model representing a saved full file path."""
+    """Model representing a saved file path."""
 
-    filename: str = Field(..., description='The full, non-empty file path of the saved file.')
+    filename: str = Field(..., description='The exact file path of the saved file.')
 
 
 class FilenameOutputList(BaseModel):
-    """Model representing a list of saved full file paths."""
+    """Model representing a list of saved file paths."""
 
     file_output_list: List[FilenameOutput] = Field(
-        ..., description='The list of the full, non-empty file paths of the saved files.'
+        ..., description='The list of the exact file paths of the saved files.'
     )
 
 

@@ -359,6 +359,7 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the YFinance Stocks Crew
                 filenames_list = (
                     YFinanceStocksCrew(
+                        query=filing_metadata.query,  # type: ignore
                         ticker_symbol=filing_metadata.ticker_symbol,  # type: ignore
                         llm=LLM(model=YFINANCE_STOCKS_MODEL, temperature=TEMPERATURE),
                         pandasai_llm=ChatSambaNovaCloud(model=PANDASAI_MODEL, temperature=TEMPERATURE),
@@ -366,11 +367,7 @@ class FinancialFlow(Flow):  # type: ignore
                         end_date=filing_metadata.end_date,  # type: ignore
                     )
                     .crew()
-                    .kickoff(
-                        {
-                            'query': filing_metadata.query,  # type: ignore
-                        },
-                    )
+                    .kickoff()
                 ).pydantic.file_output_list
 
                 # Extract the filenames

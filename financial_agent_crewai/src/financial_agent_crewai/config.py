@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 # Level of verbosity
 VERBOSE = False
@@ -8,7 +8,7 @@ VERBOSE = False
 if Path(os.getcwd()).name == 'ai-starter-kit':
     CACHE_DIR = Path('financial_agent_crewai') / 'cache/'
 else:
-    suffix = Path('cache')
+    CACHE_DIR = Path('cache')
 
 YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
 
@@ -16,13 +16,13 @@ YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
 MAX_SECTION_WORDS = 1000
 
 # Data sources
-SOURCE_GENERIC_SEARCH = False
-SOURCE_SEC_FILINGS = False
-SOURCE_YFINANCE_NEWS = False
+SOURCE_GENERIC_SEARCH = True
+SOURCE_SEC_FILINGS = True
+SOURCE_YFINANCE_NEWS = True
 SOURCE_YFINANCE_STOCK = True
 
 # User query
-USER_QUERY = 'Please give me an analysis of Google liabilities and assets for the last 6 months.'
+USER_QUERY = 'What was the research and development trend for Google in 2024?'
 
 # Comparison query
 COMPARISON_QUERY = (
@@ -53,7 +53,7 @@ REPORT_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 SEC_EDGAR_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 YFINANCE_NEWS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 YFINANCE_STOCKS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
-PANDASAI_MODEL = 'Meta-Llama-3.1-70B-Instruct'
+PANDASAI_MODEL = 'Meta-Llama-3.3-70B-Instruct'
 
 # LLM temperature
 TEMPERATURE = 0

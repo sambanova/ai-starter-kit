@@ -88,11 +88,12 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         'enabling insight-driven decision-making.'
     )
     llm: BaseChatModel
+    query: str
     ticker_symbol: str
     start_date: datetime.date
     end_date: datetime.date
 
-    def _run(self, query: str) -> FilenameOutputList:
+    def _run(self) -> FilenameOutputList:
         """Execute the search query and return results."""
 
         # Extract data from yfinance
@@ -103,7 +104,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         )
 
         # Create a prompt template
-        PROMPT_TEMPLATE = SOURCES_PROMPT_TEMPLATE.format(query=query, max_data_sources=MAX_DATA_SOURCES)
+        PROMPT_TEMPLATE = SOURCES_PROMPT_TEMPLATE.format(query=self.query, max_data_sources=MAX_DATA_SOURCES)
         # Append the data sources and their corresponding columns
         for data_source in list(data):
             PROMPT_TEMPLATE += f'Data source: {data_source}.'
@@ -143,7 +144,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
             json.dump(answer_data_dict_json, f, indent=2)
 
         # Answer the user query for the given ticker symbol
-        answer = interrogate_dataframe_pandasai(dataframe_dict, query, self.llm, self.ticker_symbol)
+        answer = interrogate_dataframe_pandasai(dataframe_dict, self.query, self.llm, self.ticker_symbol)
 
         # Save the answer to a text file
         filename_txt = CACHE_DIR / f'{FILENAME}_{self.ticker_symbol}_{self.start_date}_{self.end_date}.txt'
@@ -193,11 +194,12 @@ def interrogate_dataframe_pandasai(
     )
 
     # Generate the response to the user query in a conversational style
-    answer_conversational = (
-        query
-        + '\nResponse: '
-        + str(pandasai_agent.chat(PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL.format(query=query)))
-    )
+    query_conversational = query + '\nResponse: '
+    answer_conversational = str(pandasai_agent.chat(PANDASAI_FORMAT_INSTRUCTIONS_CONVERSATIONAL.format(query=query)))
+    if 'error' not in answer_conversational.lower():
+        answer_conversational = query_conversational + answer_conversational
+    else:
+        answer_conversational = query_conversational
 
     # Calculate the maximum number of rows in the data lake
     max_data_length = 0

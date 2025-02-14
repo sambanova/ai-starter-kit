@@ -23,6 +23,7 @@ class YFinanceStocksCrew:
 
     def __init__(
         self,
+        query: str,
         ticker_symbol: str,
         llm: LLM,
         pandasai_llm: BaseChatModel,
@@ -37,6 +38,7 @@ class YFinanceStocksCrew:
         self.tasks_config = dict()
         self.agents = list()
         self.tasks = list()
+        self.query = query
         self.ticker_symbol = ticker_symbol
         self.llm = llm
         self.pandasai_llm = pandasai_llm
@@ -56,6 +58,7 @@ class YFinanceStocksCrew:
             tools=[
                 YFinanceStocksTool(
                     llm=self.pandasai_llm,
+                    query=self.query,
                     ticker_symbol=self.ticker_symbol,
                     start_date=self.start_date,
                     end_date=self.end_date,
