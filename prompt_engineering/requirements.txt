@@ -1,7 +1,8 @@
 Requests==2.31.0
-langchain-community==0.3.1
-langchain-core==0.3.6
-langchain==0.3.1
+langchain-community==0.3.16
+langchain-core==0.3.33
+langchain==0.3.16
+langchain-sambanova==0.1.0
 mypy==1.11.2
 pre-commit==4.0.1
 pydantic==2.9.2

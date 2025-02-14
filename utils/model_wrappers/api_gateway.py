@@ -14,8 +14,8 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.langchain_chat_models import ChatSambaNovaCloud, ChatSambaStudio
-from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
+from langchain_sambanova import ChatSambaNovaCloud, ChatSambaStudio, SambaStudioEmbeddings
+
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
@@ -108,7 +108,6 @@ class APIGateway:
         model: Optional[str] = None,
         select_expert: Optional[str] = None,
         top_p: Optional[float] = None,
-        top_k: Optional[int] = None,
         repetition_penalty: Optional[float] = None,
         stop_sequences: Optional[str] = None,
         process_prompt: Optional[bool] = False,
@@ -158,7 +157,6 @@ class APIGateway:
                     'temperature': temperature,
                     'model': model or select_expert,
                     'top_p': top_p,
-                    'top_k': top_k,
                     'repetition_penalty': repetition_penalty,
                     'stop_sequences': stop_sequences,
                     'process_prompt': process_prompt,
@@ -176,7 +174,6 @@ class APIGateway:
                     'max_tokens': max_tokens or max_tokens_to_generate,
                     'temperature': temperature,
                     'top_p': top_p,
-                    'top_k': top_k,
                     'repetition_penalty': repetition_penalty,
                     'stop_sequences': stop_sequences,
                 }
@@ -198,7 +195,6 @@ class APIGateway:
                 max_tokens=max_tokens or max_tokens_to_generate,
                 model=model or select_expert,
                 temperature=temperature,
-                top_k=top_k,
                 top_p=top_p,
             )
 
@@ -215,7 +211,6 @@ class APIGateway:
         max_tokens: int = 1024,
         temperature: Optional[float] = 0.0,
         top_p: Optional[float] = None,
-        top_k: Optional[int] = None,
         do_sample: Optional[bool] = None,
         process_prompt: Optional[bool] = True,
         stream_options: Optional[Dict[str, bool]] = {'include_usage': True},
@@ -272,7 +267,6 @@ class APIGateway:
                 streaming=streaming,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                top_k=top_k,
                 top_p=top_p,
                 do_sample=do_sample,
                 process_prompt=process_prompt,
@@ -293,7 +287,6 @@ class APIGateway:
                 streaming=streaming,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                top_k=top_k,
                 top_p=top_p,
                 stream_options=stream_options,
             )
