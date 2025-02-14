@@ -31,7 +31,7 @@ COMPARISON_QUERY = (
     f'Do not exceed {MAX_SECTION_WORDS/2} words.'
 )
 # Number of documents to use for RAG
-NUM_RAG_SOURCES = 5
+NUM_RAG_SOURCES = 10
 # Maximum number of urls in generic Google web search or Yahoo Finance web search
 MAX_NEWS = 10
 # Maximum news per ticker symbol

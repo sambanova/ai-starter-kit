@@ -1,19 +1,90 @@
-# {{crew_name}} Crew
 
-Welcome to the {{crew_name}} Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+</picture>
+</a>
 
+SambaNova Financial Agent using CrewAI
+======================
+
+Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
+
+# Financial Flow Crew
+
+Welcome to the FinancialFlow project, powered by [crewAI](https://crewai.com)!
+
+Table of Contents:
+
+- [Overview](#overview)
+- [Setup](#setup)
+- [Installation](#installation)
+    - [Using UV and the CrewAI commands](#uv-crewai-commands)
+    - [Using pip and venv](#pip-venv)
+    - [The Streamlit app](#streamlit)
+- [Customization](#customization)
+- [Understanding and monitoring your crews](#understanding-monitoring)
+
+## Overview
+
+The Financial Flow project is a comprehensive template designed to facilitate the setup of a multi-agent AI system.
+By leveraging the robust and adaptable framework offered by crewAI,
+this project aims to enhance collaboration among AI agents to perform complex financial tasks efficiently.
+The ultimate goal of the Financial Flow is to maximize collective intelligence and capabilities to produce high-quality financial reports.
+
+This app demonstrates the capabilities of large language models (LLMs)
+in extracting and analyzing financial data using function calling, web scraping,
+and retrieval-augmented generation (RAG).
+
+Use the navigation menu to explore various features including:
+
+-- **Generic Google Search**: Scrape the web using Google Search API. 
+    <a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
+- **Stock Data Analysis**: Query and analyze stocks based on
+    <a href="https://pypi.org/project/yfinance/" target="_blank">Yahoo Finance</a> data.
+- **Financial Filings Analysis**: Query and analyze financial filings based on 
+     <a href="https://www.sec.gov/edgar/search/" target="_blank">SEC EDGAR </a> data.
+- **Financial News Scraping**: Scrape financial news articles from 
+    <a href="https://uk.finance.yahoo.com/" target="_blank">Yahoo Finance</a> News.
+
+## Setup
+
+1. Add your `SAMBANOVA_API_KEY` to the `.env` file.
+
+2. Add your `SERPER_API_KEY` to the `.env` file.
+
+3. For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
+    USER_AGENT: ```<Company Name> <Email Address>```.
+
+    Add the following to the `.env` file:
+    ```
+    # Your organization
+    SEC_API_ORGANIZATION="<your organization>"
+
+    # Your email address
+    SEC_API_EMAIL="<user@email_provider.com>"
+    ```
+
+4. (Optional, only if you want to use `LangTrace`)
+    Add your `LANGTRACE_API_KEY` to the `.env` file.
+    
 ## Installation
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Ensure you have Python `>=3.11 <3.13` installed on your system.
 
-First, if you haven't already, install uv:
+### Using UV and the CrewAI commands
+
+This project supports [UV](https://docs.astral.sh/uv/) for dependency management and package handling,
+offering a seamless setup and execution experience.
+
+First, if you haven't already, install `uv`:
 
 ```bash
 pip install uv
 ```
 
 Next, navigate to your project directory and install the dependencies:
-
 
 ```bash
 crewai install
@@ -36,35 +107,107 @@ or
 uv run kickoff
 ```
 
-### Customizing
+This command initializes the `FinancialFLow` Flow, assembling the agents and assigning them tasks as defined in your configuration.
+This example, unmodified, will generate a `report.md` file and a `report.pdf` file
+as the outputs of a financial research and analyais in the `cache` folder.
 
-**Add your `SAMBANOVA_API_KEY` and your `SERPER_API_KEY` into the `.env` file**
+### Using `pip` and `venv`
 
-Modify `src/name_of_flow/main.py` to add custom inputs for your agents and tasks
+If you want to create a Python virtual environment with its built-in module `venv`
+and then install the dependencies using `pip`,
+follow the steps below.
 
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+1. Install and update `pip`.
 
 ```bash
-crewai run
+cd ai-starter-kit/financial_agent_crewai
+python3 -m venv financial_agent_crewai
+source financial_agent_crewai/bin/activate
+pip install -r requirements.txt
 ```
 
-This command initializes the name_of_flow Crew, assembling the agents and assigning them tasks as defined in your configuration.
+2. Run the `main.py` file:
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+```bash
+cd ai-starter-kit/financial_agent_crewai
+python main.py
+```
 
-## Understanding Your Crew
+This command initializes the `FinancialFLow` Flow, assembling the agents and assigning them tasks as defined in your configuration.
+This example, unmodified, will generate a `report.md` file and a `report.pdf` file
+as the outputs of a financial research and analyais in the `cache` folder.
 
-The name_of_flow Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+### The `Streamlit` app
+After building your virtual environment, either using `uv` or using `pip`,
+you can run our `streamlit` app for an interactive interface and monitoring.
 
-## Support
+Run the following command:
 
-For support, questions, or feedback regarding the {{crew_name}} Crew or crewAI.
+```bash
+streamlit run streamlit/app.py --browser.gatherUsageStats false 
+```
 
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+You can now enter your query and select which data sources you want to use among the following:
+1. Generic Google Search.
+2. SEC EDGAR Filings.
+3. Yahoo Finance News.
+4. Yahoo Finance Stocks.
 
-Let's create wonders together with the power and simplicity of crewAI.
+## Customization
+You can modify the following hyperparameters of the flow and of the crews,
+as well as the corresponding agents and tasks of the latter,
+in the `config.py` file.
+
+- Level of verbosity
+    `VERBOSE`
+
+- Specify the directory and file path of the `cache`
+    `CACHE_DIR`
+
+- Maximum number of words per section
+    `MAX_SECTION_WORDS`
+
+- The default data sources to use in case they are not given to the `FinancialFlow` as hyperparameters.
+    1. Generic Google Search: `SOURCE_GENERIC_SEARCH`.
+    2. SEC EDGAR Filings: `SOURCE_SEC_FILINGS`.
+    3. Yahoo Finance News: `SOURCE_YFINANCE_NEWS`.
+    4. Yahoo Finance News: `SOURCE_YFINANCE_STOCK`.
+
+- User query:
+    `USER_QUERY`
+
+- Number of documents to use for RAG
+    `NUM_RAG_SOURCES`
+
+- Maximum number of urls in generic Google web search or Yahoo Finance web search
+    `MAX_NEWS`
+
+- Maximum news per ticker symbol
+    `MAX_NEWS_PER_TICKER`
+
+- LLMs by crew
+
+- LLM temperature
+    `TEMPERATURE`
+
+## Understanding and monitoring your crews
+
+The `FinancialFlow`, defined in `main.py`, is a `crewai.flow.flow.Flow` pipeline orchestrating several crews.
+
+The `FinancialFlow` consists of multiple crews, each one composed of AI agents, each with unique roles, goals, and tools.
+The `config/agents.yaml` files outline the capabilities and configurations of each agent in your crew.
+These agents collaborate on a series of tasks, defined in the `config/tasks.yaml` files,
+leveraging their collective skills to achieve complex objectives.
+
+If you wish to monitor your Crews within the `FinancialFlow`, you can uncomment the following lines in `main.py`.
+
+```python
+# Must precede any llm module imports
+from langtrace_python_sdk import langtrace
+langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
+```
+
+## Third-party tools and data sources
+
+All the packages/tools are listed in the `requirements.txt` file in the project directory.
+

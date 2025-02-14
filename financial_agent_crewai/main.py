@@ -12,6 +12,8 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Must precede any llm module imports
+# from langtrace_python_sdk import langtrace
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
@@ -202,11 +204,7 @@ class FinancialFlow(Flow):  # type: ignore
                         input_variables=filing_metadata,  # type: ignore
                     )
                     .crew()
-                    .kickoff(
-                        {
-                            'query': filing_metadata.query,  # type: ignore
-                        },
-                    )
+                    .kickoff()
                     .pydantic.filename
                 )
 

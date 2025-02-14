@@ -310,6 +310,7 @@ def main() -> None:
                             ' width="700" height="400" type="application/pdf">'
                         )
                         streamlit.markdown(pdf_display, unsafe_allow_html=True)
+
                         # Download the PDF report
                         download_section(
                             label='📥 Download PDF',
