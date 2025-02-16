@@ -60,7 +60,7 @@ class Guard:
             streaming=False,
             do_sample=False,
             max_tokens=1024,
-            temperature=0.1, 
+            temperature=0.1,
             model=model,
             process_prompt=False,
             sambastudio_url=sambastudio_url,

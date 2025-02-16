@@ -199,8 +199,19 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
         for symbol in symbol_list:
             try:
                 general_urls.append(f'https://finance.yahoo.com/quote/{symbol}/')
-                news = yfinance.Ticker(symbol).news
-                singular_urls.extend([news[i]['link'] for i, _ in enumerate(news)])
+
+                # Get the YFinance ticker object
+                company = yfinance.Ticker(symbol)
+
+                # Get the news articles from Yahoo Finance
+                yfinance_url_list = [
+                    item['content']['canonicalUrl']['url']
+                    for item in company.news
+                    if item['content']['contentType'] == 'STORY'
+                ]
+
+                # Extend the list of singular URLs
+                singular_urls.extend(yfinance_url_list)
             except:
                 pass
     else:
@@ -234,8 +245,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
     link_urls = [
         link_url
         for link_url in link_urls
-        if link_url.startswith('https://finance.yahoo.com/news/')
-        or link_url.startswith('https://finance.yahoo.com/quote/')
+        if link_url.startswith('https://finance.yahoo.com/') or link_url.startswith('https://www.yahoo.com')
     ]
 
     return link_urls[0:MAX_URLS]
