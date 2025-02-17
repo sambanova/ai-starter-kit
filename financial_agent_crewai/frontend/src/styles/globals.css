@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+[data-theme="dark"] {
+  --grape: 241, 116, 57;
+}
