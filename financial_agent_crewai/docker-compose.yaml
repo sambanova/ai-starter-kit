@@ -1,0 +1,13 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend:/app/financial_agent_crewai
+    env_file:
+        - ./backend/.env
+    command: uvicorn financial_agent_crewai.app:app --host 0.0.0.0 --port 8000 --reload

@@ -14,3 +14,7 @@ sec-downloader==0.11.1
 streamlit==1.41.1
 weasyprint==63.1
 yfinance==0.2.52
+
+fastapi==0.115.8
+uvicorn==0.34.0
+starlette==0.45.3

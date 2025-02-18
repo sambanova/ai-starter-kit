@@ -500,6 +500,8 @@ class FinancialFlow(Flow):  # type: ignore
         # Convert the cleaned HTML to a PDF
         pdf_data = convert_html_to_pdf(cleaned_html, output_file=self.final_report_path.replace('md', 'pdf'))
 
+        return {'title': summary_dict[report].title, 'summary': summary_dict[report].summary}
+
 
 def kickoff() -> None:
     """Initialize and start the financial content generation process."""
