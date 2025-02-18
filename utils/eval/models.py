@@ -263,3 +263,31 @@ class WeaveRAGModel(Model):
             usage['cost'] = calculate_cost(input_tokens, output_tokens, input_token_cost, ouput_token_cost)
 
         return {'completion': completion, 'context': context, 'usage': usage}
+
+
+class WeaveDummyModel(Model):
+    """
+    A class representing a Weave Dummy model.
+
+    Attributes:
+        model_kwargs (Optional[Dict[str, Any]]): model-specific parameters.
+    """
+    model_kwargs: Optional[Dict[str, Any]] = None
+
+    @weave.op()
+    async def predict(self, completion: str, context: Optional[str]) -> Dict[str, Any]:
+        """
+        Logs predictions of a dummy model.
+
+        Args:
+        completion (str): The input completion.
+
+        Returns:
+        Dict[str, Any]: A dictionary containing the completion.
+
+        Raises:
+            Exception: If completion not found.
+        """
+        if context is not None:
+            return {'completion': completion, 'context': context}
+        return {'completion': completion}
