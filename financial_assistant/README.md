@@ -83,7 +83,7 @@ This will make use of `langchain_community.embeddings.sentence_transformer.Sente
 
 # Deploy the starter kit GUI
 
-We recommend that you run the starter kit in a virtual environment or use a container. We also require the use of Python versions `>= 3.10 and < 3.12`."
+We recommend that you run the starter kit in a virtual environment or use a container. We also require the use of Python versions `>= 3.11 and < 3.12`."
 
 ## Use a virtual environment
 
