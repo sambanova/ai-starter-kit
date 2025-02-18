@@ -1,17 +1,18 @@
 import { Outlet } from "react-router-dom";
-import Header from "./Header";
-import Sidebar from "./Sidebar";
-import SettingsModal from "../SettingsModal";
 import { useState } from "react";
+
+import Header from "./Header";
+import SettingsModal from "../SettingsModal";
+import { useThemeStore } from "../../stores/ThemeStore";
 
 const MainLayout = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  return (
-    <div className="min-h-screen flex">
-      <Sidebar />
+  const theme = useThemeStore((state) => state.theme);
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+  return (
+    <div className="min-h-screen flex" data-theme={theme}>
+      <div className="sn-backdrop flex-1 flex flex-col h-screen overflow-hidden">
         <Header setIsSettingsModalOpen={setIsSettingsModalOpen} />
 
         <main className="flex-grow flex flex-col p-4 space-y-4 overflow-y-auto">

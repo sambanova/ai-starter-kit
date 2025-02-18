@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
-[data-theme="dark"] {
-  --grape: 241, 116, 57;
+@theme {
+  --color-background: rgba(15, 17, 23);
+  --color-text-primary: rgba(255, 255, 255);
+}
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer components {
+  .sn-backdrop {
+    @apply bg-white dark:text-white dark:bg-background;
+  }
+  .sn-background {
+    @apply bg-white dark:bg-background;
+  }
+  .sn-button {
+    @apply bg-orange-500 text-white;
+  }
 }

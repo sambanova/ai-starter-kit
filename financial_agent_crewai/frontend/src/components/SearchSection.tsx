@@ -26,7 +26,7 @@ const SearchSection = () => {
           {/* Search Input */}
           <input
             type="search"
-            className="w-full p-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent truncate text-gray-600"
+            className="w-full p-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent truncate"
             value={searchQuery}
             disabled={isLoading}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -53,7 +53,7 @@ const SearchSection = () => {
           type="button"
           onClick={performSearch}
           disabled={isLoading || isRecording || !searchQuery.trim()}
-          className="cursor-pointer disabled:cursor-default w-25 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+          className="cursor-pointer disabled:cursor-default w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
           <span>
             {isLoading ? (

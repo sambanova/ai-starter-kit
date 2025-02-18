@@ -1,20 +1,25 @@
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState, useEffect } from "react";
+
+import { useAPIKeysStore } from "../stores/APIKeysStore";
 
 interface ISettingsModal {
   setIsSettingsModalOpen: (isOpen: React.SetStateAction<boolean>) => void;
 }
 
-type keyType = "sambanova" | "exa" | "serper";
+type keyType = "sambanova" | "serper";
 
 const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
-  const [sambanovaKey, setSambanovaKey] = useState("");
-  const [serperKey, setSerperKey] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSambanovaKeyVisible, setIsSambanovaKeyVisible] = useState(false);
   const [isSerperKeyVisible, setIsSerperKeyVisible] = useState(false);
-  const userId = "";
+
+  const { apiKeys, addApiKey, updateApiKey } = useAPIKeysStore();
+  const [sambanovaKey, setSambanovaKey] = useState<string | null>(
+    apiKeys.SambaNova
+  );
+  const [serperKey, setSerperKey] = useState<string | null>(apiKeys.Serper);
 
   const toggleKeyVisibility = (key: keyType) => {
     if (key === "sambanova") {
@@ -25,15 +30,13 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
   };
 
   const clearKey = (key: keyType) => {
-    localStorage.removeItem(`${key}_key_${userId}`);
+    localStorage.removeItem(`${key}_key`);
 
     if (key === "sambanova") {
-      // Clear SambaNova API Key
-      setSambanovaKey("");
+      updateApiKey("SambaNova", null);
       setSuccessMessage("SambaNova API key cleared successfully!");
     } else if (key === "serper") {
-      // Clear Serper API Key
-      setSerperKey("");
+      updateApiKey("Serper", null);
       setSuccessMessage("Serper API key cleared successfully!");
     }
 
@@ -45,14 +48,14 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
       if (!sambanovaKey) {
         setErrorMessage("SambaNova API Key cannot be empty");
       } else {
-        localStorage.setItem(`${key}_key_${userId}`, sambanovaKey);
+        addApiKey("SambaNova", sambanovaKey);
         setSuccessMessage("SambaNova API key saved successfully!");
       }
     } else if (key === "serper") {
-      if (!sambanovaKey) {
+      if (!serperKey) {
         setErrorMessage("Serper API Key cannot be empty");
       } else {
-        localStorage.setItem(`${key}_key_${userId}`, serperKey);
+        addApiKey("Serper", serperKey);
         setSuccessMessage("Serper API key saved successfully!");
       }
     }
@@ -69,11 +72,6 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
 
   const closeModal = () => setIsSettingsModalOpen((prevState) => !prevState);
 
-  useEffect(() => {
-    setSambanovaKey(localStorage.getItem(`sambanova_key_${userId}`) || "");
-    setSerperKey(localStorage.getItem(`serper_key_${userId}`) || "");
-  }, []);
-
   return (
     <div v-if="isOpen" className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -89,21 +87,9 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             <h2 className="text-2xl font-bold text-gray-900">API Settings</h2>
             <button
               onClick={closeModal}
-              className="text-gray-500 hover:text-gray-700"
+              className="cursor-pointer text-gray-500 hover:text-gray-700"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <FontAwesomeIcon icon={["fas", "times"]} size="lg" />
             </button>
           </div>
 
@@ -120,7 +106,9 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             </div>
           )}
 
-          <div className="space-y-6">
+          {!localStorage.getItem("sambanova_key") && <>No Samba key</>}
+
+          <div className="space-y-6 bg-grape">
             {/* SambaNova API Key */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -135,7 +123,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
               </label>
               <div className="relative">
                 <input
-                  value={sambanovaKey}
+                  value={sambanovaKey || ""}
                   onChange={(e) => setSambanovaKey(e.target.value)}
                   type={`${isSambanovaKeyVisible ? "text" : "password"}`}
                   placeholder="Enter your SambaNova API Key"
@@ -185,7 +173,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
               </label>
               <div className="relative">
                 <input
-                  value={serperKey}
+                  value={serperKey || ""}
                   onChange={(e) => setSerperKey(e.target.value)}
                   type={`${isSerperKeyVisible ? "text" : "password"}`}
                   placeholder="Enter your Serper API Key"
@@ -196,6 +184,9 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
                 >
                   {/* Eye icon */}
+                  <FontAwesomeIcon
+                    icon={["fas", `eye${isSerperKeyVisible ? "-slash" : ""}`]}
+                  />
                 </button>
               </div>
               {/* Add Save and Clear Buttons for Serper */}

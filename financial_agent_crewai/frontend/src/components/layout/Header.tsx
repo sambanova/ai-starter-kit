@@ -1,17 +1,14 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState } from "react";
+import React from "react";
+import { useThemeStore } from "../../stores/ThemeStore";
 
 interface IHeader {
   setIsSettingsModalOpen: (isOpen: React.SetStateAction<boolean>) => void;
 }
 
-type PageModeType = "light" | "dark";
-
 const Header = ({ setIsSettingsModalOpen }: IHeader) => {
-  const [pageMode, setPageMode] = useState<PageModeType>("dark");
-
-  const handleModeChange = () =>
-    setPageMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+  const theme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
 
   const openSettingsModal = () =>
     setIsSettingsModalOpen((prevState) => !prevState);
@@ -22,6 +19,7 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
         {/* Left: Brand */}
         <div className="flex items-center space-x-2 sm:space-x-4">
           <div className="flex-shrink-0 grid grid-cols-2 gap-1">
+            {/* TODO: search an SVG that could change colors on theme change */}
             <img
               src="https://sambanova.ai/hubfs/logotype_sambanova_orange.png"
               alt="Samba Sales Co-Pilot Logo"
@@ -35,7 +33,7 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
             />
 
             <img
-              src="https://miro.medium.com/v2/resize:fit:1400/format:webp/1*Ulg1BjUIxIdmOw63J5gF1Q.png"
+              src="https://cdn.prod.website-files.com/66cf2bfc3ed15b02da0ca770/66d07240057721394308addd_Logo%20(1).svg"
               alt="CrewAI Logo"
               className="h-8 block"
             />
@@ -51,10 +49,10 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
           <div className="flex items-center space-x-2">
             <button
               className="cursor-pointer m-1 w-8 h-8 rounded-full hover:bg-gray-100 transition"
-              onClick={handleModeChange}
+              onClick={toggleTheme}
             >
               <div className="text-xl">
-                {pageMode === "dark" ? (
+                {theme === "dark" ? (
                   <FontAwesomeIcon icon={["fas", "sun"]} />
                 ) : (
                   <FontAwesomeIcon icon={["fas", "moon"]} />
