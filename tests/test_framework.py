@@ -41,7 +41,7 @@ CLI_COMMAND_TIMEOUT = 1200  # 20 minutes
 STARTER_KITS: List[str] = [
     'benchmarking',
     'enterprise_knowledge_retriever',
-    'financial_assistant',
+    # 'financial_assistant', 
     'function_calling',
     'search_assistant',
     'image_search',
