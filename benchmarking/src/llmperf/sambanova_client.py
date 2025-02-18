@@ -307,6 +307,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         if 'Bundle' in self.request_config.model:
             sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
             sampling_params['process_prompt'] = False
+            sampling_params['top_k'] = 1
 
         # build payload for api v2
         if '/api/v2' in url.lower().strip():
@@ -475,7 +476,11 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
-            self.base_url = self.request_config.api_variables['SAMBANOVA_URL']
+            self.base_url = (
+                self.request_config.api_variables['SAMBANOVA_URL']
+                if self.request_config.api_variables['SAMBANOVA_URL']
+                else SAMBANOVA_URL
+            )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
             self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
