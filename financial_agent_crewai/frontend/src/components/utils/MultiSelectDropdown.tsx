@@ -2,12 +2,14 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface IMultiSelectDropdownProps {
-  options?: string[];
+  options: { [key: string]: string };
+  handleSelectedItems: (source: string, value: boolean) => void;
   placeholder?: string;
 }
 
 const MultiSelectDropdown = ({
-  options = [],
+  options,
+  handleSelectedItems,
   placeholder = "Select items...",
 }: IMultiSelectDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +19,7 @@ const MultiSelectDropdown = ({
     setSelectedItems((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
     );
+    handleSelectedItems(item, !selectedItems.includes(item));
   };
 
   const isItemSelected = (item: string) => selectedItems.includes(item);
@@ -45,7 +48,7 @@ const MultiSelectDropdown = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="fixed z-10 w-1/4 mt-1 bg-background-main border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-          {options.map((option) => (
+          {Object.keys(options).map((option) => (
             <div
               key={option}
               onClick={() => toggleItem(option)}
@@ -53,7 +56,7 @@ const MultiSelectDropdown = ({
                 isItemSelected(option) && "bg-background-secondary"
               } cursor-pointer flex items-center justify-between`}
             >
-              <span>{option}</span>
+              <span>{options[option]}</span>
               {isItemSelected(option) && (
                 <FontAwesomeIcon
                   icon={["fas", "check"]}

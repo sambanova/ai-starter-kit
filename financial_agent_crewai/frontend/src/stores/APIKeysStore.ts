@@ -10,7 +10,7 @@ interface APIKeysState {
 
 export const useAPIKeysStore = create<APIKeysState>((set, get) => ({
   apiKeys: { SambaNova: null, Serper: null },
-  addApiKey: (apiKeyName: string, apiKeyValue: string) =>
+  addApiKey: (apiKeyName, apiKeyValue) =>
     set({ apiKeys: { ...get().apiKeys, [apiKeyName]: apiKeyValue } }),
   updateApiKey: (apiKeyName: string, apiKeyValue: string | null) =>
     set({ apiKeys: { ...get().apiKeys, [apiKeyName]: apiKeyValue } }),

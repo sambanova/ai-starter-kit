@@ -1,31 +1,54 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
+import useSearch, { SourcesType } from "../hooks/useSearch";
+import { useResponseStore } from "../stores/ResponseStore";
+import { useAPIKeysStore } from "../stores/APIKeysStore";
 
 const SearchSection = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [selectedSources, setSelectedSources] = useState<SourcesType>({
+    source_generic_search: false,
+    source_sec_filings: false,
+    source_yfinance_news: false,
+    source_yfinance_stocks: false,
+  });
 
-  const sources = [
-    "Generic Google Search",
-    "SEC Edgar Filings",
-    "Yahoo Finance News",
-    "Yahoo Finance Stocks",
-  ];
+  const { response, isLoading, sendRequest } = useSearch();
+  const { setResponse } = useResponseStore();
+  const { apiKeys } = useAPIKeysStore();
+  const missingKeys = Object.keys(apiKeys).filter(
+    (key) => apiKeys[key as keyof typeof apiKeys] === null
+  );
+
+  const sources = {
+    source_generic_search: "Generic Google Search",
+    source_sec_filings: "SEC Edgar Filings",
+    source_yfinance_news: "Yahoo Finance News",
+    source_yfinance_stocks: "Yahoo Finance Stocks",
+  };
 
   const toggleRecording = () => {
     setIsRecording((prevState) => !prevState);
   };
 
-  const performSearch = () => {
-    setIsLoading(true);
-    console.log(searchQuery);
+  const performSearch = async () => {
+    if (searchQuery) {
+      await sendRequest(searchQuery, {
+        source_generic_search: selectedSources.source_generic_search,
+        source_sec_filings: selectedSources.source_sec_filings,
+        source_yfinance_news: selectedSources.source_yfinance_news,
+        source_yfinance_stocks: selectedSources.source_yfinance_stocks,
+      });
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setSearchQuery("");
-    }, 1000);
+      setResponse(response?.summary || "");
+    }
+  };
+
+  const handleSelectedSources = (source: string, value: boolean) => {
+    setSelectedSources((prevState) => ({ ...prevState, [source]: value }));
   };
 
   return (
@@ -57,14 +80,18 @@ const SearchSection = () => {
 
         {/* Sources dropdown */}
         <div className="flex-none">
-          <MultiSelectDropdown options={sources} placeholder="Select sources" />
+          <MultiSelectDropdown
+            options={sources}
+            placeholder="Select sources"
+            handleSelectedItems={handleSelectedSources}
+          />
         </div>
 
         {/* Search button */}
         <button
           type="button"
           onClick={performSearch}
-          disabled={isLoading || !searchQuery?.trim()}
+          disabled={isLoading || missingKeys.length > 0 || !searchQuery?.trim()}
           className="cursor-pointer disabled:cursor-default w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
           <span>
