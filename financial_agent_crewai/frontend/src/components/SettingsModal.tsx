@@ -77,17 +77,17 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black opacity-30"
+          className="fixed inset-0 bg-black opacity-40"
           onClick={closeModal}
         ></div>
 
         {/* Modal */}
-        <div className="relative w-full max-w-lg bg-white rounded-xl shadow-lg p-6">
+        <div className="relative w-full max-w-lg sn-background-secondary sn-text-primary rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">API Settings</h2>
+            <h2 className="text-2xl font-bold">API Settings</h2>
             <button
               onClick={closeModal}
-              className="cursor-pointer text-gray-500 hover:text-gray-700"
+              className="cursor-pointer sn-icon-button"
             >
               <FontAwesomeIcon icon={["fas", "times"]} size="lg" />
             </button>
@@ -106,12 +106,10 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             </div>
           )}
 
-          {!localStorage.getItem("sambanova_key") && <>No Samba key</>}
-
           <div className="space-y-6 bg-grape">
             {/* SambaNova API Key */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1">
                 SambaNova API Key
                 <a
                   href="https://cloud.sambanova.ai/"
@@ -127,11 +125,11 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   onChange={(e) => setSambanovaKey(e.target.value)}
                   type={`${isSambanovaKeyVisible ? "text" : "password"}`}
                   placeholder="Enter your SambaNova API Key"
-                  className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500 pr-10"
+                  className="block w-full border pr-10 sn-input-text"
                 />
                 <button
                   onClick={() => toggleKeyVisibility("sambanova")}
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                  className="absolute inset-y-0 right-0 px-3 flex items-center sn-icon-button-secondary"
                 >
                   {/* Eye icon */}
                   <FontAwesomeIcon
@@ -152,7 +150,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                 </button>
                 <button
                   onClick={() => saveKey("sambanova")}
-                  className="px-3 py-1 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none"
+                  className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none"
                 >
                   Save Key
                 </button>
@@ -161,12 +159,12 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
 
             {/* Serper API Key */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1">
                 Serper API Key
                 <a
                   href="https://serper.dev/"
                   target="_blank"
-                  className="text-orange-600 hover:text-orange-700 ml-2 text-sm"
+                  className="text-orange-500 hover:text-orange-600 ml-2 text-sm"
                 >
                   Get Key →
                 </a>
@@ -177,11 +175,11 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   onChange={(e) => setSerperKey(e.target.value)}
                   type={`${isSerperKeyVisible ? "text" : "password"}`}
                   placeholder="Enter your Serper API Key"
-                  className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500 pr-10"
+                  className="block w-full border pr-10 sn-input-text"
                 />
                 <button
                   onClick={() => toggleKeyVisibility("serper")}
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                  className="absolute inset-y-0 right-0 px-3 flex items-center sn-icon-button-secondary"
                 >
                   {/* Eye icon */}
                   <FontAwesomeIcon

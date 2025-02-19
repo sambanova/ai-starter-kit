@@ -12,7 +12,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen flex" data-theme={theme}>
-      <div className="sn-backdrop flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="sn-backdrop sn-text-primary flex-1 flex flex-col h-screen overflow-hidden">
         <Header setIsSettingsModalOpen={setIsSettingsModalOpen} />
 
         <main className="flex-grow flex flex-col p-4 space-y-4 overflow-y-auto">

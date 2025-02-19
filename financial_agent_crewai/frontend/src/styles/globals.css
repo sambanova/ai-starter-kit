@@ -1,20 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: rgba(15, 17, 23);
-  --color-text-primary: rgba(255, 255, 255);
+  --color-background-main: rgba(15, 17, 23);
+  --color-background-secondary: rgba(30, 41, 56);
 }
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @layer components {
   .sn-backdrop {
-    @apply bg-white dark:text-white dark:bg-background;
+    @apply bg-white dark:text-white dark:bg-background-main;
   }
   .sn-background {
-    @apply bg-white dark:bg-background;
+    @apply bg-white dark:bg-background-main;
+  }
+  .sn-background-secondary {
+    @apply bg-white dark:bg-background-secondary;
   }
   .sn-button {
-    @apply bg-orange-500 text-white;
+    @apply bg-orange-500 hover:enabled:bg-orange-600 text-white;
+  }
+  .sn-icon-button {
+    @apply dark:text-white hover:text-orange-500;
+  }
+  .sn-icon-button-secondary {
+    @apply text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400;
+  }
+  .sn-text-primary {
+    @apply text-black dark:text-white;
+  }
+  .sn-text-secondary {
+    @apply text-gray-500 dark:text-gray-300;
+  }
+  .sn-header {
+    @apply shadow-md dark:shadow-xs dark:shadow-white dark:bg-background-secondary/30;
+  }
+  .sn-input-text {
+    @apply text-gray-500 focus:text-gray-600 dark:text-gray-200 dark:focus:text-gray-300 border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500;
   }
 }
