@@ -30,13 +30,13 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
   };
 
   const clearKey = (key: keyType) => {
-    localStorage.removeItem(`${key}_key`);
-
     if (key === "sambanova") {
       updateApiKey("SambaNova", null);
+      setSambanovaKey(null);
       setSuccessMessage("SambaNova API key cleared successfully!");
     } else if (key === "serper") {
       updateApiKey("Serper", null);
+      setSerperKey(null);
       setSuccessMessage("Serper API key cleared successfully!");
     }
 

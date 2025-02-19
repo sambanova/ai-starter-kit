@@ -35,7 +35,10 @@ const MultiSelectDropdown = ({
           {selectedItems.length === 0 ? (
             <span className="sn-text-secondary">{placeholder}</span>
           ) : (
-            <span>{selectedItems.length} sources selected</span>
+            <span className="sn-text-primary">
+              {selectedItems.length} source{selectedItems.length > 1 ? "s" : ""}{" "}
+              selected
+            </span>
           )}
         </div>
 
@@ -47,13 +50,15 @@ const MultiSelectDropdown = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed z-10 w-1/4 mt-1 bg-background-main border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="fixed z-10 w-1/4 mt-1 sn-background border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
           {Object.keys(options).map((option) => (
             <div
               key={option}
               onClick={() => toggleItem(option)}
-              className={`px-4 py-2 hover:bg-background-secondary/70 ${
-                isItemSelected(option) && "bg-background-secondary"
+              className={`px-4 py-2 ${
+                isItemSelected(option)
+                  ? "sn-dropdown-selected-background"
+                  : "sn-dropdown-background"
               } cursor-pointer flex items-center justify-between`}
             >
               <span>{options[option]}</span>

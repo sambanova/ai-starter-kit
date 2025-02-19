@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
-import useSearch, { SourcesType } from "../hooks/useSearch";
+import { SourcesType } from "../stores/ResponseStore";
 import { useResponseStore } from "../stores/ResponseStore";
 import { useAPIKeysStore } from "../stores/APIKeysStore";
 
@@ -16,8 +16,7 @@ const SearchSection = () => {
     source_yfinance_stocks: false,
   });
 
-  const { response, isLoading, sendRequest } = useSearch();
-  const { setResponse } = useResponseStore();
+  const { isLoading, sendRequest } = useResponseStore();
   const { apiKeys } = useAPIKeysStore();
   const missingKeys = Object.keys(apiKeys).filter(
     (key) => apiKeys[key as keyof typeof apiKeys] === null
@@ -29,21 +28,24 @@ const SearchSection = () => {
     source_yfinance_news: "Yahoo Finance News",
     source_yfinance_stocks: "Yahoo Finance Stocks",
   };
+  const searchButtonIsDisabled =
+    isLoading ||
+    missingKeys.length > 0 || // Disable if any API key is missing
+    !Object.values(selectedSources).some((value) => value) || // Disable if no source is selected
+    !searchQuery?.trim(); // Disable if search query is empty
 
   const toggleRecording = () => {
     setIsRecording((prevState) => !prevState);
   };
 
-  const performSearch = async () => {
+  const performSearch = () => {
     if (searchQuery) {
-      await sendRequest(searchQuery, {
+      sendRequest(searchQuery, {
         source_generic_search: selectedSources.source_generic_search,
         source_sec_filings: selectedSources.source_sec_filings,
         source_yfinance_news: selectedSources.source_yfinance_news,
         source_yfinance_stocks: selectedSources.source_yfinance_stocks,
       });
-
-      setResponse(response?.summary || "");
     }
   };
 
@@ -52,7 +54,7 @@ const SearchSection = () => {
   };
 
   return (
-    <>
+    <div className="rounded-xl sn-border-shadowed p-6 mb-6">
       <h2 className="text-lg font-bold mb-2 ml-1">User query</h2>
 
       <div className="flex items-center space-x-4">
@@ -91,7 +93,7 @@ const SearchSection = () => {
         <button
           type="button"
           onClick={performSearch}
-          disabled={isLoading || missingKeys.length > 0 || !searchQuery?.trim()}
+          disabled={searchButtonIsDisabled}
           className="cursor-pointer disabled:cursor-default w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
           <span>
@@ -110,7 +112,7 @@ const SearchSection = () => {
           <span>Recording... Click microphone again to stop</span>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

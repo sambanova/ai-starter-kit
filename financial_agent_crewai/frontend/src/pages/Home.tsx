@@ -2,24 +2,25 @@ import AgentProgress from "../components/AgentProgress";
 import FinancialReport from "../components/FinancialReport";
 import SearchSection from "../components/SearchSection";
 import WarningMessage from "../components/WarningMessage";
+import { useResponseStore } from "../stores/ResponseStore";
 
 const Home = () => {
-  const results: string[] = [];
+  const { response, isLoading } = useResponseStore();
 
   return (
     <div className="h-full mb-6">
       <WarningMessage />
 
-      <div className="rounded-xl shadow-md border border-gray-100 p-6 mb-6">
-        <SearchSection />
-      </div>
+      <SearchSection />
 
       {/* Results */}
-      {results.length > 0 && (
-        <div className="grid grid-cols-2 gap-6 h-full mb-6 text-center text-sm">
+      {Object.values(response).some((value) => value) && (
+        <div className={`${isLoading && "transition duration-100 blur-xs"}`}>
           <AgentProgress />
 
-          <FinancialReport />
+          <div className="h-full my-6 text-md">
+            <FinancialReport result={response} />
+          </div>
         </div>
       )}
     </div>
