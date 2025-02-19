@@ -67,9 +67,6 @@ jobs:
           set +x  # Disable command echoing to protect secrets
           {
             echo "SAMBASTUDIO_URL=${{ secrets.SAMBASTUDIO_URL }}"
-            echo "SAMBASTUDIO_BASE_URL=${{ secrets.SAMBASTUDIO_BASE_URL }}"
-            echo "SAMBASTUDIO_PROJECT_ID=${{ secrets.SAMBASTUDIO_PROJECT_ID }}"
-            echo "SAMBASTUDIO_ENDPOINT_ID=${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}"
             echo "SAMBASTUDIO_API_KEY=${{ secrets.SAMBASTUDIO_API_KEY }}"
             echo "SAMBASTUDIO_EMBEDDINGS_BASE_URL=${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}"
             echo "SAMBASTUDIO_EMBEDDINGS_PROJECT_ID=${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}"
@@ -105,9 +102,6 @@ jobs:
         env:
           # Pass secrets as environment variables
           SAMBASTUDIO_URL: ${{ secrets.SAMBASTUDIO_URL }}
-          SAMBASTUDIO_BASE_URL: ${{ secrets.SAMBASTUDIO_BASE_URL }}
-          SAMBASTUDIO_PROJECT_ID: ${{ secrets.SAMBASTUDIO_PROJECT_ID }}
-          SAMBASTUDIO_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_ENDPOINT_ID }}
           SAMBASTUDIO_API_KEY: ${{ secrets.SAMBASTUDIO_API_KEY }}
           SAMBASTUDIO_EMBEDDINGS_BASE_URL: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}
           SAMBASTUDIO_EMBEDDINGS_PROJECT_ID: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}
