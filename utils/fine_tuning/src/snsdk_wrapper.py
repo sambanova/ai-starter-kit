@@ -105,6 +105,10 @@ class SnsdkWrapper:
         tmp_snapi_config['HOST_NAME'] = host_name
         tmp_snapi_config['CONFIG_DIR'] = current_snapi_config['CONFIG_DIR']
         tmp_snapi_config['DISABLE_SSL_WARNINGS'] = current_snapi_config['DISABLE_SSL_WARNINGS']
+        
+        # check .snapi folder exist if not create it, then write config and secret
+        os.makedirs(os.path.dirname(snapi_config_path), exist_ok=True)
+        
         with open(snapi_config_path, 'w') as file:
             json.dump(tmp_snapi_config, file)
         with open(snapi_secret_path, 'w') as file:
@@ -139,7 +143,7 @@ class SnsdkWrapper:
         return host_name, new_snapi_config['TENANT_ID'], access_key
 
     def _get_sambastudio_variables(self) -> Tuple[str, str, str]:
-        """Gets Sambastudio host name, tenant id and access key from Snapi folder location
+        """Gets Sambastudio host name, tenant id and access key from environment or Snapi folder location
 
         Raises:
             FileNotFoundError: raises error when the snapi config or secret file is not found
@@ -148,41 +152,46 @@ class SnsdkWrapper:
         Returns:
             tuple: host name, tenant id and access key from snapi setup
         """
-        snapi_config = {}
+        snapi_config_base = { "CONFIG_DIR": "./", "DISABLE_SSL_WARNINGS": "false"}
         snapi_secret = ''
-        try:
-            # reads snapi config json
-            snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
-            with open(snapi_config_path, 'r') as file:
-                snapi_config = json.load(file)
-
-            # reads snapi secret txt file
-            snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
-            with open(snapi_secret_path, 'r') as file:
-                snapi_secret = file.read()
-
-        except FileNotFoundError:
-            raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
-        except ValueError:
-            raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
 
         host_name = os.getenv('SAMBASTUDIO_HOST_NAME')
         access_key = os.getenv('SAMBASTUDIO_ACCESS_KEY')
         tenant_name = os.getenv('SAMBASTUDIO_TENANT_NAME')
+        
+        snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
+        snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
 
+        #if environment variables set, .snapi folder is created or overwritten
         if (host_name is not None) and (access_key is not None) and (tenant_name is not None):
-            logging.info(f'Using env variables to set up Snsdk.')
+            logging.info(f'Using env variables to set up Snsdk and Snapi.')
             host_name, tenant_id, access_key = self._set_snapi_using_env_variables(
-                host_name,
-                access_key,
-                snapi_config,
-                snapi_config_path,
-                snapi_secret_path,
-                tenant_name,
+                host_name=host_name,
+                access_key=access_key,
+                current_snapi_config=snapi_config_base,
+                snapi_config_path=snapi_config_path,
+                snapi_secret_path=snapi_secret_path,
+                tenant_name=tenant_name,
             )
-
+         
+        # in other case try to get the current .snapi folder data   
         else:
-            logging.info(f'Using variables from Snapi config to set up Snsdk.')
+            try:
+                # reads snapi config json
+                with open(snapi_config_path, 'r') as file:
+                    snapi_config = json.load(file)
+
+                # reads snapi secret txt file
+                with open(snapi_secret_path, 'r') as file:
+                    snapi_secret = file.read()
+
+            except FileNotFoundError:
+                raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
+            except ValueError:
+                raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
+            
+            logging.info(f'Using variables from .snapi config to set up Snsdk.')
+            
             host_name = snapi_config['HOST_NAME']
             assert host_name is not None
             tenant_id = snapi_config['TENANT_ID']
