@@ -105,6 +105,10 @@ class SnsdkWrapper:
         tmp_snapi_config['HOST_NAME'] = host_name
         tmp_snapi_config['CONFIG_DIR'] = current_snapi_config['CONFIG_DIR']
         tmp_snapi_config['DISABLE_SSL_WARNINGS'] = current_snapi_config['DISABLE_SSL_WARNINGS']
+
+        # check .snapi folder exist if not create it, then write config and secret
+        os.makedirs(os.path.dirname(snapi_config_path), exist_ok=True)
+
         with open(snapi_config_path, 'w') as file:
             json.dump(tmp_snapi_config, file)
         with open(snapi_secret_path, 'w') as file:
@@ -125,12 +129,18 @@ class SnsdkWrapper:
         ):
             if len(snapi_config_response.stderr) > 0:
                 error_message = snapi_config_response.stderr
+                # if all lines in stderr are warnings don't raise
+                if all('warning' in line.lower() for line in error_message.splitlines()):
+                    logging.warning(f"Tenant '{tenant_name}' set with warnings: {error_message}")
+                else:
+                    logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
+                    raise Exception(f'Error message: {error_message}')
             else:
                 error_search = re.search(r'message:\s*(.*)', snapi_config_response.stdout)
                 if error_search:
                     error_message = error_search[0]
-            logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
-            raise Exception(f'Error message: {error_message}')
+                logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
+                raise Exception(f'Error message: {error_message}')
 
         # Read updated Snapi config file
         with open(snapi_config_path, 'r') as file:
@@ -139,7 +149,7 @@ class SnsdkWrapper:
         return host_name, new_snapi_config['TENANT_ID'], access_key
 
     def _get_sambastudio_variables(self) -> Tuple[str, str, str]:
-        """Gets Sambastudio host name, tenant id and access key from Snapi folder location
+        """Gets Sambastudio host name, tenant id and access key from environment or Snapi folder location
 
         Raises:
             FileNotFoundError: raises error when the snapi config or secret file is not found
@@ -148,41 +158,46 @@ class SnsdkWrapper:
         Returns:
             tuple: host name, tenant id and access key from snapi setup
         """
-        snapi_config = {}
+        snapi_config_base = {'CONFIG_DIR': './', 'DISABLE_SSL_WARNINGS': 'false'}
         snapi_secret = ''
-        try:
-            # reads snapi config json
-            snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
-            with open(snapi_config_path, 'r') as file:
-                snapi_config = json.load(file)
-
-            # reads snapi secret txt file
-            snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
-            with open(snapi_secret_path, 'r') as file:
-                snapi_secret = file.read()
-
-        except FileNotFoundError:
-            raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
-        except ValueError:
-            raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
 
         host_name = os.getenv('SAMBASTUDIO_HOST_NAME')
         access_key = os.getenv('SAMBASTUDIO_ACCESS_KEY')
         tenant_name = os.getenv('SAMBASTUDIO_TENANT_NAME')
 
+        snapi_config_path = os.path.expanduser(self.snapi_path) + '/config.json'
+        snapi_secret_path = os.path.expanduser(self.snapi_path) + '/secret.txt'
+
+        # if environment variables set, .snapi folder is created or overwritten
         if (host_name is not None) and (access_key is not None) and (tenant_name is not None):
-            logging.info(f'Using env variables to set up Snsdk.')
+            logging.info(f'Using env variables to set up Snsdk and Snapi.')
             host_name, tenant_id, access_key = self._set_snapi_using_env_variables(
-                host_name,
-                access_key,
-                snapi_config,
-                snapi_config_path,
-                snapi_secret_path,
-                tenant_name,
+                host_name=host_name,
+                access_key=access_key,
+                current_snapi_config=snapi_config_base,
+                snapi_config_path=snapi_config_path,
+                snapi_secret_path=snapi_secret_path,
+                tenant_name=tenant_name,
             )
 
+        # in other case try to get the current .snapi folder data
         else:
-            logging.info(f'Using variables from Snapi config to set up Snsdk.')
+            try:
+                # reads snapi config json
+                with open(snapi_config_path, 'r') as file:
+                    snapi_config = json.load(file)
+
+                # reads snapi secret txt file
+                with open(snapi_secret_path, 'r') as file:
+                    snapi_secret = file.read()
+
+            except FileNotFoundError:
+                raise FileNotFoundError(f'Error: The file {snapi_config_path} does not exist.')
+            except ValueError:
+                raise ValueError(f'Error: The file {snapi_config_path} contains invalid JSON.')
+
+            logging.info(f'Using variables from .snapi config to set up Snsdk.')
+
             host_name = snapi_config['HOST_NAME']
             assert host_name is not None
             tenant_id = snapi_config['TENANT_ID']
@@ -254,8 +269,8 @@ class SnsdkWrapper:
                     )
                 return tenants
         else:
-            logging.error(f"Failed to list projects. Details: {list_tenant_response['detail']}")
-            raise Exception(f"Error message: {list_tenant_response['detail']}")
+            logging.error(f'Failed to list projects. Details: {list_tenant_response["detail"]}')
+            raise Exception(f'Error message: {list_tenant_response["detail"]}')
 
     def search_tenant(self, tenant_name: Optional[str]) -> Optional[str]:
         """Searches tenant
@@ -340,7 +355,7 @@ class SnsdkWrapper:
                 logging.error(
                     f"Failed to create project with name '{project_name}'. Details: {create_project_response['detail']}"
                 )
-                raise Exception(f"Error message: {create_project_response['detail']}")
+                raise Exception(f'Error message: {create_project_response["detail"]}')
         else:
             logging.info(f"Project with name '{project_name}' already exists with id '{project_id}', using it")
         return project_id
@@ -373,9 +388,9 @@ class SnsdkWrapper:
                     projects.append(project_info)
             return projects
         else:
-            logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
-            logging.error(f"Failed to list projects. Details: {list_projects_response['detail']}")
-            raise Exception(f"Error message: {list_projects_response['detail']}")
+            logging.error(f'Failed to list projects. Details: {list_projects_response["detail"]}')
+            logging.error(f'Failed to list projects. Details: {list_projects_response["detail"]}')
+            raise Exception(f'Error message: {list_projects_response["detail"]}')
 
     def delete_project(self, project_name: Optional[str] = None) -> None:
         """
@@ -433,8 +448,8 @@ class SnsdkWrapper:
                     )
                 return datasets
         else:
-            logging.error(f"Failed to list models. Details: {list_datasets_response['detail']}")
-            raise Exception(f"Error message: {list_datasets_response['detail']}")
+            logging.error(f'Failed to list models. Details: {list_datasets_response["detail"]}')
+            raise Exception(f'Error message: {list_datasets_response["detail"]}')
 
     def search_dataset(self, dataset_name: Optional[str] = None) -> Optional[str]:
         """Searches a dataset
@@ -645,12 +660,18 @@ class SnsdkWrapper:
             if errors_response:
                 if len(snapi_response.stderr) > 0:
                     error_message = snapi_response.stderr
+                    # if all lines in stderr are warnings dont raise
+                    if all('warning' in line.lower() for line in error_message.splitlines()):
+                        logging.warning(f"dataset with name '{dataset_name} created with warnings: {error_message}")
+                    else:
+                        logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
+                        raise Exception(f'Error message: {error_message}')
                 else:
                     error_search = re.search(r'message:\s*(.*)', snapi_response.stdout)
                     if error_search:
                         error_message = error_search[0]
-                logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
-                raise Exception(f'Error message: {error_message}')
+                    logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
+                    raise Exception(f'Error message: {error_message}')
             # if there are no errors in reponse
             else:
                 dataset_id = self.search_dataset(dataset_name=dataset_name)
@@ -679,8 +700,8 @@ class SnsdkWrapper:
                     apps.append({'id': app.get('id'), 'name': app.get('name')})
             return apps
         else:
-            logging.error(f"Failed to list models. Details: {list_apps_response['detail']}")
-            raise Exception(f"Error message: {list_apps_response['detail']}")
+            logging.error(f'Failed to list models. Details: {list_apps_response["detail"]}')
+            raise Exception(f'Error message: {list_apps_response["detail"]}')
 
     def search_app(self, app_name: str) -> Optional[str]:
         """Searches an App
@@ -730,7 +751,7 @@ class SnsdkWrapper:
             return model_info_response
         else:
             logging.error(f"Failed to get model's info. Details: {model_info_response['message']}")
-            raise Exception(f"Error message: {model_info_response['message']}")
+            raise Exception(f'Error message: {model_info_response["message"]}')
 
     def list_models(
         self,
@@ -770,8 +791,8 @@ class SnsdkWrapper:
                         )
             return models
         else:
-            logging.error(f"Failed to list models. Details: {list_models_response['detail']}")
-            raise Exception(f"Error message: {list_models_response['detail']}")
+            logging.error(f'Failed to list models. Details: {list_models_response["detail"]}')
+            raise Exception(f'Error message: {list_models_response["detail"]}')
 
     def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
         """
@@ -896,13 +917,14 @@ class SnsdkWrapper:
                 architecture_hyper_params[architecture] = user_hyperparams_list
                 logging.info(
                     f'Default Hyperparameters for {job_type} in {architecture} for {model_name}: \n'
-                    f'''
-                    {[
-                        param["field_name"]+":`"+param["settings"]["DEFAULT"]+"`" 
-                        for param 
-                        in user_hyperparams_list
-                    ]}\n
-                    '''
+                    f"""
+                    {
+                        [
+                            param['field_name'] + ':`' + param['settings']['DEFAULT'] + '`'
+                            for param in user_hyperparams_list
+                        ]
+                    }\n
+                    """
                 )
             return architecture_hyper_params
         else:
@@ -1231,8 +1253,8 @@ class SnsdkWrapper:
                     )
             return jobs
         else:
-            logging.error(f"Failed to list jobs. Details: {list_jobs_response['detail']}")
-            raise Exception(f"Error message: {list_jobs_response['detail']}")
+            logging.error(f'Failed to list jobs. Details: {list_jobs_response["detail"]}')
+            raise Exception(f'Error message: {list_jobs_response["detail"]}')
 
     def delete_job(self, project_name: Optional[str] = None, job_name: Optional[str] = None) -> None:
         """
@@ -1518,7 +1540,7 @@ class SnsdkWrapper:
                     model_ids.append(model_id)
                 else:
                     raise Exception(f"Model with name '{model}' does not exist.")
-            logging.info(f"Models to include in composite found with ids '{list(zip(model_list,  model_ids))}")
+            logging.info(f"Models to include in composite found with ids '{list(zip(model_list, model_ids))}")
 
             # create composite model
             dependencies = [{'name': model} for model in model_list]
@@ -1535,7 +1557,7 @@ class SnsdkWrapper:
                     f'Message: {create_composite_model_response["message"]}.'
                     f'Details: {create_composite_model_response["details"]}'
                 )
-                raise Exception(f"Error message: {create_composite_model_response['details']}")
+                raise Exception(f'Error message: {create_composite_model_response["details"]}')
 
         # if selected composite model already exists
         else:
@@ -1596,8 +1618,8 @@ class SnsdkWrapper:
                     )
             return endpoints
         else:
-            logging.error(f"Failed to list endpoints. Details: {list_endpoints_response['detail']}")
-            raise Exception(f"Error message: {list_endpoints_response['detail']}")
+            logging.error(f'Failed to list endpoints. Details: {list_endpoints_response["detail"]}')
+            raise Exception(f'Error message: {list_endpoints_response["detail"]}')
 
     def create_endpoint(
         self,
