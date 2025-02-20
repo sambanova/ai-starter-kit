@@ -6,19 +6,20 @@
 # unstructured_inference==0.7.36
 # unstructured_pytesseract==0.3.12
 #LLM Eval
-PyMuPDF==1.23.4
-PyMuPDFb==1.23.3
+PyMuPDF==1.25.2
+PyMuPDFb==1.24.10
 chromadb==0.5.3
 faiss-cpu==1.7.4
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
 ipython==8.26.0
 langchain-chroma == 0.1.4
-langchain-community==0.3.9
-langchain-core==0.3.21
+langchain-community==0.3.16
+langchain-core==0.3.33
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.7rc2
-langchain==0.3.9
+langchain==0.3.16
+langchain-sambanova==0.1.0
 langgraph==0.2.28
 mypy==1.11.2
 nltk==3.9.1
@@ -36,4 +37,4 @@ sentence_transformers==3.3.1
 sseclient-py==1.8.0
 streamlit-extras==0.4.3
 streamlit==1.40.2
-weave==0.51.1
+weave==0.51.31

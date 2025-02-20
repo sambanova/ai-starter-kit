@@ -305,7 +305,7 @@ class SearchAssistant:
         params = {'lang': 'EN', 'limit': limit, 'text': query}
 
         try:
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params) # type: ignore
             if response.status_code == 200:
                 results = response.json()
                 if len(results) > 0:
