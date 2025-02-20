@@ -3,15 +3,57 @@ import json
 import os
 import re
 import shutil
+import asyncio
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Match, Optional
+from typing import AsyncGenerator
 
 import markdown
 import pandas
 import weasyprint  # type: ignore
+from queue import Queue
 from bs4 import BeautifulSoup
+
+
+def remove_ansi_escape_codes(text: str) -> str:
+    """
+    Function to remove ANSI escape sequences
+
+    Args:
+        text: string to clean.
+
+    Returns:
+        clean text.
+    """
+    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+    return ansi_escape.sub('', text)
+
+
+async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
+    """
+    Async generator that yields logs as they appear in the queue.
+
+    Args:
+        queue (Queue): The queue to retrieve log messages from.
+
+    Returns:
+        AsyncGenerator[str, None]: An asynchronous generator that yields log 
+                                   messages (as strings) from the queue. The 
+                                   generator stops when a `None` value is 
+                                   encountered in the queue.
+    """
+    while True:
+        try:
+            log_message = queue.get(timeout=0.1)  # Wait for new logs
+            if log_message is None:
+                break
+
+            clean_message = remove_ansi_escape_codes(log_message)
+            yield clean_message
+        except:
+            await asyncio.sleep(0.01)  # Prevent high CPU usage
 
 
 def clear_directory(directory: str | Path) -> Optional[str]:
