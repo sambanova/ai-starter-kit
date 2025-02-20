@@ -33,6 +33,7 @@ LLM_MODELS = [
     'Meta-Llama-3.1-70B-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-R1-Distill-Llama-70B',
+    'DeepSeek-R1',
     'Llama-3.1-Tulu-3-405B',
     'Meta-Llama-3.1-405B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
@@ -235,7 +236,7 @@ def main() -> None:
         )
         st.session_state.mp_events.demo_launch()
 
-    st.title(':orange[SambaNova] Analyst Assistant')
+    st.title(':orange[SambaNova] Enterprise Knowledge Retriever')
 
     with st.sidebar:
         st.title('Setup')
