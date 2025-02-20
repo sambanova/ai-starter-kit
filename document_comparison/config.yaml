@@ -3,7 +3,6 @@ llm:
     "temperature": 0.0
     "streaming": False
     "max_tokens": 4000
-    "top_k": 10
     "top_p": 0.1    
     "model": "Meta-Llama-3.1-70B-Instruct"
 
