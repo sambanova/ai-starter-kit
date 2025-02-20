@@ -334,21 +334,30 @@ class BYOC(SnsdkWrapper):
                 if errors_response:
                     if len(snapi_response.stderr) > 0:
                         error_message = snapi_response.stderr
+                        # if all lines in stderr are warnings set errors_response as false
+                        if all('warning' in line.lower() for line in error_message.splitlines()):
+                            logging.warning(f'Warnings when uploading checkpoint : {error_message}')
+                            errors_response = False
+                        else:
+                            logging.error(snapi_response.stdout)
+                            logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
+                            logging.error(error_message)
                     else:
-                        error_search = re.search(r'Upload Error\s*(.*)', snapi_response.stdout)
+                        error_search = re.search(r'Upload Error\s*(. *)', snapi_response.stdout)
                         if error_search:
                             error_message = error_search[0]
-                    logging.error(snapi_response.stdout)
-                    logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
-                    logging.error(error_message)
+                        logging.error(snapi_response.stdout)
+                        logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
+                        logging.error(error_message)
+
+                if errors_response:
                     if i < retries:
-                        logging.info(f'Retrying upload for {i+1} time...')
+                        logging.info(f'Retrying upload for {i + 1} time...')
                         continue
                     else:
                         raise Exception(
-                            f'Error uploading model checkpoint after {retries} attempts\n' 'max retries exceed'
+                            f'Error uploading model checkpoint after {retries} attempts\nmax retries exceed'
                         )
-
                 # if there are no errors in response
                 else:
                     model_id = self.search_model(model_name=model_name)

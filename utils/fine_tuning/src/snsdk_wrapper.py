@@ -129,12 +129,18 @@ class SnsdkWrapper:
         ):
             if len(snapi_config_response.stderr) > 0:
                 error_message = snapi_config_response.stderr
+                # if all lines in stderr are warnings don't raise
+                if all('warning' in line.lower() for line in error_message.splitlines()):
+                    logging.warning(f"Tenant '{tenant_name}' set with warnings: {error_message}")
+                else:
+                    logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
+                    raise Exception(f'Error message: {error_message}')
             else:
                 error_search = re.search(r'message:\s*(.*)', snapi_config_response.stdout)
                 if error_search:
                     error_message = error_search[0]
-            logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
-            raise Exception(f'Error message: {error_message}')
+                logging.error(f"Failed to set tenant with name '{tenant_name}'. Details: {error_message}")
+                raise Exception(f'Error message: {error_message}')
 
         # Read updated Snapi config file
         with open(snapi_config_path, 'r') as file:
@@ -654,12 +660,18 @@ class SnsdkWrapper:
             if errors_response:
                 if len(snapi_response.stderr) > 0:
                     error_message = snapi_response.stderr
+                    # if all lines in stderr are warnings dont raise
+                    if all('warning' in line.lower() for line in error_message.splitlines()):
+                        logging.warning(f"dataset with name '{dataset_name} created with warnings: {error_message}")
+                    else:
+                        logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
+                        raise Exception(f'Error message: {error_message}')
                 else:
                     error_search = re.search(r'message:\s*(.*)', snapi_response.stdout)
                     if error_search:
                         error_message = error_search[0]
-                logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
-                raise Exception(f'Error message: {error_message}')
+                    logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
+                    raise Exception(f'Error message: {error_message}')
             # if there are no errors in reponse
             else:
                 dataset_id = self.search_dataset(dataset_name=dataset_name)
