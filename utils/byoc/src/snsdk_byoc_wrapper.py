@@ -322,7 +322,7 @@ class BYOC(SnsdkWrapper):
             # attempt to upload retries times
             for i in range(retries + 1):
                 # execute snapi import model create command
-                logging.info(f'running snapi upload command:\n {"".join(command)}')
+                logging.info(f'running snapi upload command:\n {" ".join(command)}\nThis could take a while')
                 snapi_response = subprocess.run(command, capture_output=True, text=True)
 
                 # check if errors in execution

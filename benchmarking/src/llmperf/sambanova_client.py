@@ -307,6 +307,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         if 'Bundle' in self.request_config.model:
             sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
             sampling_params['process_prompt'] = False
+            sampling_params['top_k'] = 1
 
         # build payload for api v2
         if '/api/v2' in url.lower().strip():
@@ -400,7 +401,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         events_received = []
         events_timings = []
 
-        client = sseclient.SSEClient(response)
+        client = sseclient.SSEClient(response) # type: ignore
 
         for event in client.events():
             try:
@@ -412,13 +413,14 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     if data.get('usage') is None:
                         # if streams still don't hit a finish reason
                         if data['choices'][0]['finish_reason'] is None:
-                            # log s timings
-                            events_timings.append(time.monotonic() - event_start_time)
-                            event_start_time = time.monotonic()
-                            # concatenate streaming text pieces
-                            stream_content = data['choices'][0]['delta']['content']
-                            events_received.append(stream_content)
-                            generated_text += stream_content
+                            if data['choices'][0]['delta'].get('content') is not None:
+                                # log s timings
+                                events_timings.append(time.monotonic() - event_start_time)
+                                event_start_time = time.monotonic()
+                                # concatenate streaming text pieces
+                                stream_content = data['choices'][0]['delta']['content']
+                                events_received.append(stream_content)
+                                generated_text += stream_content
                     # process streaming chunk when performance usage is provided
                     else:
                         response_dict = data['usage']
@@ -474,7 +476,11 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
-            self.base_url = SAMBANOVA_URL
+            self.base_url = (
+                self.request_config.api_variables['SAMBANOVA_URL']
+                if self.request_config.api_variables['SAMBANOVA_URL']
+                else SAMBANOVA_URL
+            )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
             self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
@@ -545,7 +551,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response)
+            client = sseclient.SSEClient(response) # type: ignore
             generated_text = ''
 
             for event in client.events():
@@ -558,13 +564,14 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
                             if data['choices'][0]['finish_reason'] is None:
-                                # log s timings
-                                events_timings.append(time.monotonic() - event_start_time)
-                                event_start_time = time.monotonic()
-                                # concatenate streaming text pieces
-                                stream_content = data['choices'][0]['delta']['content']
-                                events_received.append(stream_content)
-                                generated_text += stream_content
+                                if data['choices'][0]['delta'].get('content') is not None:
+                                    # log s timings
+                                    events_timings.append(time.monotonic() - event_start_time)
+                                    event_start_time = time.monotonic()
+                                    # concatenate streaming text pieces
+                                    stream_content = data['choices'][0]['delta']['content']
+                                    events_received.append(stream_content)
+                                    generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
@@ -630,8 +637,8 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
         error_code = getattr(
             e,
             'code',
-            """Error while running LLM API requests. 
-            Check your model name, LLM API type, env variables and endpoint status.""",
+            """Error while running LLM API requests. """
+            + """Check your model name, LLM API type, env variables and endpoint status.""",
         )
         error_message = str(e)
         metrics[common_metrics.ERROR_MSG] = error_message
@@ -671,5 +678,4 @@ if __name__ == '__main__':
     metrics, generated_text, request_config = llm_request(request_config, tokenizer)
 
     print(f'Metrics collected: {metrics}')
-    # print(f'Completion text: {generated_text}')
     print(f'Request config: {request_config}')

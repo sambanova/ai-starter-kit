@@ -142,7 +142,8 @@ def main() -> None:
         llm_model = st.text_input(
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
-            help='Look at your model card in SambaStudio and introduce the same name of the model/expert here.',
+            help='If using SambaStudio, look at your model card and introduce the same name \
+                of the model/expert here following the Readme.',
             disabled=st.session_state.running,
         )
         st.session_state.llm = f'{llm_model}'
@@ -231,12 +232,18 @@ def main() -> None:
         st.toast('Performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             st.session_state.progress_bar = st.progress(0)
+            do_rerun = False
             try:
                 st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
                 st.session_state.running = False
+                # workareound to avoid rerun within try block
+                do_rerun = True
             except Exception as e:
-                st.error(f'Error: {e}.')
-            st.rerun()
+                st.error(f'Error:\n{e}.')
+                # Cleaning df results in case of error
+                st.session_state.df_req_info = None
+            if do_rerun:
+                st.rerun()
 
     if st.session_state.df_req_info is not None:
         st.subheader('Performance metrics plots')
@@ -288,6 +295,9 @@ def main() -> None:
         # Compute total throughput per batch
         st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
         st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
+
+        # Once results are given, reset running state and ending threads just in case.
+        sidebar_stop = True
 
 
 if __name__ == '__main__':

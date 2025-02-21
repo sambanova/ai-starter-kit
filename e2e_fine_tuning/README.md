@@ -17,7 +17,7 @@ End to End BYOC and Fine-Tuning SambaStudio Kit
     - [Install dependencies](#install-dependencies)
         - [Install an set up Snapi and Snsdk](#install-an-set-up-snapi-and-snsdk)
         - [Install requirements](#install-requirements)
-- [Bring your own endpoint](#bring-your-own-endpoint)
+- [Bring your own checkpoint](#bring-your-own-checkpoint)
 - [Upload a dataset](#upload-a-dataset)
 - [Fine tune your model](#fine-tune-your-model)
 - [Deploy and do inference over your models](#deploy-and-do-inference-over-your-models)
@@ -62,7 +62,7 @@ Install the python dependencies in your previously created environment.
     pip install -r requirements.txt
   ```
 
-# Bring your own endpoint
+# Bring your own checkpoint
 
 This step guides you through the process of uploading a model checkpoint to SambaStudio. For a detailed implementation, please refer to the [1_checkpoints.ipynb](./notebooks/1_checkpoints.ipynb) notebook, which provides a step-by-step guide.
 
