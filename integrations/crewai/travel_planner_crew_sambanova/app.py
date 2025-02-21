@@ -147,7 +147,7 @@ demo = gr.Interface(
         ),
     ],
     outputs=[
-        gr.Textbox(label='Complete Personalized Itinerary of your Trip', show_copy_button=True, autoscroll=False),
+        gr.Textbox(label='Complete Personalized Itinerary of your Trip', show_label=True, show_copy_button=True, autoscroll=False),
         gr.Plot(label='Venues on a Map. Please verify with a Navigation System before traveling.'),
     ],
 )
