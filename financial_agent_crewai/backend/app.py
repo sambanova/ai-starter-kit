@@ -1,5 +1,6 @@
 import sys
 import logging
+import io
 from threading import Thread
 
 from fastapi import FastAPI, HTTPException
@@ -27,6 +28,9 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+pdf_file_path = "cache/report.pdf"
+md_file_path = "cache/report.md"
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
@@ -70,8 +74,8 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
             )
             financial_flow.kickoff()
         except Exception as e:
-            logger.error(f"Error during financial prediction stream: {str(e)}")
-            sys.stderr.write(f"Error during financial flow: {str(e)}\n")
+            logger.error(f"Error during agent flow: {str(e)}")
+            queue.put('{"type": "error", "message": "internal error during agent flow"}\n')
         finally:
             sys.stdout = sys.__stdout__  # Restore stdout
             queue.put(None)  # Signal end of logs
@@ -85,3 +89,27 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
     except Exception as e:
         logger.error(f"An error occurred while starting the stream: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred while starting the stream")
+
+
+@app.get("/report/pdf")
+async def get_report() -> dict:
+    if not os.path.exists(pdf_file_path):
+        raise HTTPException(status_code=404, detail="PDF file not found")
+
+    with open(pdf_file_path, "rb") as f:
+        pdf_data = f.read()
+
+    return StreamingResponse(io.BytesIO(pdf_data), media_type="application/pdf",
+     headers={"Content-Disposition": "attachment; filename=report.pdf"})
+
+
+@app.get("/report/md")
+async def get_report() -> dict:
+    if not os.path.exists(md_file_path):
+        raise HTTPException(status_code=404, detail="Markdown file not found")
+    
+    with open(md_file_path, "r") as f:
+        md_data = f.read()
+
+    return StreamingResponse(io.BytesIO(md_data.encode()), media_type="text/markdown",
+     headers={"Content-Disposition": "attachment; filename=report.md"})
