@@ -18,6 +18,7 @@ from benchmarking.streamlit.streamlit_utils import (
     APP_PAGES,
     LLM_API_OPTIONS,
     QPS_DISTRIBUTION_OPTIONS,
+    MULTIMODAL_IMAGE_SIZE_OPTIONS,
     find_pages_to_hide,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
@@ -41,6 +42,8 @@ def _initialize_session_variables() -> None:
         st.session_state.llm = None
 
     # Initialize llm params
+    if 'multimodal_image_size' not in st.session_state:
+        st.session_state.multimodal_image_size = None
     if 'input_tokens' not in st.session_state:
         st.session_state.input_tokens = None
     if 'output_tokens' not in st.session_state:
@@ -88,6 +91,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     st.session_state.performance_evaluator = RealWorkLoadPerformanceEvaluator(
         model_name=st.session_state.llm,
         results_dir=results_path,
+        multimodal_image_size=st.session_state.multimodal_image_size,
         qps=st.session_state.qps,
         qps_distribution=st.session_state.qps_distribution,
         timeout=st.session_state.timeout,
@@ -180,6 +184,15 @@ def main() -> None:
                 index=0,
                 disabled=st.session_state.running,
             )
+            
+        st.session_state.multimodal_image_size = st.selectbox(
+            'Multimodal image size',
+            options=list(MULTIMODAL_IMAGE_SIZE_OPTIONS.keys()),
+            format_func=lambda x: MULTIMODAL_IMAGE_SIZE_OPTIONS[x],
+            index=0,
+            disabled=st.session_state.running,
+            help='Select the pre-set image size for multimodal models. Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models.',
+        )
 
         st.session_state.input_tokens = st.number_input(
             'Number of input tokens',

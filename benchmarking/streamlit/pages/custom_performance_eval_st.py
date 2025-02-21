@@ -1,3 +1,4 @@
+import os
 import warnings
 from typing import Any
 
@@ -99,6 +100,18 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
     return valid_df
 
+def _save_uploaded_file() -> str:    
+    uploaded_file = st.session_state.uploaded_file
+    temp_file_path = None
+    if st.session_state.uploaded_file is not None:
+        # Save the uploaded file to a temporary location
+        custom_input_files_path = os.path.join(os.getcwd(), 'data/custom_input_files')
+        if not os.path.exists(custom_input_files_path):
+            os.makedirs(custom_input_files_path)
+        temp_file_path = os.path.join(custom_input_files_path, uploaded_file.name)
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(uploaded_file.getbuffer())
+    return temp_file_path
 
 def main() -> None:
     if st.session_state.prod_mode:
@@ -120,9 +133,10 @@ def main() -> None:
         # File Selection #
         ##################
         st.title('File Selection')
-        st.text_input(
-            'Full File Path', help='', key='file_path', disabled=st.session_state.running
-        )  # TODO: Fill in help
+        st.session_state.uploaded_file = st.file_uploader(
+            'Upload JSON File', type='jsonl', disabled=st.session_state.running
+        )  
+        st.session_state.file_path = _save_uploaded_file()
 
         #########################
         # Runtime Configuration #
