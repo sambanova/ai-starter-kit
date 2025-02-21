@@ -36,18 +36,18 @@ Code Copilot
 
 # Overview
 
-This AI Starter Kit is a demonstration of how to use Sambanova's models as coding assistants leveraging the [Continue](https://www.continue.dev/) extension for VSCode and JetBrains.  The Kit includes:
+This is a demonstration of how to use Sambanova's models as coding assistants leveraging the [Continue](https://www.continue.dev/) extension for VSCode and JetBrains.  The Kit includes:
 
-- A configurable SambaNova Cloud - Continue connector. The connector generates answers from a SambaNova cloud hosted model.
+- A configurable SambaNova Cloud - Continue connector. The connector generates answers from a SambaNova cloud hosted models.
 
-- A configurable SambaStudio - Continue connector. The connector generates answers from a deployed LLM.
+- A configurable SambaStudio - Continue connector. The connector generates answers from deployed LLMs in your SambaStudio Environment.
 
 - An installation, setup, and usage guide.
 
 # Before you begin
 
 For this starter kit, you will need access to an SambaNova Cloud account or a SambaStudio Environment.
-> You can use a LLM of your choice, either from SambaNova Cloud or from SambaStudio, but is highly recommended to use Meta-Llama-3-8B-Instruct
+> You can use a LLM of your choice, either from SambaNova Cloud or from SambaStudio, but is highly recommended to use Qwen2.5-Coder-32B-Instruct
 
 ## Set up the account for using the LLM 
 
@@ -63,7 +63,7 @@ The next step sets you up to use one of the models available from SambaNova. It 
 
 To perform this setup, you must be a SambaNova customer with a SambaStudio account.
 
-1. Log in to SambaStudio and select the LLM to use (e,g. Bundle1.1 with Llama 3 8B instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+1. Log in to SambaStudio and select the LLM to use (e,g. Bundle with Qwen2.5-Coder-32B-Instruct) and deploy an endpoint for inference. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
 
 2. Get your endpoint API authorization key. as shown [here](https://docs.sambanova.ai/sambastudio/latest/endpoints.html#_endpoint_api_keys).
 
@@ -81,19 +81,47 @@ After installing Continue you will need to do the basic setup
 
 ## Add SambaNovaCloud default models
 
-You should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ top right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) kit provided file, and update the `apiKey` model fields with your SambaNovaCloud API Key
+You should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ top right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) provided file, and update the `apiKey` model fields with your SambaNovaCloud API Key
 
 This will add to ***Continue*** the following models
-
+   
+- `Qwen2.5-Coder-32B-Instruct`
+- `Meta-Llama-3.3-70B-Instruct`
+- `DeepSeek-R1`
+- `DeepSeek-R1-Distill-Llama-70B`
 - `Meta-Llama-3.1-8B-Instruct`
 - `Meta-Llama-3.1-70B-Instruct`
 - `Meta-Llama-3.1-405B-Instruct`
+- `Llama-3.1-Tulu-3-405B`
+- `Llama-3.2-11B-Vision-Instruct`
+- `Llama-3.2-90B-Vision-Instruct`
+- `Meta-Llama-3.2-3B-Instruct`
+- `Meta-Llama-3.2-1B-Instruct`
+- `Qwen2.5-72B-Instruct`
+- `QwQ-32B-Preview`
 
-And will add `Meta-Llama-3.2-1B-Instruct` as tab autocompletion model.
+And will add `Qwen2.5-Coder-32B-Instruct` as tab autocompletion model.
 
 ### Add SambaStudio models
 
-If you want to use models deployed in your SambaStudio environment see the steps in [customizing the connector section](#set-the-custom-sambanova-integration-optional)
+If you want to use models deployed in your SambaStudio environment you should set the ***Continue*** config.json file. press ⌘+l this will open a new ***Continue*** session, Click in the gear ⚙ top right button, the the json file will open, replace the contents of this file with the contents of the [config.json](config.json) provided file, then replace the content of models list for the following model definition:
+
+```json
+"models": [
+    {
+      "provider": "sambanova",
+      "title": "<model name> SambaStudio",
+      "model": "<model name>",
+      "apiBase": "https://<your sambanova environment>/openai/v1/<project_id>/<endpoint_id>/chat/completions",
+      "apiKey": "<Your API Key>"
+    }
+]
+```
+
+update the values to match your environment and deployed endpoint.
+
+> You can add multiple models mixing SambaStudio or SambaNovaCloud then you will see all the models in the dropdown model selector bellow the chat input
+
 
 # Usage
 
@@ -139,55 +167,6 @@ A custom command should have the following structure
   "description": "Description of your custom action"
 }
 ```
-
-## Set the custom SambaNova integration (Optional)
-
-After the basic installation you can set the custom SambaNovaCloud or the SambaStudio ***Continue*** connectors
-
-First you should modify the ***Continue*** `config.ts` file
-
-- Open the `config.ts` file in  `~/.continue/` folder and replace the contents with the contents of the [config.ts](config.ts) kit provided file.
-
-- If you are using SambaNova Cloud: replace the sambanova_api_key variable  with your previously generated SambaNova Cloud api key
-
-    For example, for an api key `123456ab-cdef-0123-4567-890abcdef` update the first section in the config.ts file as:
-
-    ```ts
-    //SambaNova Cloud usage
-    const sambanova_api_key = "123456ab-cdef-0123-4567-890abcdef"
-    ```
-
-- If you are using SambaStudio: replace the sambastudio_base_url, sambastudio_project_id, sambastudio_endpoint_id and sambastudio_api_key variables with your SambaStudio endpoint keys:
-
-    For example, for an endpoint with the URL `https://api-stage.sambanova.net/api/predict/generic/stream/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef012` with api key `123456ab-cdef-0123-4567-890abcdef` update the first section in the config.ts file as:
-
-    ```ts
-    //SambaStudio usage 
-    const sambastudio_base_url = "https://api-stage.sambanova.net";
-    const sambastudio_project_id = "12345678-9abc-def0-1234-56789abcdef0";
-    const sambastudio_endpoint_id = "456789ab-cdef-0123-4567-89abcdef012";
-    const sambastudio_api_key = "123456ab-cdef-0123-4567-890abcdef"
-    ```
-
-In the [~/.continue/config.ts](~/.continue/config.ts) script you can add new SambaNovaCloud and SambaStudio models with the possibility of customize parameters like temperature, top_p, top_k, do_sample and others, even call a more complex service using sambaNova Models in behind.
-
-
-## Modify the parameters and the model to use
-
-You can change the default SambaNova Cloud model or the default model used with SambaStudio Bundle models modifying the model and expert selection in [config.ts](config.ts) file:
-
-- If using SambaNova Cloud:
-    ```ts
-        const sambanova_model = "llama3-405b";
-    ```
-
-- If using SambaStudio Bundle:
-    ```ts
-        const sambastudio_use_bundle = true;
-        const sambastudio_model = "Meta-Llama-3-8B-Instruct";
-    ```
-
-Also you can modify model parameters modifying the `body` params of the SambaNova Cloud model and Sambastudio model in the `SambastudioModel` an `SambaNovaCloudModel` definitions of [config.ts file](config.ts).
 
 # Acknowledgments
 
