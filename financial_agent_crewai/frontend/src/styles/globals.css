@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@plugin "tailwindcss-animate";
+
 @theme {
   --color-background-main: rgba(15, 17, 23);
   --color-background-secondary: rgba(30, 41, 56);
@@ -18,7 +20,7 @@
     @apply bg-gray-100 dark:bg-background-secondary;
   }
   .sn-button {
-    @apply bg-orange-500 hover:enabled:bg-orange-600 text-white;
+    @apply bg-orange-500 hover:enabled:bg-orange-600 text-white focus:outline-white focus:outline-1;
   }
   .sn-icon-button {
     @apply dark:text-white hover:text-orange-500;
@@ -36,13 +38,13 @@
     @apply shadow-md dark:shadow-sm dark:shadow-white dark:bg-background-secondary/30;
   }
   .sn-input-text {
-    @apply text-black dark:text-white placeholder:text-gray-400 focus:text-gray-600 dark:focus:text-gray-300 border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500;
+    @apply text-black dark:text-white placeholder:text-gray-400 disabled:text-gray-500 focus:text-gray-600 dark:focus:text-gray-300 border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500;
   }
   .sn-border {
-    @apply border border-black dark:border-gray-100;
+    @apply border border-gray-400 dark:border-gray-100/50 rounded-xl;
   }
   .sn-border-shadowed {
-    @apply border border-gray-100 shadow-md dark:shadow-sm dark:shadow-white;
+    @apply border border-gray-100 shadow-lg dark:shadow-sm dark:shadow-gray-100 rounded-xl;
   }
   .sn-dropdown-background {
     @apply bg-white dark:bg-background-main hover:bg-gray-100 dark:hover:bg-background-secondary/70;

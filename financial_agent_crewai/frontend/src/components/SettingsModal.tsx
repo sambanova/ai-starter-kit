@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Eye, EyeOff, X } from "lucide-react";
 
-import { useAPIKeysStore } from "../stores/APIKeysStore";
+import { useAPIKeysStore } from "@/stores/APIKeysStore";
 
 interface ISettingsModal {
   setIsSettingsModalOpen: (isOpen: React.SetStateAction<boolean>) => void;
@@ -89,7 +89,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
               onClick={closeModal}
               className="cursor-pointer sn-icon-button"
             >
-              <FontAwesomeIcon icon={["fas", "times"]} size="lg" />
+              <X />
             </button>
           </div>
 
@@ -131,20 +131,14 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   onClick={() => toggleKeyVisibility("sambanova")}
                   className="absolute inset-y-0 right-0 px-3 flex items-center sn-icon-button-secondary"
                 >
-                  {/* Eye icon */}
-                  <FontAwesomeIcon
-                    icon={[
-                      "fas",
-                      `eye${isSambanovaKeyVisible ? "-slash" : ""}`,
-                    ]}
-                  />
+                  {isSambanovaKeyVisible ? <EyeOff /> : <Eye />}
                 </button>
               </div>
               {/* Save and Clear Buttons */}
               <div className="flex justify-end space-x-2 mt-2">
                 <button
                   onClick={() => clearKey("sambanova")}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
+                  className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-white focus:outline-1"
                 >
                   Clear Key
                 </button>
@@ -181,10 +175,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   onClick={() => toggleKeyVisibility("serper")}
                   className="absolute inset-y-0 right-0 px-3 flex items-center sn-icon-button-secondary"
                 >
-                  {/* Eye icon */}
-                  <FontAwesomeIcon
-                    icon={["fas", `eye${isSerperKeyVisible ? "-slash" : ""}`]}
-                  />
+                  {isSerperKeyVisible ? <EyeOff /> : <Eye />}
                 </button>
               </div>
               {/* Add Save and Clear Buttons for Serper */}

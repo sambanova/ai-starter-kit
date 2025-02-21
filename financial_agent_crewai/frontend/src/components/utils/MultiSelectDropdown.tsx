@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 interface IMultiSelectDropdownProps {
   options: { [key: string]: string };
@@ -42,32 +42,28 @@ const MultiSelectDropdown = ({
           )}
         </div>
 
-        <FontAwesomeIcon
-          icon={["fas", `chevron-${isOpen ? "up" : "down"}`]}
-          className="sn-icon-button-secondary transition-transform size-20 w-5"
-        />
+        {isOpen ? <ChevronUp /> : <ChevronDown />}
       </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed z-10 w-1/4 mt-1 sn-background border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="fixed z-10 w-1/5 mt-1 sn-background border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
           {Object.keys(options).map((option) => (
             <div
               key={option}
               onClick={() => toggleItem(option)}
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 border-b border-gray-300 ${
                 isItemSelected(option)
                   ? "sn-dropdown-selected-background"
                   : "sn-dropdown-background"
               } cursor-pointer flex items-center justify-between`}
             >
-              <span>{options[option]}</span>
-              {isItemSelected(option) && (
-                <FontAwesomeIcon
-                  icon={["fas", "check"]}
-                  className="text-orange-500 size-6"
-                />
-              )}
+              {options[option]}
+              <span className="mx-1">
+                {isItemSelected(option) && (
+                  <Check className="text-orange-500 h-5" />
+                )}
+              </span>
             </div>
           ))}
         </div>

@@ -1,5 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { TriangleAlert, Settings } from "lucide-react";
 
+import { Alert, AlertTitle, AlertDescription } from "./shadcn/alert";
 import { useAPIKeysStore } from "../stores/APIKeysStore";
 
 const WarningMessage = () => {
@@ -9,30 +10,23 @@ const WarningMessage = () => {
   );
 
   return (
-    <>
+    <div className="mb-4">
       {missingKeys.length > 0 && (
-        <div className="mb-4 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-          <div className="flex items-center space-x-2">
-            <FontAwesomeIcon
-              icon={["fas", "exclamation-triangle"]}
-              className="text-yellow-700"
-            />
-            <div>
-              <p className="text-yellow-700">
-                Please set up your{" "}
-                <span className="font-bold">{missingKeys.join(", ")}</span> API
-                key
-                {missingKeys.length > 1 ? "s" : ""} in the Settings{" "}
-                <span className="text-yellow-800 font-medium">
-                  <FontAwesomeIcon icon={["fas", "gear"]} />
-                </span>{" "}
-                button at the top of the page.
-              </p>
-            </div>
-          </div>
-        </div>
+        <Alert variant="warning" className="py-4 rounded-xl">
+          <TriangleAlert className="h-5 w-5" />
+          <AlertTitle>Missing API keys</AlertTitle>
+          <AlertDescription>
+            Please set up your{" "}
+            <span className="font-bold">{missingKeys.join(", ")}</span> API key
+            {missingKeys.length > 1 ? "s" : ""} in the Settings{" "}
+            <span className="inline-flex items-center align-middle w-5">
+              <Settings className="relative left-0 bottom-0.5" />
+            </span>{" "}
+            button at the top of the page.
+          </AlertDescription>
+        </Alert>
       )}
-    </>
+    </div>
   );
 };
 

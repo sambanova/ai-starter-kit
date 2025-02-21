@@ -1,5 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import { Moon, Settings, Sun } from "lucide-react";
+
 import { useThemeStore } from "../../stores/ThemeStore";
 
 interface IHeader {
@@ -39,32 +40,24 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
         </div>
 
         {/* Right: App name & Actions */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <h1 className="text-md sm:text-2xl font-bold tracking-tight text-center">
             SambaNova Financial Agent
           </h1>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <button
-              className="cursor-pointer m-1 w-8 h-8 rounded-full sn-icon-button  transition"
+              className="cursor-pointer m-1 w-6 h-6 rounded-full sn-icon-button"
               onClick={toggleTheme}
             >
-              <div className="text-xl">
-                {theme === "dark" ? (
-                  <FontAwesomeIcon icon={["fas", "sun"]} />
-                ) : (
-                  <FontAwesomeIcon icon={["fas", "moon"]} />
-                )}
-              </div>
+              {theme === "dark" ? <Sun /> : <Moon />}
             </button>
 
             <button
-              className="cursor-pointer m-1 w-8 h-8 rounded-full sn-icon-button transition"
+              className="cursor-pointer m-1 w-6 h-6 rounded-full sn-icon-button"
               onClick={openSettingsModal}
             >
-              <div className="text-xl">
-                <FontAwesomeIcon icon={["fas", "gear"]} />
-              </div>
+              <Settings />
             </button>
           </div>
         </div>

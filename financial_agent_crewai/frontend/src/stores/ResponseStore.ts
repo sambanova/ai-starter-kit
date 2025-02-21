@@ -27,7 +27,7 @@ export const useResponseStore = create<ResponseState>((set) => ({
   error: null,
   sendRequest: async (query: string, selectedSources: SourcesType) => {
     set({ isLoading: true });
-    const response = await fetch(`${BASE_URL}/financial_agent`, {
+    const response = await fetch(`${BASE_URL}/agent/predict`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

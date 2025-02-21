@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
-import { SourcesType } from "../stores/ResponseStore";
-import { useResponseStore } from "../stores/ResponseStore";
-import { useAPIKeysStore } from "../stores/APIKeysStore";
+import { SourcesType } from "@/stores/ResponseStore";
+import { useResponseStore } from "@/stores/ResponseStore";
+import { useAPIKeysStore } from "@/stores/APIKeysStore";
+import { useStreaming } from "@/hooks/useStreaming";
+import { LoaderCircle, Mic } from "lucide-react";
 
 const SearchSection = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -17,6 +18,7 @@ const SearchSection = () => {
   });
 
   const { isLoading, sendRequest } = useResponseStore();
+  const { startStream, clearMessages } = useStreaming();
   const { apiKeys } = useAPIKeysStore();
   const missingKeys = Object.keys(apiKeys).filter(
     (key) => apiKeys[key as keyof typeof apiKeys] === null
@@ -40,7 +42,16 @@ const SearchSection = () => {
 
   const performSearch = () => {
     if (searchQuery) {
+      clearMessages();
+
       sendRequest(searchQuery, {
+        source_generic_search: selectedSources.source_generic_search,
+        source_sec_filings: selectedSources.source_sec_filings,
+        source_yfinance_news: selectedSources.source_yfinance_news,
+        source_yfinance_stocks: selectedSources.source_yfinance_stocks,
+      });
+
+      startStream(searchQuery, {
         source_generic_search: selectedSources.source_generic_search,
         source_sec_filings: selectedSources.source_sec_filings,
         source_yfinance_news: selectedSources.source_yfinance_news,
@@ -54,7 +65,7 @@ const SearchSection = () => {
   };
 
   return (
-    <div className="rounded-xl sn-border-shadowed p-6 mb-6">
+    <div className="sn-border-shadowed p-6 mb-6">
       <h2 className="text-lg font-bold mb-2 ml-1">User query</h2>
 
       <div className="flex items-center space-x-4">
@@ -76,7 +87,7 @@ const SearchSection = () => {
             className="hidden cursor-pointer absolute right-4 top-1/2 transform -translate-y-1/2 p-2 sn-icon-button rounded-full transition-colors"
             title="Voice Search"
           >
-            <FontAwesomeIcon icon={["fas", "microphone"]} beat={isRecording} />
+            <Mic className={`${isRecording && "animate-pulse"}`} />
           </button>
         </div>
 
@@ -94,15 +105,9 @@ const SearchSection = () => {
           type="button"
           onClick={performSearch}
           disabled={searchButtonIsDisabled}
-          className="cursor-pointer disabled:cursor-default w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
+          className="cursor-pointer disabled:cursor-default flex items-center justify-center w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
-          <span>
-            {isLoading ? (
-              <FontAwesomeIcon icon={["fas", "spinner"]} spin />
-            ) : (
-              "Search"
-            )}
-          </span>
+          {isLoading ? <LoaderCircle className="animate-spin" /> : "Search"}
         </button>
       </div>
 
