@@ -5,6 +5,7 @@ import random
 import re
 import threading
 import time
+import base64
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -43,18 +44,20 @@ load_dotenv('../.env', override=True)
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
 USER_PROMPT_PATH = os.path.join(file_location, '../prompts/user-prompt_template.yaml')
 
-
+ 
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
         self,
         model_name: str,
         results_dir: str,
+        multimodal_image_size: str = None, 
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
     ) -> None:
+        self.multimodal_image_size = multimodal_image_size
         self.model_name = model_name
         self.results_dir = results_dir
         self.user_metadata = user_metadata
@@ -138,11 +141,13 @@ class BasePerformanceEvaluator(abc.ABC):
         if not Path(tokenized_text_directory).exists():
             Path(tokenized_text_directory).mkdir(parents=True)
 
-        if not Path(tokenized_text_filepath).exists():
-            tokens = self.tokenizer.tokenize(text)
-            joblib.dump(tokens, tokenized_text_filepath)
-        else:
-            tokens = joblib.load(tokenized_text_filepath)
+        # if not Path(tokenized_text_filepath).exists():
+        #     tokens = self.tokenizer.tokenize(text)
+        #     joblib.dump(tokens, tokenized_text_filepath)
+        # else:
+        #     tokens = joblib.load(tokenized_text_filepath)
+        tokens = self.tokenizer.tokenize(text)
+        joblib.dump(tokens, tokenized_text_filepath)
 
         token_count = len(tokens)
 
@@ -369,7 +374,13 @@ class BasePerformanceEvaluator(abc.ABC):
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
         logger.info('Benchmarking process has been stopped.')
-
+    
+    def get_image(self, image_location: str = None) -> str:
+        if not image_location:
+            image_location = llmperf_utils.LVLM_IMAGE_PATHS[self.multimodal_image_size]
+        with open(image_location, 'rb') as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        return encoded_image
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
@@ -385,6 +396,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
         self.prompt_key = list(self.dataset[0].keys())[0]
+        self.img_path_key = None
+        if len(list(self.dataset[0].keys())) == 2:
+            self.img_path_key = list(self.dataset[0].keys())[1]
         self.save_response_texts = save_response_texts
 
     @staticmethod
@@ -400,6 +414,21 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         with open(input_file_path, 'r') as file:
             data = [json.loads(line) for line in file]
+            
+        # check if dataframe headers contain 'prompt'
+        if not all([list(d.keys())[0] == 'prompt' for d in data]):
+            raise ValueError('All rows in input file must contain the same first column name "prompt" and its respective text value')
+        
+        # check if dataframe headers contain 'img_path' if there are two columns
+        if all([len(list(d.keys())) == 2 for d in data]):
+            if not all([list(d.keys())[1] == 'image_path' for d in data]):
+                raise ValueError('If input file has two columns, all rows in input file must contain the same second column name "image_path" and its respective text value')
+            if any([d['image_path'].startswith('http') for d in data]):
+                raise ValueError('Urls are not supported for image_path. Please provide local image paths.')
+        # check if there are more than two columns
+        elif any([len(list(d.keys())) > 2 for d in data]):
+            raise ValueError('Input file can not contain more then two columns.')           
+        
         return data
 
     def create_output_filename(self) -> str:
@@ -636,11 +665,17 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         for request_idx, data_point in enumerate(self.dataset):
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
             prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
+            
+            # Image to be sent in LLM request if exists
+            image = None
+            if self.img_path_key:
+                image = self.get_image(data_point[self.img_path_key]) 
 
             request_config = RequestConfig(
                 request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
+                image=image,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
                 api_variables=self.api_variables,
@@ -1027,8 +1062,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
 
-        # Build input prompt to be sent in LLM request
+        # Build input text prompt to be sent in LLM request
         prompt_tuple = self.build_prompt(input_token_count)
+        
+        # Encode image to be sent in LLM request if exists
+        if self.multimodal_image_size != 'na':
+           image = self.get_image() 
 
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
@@ -1043,6 +1082,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
+                image=image,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
                 api_variables=self.api_variables,
@@ -1067,11 +1107,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Load from prompt files
         prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-        prompt_template = prompt_template * 100_000
+        prompt_template = prompt_template * 1_000
 
         #  Adjust prompt according to desired input tokens
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-
         return (full_input_prompt, self.get_token_length(full_input_prompt))
 
 
@@ -1312,6 +1351,10 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         # Build input prompt to be sent in LLM request
         prompt_tuple = self.build_prompt(input_token_count)
 
+        # Encode image to be sent in LLM request if exists
+        if self.multimodal_image_size != 'na':
+           image = self.get_image() 
+
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
             # Add generic max tokens parameter to `sampling_params` dictionary
@@ -1325,6 +1368,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
                 request_idx=request_idx,
                 model=self.model_name,
                 prompt_tuple=prompt_tuple,
+                image=image,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
                 api_variables=self.api_variables,

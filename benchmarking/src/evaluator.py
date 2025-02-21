@@ -81,7 +81,7 @@ def main() -> None:
         type=str,
         required=True,
         default='sncloud',
-        help="The LLM API type. It could be either 'sambastudio' or 'sncloud'. Default value: 'sncloud'",
+        help="The LLM API type. It could be either 'sambastudio' or 'sncloud'. (default: %(default)s)",
     )
 
     # Optional Common Arguments
@@ -173,11 +173,19 @@ def main() -> None:
             default=10,
             help='The number of concurrent requests used to send requests. (default: %(default)s)',
         )
+        
         parser.add_argument(
             '--model-names',
             type=str,
             required=True,
             help='The name of the models to use for this performance evaluation.',
+        )
+        
+        parser.add_argument(
+            '--multimodal-image-size',
+            choices=['na', 'small', 'medium', 'large'],
+            required=True,
+            help="The image size to select if a vision model is going to be evaluated. If no multimodal model will be used, select 'na'.",
         )
         parser.add_argument(
             '--num-input-tokens',
@@ -186,6 +194,7 @@ def main() -> None:
             help="""The number of tokens to include in the prompt for each request made from the synthetic 
                 dataset. (default: %(default)s)""",
         )
+        
         parser.add_argument(
             '--num-output-tokens',
             type=int,
@@ -193,6 +202,7 @@ def main() -> None:
             help="""The number of tokens to generate from each llm request. This is the `max_tokens` param for the 
                 completions API. (default: %(default)s)""",
         )
+        
         parser.add_argument(
             '--num-requests',
             type=int,
@@ -210,6 +220,7 @@ def main() -> None:
             user_metadata['model_idx'] = model_idx
             # set synthetic evaluator
             synthetic_evaluator = SyntheticPerformanceEvaluator(
+                multimodal_image_size=args.multimodal_image_size,
                 model_name=model_name,
                 results_dir=args.results_dir,
                 num_concurrent_requests=args.num_concurrent_requests,
@@ -251,6 +262,13 @@ def main() -> None:
         )
 
         parser.add_argument(
+            '--multimodal-image-size',
+            choices=['na', 'small', 'medium', 'large'],
+            required=True,
+            help="The image size to select if a vision model is going to be evaluated. If no multimodal model will be used, select 'na'.",
+        )
+        
+        parser.add_argument(
             '--num-input-tokens',
             type=int,
             default=550,
@@ -280,6 +298,7 @@ def main() -> None:
             user_metadata['model_idx'] = model_idx
             # set real workload evaluator
             real_workload_evaluator = RealWorkLoadPerformanceEvaluator(
+                multimodal_image_size=args.multimodal_image_size,
                 model_name=model_name,
                 results_dir=args.results_dir,
                 qps=args.qps,
