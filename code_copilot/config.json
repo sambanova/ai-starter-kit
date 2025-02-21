@@ -1,65 +1,140 @@
 {
   "models": [
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Qwen2.5 Coder 32B ",
-      "model": "Qwen2.5-Coder-32B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Qwen2.5 Coder 32B SambaNovaCloud",
+      "model": "Qwen2.5-Coder-32B-Instruct",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Llama3.3 Chat 70b",
-      "model": "Meta-Llama-3.3-70B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Llama3.3 70B SambaNovaCloud",
+      "model": "Meta-Llama-3.3-70B-Instruct",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud DeepSeek R1 distilled Llama 70b",
-      "model": "DeepSeek-R1-Distill-Llama-70B" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "DeepSeek R1 SambaNovaCloud",
+      "model": "DeepSeek-R1",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Llama3.1 Chat 8b",
-      "model": "Meta-Llama-3.1-8B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "DeepSeek R1 Distill Llama 70B SambaNovaCloud",
+      "model": "DeepSeek-R1-Distill-Llama-70B",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Llama3.1 Chat 70b",
-      "model": "Meta-Llama-3.1-70B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Llama3.1 8B SambaNovaCloud",
+      "model": "Meta-Llama-3.1-8B-Instruct",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Llama3.1 Chat 405b",
-      "model": "Meta-Llama-3.1-405B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Llama3.1 70B SambaNovaCloud",
+      "model": "Meta-Llama-3.1-70B-Instruct",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud Qwen2.5 72B",
-      "model": "Qwen2.5-72B-Instruct" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Llama3.1 405B SambaNovaCloud",
+      "model": "Meta-Llama-3.1-405B-Instruct",
+      "apiKey": "<Your API Key>"
     },
     {
-      "apiKey": "your-SambaNovaCloud-api-key",
-      "title": "SambaNovaCloud QwQ 32B preview",
-      "model": "QwQ-32B-Preview" ,
-      "provider": "sambanova"
+      "provider": "sambanova",
+      "title": "Llama3.1 Tulu 3 405B SambaNovaCloud",
+      "model": "Llama-3.1-Tulu-3-405B",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "Llama3.2 11B Vision SambaNovaCloud",
+      "model": "Llama-3.2-11B-Vision-Instruct",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "Llama3.2 90B Vision SambaNovaCloud",
+      "model": "Llama-3.2-90B-Vision-Instruct",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "Llama3.2 3B SambaNovaCloud",
+      "model": "Meta-Llama-3.2-3B-Instruct",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "Llama3.2 1B SambaNovaCloud",
+      "model": "Meta-Llama-3.2-1B-Instruct",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "Qwen2.5 72B SambaNovaCloud",
+      "model": "Qwen2.5-72B-Instruct",
+      "apiKey": "<Your API Key>"
+    },
+    {
+      "provider": "sambanova",
+      "title": "QWQ 32B SambaNovaCloud",
+      "model": "QwQ-32B-Preview",
+      "apiKey": "<Your API Key>"
     }
   ],
   "tabAutocompleteModel": {
-    "title": "SnCloud Llama3.2 Chat 1B",
+    "title": "Qwen2.5 Coder 32B",
     "provider": "sambanova",
-    "model": "Meta-Llama-3.2-1B-Instruct",
-    "apiKey": "your-SambaNovaCloud-api-key"
+    "model": "Qwen2.5-Coder-32B-Instruct",
+    "apiKey": "<Your API Key>"
   },
-  "tabAutocompleteOptions": {
-    "debounceDelay": 200,
-    "maxPromptTokens": 1000,
-    "disableInFiles": []
-  },
+  "contextProviders": [
+    {
+      "name": "code",
+      "params": {}
+    },
+    {
+      "name": "docs",
+      "params": {}
+    },
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    },
+    {
+      "name": "problems",
+      "params": {}
+    },
+    {
+      "name": "folder",
+      "params": {}
+    },
+    {
+      "name": "codebase",
+      "params": {}
+    }
+  ],
+  "slashCommands": [
+    {
+      "name": "share",
+      "description": "Export the current chat session to markdown"
+    },
+    {
+      "name": "cmd",
+      "description": "Generate a shell command"
+    },
+    {
+      "name": "commit",
+      "description": "Generate a git commit message"
+    }
+  ],
   "customCommands": [
     {
       "name": "test",
