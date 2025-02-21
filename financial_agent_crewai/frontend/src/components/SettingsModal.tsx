@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, X } from "lucide-react";
 
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
+import { toast } from "sonner";
 
 interface ISettingsModal {
   setIsSettingsModalOpen: (isOpen: React.SetStateAction<boolean>) => void;
@@ -10,14 +11,12 @@ interface ISettingsModal {
 type keyType = "sambanova" | "serper";
 
 const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isSambanovaKeyVisible, setIsSambanovaKeyVisible] = useState(false);
   const [isSerperKeyVisible, setIsSerperKeyVisible] = useState(false);
 
   const { apiKeys, addApiKey, updateApiKey } = useAPIKeysStore();
   const [sambanovaKey, setSambanovaKey] = useState<string | null>(
-    apiKeys.SambaNova
+    apiKeys.SambaNova,
   );
   const [serperKey, setSerperKey] = useState<string | null>(apiKeys.Serper);
 
@@ -33,41 +32,30 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
     if (key === "sambanova") {
       updateApiKey("SambaNova", null);
       setSambanovaKey(null);
-      setSuccessMessage("SambaNova API key cleared successfully!");
+      toast.success("SambaNova API key cleared successfully");
     } else if (key === "serper") {
       updateApiKey("Serper", null);
       setSerperKey(null);
-      setSuccessMessage("Serper API key cleared successfully!");
+      toast.success("Serper API key cleared successfully");
     }
-
-    clearMessagesAfterDelay();
   };
 
   const saveKey = (key: keyType) => {
     if (key === "sambanova") {
       if (!sambanovaKey) {
-        setErrorMessage("SambaNova API Key cannot be empty");
+        toast.error("SambaNova API Key cannot be empty");
       } else {
         addApiKey("SambaNova", sambanovaKey);
-        setSuccessMessage("SambaNova API key saved successfully!");
+        toast.success("SambaNova API key saved successfully!");
       }
     } else if (key === "serper") {
       if (!serperKey) {
-        setErrorMessage("Serper API Key cannot be empty");
+        toast.error("Serper API Key cannot be empty");
       } else {
         addApiKey("Serper", serperKey);
-        setSuccessMessage("Serper API key saved successfully!");
+        toast.error("Serper API key saved successfully!");
       }
     }
-
-    clearMessagesAfterDelay();
-  };
-
-  const clearMessagesAfterDelay = () => {
-    setTimeout(() => {
-      setErrorMessage("");
-      setSuccessMessage("");
-    }, 3000);
   };
 
   const closeModal = () => setIsSettingsModalOpen((prevState) => !prevState);
@@ -93,19 +81,6 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             </button>
           </div>
 
-          {/* TODO: convert this into a toast at the top */}
-          {errorMessage && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-              {errorMessage}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
-              {successMessage}
-            </div>
-          )}
-
           <div className="space-y-6 bg-grape">
             {/* SambaNova API Key */}
             <div>
@@ -114,7 +89,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                 <a
                   href="https://cloud.sambanova.ai/"
                   target="_blank"
-                  className="text-orange-600 hover:text-orange-700 ml-2 text-sm"
+                  className="text-orange-500 hover:text-orange-600 ml-2 text-sm"
                 >
                   Get Key →
                 </a>

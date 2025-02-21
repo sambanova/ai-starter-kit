@@ -11,7 +11,6 @@ import { AlertCircle } from "lucide-react";
 
 const AgentProgress = () => {
   const { messages, error, isStreaming } = useStreaming();
-  console.log(messages);
 
   return (
     <div>

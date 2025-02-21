@@ -1,11 +1,10 @@
 import { useState } from "react";
+import { LoaderCircle, Mic } from "lucide-react";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
 import { SourcesType } from "@/stores/ResponseStore";
-import { useResponseStore } from "@/stores/ResponseStore";
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
 import { useStreaming } from "@/hooks/useStreaming";
-import { LoaderCircle, Mic } from "lucide-react";
 
 const SearchSection = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -17,11 +16,11 @@ const SearchSection = () => {
     source_yfinance_stocks: false,
   });
 
-  const { isLoading, sendRequest } = useResponseStore();
-  const { startStream, clearMessages } = useStreaming();
+  // const { isLoading, sendRequest } = useResponseStore();
+  const { isStreaming, startStream, clearMessages } = useStreaming();
   const { apiKeys } = useAPIKeysStore();
   const missingKeys = Object.keys(apiKeys).filter(
-    (key) => apiKeys[key as keyof typeof apiKeys] === null
+    (key) => apiKeys[key as keyof typeof apiKeys] === null,
   );
 
   const sources = {
@@ -31,7 +30,7 @@ const SearchSection = () => {
     source_yfinance_stocks: "Yahoo Finance Stocks",
   };
   const searchButtonIsDisabled =
-    isLoading ||
+    isStreaming ||
     missingKeys.length > 0 || // Disable if any API key is missing
     !Object.values(selectedSources).some((value) => value) || // Disable if no source is selected
     !searchQuery?.trim(); // Disable if search query is empty
@@ -43,13 +42,6 @@ const SearchSection = () => {
   const performSearch = () => {
     if (searchQuery) {
       clearMessages();
-
-      sendRequest(searchQuery, {
-        source_generic_search: selectedSources.source_generic_search,
-        source_sec_filings: selectedSources.source_sec_filings,
-        source_yfinance_news: selectedSources.source_yfinance_news,
-        source_yfinance_stocks: selectedSources.source_yfinance_stocks,
-      });
 
       startStream(searchQuery, {
         source_generic_search: selectedSources.source_generic_search,
@@ -75,7 +67,7 @@ const SearchSection = () => {
             type="search"
             className="w-full p-3 pr-12 rounded-lg border sn-input-text truncate"
             value={searchQuery || ""}
-            disabled={isLoading}
+            disabled={isStreaming}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="E.g. What is the research and development trend for Google in 2024?"
           />
@@ -83,7 +75,7 @@ const SearchSection = () => {
           {/* TODO: Voice Input Button */}
           <button
             onClick={toggleRecording}
-            disabled={isLoading}
+            disabled={isStreaming}
             className="hidden cursor-pointer absolute right-4 top-1/2 transform -translate-y-1/2 p-2 sn-icon-button rounded-full transition-colors"
             title="Voice Search"
           >
@@ -107,7 +99,7 @@ const SearchSection = () => {
           disabled={searchButtonIsDisabled}
           className="cursor-pointer disabled:cursor-default flex items-center justify-center w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
-          {isLoading ? <LoaderCircle className="animate-spin" /> : "Search"}
+          {isStreaming ? <LoaderCircle className="animate-spin" /> : "Search"}
         </button>
       </div>
 

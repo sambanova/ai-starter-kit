@@ -1,9 +1,9 @@
-// src/hooks/useStreamingStore.ts
-import { BASE_URL } from "@/Constants";
 import { create } from "zustand";
+
+import { BASE_URL } from "@/Constants";
 import { SourcesType } from "./ResponseStore";
 
-interface StreamMessage {
+export interface StreamMessage {
   id: string;
   content: string;
   timestamp: number;
