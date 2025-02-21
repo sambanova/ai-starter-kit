@@ -135,7 +135,7 @@ class EKRTestCase(unittest.TestCase):
             self.dataset[i]['context'] = response.get('source_documents', '')
             self.dataset[i]['completion'] = response.get('answer', '')
 
-        evaluation = weave.Evaluation(
+        evaluation = weave.Evaluation( # type: ignore
             name=' '.join(str(value) for value in judge_info.values()), dataset=self.dataset, scorers=[self.judge]
         )
 
