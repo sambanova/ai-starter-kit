@@ -48,7 +48,7 @@ def setup_generative_data_prep() -> None:
         if len(line) > 0:
             logging.error(line.strip())
     if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
+        raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
 
     # install generative data preparation module
     command = ['pip', 'install', generative_data_prep_dir]
@@ -64,7 +64,7 @@ def setup_generative_data_prep() -> None:
         if len(line) > 0:
             logging.error(line.strip())
     if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
+        raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
     logging.info('Gen data preparation module set up successfully')
 
 
@@ -143,7 +143,7 @@ def run_generative_data_prep_pipeline(
         if len(line) > 0:
             logging.error(line.strip())
     if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
+        raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
     logging.info('Gen data preparation pipeline ran successfully')
 
 
@@ -200,7 +200,8 @@ def gen_data_prep_pipeline(
     apply_chat_template: bool = False,
 ) -> str:
     """
-    Merges input JSONL files, sets up and runs the generative data preparation pipeline.
+    checks ig dataset is not already created, Merges input JSONL files,
+    then sets up and runs the generative data preparation pipeline.
 
     Args:
     - input_files (Union[list, str]): A list of input JSONL file paths or a single JSONL file path.
@@ -220,8 +221,14 @@ def gen_data_prep_pipeline(
     Returns:
     - str: The path of the output directory where the processed dataset is stored.
     """
+
     merged_jsonl_file = merge_jsonl_files(input_files)
     setup_generative_data_prep()
+
+    if os.path.exists(output_path) and os.listdir(output_path):
+        logging.warning(f'Training dataset already exists at {output_path} and will not be regenerated.')
+        return output_path
+
     run_generative_data_prep_pipeline(
         merged_jsonl_file,
         output_path,
