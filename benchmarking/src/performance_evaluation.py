@@ -42,7 +42,8 @@ transformers.logging.set_verbosity_error()
 load_dotenv('../.env', override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
-USER_PROMPT_PATH = os.path.join(file_location, '../prompts/user-prompt_template.yaml')
+USER_PROMPT_TEXT_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-text_instruct.yaml')
+USER_PROMPT_VISION_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-vision_instruct.yaml')
 
  
 class BasePerformanceEvaluator(abc.ABC):
@@ -1106,8 +1107,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         # Load from prompt files
-        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-        prompt_template = prompt_template * 1_000
+        if self.multimodal_image_size == 'na':
+            prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template)['template']
+        else:
+            prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template)['template']
+        prompt_template = prompt_template * 10_000
 
         #  Adjust prompt according to desired input tokens
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
@@ -1391,8 +1395,11 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         # Load from prompt files
-        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-        prompt_template = prompt_template * 100_000
+        if self.multimodal_image_size == 'na':
+            prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template)['template']
+        else:
+            prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template)['template']
+        prompt_template = prompt_template * 10_000
 
         #  Adjust prompt according to desired input tokens
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
