@@ -1,0 +1,18 @@
+_type: prompt
+input_types: {}
+input_variables: []
+metadata: null
+name: null
+optional_variables: []
+output_parser: null
+partial_variables: {}
+tags: null
+template: "describe the image and list all the objects that you find in it,\
+ \ then you must translate each object showing how to use it in a short sentence\
+ \ to the following languages: 
+ \ spanish, portuguese, french, italian, turkish, german, russian, arabic, hindi, bengali,\
+ \ urdu, persian, chinese, korean, punjabi, javanese, telugu, tamil, vietnamese, marathi,\
+ \ gujarati, thai, malay, polish, ukrainian, filipino, romanian, dutch, hebrew and japanese.\
+ \ "
+template_format: f-string
+validate_template: false
