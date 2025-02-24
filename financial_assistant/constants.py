@@ -47,6 +47,7 @@ YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')
 
 # Define default values for text inputs
 DEFAULT_COMPANY_NAME = 'Google'
+DEFAULT_TICKER_NAME = 'GOOGL'
 DEFAULT_DATAFRAME_NAME = 'income_stmt'
 DEFAULT_STOCK_QUERY = 'What is the research and development spending trend for Google?'
 DEFAULT_HISTORICAL_STOCK_PRICE_QUERY = 'Google close value'
