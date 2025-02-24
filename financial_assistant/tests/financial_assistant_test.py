@@ -110,7 +110,7 @@ class FinancialAssistantTest(unittest.TestCase):
         response = get_stock_info.invoke(
             {
                 'user_query': DEFAULT_STOCK_QUERY,
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'dataframe_name': DEFAULT_DATAFRAME_NAME,
             }
         )
@@ -142,7 +142,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Invoke the tool to answer the user query
         response = get_historical_price.invoke(
             {
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'start_date': DEFAULT_START_DATE,
                 'end_date': DEFAULT_END_DATE,
             }
@@ -184,7 +184,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Invoke the tool to answer the user query
         response = create_stock_database.invoke(
             {
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'start_date': DEFAULT_START_DATE,
                 'end_date': DEFAULT_END_DATE,
             }
@@ -198,7 +198,7 @@ class FinancialAssistantTest(unittest.TestCase):
 
         # Invoke the LLM to create the database
         response = handle_database_creation(
-            requested_companies=DEFAULT_COMPANY_NAME,
+            requested_companies=DEFAULT_TICKER_NAME,
             start_date=DEFAULT_START_DATE,
             end_date=DEFAULT_END_DATE,
         )
@@ -212,7 +212,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Create the database
         create_stock_database.invoke(
             {
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'start_date': DEFAULT_START_DATE,
                 'end_date': DEFAULT_END_DATE,
             }
@@ -223,7 +223,7 @@ class FinancialAssistantTest(unittest.TestCase):
             response = query_stock_database.invoke(
                 {
                     'user_query': DEFAULT_STOCK_QUERY,
-                    'company_list': [DEFAULT_COMPANY_NAME],
+                    'company_list': [DEFAULT_TICKER_NAME],
                     'method': method,
                 }
             )
@@ -237,7 +237,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Create the database
         create_stock_database.invoke(
             {
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'start_date': DEFAULT_START_DATE,
                 'end_date': DEFAULT_END_DATE,
             }
@@ -265,7 +265,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Invoke the tool to answer the user query
         response, url_list = scrape_yahoo_finance_news.invoke(
             {
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'user_query': DEFAULT_RAG_QUERY,
             }
         )
@@ -298,7 +298,7 @@ class FinancialAssistantTest(unittest.TestCase):
         response = retrieve_filings.invoke(
             {
                 'user_question': DEFAULT_RAG_QUERY,
-                'company_list': [DEFAULT_COMPANY_NAME],
+                'company_list': [DEFAULT_TICKER_NAME],
                 'filing_type': DEFAULT_FILING_TYPE,
                 'filing_quarter': DEFAULT_FILING_QUARTER,
                 'year': DEFAULT_FILING_YEAR,
@@ -317,7 +317,7 @@ class FinancialAssistantTest(unittest.TestCase):
         # Invoke the LLM to answer the user query
         response = handle_financial_filings(
             user_question=DEFAULT_RAG_QUERY,
-            company_name=DEFAULT_COMPANY_NAME,
+            company_name=DEFAULT_TICKER_NAME,
             filing_type=DEFAULT_FILING_TYPE,
             filing_quarter=DEFAULT_FILING_QUARTER,
             selected_year=DEFAULT_FILING_YEAR,
@@ -399,11 +399,11 @@ class FinancialAssistantTest(unittest.TestCase):
         # Ensure that the response is a dictionary
         self.assertIsInstance(response, dict)
         # Ensure that the response contains the expected keys
-        self.assertIn(DEFAULT_COMPANY_NAME.upper(), response)
+        self.assertIn(DEFAULT_TICKER_NAME.upper(), response)
         # Ensure that the response is a string
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
+        self.assertIsInstance(response[DEFAULT_TICKER_NAME.upper()], str)
         # Ensure that the response is a png file
-        self.assertTrue(response[DEFAULT_COMPANY_NAME.upper()].endswith('.png'))
+        self.assertTrue(response[DEFAULT_TICKER_NAME.upper()].endswith('.png'))
 
     def check_get_historical_price(self, response: Tuple[pandas.DataFrame, Figure, List[str]]) -> None:
         """Check the response of the tool `get_historical_prices`."""
@@ -430,15 +430,15 @@ class FinancialAssistantTest(unittest.TestCase):
         self.assertIsInstance(response, dict)
 
         # Ensure that the response contains the expected keys
-        self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+        self.assertListEqual(list(response), [DEFAULT_TICKER_NAME.upper()])
 
         # Ensure that the response contains the expected values
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
+        self.assertIsInstance(response[DEFAULT_TICKER_NAME.upper()], list)
 
         # Ensure that each value of the list of tables is a string that starts with the expected prefix
-        for table in response[DEFAULT_COMPANY_NAME.upper()]:
+        for table in response[DEFAULT_TICKER_NAME.upper()]:
             self.assertIsInstance(table, str)
-            self.assertTrue(table.startswith(f'{DEFAULT_COMPANY_NAME.lower()}_'))
+            self.assertTrue(table.startswith(f'{DEFAULT_TICKER_NAME.lower()}_'))
 
     def check_query_stock_database(self, response: Any, method: str = 'text-to-SQL') -> None:
         """Check the response of the tool `query_stock_database`."""
@@ -452,11 +452,11 @@ class FinancialAssistantTest(unittest.TestCase):
             self.assertIsInstance(response, dict)
 
             # Ensure that the response contains the expected keys
-            self.assertListEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+            self.assertListEqual(list(response), [DEFAULT_TICKER_NAME.upper()])
 
             # Ensure that the response contains the expected values
-            self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], list)
-            for item in response[DEFAULT_COMPANY_NAME.upper()]:
+            self.assertIsInstance(response[DEFAULT_TICKER_NAME.upper()], list)
+            for item in response[DEFAULT_TICKER_NAME.upper()]:
                 self.assertIsInstance(item, str)
                 self.assertTrue(item.endswith('.png'))
         else:
@@ -481,10 +481,10 @@ class FinancialAssistantTest(unittest.TestCase):
         self.assertIsInstance(response, dict)
 
         # Ensure that the response contains the expected keys
-        self.assertEqual(list(response), [DEFAULT_COMPANY_NAME.upper()])
+        self.assertEqual(list(response), [DEFAULT_TICKER_NAME.upper()])
 
         # Ensure that the response contains the expected values
-        self.assertIsInstance(response[DEFAULT_COMPANY_NAME.upper()], str)
+        self.assertIsInstance(response[DEFAULT_TICKER_NAME.upper()], str)
 
 
 class CustomTextTestResult(unittest.TextTestResult):

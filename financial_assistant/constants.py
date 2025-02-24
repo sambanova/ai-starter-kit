@@ -36,7 +36,7 @@ MAX_CHUNK_SIZE = 1024
 CHUNK_OVERLAP = 256
 RETRIEVE_HEADLINES = False
 TOP_K = 10
-MAX_URLS = 1000
+MAX_URLS = 30
 
 # SambaNova
 SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
@@ -46,7 +46,8 @@ SAMBANOVA_ORANGE = (238, 118, 36)
 YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')
 
 # Define default values for text inputs
-DEFAULT_COMPANY_NAME = 'GOOGL'
+DEFAULT_COMPANY_NAME = 'Google'
+DEFAULT_TICKER_NAME = 'GOOGL'
 DEFAULT_DATAFRAME_NAME = 'income_stmt'
 DEFAULT_STOCK_QUERY = 'What is the research and development spending trend for Google?'
 DEFAULT_HISTORICAL_STOCK_PRICE_QUERY = 'Google close value'
