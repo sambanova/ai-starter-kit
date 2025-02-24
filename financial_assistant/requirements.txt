@@ -18,5 +18,5 @@ sec-downloader==0.11.1
 sseclient-py==1.8.0
 streamlit==1.40.2
 streamlit-extras==0.4.7
-yfinance==0.2.43
+yfinance==0.2.52
 weave==0.51.31
