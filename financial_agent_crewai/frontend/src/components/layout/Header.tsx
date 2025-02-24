@@ -19,18 +19,25 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
       <div className="h-16 mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Left: Brand */}
         <div className="flex items-center text-left space-x-2 sm:space-x-4">
-          {/* TODO: search an SVG that could change colors on theme change */}
           <img
             src="https://sambanova.ai/hubfs/logotype_sambanova_orange.png"
-            alt="Samba Sales Co-Pilot Logo"
+            alt="SambaNova Logo"
             className="h-8 block md:hidden"
           />
 
-          <img
-            src="https://sambanova.ai/hubfs/sambanova-logo-black.png"
-            alt="Samba Sales Co-Pilot Logo"
-            className="hidden md:h-8 md:block"
-          />
+          {theme === "dark" ? (
+            <img
+              src="https://sambanova.ai/hubfs/sambanova-logo-white.png"
+              alt="SambaNova Logo"
+              className="hidden md:h-8 md:block"
+            />
+          ) : (
+            <img
+              src="https://sambanova.ai/hubfs/sambanova-logo-black.png"
+              alt="SambaNova Logo"
+              className="hidden md:h-8 md:block"
+            />
+          )}
 
           <img
             src="https://cdn.prod.website-files.com/66cf2bfc3ed15b02da0ca770/66d07240057721394308addd_Logo%20(1).svg"
