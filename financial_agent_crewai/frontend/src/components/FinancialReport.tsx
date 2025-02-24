@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { BASE_URL } from "@/Constants";
 
 interface IFinancialReport {
@@ -11,13 +12,88 @@ const FinancialReport = ({ result }: IFinancialReport) => {
     try {
       const response = await fetch(`${BASE_URL}/report/md`);
 
-      // if (!response.body) {
-      //   throw new Error("No response body");
-      // }
-      console.log(response.body);
-      return response.body;
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      // Create a link and click it to trigger the browser's download
+      const url = window.URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+
+      // Get filename from headers if available
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = "report.md";
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename=([^;]+)/);
+
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error(error);
+
+      if (error instanceof Error) {
+        toast.error("Failed to download report: " + error.message);
+      } else {
+        toast.error(
+          "Failed to download report. Check the console for more details.",
+        );
+      }
+    }
+  };
+
+  const downloadPDF = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/report/pdf`);
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      // Create a link and click it to trigger the browser's download
+      const url = window.URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+
+      // Get filename from headers if available
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = "report.pdf";
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename=([^;]+)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        toast.error("Failed to download report: " + error.message);
+      } else {
+        toast.error(
+          "Failed to download report. Check the console for more details.",
+        );
+      }
     }
   };
 
@@ -35,17 +111,15 @@ const FinancialReport = ({ result }: IFinancialReport) => {
         <button
           type="button"
           onClick={downloadMarkdown}
-          // disabled={searchButtonIsDisabled}
-          className="cursor-pointer disabled:cursor-default flex items-center justify-center sn-button bg-blue-400"
+          className="cursor-pointer flex items-center justify-center sn-button bg-blue-400 hover:bg-blue-500"
         >
           Download Markdown
         </button>
 
         <button
           type="button"
-          onClick={() => console.log("")}
-          // disabled={searchButtonIsDisabled}
-          className="cursor-pointer disabled:cursor-default flex items-center justify-center sn-button bg-red-400"
+          onClick={downloadPDF}
+          className="cursor-pointer flex items-center justify-center sn-button bg-red-400 hover:bg-red-500"
         >
           Download PDF
         </button>
