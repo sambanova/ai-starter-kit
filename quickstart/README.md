@@ -1,7 +1,7 @@
 <a href="https://sambanova.ai/">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./images/SambaNova-light-logo-1.png" height="60">
-  <img alt="SambaNova logo" src="./images/SambaNova-dark-logo-1.png" height="60">
+  <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
 </a>
 
@@ -125,21 +125,20 @@ print(response)
 
 ## Using SambaNova APIs with Langchain
 
-Install `langchain-openai`:
+Install `langchain-sambanova`:
 ```shell  
-pip install -U langchain-openai
+pip install -U langchain-sambanova
 ```
 
 Here's an example of using SambaNova's APIs with the Langchain library:
 
 ```python
 import os
-from langchain_openai import ChatOpenAI
+from langchain_sambanova import ChatSambaNovaCloud
 
 api_key = os.environ.get("SAMBANOVA_API_KEY")
 
-llm = ChatOpenAI(
-    base_url="https://api.sambanova.ai/v1/",  
+llm = ChatSambaNovaCloud(
     api_key=api_key,
     streaming=True,
     model="Meta-Llama-3.1-70B-Instruct",
@@ -149,11 +148,11 @@ response = llm.invoke('What is the capital of France?')
 print(response.content)
 ```
 
-This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance with SambaNova's APIs, specifying the API key, base URL, streaming option, and model. You can then use the `llm` object to generate completions by passing in prompts.
+This code snippet demonstrates how to set up a Langchain `ChatSambaNovaCloud` instance with SambaNova's APIs, specifying the API key, streaming option, and model. You can then use the `llm` object to generate completions by passing in prompts.
 
 ## Starter Applications
 
-[SambaNova AI Starter Kits](https://community.sambanova.ai/t/ai-starter-kits/160) help you build fast, bootstrapping application development for common AI use cases with open-source Python code on a SambaNova GitHub repository. They let you see how the code works and customize it to your needs, so you can prove the business value of AI. Here are some of the most popular kits:
+[SambaNova AI Starter Kits](../README.md) help you build fast, bootstrapping application development for common AI use cases with open-source Python code on a SambaNova GitHub repository. They let you see how the code works and customize it to your needs, so you can prove the business value of AI. Here are some of the most popular kits:
 
 | Application                        | Description                                                                                                                                                                                                                                                  | Demo                                                           | Gradio                                                                                                                  | Source Code                                                                                         |
 |------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -169,7 +168,7 @@ This code snippet demonstrates how to set up a Langchain `ChatOpenAI` instance w
 
 ## Get Help
 
-- Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) for additional help
+- Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) and [SambaNova Cloud documentation](https://docs.sambanova.ai/cloud/docs/get-started/overview) for additional help
 - Find answers and post questions in the [SambaNova Community](https://community.sambanova.ai/latest)
 - Let us know your most wanted features and challenges via the channels above
 - More inference models, longer context lengths, and embeddings models are coming soon!
