@@ -285,13 +285,14 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
         raise Exception('QA response is not a dictionary.')
 
     # Extract the answer from  the QA response
-    answer = response['answer']
+    answer = response['answer'] if isinstance(response['answer'], str) else ''
 
     # Extract the urls from the QA response
-    url_list = list()
+    url_list: List[str] = list()
     for doc in response['context']:
-        if doc.metadata.get('url') is not None:
-            url_list.append(doc.metadata['url'])
+        if isinstance(doc, Document):
+            if doc.metadata.get('url') is not None:
+                url_list.append(doc.metadata['url'])
 
     return answer, url_list
 

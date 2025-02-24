@@ -1,27 +1,45 @@
 from typing import Any, Dict, List, Tuple
 
+import chromadb
 import yaml
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.base import RunnableBinding
-from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from financial_assistant.constants import *
-from financial_assistant.prompts.retrieval_prompts import QA_RETRIEVAL_PROMPT_TEMPLATE
-from financial_assistant.src.exceptions import VectorStoreException
 from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
 from financial_assistant.streamlit.llm_model import sambanova_llm
 from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
 
+RETRIEVAL_QA_PROMPT_TEMPLATE = """
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-def get_qa_response(user_request: str, documents: List[Document]) -> Any:
+Answer any use questions based solely on the context below:
+
+<context>
+
+{context}
+
+</context>
+
+<|eot_id|>
+
+<|start_header_id|>user<|end_header_id|>
+
+{input}
+
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+"""
+
+
+def get_qa_response(user_request: str, documents: List[Document]) -> Dict[str, str | List[Document]]:
     """
     Elaborate an answer to user request using RetrievalQA chain.
 
@@ -43,13 +61,27 @@ def get_qa_response(user_request: str, documents: List[Document]) -> Any:
         raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry
-    vectorstore, retriever = get_vectorstore_retriever(documents)
+    vectorstore = get_vectorstore(documents=documents)
 
-    # Get the QA chain from the retriever
-    qa_chain = get_qa_chain(retriever)
+    # Retrieve the most relevant docs
+    retrieved_docs = vectorstore.similarity_search(query=user_request, k=TOP_K)
 
-    # Invoke the QA chain to get an answer to the user
-    response = invoke_qa_chain(qa_chain, user_request)
+    # Extract the content of the retrieved docs
+    docs_content = '\n\n'.join(doc.page_content for doc in retrieved_docs)
+
+    # Prompt template
+    retrieval_qa_chat_prompt_template = PromptTemplate.from_template(RETRIEVAL_QA_PROMPT_TEMPLATE)
+
+    # Prompt
+    retrieval_qa_chat_prompt = retrieval_qa_chat_prompt_template.format(input=user_request, context=docs_content)
+
+    # Call the LLM
+    answer = sambanova_llm.llm.invoke(retrieval_qa_chat_prompt)
+
+    # Build the response with the answer and the urls
+    response: Dict[str, str | List[Document]] = dict()
+    response['answer'] = answer
+    response['context'] = retrieved_docs
 
     return response
 
@@ -94,20 +126,18 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
         )
 
 
-def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, VectorStoreRetriever]:
+def get_vectorstore(documents: List[Document]) -> Chroma:
     """
     Get the retriever for a given session id and documents.
 
     Args:
         documents: List of documents to be used for retrieval.
-        vectorstore_registry: Registry of vectorstores to be used in retrieval.
-            Defaults to an empty registry.
 
     Returns:
-        A tuple with the vectorstore registry and the current session id.
+        The vectorstore.
 
-    Raisese:
-        Exception: If a vectorstore and a retriever cannot be instantiated.
+    Raises:
+        Exception: If a vectorstore cannot be instantiated.
     """
     # Load config
     config = _get_config_info(CONFIG_PATH)
@@ -120,52 +150,12 @@ def get_vectorstore_retriever(documents: List[Document]) -> Tuple[Chroma, Vector
 
     # Instantiate the vectorstore with an explicit in-memory configuration
     try:
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
         vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
-        raise VectorStoreException('Could not instantiate the vectorstore.')
+        raise Exception('Could not instantiate the vectorstore.')
 
     if not isinstance(vectorstore, Chroma):
         raise Exception('Could not instantiate the vectorstore.')
 
-    # Instantiate the retriever
-    retriever = vectorstore.as_retriever(
-        search_kwargs={
-            'k': retrieval_info['k_retrieved_documents'],
-        },
-    )
-
-    if not isinstance(retriever, VectorStoreRetriever):
-        raise Exception(f'Could not retrieve the retriever.')
-
-    return vectorstore, retriever
-
-
-def get_qa_chain(retriever: VectorStoreRetriever) -> Any:
-    """
-    Get a retrieval QA chain using the provided vectorstore `as retriever`.
-
-    Args:
-        retriever: Retriever to use for the QA chain.
-
-    Returns:
-        A retrieval QA chain using the provided retriever.
-
-    Raises:
-        TypeError: If `retriever` is not of type `langchain_core.vectorstores.base.VectorStoreRetriever`.
-    """
-    if not isinstance(retriever, VectorStoreRetriever):
-        raise TypeError(
-            '`retriever` should be a `langchain_core.vectorstores.base.VectorStoreRetriever`. '
-            f'Got type {type(retriever)}.'
-        )
-
-    # The Retrieval QA prompt
-    retrieval_qa_chat_prompt = PromptTemplate.from_template(
-        template=QA_RETRIEVAL_PROMPT_TEMPLATE,
-    )
-
-    # Create a retrieval-based QA chain
-    combine_docs_chain = create_stuff_documents_chain(sambanova_llm.llm, retrieval_qa_chat_prompt)
-    qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
-
-    return qa_chain
+    return vectorstore
