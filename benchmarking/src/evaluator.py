@@ -185,7 +185,8 @@ def main() -> None:
             '--multimodal-image-size',
             choices=['na', 'small', 'medium', 'large'],
             required=True,
-            help="The image size to select if a vision model is going to be evaluated. If no multimodal model will be used, select 'na'.",
+            help="The image size to select if a vision model is going to be evaluated.\
+                If no multimodal model will be used, select 'na'.",
         )
         parser.add_argument(
             '--num-input-tokens',
@@ -265,7 +266,8 @@ def main() -> None:
             '--multimodal-image-size',
             choices=['na', 'small', 'medium', 'large'],
             required=True,
-            help="The image size to select if a vision model is going to be evaluated. If no multimodal model will be used, select 'na'.",
+            help="The image size to select if a vision model is going to be evaluated.\
+                If no multimodal model will be used, select 'na'.",
         )
         
         parser.add_argument(
