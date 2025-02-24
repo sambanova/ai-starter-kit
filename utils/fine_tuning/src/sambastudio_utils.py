@@ -1,3 +1,4 @@
+import importlib.util
 import logging
 import os
 import subprocess
@@ -21,7 +22,7 @@ logging.basicConfig(
 )
 
 
-def setup_generative_data_prep() -> None:
+def setup_generative_data_prep(force_gen_data_prep_install: bool = False) -> None:
     """
     Configures the generative data preparation module.
 
@@ -29,43 +30,53 @@ def setup_generative_data_prep() -> None:
     then installs the generative data preparation module using pip.
     If any errors occur during the process, an exception is raised.
 
+    Args:
+    - force_gen_data_prep_install (bool): whether or not to force reinstallation
+
     Returns:
         None
     """
 
     generative_data_prep_dir = os.path.join(fine_tuning_dir, 'generative_data_prep')
-    # init and update generative data preparation submodule
-    command = ['git', 'submodule', 'update', '--recursive', '--init', generative_data_prep_dir]
-    response = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-    )
-    for line in response.stdout.split('\n'):
-        if len(line) > 0:
-            logging.info(line.strip())
-    for line in response.stderr.split('\n'):
-        if len(line) > 0:
-            logging.error(line.strip())
-    if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
 
-    # install generative data preparation module
-    command = ['pip', 'install', generative_data_prep_dir]
-    response = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-    )
-    for line in response.stdout.split('\n'):
-        if len(line) > 0:
-            logging.info(line.strip())
-    for line in response.stderr.split('\n'):
-        if len(line) > 0:
-            logging.error(line.strip())
-    if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
-    logging.info('Gen data preparation module set up successfully')
+    # Check if the package is already installed
+    package_spec = importlib.util.find_spec('generative_data_prep')
+    if package_spec is not None and not force_gen_data_prep_install:
+        logging.info('generative_data_prep is already installed. Skipping installation.')
+
+    else:
+        # init and update generative data preparation submodule
+        command = ['git', 'submodule', 'update', '--recursive', '--init', generative_data_prep_dir]
+        response = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+        )
+        for line in response.stdout.split('\n'):
+            if len(line) > 0:
+                logging.info(line.strip())
+        for line in response.stderr.split('\n'):
+            if len(line) > 0:
+                logging.error(line.strip())
+        if response.returncode != 0:
+            raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
+
+        # install generative data preparation module
+        command = ['pip', 'install', generative_data_prep_dir]
+        response = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+        )
+        for line in response.stdout.split('\n'):
+            if len(line) > 0:
+                logging.info(line.strip())
+        for line in response.stderr.split('\n'):
+            if len(line) > 0:
+                logging.error(line.strip())
+        if response.returncode != 0:
+            raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
+        logging.info('Gen data preparation module set up successfully')
 
 
 def run_generative_data_prep_pipeline(
@@ -143,7 +154,7 @@ def run_generative_data_prep_pipeline(
         if len(line) > 0:
             logging.error(line.strip())
     if response.returncode != 0:
-        raise Exception(f"Error executing command: {''.join(command)}", response.stderr)
+        raise Exception(f'Error executing command: {"".join(command)}', response.stderr)
     logging.info('Gen data preparation pipeline ran successfully')
 
 
@@ -198,9 +209,11 @@ def gen_data_prep_pipeline(
     completion_keyword: str = 'completion',
     num_training_splits: int = 32,
     apply_chat_template: bool = False,
+    force_gen_data_prep_install: bool = False,
 ) -> str:
     """
-    Merges input JSONL files, sets up and runs the generative data preparation pipeline.
+    checks ig dataset is not already created, Merges input JSONL files,
+    then sets up and runs the generative data preparation pipeline.
 
     Args:
     - input_files (Union[list, str]): A list of input JSONL file paths or a single JSONL file path.
@@ -214,14 +227,22 @@ def gen_data_prep_pipeline(
     - num_training_splits (int): number of training splits to generate. Default is 32
     - apply_chat_template (bool): Whether to tokenize the data using the
         tokenizer_config.json chat_template. Default is False
+    -force_gen_data_prep_install (bool): force the re-installation of generative data preparation
+        repository package. Default is false
 
     see more: https://github.com/sambanova/generative_data_prep?tab=readme-ov-file#flags
 
     Returns:
     - str: The path of the output directory where the processed dataset is stored.
     """
+
     merged_jsonl_file = merge_jsonl_files(input_files)
-    setup_generative_data_prep()
+    setup_generative_data_prep(force_gen_data_prep_install)
+
+    if os.path.exists(output_path) and os.listdir(output_path):
+        logging.warning(f'Training dataset already exists at {output_path} and will not be regenerated.')
+        return output_path
+
     run_generative_data_prep_pipeline(
         merged_jsonl_file,
         output_path,
