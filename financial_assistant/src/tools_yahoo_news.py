@@ -233,7 +233,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
             if url in general_urls:
                 # Find all the links mentioned in the webpage
                 links = soup.find_all('a')
-                link_urls.extend([link['href'] for link in links])  # type: ignore
+                link_urls.extend([link['href'] for link in links])
             else:
                 link_urls.append(url)
         else:
@@ -242,7 +242,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
     # Remove duplicate URLs from the list of links
     link_urls = list(set(link_urls))
 
-    return link_urls[0:MAX_URLS]  # type: ignore
+    return link_urls[0:MAX_URLS]
 
 
 def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[str, List[str]]:
