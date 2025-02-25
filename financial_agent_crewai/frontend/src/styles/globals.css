@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-background-main: rgba(15, 17, 23);
+  --color-background-secondary: rgba(30, 41, 56);
+}
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer components {
+  .sn-backdrop {
+    @apply bg-white dark:text-white dark:bg-background-main;
+  }
+  .sn-background {
+    @apply bg-white dark:bg-background-main;
+  }
+  .sn-background-secondary {
+    @apply bg-gray-100 dark:bg-background-secondary;
+  }
+  .sn-button {
+    @apply bg-orange-500 hover:enabled:bg-orange-600 disabled:opacity-50 text-white focus:outline-white focus:outline-1 rounded-lg px-6 py-3;
+  }
+  .sn-icon-button {
+    @apply dark:text-white hover:text-orange-500;
+  }
+  .sn-icon-button-secondary {
+    @apply text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400;
+  }
+  .sn-text-primary {
+    @apply text-black dark:text-white;
+  }
+  .sn-text-secondary {
+    @apply text-gray-400;
+  }
+  .sn-header {
+    @apply shadow-md dark:shadow-sm dark:shadow-white dark:bg-background-secondary/30;
+  }
+  .sn-input-text {
+    @apply text-black dark:text-white placeholder:text-gray-400 disabled:text-gray-500 focus:text-gray-600 dark:focus:text-gray-300 border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500;
+  }
+  .sn-border {
+    @apply border border-gray-400 dark:border-gray-100/50 rounded-xl;
+  }
+  .sn-border-shadowed {
+    @apply border border-gray-100 shadow-lg dark:shadow-sm dark:shadow-gray-100 rounded-xl;
+  }
+  .sn-dropdown-background {
+    @apply bg-white dark:bg-background-main hover:bg-gray-100 dark:hover:bg-background-secondary/70;
+  }
+  .sn-dropdown-selected-background {
+    @apply bg-gray-200 dark:bg-background-secondary hover:bg-gray-200 dark:hover:bg-background-secondary/60;
+  }
+}
