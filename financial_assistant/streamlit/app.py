@@ -115,10 +115,10 @@ def main() -> None:
                 streamlit.session_state.pdf_generation_dir,
             ]
 
-            if prod_mode:
-                # In production mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
+            # In production mode
+            create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
+            if prod_mode:
                 # In production, schedule deletion after EXIT_TIME_DELTA minutes
                 try:
                     schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)

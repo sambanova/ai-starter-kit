@@ -127,10 +127,10 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="code_copilot/README.md">Code Copilot</a></td>
+<td width="20%"><a href="integrations/continue/README.md">Code Copilot</a></td>
 <td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Advanced AI Capabilities </td>  
+<td width="20%"> Integrations </td>  
 </tr>
 
 <tr>
