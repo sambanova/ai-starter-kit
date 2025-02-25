@@ -228,6 +228,11 @@ enterprise_knowledge_retriever/output
 
 =======
 
+# financial_agent_crewai
+financial_agent_crewai/cache/*
+
+=======
+
 #financial_assistant
 financial_assistant/streamlit/cache/*
 scratch/financial_assistant/cache/*

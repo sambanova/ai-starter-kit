@@ -4,3 +4,5 @@ langchain-community==0.3.16
 sseclient-py==1.8.0
 python-dotenv==1.0.1
 langchain-sambanova==0.1.0
+pandas==2.2.3
+seaborn==0.13.2

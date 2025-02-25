@@ -147,7 +147,7 @@ class CustomTextTestResult(unittest.TextTestResult):
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(DCTestCase)
     test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
-    #test_result = unittest.TextTestRunner().run(suite)
+    # test_result = unittest.TextTestRunner().run(suite)
 
     logger.info('\nTest Results:')
     assert hasattr(test_result, 'test_results')

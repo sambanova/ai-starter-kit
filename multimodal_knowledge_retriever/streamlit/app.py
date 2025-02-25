@@ -39,8 +39,9 @@ LVLM_MODELS = [
 # Available models in dropdown menu
 LLM_MODELS = [
     'Meta-Llama-3.1-70B-Instruct',
-    'DeepSeek-R1-Distill-Llama-70B',
     'Meta-Llama-3.3-70B-Instruct',
+    'DeepSeek-R1',
+    'DeepSeek-R1-Distill-Llama-70B',
     'Llama-3.1-Tulu-3-405B',
     'Meta-Llama-3.1-405B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
