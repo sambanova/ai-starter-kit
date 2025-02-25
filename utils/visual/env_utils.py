@@ -49,14 +49,17 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
 
 
 def env_input_fields(additional_env_vars: List[str] = [], mode: str = 'SambaNova Cloud') -> Tuple[str, Any]:
+    SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
     if additional_env_vars is None:
         additional_env_vars = []
 
     if mode == 'SambaNova Cloud':
+        url = st.text_input('SAMBANOVA CLOUD URL', value=st.session_state.get('SAMBANOVA_URL', SAMBANOVA_URL), type='password')
         api_key = st.text_input(
             'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
         )
         additional_vars = {}
+        additional_vars['SAMBANOVA_URL'] = url
     elif mode == 'SambaStudio':
         url = st.text_input('SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password')
         api_key = st.text_input(
