@@ -29,8 +29,8 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-pdf_file_path = "cache/report.pdf"
-md_file_path = "cache/report.md"
+pdf_file_path = "src/cache/report.pdf"
+md_file_path = "src/cache/report.md"
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
