@@ -41,7 +41,11 @@ from langchain_community.chat_models import ChatSambaNovaCloud
 from langchain_core.messages import HumanMessage
 from openai import OpenAI
 
-from utils.tests.utils_test import audio_requests, image_to_base64, load_encode_audio
+from utils.tests.utils_test import (
+    # audio_requests, 
+    image_to_base64, 
+    load_encode_audio
+)
 
 load_dotenv()
 
