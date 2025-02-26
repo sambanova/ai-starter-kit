@@ -57,7 +57,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'benchmarking': (
         'python src/evaluator.py '
         '--mode synthetic '
-        "--model-names 'llama3-8b llama3-70b llama3-405b' "
+        "--model-names 'Meta-Llama-3.1-8B-Instruct Meta-Llama-3.1-70B-Instruct Meta-Llama-3.1-405B-Instruct' "
         "--results-dir './data/results/llmperf' "
         '--num-concurrent-requests 1 '
         '--timeout 600 '

@@ -43,7 +43,7 @@ from prompt_engineering.src.llm_management import LLMManager
 # load env variables
 load_dotenv(os.path.join(repo_dir, '.env'))
 
-MODEL = 'llama3-405b'
+MODEL = 'Meta-Llama-3.1-405B-Instruct'
 MODEL_PROMPT = 'Llama3'
 
 
