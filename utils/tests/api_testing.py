@@ -194,14 +194,14 @@ class TestAPIModel(unittest.TestCase):
 
     def test_client_bad_model(self) -> None:
         model = 'parrot'
-        with self.assertRaises(openai.BadRequestError) as context:
+        with self.assertRaises(openai.NotFoundError) as context:
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[{'role': 'user', 'content': text_prompt}],
                 stream=False,
             )
             logger.info(f'Bad request: {response}')
-        self.assertIn(f'Unknown model: {model}', str(context.exception))
+        self.assertIn("Error code: 404 - {'error': 'Model not found'}", str(context.exception))
 
     def test_langchain_chat_completion_text(self) -> None:
         messages = [
