@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
-
 from src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
 
 load_dotenv()

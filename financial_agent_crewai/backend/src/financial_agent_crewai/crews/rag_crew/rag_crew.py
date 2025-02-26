@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
-
 from src.financial_agent_crewai.tools.general_tools import (
     convert_csv_source_to_txt_report_filename,
 )

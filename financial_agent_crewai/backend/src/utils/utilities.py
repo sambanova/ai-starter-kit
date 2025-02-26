@@ -1,19 +1,18 @@
+import asyncio
 import base64
 import json
 import os
 import re
 import shutil
-import asyncio
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Match, Optional
-from typing import AsyncGenerator
+from queue import Queue
+from typing import Any, AsyncGenerator, Dict, Generator, List, Match, Optional
 
 import markdown
 import pandas
 import weasyprint  # type: ignore
-from queue import Queue
 from bs4 import BeautifulSoup
 
 
@@ -39,9 +38,9 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
         queue (Queue): The queue to retrieve log messages from.
 
     Returns:
-        AsyncGenerator[str, None]: An asynchronous generator that yields log 
-                                   messages (as strings) from the queue. The 
-                                   generator stops when a `None` value is 
+        AsyncGenerator[str, None]: An asynchronous generator that yields log
+                                   messages (as strings) from the queue. The
+                                   generator stops when a `None` value is
                                    encountered in the queue.
     """
     while True:
