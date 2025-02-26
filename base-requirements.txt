@@ -1,11 +1,12 @@
 # Core dependencies
 llama-index==0.11.17
 llama-index-llms-langchain==0.4.2
-langchain==0.3.9
-langchain-core==0.3.21
+langchain==0.3.16
+langchain-sambanova==0.1.0
+langchain-core==0.3.33
 langchain-milvus==0.1.7rc2
 langchain-chroma == 0.1.4
-langchain-community==0.3.9
+langchain-community==0.3.16
 langchain-experimental==0.3.2
 langchain-huggingface==0.1.2
 langgraph==0.2.28
@@ -38,8 +39,8 @@ numpy==1.26.0
 sqlitedict==2.1.0
 faiss-cpu==1.7.4
 chromadb==0.5.23
-PyMuPDF==1.23.4
-PyMuPDFb==1.23.3
+PyMuPDF==1.25.2
+PyMuPDFb==1.24.10
 pypandoc==1.13
 pypandoc_binary==1.13
 python-docx==1.1.2
@@ -88,7 +89,7 @@ Jinja2==3.1.4
 
 # Data sources
 sec-downloader==0.11.1
-yfinance==0.2.52
+yfinance==0.2.54
 
 # Development tools
 ipykernel==6.29.4
@@ -100,9 +101,9 @@ ruamel.yaml==0.18.6
 # Schedule
 schedule==1.2.2
 
-# llm-eval
-weave==0.51.1
-wandb==0.18.5
+#llm-eval
+weave==0.51.31
+wandb==0.19.4
 
 # client
 openai==1.59.7
