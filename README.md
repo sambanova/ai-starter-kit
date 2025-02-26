@@ -17,7 +17,9 @@ Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">
 
 # Available AI Starter Kits
 
-The table belows lists the available kits, which are grouped into five categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities, 5) integrations.
+The table below lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities.
+
+For functionalities related to third-party integrations, find a list in our [Integrations folder](https://github.com/sambanova/integrations).
 
 **Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
 
@@ -127,7 +129,7 @@ The table belows lists the available kits, which are grouped into five categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="https://github.com/sambanova/integrations/continue/README.md">Code Copilot</a></td>
+<td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
 <td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Integrations </td>  
@@ -166,13 +168,6 @@ The table belows lists the available kits, which are grouped into five categorie
 <td width="40%">App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces.</td>
 <td width="20%"> SambaNova Cloud</td>
 <td width="20%"> Advanced AI Capabilities </td>
-</tr>
-
-<tr>
-<td width="20%"><a href="https://github.com/sambanova/integrations/README.md"> Framework Integrations</a></td>
-<td width="40%">Set of Integrations to multiple GenAI integrations including CrewAI, Haystack, Llamaindex, instructor and several others</td>
-<td width="20%"> SambaNova Cloud</td>
-<td width="20%"> Integrations </td>
 </tr>
 
 </tbody>
