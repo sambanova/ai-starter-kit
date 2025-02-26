@@ -8,6 +8,22 @@ services:
       - 8000:8000
     volumes:
       - ./backend:/app/financial_agent_crewai
+      # - ./backend:/app
     env_file:
-        - ./backend/.env
+      - ./backend/.env
     command: uvicorn financial_agent_crewai.app:app --host 0.0.0.0 --port 8000 --reload
+    # command: uvicorn src.app:app --host 0.0.0.0 --port 8000 --reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - 5173:5173
+    stdin_open: true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
+    command: yarn dev --host
