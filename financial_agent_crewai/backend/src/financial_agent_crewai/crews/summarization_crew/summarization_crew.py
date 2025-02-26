@@ -4,7 +4,7 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
+from src.financial_agent_crewai.tools.report_tools import ReportSummary
 
 load_dotenv()
 

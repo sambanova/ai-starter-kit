@@ -19,38 +19,38 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
+from .financial_agent_crewai.config import *
+from .financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
+from .financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
+from .financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
     GenericResearchCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sorting_hat_crew.sorting_hat_crew import (
+from .financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
+from .financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
+from .financial_agent_crewai.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
+from .financial_agent_crewai.crews.sorting_hat_crew.sorting_hat_crew import (
     SortingHatCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.summarization_crew.summarization_crew import (
+from .financial_agent_crewai.crews.summarization_crew.summarization_crew import (
     SummarizationCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_news_crew.yfinance_news_crew import (
+from .financial_agent_crewai.crews.yfinance_news_crew.yfinance_news_crew import (
     YFinanceNewsCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
+from .financial_agent_crewai.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
     YFinanceStocksCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
+from .financial_agent_crewai.tools.general_tools import (
     SubQueriesList,
     convert_csv_source_to_txt_report_filename,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
-from financial_agent_crewai.utils.utilities import *
+from .financial_agent_crewai.tools.report_tools import ReportSummary
+from .financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from .utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()

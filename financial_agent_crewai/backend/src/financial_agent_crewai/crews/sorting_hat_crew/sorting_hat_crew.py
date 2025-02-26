@@ -4,7 +4,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
 
 load_dotenv()
 from crewai import LLM

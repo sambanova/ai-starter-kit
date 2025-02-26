@@ -12,7 +12,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from pydantic import BaseModel, Field
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
+from src.financial_agent_crewai.config import *
 
 # Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4

@@ -4,10 +4,10 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
+from src.financial_agent_crewai.tools.general_tools import (
     convert_csv_source_to_txt_report_filename,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
+from src.financial_agent_crewai.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
 
 load_dotenv()
 

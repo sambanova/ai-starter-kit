@@ -7,11 +7,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from financial_agent_crewai.queue import StreamToQueue
-from financial_agent_crewai import schemas
-from financial_agent_crewai.main import FinancialFlow
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.utils.utilities import *
+from .streaming_queue import StreamToQueue
+from . import schemas
+from .main import FinancialFlow
+from .financial_agent_crewai.config import *
+from .utils.utilities import *
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
