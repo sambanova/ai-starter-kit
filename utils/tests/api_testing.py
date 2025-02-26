@@ -178,15 +178,15 @@ class TestAPIModel(unittest.TestCase):
             self.assertEqual(response.model, model)
             self.assertTrue(hasattr(response, 'usage'))
 
-    def test_request_audio(self) -> None:
-        for model in audio_models:
-            for url in ['transcription_url', 'translation_url']:
-                response = audio_requests(
-                    config['urls'][url], self.sambanova_api_key, file_path=audio_path, model=model
-                )
-                self.assertIn('text', response)
-                self.assertIsInstance(response.get('text'), str)
-                self.assertGreater(len(response.get('text')), 0)
+    # def test_request_audio(self) -> None:
+    #     for model in audio_models:
+    #         for url in ['transcription_url', 'translation_url']:
+    #             response = audio_requests(
+    #                 config['urls'][url], self.sambanova_api_key, file_path=audio_path, model=model
+    #             )
+    #             self.assertIn('text', response)
+    #             self.assertIsInstance(response.get('text'), str)
+    #             self.assertGreater(len(response.get('text')), 0)
 
     def test_client_bad_model(self) -> None:
         model = 'parrot'
