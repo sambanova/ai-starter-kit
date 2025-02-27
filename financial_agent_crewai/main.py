@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
-from langchain_sambanova import ChatSambaNovaCloud
+from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
 
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
