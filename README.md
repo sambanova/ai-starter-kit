@@ -17,7 +17,9 @@ Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">
 
 # Available AI Starter Kits
 
-The table belows lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities. 
+The table below lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities.
+
+For functionalities related to third-party integrations, find a list in our [Integrations folder](https://github.com/sambanova/integrations).
 
 **Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
 
@@ -127,7 +129,7 @@ The table belows lists the available kits, which are grouped into four categorie
 </tr>
 
 <tr>
-<td width="20%"><a href="integrations/continue/README.md">Code Copilot</a></td>
+<td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
 <td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Integrations </td>  
@@ -172,6 +174,8 @@ The table belows lists the available kits, which are grouped into four categorie
 </table>
 
 # Getting Started 
+
+Go to [SambaNova Cloud Quickstart Guide](./quickstart/README.md) If is your first time using the AI State Kits and you want to try out simple examples. Follow the next steps to read more detailed instructions or if you ar a SambaStudio user. 
 
 ## Getting a SambaNova API key and setting your generative models
 
@@ -226,11 +230,8 @@ To integrate your embedding model deployed on SambaStudio with this AI starter k
 is entered in the `.env` file as:
 
 ``` bash
-SAMBASTUDIO_EMBEDDINGS_BASE_URL="https://api-stage.sambanova.net"
-SAMBASTUDIO_EMBEDDINGS_BASE_URI="api/predict/generic"
-SAMBASTUDIO_EMBEDDINGS_PROJECT_ID="12345678-9abc-def0-1234-56789abcdef0"
-SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID="456789ab-cdef-0123-4567-89abcdef0123"
-SAMBASTUDIO_EMBEDDINGS_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
+SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 ```
 
 ## Run the desired starter kit
@@ -240,7 +241,7 @@ Go to the `README.md` of the starter kit you want to use and follow the instruct
 ## Additional information
 
 <details>
-<summary>Use Sambanova's LLMs and Langchain wrappers</summary>
+<summary>Use Sambanova's LLMs and Langchain chat model wrappers</summary>
 
 ### LLM Wrappers
 
@@ -248,40 +249,36 @@ Set your environment as shown in [integrate your model](#integrate-your-model-in
 
 #### Using Sambastudio LLMs
 
-1. Import the **SambaStudio** langchain community wrapper in your project and define your **SambaStudio* LLM:
+1. Import the **SambaStudio** langchain integration in your project and define your **SambaStudio* ChatModel:
+
+``` bash
+pip install langchain-sambanova
+```
 
 - If using a Bundle endpoint:
 
 ```python
-from langchain_community.llms.sambanova import SambaStudio
+from langchain_sambanova import ChatSambaStudio
 
 load_dotenv('.env')
 
-llm = SambaStudio(
-    model_kwargs={
-      "do_sample": False,
-      "max_tokens_to_generate": 512,
-      "temperature": 0.0,
-      "select_expert": "Meta-Llama-3-8B-Instruct",
-      "process_prompt": "False"
-      },
+llm = ChatSambaStudio(
+  max_tokens_to_generate = 512,
+  temperature = 0.0,
+  model = "Meta-Llama-3-8B-Instruct"
 )
 ```
 
 - If using a single model endpoint
 
 ```python
-from langchain_community.llms.sambanova import SambaStudio
+from langchain_sambanova import ChatSambaStudio
 
 load_dotenv('.env')
 
-llm = SambaStudio(
-    model_kwargs={
-      "do_sample": False,
-      "max_tokens_to_generate": 512,
-      "temperature": 0.0,
-      "process_prompt": "False"
-      },
+llm = ChatSambaStudio(
+  max_tokens_to_generate = 512,
+  temperature = 0.0
 )
 ```
 
@@ -295,15 +292,19 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Using SambaNova Cloud LLMs
 
-1. Import our **SambaNovaCloud** langchain internal wrapper in your project and define your **SambaNovaCloud** LLM:
+1. Import our **SambaNovaCloud** langchain integration in your project and define your **SambaNovaCloud* ChatModel:
 
+
+``` bash
+pip install langchain-sambanova
+```
 
 ```python
-from util..model_wrappers.llms.langchain_llms import SambaNovaCloud
+from langchain_sambanova import ChatSambaNovaCloud
 
 load_dotenv('.env')
 
-llm = SambaNovaCloud(model='Meta-Llama-3.1-70B-Instruct')
+llm = ChatSambaNovaCloud(model='Meta-Llama-3.3-70B-Instruct')
 ```
 
 2. Use the model
@@ -316,19 +317,23 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Embedding Wrapper
 
-1. Import the **SambaStudioEmbedding** langchain community wrapper in your project and define your **SambaStudioEmbeddings** embedding:
+1. Import the **SambaStudioEmbedding** langchain integration in your project and define your **SambaStudioEmbedding*  embedding:
+
+``` bash
+pip install langchain-sambanova
+```
 
 - If using a Bundle endpoint
 
 ```python
-from langchain_community.embeddings import SambaStudioEmbeddings
+from langchain_sambanova import SambaStudioEmbeddings
 
 load_dotenv('.env')
 
 embedding = SambaStudioEmbeddings(
               batch_size=1,
               model_kwargs = {
-                  "select_expert":e5-mistral-7b-instruct
+                  "select_expert":"e5-mistral-7b-instruct"
                   }
               )
 ```
@@ -336,7 +341,7 @@ embedding = SambaStudioEmbeddings(
 - If using a single embedding model endpoint
 
 ```python
-from langchain_community.embeddings import SambaStudioEmbeddings
+from langchain_sambanova import SambaStudioEmbeddings
 
 load_dotenv('.env')
 
@@ -402,11 +407,11 @@ node app.js
 There are two approaches to setting up your virtual environment for the AI Starter Kits:
 
 1. **Individual Kit Setup (Traditional Method)**
-2. **Base Environment Setup (WIP)**
+2. **Base Environment Setup**
 
 ### 1. Individual Kit Setup
 
-Each starter kit has its own `README.md` and `requirements.txt` file. You can set up a separate virtual environment for each kit by following the instructions in their respective directories. This method is suitable if you're only interested in running a single kit or prefer isolated environments for each project.
+Each starter kit (see table [above](#available-ai-starter-kits)) has its own `README.md` and `requirements.txt` file. You can set up a separate virtual environment for each kit by following the instructions in their respective directories. This method is suitable if you're only interested in running a single kit or prefer isolated environments for each project.
 
 To use this method:
 1. Navigate to the specific kit's directory
@@ -438,10 +443,7 @@ Benefits of the base environment approach:
 5. Installs system dependencies like Tesseract OCR and Poppler.
 6. Provides Docker-based setup options for consistent environments across different systems.
 
-
-
 #### Setting Up the Base Environment
-
 
 1. **Install and Set Up the Base Environment:**
 
@@ -462,7 +464,6 @@ cd path/to/starter_kit
 ```
 Within the starter kit there will be instructions on how to start the kit. You can skip the virtual environment creation 
 part in the kits README.md as we've done it here.
-
 
 
 ### Parsing Service Management
@@ -564,7 +565,6 @@ This is likely due to missing `qpdf` dependency. The Makefile should automatical
 
 If you continue to face issues, please ensure your system meets all the requirements for building `pikepdf` and consider checking the [pikepdf documentation](https://pikepdf.readthedocs.io/en/latest/installation.html) for more detailed installation instructions.
 
-
 ### Parsing service issues
 
 If the parsing service isn't starting or is behaving unexpectedly:
@@ -615,4 +615,11 @@ If you continue to experience issues, please [open an issue](https://github.com/
 - Some kits may require additional setup steps. Always refer to the specific README of the kit you're using.
 </details>
 
+### API Reference
+
+- Find more information about SambaNova Cloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
+
+- Find more information about SambaStudio [here](https://docs.sambanova.ai/sambastudio/latest/index.html)
+
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
+
