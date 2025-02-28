@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import sys
 from threading import Thread
@@ -74,7 +75,7 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
             financial_flow.kickoff()
         except Exception as e:
             logger.error(f'Error during agent flow: {str(e)}')
-            queue.put('{"type": "error", "message": "internal error during agent flow"}\n')
+            queue.put(json.dumps({'type': 'error', 'content': 'internal error during agent flow'}))
         finally:
             sys.stdout = sys.__stdout__  # Restore stdout
             queue.put(None)  # Signal end of logs
