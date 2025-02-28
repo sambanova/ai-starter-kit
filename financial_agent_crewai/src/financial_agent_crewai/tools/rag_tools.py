@@ -1,6 +1,7 @@
 import logging
 from typing import Any, List
 
+import chromadb
 import pandas
 from crewai import LLM
 from crewai.tools import BaseTool
@@ -147,6 +148,7 @@ def get_vectorstore(documents: List[Document]) -> Chroma:
 
     # Instantiate the vectorstore with an explicit in-memory configuration
     try:
+        chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
         vectorstore = Chroma.from_documents(documents=documents, embedding=embedding_model, persist_directory=None)
     except:
         raise Exception('Could not instantiate the vectorstore.')
