@@ -7,7 +7,6 @@ from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.general_tools import FilenameOutput
 from src.financial_agent_crewai.tools.yfinance_news_tools import YahooFinanceNewsTool
 
-
 load_dotenv()
 
 

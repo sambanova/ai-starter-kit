@@ -8,7 +8,6 @@ from src.financial_agent_crewai.tools.general_tools import FilenameOutput
 from src.financial_agent_crewai.tools.sec_edgar_tools import SecEdgarFilingRetriever
 from src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInput
 
-
 load_dotenv()
 
 

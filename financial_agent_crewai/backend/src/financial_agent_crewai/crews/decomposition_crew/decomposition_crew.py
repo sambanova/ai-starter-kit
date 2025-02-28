@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.general_tools import SubQueriesList
 
-
 load_dotenv()
 
 
