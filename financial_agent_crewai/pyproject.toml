@@ -5,7 +5,6 @@ description = "Financial Agent using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "chromadb==0.6.3",
     "langchain-chroma==0.2.2",
     "langchain-core==0.3.40",
     "langchain-huggingface==0.1.2",
