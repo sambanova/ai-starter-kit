@@ -4,7 +4,7 @@ import { LoaderCircle, Mic } from "lucide-react";
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
 import { SourcesType } from "@/stores/ResponseStore";
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
-import { useStreaming } from "@/hooks/useStreaming";
+import { useStreamingStore } from "@/stores/StreamingResponseStore";
 
 const SearchSection = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,12 +16,8 @@ const SearchSection = () => {
     source_yfinance_stocks: false,
   });
 
-  // const { isLoading, sendRequest } = useResponseStore();
-  const { isStreaming, startStream, clearMessages } = useStreaming();
+  const { isStreaming, startStream, clearMessages } = useStreamingStore();
   const { apiKeys } = useAPIKeysStore();
-  const missingKeys = Object.keys(apiKeys).filter(
-    (key) => apiKeys[key as keyof typeof apiKeys] === null,
-  );
 
   const sources = {
     source_generic_search: "Generic Google Search",
@@ -29,6 +25,9 @@ const SearchSection = () => {
     source_yfinance_news: "Yahoo Finance News",
     source_yfinance_stocks: "Yahoo Finance Stocks",
   };
+  const missingKeys = Object.keys(apiKeys).filter(
+    (key) => apiKeys[key as keyof typeof apiKeys] === null,
+  );
   const searchButtonIsDisabled =
     isStreaming ||
     missingKeys.length > 0 || // Disable if any API key is missing
@@ -49,6 +48,8 @@ const SearchSection = () => {
         source_yfinance_news: selectedSources.source_yfinance_news,
         source_yfinance_stocks: selectedSources.source_yfinance_stocks,
       });
+
+      setSearchQuery(null);
     }
   };
 

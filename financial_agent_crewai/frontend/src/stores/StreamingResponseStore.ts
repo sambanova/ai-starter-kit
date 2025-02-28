@@ -12,6 +12,7 @@ export interface StreamMessage {
 interface StreamingState {
   messages: StreamMessage[];
   isStreaming: boolean;
+  isFinished: boolean;
   error: string | null;
   startStream: (query: string, selectedSources: SourcesType) => Promise<void>;
   addMessage: (message: string) => void;
@@ -23,6 +24,7 @@ interface StreamingState {
 export const useStreamingStore = create<StreamingState>((set) => ({
   messages: [],
   isStreaming: false,
+  isFinished: false,
   error: null,
 
   addMessage: (content: string) =>
@@ -44,7 +46,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
   setIsStreaming: (isStreaming: boolean) => set({ isStreaming }),
 
   startStream: async (query: string, selectedSources: SourcesType) => {
-    set({ isStreaming: true, error: null });
+    set({ isStreaming: true, isFinished: false, error: null });
 
     try {
       const response = await fetch(`${BASE_URL}/agent/stream`, {
@@ -60,6 +62,11 @@ export const useStreamingStore = create<StreamingState>((set) => ({
           source_yfinance_stocks: selectedSources.source_yfinance_stocks,
         }),
       });
+
+      if (!response.ok) {
+        console.error(response);
+        throw new Error(`${response.status} - ${response.statusText}`);
+      }
 
       if (!response.body) {
         throw new Error("No response body");
@@ -91,7 +98,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "An error occurred" });
     } finally {
-      set({ isStreaming: false });
+      set({ isStreaming: false, isFinished: true });
     }
   },
 }));

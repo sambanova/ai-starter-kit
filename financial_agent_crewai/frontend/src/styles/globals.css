@@ -41,10 +41,10 @@
     @apply text-black dark:text-white placeholder:text-gray-400 disabled:text-gray-500 focus:text-gray-600 dark:focus:text-gray-300 border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-orange-500 focus:border-orange-500;
   }
   .sn-border {
-    @apply border border-gray-400 dark:border-gray-100/50 rounded-xl;
+    @apply border border-gray-400 dark:border-gray-100/50 rounded-xl my-4;
   }
   .sn-border-shadowed {
-    @apply border border-gray-100 shadow-lg dark:shadow-sm dark:shadow-gray-100 rounded-xl;
+    @apply border border-gray-100 shadow-lg dark:shadow-sm dark:shadow-gray-100 rounded-xl my-4;
   }
   .sn-dropdown-background {
     @apply bg-white dark:bg-background-main hover:bg-gray-100 dark:hover:bg-background-secondary/70;
