@@ -13,21 +13,59 @@ python src/evaluator.py \
 --llm-api sncloud
 
 # Notes:
-# 1. Replace <CUSTOM DATASET PATH HERE> with the path to your custom dataset.
+# Here are some examples of how to run the script with different models and API endpoints.
 #
-# 2. For Bundle Models, make sure to include the prefix "Bundle/" before the expert name.
-#   For example:
-#      --model-name "Bundle/Mistral-7B-Instruct-v0.2"
-#          OR
-#      --model-name "Bundle/Meta-Llama-3-8B-Instruct"
+# 1. SambaStudio 
+#   1.1 Instruct models
+
+# python src/evaluator.py \
+# --mode custom \
+# --model-name "Bundle/Meta-Llama-3-70B-Instruct-4096" \
+# --results-dir "./data/results/llmperf" \
+# --num-concurrent-requests 1 \
+# --timeout 600 \
+# --input-file-path "/Users/rodrigom/Desktop/aisk/benchmarking/custom_benchmark_test_data.jsonl" \
+# --save-llm-responses False \
+# --sampling-params '{"max_tokens_to_generate": 256}' \
+# --llm-api sambastudio
+
+#   1.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
+
+# python src/evaluator.py \
+# --mode custom \
+# --model-name "Meta-Llama-3.2-11B-Vision-Instruct" \
+# --results-dir "./data/results/llmperf" \
+# --num-concurrent-requests 1 \
+# --timeout 600 \
+# --input-file-path "<CUSTOM DATASET PATH HERE>" \
+# --save-llm-responses False \
+# --sampling-params '{"max_tokens_to_generate": 256}' \
+# --llm-api sambastudio
+
+# 2. SambaNova Cloud 
 #
-# 3. For Non-Bundle models, use the model name directly and remember to update and source the `.env` file for a new endpoint.
-#   For example:
-#      --model-name "Mistral-7B-Instruct-v0.2"
-#          OR
-#      --model-name "Meta-Llama-3-8B-Instruct"
-#
-# 4. For SambaNovaCloud endpoints, change the llm-api parameter to "snloud" and use the model name directly.
-#   For example:
-#      --model-names "Meta-Llama-3.1-8B-Instruct"
-#
+#   2.1 Instruct models
+
+# python src/evaluator.py \
+# --mode custom \
+# --model-name "Meta-Llama-3.3-70B-Instruct" \
+# --results-dir "./data/results/llmperf" \
+# --num-concurrent-requests 1 \
+# --timeout 600 \
+# --input-file-path "<CUSTOM DATASET PATH HERE>" \
+# --save-llm-responses False \
+# --sampling-params '{"max_tokens_to_generate": 256}' \
+# --llm-api sncloud
+
+#   2.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
+
+# python src/evaluator.py \
+# --mode custom \
+# --model-name "Llama-3.2-11B-Vision-Instruct" \
+# --results-dir "./data/results/llmperf" \
+# --num-concurrent-requests 1 \
+# --timeout 600 \
+# --input-file-path "<CUSTOM DATASET PATH HERE>" \
+# --save-llm-responses False \
+# --sampling-params '{"max_tokens_to_generate": 256}' \
+# --llm-api sncloud
