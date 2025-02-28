@@ -14,6 +14,26 @@ import markdown
 import pandas
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
+from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
+
+
+def read_json_from_file(file_path: str) -> dict:
+    """
+    Reads JSON data from a file.
+
+    Args:
+        file_path (str): The path to the JSON file.
+
+    Returns:
+        dict: The JSON data as a dictionary.
+    """
+    try:
+        with open(file_path, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return None
+    except json.JSONDecodeError:
+        return None
 
 
 def remove_ansi_escape_codes(text: str) -> str:
@@ -43,6 +63,7 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
                                    generator stops when a `None` value is
                                    encountered in the queue.
     """
+    agent_cache = set()
     while True:
         try:
             log_message = queue.get(timeout=0.1)  # Wait for new logs
@@ -50,7 +71,16 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
                 break
 
             clean_message = remove_ansi_escape_codes(log_message)
-            yield clean_message
+            agents_output = read_json_from_file(OUTPUT_LOG_FILE)
+            current_agent_output = (
+                json.dumps(agents_output[-1])
+                if agents_output is not None and agents_output[-1].get('status') == 'completed'
+                else None
+            )
+
+            if current_agent_output is not None and current_agent_output not in agent_cache:
+                agent_cache.add(current_agent_output)
+                yield current_agent_output
         except:
             await asyncio.sleep(0.01)  # Prevent high CPU usage
 
