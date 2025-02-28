@@ -4,7 +4,8 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
-from src.financial_agent_crewai.config import CACHE_DIR, MAX_NEWS
+from src.financial_agent_crewai.config import CACHE_DIR, MAX_NEWS, OUTPUT_LOG_FILE
+
 
 load_dotenv()
 
@@ -64,4 +65,5 @@ class GenericResearchCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )

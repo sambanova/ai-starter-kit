@@ -3,7 +3,9 @@ from typing import Any, Dict, List
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
+from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+
 
 load_dotenv()
 from crewai import LLM
@@ -61,4 +63,5 @@ class SortingHatCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )

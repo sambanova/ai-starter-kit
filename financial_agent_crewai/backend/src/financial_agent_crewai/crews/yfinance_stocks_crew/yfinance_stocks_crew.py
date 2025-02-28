@@ -5,8 +5,10 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
+from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.general_tools import FilenameOutputList
 from src.financial_agent_crewai.tools.yfinance_stocks_tools import YFinanceStocksTool
+
 
 load_dotenv()
 
@@ -83,4 +85,5 @@ class YFinanceStocksCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )

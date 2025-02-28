@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
+from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.general_tools import (
     convert_csv_source_to_txt_report_filename,
 )
@@ -72,4 +73,5 @@ class RAGCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )

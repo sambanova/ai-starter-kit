@@ -12,6 +12,9 @@ else:
 
 YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
 
+# CrewAI logging JSON file
+OUTPUT_LOG_FILE = str(CACHE_DIR / 'output_log_file.json')
+
 # Maximum number of words per section
 MAX_SECTION_WORDS = 1000
 

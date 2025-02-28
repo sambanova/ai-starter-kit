@@ -178,7 +178,7 @@ def interrogate_dataframe_pandasai(
     output_folder = YFINANCE_STOCKS_DIR / f'{ticker_symbol}'
 
     # Extract the list of dataframes
-    pandasai_dataframes_list = [dataframe for dataframe in dataframe_dict.values()]
+    pandasai_dataframes_list = [dataframe.dropna() for dataframe in dataframe_dict.values()]
 
     # Create a new pandasai agent
     pandasai_agent = Agent(

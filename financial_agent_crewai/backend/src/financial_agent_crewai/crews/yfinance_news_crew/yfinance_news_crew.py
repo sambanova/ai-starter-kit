@@ -3,8 +3,10 @@ from typing import Any, Dict, List
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
+from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from src.financial_agent_crewai.tools.general_tools import FilenameOutput
 from src.financial_agent_crewai.tools.yfinance_news_tools import YahooFinanceNewsTool
+
 
 load_dotenv()
 
@@ -62,4 +64,5 @@ class YFinanceNewsCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )
