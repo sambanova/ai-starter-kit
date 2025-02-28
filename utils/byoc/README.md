@@ -49,6 +49,16 @@ Clone the starter kit repo.
 ### Install an set up Snapi and Snsdk
 Follow the instructions in the [Snapi and Snsdk installation guide](https://docs.sambanova.ai/sambastudio/latest/cli-setup.html) to install and set up Snapi and Snsdk on your virtual environment.
 
+### Set your SambaStudio variables
+- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
+- Set your SambaStudio variables:
+
+``` bash
+SAMBASTUDIO_HOST_NAME="https://www.environment.com" # set with your environment URL (without `/` at the end)
+SAMBASTUDIO_ACCESS_KEY="**************" # set with your generated access key
+SAMBASTUDIO_TENANT_NAME="default" # Set with your tenant name
+```
+
 ### Install requirements
 Install the python dependencies in your previously created environment.
 
