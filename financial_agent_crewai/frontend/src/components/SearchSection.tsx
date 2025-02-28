@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LoaderCircle, Mic } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
 import { SourcesType } from "@/stores/ResponseStore";
@@ -7,7 +7,6 @@ import { useAPIKeysStore } from "@/stores/APIKeysStore";
 import { useStreamingStore } from "@/stores/StreamingResponseStore";
 
 const SearchSection = () => {
-  const [isRecording, setIsRecording] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [selectedSources, setSelectedSources] = useState<SourcesType>({
     source_generic_search: false,
@@ -25,6 +24,12 @@ const SearchSection = () => {
     source_yfinance_news: "Yahoo Finance News",
     source_yfinance_stocks: "Yahoo Finance Stocks",
   };
+  // const sources = {
+  //   source_generic_search: { name: "Generic Google Search", checked: false },
+  //   source_sec_filings: { name: "SEC Edgar Filings", checked: false },
+  //   source_yfinance_news: { name: "Yahoo Finance News", checked: false },
+  //   source_yfinance_stocks: { name: "Yahoo Finance Stocks", checked: false },
+  // };
   const missingKeys = Object.keys(apiKeys).filter(
     (key) => apiKeys[key as keyof typeof apiKeys] === null,
   );
@@ -33,10 +38,6 @@ const SearchSection = () => {
     missingKeys.length > 0 || // Disable if any API key is missing
     !Object.values(selectedSources).some((value) => value) || // Disable if no source is selected
     !searchQuery?.trim(); // Disable if search query is empty
-
-  const toggleRecording = () => {
-    setIsRecording((prevState) => !prevState);
-  };
 
   const performSearch = () => {
     if (searchQuery) {
@@ -66,22 +67,12 @@ const SearchSection = () => {
           {/* Search Input */}
           <input
             type="search"
-            className="w-full p-3 pr-12 rounded-lg border sn-input-text truncate"
+            className="w-full p-3 rounded-lg border sn-input-text truncate"
             value={searchQuery || ""}
             disabled={isStreaming}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="E.g. What is the research and development trend for Google in 2024?"
           />
-
-          {/* TODO: Voice Input Button */}
-          <button
-            onClick={toggleRecording}
-            disabled={isStreaming}
-            className="hidden cursor-pointer absolute right-4 top-1/2 transform -translate-y-1/2 p-2 sn-icon-button rounded-full transition-colors"
-            title="Voice Search"
-          >
-            <Mic className={`${isRecording && "animate-pulse"}`} />
-          </button>
         </div>
 
         {/* Sources dropdown */}
@@ -103,13 +94,6 @@ const SearchSection = () => {
           {isStreaming ? <LoaderCircle className="animate-spin" /> : "Search"}
         </button>
       </div>
-
-      {isRecording && (
-        <div className="mt-2 text-sm sn-text-primary flex items-center space-x-2">
-          <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <span>Recording... Click microphone again to stop</span>
-        </div>
-      )}
     </div>
   );
 };
