@@ -9,13 +9,13 @@ sys.path.append('./src')
 sys.path.append('./streamlit')
 
 import warnings
-from typing import List
+from typing import Dict
 
 import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, SAMBANOVA_URL
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -83,7 +83,9 @@ def main() -> None:
             # Mode selection
             st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
 
-            additional_env_vars: List[str] = []
+            additional_env_vars: Dict[str] = []
+            additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
+            
             if st.session_state.mode == 'SambaNova Cloud':
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio
@@ -93,6 +95,7 @@ def main() -> None:
 
             if not are_credentials_set(additional_env_vars):
                 api_key, additional_vars = env_input_fields(additional_env_vars, st.session_state.mode)
+
                 if st.button('Save Credentials'):
                     if st.session_state.mode == 'SambaNova Cloud':
                         message = save_credentials(api_key, additional_vars, prod_mode)
