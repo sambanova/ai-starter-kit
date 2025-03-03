@@ -1,11 +1,14 @@
 import netrc
 import os
-from typing import Union, Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import streamlit as st
 
 
-def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optional[Union[List[str], Dict[str,Any]]] = None) -> None:
+def initialize_env_variables(
+    prod_mode: bool = False, 
+    additional_env_vars: Optional[Union[List[str], Dict[str,Any]]] = None
+) -> None:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -49,7 +52,11 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
             raise ValueError('additional_env_vars must be a List or Dict')
 
 
-def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> None:
+def set_env_variables(
+    api_key: str, 
+    additional_vars: Optional[Dict[str, Any]] = None, 
+    prod_mode: bool = False
+) -> None:
     st.session_state.SAMBANOVA_API_KEY = api_key
     if additional_vars:
         for key, value in additional_vars.items():
@@ -62,7 +69,10 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
                 os.environ[key] = value
 
 
-def env_input_fields(additional_env_vars: Union[List[str], Dict[str, Any]] = None, mode: str = 'SambaNova Cloud') -> Tuple[str, Any]:
+def env_input_fields(
+    additional_env_vars: Union[List[str], Dict[str, Any]] = None, 
+    mode: str = 'SambaNova Cloud'
+) -> Tuple[str, Any]:
     if additional_env_vars is None:
         additional_env_vars = []
 
