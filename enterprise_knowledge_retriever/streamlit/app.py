@@ -255,6 +255,7 @@ def main() -> None:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
                 save_credentials('', '', prod_mode)  # type: ignore
+                st.session_state.document_retrieval = initialize_document_retrieval(prod_mode)
                 st.rerun()
 
         if are_credentials_set():
