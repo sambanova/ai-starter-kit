@@ -36,7 +36,7 @@ from utils.visual.env_utils import get_wandb_key
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
-load_dotenv(os.path.join(repo_dir, '.env'))
+load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
 # Handle the WANDB_API_KEY resolution before importing weave
 wandb_api_key = get_wandb_key()
