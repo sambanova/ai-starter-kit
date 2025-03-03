@@ -553,7 +553,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         request_configs = self.build_request_configs(
             sampling_params,
@@ -578,6 +577,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
+        start_time = time.monotonic()
 
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor() as executor:
@@ -943,7 +943,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             Exception: If an unexpected error occurs during the execution of requests.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -967,6 +966,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
+        start_time = time.monotonic()
 
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor() as executor:
@@ -1257,7 +1257,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             Exception: If an unexpected error occurs during the execution of requests.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1265,7 +1264,8 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
-
+        start_time = time.monotonic()
+        
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor() as executor:
             # Store futures for the tasks
