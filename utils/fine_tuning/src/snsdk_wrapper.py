@@ -1724,6 +1724,7 @@ class SnsdkWrapper:
             instances=instances,
             rdu_arch=rdu_arch,
             hyperparams=json.dumps(hyperparams),
+            inference_api_openai_compatible=True,
         )
 
         if create_endpoint_response['status_code'] == 200:
