@@ -24,12 +24,6 @@ const SearchSection = () => {
     source_yfinance_news: "Yahoo Finance News",
     source_yfinance_stocks: "Yahoo Finance Stocks",
   };
-  // const sources = {
-  //   source_generic_search: { name: "Generic Google Search", checked: false },
-  //   source_sec_filings: { name: "SEC Edgar Filings", checked: false },
-  //   source_yfinance_news: { name: "Yahoo Finance News", checked: false },
-  //   source_yfinance_stocks: { name: "Yahoo Finance Stocks", checked: false },
-  // };
   const missingKeys = Object.keys(apiKeys).filter(
     (key) => apiKeys[key as keyof typeof apiKeys] === null,
   );
