@@ -1545,7 +1545,12 @@ class SnsdkWrapper:
             # create composite model
             dependencies = [{'name': model} for model in model_list]
             create_composite_model_response = self.snsdk_client.add_composite_model(
-                name=model_name, description=description, dependencies=dependencies, rdu_required=rdu_required
+                name=model_name, 
+                description=description, 
+                dependencies=dependencies, 
+                rdu_required=rdu_required,
+                config_params={}, 
+                app="",
             )
 
             if create_composite_model_response['status_code'] == 200:
