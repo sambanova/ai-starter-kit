@@ -68,7 +68,7 @@ SAMBASTUDIO_TENANT_NAME="default" # Set with your tenant name
 Install the python dependencies in your previously created environment.
 
   ``` bash
-    cd ai_starter_kit/utils/byoc
+    cd ai_starter_kit/e2e_fine_tuning
     pip install -r requirements.txt
   ```
 
