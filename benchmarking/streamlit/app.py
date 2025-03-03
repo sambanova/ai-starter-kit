@@ -9,7 +9,7 @@ sys.path.append('./src')
 sys.path.append('./streamlit')
 
 import warnings
-from typing import Dict
+from typing import Any, Dict
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -83,7 +83,7 @@ def main() -> None:
             # Mode selection
             st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
 
-            additional_env_vars: Dict[str] = []
+            additional_env_vars: Dict[str, Any] = {}
             additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
             
             if st.session_state.mode == 'SambaNova Cloud':
