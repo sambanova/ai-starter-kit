@@ -16,6 +16,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from pandas.api.types import is_datetime64_any_dtype
 from pandasai import Agent
 from pydantic import BaseModel, Field
+
 from src.financial_agent_crewai.config import *
 from src.financial_agent_crewai.tools.general_tools import FilenameOutput, FilenameOutputList
 

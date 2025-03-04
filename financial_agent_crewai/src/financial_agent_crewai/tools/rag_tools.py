@@ -12,6 +12,7 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from pydantic import BaseModel, Field
+
 from src.financial_agent_crewai.config import *
 
 # Main text processing, RAG, and web scraping constants

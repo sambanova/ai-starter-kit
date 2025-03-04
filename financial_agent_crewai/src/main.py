@@ -87,6 +87,7 @@ class FinancialFlow(Flow):  # type: ignore
         source_yfinance_stocks: Optional[bool] = None,
         cache_path: Optional[str | Path] = None,
         verbose: bool = True,
+        sambanova_api_key: Optional[str] = None,
     ) -> None:
         """Initialize the Finance Flow."""
         super().__init__()
@@ -104,9 +105,6 @@ class FinancialFlow(Flow):  # type: ignore
         self.final_report_path = str(CACHE_DIR / 'report.md')
         self.report_list: List[str] = list()
         self.generic_report_name = str(CACHE_DIR / 'report_generic_search.txt')
-
-        # General LLM
-        self.llm = LLM(model=GENERAL_MODEL, temperature=TEMPERATURE)
 
         # Create cache path
         if cache_path is not None:
@@ -128,6 +126,12 @@ class FinancialFlow(Flow):  # type: ignore
         # Set the level of verbosity
         self.verbose = verbose
 
+        # Set the SAMBANOVA_API_KEY
+        if sambanova_api_key is not None:
+            self.sambanova_api_key = sambanova_api_key
+        else:
+            self.sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+
     @start()  # type: ignore
     def generic_research(self) -> Optional[str]:
         """Perform a generic research on the user query."""
@@ -135,7 +139,11 @@ class FinancialFlow(Flow):  # type: ignore
         if self.source_generic_search:
             # Call the Generic Research Crew
             GenericResearchCrew(
-                llm=LLM(model=GENERIC_RESEARCH_MODEL, temperature=TEMPERATURE),
+                llm=LLM(
+                    model=GENERIC_RESEARCH_MODEL,
+                    temperature=TEMPERATURE,
+                    api_key=self.sambanova_api_key,
+                ),
                 filename=self.generic_report_name,
             ).crew().kickoff(inputs={'query': self.query})
 
@@ -154,7 +162,13 @@ class FinancialFlow(Flow):  # type: ignore
         if self.source_sec_filings or self.source_yfinance_news or self.source_yfinance_stocks:
             # Call the Decomposition Crew
             query_list = (
-                DecompositionCrew(llm=LLM(model=DECOMPOSITION_MODEL, temperature=TEMPERATURE))
+                DecompositionCrew(
+                    llm=LLM(
+                        model=DECOMPOSITION_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    )
+                )
                 .crew()
                 .kickoff(inputs={'query': self.query})
                 .pydantic
@@ -178,7 +192,13 @@ class FinancialFlow(Flow):  # type: ignore
 
             # Lickoff the Sorting Hat Crew
             company_input_list = (
-                SortingHatCrew(llm=LLM(model=INFORMATION_EXTRACTION_MODEL, temperature=TEMPERATURE))
+                SortingHatCrew(
+                    llm=LLM(
+                        model=INFORMATION_EXTRACTION_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    )
+                )
                 .crew()
                 .kickoff(inputs={'query': decomposed_query})
                 .pydantic.inputs_list
@@ -201,7 +221,11 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the SEC EDGAR Crew
                 filename = (
                     SECEdgarCrew(
-                        llm=LLM(model=SEC_EDGAR_MODEL, temperature=TEMPERATURE),
+                        llm=LLM(
+                            model=SEC_EDGAR_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        ),
                         input_variables=filing_metadata,  # type: ignore
                     )
                     .crew()
@@ -215,7 +239,11 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the RAG Crew
                 RAGCrew(
                     filename=filename,
-                    llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=RAG_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                 ).crew().kickoff(
                     {'query': filing_metadata.query},  # type: ignore
                 )
@@ -250,7 +278,11 @@ class FinancialFlow(Flow):  # type: ignore
 
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                     output_file=convert_csv_source_to_txt_report_filename(global_sec_filename),
                 ).crew().kickoff(
                     {
@@ -279,7 +311,13 @@ class FinancialFlow(Flow):  # type: ignore
             for filing_metadata in metadata_inputs_list:
                 # Call the Yahoo Finance News Crew
                 filename = (
-                    YFinanceNewsCrew(llm=LLM(model=YFINANCE_NEWS_MODEL, temperature=TEMPERATURE))
+                    YFinanceNewsCrew(
+                        llm=LLM(
+                            model=YFINANCE_NEWS_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        )
+                    )
                     .crew()
                     .kickoff(
                         {'ticker_symbol': filing_metadata.ticker_symbol},  # type: ignore
@@ -290,7 +328,11 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the RAG Crew
                 RAGCrew(
                     filename=filename,
-                    llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=RAG_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                 ).crew().kickoff(
                     {'query': filing_metadata.query},  # type: ignore
                 )
@@ -326,7 +368,11 @@ class FinancialFlow(Flow):  # type: ignore
                     context = source.read()
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                     output_file=convert_csv_source_to_txt_report_filename(global_yfinance_news_filename),
                 ).crew().kickoff(
                     {
@@ -360,8 +406,16 @@ class FinancialFlow(Flow):  # type: ignore
                     YFinanceStocksCrew(
                         query=filing_metadata.query,  # type: ignore
                         ticker_symbol=filing_metadata.ticker_symbol,  # type: ignore
-                        llm=LLM(model=YFINANCE_STOCKS_MODEL, temperature=TEMPERATURE),
-                        pandasai_llm=ChatSambaNovaCloud(model=PANDASAI_MODEL, temperature=TEMPERATURE),
+                        llm=LLM(
+                            model=YFINANCE_STOCKS_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        ),
+                        pandasai_llm=ChatSambaNovaCloud(
+                            model=PANDASAI_MODEL,
+                            temperature=TEMPERATURE,
+                            sambanova_api_key=self.sambanova_api_key,
+                        ),
                         start_date=filing_metadata.start_date,  # type: ignore
                         end_date=filing_metadata.end_date,  # type: ignore
                     )
@@ -426,7 +480,11 @@ class FinancialFlow(Flow):  # type: ignore
                     context = source.read()
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                     output_file=global_yfinance_stocks_filename,
                 ).crew().kickoff(
                     {
@@ -461,7 +519,11 @@ class FinancialFlow(Flow):  # type: ignore
 
             # Call the Report Crew
             ReportCrew(
-                llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                llm=LLM(
+                    model=REPORT_MODEL,
+                    temperature=TEMPERATURE,
+                    api_key=self.sambanova_api_key,
+                ),
                 filename=section_filename,
             ).crew().kickoff(
                 {
@@ -472,7 +534,11 @@ class FinancialFlow(Flow):  # type: ignore
             # Call the Summarization Crew
             summary_dict[report] = (
                 SummarizationCrew(
-                    llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=REPORT_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
                 )
                 .crew()
                 .kickoff(
