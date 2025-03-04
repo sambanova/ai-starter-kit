@@ -27,7 +27,11 @@ from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import (
+    LLMPerfResults,
+    flatten,
+    get_tokenizer,
+)
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 
@@ -96,9 +100,7 @@ class BasePerformanceEvaluator(abc.ABC):
     @abc.abstractmethod
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> (
-        Tuple[Dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
         pass
 
     @abc.abstractmethod
@@ -138,12 +140,9 @@ class BasePerformanceEvaluator(abc.ABC):
         if not Path(tokenized_text_directory).exists():
             Path(tokenized_text_directory).mkdir(parents=True)
 
-        if not Path(tokenized_text_filepath).exists():
-            tokens = self.tokenizer.tokenize(text)
-            joblib.dump(tokens, tokenized_text_filepath)
-        else:
-            tokens = joblib.load(tokenized_text_filepath)
-
+        # if not Path(tokenized_text_filepath).exists():
+        tokens = self.tokenizer.tokenize(text)
+        joblib.dump(tokens, tokenized_text_filepath)
         token_count = len(tokens)
 
         if token_count > target_token_count:
@@ -189,7 +188,9 @@ class BasePerformanceEvaluator(abc.ABC):
 
             # Create response object containing metrics, generated text, and corresponding request config
             response_object = LLMResponse(
-                metrics=req_metrics, response_text=response_text, request_config=request_config
+                metrics=req_metrics,
+                response_text=response_text,
+                request_config=request_config,
             )
             completed_requests.extend([response_object])
             update_unit = 1
@@ -199,7 +200,6 @@ class BasePerformanceEvaluator(abc.ABC):
                 self.cli_progress_bar.update(update_unit)
             if self.ui_progress_bar:
                 self.ui_progress_bar(len(progress), num_requests)
-            
 
     def build_metrics_summary(
         self,
@@ -313,9 +313,11 @@ class BasePerformanceEvaluator(abc.ABC):
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse]
-        | List[Tuple[Dict[str, Any], str, RequestConfig]]
-        | Tuple[Dict[str, object], List[LLMResponse]],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
     ) -> None:
         """Save the performance evaluation results to a file.
 
@@ -420,9 +422,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self,
         filename: str,
         summary: Dict[str, Any],
-        individual_responses: List[LLMResponse]
-        | List[Tuple[Dict[str, Any], str, RequestConfig]]
-        | Tuple[Dict[str, object], List[LLMResponse]],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
     ) -> None:
         """Save the performance evaluation results to a file, and completion texts if save_response_text condition is
         setup as True
@@ -463,9 +467,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> (
-        Tuple[Dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
         """Run a benchmark test for the specified LLM using a custom dataset provided by the user.
 
         Args:
@@ -494,9 +496,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
     def get_token_throughput_latencies(
         self, sampling_params: Dict[str, Any]
-    ) -> (
-        Tuple[dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[dict[str, Any], List[LLMResponse]]:
         """This function is used to measure the token throughput and latencies.
 
         Args:
@@ -513,7 +513,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         request_configs = self.build_request_configs(
             sampling_params,
@@ -521,8 +520,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Get batch size details
         total_request_count = len(request_configs)
-        request_config_batches: List[List[RequestConfig]]  = []
-        
+        request_config_batches: List[List[RequestConfig]] = []
+
         if self.num_concurrent_requests:
             requests_per_thread = total_request_count // self.num_concurrent_requests
             remainder = total_request_count % self.num_concurrent_requests
@@ -539,6 +538,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
+        start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
@@ -551,7 +551,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
                 # Submit the task to the executor
                 future = executor.submit(
-                    self.send_requests, request_config_batch, llm_responses, progress, start_time, total_request_count
+                    self.send_requests,
+                    request_config_batch,
+                    llm_responses,
+                    progress,
+                    start_time,
+                    total_request_count,
                 )
                 futures.append(future)
                 for t in executor._threads:
@@ -720,7 +725,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         output_file_name = (
             f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
+            f"_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
 
@@ -769,7 +774,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         return summary, individual_responses
 
     def add_metric_after_key(
-        self, metrics_dict: Dict[str, Any], new_key: str, new_value: float, after_key: str
+        self,
+        metrics_dict: Dict[str, Any],
+        new_key: str,
+        new_value: float,
+        after_key: str,
     ) -> Dict[str, Any]:
         """Adds a new metric (dict key and value) to a dict after an specific key
 
@@ -817,7 +826,11 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 start_time = llm_response.metrics['start_time']
                 server_ttft_s = llm_response.metrics['server_ttft_s']
                 responses_ttfts.append(
-                    {'request_idx': request_idx, 'start_time': start_time, 'server_ttft_s': server_ttft_s}
+                    {
+                        'request_idx': request_idx,
+                        'start_time': start_time,
+                        'server_ttft_s': server_ttft_s,
+                    }
                 )
 
         df_valid_responses = pd.DataFrame(responses_ttfts)
@@ -868,9 +881,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         num_output_tokens: int,
         num_requests: int,
         sampling_params: Dict[str, Any],
-    ) -> (
-        Tuple[dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[dict[str, Any], List[LLMResponse]]:
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
         and the specified number of requests.
@@ -892,7 +903,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             Exception: If an unexpected error occurs during the execution of requests.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -900,7 +910,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Get the request counts in order to place them into threads to be executed in batches
         total_request_count = len(request_configs)
         request_config_batches: List[List[RequestConfig]] = []
-        
+
         if self.num_concurrent_requests:
             requests_per_thread = (total_request_count) // self.num_concurrent_requests
             remainder = (total_request_count) % self.num_concurrent_requests
@@ -917,6 +927,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
+        start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
@@ -928,7 +939,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     break
                 # Submit the task to the executor
                 future = executor.submit(
-                    self.send_requests, request_config_batch, llm_responses, progress, start_time, num_requests
+                    self.send_requests,
+                    request_config_batch,
+                    llm_responses,
+                    progress,
+                    start_time,
+                    num_requests,
                 )
                 futures.append(future)
                 for t in executor._threads:
@@ -1067,7 +1083,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Load from prompt files
         prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-        prompt_template = prompt_template * 100_000
+
+        max_words = num_input_tokens  # User-defined word limit
+
+        # Calculate the maximum number of repetitions
+        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
+
+        # Repeat the prompt
+        prompt_template = (prompt_template + ' ') * num_repeats
 
         #  Adjust prompt according to desired input tokens
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
@@ -1093,15 +1116,13 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
 
         output_file_name = (
             f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}'
+            f"_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> (
-        Tuple[Dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
         """Run a benchmark test for the specified LLM using real workload synthetic data.
 
         Args:
@@ -1161,9 +1182,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         num_output_tokens: int,
         num_requests: int,
         sampling_params: Dict[str, Any],
-    ) -> (
-        Tuple[dict[str, Any], List[LLMResponse]]
-    ):
+    ) -> Tuple[dict[str, Any], List[LLMResponse]]:
         """This function runs a token benchmark for the given model and API,
         measuring the throughput and latencies for the specified number of input and output tokens,
         and the specified number of requests.
@@ -1187,7 +1206,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             Exception: If an unexpected error occurs during the execution of requests.
         """
         random.seed(11111)
-        start_time = time.monotonic()
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1197,6 +1215,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         progress: List[Any] = []
 
         # Use ThreadPoolExecutor to handle threads
+        start_time = time.monotonic()
         with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
             futures = []
@@ -1208,7 +1227,12 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
 
                 # Submit the task to the executor
                 future = executor.submit(
-                    self.send_requests, [request_config], llm_responses, progress, start_time, num_requests
+                    self.send_requests,
+                    [request_config],
+                    llm_responses,
+                    progress,
+                    start_time,
+                    num_requests,
                 )
                 futures.append(future)
                 for t in executor._threads:
@@ -1348,7 +1372,13 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Load from prompt files
         prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-        prompt_template = prompt_template * 100_000
+        max_words = num_input_tokens  # User-defined word limit
+
+        # Calculate the maximum number of repetitions
+        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
+
+        # Repeat the prompt
+        prompt_template = (prompt_template + ' ') * num_repeats
 
         #  Adjust prompt according to desired input tokens
         full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
