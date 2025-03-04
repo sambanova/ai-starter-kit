@@ -11,15 +11,12 @@ A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip
 
 import json
 import logging
-from datetime import datetime
+import datetime
 from typing import List, Tuple
 
 import gradio as gr
 import plotly.graph_objects as go
-from gradio_calendar import Calendar
-
-from .crew import AddressSummaryCrew, TravelCrew
-from .db import log_query
+from crew import AddressSummaryCrew, TravelCrew
 
 
 def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figure:
@@ -50,7 +47,7 @@ def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figur
 def run(
     origin: str,
     destination: str,
-    arrival_date: datetime,
+    arrival_date: int,
     age: int,
     trip_duration: int,
     interests: List[str],
@@ -64,7 +61,7 @@ def run(
     Args:
         origin: Origin city of the traveller
         destination: Destination that traveller is going to
-        arrival_date: Approximate date when the trip will begin
+        arrival_date: Approximate date when the trip will begin in epoch time
         age: Age profile of traveller
         interests: Specific interests of the traveller
         cuisine_preferences: Specific cuisine preferences of the traveller
@@ -74,17 +71,15 @@ def run(
     Returns:
         Returns a tuple containing the itinerary and map
     """
+    arrival_date_input = datetime.datetime.fromtimestamp(arrival_date).strftime("%m-%d-%Y")
     logger.info(
-        f'Origin: {origin}, Destination: {destination}, Arrival Date: {arrival_date}, '
-        f'Age: {age}, Duration: {trip_duration}, '
-        f'Interests: {interests}, Cuisines: {cuisine_preferences}, '
-        f'Children: {children}, Daily Budget: {budget}'
+        f'Origin: {origin}, Destination: {destination}, Arrival Date: {arrival_date}, Age: {age}, Duration: {trip_duration},'
+        f' Interests: {interests}, Cuisines: {cuisine_preferences}, Children: {children}, Daily Budget: {budget}'
     )
-    log_query(origin, destination, age, trip_duration, budget)
     inputs = {
         'origin': origin,
         'destination': destination,
-        'arrival_date': arrival_date.strftime('%m-%d-%Y'),
+        'arrival_date': arrival_date_input,
         'age': age,
         'trip_duration': trip_duration,
         'interests': interests,
@@ -129,7 +124,7 @@ demo = gr.Interface(
     inputs=[
         gr.Textbox(label='Where are you travelling from?'),
         gr.Textbox(label='Where are you going?'),
-        Calendar(type='datetime', label='Approximate arrival date'),
+        gr.DateTime(label="Approximate arrival date"),
         gr.Slider(label='Your age?', value=30, minimum=15, maximum=90, step=5),
         gr.Slider(label='How many days are you travelling?', value=5, minimum=1, maximum=14, step=1),
         gr.CheckboxGroup(

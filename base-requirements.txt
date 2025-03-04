@@ -60,7 +60,6 @@ backoff==2.2.1
 streamlit-javascript==0.1.5
 gradio==5.1.0
 gradio_client==1.4.0
-gradio_calendar==0.0.6
 
 # Visualization
 plotly==5.19.0
