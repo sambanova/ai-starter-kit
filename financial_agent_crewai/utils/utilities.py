@@ -22,7 +22,7 @@ def read_json_from_file(file_path: str) -> dict:
     Reads JSON data from a file.
 
     Args:
-        file_path (str): The path to the JSON file.
+        file_path: The path to the JSON file.
 
     Returns:
         dict: The JSON data as a dictionary.
@@ -55,10 +55,10 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
     Async generator that yields logs as they appear in the queue.
 
     Args:
-        queue (Queue): The queue to retrieve log messages from.
+        queue: The queue to retrieve log messages from.
 
     Returns:
-        AsyncGenerator[str, None]: An asynchronous generator that yields log
+        AsyncGenerator: An asynchronous generator that yields log
                                    messages (as strings) from the queue. The
                                    generator stops when a `None` value is
                                    encountered in the queue.
@@ -66,7 +66,7 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
     agent_cache = set()
     while True:
         try:
-            log_message = queue.get(timeout=0.1)  # Wait for new logs
+            log_message = queue.get(timeout=0.1)
             if log_message is None:
                 break
 
@@ -82,7 +82,7 @@ async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
                 agent_cache.add(current_agent_output)
                 yield current_agent_output
         except:
-            await asyncio.sleep(0.01)  # Prevent high CPU usage
+            await asyncio.sleep(0.01)
 
 
 def clear_directory(directory: str | Path) -> Optional[str]:
