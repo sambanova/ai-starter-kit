@@ -41,13 +41,13 @@ def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
     Handles a POST request to predict financial agent outcomes based on user input.
     
     Args:
-        user_input: The user input containing query and data sources.
+      user_input: The user input containing query and data sources.
 
     Returns:
-        AgentFinalOutput: A response containing the prediction results.
+      AgentFinalOutput: A response containing the prediction results.
     
     Raises:
-        HTTPException: If an error occurs during the prediction process.
+      HTTPException: If an error occurs during the prediction process.
     """
     try:
         logger.info(f'Received request for financial prediction with input: {user_input}')
@@ -74,13 +74,13 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
     Handles a POST request to stream financial agent prediction results based on user input.
     
     Args:
-        user_input: The user input containing query and data sources.
+      user_input: The user input containing query and data sources.
 
     Returns:
-        StreamingResponse: A response streaming the logs generated during the financial prediction.
+      StreamingResponse: A response streaming the logs generated during the financial prediction.
     
     Raises:
-        HTTPException: If an error occurs while starting the stream.
+      HTTPException: If an error occurs while starting the stream.
     """
     queue = Queue()
 
@@ -129,10 +129,10 @@ async def get_report() -> StreamingResponse:
     Retrieves and streams a PDF report file to the client.
     
     Returns:
-        dict: A dictionary containing the streaming response of the PDF file.
+      dict: A dictionary containing the streaming response of the PDF file.
     
     Raises:
-        HTTPException: If the PDF file does not exist.
+      HTTPException: If the PDF file does not exist.
     """
     if not os.path.exists(pdf_file_path):
         raise HTTPException(status_code=404, detail='PDF file not found')
@@ -153,10 +153,10 @@ async def get_report() -> StreamingResponse:
     Retrieves and streams a Markdown report file to the client.
     
     Returns:
-        dict: A dictionary containing the streaming response of the Markdown file.
+      dict: A dictionary containing the streaming response of the Markdown file.
     
     Raises:
-        HTTPException: If the Markdown file does not exist.
+      HTTPException: If the Markdown file does not exist.
     """
     if not os.path.exists(md_file_path):
         raise HTTPException(status_code=404, detail='Markdown file not found')
