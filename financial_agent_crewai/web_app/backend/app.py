@@ -9,10 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from . import schemas
-from .financial_agent_crewai.config import *
-from .main import FinancialFlow
+from src.financial_agent_crewai.config import *
+from src.main import FinancialFlow
 from .streaming_queue import StreamToQueue
-from .utils.utilities import *
+from utils.utilities import *
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -29,8 +30,8 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-pdf_file_path = 'src/cache/report.pdf'
-md_file_path = 'src/cache/report.md'
+pdf_file_path = 'cache/report.pdf'
+md_file_path = 'cache/report.md'
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)

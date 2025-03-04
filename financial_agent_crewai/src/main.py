@@ -50,7 +50,7 @@ from .financial_agent_crewai.tools.general_tools import (
 )
 from .financial_agent_crewai.tools.report_tools import ReportSummary
 from .financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
-from .utils.utilities import *
+from utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
