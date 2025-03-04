@@ -1,3 +1,4 @@
+import os
 import io
 import json
 import logging
@@ -30,12 +31,24 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-pdf_file_path = 'cache/report.pdf'
-md_file_path = 'cache/report.md'
+pdf_file_path = os.path.join(CACHE_DIR, 'report.pdf')
+md_file_path = os.path.join(CACHE_DIR, 'report.md')
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
 def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
+    """
+    Handles a POST request to predict financial agent outcomes based on user input.
+    
+    Args:
+        user_input: The user input containing query and data sources.
+
+    Returns:
+        AgentFinalOutput: A response containing the prediction results.
+    
+    Raises:
+        HTTPException: If an error occurs during the prediction process.
+    """
     try:
         logger.info(f'Received request for financial prediction with input: {user_input}')
         financial_flow = FinancialFlow(
@@ -57,10 +70,28 @@ def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
 
 @app.post('/agent/stream')
 async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResponse:
+    """
+    Handles a POST request to stream financial agent prediction results based on user input.
+    
+    Args:
+        user_input: The user input containing query and data sources.
+
+    Returns:
+        StreamingResponse: A response streaming the logs generated during the financial prediction.
+    
+    Raises:
+        HTTPException: If an error occurs while starting the stream.
+    """
     queue = Queue()
 
     def run_financial_flow() -> None:
-        """Run the financial flow while capturing logs."""
+        """
+        Executes the financial prediction flow and streams logs to the queue.
+        Logs are captured and sent to the response stream.
+
+        Raises:
+            Exception: If an error occurs during the financial prediction flow.
+        """
         try:
             logger.info(f'Received request for financial prediction stream with input: {user_input}')
 
@@ -93,7 +124,16 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
 
 
 @app.get('/report/pdf')
-async def get_report() -> dict:
+async def get_report() -> StreamingResponse:
+    """
+    Retrieves and streams a PDF report file to the client.
+    
+    Returns:
+        dict: A dictionary containing the streaming response of the PDF file.
+    
+    Raises:
+        HTTPException: If the PDF file does not exist.
+    """
     if not os.path.exists(pdf_file_path):
         raise HTTPException(status_code=404, detail='PDF file not found')
 
@@ -108,7 +148,16 @@ async def get_report() -> dict:
 
 
 @app.get('/report/md')
-async def get_report() -> dict:
+async def get_report() -> StreamingResponse:
+    """
+    Retrieves and streams a Markdown report file to the client.
+    
+    Returns:
+        dict: A dictionary containing the streaming response of the Markdown file.
+    
+    Raises:
+        HTTPException: If the Markdown file does not exist.
+    """
     if not os.path.exists(md_file_path):
         raise HTTPException(status_code=404, detail='Markdown file not found')
 
