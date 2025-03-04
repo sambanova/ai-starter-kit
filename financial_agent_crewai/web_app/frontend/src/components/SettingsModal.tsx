@@ -18,7 +18,6 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
   const [isSerperKeyVisible, setIsSerperKeyVisible] = useState(false);
 
   const { apiKeys, addApiKey, updateApiKey } = useAPIKeysStore();
-  console.log(apiKeys);
   const [sambanovaKey, setSambanovaKey] = useState<string | null>(
     apiKeys.SambaNova,
   );
