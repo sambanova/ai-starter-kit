@@ -2,6 +2,18 @@
   "singleQuote": false,
   "jsxSingleQuote": false,
   "printWidth": 80,
-  "tabWidth": 2,
-  "arrowParens": "always"
+  "semi": true,
+  "importOrder": [
+    "^react$",
+    "<THIRD_PARTY_MODULES>",
+    "^@/components/(.*)$",
+    "^@/hooks/(.*)$",
+    "^@/stores/(.*)$",
+    "^./utils/(.*)$",
+    "^@/Constants$"
+  ],
+  "importOrderCaseInsensitive": false,
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "plugins": ["@trivago/prettier-plugin-sort-imports"]
 }
