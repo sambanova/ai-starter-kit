@@ -11,6 +11,7 @@ REQ_START_TIME = 'start_time'
 REQ_END_TIME = 'end_time'
 BATCH_SIZE_USED = 'batch_size_used'
 QUEUE_TIME = 'queue_time'
+ACCEPTANCE_RATE = 'acceptance_rate'
 
 # Client-side metrics
 TTFT = 'client_ttft_s'
