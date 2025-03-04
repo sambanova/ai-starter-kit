@@ -66,6 +66,14 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
    - Model ID: `Llama-3.1-Tulu-3-405B`
    - Context length: 4k, 8k, 16k
 
+**Model details for Swallow family**:
+1. Llama 3.1 Swallow 70B:
+   - Model ID: `Llama-3.1-Swallow-70B-Instruct-v0.3`
+   - Context length: 4k, 8k, 16k
+1. Llama 3.1 Swallow 8B:
+   - Model ID: `Llama-3.1-Swallow-8B-Instruct-v0.3`
+   - Context length: 4k, 8k, 16k
+   
 **Model details for Qwen2  family**
 1. Qwen 2.5 Coder 32B:
     - Model ID: `Qwen2.5-Coder-32B-Instruct`
@@ -81,6 +89,12 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
 1. Llama Guard 3 8B:
    - Model ID: `Meta-Llama-Guard-3-8B`
    - Context length: 8k
+
+> You can also get the full list of models runing in your teminal:
+
+``` bash
+curl https://api.sambanova.ai/v1/models
+```
 
 ## Query the API
 
