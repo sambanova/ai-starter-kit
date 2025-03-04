@@ -120,7 +120,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
   return (
     <div>
       <div className="flex space-x-4 items-center mb-4">
-        <h2 className="text-lg font-bold ml-1">Files</h2>
+        <h2 className="text-lg font-bold ml-1">File previews</h2>
 
         <div className="flex space-x-4">
           <button
@@ -142,7 +142,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
       </div>
 
       {/* PREVIEWS */}
-      <div className="flex flex-col lg:flex-row justify-center space-x-4 space-y-8 lg:space-y-0 mx-auto h-300 lg:h-150  py-4 sn-border-shadowed">
+      <div className="flex flex-col lg:flex-row justify-center space-x-4 space-y-8 lg:space-y-0 mx-auto h-300 lg:h-200  py-4 sn-border-shadowed">
         {mdFile && (
           <object
             type="text/markdown"
