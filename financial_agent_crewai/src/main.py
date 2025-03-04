@@ -19,17 +19,12 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud
 
-from financial_agent_crewai.utils.utilities import *
-
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
 )
 from financial_agent_crewai.src.financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
-)
-from .financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
-    GenericResearchCrew,
 )
 from financial_agent_crewai.src.financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
 from financial_agent_crewai.src.financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
@@ -52,6 +47,11 @@ from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools impor
 )
 from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
 from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.utils.utilities import *
+
+from .financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
+    GenericResearchCrew,
+)
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
