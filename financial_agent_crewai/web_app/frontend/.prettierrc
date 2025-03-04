@@ -6,11 +6,12 @@
   "importOrder": [
     "^react$",
     "<THIRD_PARTY_MODULES>",
-    "^@/components/(.*)$",
-    "^@/hooks/(.*)$",
-    "^@/stores/(.*)$",
-    "^./utils/(.*)$",
-    "^@/Constants$"
+    "^(@/|\\./)?components/(.*)$",
+    "^(@/|\\./)?hooks/(.*)$",
+    "^(@/|\\./)?stores/(.*)$",
+    "^(@/|\\./)?utils/(.*)$",
+    "^(@/|\\./)?Constants$",
+    "^[./]"
   ],
   "importOrderCaseInsensitive": false,
   "importOrderSeparation": true,

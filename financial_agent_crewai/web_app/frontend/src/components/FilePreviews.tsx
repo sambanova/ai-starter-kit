@@ -126,7 +126,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
           <button
             type="button"
             onClick={downloadMarkdown}
-            className="cursor-pointer flex items-center justify-center sn-button bg-blue-400 hover:bg-blue-500 p-3"
+            className="flex items-center justify-center sn-button bg-blue-400 hover:bg-blue-500 p-3"
           >
             Download Markdown
           </button>
@@ -134,7 +134,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
           <button
             type="button"
             onClick={downloadPDF}
-            className="cursor-pointer flex items-center justify-center sn-button bg-red-400 hover:bg-red-500 px-4"
+            className="flex items-center justify-center sn-button bg-red-400 hover:bg-red-500 px-4"
           >
             Download PDF
           </button>

@@ -1,8 +1,9 @@
 import { useState } from "react";
 
+import { ChevronDown, ChevronRight } from "lucide-react";
+
 import JsonNode from "./JsonNode";
 import { JsonObjectType } from "./Types";
-import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface JsonObjectNodeProps {
   object: JsonObjectType;

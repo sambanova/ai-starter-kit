@@ -1,9 +1,10 @@
-import { Outlet } from "react-router-dom";
 import { useState } from "react";
 
-import Header from "./Header";
-import SettingsModal from "../SettingsModal";
+import { Outlet } from "react-router-dom";
+
 import { useThemeStore } from "../../stores/ThemeStore";
+import SettingsModal from "../SettingsModal";
+import Header from "./Header";
 
 const MainLayout = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);

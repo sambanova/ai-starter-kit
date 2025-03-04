@@ -1,6 +1,7 @@
+import { Settings, TriangleAlert } from "lucide-react";
+
 import { useAPIKeysStore } from "../stores/APIKeysStore";
 import { Alert, AlertDescription, AlertTitle } from "./shadcn/alert";
-import { Settings, TriangleAlert } from "lucide-react";
 
 const WarningMessage = () => {
   const { apiKeys } = useAPIKeysStore();

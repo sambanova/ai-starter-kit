@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 interface IMultiSelectDropdownProps {
@@ -17,7 +18,7 @@ const MultiSelectDropdown = ({
 
   const toggleItem = (item: string) => {
     setSelectedItems((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
     );
     handleSelectedItems(item, !selectedItems.includes(item));
   };

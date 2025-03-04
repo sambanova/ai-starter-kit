@@ -1,7 +1,7 @@
 import { ComponentProps } from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
+import { type VariantProps, cva } from "class-variance-authority";
 
 const alertVariants = cva(
   "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
@@ -18,7 +18,7 @@ const alertVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 function Alert({
@@ -43,7 +43,7 @@ function AlertTitle({ className, ...props }: ComponentProps<"h5">) {
       data-slot="alert-title"
       className={cn(
         "mb-2 font-medium text-lg leading-none tracking-tight",
-        className
+        className,
       )}
       {...props}
     />

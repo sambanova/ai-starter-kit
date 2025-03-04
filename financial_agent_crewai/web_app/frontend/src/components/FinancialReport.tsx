@@ -1,7 +1,8 @@
-import { Alert, AlertDescription, AlertTitle } from "./shadcn/alert";
 import { AlertCircle } from "lucide-react";
 
 import { useFilteredMessages } from "@/utils/useFilteredMessages";
+
+import { Alert, AlertDescription, AlertTitle } from "./shadcn/alert";
 
 const FinancialReport = () => {
   const finalResult = useFilteredMessages();

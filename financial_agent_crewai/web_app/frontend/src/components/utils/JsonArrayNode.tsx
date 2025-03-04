@@ -1,8 +1,9 @@
 import { useState } from "react";
 
+import { ChevronDown, ChevronRight } from "lucide-react";
+
 import JsonNode from "./JsonNode";
 import { JsonArrayType } from "./Types";
-import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface JsonArrayNodeProps {
   array: JsonArrayType;

@@ -1,3 +1,5 @@
+import { useStreamingStore } from "@/stores/StreamingResponseStore";
+
 import AgentCard from "./AgentCard";
 import {
   Accordion,
@@ -5,8 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./shadcn/Accordion";
-
-import { useStreamingStore } from "@/stores/StreamingResponseStore";
 
 interface AgentOutputProps {
   initialExpanded?: boolean;

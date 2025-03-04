@@ -1,7 +1,8 @@
-import { SourcesType } from "./ResponseStore";
 import { create } from "zustand";
 
 import { BASE_URL } from "@/Constants";
+
+import { SourcesType } from "./ResponseStore";
 
 export interface StreamMessage {
   id: string;

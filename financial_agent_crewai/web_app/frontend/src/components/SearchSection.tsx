@@ -1,10 +1,12 @@
 import { useState } from "react";
+
 import { LoaderCircle } from "lucide-react";
 
-import MultiSelectDropdown from "./utils/MultiSelectDropdown";
-import { SourcesType } from "@/stores/ResponseStore";
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
+import { SourcesType } from "@/stores/ResponseStore";
 import { useStreamingStore } from "@/stores/StreamingResponseStore";
+
+import MultiSelectDropdown from "./utils/MultiSelectDropdown";
 
 const SearchSection = () => {
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -83,7 +85,7 @@ const SearchSection = () => {
           type="button"
           onClick={performSearch}
           disabled={searchButtonIsDisabled}
-          className="cursor-pointer disabled:cursor-default flex items-center justify-center w-25 px-6 py-3 sn-button rounded-lg hover:bg-primary-700 disabled:opacity-50"
+          className="flex items-center justify-center w-25 sn-button"
         >
           {isStreaming ? <LoaderCircle className="animate-spin" /> : "Search"}
         </button>

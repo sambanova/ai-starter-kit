@@ -20,7 +20,7 @@
     @apply bg-gray-100 dark:bg-background-secondary;
   }
   .sn-button {
-    @apply bg-orange-500 hover:enabled:bg-orange-600 disabled:opacity-50 text-white focus:outline-white focus:outline-1 rounded-lg px-6 py-3;
+    @apply cursor-pointer disabled:cursor-default bg-orange-500 hover:enabled:bg-orange-600 disabled:opacity-50 text-white focus:outline-white focus:outline-1 rounded-lg px-6 py-3;
   }
   .sn-icon-button {
     @apply dark:text-white hover:text-orange-500;

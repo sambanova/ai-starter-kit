@@ -1,8 +1,11 @@
 import { useState } from "react";
+
 import { Eye, EyeOff, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
-import { toast } from "sonner";
+
+import { BASE_URL } from "@/Constants";
 
 interface ISettingsModal {
   setIsSettingsModalOpen: (isOpen: React.SetStateAction<boolean>) => void;
@@ -15,6 +18,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
   const [isSerperKeyVisible, setIsSerperKeyVisible] = useState(false);
 
   const { apiKeys, addApiKey, updateApiKey } = useAPIKeysStore();
+  console.log(apiKeys);
   const [sambanovaKey, setSambanovaKey] = useState<string | null>(
     apiKeys.SambaNova,
   );
@@ -55,6 +59,39 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
         addApiKey("Serper", serperKey);
         toast.error("Serper API key saved successfully!");
       }
+    }
+  };
+
+  const saveKeys = async () => {
+    if (!sambanovaKey || !serperKey) {
+      toast.error("API Keys cannot be empty.");
+    } else {
+      try {
+        const response = await fetch(`${BASE_URL}/set_api_keys`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // TODO: if backend and frontend are going to be on the same domain, change to "same-origin"
+          body: JSON.stringify({
+            sambanova_key: sambanovaKey,
+            serper_key: serperKey,
+          }),
+        });
+
+        if (!response.ok)
+          throw new Error(`${response.status} - ${response.statusText}`);
+      } catch (error) {
+        console.error(error);
+
+        if (error instanceof Error) {
+          toast.error(`Failed to save API keys. Detail: ${error.message}`);
+        }
+      }
+
+      addApiKey("SambaNova", sambanovaKey);
+      addApiKey("Serper", serperKey);
+      toast.success("API keys saved successfully!");
     }
   };
 
@@ -138,11 +175,12 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   Get Key →
                 </a>
               </label>
+
               <div className="relative">
                 <input
                   value={serperKey || ""}
                   onChange={(e) => setSerperKey(e.target.value)}
-                  type={`${isSerperKeyVisible ? "text" : "password"}`}
+                  type={`${isSerperKeyVisible ? "search" : "password"}`}
                   placeholder="Enter your Serper API Key"
                   className="block w-full border pr-10 sn-input-text"
                 />
@@ -163,11 +201,20 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                 </button>
                 <button
                   onClick={() => saveKey("serper")}
-                  className="px-3 py-1 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none"
+                  className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none"
                 >
                   Save Key
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-center space-x-2 mt-2">
+              <button
+                onClick={saveKeys}
+                className="cursor-pointer focus:outline-none px-4 py-2 text-sm sn-button"
+              >
+                Save Keys
+              </button>
             </div>
           </div>
         </div>
