@@ -13,8 +13,8 @@ from financial_agent_crewai.src.main import FinancialFlow
 
 from financial_agent_crewai.utils.utilities import *
 
-from . import schemas
-from .streaming_queue import StreamToQueue
+from financial_agent_crewai.web_app.backend import schemas
+from financial_agent_crewai.web_app.backend.streaming_queue import StreamToQueue
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
