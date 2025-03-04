@@ -19,6 +19,8 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud
 
+from utils.utilities import *
+
 from .financial_agent_crewai.config import *
 from .financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
@@ -50,7 +52,6 @@ from .financial_agent_crewai.tools.general_tools import (
 )
 from .financial_agent_crewai.tools.report_tools import ReportSummary
 from .financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
-from utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()

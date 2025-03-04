@@ -1,20 +1,20 @@
-import os
 import io
 import json
 import logging
+import os
 import sys
 from threading import Thread
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
-from . import schemas
 from src.financial_agent_crewai.config import *
 from src.main import FinancialFlow
-from .streaming_queue import StreamToQueue
+
 from utils.utilities import *
 
+from . import schemas
+from .streaming_queue import StreamToQueue
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -39,13 +39,13 @@ md_file_path = os.path.join(CACHE_DIR, 'report.md')
 def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
     """
     Handles a POST request to predict financial agent outcomes based on user input.
-    
+
     Args:
       user_input: The user input containing query and data sources.
 
     Returns:
       AgentFinalOutput: A response containing the prediction results.
-    
+
     Raises:
       HTTPException: If an error occurs during the prediction process.
     """
@@ -72,13 +72,13 @@ def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
 async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResponse:
     """
     Handles a POST request to stream financial agent prediction results based on user input.
-    
+
     Args:
       user_input: The user input containing query and data sources.
 
     Returns:
       StreamingResponse: A response streaming the logs generated during the financial prediction.
-    
+
     Raises:
       HTTPException: If an error occurs while starting the stream.
     """
@@ -127,10 +127,10 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
 async def get_report() -> StreamingResponse:
     """
     Retrieves and streams a PDF report file to the client.
-    
+
     Returns:
       dict: A dictionary containing the streaming response of the PDF file.
-    
+
     Raises:
       HTTPException: If the PDF file does not exist.
     """
@@ -151,10 +151,10 @@ async def get_report() -> StreamingResponse:
 async def get_report() -> StreamingResponse:
     """
     Retrieves and streams a Markdown report file to the client.
-    
+
     Returns:
       dict: A dictionary containing the streaming response of the Markdown file.
-    
+
     Raises:
       HTTPException: If the Markdown file does not exist.
     """
