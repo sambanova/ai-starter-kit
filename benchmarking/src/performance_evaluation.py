@@ -199,6 +199,7 @@ class BasePerformanceEvaluator(abc.ABC):
                 self.cli_progress_bar.update(update_unit)
             if self.ui_progress_bar:
                 self.ui_progress_bar(len(progress), num_requests)
+            
 
     def build_metrics_summary(
         self,
@@ -539,7 +540,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         progress: List[Any] = []
 
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -917,7 +918,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         progress: List[Any] = []
 
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -925,7 +926,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 if self.stop_event.is_set():
                     logger.info('Stopping task submission due to stop signal.')
                     break
-
                 # Submit the task to the executor
                 future = executor.submit(
                     self.send_requests, request_config_batch, llm_responses, progress, start_time, num_requests
@@ -1197,7 +1197,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         progress: List[Any] = []
 
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=1000) as executor:
             # Store futures for the tasks
             futures = []
 
