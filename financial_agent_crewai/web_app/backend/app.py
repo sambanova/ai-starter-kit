@@ -8,10 +8,10 @@ from threading import Thread
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from src.financial_agent_crewai.config import *
-from src.main import FinancialFlow
+from financial_agent_crewai.src.financial_agent_crewai.config import *
+from financial_agent_crewai.src.main import FinancialFlow
 
-from utils.utilities import *
+from financial_agent_crewai.utils.utilities import *
 
 from . import schemas
 from .streaming_queue import StreamToQueue

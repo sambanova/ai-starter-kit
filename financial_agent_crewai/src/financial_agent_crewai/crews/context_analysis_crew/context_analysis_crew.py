@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
-from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
+from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 
 load_dotenv()
 

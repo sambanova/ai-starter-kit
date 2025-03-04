@@ -16,9 +16,9 @@ COPY ./web_app/backend/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./src ./src
-COPY ./web_app/backend ./src
+COPY ../src ./financial_agent_crewai/src
+COPY ./web_app/backend ./financial_agent_crewai/src
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "financial_agent_crewai.web_app.backend.app", "--host", "0.0.0.0", "--port", "8000"]

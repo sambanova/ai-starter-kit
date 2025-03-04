@@ -14,7 +14,7 @@ import markdown
 import pandas
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
-from src.financial_agent_crewai.config import OUTPUT_LOG_FILE
+from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 
 
 def read_json_from_file(file_path: str) -> dict:

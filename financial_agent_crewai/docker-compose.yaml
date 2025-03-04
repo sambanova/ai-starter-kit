@@ -7,10 +7,10 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./:/app
+      - ../financial_agent_crewai:/app/financial_agent_crewai
     env_file:
       - ./web_app/backend/.env
-    command: uvicorn web_app.backend.app:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn financial_agent_crewai.web_app.backend.app:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     build:
