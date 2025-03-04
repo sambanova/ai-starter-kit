@@ -1,12 +1,11 @@
-import { TriangleAlert, Settings } from "lucide-react";
-
-import { Alert, AlertTitle, AlertDescription } from "./shadcn/alert";
 import { useAPIKeysStore } from "../stores/APIKeysStore";
+import { Alert, AlertDescription, AlertTitle } from "./shadcn/alert";
+import { Settings, TriangleAlert } from "lucide-react";
 
 const WarningMessage = () => {
   const { apiKeys } = useAPIKeysStore();
   const missingKeys = Object.keys(apiKeys).filter(
-    (key) => apiKeys[key as keyof typeof apiKeys] === null
+    (key) => apiKeys[key as keyof typeof apiKeys] === null,
   );
 
   return (

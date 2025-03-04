@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json yarn.lock  ./
+COPY package.json yarn.lock vite.config.ts index.html  ./
 
 RUN yarn install
 

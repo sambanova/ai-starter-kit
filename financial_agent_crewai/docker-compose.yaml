@@ -14,15 +14,15 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./web_app/frontend
       dockerfile: Dockerfile
     container_name: frontend
     ports:
       - 5173:5173
     stdin_open: true
     volumes:
-      - ./frontend:/app
+      - ./web_app/frontend/src:/app/src
       - /app/node_modules
     env_file:
-      - ./frontend/.env
+      - ./web_app/frontend/.env
     command: yarn dev --host
