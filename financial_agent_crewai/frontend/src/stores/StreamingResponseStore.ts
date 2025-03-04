@@ -1,12 +1,16 @@
+import { SourcesType } from "./ResponseStore";
 import { create } from "zustand";
 
 import { BASE_URL } from "@/Constants";
-import { SourcesType } from "./ResponseStore";
 
 export interface StreamMessage {
   id: string;
-  content: string;
-  timestamp: number;
+  timestamp: string;
+  task_name: string;
+  task: string;
+  agent: string;
+  status: string;
+  output: string;
 }
 
 interface StreamingState {
@@ -15,7 +19,6 @@ interface StreamingState {
   isFinished: boolean;
   error: string | null;
   startStream: (query: string, selectedSources: SourcesType) => Promise<void>;
-  addMessage: (message: string) => void;
   clearMessages: () => void;
   setError: (error: string | null) => void;
   setIsStreaming: (isStreaming: boolean) => void;
@@ -26,18 +29,6 @@ export const useStreamingStore = create<StreamingState>((set) => ({
   isStreaming: false,
   isFinished: false,
   error: null,
-
-  addMessage: (content: string) =>
-    set((state) => ({
-      messages: [
-        ...state.messages,
-        {
-          id: crypto.randomUUID(),
-          content,
-          timestamp: Date.now(),
-        },
-      ],
-    })),
 
   clearMessages: () => set({ messages: [] }),
 
@@ -88,8 +79,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
               ...state.messages,
               {
                 id: crypto.randomUUID(),
-                content: chunk,
-                timestamp: Date.now(),
+                ...JSON.parse(chunk),
               },
             ],
           }));

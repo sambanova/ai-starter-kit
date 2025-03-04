@@ -1,5 +1,6 @@
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
+
+import { toast } from "sonner";
 
 import { BASE_URL } from "@/Constants";
 
@@ -12,9 +13,13 @@ type FileType = {
   url: string;
 };
 
+type MdFileType = FileType & {
+  content: string;
+};
+
 const FilePreviews = ({ isFinished }: IFilePreviews) => {
   const [pdfFile, setPdfFile] = useState<FileType | null>(null);
-  const [mdFile, setMdFile] = useState<FileType | null>(null);
+  const [mdFile, setMdFile] = useState<MdFileType | null>(null);
 
   const getFile = async (fileType: "md" | "pdf") => {
     try {
@@ -24,7 +29,8 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
         throw new Error(response.statusText);
       }
 
-      const url = window.URL.createObjectURL(await response.blob());
+      const content = await response.blob();
+      const url = window.URL.createObjectURL(content);
       const contentDisposition = response.headers.get("Content-Disposition");
       let filename = `report.${fileType}`;
 
@@ -35,15 +41,18 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
           filename = filenameMatch[1];
         }
       }
-      fileType === "md"
-        ? setMdFile({
-            name: filename,
-            url: url,
-          })
-        : setPdfFile({
-            name: filename,
-            url: url,
-          });
+      if (fileType === "md") {
+        setMdFile({
+          name: filename,
+          url: url,
+          content: await content.text(),
+        });
+      } else if (fileType === "pdf") {
+        setPdfFile({
+          name: filename,
+          url: url,
+        });
+      }
     } catch (error) {
       console.error(error);
 
@@ -74,6 +83,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
         throw Error();
       }
     } catch (error) {
+      console.error(error);
       toast.error("Failed to download Markdwon report.");
     }
   };
@@ -95,6 +105,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
         throw Error();
       }
     } catch (error) {
+      console.error(error);
       toast.error("Failed to download PDF report.");
     }
   };
