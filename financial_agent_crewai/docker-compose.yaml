@@ -26,3 +26,18 @@ services:
     env_file:
       - ./web_app/frontend/.env
     command: yarn dev --host
+  
+  redis:
+    image: "redis:7.0-alpine"
+    container_name: redis
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 6G
+        reservations:
+          cpus: '0.5'
+          memory: 2G
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --save 60 1000
