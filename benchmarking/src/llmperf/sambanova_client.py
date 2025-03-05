@@ -662,7 +662,13 @@ if __name__ == '__main__':
     llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 
-    prompt = 'This is a test example, so tell me about anything'
+    prompt_text = 'This is a test example, so tell me about anything'
+    prompt = {
+        'name': 'test',
+        'performance_level': 'low',
+        'template': prompt_text
+    }
+    
     request_config = RequestConfig(
         request_idx=1,
         prompt_tuple=(prompt, 10),

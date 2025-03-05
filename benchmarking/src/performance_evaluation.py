@@ -20,7 +20,6 @@ import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
@@ -755,7 +754,17 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self.num_concurrent_requests = num_concurrent_requests
         self.prompts = self.load_prompts()
         
-    def load_prompts(self):
+    def load_prompts(self) -> List[Dict[str, Any]]:
+        """ Loads prompts from yaml file.
+
+        Raises:
+            ValueError: Validates if entries have the right structure.
+            ValueError: Validates performance level entry values
+
+        Returns:
+            List[Dict[str, Any]]: List of dictionaries containing the name, performance level 
+            and text template of each prompt.
+        """
         with open(USER_PROMPT_PATH, 'r') as file:
             data = yaml.safe_load(file)
         
@@ -1079,14 +1088,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return metadata, llm_responses
 
-    def select_raw_prompts(self, num_requests: int) -> List[Tuple[Dict[str,Any], int]]:
+    def select_raw_prompts(self, num_requests: int) -> List[Dict[str,Any]]:
         """ Selects prompts randomly based on the distribution of performance levels
 
         Args:
             num_requests (int): Number of requests to be generated
 
         Returns:
-            List[Tuple[Dict[str,Any], int]]: List of randomly selected prompts
+            List[Dict[str,Any]]: List of randomly selected prompts
         """
         high_perf_prompts = [p for p in self.prompts if p['performance_level'] == 'high']
 
@@ -1162,7 +1171,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         multiple times to reach a user set input_token_count.
 
         Args:
-            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input prompt.
+            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input 
+            prompt.
             num_input_tokens (int): The user specified length of the input prompt.
 
         Returns:
@@ -1186,8 +1196,14 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
 
 class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
-    def __init__(self, qps: float, qps_distribution: str, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs, num_concurrent_requests=0)
+    def __init__(self, 
+                 qps: float, 
+                 qps_distribution: str, 
+                 num_concurrent_requests: int = 0, 
+                 *args: Any, 
+                 **kwargs: Any
+    ) -> None:
+        super().__init__(num_concurrent_requests, *args, **kwargs)
         self.qps = qps
         self.qps_distribution = qps_distribution
 
