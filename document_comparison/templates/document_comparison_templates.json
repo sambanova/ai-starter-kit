@@ -15,7 +15,7 @@
         "document_1_title": "Criteria Document",
         "document_2_title": "Proposal Document",
         "prompts": [
-            "Identify all the requirements in the Criteria document. For each requirement in the Criteria document, provide an 'Assessment' that states whether the Proposal document either 'Meets', 'Partially Meets', or 'Does Not Meet' meet that requirement. Also include an 'Explanation' that contains evidence from the Proposal to justify the 'Assessment' or explains why the requirements are not met or are partially met. The 'Assessment' and 'Explanation' should be indented as sub-bullets for each numbered requirement. Limit the output to 2000 words."
+            "Identify all the requirements that are strictly in the Criteria document and not outside of it. For each of those requirements, provide an 'Assessment' that states whether the Proposal document either 'Meets', 'Partially Meets', or 'Does Not Meet' meet that requirement. Also include an 'Explanation' that contains evidence from the Proposal to justify the 'Assessment' or explains why the requirements are not met or are partially met. The 'Assessment' and 'Explanation' should be indented as sub-bullets for each numbered requirement. Limit the output to 2000 words."
         ]
     },
     "Submission Guidelines": {

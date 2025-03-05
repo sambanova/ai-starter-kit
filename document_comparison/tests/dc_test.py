@@ -54,7 +54,7 @@ class DCTestCase(unittest.TestCase):
     document1_text: str
     document2_text: str
     user_input: str
-    prompt: str
+    prompt_messages: List[List[str]]
     llm_output: str
     llm_usage: str
 
@@ -70,14 +70,14 @@ class DCTestCase(unittest.TestCase):
         cls.document1_text = cls.parse_document('document1')
         cls.document2_text = cls.parse_document('document2')
         cls.user_input = cls.test_case['user_input']
-        cls.prompt = cls.document_analyzer.generate_prompt(
+        cls.prompt_messages = cls.document_analyzer.generate_prompt_messages(
             cls.user_input,
             'document1',
             cls.document1_text,
             'document2',
             cls.document2_text,
         )
-        cls.llm_output, cls.llm_usage = cls.document_analyzer.get_analysis(cls.prompt)
+        cls.llm_output, cls.llm_usage = cls.document_analyzer.get_analysis(cls.prompt_messages)
 
     @classmethod
     def parse_document(cls: Type['DCTestCase'], document_name: str = 'document1') -> str:
@@ -102,7 +102,9 @@ class DCTestCase(unittest.TestCase):
         self.assertEqual(len(results), 0, f'tmp folder should be empty. It contains the following: {results}')
 
     def test_prompt_generation(self) -> None:
-        self.assertGreaterEqual(len(self.prompt), 1, 'Generated prompt should be at least 1 character in length')
+        self.assertGreaterEqual(
+            len(self.prompt_messages), 3, 'Generated prompt messages should contain at least 3 entries'
+        )
 
     def test_llm_response(self) -> None:
         self.assertEqual(
