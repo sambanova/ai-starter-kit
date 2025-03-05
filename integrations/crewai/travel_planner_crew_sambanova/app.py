@@ -4,7 +4,7 @@ Travel planner based on Agentic AI workflow.
 This module deploys a portal which can customize a day to day travel itinerary
 for a person using multiple specialized AI crews.
 
-Implemented using Sambanova Cloud, Gradio and Crew AI. 
+Implemented using Sambanova Cloud, Gradio and Crew AI.
 A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip-planner
 """
 
@@ -34,8 +34,7 @@ def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figur
 
     # Creating a map with the provided markers using their latitude and longitude coordinates.
     fig = go.Figure(
-        go.Scattermapbox(lat=lat, lon=lon, mode='markers',
-                         marker=go.scattermapbox.Marker(size=11), hovertext=text_list)
+        go.Scattermapbox(lat=lat, lon=lon, mode='markers', marker=go.scattermapbox.Marker(size=11), hovertext=text_list)
     )
 
     # Update the map by centering it on of the the provided longitude and latitude coordinates
@@ -103,7 +102,7 @@ def run(
         coordinates of the addresses (latitude and longitude), so that the addresses in the
         result can be displayed in map coordinates
     """
-    
+
     inputs_for_address = {'text': str(result)}
 
     addresses = AddressSummaryCrew().crew().kickoff(inputs=inputs_for_address)
@@ -130,7 +129,7 @@ def run(
                     logger.error('Error loading Crew Output for addresses')
                     logger.info(addresses.raw)
                     return (result, None)
-    fig = filter_map(json_addresses['name'], json_addresses['lat'], json_addresses['lon'])
+        fig = filter_map(json_addresses['name'], json_addresses['lat'], json_addresses['lon'])
     return (result, fig)
 
 
