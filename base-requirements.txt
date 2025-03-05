@@ -38,7 +38,6 @@ pandas==1.5.3
 numpy==1.26.0
 sqlitedict==2.1.0
 faiss-cpu==1.7.4
-chromadb==0.5.23
 PyMuPDF==1.25.2
 PyMuPDFb==1.24.10
 pypandoc==1.13
