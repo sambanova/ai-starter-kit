@@ -342,36 +342,36 @@ def main() -> None:
                 if st.button('Process'):
                     st.session_state.mp_events.input_submitted('document_ingest')
                     with st.spinner('Processing'):
-                        # try:
-                        if docs is not None:
-                            temp_folder = save_files_user(docs, schedule_deletion=prod_mode)
-                        text_chunks = st.session_state.document_retrieval.parse_doc(temp_folder)
-                        if len(text_chunks) == 0:
-                            st.error(
-                                """No able to get text from the documents. check your docs or try setting
-                                        pdf_only_mode to False"""
+                        try:
+                            if docs is not None:
+                                temp_folder = save_files_user(docs, schedule_deletion=prod_mode)
+                            text_chunks = st.session_state.document_retrieval.parse_doc(temp_folder)
+                            if len(text_chunks) == 0:
+                                st.error(
+                                    """No able to get text from the documents. check your docs or try setting
+                                            pdf_only_mode to False"""
+                                )
+                            embeddings = st.session_state.document_retrieval.load_embedding_model()
+                            collection_name = default_collection if not prod_mode else None
+                            save_location = temp_folder + '_db'
+                            if prod_mode:
+                                schedule_temp_dir_deletion(save_location, EXIT_TIME_DELTA)
+                            vectorstore = st.session_state.document_retrieval.create_vector_store(
+                                text_chunks, embeddings, output_db=save_location, collection_name=collection_name
                             )
-                        embeddings = st.session_state.document_retrieval.load_embedding_model()
-                        collection_name = default_collection if not prod_mode else None
-                        save_location = temp_folder + '_db'
-                        if prod_mode:
-                            schedule_temp_dir_deletion(save_location, EXIT_TIME_DELTA)
-                        vectorstore = st.session_state.document_retrieval.create_vector_store(
-                            text_chunks, embeddings, output_db=save_location, collection_name=collection_name
-                        )
-                        st.session_state.vectorstore = vectorstore
-                        st.session_state.document_retrieval.init_retriever(vectorstore)
-                        st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
-                            conversational=conversational
-                        )
-                        st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
-                        st.session_state.input_disabled = False
-                    # except Exception as e:
-                    #     logging.error(f'An error occurred while processing: {str(e)}')
-                    #     if prod_mode:
-                    #         st.error(f'An error occurred while processing')
-                    #     else:
-                    #         st.error(f'An error occurred while processing: {str(e)}')
+                            st.session_state.vectorstore = vectorstore
+                            st.session_state.document_retrieval.init_retriever(vectorstore)
+                            st.session_state.conversation = st.session_state.document_retrieval.get_qa_retrieval_chain(
+                                conversational=conversational
+                            )
+                            st.toast(f'File uploaded! Go ahead and ask some questions', icon='🎉')
+                            st.session_state.input_disabled = False
+                        except Exception as e:
+                            logging.error(f'An error occurred while processing: {str(e)}')
+                            if prod_mode:
+                                st.error(f'An error occurred while processing')
+                            else:
+                                st.error(f'An error occurred while processing: {str(e)}')
 
                 if not prod_mode:
                     st.markdown('[Optional] Save database for reuse')
