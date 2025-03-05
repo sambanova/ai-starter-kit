@@ -3,8 +3,8 @@ from typing import Dict
 
 import redis
 
-from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
 from financial_agent_crewai.src.exceptions import InvalidSessionError
+from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
 
 
 class UserSessionManager:
