@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
 import yaml
 
 file_location = Path(__file__).parent.resolve()
@@ -45,7 +44,7 @@ transformers.logging.set_verbosity_error()
 load_dotenv('../.env', override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
-USER_PROMPT_PATH = os.path.join(file_location, '../prompts/user-prompt_template.yaml')
+USER_PROMPT_PATH = os.path.join(file_location, '../prompts/new-user-prompt_template.yaml')
 
 
 class BasePerformanceEvaluator(abc.ABC):
@@ -132,17 +131,8 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             str: adjusted text
         """
-        model = self.model_name.replace('Bundle/', '').replace('/', '_')
-        tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
-        tokenized_text_directory = f'{kit_location}/../../scratch/benchmarking/prompts'
-        tokenized_text_filepath = f'{tokenized_text_directory}/{tokenized_text_filename}'
-
-        if not Path(tokenized_text_directory).exists():
-            Path(tokenized_text_directory).mkdir(parents=True)
-
         # if not Path(tokenized_text_filepath).exists():
         tokens = self.tokenizer.tokenize(text)
-        joblib.dump(tokens, tokenized_text_filepath)
         token_count = len(tokens)
 
         if token_count > target_token_count:
@@ -552,7 +542,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             This function uses threading to send requests concurrently. It splits the total request count evenly among
             the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         request_configs = self.build_request_configs(
             sampling_params,
@@ -752,6 +742,26 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(self, num_concurrent_requests: int, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
+        self.prompts = self.load_prompts()
+        
+    def load_prompts(self):
+        with open(USER_PROMPT_PATH, 'r') as file:
+            data = yaml.safe_load(file)
+        
+        valid_performance_levels = ["low", "medium", "high"]
+        valid_prompt_structure = ["name", "performance_level", "template"]
+        validated_prompts = []
+        
+        for prompt in data.get('prompts', []):
+            if not all(key in prompt for key in valid_prompt_structure):
+                raise ValueError(f"Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.")
+            if prompt["performance_level"] not in valid_performance_levels:
+                raise ValueError(f"Invalid performance level '{prompt['performance_level']}' in prompt: {prompt}.\
+                    Valid values are valid_performance_levels")
+            validated_prompts.append(prompt)
+
+        return validated_prompts
 
     def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
@@ -942,7 +952,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1057,6 +1067,27 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         }
 
         return metadata, llm_responses
+    
+    def select_raw_prompts(self, num_requests: int) -> List[Tuple[Dict[str,Any], int]]:
+        high_perf_prompts = [p for p in self.prompts if p['performance_level'] == 'high']
+        
+        selected_prompts = []
+        if high_perf_prompts:
+            high_perf_prompt_selected = random.choice(high_perf_prompts)
+            # adjusted_prompt = self.build_prompt(high_perf_prompt_selected, input_token_count)
+            selected_prompts.append(high_perf_prompt_selected)
+        
+        remaining_prompts = random.choices(self.prompts, k = num_requests - 1)
+        # remaining_prompts = [self.build_prompt(prompt, input_token_count) for prompt in remaining_prompts]
+        selected_prompts.extend(remaining_prompts)
+        
+        print(f"perf levels {[p['performance_level'] for p in selected_prompts]}")
+        print(f"low {len([p for p in selected_prompts if p['performance_level'] == 'low'])}")
+        print(f"medium {len([p for p in selected_prompts if p['performance_level'] == 'medium'])}")
+        print(f"high {len([p for p in selected_prompts if p['performance_level'] == 'high'])}")
+        assert len(selected_prompts) == num_requests, "Number of selected prompts does not match the requested count"
+        
+        return selected_prompts
 
     def build_request_configs(
         self,
@@ -1082,19 +1113,17 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
+        
+        selected_raw_prompts = self.select_raw_prompts(num_requests)
 
         # Build input prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
+        # Iterate through data points and build a request config for each            
+        for request_idx, raw_prompt in enumerate(selected_raw_prompts):
+            prompt_tuple = self.build_prompt(raw_prompt['template'], input_token_count)
 
-        # Iterate through data points and build a request config for each
-        for request_idx in range(num_requests):
-            # Add generic max tokens parameter to `sampling_params` dictionary
-            updated_sampling_params = {
-                'max_tokens_to_generate': output_token_count,
-            }
+            updated_sampling_params = {'max_tokens_to_generate': output_token_count}
             updated_sampling_params.update(sampling_params)
-
-            # Create request config object
+            
             request_config = RequestConfig(
                 request_idx=request_idx,
                 model=self.model_name,
@@ -1105,12 +1134,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 is_stream_mode=self.is_stream_mode,
                 num_concurrent_requests=self.num_concurrent_requests,
             )
-
+            
             request_configs.append(request_config)
 
         return request_configs
 
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
+    def build_prompt(self, prompt_text: str, num_input_tokens: int) -> Tuple[str, int]:
         """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
         multiple times to reach a user set input_token_count.
 
@@ -1121,20 +1150,15 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
-        # Load from prompt files
-        prompt_template = yaml.safe_load(PromptTemplate.from_file(USER_PROMPT_PATH).template)['template']
-
-        max_words = num_input_tokens  # User-defined word limit
-
-        # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
+        # Calculate the maximum number of repetitions. Approximate number of desired tokens based on words in prompt. 
+        num_repeats = max(1, num_input_tokens // len(prompt_text.split()) + 1)
 
         # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
+        repeated_prompt = (prompt_text + ' ') * num_repeats
 
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-
+        # Adjust prompt according to desired input tokens
+        full_input_prompt = self.adjust_to_exact_tokens(repeated_prompt, num_input_tokens)
+    
         return (full_input_prompt, self.get_token_length(full_input_prompt))
 
 
@@ -1245,7 +1269,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
