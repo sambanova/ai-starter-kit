@@ -31,6 +31,13 @@ class ChatPerformanceEvaluator:
             <|start_header_id|>assistant<|end_header_id|>"""
         else:
             prompt_template = f'[INST]{prompt}[/INST]'
+            
+        # Build prompt dict for Request Config
+        prompt_dict = {
+            'name': 'chat_prompt',
+            'performance_level': 'na',
+            'template': prompt_template
+        }
 
         tokenizer = llmperf_utils.get_tokenizer(self.model)
 
@@ -38,7 +45,7 @@ class ChatPerformanceEvaluator:
 
         request_config = RequestConfig(
             request_idx=1,
-            prompt_tuple=(prompt_template, 10),
+            prompt_tuple=(prompt_dict, 0),
             model=self.model,
             llm_api=self.llm_api,
             api_variables=api_variables,
