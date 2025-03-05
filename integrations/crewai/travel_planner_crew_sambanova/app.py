@@ -1,11 +1,10 @@
-#!/usr/bin/env python
 """
 Travel planner based on Agentic AI workflow.
 
 This module deploys a portal which can customize a day to day travel itinerary
 for a person using multiple specialized AI crews.
 
-Implemented using Gradio and Crew AI
+Implemented using Sambanova Cloud, Gradio and Crew AI. 
 A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip-planner
 """
 
@@ -25,18 +24,21 @@ def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figur
     Create a Map showing the points specified in the inputs.
 
     Args:
-        text_list: List of the description of all locations that will be shown on the map
-        lat:       List of latitude coordinates of the locations
-        lon:       List of longitude coordinates of the locations
+        text_list: List of the description of all locations that will be shown on the map.
+        lat:       List of latitude coordinates of the locations.
+        lon:       List of longitude coordinates of the locations.
 
     Returns:
         Figure: Map with the points specified in the inputs
     """
 
+    # Creating a map with the provided markers using their latitude and longitude coordinates.
     fig = go.Figure(
-        go.Scattermapbox(lat=lat, lon=lon, mode='markers', marker=go.scattermapbox.Marker(size=11), hovertext=text_list)
+        go.Scattermapbox(lat=lat, lon=lon, mode='markers',
+                         marker=go.scattermapbox.Marker(size=11), hovertext=text_list)
     )
 
+    # Update the map by centering it on of the the provided longitude and latitude coordinates
     fig.update_layout(
         mapbox_style='open-street-map',
         hovermode='closest',
@@ -57,17 +59,17 @@ def run(
     budget: int,
 ) -> Tuple[str, go.Figure]:
     """
-    Run the specfied query using Crew AI agents
+    Run the specfied query using Crew AI agents.
 
     Args:
-        origin: Origin city of the traveller
-        destination: Destination that traveller is going to
-        arrival_date: Approximate date when the trip will begin in epoch time
-        age: Age profile of traveller
-        interests: Specific interests of the traveller
-        cuisine_preferences: Specific cuisine preferences of the traveller
-        children: Whether traveller has children travelling with them
-        budget: Total budget of traveller in US Dollars
+        origin: Origin city of the traveller.
+        destination: Destination to which the traveller is going.
+        arrival_date: Approximate date when the trip will begin in epoch time.
+        age: Age profile of traveller.
+        interests: Specific interests of the traveller.
+        cuisine_preferences: Specific cuisine preferences of the traveller.
+        children: Whether traveller has children travelling with them.
+        budget: Total budget of traveller in US Dollars.
 
     Returns:
         Returns a tuple containing the itinerary and map
@@ -79,7 +81,11 @@ def run(
         f' Interests: {interests}, Cuisines: {cuisine_preferences},'
         f' Children: {children}, Daily Budget: {budget}'
     )
-    inputs = {
+
+    # Creating a dictionary of user provided preferences and providing these to the crew agents
+    # to work on.
+
+    user_preferences = {
         'origin': origin,
         'destination': destination,
         'arrival_date': arrival_date_input,
@@ -90,22 +96,34 @@ def run(
         'children': children,
         'budget': budget,
     }
-    result = TravelCrew().crew().kickoff(inputs=inputs)
+    result = TravelCrew().crew().kickoff(inputs=user_preferences)
+
+    """
+        Now we will pass the result to a address summary crew whose job is to extract position
+        coordinates of the addresses (latitude and longitude), so that the addresses in the
+        result can be displayed in map coordinates
+    """
+    
     inputs_for_address = {'text': str(result)}
 
     addresses = AddressSummaryCrew().crew().kickoff(inputs=inputs_for_address)
+
+    """
+        We have requested the crew agent to return latitude, longitude coordinates.
+        But the exact way the LLMs return varies. Hence we try multiple different ways of
+        extracting addresses in JSON format from the result.
+    """
     json_addresses = None
-    if addresses.json_dict:
+    if addresses.json_dict is not None:
         json_addresses = addresses.json_dict
-    if not json_addresses:
         try:
             json_addresses = json.loads(addresses.raw)
         except json.JSONDecodeError as e:
-            # Try with different format of result data generated with ```json and ending with ```
+            # Try with different format of result data generated with ```json and ending with ```.
             try:
                 json_addresses = json.loads(addresses.raw[8:-4])
             except json.JSONDecodeError as e:
-                # Try with different format of result data generated with ``` and ending with ```
+                # Try with different format of result data generated with ``` and ending with ```.
                 try:
                     json_addresses = json.loads(addresses.raw[4:-4])
                 except json.JSONDecodeError as e:

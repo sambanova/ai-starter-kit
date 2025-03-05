@@ -23,7 +23,7 @@ personalized_activity_planning_task:
     - budget for entire trip in dollars: {budget}
   expected_output: >
     A list of recommended activities and events for each day of the trip.
-    Each entry should include the activity name, location including a , a brief description, and why it's suitable for the traveler.
+    Each entry should include the activity name, location including a brief description, and why it's suitable for the traveler.
     The location should have the full address so that it can be easily found using a map.
     And potential reviews and ratings of the activities.
 

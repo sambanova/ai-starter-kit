@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ```
 
 ### API Key Setup 
-**Before you begin Add your `SAMBANOVA_API_KEY` and `SERPER_API_KEY` into the `.env` file in the main starter kit repo folder. Alternatively provide them as environment variables.**
+**Before you begin Add your `SAMBANOVA_API_KEY` and `SERPER_API_KEY` into the `.env` file in the main starter kit repo folder. Alternatively provide them as environment variables while running the app.**
 - You can get your SambaNova API Key [here](https://docs.astral.sh/uv/)
 - You can get your Serper API Key [here](https://serper.dev/)
 
@@ -41,7 +41,10 @@ pip install -r requirements.txt
 ```
 python3 app.py
 ```
+alternatively, if a .env file is not created...
+```
+SAMBANOVA_API_KEY=<Sambanova Key> SERPER_API_KEY=<Serper Key> python3 app.py
 
 ### Customizing
 - Modify `config/agents.yaml` to define your agents. Please check CrewAI documentation on how to configure an agent.
-- Modify `config/tasks.yaml` to define your tasks
+- Modify `config/tasks.yaml` to define your tasks.
