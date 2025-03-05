@@ -19,6 +19,7 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud
 
+from financial_agent_crewai.src.exceptions import APIKeyNotFoundError
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
@@ -131,6 +132,8 @@ class FinancialFlow(Flow):  # type: ignore
             self.sambanova_api_key = sambanova_api_key
         else:
             self.sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+            if self.sambanova_api_key is None:
+                raise APIKeyNotFoundError('No credentials found')
 
     @start()  # type: ignore
     def generic_research(self) -> Optional[str]:

@@ -18,3 +18,5 @@ yfinance==0.2.54
 fastapi==0.115.8
 uvicorn==0.34.0
 starlette==0.45.3
+cryptography==44.0.2
+redis==5.2.1

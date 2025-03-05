@@ -3,20 +3,28 @@ import json
 import logging
 import os
 import sys
+import uuid
 from threading import Thread
 
-from fastapi import FastAPI, HTTPException
+import redis
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader
 
+from financial_agent_crewai.src.exceptions import APIKeyNotFoundError, InvalidSessionError
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.main import FinancialFlow
 from financial_agent_crewai.utils.utilities import *
 from financial_agent_crewai.web_app.backend import schemas
+from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
+from financial_agent_crewai.web_app.backend.session.user_manager import UserSessionManager
 from financial_agent_crewai.web_app.backend.streaming_queue import StreamToQueue
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+redis_client = redis.Redis(host=os.getenv('REDIS_HOST', 'redis'), port=int(os.getenv('REDIS_PORT', '6379')), db=0)
 
 app = FastAPI()
 
@@ -30,8 +38,25 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+sambanova_api_key_header = APIKeyHeader(name='x-sambanova-key', scheme_name='sambanova_key')
+serper_api_key_header = APIKeyHeader(name='x-serper-key', scheme_name='serper_key')
+key_manager = APIKeyManager()
+
 pdf_file_path = os.path.join(CACHE_DIR, 'report.pdf')
 md_file_path = os.path.join(CACHE_DIR, 'report.md')
+
+
+@app.post('/keys')
+async def store_keys(
+    sambanova_api_key: str = Depends(sambanova_api_key_header), serper_api_key: str = Depends(serper_api_key_header)
+) -> Dict[str, str]:
+    user_id = str(uuid.uuid4())
+
+    api_keys = {'sambanova_api_key': sambanova_api_key, 'serper_api_key': serper_api_key}
+
+    session_token = UserSessionManager.create_session(user_id, api_keys, key_manager, redis_client)
+
+    return {'token': session_token}
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
@@ -68,7 +93,7 @@ def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
 
 
 @app.post('/agent/stream')
-async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResponse:
+async def financial_agent_stream(user_input: schemas.UserInput, request: Request) -> StreamingResponse:
     """
     Handles a POST request to stream financial agent prediction results based on user input.
 
@@ -81,7 +106,26 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
     Raises:
       HTTPException: If an error occurs while starting the stream.
     """
+    session_token = request.headers.get('session_token', None)
+    try:
+        api_keys = UserSessionManager.get_session_keys(session_token, key_manager, redis_client)
+
+    except InvalidSessionError:
+        raise HTTPException(status_code=401, detail='Invalid or expired session')
+
     queue = Queue()
+
+    try:
+        financial_flow = FinancialFlow(
+            query=user_input.user_query,
+            source_generic_search=user_input.source_generic_search,
+            source_sec_filings=user_input.source_sec_filings,
+            source_yfinance_news=user_input.source_yfinance_news,
+            source_yfinance_stocks=user_input.source_yfinance_stocks,
+            sambanova_api_key=api_keys.get('sambanova_api_key'),
+        )
+    except APIKeyNotFoundError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'No api key found')
 
     def run_financial_flow() -> None:
         """
@@ -92,17 +136,7 @@ async def financial_agent_stream(user_input: schemas.UserInput) -> StreamingResp
             Exception: If an error occurs during the financial prediction flow.
         """
         try:
-            logger.info(f'Received request for financial prediction stream with input: {user_input}')
-
             sys.stdout = StreamToQueue(queue)  # Redirect logs to queue
-
-            financial_flow = FinancialFlow(
-                query=user_input.user_query,
-                source_generic_search=user_input.source_generic_search,
-                source_sec_filings=user_input.source_sec_filings,
-                source_yfinance_news=user_input.source_yfinance_news,
-                source_yfinance_stocks=user_input.source_yfinance_stocks,
-            )
             financial_flow.kickoff()
         except Exception as e:
             logger.error(f'Error during agent flow: {str(e)}')
