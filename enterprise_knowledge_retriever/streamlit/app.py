@@ -348,8 +348,8 @@ def main() -> None:
                             text_chunks = st.session_state.document_retrieval.parse_doc(temp_folder)
                             if len(text_chunks) == 0:
                                 st.error(
-                                    """No able to get text from the documents. check your docs or try setting
-                                            pdf_only_mode to False"""
+                                    """No able to get text from the documents. check your docs or try setting 
+                                    pdf_only_mode to False"""
                                 )
                             embeddings = st.session_state.document_retrieval.load_embedding_model()
                             collection_name = default_collection if not prod_mode else None
