@@ -1,17 +1,16 @@
 import { Container, Typography } from "@mui/material";
 
-const HomePage = () => {
+const FineTuning = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>
-        Welcome to the Home Page
+        Welcome to the Fine Tuning page
       </Typography>
       <Typography variant="body1">
-        This is the Home page of the application. Here will be displayed general
-        information of what to do here.
+        This is the Fine Tuning page of the application.
       </Typography>
     </Container>
   );
 };
 
-export default HomePage;
+export default FineTuning;
