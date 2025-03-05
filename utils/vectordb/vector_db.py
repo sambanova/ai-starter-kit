@@ -22,6 +22,7 @@ import os
 import sys
 from typing import Any, List, Optional, Set
 
+import chromadb
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.vectorstores import FAISS, Chroma, Qdrant
@@ -208,12 +209,14 @@ class VectorDb:
             if output_db:
                 vector_store = Chroma()
                 vector_store.delete_collection()
+                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma.from_documents(
                     documents=chunks, embedding=embeddings, persist_directory=output_db, collection_name=collection_name
                 )
             else:
                 vector_store = Chroma()
                 vector_store.delete_collection()
+                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma.from_documents(
                     documents=chunks, embedding=embeddings, collection_name=collection_name
                 )
