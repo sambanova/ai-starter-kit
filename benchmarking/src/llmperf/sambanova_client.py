@@ -214,6 +214,7 @@ class BaseAPIEndpoint(abc.ABC):
                 metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] / (metrics[common_metrics.E2E_LAT_SERVER])
             )
 
+        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN] = response_dict.get('completion_tokens_after_first_per_sec_first_ten')
         metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get('batch_size_used')
         metrics[common_metrics.ACCEPTANCE_RATE] = response_dict.get('acceptance_rate')
 
@@ -356,6 +357,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
             with requests.post(
                 url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode
             ) as response:
+                print(f'response: {response.content}')
                 if response.status_code != 200:
                     error_details = response.json().get('error', 'No additional error details provided.')
                     raise Exception(f'Error: {response.status_code}, Details: {error_details}')
@@ -550,6 +552,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
+            print(f'response {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response) # type: ignore
