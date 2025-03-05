@@ -305,7 +305,7 @@ class SearchAssistant:
         params = {'lang': 'EN', 'limit': limit, 'text': query}
 
         try:
-            response = requests.get(url, params=params) # type: ignore
+            response = requests.get(url, params=params)  # type: ignore
             if response.status_code == 200:
                 results = response.json()
                 if len(results) > 0:
@@ -711,7 +711,10 @@ class SearchAssistant:
             self.set_retrieval_qa_chain(conversational=True)
             return None
         else:
-            return {'message': f"No links found for '{query}'. Try again"}
+            return {
+                'message': f"No links found for '{query}'. Try again, "
+                'increase the number of results or check your api keys'
+            }
 
     def get_relevant_queries(self, query: str) -> Any:
         """

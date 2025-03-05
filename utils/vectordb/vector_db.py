@@ -207,16 +207,16 @@ class VectorDb:
 
         elif db_type == 'chroma':
             if output_db:
+                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma()
                 vector_store.delete_collection()
-                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma.from_documents(
                     documents=chunks, embedding=embeddings, persist_directory=output_db, collection_name=collection_name
                 )
             else:
+                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma()
                 vector_store.delete_collection()
-                chromadb.api.client.SharedSystemClient.clear_system_cache()  # type: ignore
                 vector_store = Chroma.from_documents(
                     documents=chunks, embedding=embeddings, collection_name=collection_name
                 )
