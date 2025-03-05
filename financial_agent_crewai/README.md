@@ -162,10 +162,11 @@ You can now enter your query and select which data sources you want to use among
 
 You can also use the functionalities via a local web app built with React and FastAPI and deployed with Docker, following these steps:
 
-1. On a terminal go to the `/financial_agent_crewai/` folder.
-2. (Make sure to have the Docker daemon running) Run the command `docker compose build` and wait for the containers to build.
-3. Once the step 2 is complete, run the command `docker compose up` and wait for the containers to start their execution.
-4. Once they're up and running, go to your browser and navigate to `localhost:5173` to access the app.
+1. Create the respective `.env` files. On both `backend/` and `frontend/` directories you can find `.env.example` files with a structure on how to set up your `.env` files for each directory.
+2. On a terminal go to the `/financial_agent_crewai/` folder.
+3. (Make sure to have the Docker daemon running) Run the command `docker compose build` and wait for the containers to build.
+4. Once the step 2 is complete, run the command `docker compose up` and wait for the containers to start their execution.
+5. Once they're up and running, go to your browser and navigate to `localhost:5173` to access the app.
 
 Similar to the Streamlit app, you can now set up your API keys, enter your query and select which data sources you want to use among the following:
 
