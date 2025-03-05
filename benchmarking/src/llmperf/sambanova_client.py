@@ -215,6 +215,7 @@ class BaseAPIEndpoint(abc.ABC):
             )
 
         metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get('batch_size_used')
+        metrics[common_metrics.ACCEPTANCE_RATE] = response_dict.get('acceptance_rate')
 
         return metrics
 
