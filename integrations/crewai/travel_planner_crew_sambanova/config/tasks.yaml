@@ -30,11 +30,11 @@ personalized_activity_planning_task:
 restaurant_scenic_location_scout_task:
   description: >
     Find highly-rated restaurants and dining experiences for the specific cuisine interests {cuisine_preferences} at {destination}.
-    Pay particular attention to the cuisines. If Vegan is on the list, then recommend restaurants which accomodate vegan diet.
+    Pay particular attention to the cuisines. As an example, if vegan is on the list, then recommend restaurants which accomodate vegan diet.
     Recommend scenic locations that align with the traveler's preferences and activities.
     Use internet search tools, restaurant review sites, and travel guides.
     Make sure to find a variety of options to suit different tastes and budgets, and ratings for them.
-    Extract the address of he restaurant so that the same can be displayed to the user.
+    Extract the address of the restaurant so that the same can be displayed to the user.
 
     Traveler's information:
 
@@ -91,4 +91,4 @@ itinerary_compilation_task:
     Do a great job so that you can be proud of your work.
   expected_output: >
     A detailed itinerary document, the itinerary should include a day-by-day
-    plan with activities, restaurants, and scenic locations. Include the address for each location so that an user can easily go to the address. A day can contain multiple activities. In such a case a recommened mode of transport should be provided to help move from one activity location to another.
+    plan with activities, restaurants, and scenic locations. Include the address for each location so that a user can easily go to the address. A day can contain multiple activities. In such a case a recommended mode of transport should be provided to help move from one activity location to another.

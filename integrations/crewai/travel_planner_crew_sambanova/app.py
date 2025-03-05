@@ -9,14 +9,15 @@ Implemented using Gradio and Crew AI
 A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip-planner
 """
 
+import datetime
 import json
 import logging
-import datetime
 from typing import List, Tuple
 
 import gradio as gr
 import plotly.graph_objects as go
-from crew import AddressSummaryCrew, TravelCrew
+
+from .crew import AddressSummaryCrew, TravelCrew
 
 
 def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figure:
@@ -71,10 +72,12 @@ def run(
     Returns:
         Returns a tuple containing the itinerary and map
     """
-    arrival_date_input = datetime.datetime.fromtimestamp(arrival_date).strftime("%m-%d-%Y")
+    arrival_date_input = datetime.datetime.fromtimestamp(arrival_date).strftime('%m-%d-%Y')
     logger.info(
-        f'Origin: {origin}, Destination: {destination}, Arrival Date: {arrival_date}, Age: {age}, Duration: {trip_duration},'
-        f' Interests: {interests}, Cuisines: {cuisine_preferences}, Children: {children}, Daily Budget: {budget}'
+        f'Origin: {origin}, Destination: {destination}, Arrival Date: {arrival_date_input},'
+        f' Age: {age}, Duration: {trip_duration},'
+        f' Interests: {interests}, Cuisines: {cuisine_preferences},'
+        f' Children: {children}, Daily Budget: {budget}'
     )
     inputs = {
         'origin': origin,
@@ -124,7 +127,7 @@ demo = gr.Interface(
     inputs=[
         gr.Textbox(label='Where are you travelling from?'),
         gr.Textbox(label='Where are you going?'),
-        gr.DateTime(label="Approximate arrival date"),
+        gr.DateTime(label='Approximate arrival date'),
         gr.Slider(label='Your age?', value=30, minimum=15, maximum=90, step=5),
         gr.Slider(label='How many days are you travelling?', value=5, minimum=1, maximum=14, step=1),
         gr.CheckboxGroup(
