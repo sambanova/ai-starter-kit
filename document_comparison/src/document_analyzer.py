@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from io import BytesIO
-from typing import Tuple
+from typing import List, Tuple
 
 import tiktoken
 import yaml
@@ -92,21 +92,22 @@ class DocumentAnalyzer:
     def get_token_count(self, input_text: str) -> int:
         return len(tokenizer.encode(input_text))
 
-    def generate_prompt(
+    def generate_prompt_messages(
         self, instruction: str, doc1_title: str, doc1_text: str, doc2_title: str, doc2_text: str
-    ) -> str:
-        return f"""-----Begin {doc1_title}-----
-    {doc1_text}
-    -----End {doc1_title}-----
-    -----Begin {doc2_title}-----
-    {doc2_text}
-    -----End {doc2_title}-----
-    {instruction}
-    """
+    ) -> List[List[str]]:
+        messages = [
+            ['system', self.system_message],
+            ['user', f'Consider the following {doc1_title}:\n{doc1_text}'],
+            ['user', f'Consider the following {doc2_title}:\n{doc2_text}'],
+            [
+                'user',
+                f'The {doc1_title} and {doc2_title} above are separate documents.\
+                     Do not confuse them.\n{instruction}',
+            ],
+        ]
+        return messages
 
-    def get_analysis(self, prompt: str) -> Tuple[str, str]:
-        messages = [['system', self.system_message], ['user', prompt]]
-
+    def get_analysis(self, messages: List[List[str]]) -> Tuple[str, str]:
         retries = 0
         error_message = ''
         while retries < self.max_retries:
