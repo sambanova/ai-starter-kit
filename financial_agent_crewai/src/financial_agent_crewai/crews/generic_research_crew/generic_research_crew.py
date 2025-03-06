@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Agent, Crew, Process, Task
@@ -22,6 +23,7 @@ class GenericResearchCrew:
     def __init__(
         self,
         llm: LLM,
+        serper_api_key: str,
         filename: Optional[str] = None,
         verbose: bool = True,
     ) -> None:
@@ -35,6 +37,9 @@ class GenericResearchCrew:
         self.llm = llm
         self.filename = filename if filename is not None else str(CACHE_DIR / 'report.txt')
         self.verbose = verbose
+
+        # Set the Google Serper API KEY
+        os.environ['SERPER_API_KEY'] = serper_api_key
 
     @agent  # type: ignore
     def researcher(self) -> Agent:

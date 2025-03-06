@@ -18,8 +18,8 @@ from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
-from financial_agent_crewai.src.exceptions import APIKeyNotFoundError
 
+from financial_agent_crewai.src.exceptions import APIKeyNotFoundError
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
@@ -136,7 +136,7 @@ class FinancialFlow(Flow):  # type: ignore
             self.sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
 
             if self.sambanova_api_key is None:
-                raise APIKeyNotFoundError('No credentials found')
+                raise APIKeyNotFoundError('No SAMBANOVA API KEY defined')
 
         # Set the SERPER_API_KEY
         self.serper_api_key: Optional[str]
@@ -150,6 +150,9 @@ class FinancialFlow(Flow):  # type: ignore
         """Perform a generic research on the user query."""
 
         if self.source_generic_search:
+            if self.serper_api_key is None:
+                raise APIKeyNotFoundError('No SERPER API KEY defined.')
+
             # Call the Generic Research Crew
             GenericResearchCrew(
                 llm=LLM(
@@ -157,6 +160,7 @@ class FinancialFlow(Flow):  # type: ignore
                     temperature=TEMPERATURE,
                     api_key=self.sambanova_api_key,
                 ),
+                serper_api_key=self.serper_api_key,
                 filename=self.generic_report_name,
             ).crew().kickoff(inputs={'query': self.query})
 

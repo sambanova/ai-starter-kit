@@ -1,5 +1,5 @@
 langchain-chroma==0.2.2
-langchain-core==0.3.40
+langchain-core==0.3.41
 langchain-huggingface==0.1.2
 langchain-sambanova==0.1.2
 langtrace-python-sdk==3.8.0
