@@ -1,3 +1,4 @@
+import uuid
 import abc
 import json
 import os
@@ -71,6 +72,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.stop_event = threading.Event()
         self.ui_progress_bar = None
         self.cli_progress_bar = None
+        self.run_uuid = uuid.uuid4()
 
         # To be set upon saving of results
         self.summary_file_path: Optional[str] = None
@@ -455,7 +457,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'custom_{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
+        output_file_name = f'{self.run_uuid}_custom_{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -764,7 +766,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'{self.run_uuid}_synthetic_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
             f"_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
@@ -1155,7 +1157,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             generation_mode = 'stream'
 
         output_file_name = (
-            f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
+            f'{self.run_uuid}_realworkload_{self.user_metadata["model_idx"]}_{self.model_name}_{num_input_tokens}'
             f"_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}"
         )
         return self.sanitize_file_prefix(output_file_name)
