@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Optional
+from typing import Dict
 
 import redis
 
@@ -9,14 +9,11 @@ from financial_agent_crewai.web_app.backend.session.credentials_manager import A
 
 class UserSessionManager:
     @staticmethod
-    def create_session(
-        user_id: str, api_keys: Dict[str, str], key_manager: APIKeyManager, redis_client: redis.Redis
-    ) -> str:
+    def create_session(api_keys: Dict[str, str], key_manager: APIKeyManager, redis_client: redis.Redis) -> str:
         """
         Creates a secure session for a user by encrypting their API keys and storing them in Redis.
 
         Args:
-            user_id: The unique identifier for the user.
             api_keys: A dictionary containing the user's API keys.
             key_manager: An instance of the APIKeyManager to handle encryption.
             redis_client: The Redis client used to store the session data.
@@ -28,15 +25,12 @@ class UserSessionManager:
 
         session_token = str(uuid.uuid4())
 
-        redis_client.setex(f'session:{session_token}', 36000, encrypted_keys)
+        redis_client.setex(f'session:{session_token}', 7200, encrypted_keys)
 
         return session_token
 
-    # TODO: make session_token not optional
     @staticmethod
-    def get_session_keys(
-        session_token: Optional[str], key_manager: APIKeyManager, redis_client: redis.Redis
-    ) -> Dict[str, str]:
+    def get_session_keys(session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis) -> Dict[str, str]:
         """
         Retrieves and decrypts the API keys associated with a given session token.
 

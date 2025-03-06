@@ -3,13 +3,12 @@ import json
 import logging
 import os
 import sys
-import uuid
 from queue import Queue
 from threading import Thread
-from typing import Dict
+from typing import Annotated, Dict
 
 import redis
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
@@ -18,7 +17,7 @@ from financial_agent_crewai.src.exceptions import APIKeyNotFoundError, InvalidSe
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.main import FinancialFlow
 from financial_agent_crewai.utils.utilities import log_stream
-from financial_agent_crewai.web_app.backend import schemas
+from financial_agent_crewai.web_app.backend import oauth2, schemas
 from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
 from financial_agent_crewai.web_app.backend.session.user_manager import UserSessionManager
 from financial_agent_crewai.web_app.backend.streaming_queue import StreamToQueue
@@ -50,15 +49,25 @@ md_file_path = os.path.join(CACHE_DIR, 'report.md')
 
 @app.post('/keys')
 async def store_keys(
-    sambanova_api_key: str = Depends(sambanova_api_key_header), serper_api_key: str = Depends(serper_api_key_header)
+    response: Response,
+    sambanova_api_key: str = Depends(sambanova_api_key_header),
+    serper_api_key: str = Depends(serper_api_key_header),
 ) -> Dict[str, str]:
-    user_id = str(uuid.uuid4())
-
     api_keys = {'sambanova_api_key': sambanova_api_key, 'serper_api_key': serper_api_key}
 
-    session_token = UserSessionManager.create_session(user_id, api_keys, key_manager, redis_client)
+    session_token = UserSessionManager.create_session(api_keys, key_manager, redis_client)
+    access_token = oauth2.create_access_token({'session_token': session_token})
 
-    return {'token': session_token}
+    response.set_cookie(
+        key='access_token',
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite='strict',
+        max_age=7200,
+    )
+
+    return {'access_token': access_token, 'token_type': 'bearer'}
 
 
 @app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
@@ -95,7 +104,9 @@ def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
 
 
 @app.post('/agent/stream')
-async def financial_agent_stream(user_input: schemas.UserInput, request: Request) -> StreamingResponse:
+async def financial_agent_stream(
+    user_input: schemas.UserInput, access_token: Annotated[str | None, Cookie()] = None
+) -> StreamingResponse:
     """
     Handles a POST request to stream financial agent prediction results based on user input.
 
@@ -108,9 +119,17 @@ async def financial_agent_stream(user_input: schemas.UserInput, request: Request
     Raises:
       HTTPException: If an error occurs while starting the stream.
     """
-    session_token = request.headers.get('session_token', None)
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=f'Could not validate credentials',
+    )
+    session_token = oauth2.verify_access_token(access_token, credentials_exception)
+
+    if session_token.session_token is None:
+        raise HTTPException(status_code=401, detail='Invalid or expired session')
     try:
-        api_keys = UserSessionManager.get_session_keys(session_token, key_manager, redis_client)
+        api_keys = UserSessionManager.get_session_keys(session_token.session_token, key_manager, redis_client)
 
     except InvalidSessionError:
         raise HTTPException(status_code=401, detail='Invalid or expired session')
@@ -173,7 +192,7 @@ async def get_report_pdf() -> StreamingResponse:
       HTTPException: If the PDF file does not exist.
     """
     if not os.path.exists(pdf_file_path):
-        raise HTTPException(status_code=404, detail='PDF file not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='PDF file not found')
 
     with open(pdf_file_path, 'rb') as f:
         pdf_data = f.read()
@@ -197,7 +216,7 @@ async def get_report_md() -> StreamingResponse:
       HTTPException: If the Markdown file does not exist.
     """
     if not os.path.exists(md_file_path):
-        raise HTTPException(status_code=404, detail='Markdown file not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Markdown file not found')
 
     with open(md_file_path, 'r') as f:
         md_data = f.read()

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -12,3 +14,7 @@ class UserInput(BaseModel):
 class AgentFinalOutput(BaseModel):
     title: str
     summary: str
+
+
+class TokenData(BaseModel):
+    session_token: Optional[str] = None
