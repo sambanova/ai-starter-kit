@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 
 
-def read_json_from_file(file_path: str) -> dict:
+def read_json_from_file(file_path: str) -> Optional[List[Dict[str, str]]]:
     """
     Reads JSON data from a file.
 
@@ -30,7 +30,8 @@ def read_json_from_file(file_path: str) -> dict:
     """
     try:
         with open(file_path, 'r') as file:
-            return json.load(file)
+            json_dict = json.load(file)
+            return json_dict if isinstance(json_dict, list) else None
     except FileNotFoundError:
         return None
     except json.JSONDecodeError:
@@ -51,7 +52,7 @@ def remove_ansi_escape_codes(text: str) -> str:
     return ansi_escape.sub('', text)
 
 
-async def log_stream(queue: Queue) -> AsyncGenerator[str, None]:
+async def log_stream(queue: Queue[str]) -> AsyncGenerator[str, None]:
     """
     Async generator that yields logs as they appear in the queue.
 

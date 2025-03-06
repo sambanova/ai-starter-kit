@@ -4,7 +4,9 @@ import logging
 import os
 import sys
 import uuid
+from queue import Queue
 from threading import Thread
+from typing import Dict
 
 import redis
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -15,7 +17,7 @@ from fastapi.security import APIKeyHeader
 from financial_agent_crewai.src.exceptions import APIKeyNotFoundError, InvalidSessionError
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.main import FinancialFlow
-from financial_agent_crewai.utils.utilities import *
+from financial_agent_crewai.utils.utilities import log_stream
 from financial_agent_crewai.web_app.backend import schemas
 from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
 from financial_agent_crewai.web_app.backend.session.user_manager import UserSessionManager
@@ -113,7 +115,7 @@ async def financial_agent_stream(user_input: schemas.UserInput, request: Request
     except InvalidSessionError:
         raise HTTPException(status_code=401, detail='Invalid or expired session')
 
-    queue = Queue()
+    queue: Queue[str] = Queue()
 
     try:
         financial_flow = FinancialFlow(
@@ -136,14 +138,17 @@ async def financial_agent_stream(user_input: schemas.UserInput, request: Request
             Exception: If an error occurs during the financial prediction flow.
         """
         try:
-            sys.stdout = StreamToQueue(queue)  # Redirect logs to queue
+            # Redirect logs to queue
+            sys.stdout = StreamToQueue(queue)
             financial_flow.kickoff()
         except Exception as e:
             logger.error(f'Error during agent flow: {str(e)}')
             queue.put(json.dumps({'type': 'error', 'content': 'internal error during agent flow'}))
         finally:
-            sys.stdout = sys.__stdout__  # Restore stdout
-            queue.put(None)  # Signal end of logs
+            # Restore stdout
+            sys.stdout = sys.__stdout__
+            # Signal end of logs
+            queue.put(None)  # type: ignore
 
     try:
         thread = Thread(target=run_financial_flow, daemon=True)
@@ -157,7 +162,7 @@ async def financial_agent_stream(user_input: schemas.UserInput, request: Request
 
 
 @app.get('/report/pdf')
-async def get_report() -> StreamingResponse:
+async def get_report_pdf() -> StreamingResponse:
     """
     Retrieves and streams a PDF report file to the client.
 
@@ -181,7 +186,7 @@ async def get_report() -> StreamingResponse:
 
 
 @app.get('/report/md')
-async def get_report() -> StreamingResponse:
+async def get_report_md() -> StreamingResponse:
     """
     Retrieves and streams a Markdown report file to the client.
 

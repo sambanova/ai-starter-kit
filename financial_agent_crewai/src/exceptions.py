@@ -1,4 +1,3 @@
-
 class APIKeyNotFoundError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
@@ -7,4 +6,3 @@ class APIKeyNotFoundError(Exception):
 class InvalidSessionError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
-

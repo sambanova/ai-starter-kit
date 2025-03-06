@@ -15,7 +15,7 @@ class StreamToQueue:
       _buffer (StringIO): A buffer to handle incoming message data.
     """
 
-    def __init__(self, queue: Queue) -> None:
+    def __init__(self, queue: Queue[str]) -> None:
         """
         Initializes the StreamToQueue object with a given queue.
 

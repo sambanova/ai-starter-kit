@@ -20,8 +20,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(parent_dir)
 
-from financial_agent_crewai.main import FinancialFlow
 from financial_agent_crewai.src.financial_agent_crewai.config import *
+from financial_agent_crewai.src.main import FinancialFlow
 from financial_agent_crewai.utils.utilities import *
 
 # Load environment variables

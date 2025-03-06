@@ -17,15 +17,18 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
-from langchain_sambanova import ChatSambaNovaCloud
-
+from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
 from financial_agent_crewai.src.exceptions import APIKeyNotFoundError
+
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
 )
 from financial_agent_crewai.src.financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
+)
+from financial_agent_crewai.src.financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
+    GenericResearchCrew,
 )
 from financial_agent_crewai.src.financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
 from financial_agent_crewai.src.financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
@@ -50,13 +53,10 @@ from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import
 from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
 from financial_agent_crewai.utils.utilities import *
 
-from .financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
-    GenericResearchCrew,
-)
-
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
 
+# Uncomment this line for langtrace monitoring
 # langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
@@ -89,6 +89,7 @@ class FinancialFlow(Flow):  # type: ignore
         cache_path: Optional[str | Path] = None,
         verbose: bool = True,
         sambanova_api_key: Optional[str] = None,
+        serper_api_key: Optional[str] = None,
     ) -> None:
         """Initialize the Finance Flow."""
         super().__init__()
@@ -128,12 +129,21 @@ class FinancialFlow(Flow):  # type: ignore
         self.verbose = verbose
 
         # Set the SAMBANOVA_API_KEY
+        self.sambanova_api_key: Optional[str]
         if sambanova_api_key is not None:
             self.sambanova_api_key = sambanova_api_key
         else:
             self.sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+
             if self.sambanova_api_key is None:
                 raise APIKeyNotFoundError('No credentials found')
+
+        # Set the SERPER_API_KEY
+        self.serper_api_key: Optional[str]
+        if serper_api_key is not None:
+            self.serper_api_key = serper_api_key
+        else:
+            self.serper_api_key = os.getenv('SERPER_API_KEY')
 
     @start()  # type: ignore
     def generic_research(self) -> Optional[str]:

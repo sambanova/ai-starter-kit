@@ -37,4 +37,5 @@ class APIKeyManager:
             ValueError: If the decryption fails or the decrypted data cannot be parsed into a dictionary.
         """
         decrypted = self.cipher_suite.decrypt(encrypted_keys).decode()
-        return eval(decrypted)
+        eval_decrypted: Dict[str, str] = eval(decrypted)
+        return eval_decrypted

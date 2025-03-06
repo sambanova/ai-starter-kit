@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict
+from typing import Dict, Optional
 
 import redis
 
@@ -32,8 +32,11 @@ class UserSessionManager:
 
         return session_token
 
+    # TODO: make session_token not optional
     @staticmethod
-    def get_session_keys(session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis) -> Dict[str, str]:
+    def get_session_keys(
+        session_token: Optional[str], key_manager: APIKeyManager, redis_client: redis.Redis
+    ) -> Dict[str, str]:
         """
         Retrieves and decrypts the API keys associated with a given session token.
 
