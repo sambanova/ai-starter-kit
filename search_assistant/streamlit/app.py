@@ -1,8 +1,12 @@
 import logging
 import os
+import shutil
 import sys
+import time
 import uuid
+from threading import Thread
 
+import schedule
 import streamlit as st
 import yaml
 
@@ -22,6 +26,8 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
+# Minutes for scheduled cache deletion
+EXIT_TIME_DELTA = 30
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
@@ -42,6 +48,31 @@ st_description = load_app_description()
 prod_mode = config.get('prod_mode', False)
 llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 additional_env_vars = config.get('additional_env_vars', None)
+
+
+def delete_temp_dir(temp_dir: str) -> None:
+    """Delete the temporary directory and its contents."""
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            logging.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            logging.info(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """Schedule the deletion of the temporary directory after a delay."""
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
 
 
 def handle_user_input(user_question: Optional[str]) -> None:
@@ -164,6 +195,8 @@ def main() -> None:
         st.session_state.input_disabled = True
     if 'st_session_id' not in st.session_state:
         st.session_state.st_session_id = str(uuid.uuid4())
+    if 'session_temp_subfolder' not in st.session_state:
+        st.session_state.session_temp_subfolder = st.session_state.st_session_id + '_db'
     if 'mp_events' not in st.session_state:
         st.session_state.mp_events = MixpanelEvents(
             os.getenv('MIXPANEL_TOKEN'),
@@ -236,12 +269,21 @@ def main() -> None:
                         if not st.session_state.query:
                             st.error('Please enter a query')
                         else:
+                            # Create the temporal folder to this session if it doesn't exist
+                            temp_folder = os.path.join(kit_dir, 'data', 'tmp', st.session_state.session_temp_subfolder)
                             scraper_state = st.session_state.search_assistant.search_and_scrape(
                                 query=st.session_state.query,
                                 search_method=st.session_state.tool[0],
                                 max_results=st.session_state.max_results,
                                 search_engine=st.session_state.search_engine,
+                                persist_directory=temp_folder,
                             )
+                            if prod_mode:
+                                schedule_temp_dir_deletion(temp_folder, EXIT_TIME_DELTA)
+                                st.toast(
+                                    f'your session will be active for the next {EXIT_TIME_DELTA} minutes, '
+                                    'after this time files will be deleted'
+                                )
                             if scraper_state is not None:
                                 st.error(scraper_state.get('message'))
                             st.session_state.input_disabled = False
