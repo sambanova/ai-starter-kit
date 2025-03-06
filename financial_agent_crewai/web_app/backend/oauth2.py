@@ -13,7 +13,7 @@ ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 
-def create_access_token(data: Dict[str, datetime.datetime]) -> Any:
+def create_access_token(data: Dict[str, Any]) -> Any:
     to_encode = data.copy()
 
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

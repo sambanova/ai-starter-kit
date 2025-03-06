@@ -121,22 +121,28 @@ async def financial_agent_stream(
     Raises:
         HTTPException: If an error occurs while starting the stream.
     """
-
+    session_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='Invalid or expired session',
+    )
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=f'Could not validate credentials',
+        detail='Could not validate credentials',
     )
+    if access_token is None:
+        raise session_exception
+
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     if session_token.session_token is None:
-        raise HTTPException(status_code=401, detail='Invalid or expired session')
+        raise session_exception
     try:
         api_keys = UserSessionManager.get_session_keys(session_token.session_token, key_manager, redis_client)
 
     except InvalidSessionError:
-        raise HTTPException(status_code=401, detail='Invalid or expired session')
+        raise session_exception
     except InvalidToken:
-        raise HTTPException(status_code=401, detail='Invalid token')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token')
 
     queue: Queue[str] = Queue()
 
