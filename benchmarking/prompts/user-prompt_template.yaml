@@ -7,11 +7,12 @@ optional_variables: []
 output_parser: null
 partial_variables: {}
 tags: null
-template: "Generate a detailed,\
-  \ extensive and complex movie script of the Star Wars movie The Empire strikes back,\
-  \ describing how every character felt, environment details and onomatopoeias. After\
-  \ that, generate a complete and extensive end-to-end plot of the movie. Finally,\
-  \ generate a detailed explanation of each character biograhy in multiple paragraphs.\
-  \ "
+template: |
+  Write a detailed, in-depth guide on the evolution of deep learning.Cover 
+  the historical milestones, key breakthroughs, architectures (such as CNNs, 
+  RNNs, and Transformers), training methodologies, hardware advancements, 
+  ethical concerns, and future trends. Include real-world applications, 
+  case studies, and a comparison of deep learning with traditional machine 
+  learning. Provide citations and technical explanations where necessary.
 template_format: f-string
 validate_template: false
