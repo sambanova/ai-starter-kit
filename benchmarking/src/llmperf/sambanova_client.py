@@ -214,7 +214,10 @@ class BaseAPIEndpoint(abc.ABC):
                 metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] / (metrics[common_metrics.E2E_LAT_SERVER])
             )
 
+        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN] = response_dict.get(
+            'completion_tokens_after_first_per_sec_first_ten')
         metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get('batch_size_used')
+        metrics[common_metrics.ACCEPTANCE_RATE] = response_dict.get('acceptance_rate')
 
         return metrics
 

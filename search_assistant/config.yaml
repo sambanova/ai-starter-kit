@@ -25,6 +25,7 @@ web_crawling:
     "excluded_links":
         - 'facebook.com'
         - 'twitter.com'
+        - 'x.com'
         - 'instagram.com'
         - 'linkedin.com'
         - 'telegram.me'

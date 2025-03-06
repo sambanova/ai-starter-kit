@@ -244,7 +244,47 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
         ]:
-            logger.info(f'Building Metrics Summary for metric: {metric}')
+            logger.info(f'Building Client Metrics Summary for metric: {metric}')
+            metrics_summary[metric] = {}
+
+            # Get flattened list from metric column in metrics df
+            series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
+
+            # Generate statistics for specific metric
+            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            quantiles_reformatted_keys = {}
+            for quantile, value in quantiles.items():
+                reformatted_key = f'p{int(quantile * 100)}'
+                logger.info(f'    {reformatted_key} = {value}')
+                quantiles_reformatted_keys[reformatted_key] = value
+            metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
+
+            series_mean = round(series.mean(), 4)
+            logger.info(f'    mean = {series_mean}')
+            metrics_summary[metric]['mean'] = series_mean
+
+            series_min = round(series.min(), 4)
+            logger.info(f'    min = {series_min}')
+            metrics_summary[metric]['min'] = series_min
+
+            series_max = round(series.max(), 4)
+            logger.info(f'    max = {series_max}')
+            metrics_summary[metric]['max'] = series_max
+
+            series_std = round(series.std(), 4)
+            logger.info(f'    stddev = {series_std}')
+            metrics_summary[metric]['stddev'] = series_std
+            
+        # Record descriptive statistics for the metrics in the following list
+        for metric in [
+            common_metrics.TTFT_SERVER,
+            common_metrics.E2E_LAT_SERVER,
+            common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER,
+            common_metrics.NUM_INPUT_TOKENS_SERVER,
+            common_metrics.NUM_OUTPUT_TOKENS_SERVER,
+            common_metrics.ACCEPTANCE_RATE
+        ]:
+            logger.info(f'Building Server Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
