@@ -1,3 +1,4 @@
+import base64
 import os
 from typing import Any, Dict, Optional, Tuple
 
@@ -12,9 +13,10 @@ from benchmarking.streamlit.streamlit_utils import set_api_variables
 class ChatPerformanceEvaluator:
     """Samba Studio Bundle handler that wraps SamabaNova LLM client to parse output"""
 
-    def __init__(self, model_name: str, llm_api: str, params: Optional[Dict[str, Any]]) -> None:
+    def __init__(self, model_name: str, llm_api: str, image_path: str, params: Optional[Dict[str, Any]]) -> None:
         self.model = model_name
         self.llm_api = llm_api
+        self.image_path = image_path
         self.params = params
 
     def generate(self, prompt: str) -> Tuple[Dict[str, Any], str, RequestConfig]:
@@ -35,10 +37,17 @@ class ChatPerformanceEvaluator:
         tokenizer = llmperf_utils.get_tokenizer(self.model)
 
         api_variables = set_api_variables()
-
+        
+        # Image to be sent in LLM request if exists
+        image = None
+        if self.image_path:
+            with open(self.image_path, 'rb') as image_file:
+                image = base64.b64encode(image_file.read()).decode('utf-8')
+                
         request_config = RequestConfig(
             request_idx=1,
             prompt_tuple=(prompt_template, 10),
+            image = image,
             model=self.model,
             llm_api=self.llm_api,
             api_variables=api_variables,
@@ -75,6 +84,6 @@ if __name__ == '__main__':
         # "top_p":0.95,
     }
 
-    handler = ChatPerformanceEvaluator(model_name, llm_api, params)
+    handler = ChatPerformanceEvaluator(model_name, llm_api, image_path='', params=params)
     response = handler.generate(prompt='Tell me about SambaNova in one sentence')
     print(response)

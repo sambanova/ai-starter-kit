@@ -63,6 +63,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
         '--timeout 600 '
         '--num-input-tokens 1000 '
         '--num-output-tokens 1000 '
+        '--multimodal-image-size na '
         '--num-requests 2 '
         '--llm-api sncloud'
     ),
