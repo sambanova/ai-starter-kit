@@ -11,7 +11,7 @@ const WarningMessage = () => {
 
   return (
     <div className="mb-4">
-      {missingKeys.length > 0 && (
+      {missingKeys.includes("SambaNova") && (
         <Alert variant="warning" className="py-4 rounded-xl">
           <TriangleAlert className="h-5 w-5" />
           <AlertTitle>Missing API keys</AlertTitle>

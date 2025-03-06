@@ -103,7 +103,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             {/* SambaNova API Key */}
             <div>
               <label className="block text-sm font-medium mb-1">
-                SambaNova API Key
+                SambaNova API Key <span className="text-red-400">*</span>
                 <a
                   href="https://cloud.sambanova.ai/"
                   target="_blank"
@@ -132,7 +132,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
               <div className="flex justify-end space-x-2 mt-2">
                 <button
                   onClick={() => clearKey("sambanova")}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-white focus:outline-1"
+                  className="sn-clear-button"
                 >
                   Clear Key
                 </button>
@@ -176,7 +176,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
               <div className="flex justify-end space-x-2 mt-2">
                 <button
                   onClick={() => clearKey("serper")}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
+                  className="sn-clear-button"
                 >
                   Clear Key
                 </button>

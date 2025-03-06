@@ -28,6 +28,9 @@
   .sn-icon-button-secondary {
     @apply text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400;
   }
+  .sn-clear-button {
+    @apply cursor-pointer px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-white focus:outline-1;
+  }
   .sn-text-primary {
     @apply text-black dark:text-white;
   }
