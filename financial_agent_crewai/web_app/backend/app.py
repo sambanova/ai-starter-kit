@@ -8,6 +8,7 @@ from threading import Thread
 from typing import Annotated, Dict
 
 import redis
+from cryptography.fernet import InvalidToken
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -134,6 +135,8 @@ async def financial_agent_stream(
 
     except InvalidSessionError:
         raise HTTPException(status_code=401, detail='Invalid or expired session')
+    except InvalidToken:
+        raise HTTPException(status_code=401, detail='Invalid token')
 
     queue: Queue[str] = Queue()
 
