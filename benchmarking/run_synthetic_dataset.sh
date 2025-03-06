@@ -3,13 +3,13 @@
 
 python src/evaluator.py \
 --mode synthetic \
---model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct Meta-Llama-3.1-405B-Instruct" \
---results-dir "./data/results/llmperf" \
+--model-names "Meta-Llama-3.1-70B-Instruct" \
+--results-dir "./data/results/ankur_softbank" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
---num-requests 16 \
+--num-input-tokens 100 \
+--num-output-tokens 100 \
+--num-requests 1 \
 --llm-api sncloud
 
 # Notes:
