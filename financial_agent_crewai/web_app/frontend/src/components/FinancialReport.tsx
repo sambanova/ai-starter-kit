@@ -1,11 +1,37 @@
 import { AlertCircle } from "lucide-react";
 
-import { useFilteredMessages } from "@/utils/useFilteredMessages";
+import {
+  StreamMessage,
+  useStreamingStore,
+} from "@/stores/StreamingResponseStore";
 
 import { Alert, AlertDescription, AlertTitle } from "./shadcn/alert";
 
+type FilteredMessageType = {
+  title: string | null;
+  summary: string | null;
+};
+
 const FinancialReport = () => {
-  const finalResult = useFilteredMessages();
+  const { messages } = useStreamingStore();
+
+  const filterFinalMessage = (messages: StreamMessage[]) => {
+    const finalAnswerIndex = messages.findIndex((msg) =>
+      msg.output.includes('"title": '),
+    );
+
+    if (finalAnswerIndex === -1) return { title: null, summary: null };
+
+    const filteredMessage = messages
+      .slice(finalAnswerIndex)
+      .map((msg) => msg.output)[0];
+
+    const finalResult: FilteredMessageType = JSON.parse(filteredMessage);
+
+    return finalResult;
+  };
+
+  const finalResult = filterFinalMessage(messages);
 
   return (
     <>
