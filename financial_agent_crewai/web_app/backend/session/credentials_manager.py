@@ -16,7 +16,7 @@ class APIKeyManager:
             keys: A dictionary containing API keys (key-value pairs) to be encrypted.
 
         Returns:
-            bytes: The encrypted version of the API keys, encoded as bytes.
+            The encrypted version of the API keys, encoded as bytes.
 
         Raises:
             ValueError: If the keys cannot be properly converted to a string for encryption.

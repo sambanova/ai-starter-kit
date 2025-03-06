@@ -19,7 +19,7 @@ class UserSessionManager:
             redis_client: The Redis client used to store the session data.
 
         Returns:
-            session_token: A session token that uniquely identifies the created session.
+            A session token that uniquely identifies the created session.
         """
         encrypted_keys = key_manager.encrypt_keys(api_keys)
 

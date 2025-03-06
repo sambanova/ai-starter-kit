@@ -23,10 +23,10 @@ def read_json_from_file(file_path: str) -> Optional[List[Dict[str, str]]]:
     Reads JSON data from a file.
 
     Args:
-      file_path: The path to the JSON file.
+        file_path: The path to the JSON file.
 
     Returns:
-      dict: The JSON data as a dictionary.
+        The JSON data as a dictionary.
     """
     try:
         with open(file_path, 'r') as file:
@@ -43,10 +43,10 @@ def remove_ansi_escape_codes(text: str) -> str:
     Function to remove ANSI escape sequences
 
     Args:
-      text: string to clean.
+        text: string to clean.
 
     Returns:
-      clean text.
+        clean text.
     """
     ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
     return ansi_escape.sub('', text)
@@ -57,10 +57,10 @@ async def log_stream(queue: Queue[str]) -> AsyncGenerator[str, None]:
     Async generator that yields logs as they appear in the queue.
 
     Args:
-      queue: The queue to retrieve log messages from.
+        queue: The queue to retrieve log messages from.
 
     Returns:
-      AsyncGenerator: An asynchronous generator that yields log
+        AsyncGenerator: An asynchronous generator that yields log
                                    messages (as strings) from the queue. The
                                    generator stops when a `None` value is
                                    encountered in the queue.

@@ -1,5 +1,4 @@
 import datetime
-import os
 from typing import Any, Dict
 
 import jwt
@@ -7,10 +6,11 @@ from fastapi.exceptions import HTTPException
 from jwt.exceptions import InvalidTokenError
 
 from financial_agent_crewai.web_app.backend import schemas
+from financial_agent_crewai.web_app.backend.config import settings
 
-SECRET_KEY = os.getenv('SECRET_KEY')
-ALGORITHM = os.getenv('ALGORITHM')
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES'))
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 
 def create_access_token(data: Dict[str, str]) -> Any:
