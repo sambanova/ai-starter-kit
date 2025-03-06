@@ -5,16 +5,16 @@
 # sys.path.append(kit_dir)
 # sys.path.append(repo_dir)
 
+import io
+import json
 import warnings
+import zipfile
 from typing import Any, Dict
 
-import json
 import pandas as pd
 import streamlit as st
 import yaml
 from st_pages import hide_pages
-import zipfile
-import io
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
@@ -263,10 +263,19 @@ def main() -> None:
         )
 
         st.session_state.timeout = st.number_input(
-            'Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running or st.session_state.optional_download
+            'Timeout', 
+            min_value=60, 
+            max_value=1800, 
+            value=600, 
+            step=1, 
+            disabled=st.session_state.running or st.session_state.optional_download
         )
 
-        st.session_state.running = st.sidebar.button('Run!', disabled=st.session_state.running or st.session_state.optional_download, key='run_button')
+        st.session_state.running = st.sidebar.button(
+            'Run!', 
+            disabled=st.session_state.running or st.session_state.optional_download, 
+            key='run_button'
+        )
 
         if st.session_state.optional_download:
             st.sidebar.download_button(
@@ -276,10 +285,17 @@ def main() -> None:
                 mime="application/zip"
             )
         else:
-            st.sidebar.download_button(label="Download Results", data='', disabled=not st.session_state.running or not st.session_state.optional_download)
+            st.sidebar.download_button(
+                label="Download Results", 
+                data='', 
+                disabled=not st.session_state.running or not st.session_state.optional_download
+            )
         
         # Disable stop button if app is not running and download button is not available
-        sidebar_stop = st.sidebar.button('Stop', disabled=(not st.session_state.running) and (not st.session_state.optional_download) )
+        sidebar_stop = st.sidebar.button(
+            'Stop', 
+            disabled=(not st.session_state.running) and (not st.session_state.optional_download) 
+        )
 
         if st.session_state.prod_mode:
             if st.button('Back to Setup', disabled=st.session_state.running or st.session_state.optional_download):

@@ -1,4 +1,3 @@
-import uuid
 import abc
 import json
 import os
@@ -6,6 +5,7 @@ import random
 import re
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -457,7 +457,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'{self.run_uuid}_custom_{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
+        output_file_name = f'{self.run_uuid}_custom_{self.model_name}_{self.file_name}_\
+            {self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
