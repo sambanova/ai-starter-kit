@@ -1352,7 +1352,7 @@ class SnsdkWrapper:
         list_checkpoints_response = self.snsdk_client.list_checkpoints(project=project_id, job=job_id)
         if list_checkpoints_response['status_code'] == 200:
             checkpoints = []
-            for checkpoint in list_checkpoints_response['data']['checkpoints']:
+            for checkpoint in list_checkpoints_response['checkpoints']:
                 if verbose or sort:
                     checkpoints.append({k: v for k, v in checkpoint.items()})
                 else:
@@ -1545,7 +1545,12 @@ class SnsdkWrapper:
             # create composite model
             dependencies = [{'name': model} for model in model_list]
             create_composite_model_response = self.snsdk_client.add_composite_model(
-                name=model_name, description=description, dependencies=dependencies, rdu_required=rdu_required
+                name=model_name, 
+                description=description, 
+                dependencies=dependencies, 
+                rdu_required=rdu_required,
+                config_params={}, 
+                app="",
             )
 
             if create_composite_model_response['status_code'] == 200:
@@ -1719,6 +1724,7 @@ class SnsdkWrapper:
             instances=instances,
             rdu_arch=rdu_arch,
             hyperparams=json.dumps(hyperparams),
+            inference_api_openai_compatible=True,
         )
 
         if create_endpoint_response['status_code'] == 200:
