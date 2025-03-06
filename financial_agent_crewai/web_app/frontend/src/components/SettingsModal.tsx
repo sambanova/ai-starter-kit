@@ -1,9 +1,11 @@
 import { useState } from "react";
 
-import { Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff, Info, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
+
+import Tooltip from "./utils/Tooltip";
 
 import { BASE_URL } from "@/Constants";
 
@@ -43,39 +45,19 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
     }
   };
 
-  const saveKey = (key: keyType) => {
-    if (key === "sambanova") {
-      if (!sambanovaKey) {
-        toast.error("SambaNova API Key cannot be empty");
-      } else {
-        addApiKey("SambaNova", sambanovaKey);
-        toast.success("SambaNova API key saved successfully!");
-      }
-    } else if (key === "serper") {
-      if (!serperKey) {
-        toast.error("Serper API Key cannot be empty");
-      } else {
-        addApiKey("Serper", serperKey);
-        toast.error("Serper API key saved successfully!");
-      }
-    }
-  };
-
   const saveKeys = async () => {
-    if (!sambanovaKey || !serperKey) {
-      toast.error("API Keys cannot be empty.");
+    if (!sambanovaKey) {
+      toast.error("SambaNova API Key cannot be empty.");
     } else {
       try {
-        const response = await fetch(`${BASE_URL}/set_api_keys`, {
+        const response = await fetch(`${BASE_URL}/keys`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-sambanova-key": sambanovaKey,
+            "x-serper-key": serperKey || "",
           },
           credentials: "include", // TODO: if backend and frontend are going to be on the same domain, change to "same-origin"
-          body: JSON.stringify({
-            sambanova_key: sambanovaKey,
-            serper_key: serperKey,
-          }),
         });
 
         if (!response.ok)
@@ -89,7 +71,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
       }
 
       addApiKey("SambaNova", sambanovaKey);
-      addApiKey("Serper", serperKey);
+      if (serperKey) addApiKey("Serper", serperKey);
       toast.success("API keys saved successfully!");
     }
   };
@@ -130,6 +112,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   Get Key →
                 </a>
               </label>
+
               <div className="relative">
                 <input
                   value={sambanovaKey || ""}
@@ -145,7 +128,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   {isSambanovaKeyVisible ? <EyeOff /> : <Eye />}
                 </button>
               </div>
-              {/* Save and Clear Buttons */}
+              {/* Clear Button */}
               <div className="flex justify-end space-x-2 mt-2">
                 <button
                   onClick={() => clearKey("sambanova")}
@@ -153,19 +136,18 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                 >
                   Clear Key
                 </button>
-                <button
-                  onClick={() => saveKey("sambanova")}
-                  className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none"
-                >
-                  Save Key
-                </button>
               </div>
             </div>
 
             {/* Serper API Key */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Serper API Key
+              <label className="inline-block align-middle text-sm font-medium mb-1 space-x-1">
+                Serper API Key <span className="font-bold">(Optional)</span>{" "}
+                <span className="inline-flex items-center align-middle w-5">
+                  <Tooltip text="This API key is only required if you want to make a query using the 'Generic Google Search' source.">
+                    <Info />
+                  </Tooltip>
+                </span>
                 <a
                   href="https://serper.dev/"
                   target="_blank"
@@ -190,19 +172,13 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
                   {isSerperKeyVisible ? <EyeOff /> : <Eye />}
                 </button>
               </div>
-              {/* Add Save and Clear Buttons for Serper */}
+              {/* Clear Button */}
               <div className="flex justify-end space-x-2 mt-2">
                 <button
                   onClick={() => clearKey("serper")}
                   className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
                 >
                   Clear Key
-                </button>
-                <button
-                  onClick={() => saveKey("serper")}
-                  className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none"
-                >
-                  Save Key
                 </button>
               </div>
             </div>

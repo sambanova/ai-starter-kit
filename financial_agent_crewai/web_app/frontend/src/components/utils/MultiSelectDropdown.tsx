@@ -1,76 +1,136 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
-interface IMultiSelectDropdownProps {
-  options: { [key: string]: string };
-  handleSelectedItems: (source: string, value: boolean) => void;
+type OptionType = {
+  id: string;
+  label: string;
+};
+
+interface MultiSelectProps {
+  options: OptionType[];
   placeholder?: string;
+  optionName?: string;
+  onChange?: (selectedOptions: OptionType[]) => void;
+  maxHeight?: string;
+  disabled?: boolean;
 }
 
-const MultiSelectDropdown = ({
+const MultiSelect = ({
   options,
-  handleSelectedItems,
-  placeholder = "Select items...",
-}: IMultiSelectDropdownProps) => {
+  placeholder = "Select options",
+  optionName = "option",
+  onChange,
+  maxHeight = "max-h-80",
+  disabled = false,
+}: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selected, setSelected] = useState<OptionType[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleItem = (item: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
-    );
-    handleSelectedItems(item, !selectedItems.includes(item));
+  // Handle click outside to close the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    // Add event listener when dropdown is open
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // Clean up event listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const toggleOption = (option: OptionType) => {
+    const isSelected = selected.some((item) => item.id === option.id);
+    let updatedSelection: OptionType[];
+
+    if (isSelected) {
+      updatedSelection = selected.filter((item) => item.id !== option.id);
+    } else {
+      updatedSelection = [...selected, option];
+    }
+
+    setSelected(updatedSelection);
+    onChange?.(updatedSelection);
   };
 
-  const isItemSelected = (item: string) => selectedItems.includes(item);
+  const toggleDropdown = () => {
+    if (!disabled) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  // Create a display string for selected items
+  const getSelectionDisplay = () => {
+    if (selected.length === 0) {
+      return <span className="text-gray-500">{placeholder}</span>;
+    }
+
+    return (
+      <span className="sn-text-primary truncate">
+        {selected.length} {optionName}
+        {selected.length !== 1 ? "s" : ""} selected
+      </span>
+    );
+  };
 
   return (
-    <>
-      {/* Dropdown Button */}
+    <div className="relative w-full min-w-50" ref={dropdownRef}>
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-full min-w-50 sn-background border border-gray-300 rounded-lg px-4 py-3 flex items-center justify-between hover:border-gray-400"
+        className={`flex items-center justify-between p-3 border rounded-md cursor-pointer ${
+          isOpen ? "ring-2 ring-orange-500" : "border-gray-300"
+        } ${disabled ? "bg-gray-100 cursor-not-allowed" : "sn-background"}`}
+        onClick={toggleDropdown}
       >
-        <div className="flex flex-wrap gap-2">
-          {selectedItems.length === 0 ? (
-            <span className="sn-text-secondary">{placeholder}</span>
-          ) : (
-            <span className="sn-text-primary">
-              {selectedItems.length} source{selectedItems.length > 1 ? "s" : ""}{" "}
-              selected
-            </span>
-          )}
-        </div>
+        <div className="flex-1 truncate">{getSelectionDisplay()}</div>
 
-        {isOpen ? <ChevronUp /> : <ChevronDown />}
+        <div className="ml-2 flex-shrink-0 text-gray-600">
+          {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </div>
       </div>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed z-10 w-1/5 mt-1 sn-background border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-          {Object.keys(options).map((option) => (
-            <div
-              key={option}
-              onClick={() => toggleItem(option)}
-              className={`px-4 py-2 border-b border-gray-300 ${
-                isItemSelected(option)
-                  ? "sn-dropdown-selected-background"
-                  : "sn-dropdown-background"
-              } cursor-pointer flex items-center justify-between`}
-            >
-              {options[option]}
-              <span className="mx-1">
-                {isItemSelected(option) && (
-                  <Check className="text-orange-500 h-5" />
-                )}
-              </span>
-            </div>
-          ))}
+        <div
+          className={`absolute mt-1 w-full rounded-md sn-background border border-gray-300 shadow-lg z-10 ${maxHeight} overflow-y-auto`}
+        >
+          <ul>
+            {options.map((option) => {
+              const isOptionSelected = selected.some(
+                (item) => item.id === option.id,
+              );
+
+              return (
+                <li
+                  key={option.id}
+                  className={`px-3 py-2 cursor-pointer flex items-center justify-between ${
+                    isOptionSelected
+                      ? "sn-dropdown-selected-background"
+                      : "sn-dropdown-background"
+                  }`}
+                  onClick={() => toggleOption(option)}
+                >
+                  <span>{option.label}</span>
+                  {isOptionSelected && (
+                    <Check size={16} className="text-orange-500" />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
-export default MultiSelectDropdown;
+export default MultiSelect;

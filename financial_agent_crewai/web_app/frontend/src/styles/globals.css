@@ -58,4 +58,7 @@
   .sn-dropdown-selected-background {
     @apply bg-gray-200 dark:bg-background-secondary hover:bg-gray-200 dark:hover:bg-background-secondary/60;
   }
+  .sn-tooltip {
+    @apply bg-white dark:bg-background-main text-black dark:text-white;
+  }
 }

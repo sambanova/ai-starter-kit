@@ -20,18 +20,21 @@ const SearchSection = () => {
   const { isStreaming, startStream, clearMessages } = useStreamingStore();
   const { apiKeys } = useAPIKeysStore();
 
-  const sources = {
-    source_generic_search: "Generic Google Search",
-    source_sec_filings: "SEC Edgar Filings",
-    source_yfinance_news: "Yahoo Finance News",
-    source_yfinance_stocks: "Yahoo Finance Stocks",
-  };
-  const missingKeys = Object.keys(apiKeys).filter(
-    (key) => apiKeys[key as keyof typeof apiKeys] === null,
-  );
+  const sources = [
+    {
+      id: "source_generic_search",
+      label: "Generic Google Search",
+    },
+    { id: "source_sec_filings", label: "SEC Edgar Filings" },
+    { id: "source_yfinance_news", label: "Yahoo Finance News" },
+    { id: "source_yfinance_stocks", label: "Yahoo Finance Stocks" },
+  ];
+  const missingSambaNovaKey = Object.keys(apiKeys)
+    .filter((key) => apiKeys[key as keyof typeof apiKeys] === null)
+    .includes("SambaNova");
   const searchButtonIsDisabled =
     isStreaming ||
-    missingKeys.length > 0 || // Disable if any API key is missing
+    missingSambaNovaKey || // Disable if any API key is missing
     !Object.values(selectedSources).some((value) => value) || // Disable if no source is selected
     !searchQuery?.trim(); // Disable if search query is empty
 
@@ -50,8 +53,20 @@ const SearchSection = () => {
     }
   };
 
-  const handleSelectedSources = (source: string, value: boolean) => {
-    setSelectedSources((prevState) => ({ ...prevState, [source]: value }));
+  const handleSelectedSources = (selectedSources: typeof sources) => {
+    const updatedSources = selectedSources.reduce(
+      (acc, curr) => {
+        acc[curr.id as keyof SourcesType] = true;
+        return acc;
+      },
+      {
+        source_generic_search: false,
+        source_sec_filings: false,
+        source_yfinance_news: false,
+        source_yfinance_stocks: false,
+      },
+    );
+    setSelectedSources(updatedSources);
   };
 
   return (
@@ -75,8 +90,9 @@ const SearchSection = () => {
         <div className="flex-none">
           <MultiSelectDropdown
             options={sources}
+            onChange={handleSelectedSources}
             placeholder="Select sources"
-            handleSelectedItems={handleSelectedSources}
+            optionName="source"
           />
         </div>
 

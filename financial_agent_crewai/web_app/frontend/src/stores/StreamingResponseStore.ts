@@ -46,6 +46,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           user_query: query,
           source_generic_search: selectedSources.source_generic_search,
