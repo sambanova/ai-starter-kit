@@ -41,7 +41,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
     set({ isStreaming: true, isFinished: false, error: null });
 
     try {
-      const response = await fetch(`${BASE_URL}/agent/stream`, {
+      const response = await fetch(`${BASE_URL}/flow/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

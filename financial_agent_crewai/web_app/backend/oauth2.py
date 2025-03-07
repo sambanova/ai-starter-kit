@@ -24,7 +24,7 @@ def create_access_token(data: Dict[str, Any]) -> Any:
     return encoded_jwt
 
 
-def verify_access_token(token: str, credentials_exception: HTTPException) -> schemas.TokenData:
+def verify_access_token(token: str, credentials_exception: HTTPException) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         session_token: str = str(payload.get('session_token'))
@@ -34,4 +34,7 @@ def verify_access_token(token: str, credentials_exception: HTTPException) -> sch
     except InvalidTokenError:
         raise credentials_exception
 
-    return token_data
+    if token_data.session_token is not None:
+        return token_data.session_token
+    else:
+        raise credentials_exception

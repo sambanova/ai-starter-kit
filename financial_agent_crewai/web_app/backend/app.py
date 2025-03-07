@@ -46,11 +46,6 @@ sambanova_api_key_header = APIKeyHeader(name='x-sambanova-key', scheme_name='sam
 serper_api_key_header = APIKeyHeader(name='x-serper-key', scheme_name='serper_key')
 key_manager = APIKeyManager()
 
-
-# Working directories
-current_dir = Path(__file__).resolve().parent
-kit_dir = current_dir.parent
-
 # Exceptions
 session_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -85,40 +80,7 @@ async def store_keys(
     return {'access_token': access_token, 'token_type': 'bearer'}
 
 
-@app.post('/agent/predict', response_model=schemas.AgentFinalOutput)
-def financial_agent(user_input: schemas.UserInput) -> schemas.AgentFinalOutput:
-    """
-    Handles a POST request to predict financial agent outcomes based on user input.
-
-    Args:
-        user_input: The user input containing query and data sources.
-
-    Returns:
-        A response containing the prediction results.
-
-    Raises:
-        HTTPException: If an error occurs during the prediction process.
-    """
-    try:
-        logger.info(f'Received request for financial prediction with input: {user_input}')
-        financial_flow = FinancialFlow(
-            query=user_input.user_query,
-            source_generic_search=user_input.source_generic_search,
-            source_sec_filings=user_input.source_sec_filings,
-            source_yfinance_news=user_input.source_yfinance_news,
-            source_yfinance_stocks=user_input.source_yfinance_stocks,
-        )
-        results = financial_flow.kickoff()
-
-        response = schemas.AgentFinalOutput(**results)
-        return response
-
-    except Exception as e:
-        logger.error(f'Error occurred during financial prediction: {str(e)}')
-        raise HTTPException(status_code=500, detail=f'An error occurred')
-
-
-@app.post('/agent/stream')
+@app.post('/flow/run')
 async def financial_agent_stream(
     user_input: schemas.UserInput, access_token: Annotated[str | None, Cookie()] = None
 ) -> StreamingResponse:
@@ -137,20 +99,19 @@ async def financial_agent_stream(
     if access_token is None:
         raise session_exception
 
-    # Extract session token
+    # Extract and verify session token
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(kit_dir, session_token)
-    Path(cache_path).mkdir(exist_ok=True)
+    cache_path = create_cache_path_session_token(kit_dir, session_token, create_cache=True)
 
     # Schedule cache deletion after 30 minutes
     schedule_temp_dir_deletion(str(cache_path), 30)
 
-    if session_token.session_token is None:
+    if session_token is None:
         raise session_exception
     try:
-        api_keys = UserSessionManager.get_session_keys(session_token.session_token, key_manager, redis_client)
+        api_keys = UserSessionManager.get_session_keys(session_token, key_manager, redis_client)
 
     except InvalidSessionError:
         raise session_exception
@@ -219,11 +180,11 @@ async def get_report_md(access_token: Annotated[str | None, Cookie()] = None) ->
     if access_token is None:
         raise session_exception
 
-    # Extract session token
+    # Extract and verify session token
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(kit_dir, session_token)
+    cache_path = create_cache_path_session_token(kit_dir, session_token, create_cache=False)
 
     # Create the final report Markdown path
     md_file_path = os.path.join(cache_path, 'report.md')
@@ -255,11 +216,11 @@ async def get_report_pdf(access_token: Annotated[str | None, Cookie()] = None) -
     if access_token is None:
         raise session_exception
 
-    # Extract session token
+    # Extract and verify session token
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(kit_dir, session_token)
+    cache_path = create_cache_path_session_token(kit_dir, session_token, create_cache=False)
 
     # Create the final report PDF path
     pdf_file_path = os.path.join(cache_path, 'report.pdf')
@@ -277,7 +238,25 @@ async def get_report_pdf(access_token: Annotated[str | None, Cookie()] = None) -
     )
 
 
-def create_cache_path_session_token(kit_dir: Path, session_token: str) -> Path:
+def create_cache_path_session_token(kit_dir: Path, session_token: str, create_cache: bool = True) -> Path:
     """Create the cache path from user token."""
 
-    return kit_dir.parent.parent / 'scratch' / 'financial_assistant' / 'cache' / f'cache_{session_token}'
+    # Working directories
+    current_dir = Path(__file__).resolve().parent
+    kit_dir = current_dir.parent
+
+    scratch_path = kit_dir.parent.parent / 'scratch'
+    print(kit_dir)
+    financial_agent_crewai_path = scratch_path / 'financial_agent_crewai'
+    financial_agent_cache_path = financial_agent_crewai_path / 'cache'
+    cache_path = financial_agent_cache_path / f'cache_{session_token}'
+
+    scratch_path.mkdir(exist_ok=True)
+    financial_agent_crewai_path.mkdir(exist_ok=True)
+    financial_agent_cache_path.mkdir(exist_ok=True)
+
+    if create_cache:
+        cache_path.mkdir(exist_ok=True)
+
+    print(cache_path)
+    return cache_path
