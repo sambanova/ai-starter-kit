@@ -49,7 +49,7 @@ const Header = ({ setIsSettingsModalOpen }: IHeader) => {
 
         {/* Right: App name & Actions */}
         <div className="flex items-center space-x-4">
-          <h1 className="text-md sm:text-2xl font-bold tracking-tight text-center">
+          <h1 className="text-md md:text-2xl font-bold tracking-tight text-center">
             SambaNova Financial Agent
           </h1>
 

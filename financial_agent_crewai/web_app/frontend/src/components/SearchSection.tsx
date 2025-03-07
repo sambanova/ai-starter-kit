@@ -73,8 +73,8 @@ const SearchSection = () => {
     <div className="sn-border-shadowed p-6 mb-6">
       <h2 className="text-lg font-bold mb-2 ml-1">User query</h2>
 
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col lg:flex-row items-center gap-4">
+        <div className="relative w-full lg:flex-1">
           {/* Search Input */}
           <input
             type="search"
@@ -86,25 +86,27 @@ const SearchSection = () => {
           />
         </div>
 
-        {/* Sources dropdown */}
-        <div className="flex-none">
-          <MultiSelectDropdown
-            options={sources}
-            onChange={handleSelectedSources}
-            placeholder="Select sources"
-            optionName="source"
-          />
-        </div>
+        <div className="flex gap-4 w-full lg:w-auto">
+          {/* Sources dropdown */}
+          <div className="flex-grow">
+            <MultiSelectDropdown
+              options={sources}
+              onChange={handleSelectedSources}
+              placeholder="Select sources"
+              optionName="source"
+            />
+          </div>
 
-        {/* Search button */}
-        <button
-          type="button"
-          onClick={performSearch}
-          disabled={searchButtonIsDisabled}
-          className="flex items-center justify-center w-25 sn-button"
-        >
-          {isStreaming ? <LoaderCircle className="animate-spin" /> : "Search"}
-        </button>
+          {/* Search button */}
+          <button
+            type="button"
+            onClick={performSearch}
+            disabled={searchButtonIsDisabled}
+            className="flex items-center justify-center w-25 sn-button"
+          >
+            {isStreaming ? <LoaderCircle className="animate-spin" /> : "Search"}
+          </button>
+        </div>
       </div>
     </div>
   );

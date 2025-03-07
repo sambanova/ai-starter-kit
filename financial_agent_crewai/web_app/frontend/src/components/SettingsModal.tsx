@@ -62,6 +62,11 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
 
         if (!response.ok)
           throw new Error(`${response.status} - ${response.statusText}`);
+
+        addApiKey("SambaNova", sambanovaKey);
+        if (serperKey) addApiKey("Serper", serperKey);
+        toast.success("API keys saved successfully!");
+        closeModal();
       } catch (error) {
         console.error(error);
 
@@ -69,10 +74,6 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
           toast.error(`Failed to save API keys. Detail: ${error.message}`);
         }
       }
-
-      addApiKey("SambaNova", sambanovaKey);
-      if (serperKey) addApiKey("Serper", serperKey);
-      toast.success("API keys saved successfully!");
     }
   };
 
