@@ -106,6 +106,7 @@ The GUI for this starter kit uses Streamlit, a Python framework for building web
 Ensure you are in the `benchmarking` folder and run the following command:
 
 ```shell
+ulimit -n 4096
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
