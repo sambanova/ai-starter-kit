@@ -4,12 +4,12 @@
 python src/evaluator.py \
 --mode synthetic \
 --model-names "Meta-Llama-3.1-70B-Instruct" \
---results-dir "./data/results/ankur_softbank" \
---num-concurrent-requests 1 \
+--results-dir "./data/ankur_softbank_amit_new" \
+--num-concurrent-requests 64 \
 --timeout 600 \
---num-input-tokens 100 \
---num-output-tokens 100 \
---num-requests 1 \
+--num-input-tokens 128 \
+--num-output-tokens 2048 \
+--num-requests 64 \
 --llm-api sncloud
 
 # Notes:

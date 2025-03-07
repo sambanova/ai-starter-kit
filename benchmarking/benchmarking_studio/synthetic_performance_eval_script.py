@@ -2,10 +2,10 @@ import sys
 import time
 from typing import Any, Dict
 
-sys.path.append('../')
-sys.path.append('../src')
-sys.path.append('../prompts')
-sys.path.append('../src/llmperf')
+sys.path.append("../")
+sys.path.append("../src")
+sys.path.append("../prompts")
+sys.path.append("../src/llmperf")
 
 import pandas as pd
 
@@ -37,33 +37,53 @@ from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluato
 # To run the script, go to the kit's root and run:
 
 # General parameters:
-model_names = ['Meta-Llama-3.1-70B-Instruct']  # add more models if necessary
-llm_api = 'sncloud'  # it could be sncloud or sambastudio
-results_dir = 'data/results/ankur_softbank/'  # set the path where results will be saved
+model_names = ["Meta-Llama-3.1-70B-Instruct"]  # add more models if necessary
+llm_api = "sncloud"  # it could be sncloud or sambastudio
+results_dir = "data/results/amit_softbank/"  # set the path where results will be saved
 
 # Additional parameters:
 timeout = 600
 sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
-time_delay = 1  # delayed time in seconds between runs
+time_delay = 5  # delayed time in seconds between runs
 
 # Perf parameters:
-num_input_tokens = [512,128,2048,128,2048]  # add more input token numbers if needed
-num_output_tokens = [512,128,128,2048,2048]  # add more output token numbers if needed
-num_concurrent_requests = [1,2,4,8,16,32,64,128,256,512,1024]  # add more concurrent requests token numbers if needed
+num_input_tokens = [512, 128, 2048, 128, 2048]  # add more input token numbers if needed
+num_output_tokens = [
+    512,
+    128,
+    128,
+    2048,
+    2048,
+]  # add more output token numbers if needed
+num_concurrent_requests = [
+    # 1,
+    # 2,
+    # 4,
+    # 8,
+    # 16,
+    # 32,
+    # 64,
+    # 128,
+    # 256,
+    512,
+    # 1024,
+]  # add more concurrent requests token numbers if needed
 ratio = 1  # ratio between num_requests/concurrent_requests
-# e.g. means: for num_concurrent_requests = 10, there will be num_requests = 50
+# e.g. means: for num_concurrent_requests = 10, there will be num_requests = 10
 
 df_all_summary_results = pd.DataFrame()
 for model_idx, model_name in enumerate(model_names):
-    for input_tokens, output_tokens in zip(num_input_tokens, num_output_tokens):
+    for input_tokens, output_tokens in zip(
+        num_input_tokens[1:2], num_output_tokens[1:2]
+    ):
         for concurrent_requests in num_concurrent_requests:
             num_requests = concurrent_requests * ratio
             print(
-                f'running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, '
-                f'concurrent_requests {concurrent_requests}, num_requests {num_requests}'
+                f"running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, "
+                f"concurrent_requests {concurrent_requests}, num_requests {num_requests}"
             )
-            user_metadata['model_idx'] = model_idx
+            user_metadata["model_idx"] = model_idx
             # Instantiate evaluator
             evaluator = SyntheticPerformanceEvaluator(
                 model_name=model_name,
@@ -82,15 +102,21 @@ for model_idx, model_name in enumerate(model_names):
                 sampling_params=sampling_params,
             )
 
-            flatten_model_results_summary = llmperf_utils.flatten_dict(model_results_summary)
+            flatten_model_results_summary = llmperf_utils.flatten_dict(
+                model_results_summary
+            )
             filtered_flatten_model_results_summary = {
-                key: value for key, value in flatten_model_results_summary.items() if key not in ['model']
+                key: value
+                for key, value in flatten_model_results_summary.items()
+                if key not in ["model"]
             }
             df_model_results_summary = pd.DataFrame.from_dict(
                 filtered_flatten_model_results_summary,
-                orient='index',
-                columns=[flatten_model_results_summary['model']],
+                orient="index",
+                columns=[flatten_model_results_summary["model"]],
             )
 
-            df_all_summary_results = pd.concat([df_all_summary_results, df_model_results_summary], axis=1)
+            df_all_summary_results = pd.concat(
+                [df_all_summary_results, df_model_results_summary], axis=1
+            )
             time.sleep(time_delay)
