@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 from queue import Queue
 from threading import Thread
 from typing import Annotated, Dict
@@ -17,7 +18,7 @@ from fastapi.security import APIKeyHeader
 from financial_agent_crewai.src.exceptions import APIKeyNotFoundError, InvalidSessionError
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.main import FinancialFlow
-from financial_agent_crewai.utils.utilities import log_stream
+from financial_agent_crewai.utils.utilities import log_stream, schedule_temp_dir_deletion
 from financial_agent_crewai.web_app.backend import oauth2, schemas
 from financial_agent_crewai.web_app.backend.config import settings
 from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
@@ -45,8 +46,20 @@ sambanova_api_key_header = APIKeyHeader(name='x-sambanova-key', scheme_name='sam
 serper_api_key_header = APIKeyHeader(name='x-serper-key', scheme_name='serper_key')
 key_manager = APIKeyManager()
 
-pdf_file_path = os.path.join(CACHE_DIR, 'report.pdf')
-md_file_path = os.path.join(CACHE_DIR, 'report.md')
+
+# Working directories
+current_dir = Path(__file__).resolve().parent
+kit_dir = current_dir.parent
+
+# Exceptions
+session_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail='Invalid or expired session',
+)
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail='Could not validate credentials',
+)
 
 
 @app.post('/keys')
@@ -121,18 +134,18 @@ async def financial_agent_stream(
     Raises:
         HTTPException: If an error occurs while starting the stream.
     """
-    session_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='Invalid or expired session',
-    )
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='Could not validate credentials',
-    )
     if access_token is None:
         raise session_exception
 
+    # Extract session token
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
+
+    # Create the cache path
+    cache_path = create_cache_path_session_token(kit_dir, session_token)
+    Path(cache_path).mkdir(exist_ok=True)
+
+    # Schedule cache deletion after 30 minutes
+    schedule_temp_dir_deletion(str(cache_path), 30)
 
     if session_token.session_token is None:
         raise session_exception
@@ -153,7 +166,9 @@ async def financial_agent_stream(
             source_sec_filings=user_input.source_sec_filings,
             source_yfinance_news=user_input.source_yfinance_news,
             source_yfinance_stocks=user_input.source_yfinance_stocks,
+            cache_path=cache_path,
             sambanova_api_key=api_keys.get('sambanova_api_key'),
+            serper_api_key=api_keys.get('serper_api_key'),
         )
     except APIKeyNotFoundError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'No api key found')
@@ -190,8 +205,44 @@ async def financial_agent_stream(
         raise HTTPException(status_code=500, detail=f'An error occurred while starting the stream')
 
 
+@app.get('/report/md')
+async def get_report_md(access_token: Annotated[str | None, Cookie()] = None) -> StreamingResponse:
+    """
+    Retrieves and streams a Markdown report file to the client.
+
+    Returns:
+        A dictionary containing the streaming response of the Markdown file.
+
+    Raises:
+        HTTPException: If the Markdown file does not exist.
+    """
+    if access_token is None:
+        raise session_exception
+
+    # Extract session token
+    session_token = oauth2.verify_access_token(access_token, credentials_exception)
+
+    # Create the cache path
+    cache_path = create_cache_path_session_token(kit_dir, session_token)
+
+    # Create the final report Markdown path
+    md_file_path = os.path.join(cache_path, 'report.md')
+
+    if not os.path.exists(md_file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Markdown file not found')
+
+    with open(md_file_path, 'r') as f:
+        md_data = f.read()
+
+    return StreamingResponse(
+        io.BytesIO(md_data.encode()),
+        media_type='text/markdown',
+        headers={'Content-Disposition': 'attachment; filename=report.md'},
+    )
+
+
 @app.get('/report/pdf')
-async def get_report_pdf() -> StreamingResponse:
+async def get_report_pdf(access_token: Annotated[str | None, Cookie()] = None) -> StreamingResponse:
     """
     Retrieves and streams a PDF report file to the client.
 
@@ -201,6 +252,18 @@ async def get_report_pdf() -> StreamingResponse:
     Raises:
         HTTPException: If the PDF file does not exist.
     """
+    if access_token is None:
+        raise session_exception
+
+    # Extract session token
+    session_token = oauth2.verify_access_token(access_token, credentials_exception)
+
+    # Create the cache path
+    cache_path = create_cache_path_session_token(kit_dir, session_token)
+
+    # Create the final report PDF path
+    pdf_file_path = os.path.join(cache_path, 'report.pdf')
+
     if not os.path.exists(pdf_file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='PDF file not found')
 
@@ -214,25 +277,7 @@ async def get_report_pdf() -> StreamingResponse:
     )
 
 
-@app.get('/report/md')
-async def get_report_md() -> StreamingResponse:
-    """
-    Retrieves and streams a Markdown report file to the client.
+def create_cache_path_session_token(kit_dir: Path, session_token: str) -> Path:
+    """Create the cache path from user token."""
 
-    Returns:
-        A dictionary containing the streaming response of the Markdown file.
-
-    Raises:
-        HTTPException: If the Markdown file does not exist.
-    """
-    if not os.path.exists(md_file_path):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Markdown file not found')
-
-    with open(md_file_path, 'r') as f:
-        md_data = f.read()
-
-    return StreamingResponse(
-        io.BytesIO(md_data.encode()),
-        media_type='text/markdown',
-        headers={'Content-Disposition': 'attachment; filename=report.md'},
-    )
+    return kit_dir.parent.parent / 'scratch' / 'financial_assistant' / 'cache' / f'cache_{session_token}'
