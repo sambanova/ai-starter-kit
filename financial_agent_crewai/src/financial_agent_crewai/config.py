@@ -8,7 +8,7 @@ VERBOSE = False
 if Path(os.getcwd()).name == 'ai-starter-kit':
     CACHE_DIR = Path('financial_agent_crewai') / 'cache/'
 else:
-    CACHE_DIR = Path('cache')
+    CACHE_DIR = Path('scratch/financial_agent_crewai')
 
 YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
 

@@ -103,7 +103,7 @@ async def financial_agent_stream(
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(kit_dir, session_token, create_cache=True)
+    cache_path = create_cache_path_session_token(session_token, create_cache=True)
 
     # Schedule cache deletion after 30 minutes
     schedule_temp_dir_deletion(str(cache_path), 30)
@@ -238,7 +238,7 @@ async def get_report_pdf(access_token: Annotated[str | None, Cookie()] = None) -
     )
 
 
-def create_cache_path_session_token(kit_dir: Path, session_token: str, create_cache: bool = True) -> Path:
+def create_cache_path_session_token(session_token: str, create_cache: bool = True) -> Path:
     """Create the cache path from user token."""
 
     # Working directories
