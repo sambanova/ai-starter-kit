@@ -49,7 +49,10 @@ def set_api_variables() -> Dict[str, Any]:
     if st.session_state.prod_mode:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
-            api_variables = {'SAMBANOVA_URL': SAMBANOVA_URL, 'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY}
+            api_variables = {
+                'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL, 
+                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY
+            }
         # SambaStudio
         elif st.session_state.llm_api == 'sambastudio':
             api_variables = {
