@@ -1,4 +1,5 @@
 import datetime
+from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
@@ -6,9 +7,9 @@ from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import FilenameOutputList
 from financial_agent_crewai.src.financial_agent_crewai.tools.yfinance_stocks_tools import YFinanceStocksTool
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
@@ -30,6 +31,7 @@ class YFinanceStocksCrew:
         pandasai_llm: BaseChatModel,
         start_date: datetime.date,
         end_date: datetime.date,
+        cache_dir: Path,
         verbose: bool = True,
     ) -> None:
         """Initialize the YFinanceStockCrew crew."""
@@ -45,6 +47,7 @@ class YFinanceStocksCrew:
         self.pandasai_llm = pandasai_llm
         self.start_date = start_date
         self.end_date = end_date
+        self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
@@ -63,6 +66,7 @@ class YFinanceStocksCrew:
                     ticker_symbol=self.ticker_symbol,
                     start_date=self.start_date,
                     end_date=self.end_date,
+                    cache_dir=self.cache_dir,
                 ),
             ],
         )
@@ -85,5 +89,5 @@ class YFinanceStocksCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )
