@@ -99,14 +99,14 @@ def clear_directory(directory: str | Path) -> Optional[str]:
     including all files and subdirectories.
 
     Args:
-      directory: The path to the directory to clear.
+        directory: The path to the directory to clear.
 
     Returns:
-      An error message if the directory does not exist or is not a directory,
-      otherwise None if the operation is successful.
+        An error message if the directory does not exist or is not a directory,
+        otherwise None if the operation is successful.
 
     Raises:
-      OSError: If an error occurs while deleting files or directories.
+        OSError: If an error occurs while deleting files or directories.
     """
     if not os.path.exists(directory):
         return f'Directory {directory} does not exist.'
