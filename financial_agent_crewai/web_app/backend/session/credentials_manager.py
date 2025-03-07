@@ -8,7 +8,7 @@ class APIKeyManager:
         self.encryption_key = encryption_key or Fernet.generate_key()
         self.cipher_suite = Fernet(self.encryption_key)
 
-    def encrypt_keys(self, keys: Dict[str, str]) -> bytes:
+    def encrypt_keys(self, keys: Dict[str, str | None]) -> bytes:
         """
         Encrypts a dictionary of API keys using the configured encryption key.
 

@@ -4,12 +4,18 @@ from typing import Dict
 import redis
 
 from financial_agent_crewai.src.exceptions import InvalidSessionError
-from financial_agent_crewai.web_app.backend.session.credentials_manager import APIKeyManager
+from financial_agent_crewai.web_app.backend.session.credentials_manager import (
+    APIKeyManager,
+)
 
 
 class UserSessionManager:
     @staticmethod
-    def create_session(api_keys: Dict[str, str], key_manager: APIKeyManager, redis_client: redis.Redis) -> str:
+    def create_session(
+        api_keys: Dict[str, str | None],
+        key_manager: APIKeyManager,
+        redis_client: redis.Redis,
+    ) -> str:
         """
         Creates a secure session for a user by encrypting their API keys and storing them in Redis.
 
@@ -25,12 +31,14 @@ class UserSessionManager:
 
         session_token = str(uuid.uuid4())
 
-        redis_client.setex(f'session:{session_token}', 7200, encrypted_keys)
+        redis_client.setex(f"session:{session_token}", 7200, encrypted_keys)
 
         return session_token
 
     @staticmethod
-    def get_session_keys(session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis) -> Dict[str, str]:
+    def get_session_keys(
+        session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis
+    ) -> Dict[str, str]:
         """
         Retrieves and decrypts the API keys associated with a given session token.
 
@@ -46,9 +54,9 @@ class UserSessionManager:
             InvalidSessionError: If the session is invalid or expired, or if the session data cannot be found.
         """
 
-        encrypted_keys = redis_client.get(f'session:{session_token}')
+        encrypted_keys = redis_client.get(f"session:{session_token}")
 
         if not encrypted_keys:
-            raise InvalidSessionError('Invalid or expired session')
+            raise InvalidSessionError("Invalid or expired session")
 
         return key_manager.decrypt_keys(encrypted_keys)
