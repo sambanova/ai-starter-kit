@@ -40,7 +40,7 @@ def load_app_description() -> Any:
 def handle_userinput(instruction: str) -> None:
     doc1_title = st.session_state.document_titles[0]
     doc2_title = st.session_state.document_titles[1]
-    prompt = st.session_state.document_analyzer.generate_prompt(
+    messages = st.session_state.document_analyzer.generate_prompt_messages(
         instruction,
         doc1_title,
         st.session_state.documents[doc1_title],
@@ -54,7 +54,7 @@ def handle_userinput(instruction: str) -> None:
 
     try:
         with st.spinner('Processing...'):
-            completion, usage = st.session_state.document_analyzer.get_analysis(prompt)
+            completion, usage = st.session_state.document_analyzer.get_analysis(messages)
     except Exception as e:
         st.error(f'An error occurred while processing your instruction: {str(e)}')
     latency = time.time() - start
@@ -245,7 +245,8 @@ def main() -> None:
             and st.session_state.document_titles[0] in st.session_state.documents
             and st.session_state.document_titles[1] in st.session_state.documents
         ):
-            st.session_state.mp_events.input_submitted('chat_input')
+            if st.session_state.selected_app_template is not None:
+                st.session_state.mp_events.input_submitted(st.session_state.selected_app_template)
             handle_userinput(user_instruction)
 
 
