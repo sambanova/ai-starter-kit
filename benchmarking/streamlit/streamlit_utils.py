@@ -139,7 +139,14 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame) -> Figure:
 
 
 def plot_client_vs_server_barplots(
-    df_user: pd.DataFrame, x_col: str, y_cols: List[str], legend_labels: List[str], title: str, ylabel: str, xlabel: str, batching_exposed: bool
+    df_user: pd.DataFrame, 
+    x_col: str, 
+    y_cols: List[str], 
+    legend_labels: List[str], 
+    title: str, 
+    ylabel: str, 
+    xlabel: str, 
+    batching_exposed: bool
 ) -> Figure:
     """
     Plots bar plots for client vs server metrics from a DataFrame.
