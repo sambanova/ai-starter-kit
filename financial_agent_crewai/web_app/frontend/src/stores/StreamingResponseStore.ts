@@ -2,7 +2,12 @@ import { create } from "zustand";
 
 import { BASE_URL } from "@/Constants";
 
-import { SourcesType } from "./ResponseStore";
+export type SourcesType = {
+  source_generic_search: boolean;
+  source_sec_filings: boolean;
+  source_yfinance_news: boolean;
+  source_yfinance_stocks: boolean;
+};
 
 export interface StreamMessage {
   id: string;

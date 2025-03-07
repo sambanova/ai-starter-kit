@@ -3,7 +3,7 @@ import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
-import { SourcesType } from "@/stores/ResponseStore";
+import { SourcesType } from "@/stores/StreamingResponseStore";
 import { useStreamingStore } from "@/stores/StreamingResponseStore";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
