@@ -85,7 +85,7 @@ const MultiSelect = ({
   };
 
   return (
-    <div className="relative w-full min-w-50" ref={dropdownRef}>
+    <div className="relative w-full min-w-60" ref={dropdownRef}>
       <div
         className={`flex items-center justify-between p-3 border rounded-md cursor-pointer ${
           isOpen ? "ring-2 ring-orange-500" : "border-gray-300"

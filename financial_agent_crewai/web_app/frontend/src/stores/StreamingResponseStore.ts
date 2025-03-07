@@ -63,7 +63,8 @@ export const useStreamingStore = create<StreamingState>((set) => ({
 
       if (!response.ok) {
         console.error(response);
-        throw new Error(`${response.status} - ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || response.statusText);
       }
 
       if (!response.body) {
