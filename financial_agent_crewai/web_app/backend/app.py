@@ -10,7 +10,7 @@ from typing import Annotated, Dict, Optional
 
 import redis
 from cryptography.fernet import InvalidToken
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status, Header
+from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
@@ -35,28 +35,24 @@ from financial_agent_crewai.web_app.backend.session.user_manager import (
 )
 from financial_agent_crewai.web_app.backend.streaming_queue import StreamToQueue
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 redis_client = redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0)
 
 app = FastAPI()
 
-origins = ["*"]
+origins = ['*']
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
-sambanova_api_key_header = APIKeyHeader(
-    name="x-sambanova-key", scheme_name="sambanova_key"
-)
+sambanova_api_key_header = APIKeyHeader(name='x-sambanova-key', scheme_name='sambanova_key')
 
 
 # serper_api_key_header = APIKeyHeader(name="x-serper-key", scheme_name="serper_key")
@@ -73,43 +69,41 @@ key_manager = APIKeyManager()
 # Exceptions
 session_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Invalid or expired session",
+    detail='Invalid or expired session',
 )
 credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
+    detail='Could not validate credentials',
 )
 
 
-@app.post("/keys")
+@app.post('/keys')
 async def store_keys(
     response: Response,
     sambanova_api_key: str = Depends(sambanova_api_key_header),
     serper_api_key: Optional[str] = Depends(serper_api_key_header),
 ) -> Dict[str, str]:
     api_keys = {
-        "sambanova_api_key": sambanova_api_key,
-        "serper_api_key": serper_api_key,
+        'sambanova_api_key': sambanova_api_key,
+        'serper_api_key': serper_api_key,
     }
 
-    session_token = UserSessionManager.create_session(
-        api_keys, key_manager, redis_client
-    )
-    access_token = oauth2.create_access_token({"session_token": session_token})
+    session_token = UserSessionManager.create_session(api_keys, key_manager, redis_client)
+    access_token = oauth2.create_access_token({'session_token': session_token})
 
     response.set_cookie(
-        key="access_token",
+        key='access_token',
         value=access_token,
         httponly=True,
         secure=True,
-        samesite="strict",
+        samesite='strict',
         max_age=7200,
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {'access_token': access_token, 'token_type': 'bearer'}
 
 
-@app.post("/flow/run")
+@app.post('/flow/run')
 async def financial_agent_stream(
     user_input: schemas.UserInput, access_token: Annotated[str | None, Cookie()] = None
 ) -> StreamingResponse:
@@ -132,24 +126,20 @@ async def financial_agent_stream(
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(session_token, create_cache=True)
+    cache_dir = create_cache_path_session_token(session_token, create_cache=True)
 
     # Schedule cache deletion after 30 minutes
-    schedule_temp_dir_deletion(str(cache_path), 30)
+    schedule_temp_dir_deletion(str(cache_dir), 30)
 
     if session_token is None:
         raise session_exception
     try:
-        api_keys = UserSessionManager.get_session_keys(
-            session_token, key_manager, redis_client
-        )
+        api_keys = UserSessionManager.get_session_keys(session_token, key_manager, redis_client)
 
     except InvalidSessionError:
         raise session_exception
     except InvalidToken:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token')
 
     queue: Queue[str] = Queue()
 
@@ -160,14 +150,12 @@ async def financial_agent_stream(
             source_sec_filings=user_input.source_sec_filings,
             source_yfinance_news=user_input.source_yfinance_news,
             source_yfinance_stocks=user_input.source_yfinance_stocks,
-            cache_path=cache_path,
-            sambanova_api_key=api_keys.get("sambanova_api_key"),
-            serper_api_key=api_keys.get("serper_api_key"),
+            cache_dir=cache_dir,
+            sambanova_api_key=api_keys.get('sambanova_api_key'),
+            serper_api_key=api_keys.get('serper_api_key'),
         )
     except APIKeyNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"No api key found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'No api key found')
 
     def run_financial_flow() -> None:
         """
@@ -182,12 +170,8 @@ async def financial_agent_stream(
             sys.stdout = StreamToQueue(queue)
             financial_flow.kickoff()
         except Exception as e:
-            logger.error(f"Error during agent flow: {str(e)}")
-            queue.put(
-                json.dumps(
-                    {"type": "error", "content": "internal error during agent flow"}
-                )
-            )
+            logger.error(f'Error during agent flow: {str(e)}')
+            queue.put(json.dumps({'type': 'error', 'content': 'internal error during agent flow'}))
         finally:
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -198,16 +182,14 @@ async def financial_agent_stream(
         thread = Thread(target=run_financial_flow, daemon=True)
         thread.start()
 
-        return StreamingResponse(log_stream(queue), media_type="text/plain")
+        return StreamingResponse(log_stream(queue, cache_dir), media_type='text/plain')
 
     except Exception as e:
-        logger.error(f"An error occurred while starting the stream: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred while starting the stream"
-        )
+        logger.error(f'An error occurred while starting the stream: {str(e)}')
+        raise HTTPException(status_code=500, detail=f'An error occurred while starting the stream')
 
 
-@app.get("/report/md")
+@app.get('/report/md')
 async def get_report_md(
     access_token: Annotated[str | None, Cookie()] = None,
 ) -> StreamingResponse:
@@ -227,29 +209,25 @@ async def get_report_md(
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(
-        kit_dir, session_token, create_cache=False
-    )
+    cache_dir = create_cache_path_session_token(session_token, create_cache=False)
 
     # Create the final report Markdown path
-    md_file_path = os.path.join(cache_path, "report.md")
+    md_file_path = os.path.join(cache_dir, 'report.md')
 
     if not os.path.exists(md_file_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Markdown file not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Markdown file not found')
 
-    with open(md_file_path, "r") as f:
+    with open(md_file_path, 'r') as f:
         md_data = f.read()
 
     return StreamingResponse(
         io.BytesIO(md_data.encode()),
-        media_type="text/markdown",
-        headers={"Content-Disposition": "attachment; filename=report.md"},
+        media_type='text/markdown',
+        headers={'Content-Disposition': 'attachment; filename=report.md'},
     )
 
 
-@app.get("/report/pdf")
+@app.get('/report/pdf')
 async def get_report_pdf(
     access_token: Annotated[str | None, Cookie()] = None,
 ) -> StreamingResponse:
@@ -269,49 +247,37 @@ async def get_report_pdf(
     session_token = oauth2.verify_access_token(access_token, credentials_exception)
 
     # Create the cache path
-    cache_path = create_cache_path_session_token(
-        kit_dir, session_token, create_cache=False
-    )
+    cache_dir = create_cache_path_session_token(session_token, create_cache=False)
 
     # Create the final report PDF path
-    pdf_file_path = os.path.join(cache_path, "report.pdf")
+    pdf_file_path = os.path.join(cache_dir, 'report.pdf')
 
     if not os.path.exists(pdf_file_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="PDF file not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='PDF file not found')
 
-    with open(pdf_file_path, "rb") as f:
+    with open(pdf_file_path, 'rb') as f:
         pdf_data = f.read()
 
     return StreamingResponse(
         io.BytesIO(pdf_data),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=report.pdf"},
+        media_type='application/pdf',
+        headers={'Content-Disposition': 'attachment; filename=report.pdf'},
     )
 
 
-def create_cache_path_session_token(
-    session_token: str, create_cache: bool = True
-) -> Path:
+def create_cache_path_session_token(session_token: str, create_cache: bool = True) -> Path:
     """Create the cache path from user token."""
 
     # Working directories
-    current_dir = Path(__file__).resolve().parent
-    kit_dir = current_dir.parent
+    current_dir = Path(__file__).resolve()
+    kit_dir = current_dir.parent.parent.parent.parent
 
-    scratch_path = kit_dir.parent.parent / "scratch"
-    print(kit_dir)
-    financial_agent_crewai_path = scratch_path / "financial_agent_crewai"
-    financial_agent_cache_path = financial_agent_crewai_path / "cache"
-    cache_path = financial_agent_cache_path / f"cache_{session_token}"
+    financial_agent_cache_dir = kit_dir / 'cache'
+    cache_dir = financial_agent_cache_dir / f'cache_{session_token}'
 
-    scratch_path.mkdir(exist_ok=True)
-    financial_agent_crewai_path.mkdir(exist_ok=True)
-    financial_agent_cache_path.mkdir(exist_ok=True)
+    financial_agent_cache_dir.mkdir(exist_ok=True)
 
     if create_cache:
-        cache_path.mkdir(exist_ok=True)
+        cache_dir.mkdir(exist_ok=True)
 
-    print(cache_path)
-    return cache_path
+    return cache_dir

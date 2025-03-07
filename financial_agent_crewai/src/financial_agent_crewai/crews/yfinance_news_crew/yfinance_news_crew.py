@@ -1,12 +1,13 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import FilenameOutput
 from financial_agent_crewai.src.financial_agent_crewai.tools.yfinance_news_tools import YahooFinanceNewsTool
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
@@ -23,6 +24,7 @@ class YFinanceNewsCrew:
     def __init__(
         self,
         llm: LLM,
+        cache_dir: Path,
         verbose: bool = True,
     ) -> None:
         """Initialize the YFinanceNewsCrew crew."""
@@ -33,6 +35,7 @@ class YFinanceNewsCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
+        self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
@@ -43,7 +46,7 @@ class YFinanceNewsCrew:
             config=self.agents_config['yahoo_finance_researcher'],
             verbose=self.verbose,
             llm=self.llm,
-            tools=[YahooFinanceNewsTool()],
+            tools=[YahooFinanceNewsTool(cache_dir=self.cache_dir)],
         )
 
     @task  # type: ignore
@@ -64,5 +67,5 @@ class YFinanceNewsCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )

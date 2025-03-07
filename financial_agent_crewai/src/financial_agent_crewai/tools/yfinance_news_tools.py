@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -22,6 +23,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
         'Useful for when you need to find financial news about a public company. '
         'Input should be a company ticker symbol. '
     )
+    cache_dir: Path
 
     def _run(
         self,
@@ -68,7 +70,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
         filename_list = list()
 
         # Create the filename
-        filename = str(CACHE_DIR / f'yfinance_news_{ticker_symbol}.csv')
+        filename = str(self.cache_dir / f'yfinance_news_{ticker_symbol}.csv')
 
         # Webscraping by url
         report_count = 0

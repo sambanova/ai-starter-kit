@@ -31,14 +31,12 @@ class UserSessionManager:
 
         session_token = str(uuid.uuid4())
 
-        redis_client.setex(f"session:{session_token}", 7200, encrypted_keys)
+        redis_client.setex(f'session:{session_token}', 7200, encrypted_keys)
 
         return session_token
 
     @staticmethod
-    def get_session_keys(
-        session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis
-    ) -> Dict[str, str]:
+    def get_session_keys(session_token: str, key_manager: APIKeyManager, redis_client: redis.Redis) -> Dict[str, str]:
         """
         Retrieves and decrypts the API keys associated with a given session token.
 
@@ -54,9 +52,9 @@ class UserSessionManager:
             InvalidSessionError: If the session is invalid or expired, or if the session data cannot be found.
         """
 
-        encrypted_keys = redis_client.get(f"session:{session_token}")
+        encrypted_keys = redis_client.get(f'session:{session_token}')
 
         if not encrypted_keys:
-            raise InvalidSessionError("Invalid or expired session")
+            raise InvalidSessionError('Invalid or expired session')
 
         return key_manager.decrypt_keys(encrypted_keys)

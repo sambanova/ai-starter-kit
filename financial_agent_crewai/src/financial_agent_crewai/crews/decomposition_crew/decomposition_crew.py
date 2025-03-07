@@ -1,11 +1,12 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import SubQueriesList
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ class DecompositionCrew:
     def __init__(
         self,
         llm: LLM,
+        cache_dir: Path,
         verbose: bool = True,
     ) -> None:
         """Initialize the DecompositionCrew crew."""
@@ -32,6 +34,7 @@ class DecompositionCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
+        self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
@@ -62,5 +65,5 @@ class DecompositionCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )

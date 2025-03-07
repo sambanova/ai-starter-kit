@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from typing import List
 
@@ -7,8 +6,6 @@ import pandas
 from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field
-
-from financial_agent_crewai.src.financial_agent_crewai.config import CACHE_DIR
 
 # Main text processing, RAG, and web scraping constants
 MIN_CHUNK_SIZE = 4
@@ -66,9 +63,6 @@ def get_html_text(html_text: bytes, filename: str) -> None:
 
     # Save chunks to csv
     df = pandas.DataFrame(chunks, columns=['text'])
-
-    # Create the directory if it doesn't exist
-    os.makedirs(CACHE_DIR, exist_ok=True)
 
     # Save chunks as csv
     df.to_csv(filename, mode='a', index=False, header=False)

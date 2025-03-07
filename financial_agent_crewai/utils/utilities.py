@@ -19,8 +19,6 @@ import schedule
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
-
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +56,7 @@ def remove_ansi_escape_codes(text: str) -> str:
     return ansi_escape.sub('', text)
 
 
-async def log_stream(queue: Queue[str]) -> AsyncGenerator[str, None]:
+async def log_stream(queue: Queue[str], cache_dir: Path) -> AsyncGenerator[str, None]:
     """
     Async generator that yields logs as they appear in the queue.
 
@@ -79,7 +77,7 @@ async def log_stream(queue: Queue[str]) -> AsyncGenerator[str, None]:
                 break
 
             clean_message = remove_ansi_escape_codes(log_message)
-            agents_output = read_json_from_file(OUTPUT_LOG_FILE)
+            agents_output = read_json_from_file(create_log_path(cache_dir))
             current_agent_output = (
                 json.dumps(agents_output[-1])
                 if agents_output is not None and agents_output[-1].get('status') == 'completed'
@@ -629,3 +627,16 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
 
     # Run scheduler in a separate thread to be non-blocking
     Thread(target=run_scheduler, daemon=True).start()
+
+
+def create_yfinance_stock_dir(cache_dir: Path) -> Path:
+    """Create the directory for Yahoo Finance stock images."""
+
+    return cache_dir / 'yfinance_stocks'
+
+
+def create_log_path(cache_dir: Path) -> str:
+    """Create the CrewAI log file JSON path."""
+
+    # CrewAI logging JSON file
+    return str(cache_dir / 'output_log_file.json')

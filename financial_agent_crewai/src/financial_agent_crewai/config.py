@@ -8,12 +8,7 @@ VERBOSE = False
 if Path(os.getcwd()).name == 'ai-starter-kit':
     CACHE_DIR = Path('financial_agent_crewai') / 'cache/'
 else:
-    CACHE_DIR = Path('scratch/financial_agent_crewai')
-
-YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
-
-# CrewAI logging JSON file
-OUTPUT_LOG_FILE = str(CACHE_DIR / 'output_log_file.json')
+    CACHE_DIR = Path('cache')
 
 # Maximum number of words per section
 MAX_SECTION_WORDS = 1000
