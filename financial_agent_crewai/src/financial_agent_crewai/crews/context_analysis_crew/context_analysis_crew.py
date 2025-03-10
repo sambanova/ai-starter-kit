@@ -4,6 +4,8 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
+from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
+
 load_dotenv()
 
 
@@ -61,4 +63,5 @@ class ContextAnalysisCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
+            output_log_file=OUTPUT_LOG_FILE,
         )
