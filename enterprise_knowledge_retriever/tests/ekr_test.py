@@ -43,7 +43,7 @@ from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
 from utils.eval.dataset import WeaveDatasetManager
-from utils.eval.models import CorrectnessLLMJudge, WeaveRAGModel
+from utils.eval.models import CorrectnessLLMJudge, WeaveDummyModel
 
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'tests', 'vectordata', 'my-vector-db')
 TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data', 'test')
@@ -62,7 +62,7 @@ class EKRTestCase(unittest.TestCase):
     time_start: float
     sambanova_api_key: str
     judge: CorrectnessLLMJudge
-    rag_model: WeaveRAGModel
+    rag_model: WeaveDummyModel
     data_manager: WeaveDatasetManager
     dataset: List[Dict[str, str]]
     document_retrieval: DocumentRetrieval
@@ -77,7 +77,7 @@ class EKRTestCase(unittest.TestCase):
         cls.time_start = time.time()
         cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
         cls.judge = CorrectnessLLMJudge(**judge_info)
-        cls.rag_model = WeaveRAGModel(**rag_info)
+        cls.rag_model = WeaveDummyModel(model_kwargs=rag_info) # type: ignore
         cls.data_manager = WeaveDatasetManager()
         cls.dataset = cls.get_data()
         cls.document_retrieval = DocumentRetrieval(sambanova_api_key=cls.sambanova_api_key)
