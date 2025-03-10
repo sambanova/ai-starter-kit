@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 import { BASE_URL } from "@/Constants";
 
-export type SourcesType = {
+export type RequestSourcesType = {
   source_generic_search: boolean;
   source_sec_filings: boolean;
   source_yfinance_news: boolean;
@@ -24,7 +24,10 @@ interface StreamingState {
   isStreaming: boolean;
   isFinished: boolean;
   error: string | null;
-  startStream: (query: string, selectedSources: SourcesType) => Promise<void>;
+  startStream: (
+    query: string,
+    selectedSources: RequestSourcesType,
+  ) => Promise<void>;
   clearMessages: () => void;
   setError: (error: string | null) => void;
   setIsStreaming: (isStreaming: boolean) => void;
@@ -42,7 +45,7 @@ export const useStreamingStore = create<StreamingState>((set) => ({
 
   setIsStreaming: (isStreaming: boolean) => set({ isStreaming }),
 
-  startStream: async (query: string, selectedSources: SourcesType) => {
+  startStream: async (query: string, selectedSources: RequestSourcesType) => {
     set({ isStreaming: true, isFinished: false, error: null });
 
     try {

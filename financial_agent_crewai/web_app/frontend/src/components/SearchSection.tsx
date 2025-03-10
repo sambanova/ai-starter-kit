@@ -3,14 +3,15 @@ import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { useAPIKeysStore } from "@/stores/APIKeysStore";
-import { SourcesType } from "@/stores/StreamingResponseStore";
+import { RequestSourcesType } from "@/stores/StreamingResponseStore";
 import { useStreamingStore } from "@/stores/StreamingResponseStore";
 
 import MultiSelectDropdown from "./utils/MultiSelectDropdown";
+import { DropdownOptionType } from "./utils/Types";
 
 const SearchSection = () => {
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const [selectedSources, setSelectedSources] = useState<SourcesType>({
+  const [selectedSources, setSelectedSources] = useState<RequestSourcesType>({
     source_generic_search: false,
     source_sec_filings: false,
     source_yfinance_news: false,
@@ -20,10 +21,14 @@ const SearchSection = () => {
   const { isStreaming, startStream, clearMessages } = useStreamingStore();
   const { apiKeys } = useAPIKeysStore();
 
-  const sources = [
+  const sources: DropdownOptionType[] = [
     {
       id: "source_generic_search",
       label: "Generic Google Search",
+      disabled: !apiKeys.Serper,
+      disabled_reason: !apiKeys.Serper
+        ? "You must set a Serper API key to use this source"
+        : undefined,
     },
     { id: "source_sec_filings", label: "SEC Edgar Filings" },
     { id: "source_yfinance_news", label: "Yahoo Finance News" },
@@ -56,7 +61,7 @@ const SearchSection = () => {
   const handleSelectedSources = (selectedSources: typeof sources) => {
     const updatedSources = selectedSources.reduce(
       (acc, curr) => {
-        acc[curr.id as keyof SourcesType] = true;
+        acc[curr.id as keyof RequestSourcesType] = true;
         return acc;
       },
       {
@@ -91,6 +96,7 @@ const SearchSection = () => {
           <div className="flex-grow">
             <MultiSelectDropdown
               options={sources}
+              disabled={isStreaming}
               onChange={handleSelectedSources}
               placeholder="Select sources"
               optionName="source"

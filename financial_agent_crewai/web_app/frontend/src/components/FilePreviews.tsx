@@ -105,10 +105,6 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
     }
   }, [isFinished]);
 
-  console.log(mdFile);
-  console.log(pdfFile);
-  // make the query input shorter and close modal when saving the keys
-
   return (
     <div>
       <div className="flex space-x-4 items-center mb-4">

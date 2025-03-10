@@ -2,16 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
-type OptionType = {
-  id: string;
-  label: string;
-};
+import { DropdownOptionType } from "./Types";
 
 interface MultiSelectProps {
-  options: OptionType[];
+  options: DropdownOptionType[];
   placeholder?: string;
   optionName?: string;
-  onChange?: (selectedOptions: OptionType[]) => void;
+  onChange?: (selectedOptions: DropdownOptionType[]) => void;
   maxHeight?: string;
   disabled?: boolean;
 }
@@ -25,8 +22,46 @@ const MultiSelect = ({
   disabled = false,
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<OptionType[]>([]);
+  const [selected, setSelected] = useState<DropdownOptionType[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const toggleOption = (option: DropdownOptionType) => {
+    // Don't toggle if option is disabled
+    if (option.disabled) return;
+
+    const isSelected = selected.some((item) => item.id === option.id);
+    let updatedSelection: DropdownOptionType[];
+
+    if (isSelected) {
+      updatedSelection = selected.filter((item) => item.id !== option.id);
+    } else {
+      updatedSelection = [...selected, option];
+    }
+
+    setSelected(updatedSelection);
+    onChange?.(updatedSelection);
+  };
+
+  const toggleDropdown = () => {
+    if (!disabled) {
+      console.log("a");
+      setIsOpen(!isOpen);
+    }
+  };
+
+  // Create a display string for selected items
+  const getSelectionDisplay = () => {
+    if (selected.length === 0) {
+      return <span className="text-gray-500">{placeholder}</span>;
+    }
+
+    return (
+      <span className="sn-text-primary truncate">
+        {selected.length} {optionName}
+        {selected.length !== 1 ? "s" : ""} selected
+      </span>
+    );
+  };
 
   // Handle click outside to close the dropdown
   useEffect(() => {
@@ -50,46 +85,12 @@ const MultiSelect = ({
     };
   }, [isOpen]);
 
-  const toggleOption = (option: OptionType) => {
-    const isSelected = selected.some((item) => item.id === option.id);
-    let updatedSelection: OptionType[];
-
-    if (isSelected) {
-      updatedSelection = selected.filter((item) => item.id !== option.id);
-    } else {
-      updatedSelection = [...selected, option];
-    }
-
-    setSelected(updatedSelection);
-    onChange?.(updatedSelection);
-  };
-
-  const toggleDropdown = () => {
-    if (!disabled) {
-      setIsOpen(!isOpen);
-    }
-  };
-
-  // Create a display string for selected items
-  const getSelectionDisplay = () => {
-    if (selected.length === 0) {
-      return <span className="text-gray-500">{placeholder}</span>;
-    }
-
-    return (
-      <span className="sn-text-primary truncate">
-        {selected.length} {optionName}
-        {selected.length !== 1 ? "s" : ""} selected
-      </span>
-    );
-  };
-
   return (
     <div className="relative w-full min-w-60" ref={dropdownRef}>
       <div
-        className={`flex items-center justify-between p-3 border rounded-md cursor-pointer ${
+        className={`flex items-center justify-between p-3 border rounded-md ${
           isOpen ? "ring-2 ring-orange-500" : "border-gray-300"
-        } ${disabled ? "bg-gray-100 cursor-not-allowed" : "sn-background"}`}
+        } ${disabled ? "cursor-not-allowed" : "sn-background cursor-pointer"}`}
         onClick={toggleDropdown}
       >
         <div className="flex-1 truncate">{getSelectionDisplay()}</div>
@@ -112,12 +113,15 @@ const MultiSelect = ({
               return (
                 <li
                   key={option.id}
-                  className={`px-3 py-2 cursor-pointer flex items-center justify-between ${
-                    isOptionSelected
-                      ? "sn-dropdown-selected-background"
-                      : "sn-dropdown-background"
+                  className={`px-3 py-2 flex items-center justify-between ${
+                    option.disabled
+                      ? "cursor-not-allowed text-gray-500"
+                      : isOptionSelected
+                        ? "sn-dropdown-selected-background cursor-pointer"
+                        : "sn-dropdown-background cursor-pointer"
                   }`}
                   onClick={() => toggleOption(option)}
+                  title={option.disabled_reason}
                 >
                   <span>{option.label}</span>
                   {isOptionSelected && (
