@@ -1,0 +1,17 @@
+version: 2
+
+updates:
+  # Define updates for Python dependencies using pip
+  - package-ecosystem: "pip"
+    # Specify the directories containing requirements.txt files
+    directories:
+      - "/financial_assistant"
+      # Add additional package directories as needed
+    schedule:
+      interval: "daily"  # Check for updates every day
+    commit-message:
+      prefix: "pip"
+    groups:
+      all-python-packages:
+        patterns:
+          - "*"
