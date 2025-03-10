@@ -1,0 +1,52 @@
+version: 2
+
+updates:
+  # Define updates for Python dependencies using pip
+  - package-ecosystem: "pip"
+    # Specify the directories containing requirements.txt files
+    directories:
+      - "/financial_assistant"
+      # Add additional package directories as needed
+    schedule:
+      interval: "daily"  # Check for updates every day
+    commit-message:
+      prefix: "pip dependency update."
+    # Create a group of dependencies to be updated together in one pull request
+    groups:
+      # Core dependencies
+      core-dependencies:
+        # Define patterns to include dependencies in the group (based on dependency name)
+        applies-to: version-updates # Applies the group rule to version updates
+        patterns:
+          - "llama-index*"
+          - "langchain*"
+          - "crewai*"
+          - "pandasai"
+          - "pydantic"
+          - "python-dotenv"
+          - "streamlit*"
+          - "st-pages"
+          - "sseclient-py"
+          - "torch"
+        update-types:
+          - "minor"
+          - "patch"
+      # All the Python packages (excluding core dependencies)
+      all-python-packages:
+        applies-to: version-updates # Applies the group rule to version updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "llama-index*"
+          - "langchain*"
+          - "crewai*"
+          - "pandasai"
+          - "pydantic"
+          - "python-dotenv"
+          - "streamlit*"
+          - "st-pages"
+          - "sseclient-py"
+          - "torch"
+        update-types:
+          - "minor"
+          - "patch"
