@@ -1,11 +1,14 @@
 import netrc
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import streamlit as st
 
 
-def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optional[List[str]] = None) -> None:
+def initialize_env_variables(
+    prod_mode: bool = False, 
+    additional_env_vars: Optional[Union[List[str], Dict[str,Any]]] = None
+) -> None:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -20,8 +23,14 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
         st.session_state.SAMBASTUDIO_API_KEY = os.environ.get(
             'SAMBASTUDIO_API_KEY', st.session_state.get('SAMBASTUDIO_API_KEY', '')
         )
-        for var in additional_env_vars:
-            st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
+        if isinstance(additional_env_vars, List):
+            for var in additional_env_vars:
+                st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
+        elif isinstance(additional_env_vars, Dict):
+            for key, val in additional_env_vars.items():
+                st.session_state[key] = os.environ.get(key, st.session_state.get(key, val))
+        else:
+            raise ValueError('additional_env_vars must be a List or Dict')
     else:
         # In prod mode, only use session state
         if 'SAMBANOVA_API_KEY' not in st.session_state:
@@ -30,12 +39,24 @@ def initialize_env_variables(prod_mode: bool = False, additional_env_vars: Optio
             st.session_state.SAMBASTUDIO_URL = ''
         if 'SAMBASTUDIO_API_KEY' not in st.session_state:
             st.session_state.SAMBASTUDIO_API_KEY = ''
-        for var in additional_env_vars:
-            if var not in st.session_state:
-                st.session_state[var] = ''
+        
+        if isinstance(additional_env_vars, List):
+            for var in additional_env_vars:
+                if var not in st.session_state:
+                    st.session_state[var] = ''
+        elif isinstance(additional_env_vars, Dict):
+            for key, val in additional_env_vars.items():
+                if key not in st.session_state:
+                    st.session_state[key] = val
+        else:
+            raise ValueError('additional_env_vars must be a List or Dict')
 
 
-def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> None:
+def set_env_variables(
+    api_key: str, 
+    additional_vars: Optional[Dict[str, Any]] = None, 
+    prod_mode: bool = False
+) -> None:
     st.session_state.SAMBANOVA_API_KEY = api_key
     if additional_vars:
         for key, value in additional_vars.items():
@@ -48,7 +69,10 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
                 os.environ[key] = value
 
 
-def env_input_fields(additional_env_vars: List[str] = [], mode: str = 'SambaNova Cloud') -> Tuple[str, Any]:
+def env_input_fields(
+    additional_env_vars: Union[List[str], Dict[str, Any]] = None, 
+    mode: str = 'SambaNova Cloud'
+) -> Tuple[str, Any]:
     if additional_env_vars is None:
         additional_env_vars = []
 
@@ -67,18 +91,28 @@ def env_input_fields(additional_env_vars: List[str] = [], mode: str = 'SambaNova
     else:
         raise Exception('Setup mode not supported.')
 
-    for var in additional_env_vars:
-        additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
+    if isinstance(additional_env_vars, List):
+        for var in additional_env_vars:
+            additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
+    elif isinstance(additional_env_vars, Dict):
+        for key, val in additional_env_vars.items():
+            if mode == 'SambaStudio' and key == 'SAMBANOVA_URL':
+                continue
+            additional_vars[key] = st.text_input(f'{key}', value=st.session_state.get(key, val), type='password')
 
     return api_key, additional_vars
 
 
-def are_credentials_set(additional_env_vars: Optional[List[str]] = None) -> bool:
+def are_credentials_set(additional_env_vars: Optional[Union[List[str], Dict[str, Any]]] = None) -> bool:
     if additional_env_vars is None:
         additional_env_vars = []
 
     base_creds_set = bool(st.session_state.SAMBANOVA_API_KEY)
-    additional_creds_set = all(bool(st.session_state.get(var, '')) for var in additional_env_vars)
+    
+    if isinstance(additional_env_vars, List):
+        additional_creds_set = all(bool(st.session_state.get(var, '')) for var in additional_env_vars)
+    elif isinstance(additional_env_vars, Dict):
+        additional_creds_set = all(bool(st.session_state.get(key, '')) for key, _ in additional_env_vars.items())
 
     return base_creds_set and additional_creds_set
 

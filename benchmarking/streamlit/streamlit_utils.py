@@ -49,7 +49,10 @@ def set_api_variables() -> Dict[str, Any]:
     if st.session_state.prod_mode:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
-            api_variables = {'SAMBANOVA_URL': SAMBANOVA_URL, 'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY}
+            api_variables = {
+                'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL, 
+                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY
+            }
         # SambaStudio
         elif st.session_state.llm_api == 'sambastudio':
             api_variables = {
@@ -136,7 +139,14 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame) -> Figure:
 
 
 def plot_client_vs_server_barplots(
-    df_user: pd.DataFrame, x_col: str, y_cols: List[str], legend_labels: List[str], title: str, ylabel: str, xlabel: str
+    df_user: pd.DataFrame, 
+    x_col: str, 
+    y_cols: List[str], 
+    legend_labels: List[str], 
+    title: str, 
+    ylabel: str, 
+    xlabel: str, 
+    batching_exposed: bool
 ) -> Figure:
     """
     Plots bar plots for client vs server metrics from a DataFrame.
@@ -149,6 +159,7 @@ def plot_client_vs_server_barplots(
         title (str): The title of the plot.
         ylabel (str): The label for the y-axis.
         xlabel (str): The label for the x-axis.
+        batching_exposed (bool): boolean identifying if batching was exposed.
 
     Returns:
         fig (go.Figure): The plotly figure container
@@ -156,7 +167,7 @@ def plot_client_vs_server_barplots(
     value_vars = y_cols
     title_text = title
     yaxis_title = ylabel
-    xaxis_title = xlabel
+    xaxis_title = xlabel if batching_exposed else ""
 
     df_melted = df_user.melt(
         id_vars=[x_col],
@@ -246,7 +257,11 @@ def plot_client_vs_server_barplots(
         hovermode='x unified',
     )
 
-    fig.update_xaxes(hoverformat='foo')
+    fig.update_xaxes(
+        hoverformat="foo",
+        showticklabels=batching_exposed
+    )
+    
     return fig
 
 

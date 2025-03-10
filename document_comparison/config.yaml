@@ -4,7 +4,7 @@ llm:
     "streaming": False
     "max_tokens": 4000
     "top_p": 0.1    
-    "model": "Meta-Llama-3.1-70B-Instruct"
+    "model": "Meta-Llama-3.3-70B-Instruct"
 
 system_message: "You are a document analysis assistant" 
 

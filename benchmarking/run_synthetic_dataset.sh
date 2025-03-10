@@ -1,6 +1,7 @@
 #!/bin/bash
 # run_synthetic_dataset.sh
 
+ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
 --model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct Meta-Llama-3.1-405B-Instruct" \
