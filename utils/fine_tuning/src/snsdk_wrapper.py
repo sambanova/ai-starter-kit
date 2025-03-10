@@ -1715,6 +1715,7 @@ class SnsdkWrapper:
             hyperparams = self.config['endpoint']['hyperparams']
 
         # create endpoint
+        # TODO: enable inference_api_openai_compatible when available
         create_endpoint_response = self.snsdk_client.create_endpoint(
             project=project_id,
             endpoint_name=endpoint_name,
@@ -1724,7 +1725,7 @@ class SnsdkWrapper:
             instances=instances,
             rdu_arch=rdu_arch,
             hyperparams=json.dumps(hyperparams),
-            inference_api_openai_compatible=True,
+            inference_api_openai_compatible=False,
         )
 
         if create_endpoint_response['status_code'] == 200:
