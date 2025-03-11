@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ../
+      dockerfile: e2e_fine_tuning/backend/Dockerfile
+    container_name: backend_byoc
+    ports:
+      - 8000:8000
+    volumes:
+      - ../:/app/.
+    env_file:
+        - ./backend/.env
+    command: uvicorn e2e_fine_tuning.backend.src.app:app --host 0.0.0.0 --port 8000 --reload
+  
+  redis:
+    image: redis:7.4.2
+    container_name: redis_queue
+    ports:
+      - "6379:6379"
+  
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: ../
+      dockerfile: e2e_fine_tuning/backend/Dockerfile
+    command: watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A e2e_fine_tuning.backend.src.app.celery_app worker --loglevel=info
+    volumes:
+      - ../:/app/.
+    env_file:
+        - ./backend/.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+
+  # flower:
+  #   container_name: flower
+  #   build: .
+  #   command: celery -A celery_worker.celery flower --port=5555
+  #   ports:
+  #     - 5556:5555
+  #   environment:
+  #     - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+  #     - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+  #   depends_on:
+  #     - backend
+  #     - redis
+  #     - celery_worker
