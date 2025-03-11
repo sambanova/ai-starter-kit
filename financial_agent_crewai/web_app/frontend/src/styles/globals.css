@@ -17,7 +17,7 @@
     @apply bg-white dark:bg-background-main;
   }
   .sn-background-secondary {
-    @apply bg-gray-100 dark:bg-background-secondary;
+    @apply bg-gray-200 dark:bg-background-secondary;
   }
   .sn-button {
     @apply cursor-pointer disabled:cursor-default bg-orange-500 hover:enabled:bg-orange-600 disabled:opacity-50 text-white focus:outline-white focus:outline-1 rounded-lg px-6 py-3;

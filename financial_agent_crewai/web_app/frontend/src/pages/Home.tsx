@@ -23,7 +23,7 @@ const Home = () => {
   }, [isFinished]);
 
   return (
-    <div className="h-full mb-6">
+    <div>
       <WarningMessage />
 
       <SearchSection />

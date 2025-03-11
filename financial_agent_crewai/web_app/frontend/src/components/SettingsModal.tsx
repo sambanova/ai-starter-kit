@@ -89,7 +89,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
         ></div>
 
         {/* Modal */}
-        <div className="relative w-full max-w-lg sn-background-secondary sn-text-primary rounded-xl shadow-lg p-6">
+        <div className="relative w-full max-w-lg sn-background sn-text-primary rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">API Settings</h2>
             <button
@@ -100,7 +100,7 @@ const SettingsModal = ({ setIsSettingsModalOpen }: ISettingsModal) => {
             </button>
           </div>
 
-          <div className="space-y-6 bg-grape">
+          <div className="space-y-6">
             {/* SambaNova API Key */}
             <div>
               <label className="block text-sm font-medium mb-1">

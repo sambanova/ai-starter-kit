@@ -16,7 +16,7 @@ const MainLayout = () => {
       <div className="sn-backdrop sn-text-primary flex-1 flex flex-col h-screen overflow-hidden">
         <Header setIsSettingsModalOpen={setIsSettingsModalOpen} />
 
-        <main className="flex-grow flex flex-col p-4 space-y-4 overflow-y-auto">
+        <main className="flex-grow flex flex-col px-4 pt-4 pb-8 space-y-4 overflow-y-auto">
           <Outlet />
         </main>
 

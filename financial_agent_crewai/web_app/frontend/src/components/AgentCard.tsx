@@ -45,7 +45,8 @@ const AgentCard = ({ task, initialExpanded }: AgentCardProps) => {
   // Format the timestamp to be more readable
   const formatTimestamp = (timestamp: string) => {
     try {
-      const date = new Date(timestamp);
+      const utcTimestamp = timestamp.replace(" ", "T") + "Z";
+      const date = new Date(utcTimestamp);
 
       return date.toLocaleTimeString();
     } catch (e) {
@@ -62,8 +63,8 @@ const AgentCard = ({ task, initialExpanded }: AgentCardProps) => {
   return (
     <div className="sn-border sn-background overflow-hidden">
       {/* Card header */}
-      <div className="p-4 sn-background-secondary border-b flex justify-between items-center">
-        <div className="flex items-center space-x-2">
+      <div className="p-4 sn-background-secondary border-b flex flex-col sm:flex-row sm:justify-between sm:items-center">
+        <div className="flex items-center space-x-2 justify-between">
           <span
             className={`px-2 py-1 rounded text-sm font-medium ${
               AgentTasksColors[task.task_name] || AgentTasksColors.default
@@ -72,11 +73,13 @@ const AgentCard = ({ task, initialExpanded }: AgentCardProps) => {
             {task.task_name}
           </span>
 
-          <span className="sn-text-agent-name font-medium">{task.agent}</span>
+          <span className="sn-text-agent-name font-medium text-right">
+            {task.agent}
+          </span>
         </div>
 
         {/* Task status and timestamp */}
-        <div className="flex items-center space-x-3 text-sm text-gray-500">
+        <div className="flex items-center space-x-3 text-sm text-gray-500  justify-between">
           <span className="flex items-center">
             <Clock className="h-4 w-4 mr-1" />
             {formatTimestamp(task.timestamp)}

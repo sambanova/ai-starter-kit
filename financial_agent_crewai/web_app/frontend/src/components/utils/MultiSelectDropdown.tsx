@@ -44,7 +44,6 @@ const MultiSelect = ({
 
   const toggleDropdown = () => {
     if (!disabled) {
-      console.log("a");
       setIsOpen(!isOpen);
     }
   };

@@ -133,7 +133,7 @@ const FilePreviews = ({ isFinished }: IFilePreviews) => {
 
       {/* PREVIEWS */}
       {error ? (
-        <Alert variant="error" className="py-4 my-4">
+        <Alert variant="error" className="py-4 mt-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
