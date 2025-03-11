@@ -310,7 +310,7 @@ kits_to_deploy.json
 deploy_kits.sh
 test_results
 
-# === Frontend ===
+# === React & Frontend ===
 # Logs
 logs
 *.log
