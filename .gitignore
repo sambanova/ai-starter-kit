@@ -277,6 +277,13 @@ wandb/
 
 # VSCode
 .vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # all .db files
 *.db
@@ -302,3 +309,18 @@ yoda/llava_data_prep/scripts/yolov8n.pt
 kits_to_deploy.json
 deploy_kits.sh
 test_results
+
+# === Frontend ===
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
