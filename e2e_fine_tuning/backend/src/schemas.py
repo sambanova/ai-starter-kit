@@ -2,13 +2,13 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
-
 test_messages = [
-    {"role": "system", "content": "This is a system prompt."},
-    {"role": "user", "content": "This is a user prompt."},
-    {"role": "assistant", "content": "This is a response from the assistant."},
-    {"role": "user", "content": "This is an user follow up"}
-    ]
+    {'role': 'system', 'content': 'This is a system prompt.'},
+    {'role': 'user', 'content': 'This is a user prompt.'},
+    {'role': 'assistant', 'content': 'This is a response from the assistant.'},
+    {'role': 'user', 'content': 'This is an user follow up'},
+]
+
 
 class DatasetCreate(BaseModel):
     dataset_name_sambastudio: str = 'publichealth-testing'
