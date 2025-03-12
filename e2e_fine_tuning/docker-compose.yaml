@@ -9,15 +9,30 @@ services:
     volumes:
       - ../:/app/.
     env_file:
-        - ./backend/.env
+      - ./backend/.env
     command: uvicorn e2e_fine_tuning.backend.src.app:app --host 0.0.0.0 --port 8000 --reload
-  
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_byoc
+    ports:
+      - 5173:5173
+    stdin_open: true
+    volumes:
+      - ./frontend/src:/app/src
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
+    command: yarn dev --host
+
   redis:
     image: redis:7.4.2
     container_name: redis_queue
     ports:
       - "6379:6379"
-  
+
   celery_worker:
     container_name: celery_worker
     build:
@@ -27,7 +42,7 @@ services:
     volumes:
       - ../:/app/.
     env_file:
-        - ./backend/.env
+      - ./backend/.env
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
