@@ -23,7 +23,7 @@ services:
     build:
       context: ../
       dockerfile: e2e_fine_tuning/backend/Dockerfile
-    command: watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A e2e_fine_tuning.backend.src.app.celery_app worker --loglevel=info
+    command: watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A e2e_fine_tuning.backend.src.celery_app_workers.celery_workers.celery_app worker --loglevel=info
     volumes:
       - ../:/app/.
     env_file:
