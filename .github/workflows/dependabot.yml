@@ -1,5 +1,4 @@
 version: 2
-
 updates:
   # Define updates for Python dependencies using pip
   - package-ecosystem: "pip"
@@ -36,7 +35,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
       # All the Python packages (excluding core dependencies)
       other-packages:
         applies-to: version-updates
