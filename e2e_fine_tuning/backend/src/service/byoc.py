@@ -1,13 +1,6 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import e2e_fine_tuning.backend.src.schemas as schemas
-from e2e_fine_tuning.backend.src.exceptions.sdk_repository_exceptions import (
-    AppFetchError,
-    DatasetCreateError,
-    DatasetDeleteError,
-    DatasetFetchError,
-)
 from e2e_fine_tuning.backend.src.repositories.byoc import BYOCRepository
 
 logging.basicConfig(
@@ -19,17 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 class BYOCService:
-    def __init__(self, repository: BYOCRepository):
+    def __init__(self, repository: BYOCRepository) -> None:
         self.repository = repository
 
     def create_checkpoint_config(self, checkpoint_info: str) -> None:
         return self.repository.create_checkpoint_config(checkpoint_info)
-    
+
     def get_suitable_apps(self) -> List[List[Dict[str, Any]]]:
         suitable_apps = self.repository.get_suitable_apps()
         return suitable_apps
 
-    def upload_checkpoint(self, messages):
+    def upload_checkpoint(self, messages: List[Dict[str, str]]) -> str:
         logger.info('start set_chat_template')
         self.repository.set_chat_template()
         logger.info('check_chat_template')

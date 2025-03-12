@@ -1,8 +1,8 @@
-import os
-import re
 import json
 import logging
-from typing import Any, Dict, List
+import os
+import re
+from typing import Any, Dict, List, Optional
 
 from utils.byoc.src.snsdk_byoc_wrapper import BYOC
 
@@ -15,10 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class BYOCRepository:
-    def __init__(self, byoc: BYOC, target_dir) -> None:
+    def __init__(self, byoc: BYOC, target_dir: str) -> None:
         self.__byoc = byoc
         self.target_dir = target_dir
         self.checkpoint = None
+
+    def get_models(self) -> List[Dict[str, Any]]:
+        return self.__byoc.list_models()
 
     def create_checkpoint_config(self, checkpoint_info: str) -> None:
         checkpoint_folder = None
@@ -88,7 +91,7 @@ class BYOCRepository:
         ]
         self.checkpoint.update(checkpoint_config_params)
 
-    def upload_checkpoint(self):
+    def upload_checkpoint(self) -> Optional[str]:
         model_id = self.__byoc.upload_checkpoint(
             model_name=self.checkpoint['model_name'],
             checkpoint_path=self.checkpoint['checkpoint_path'],
@@ -99,6 +102,6 @@ class BYOCRepository:
             seq_length=self.checkpoint['seq_length'],
             vocab_size=self.checkpoint['vocab_size'],
             app_id=self.checkpoint['app_id'],
-            retries=3
+            retries=3,
         )
         return model_id

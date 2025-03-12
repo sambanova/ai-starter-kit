@@ -1,26 +1,23 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from huggingface_hub import HfApi
+from fastapi.responses import JSONResponse
 
 import e2e_fine_tuning.backend.src.schemas as schemas
-from e2e_fine_tuning.backend.src.dependencies import get_sdk_service
-from e2e_fine_tuning.backend.src.service.hf import HuggingFaceHandler
+from e2e_fine_tuning.backend.src.celery_app_workers.celery_workers import create_dataset_task
+from e2e_fine_tuning.backend.src.dependencies import get_byoc_service, get_hf_handler, get_sdk_service
 from e2e_fine_tuning.backend.src.service.sdk import SnsdkWrapperService
-from e2e_fine_tuning.backend.src.utils_functions import create_folder
-
-# from e2e_fine_tuning.backend.src.celery_app_workers.dataset_worker import create_dataset_task
-
 
 router = APIRouter(prefix='/dataset', tags=['Dataset'])
 
-data_dir, target_dir = create_folder()
-data_dir, target_dir_model = create_folder(target_dir='models')
+sdk_service = get_sdk_service()
+byoc_service = get_byoc_service()
 
-hf_client = HfApi()
-hf_handler = HuggingFaceHandler(hf_client, data_dir, target_dir_model)
+hf_handler = get_hf_handler()
 
 
 @router.get('/', response_model=schemas.Datasets)
-def get_datasets(sdk_service: SnsdkWrapperService = Depends(get_sdk_service)):
+def get_datasets(sdk_service: SnsdkWrapperService = Depends(get_sdk_service)) -> Optional[schemas.Datasets]:
     datasets = sdk_service.get_datasets()
     if datasets is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='no datasets found')
@@ -28,7 +25,9 @@ def get_datasets(sdk_service: SnsdkWrapperService = Depends(get_sdk_service)):
 
 
 @router.get('/{dataset_name}', response_model=schemas.Dataset)
-def get_dataset(dataset_name: str, sdk_service: SnsdkWrapperService = Depends(get_sdk_service)):
+def get_dataset(
+    dataset_name: str, sdk_service: SnsdkWrapperService = Depends(get_sdk_service)
+) -> Optional[schemas.Dataset]:
     dataset = sdk_service.get_dataset(dataset_name)
     if dataset is None:
         raise HTTPException(
@@ -37,8 +36,14 @@ def get_dataset(dataset_name: str, sdk_service: SnsdkWrapperService = Depends(ge
     return dataset
 
 
+@router.post('/')
+def create_dataset(dataset_info: schemas.DatasetCreate) -> JSONResponse:
+    task = create_dataset_task.delay(dataset_info.model_dump())
+    return JSONResponse({'task_id': task.id})
+
+
 @router.delete('/{dataset_name}')
-def delete_dataset(dataset_name: str, sdk_service: SnsdkWrapperService = Depends(get_sdk_service)):
+def delete_dataset(dataset_name: str, sdk_service: SnsdkWrapperService = Depends(get_sdk_service)) -> Response:
     try:
         response = sdk_service.delete_dataset(dataset_name)
         if not response:

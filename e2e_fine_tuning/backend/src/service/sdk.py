@@ -10,7 +10,6 @@ from e2e_fine_tuning.backend.src.exceptions.sdk_repository_exceptions import (
 )
 from e2e_fine_tuning.backend.src.repositories.sdk import SnsdkWrapperRepository
 
-
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -80,8 +79,10 @@ class SnsdkWrapperService:
             raise DatasetFetchError(f"Dataset {dataset_info['dataset_name_sambastudio']} already exists.")
 
         try:
-            response = self.repository.create_dataset(dataset_info['dataset_name_sambastudio'], dataset_config)
+            new_dataset_id = self.repository.create_dataset(dataset_info['dataset_name_sambastudio'], dataset_config)
             new_dataset = self.get_dataset(dataset_info['dataset_name_sambastudio'])
+            if new_dataset is None:
+                raise DatasetFetchError(f'Dataset not found')
             logger.info(f'Dataset {new_dataset} created successfully')
             return new_dataset.model_dump() if new_dataset is not None else None
         except DatasetCreateError as e:

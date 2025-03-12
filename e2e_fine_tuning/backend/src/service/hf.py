@@ -18,9 +18,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# hf_model = 'lightblue/suzume-llama-3-8B-multilingual'
-
-
 class HuggingFaceHandler:
     def __init__(self, client: HfApi, data_dir: str, target_dir: str) -> None:
         self.__client = client
