@@ -8,7 +8,7 @@ updates:
       # Check for updates every day
       interval: "daily"
       # Optional: set a specific time for daily updates
-      time: "12:00"
+      time: "13:41"
       # Optional timezone definition
       timezone: "Etc/UTC"
     commit-message:
