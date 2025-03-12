@@ -3,7 +3,7 @@ sambastudio:
   rdu_arch: "SN40L-8"
 
 project:
-  project_name: "byoc fine-tuning project"
+  project_name: "byoc-fine-tuning-project"
   project_description: "this project will be used to test the BYOC and Fine-tuning e2e pipeline implementation"
 
 job:
