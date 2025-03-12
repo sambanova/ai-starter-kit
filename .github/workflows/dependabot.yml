@@ -3,20 +3,25 @@ version: 2
 updates:
   # Define updates for Python dependencies using pip
   - package-ecosystem: "pip"
-    # Specify the directories containing requirements.txt files
-    directories:
-      - "/financial_assistant"
-      # Add additional package directories as needed
+    # Folders with requirements.txt file
+    directory: "/financial_assistant"
     schedule:
-      interval: "daily"  # Check for updates every day
+      # Check for updates every day
+      interval: "daily"
+      # Optional: set a specific time for daily updates
+      time: "12:00"
+      # Optional timezone definition
+      timezone: "Etc/UTC"
     commit-message:
-      prefix: "pip dependency update."
-    # Create a group of dependencies to be updated together in one pull request
+      prefix: "pip dependency update"
+    # Optional: Use labels on PRs for easier sorting/filtering
+    labels:
+      - "dependencies"
     groups:
-      # Core dependencies
       core-dependencies:
+        # Applies the group rule to version updates
+        applies-to: version-updates
         # Define patterns to include dependencies in the group (based on dependency name)
-        applies-to: version-updates # Applies the group rule to version updates
         patterns:
           - "llama-index*"
           - "langchain*"
@@ -31,9 +36,10 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
       # All the Python packages (excluding core dependencies)
-      all-python-packages:
-        applies-to: version-updates # Applies the group rule to version updates
+      other-packages:
+        applies-to: version-updates
         patterns:
           - "*"
         exclude-patterns:
