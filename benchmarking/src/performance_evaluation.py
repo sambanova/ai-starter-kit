@@ -266,6 +266,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.TTFT_SERVER,
             common_metrics.E2E_LAT_SERVER,
             common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER,
+            common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN,
             common_metrics.NUM_INPUT_TOKENS_SERVER,
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
             common_metrics.ACCEPTANCE_RATE
