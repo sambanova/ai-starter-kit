@@ -35,7 +35,6 @@ class ChatPerformanceEvaluator:
         # Build prompt dict for Request Config
         prompt_dict = {
             'name': 'chat_prompt',
-            'performance_level': 'na',
             'template': prompt_template
         }
 

@@ -675,7 +675,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             # Make raw prompt dictionary
             raw_prompt = {
                 'name': 'custom_prompt',
-                'performance_level': 'na',
                 'template': data_point[self.prompt_key]
             }
             

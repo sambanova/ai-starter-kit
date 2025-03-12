@@ -665,7 +665,6 @@ if __name__ == '__main__':
     prompt_text = 'This is a test example, so tell me about anything'
     prompt = {
         'name': 'test',
-        'performance_level': 'low',
         'template': prompt_text
     }
     
