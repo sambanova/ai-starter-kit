@@ -3,6 +3,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
   Box,
+  Button,
   IconButton,
   Theme,
   Toolbar,
@@ -34,33 +35,43 @@ const Header = ({ onDrawerToggle }: HeaderProps) => {
         zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
     >
-      <Toolbar>
-        {isMobile && (
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={onDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
-        <Box
-          component="img"
-          src="https://sambanova.ai/hubfs/logotype_sambanova_orange.png"
-          alt="SambaNova Logo"
-          sx={{
-            height: 35,
-            display: { xs: "block", sm: "none" }, // Only show on mobile
-            mr: 2,
-          }}
-        />
-        <Typography variant="h6" noWrap component="div">
-          Bring your own Checkpoint
-        </Typography>
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          {isMobile && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={onDrawerToggle}
+              sx={{ mr: 2, display: { sm: "none" } }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Box
+            component="img"
+            src="https://sambanova.ai/hubfs/logotype_sambanova_orange.png"
+            alt="SambaNova Logo"
+            sx={{
+              height: 35,
+              display: { xs: "block", sm: "none" }, // Only show on mobile
+              mr: 2,
+            }}
+          />
+          <Typography variant="h6" noWrap component="div">
+            Bring your own Checkpoint
+          </Typography>
+        </Box>
 
-        <SettingsIcon />
+        <Button
+          sx={{
+            minWidth: 40,
+            minHeight: 40,
+            borderRadius: "50%",
+          }}
+        >
+          <SettingsIcon />
+        </Button>
       </Toolbar>
     </AppBar>
   );
