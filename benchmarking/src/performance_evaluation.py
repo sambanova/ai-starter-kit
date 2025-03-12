@@ -44,7 +44,7 @@ transformers.logging.set_verbosity_error()
 load_dotenv('../.env', override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
-USER_PROMPT_PATH = os.path.join(file_location, '../prompts/new-user-prompt_template.yaml')
+USER_PROMPT_PATH = os.path.join(file_location, '../prompts/user-prompt_template.yaml')
 
 
 class BasePerformanceEvaluator(abc.ABC):
@@ -572,7 +572,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -771,17 +771,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         with open(USER_PROMPT_PATH, 'r') as file:
             data = yaml.safe_load(file)
         
-        valid_performance_levels = ["low", "medium", "high"]
-        valid_prompt_structure = ["name", "performance_level", "template"]
+        valid_prompt_structure = ["name", "template"]
         validated_prompts = []
         
         for prompt in data.get('prompts', []):
             if not all(key in prompt for key in valid_prompt_structure):
                 raise ValueError(f"Invalid prompt structure: {prompt}.\
                     It must include the fields {valid_prompt_structure}.")
-            if prompt["performance_level"] not in valid_performance_levels:
-                raise ValueError(f"Invalid performance level '{prompt['performance_level']}' in prompt: {prompt}.\
-                    Valid values are valid_performance_levels")
             validated_prompts.append(prompt)
 
         return validated_prompts
@@ -1002,7 +998,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -1100,23 +1096,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Returns:
             List[Dict[str,Any]]: List of randomly selected prompts
         """
-        high_perf_prompts = [p for p in self.prompts if p['performance_level'] == 'high']
 
-        selected_prompts = []
-        if high_perf_prompts:
-            high_perf_prompt_selected = random.choice(high_perf_prompts)
-            selected_prompts.append(high_perf_prompt_selected)
-        
-        remaining_prompts = random.choices(self.prompts, k = num_requests - 1)
-        selected_prompts.extend(remaining_prompts)
-        
-        # prints to log random prompt distribution
-        print(f"low {len([p for p in selected_prompts if p['performance_level'] == 'low'])}")
-        print(f"medium {len([p for p in selected_prompts if p['performance_level'] == 'medium'])}")
-        print(f"high {len([p for p in selected_prompts if p['performance_level'] == 'high'])}")
-        assert len(selected_prompts) == num_requests, "Number of selected prompts does not match the requested count"
-        
-        return selected_prompts
+        random_selected_prompts = random.choices(self.prompts, k = num_requests)
+        assert len(random_selected_prompts) == num_requests, "Number of selected prompts does not match the requested count"
+        return random_selected_prompts
 
     def build_request_configs(
         self,
@@ -1278,7 +1261,7 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
 
         # Use ThreadPoolExecutor to handle threads
         start_time = time.monotonic()
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=10000) as executor:
             # Store futures for the tasks
             futures = []
 
