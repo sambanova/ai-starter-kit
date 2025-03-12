@@ -265,7 +265,7 @@ def create_cache_path_session_token(session_token: str, create_cache: bool = Tru
     current_dir = Path(__file__).resolve()
     kit_dir = current_dir.parent.parent.parent.parent
 
-    financial_agent_cache_dir = kit_dir / 'cache'
+    financial_agent_cache_dir = Path('cache')
     cache_dir = financial_agent_cache_dir / f'cache_{session_token}'
 
     financial_agent_cache_dir.mkdir(exist_ok=True)
