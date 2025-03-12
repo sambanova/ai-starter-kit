@@ -55,14 +55,7 @@ app.add_middleware(
 sambanova_api_key_header = APIKeyHeader(name='x-sambanova-key', scheme_name='sambanova_key')
 
 
-# serper_api_key_header = APIKeyHeader(name="x-serper-key", scheme_name="serper_key")
-def serper_api_key_header(
-    serper_api_key: Optional[str] = Header(None),
-) -> Optional[str]:
-    if serper_api_key is None:
-        return None
-    return serper_api_key
-
+serper_api_key_header = APIKeyHeader(name="x-serper-key", scheme_name="serper_key", auto_error=False)
 
 key_manager = APIKeyManager()
 
