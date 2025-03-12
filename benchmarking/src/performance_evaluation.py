@@ -1098,7 +1098,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         random_selected_prompts = random.choices(self.prompts, k = num_requests)
-        assert len(random_selected_prompts) == num_requests, "Number of selected prompts does not match the requested count"
+        assert len(random_selected_prompts) == num_requests, "Number of selected prompts \
+            does not match the requested count"
         return random_selected_prompts
 
     def build_request_configs(
