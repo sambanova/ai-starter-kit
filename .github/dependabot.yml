@@ -4,8 +4,30 @@ updates:
   - package-ecosystem: "pip"
     # Folders with requirements.txt file
     directories:
+      # Main repository
       - "/"
-      - "/*"
+      # First degree folders
+      - "/benchmarking"
+      - "/bundle_jump_start"
+      - "/data_extraction"
+      - "/document_comparison"
+      - "/e2e_fine_tuning"
+      - "/enterprise_knowledge_retriever"
+      - "/eval_jumpstart"
+      - "/financial_assistant"
+      - "/fine_tuning_embeddings"
+      - "/fine_tuning_sql"
+      - "/funcion_calling"
+      - "/image_search"
+      - "/multimodal_knowledge_retriever"
+      - "/post_call_analysis"
+      - "/prompt_engineering"
+      - "/sambanova_scribe"
+      - "/search_assistant"
+      - "/tests"
+      - "/web_crawled_data_retriever"
+      # Second degree repositories
+      - "/utils/*"
     schedule:
       # Check for updates every day
       interval: "daily"
