@@ -5,7 +5,7 @@ updates:
     # Folders with requirements.txt file
     directories:
       - "/"
-      - "**/*"
+      - "/*"
     schedule:
       # Check for updates every day
       interval: "daily"
