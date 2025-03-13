@@ -172,7 +172,11 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
 
-5. Synthetic Performance common examples
+5. Customize synthetic prompts.
+
+    Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+
+6. Synthetic Performance common examples
     1. Dynamic batching speed  
 
         Parameters:
@@ -288,6 +292,10 @@ This option allows you to evaluate the performance of the selected LLM on real w
     - ```Total output throughput per batch size```: This bar plot shows the median total tokens generated per second per batch in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see good agreement between the client and server-side metrics. This metric will calculate the same values as the previous metric for batch size = 1. However, for batch size > 1, it is estimated as the average of ```Output throughput by batch size * Batch size``` for each batch, to account for more generated tokens due to concurrent requests being served in batch mode.
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
+
+5. Customize synthetic prompts:
+
+    Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
 </details>
 
@@ -445,6 +453,11 @@ synthetic_<MODEL_IDX>_<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_C
 ![summary_output_image](./imgs/synthetic_summary_ouput.png)
 
 - There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis. 
+
+4. Customize synthetic prompts
+
+Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+
 </details>
 
 <details id="real-workload-dataset">
@@ -497,6 +510,11 @@ realworkload_<MODEL_IDX>_<MODEL_NAME>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{QP
 ![summary_output_image](./imgs/real_workload_summary_ouput.png)
 
 - There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis. 
+
+4. Customize synthetic prompts
+
+Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+
 </details>
 
 <details id="custom-dataset">

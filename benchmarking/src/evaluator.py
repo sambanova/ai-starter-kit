@@ -286,7 +286,7 @@ def main() -> None:
                 qps_distribution=args.qps_distribution,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
-                llm_api=args.llm_api,
+                llm_api=args.llm_api
             )
 
             # Run performance evaluation
