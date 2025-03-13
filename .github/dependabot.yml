@@ -4,8 +4,11 @@ updates:
   - package-ecosystem: "pip"
     # Folders with requirements.txt file
     directories:
-      - "/"
-      - "/*"
+      - "/benchmarking"
+      - "/financial_assistant"
+      - "/funcion_calling"
+      - "/multimodal_knowledge_retriever"
+      - "/search_assistant"
     schedule:
       # Check for updates every day
       interval: "daily"
