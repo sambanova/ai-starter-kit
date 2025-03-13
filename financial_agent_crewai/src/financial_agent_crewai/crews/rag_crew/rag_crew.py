@@ -60,7 +60,7 @@ class RAGCrew:
         )
 
     @task  # type: ignore
-    def rag_esearch_task(self) -> Task:
+    def rag_research_task(self) -> Task:
         """Add the RAG Research Task."""
 
         return Task(
