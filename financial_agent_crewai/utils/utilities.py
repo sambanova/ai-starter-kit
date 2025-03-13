@@ -1,17 +1,94 @@
+import asyncio
 import base64
 import json
+import logging
 import os
 import re
 import shutil
+import time
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Match, Optional
+from queue import Queue
+from threading import Thread
+from typing import Any, AsyncGenerator, Dict, Generator, List, Match, Optional
 
 import markdown
 import pandas
+import schedule
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
+
+
+def read_json_from_file(file_path: str) -> Optional[List[Dict[str, str]]]:
+    """
+    Reads JSON data from a file.
+
+    Args:
+        file_path: The path to the JSON file.
+
+    Returns:
+        The JSON data as a dictionary.
+    """
+    try:
+        with open(file_path, 'r') as file:
+            json_dict = json.load(file)
+            return json_dict if isinstance(json_dict, list) else None
+    except FileNotFoundError:
+        return None
+    except json.JSONDecodeError:
+        return None
+
+
+def remove_ansi_escape_codes(text: str) -> str:
+    """
+    Function to remove ANSI escape sequences
+
+    Args:
+        text: string to clean.
+
+    Returns:
+        clean text.
+    """
+    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+    return ansi_escape.sub('', text)
+
+
+async def log_stream(queue: Queue[str], cache_dir: Path) -> AsyncGenerator[str, None]:
+    """
+    Async generator that yields logs as they appear in the queue.
+
+    Args:
+        queue: The queue to retrieve log messages from.
+
+    Returns:
+        AsyncGenerator: An asynchronous generator that yields log
+                                   messages (as strings) from the queue. The
+                                   generator stops when a `None` value is
+                                   encountered in the queue.
+    """
+    agent_cache = set()
+    while True:
+        try:
+            log_message = queue.get(timeout=0.1)
+            if log_message is None:
+                break
+
+            clean_message = remove_ansi_escape_codes(log_message)
+            agents_output = read_json_from_file(create_log_path(cache_dir))
+            current_agent_output = (
+                json.dumps(agents_output[-1])
+                if agents_output is not None and agents_output[-1].get('status') == 'completed'
+                else None
+            )
+
+            if current_agent_output is not None and current_agent_output not in agent_cache:
+                agent_cache.add(current_agent_output)
+                yield current_agent_output
+        except:
+            await asyncio.sleep(0.01)
 
 
 def clear_directory(directory: str | Path) -> Optional[str]:
@@ -523,3 +600,43 @@ def generate_final_report(
                     with final_report_path.open('a', encoding='utf-8') as target:
                         target.write(f'\n### Data Sources Images - {company_ticker}\n\n')
                     convert_file_of_image_paths_to_markdown(images_list, final_report_path, f'Image {company_ticker}')
+
+
+def delete_temp_dir(temp_dir: str, verbose: bool = False) -> None:
+    """Delete the temporary directory and its contents."""
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            if verbose:
+                logger.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            if verbose:
+                logger.warning(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """Schedule the deletion of the temporary directory after a delay."""
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir=temp_dir, verbose=False).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
+def create_yfinance_stock_dir(cache_dir: Path) -> Path:
+    """Create the directory for Yahoo Finance stock images."""
+
+    return cache_dir / 'yfinance_stocks'
+
+
+def create_log_path(cache_dir: Path) -> str:
+    """Create the CrewAI log file JSON path."""
+
+    # CrewAI logging JSON file
+    return str(cache_dir / 'output_log_file.json')

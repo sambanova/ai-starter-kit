@@ -1,11 +1,12 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
 from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 from crewai import LLM
@@ -23,6 +24,7 @@ class SortingHatCrew:
     def __init__(
         self,
         llm: LLM,
+        cache_dir: Path,
         verbose: bool = True,
     ) -> None:
         """Initialize the SortingHatCrew crew."""
@@ -33,6 +35,7 @@ class SortingHatCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
+        self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
@@ -63,5 +66,5 @@ class SortingHatCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )
