@@ -3,12 +3,14 @@ updates:
   # Define updates for Python dependencies using pip
   - package-ecosystem: "pip"
     # Folders with requirements.txt file
-    directory: "/financial_assistant"
+    directories:
+      - "/"
+      - "/*"
     schedule:
       # Check for updates every day
       interval: "daily"
       # Optional: set a specific time for daily updates
-      time: "13:41"
+      time: "15:00"
       # Optional timezone definition
       timezone: "Etc/UTC"
     commit-message:
@@ -17,10 +19,9 @@ updates:
     labels:
       - "dependencies"
     groups:
+      # All the Python core dependencies: minor + patch
       core-dependencies:
-        # Applies the group rule to version updates
         applies-to: version-updates
-        # Define patterns to include dependencies in the group (based on dependency name)
         patterns:
           - "llama-index*"
           - "langchain*"
@@ -35,8 +36,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      # All the Python packages (excluding core dependencies)
-      other-packages:
+      # All the other Python packages: minor + patch
+      other-dependencies:
         applies-to: version-updates
         patterns:
           - "*"
@@ -54,3 +55,37 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      # All the Python core dependencies: major
+      core-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "llama-index*"
+          - "langchain*"
+          - "crewai*"
+          - "pandasai"
+          - "pydantic"
+          - "python-dotenv"
+          - "streamlit*"
+          - "st-pages"
+          - "sseclient-py"
+          - "torch"
+        update-types:
+          - "major"
+      # All the other Python packages: major
+      other-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "llama-index*"
+          - "langchain*"
+          - "crewai*"
+          - "pandasai"
+          - "pydantic"
+          - "python-dotenv"
+          - "streamlit*"
+          - "st-pages"
+          - "sseclient-py"
+          - "torch"
+        update-types:
+          - "major"
