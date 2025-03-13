@@ -305,7 +305,7 @@ class SearchAssistant:
         params = {'lang': 'EN', 'limit': limit, 'text': query}
 
         try:
-            response = requests.get(url, params=params) # type: ignore
+            response = requests.get(url, params=params)  # type: ignore
             if response.status_code == 200:
                 results = response.json()
                 if len(results) > 0:
@@ -523,47 +523,6 @@ class SearchAssistant:
 
         return chunks
 
-    def create_load_vector_store(self, force_reload: bool = False, update: bool = False) -> None:
-        """
-        Create a vector store based on the given documents.
-        Args:
-            force_reload (bool, optional): Whether to force reloading the vector store. Defaults to False.
-            update (bool, optional): Whether to update the vector store. Defaults to False.
-        """
-
-        persist_directory = self.config.get('persist_directory', 'NoneDirectory')
-
-        embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info['type'],
-            batch_size=self.embedding_model_info['batch_size'],
-            bundle=self.embedding_model_info['bundle'],
-            select_expert=self.embedding_model_info['select_expert'],
-        )
-
-        if os.path.exists(persist_directory) and not force_reload and not update:
-            self.vector_store = self.vectordb.load_vdb(
-                persist_directory, embeddings, db_type=self.retrieval_info['db_type']
-            )
-
-        elif os.path.exists(persist_directory) and update:
-            chunks = self.get_text_chunks_with_references(
-                self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
-            )
-            self.vector_store = self.vectordb.load_vdb(
-                persist_directory, embeddings, db_type=self.retrieval_info['db_type']
-            )
-            self.vector_store = self.vectordb.update_vdb(
-                chunks, embeddings, self.retrieval_info['db_type'], persist_directory
-            )
-
-        else:
-            chunks = self.get_text_chunks_with_references(
-                self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
-            )
-            self.vector_store = self.vectordb.create_vector_store(
-                chunks, embeddings, self.retrieval_info['db_type'], None
-            )
-
     def create_and_save_local(
         self,
         input_directory: Optional[str] = None,
@@ -595,14 +554,9 @@ class SearchAssistant:
             )
 
         else:
-            if os.path.exists(persist_directory):
-                self.vector_store = self.vectordb.create_vector_store(
-                    chunks, embeddings, self.retrieval_info['db_type'], persist_directory
-                )
-            else:
-                self.vector_store = self.vectordb.create_vector_store(
-                    chunks, embeddings, self.retrieval_info['db_type'], None
-                )
+            self.vector_store = self.vectordb.create_vector_store(
+                chunks, embeddings, self.retrieval_info['db_type'], persist_directory, 'default_collection'
+            )
 
     def basic_call(
         self,
@@ -689,6 +643,7 @@ class SearchAssistant:
         search_method: Optional[str] = 'serpapi',
         max_results: int = 5,
         search_engine: Optional[str] = 'google',
+        persist_directory: Optional[str] = None,
     ) -> Optional[Dict[str, str]]:
         """
         Do a call to the serp tool, scrape the url results, and save the scraped data in a a vectorstore
@@ -706,12 +661,14 @@ class SearchAssistant:
             _, links = self.queryOpenSerp(query=query, limit=max_results, engine=search_engine, do_analysis=False)
         if len(links) > 0:
             self.web_crawl(urls=links)
-            # self.create_load_vector_store()
-            self.create_and_save_local()
+            self.create_and_save_local(persist_directory=persist_directory)
             self.set_retrieval_qa_chain(conversational=True)
             return None
         else:
-            return {'message': f"No links found for '{query}'. Try again"}
+            return {
+                'message': f"No links found for '{query}'. Try again, "
+                'increase the number of results or check your api keys'
+            }
 
     def get_relevant_queries(self, query: str) -> Any:
         """
