@@ -12,5 +12,5 @@ pydantic == 2.9.2
 pydantic-core == 2.23.4
 python-dotenv == 1.0.1
 huggingface-hub==0.25.2
-sentence_transformers==2.2.2
+sentence_transformers==3.4.1
 instructorembedding==1.0.1
