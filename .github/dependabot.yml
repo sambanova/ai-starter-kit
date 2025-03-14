@@ -136,6 +136,7 @@ updates:
       miscellaneous-dependencies:
         applies-to: version-updates
         patterns:
+          - "schedule"
           - "tqdm"
           - "watchdog"
           - "pillow"
@@ -164,14 +165,6 @@ updates:
           - "pre-commit"
           - "ruff"
           - "ruamel.yaml"
-        update-types:
-          - "minor"
-          - "patch"
-
-      schedule-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "schedule"
         update-types:
           - "minor"
           - "patch"
