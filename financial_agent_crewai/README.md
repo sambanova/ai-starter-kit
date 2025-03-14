@@ -95,21 +95,6 @@ Once all of the dependencies are installed, you need to activate the virtual env
 source .venv/bin/activate
 ```
 
-After activating the virtual environment, you can run the flow by executing one of the following commands:
-
-```bash
-crewai flow kickoff
-```
-or
-
-```bash
-uv run kickoff
-```
-
-This command initializes the `FinancialFLow` Flow, assembling the agents and assigning them tasks as defined in your configuration.
-This example, unmodified, will generate a `report.md` file and a `report.pdf` file
-as the outputs of a financial research and analyais in the `cache` folder.
-
 ### 3.2 Using `pip` and `venv`
 
 If you want to create a Python virtual environment with its built-in module `venv`
