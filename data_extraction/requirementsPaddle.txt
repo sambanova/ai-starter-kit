@@ -59,12 +59,12 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.7.1
 kiwisolver==1.4.5
-langchain-chroma == 0.1.4
-langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-chroma == 0.2.2
+langchain-community==0.3.19
+langchain-core==0.3.44
 langchain-huggingface==0.1.2
-langchain==0.3.16
-langchain-sambanova==0.1.0
+langchain==0.3.20
+langchain-sambanova==0.1.2
 lazy_loader==0.3
 lmdb==1.4.1
 lxml==5.1.0
