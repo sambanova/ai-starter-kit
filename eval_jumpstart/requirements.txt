@@ -10,7 +10,7 @@ langchain-sambanova==0.1.0
 mypy==1.11.2
 pre-commit==4.0.1
 ruff==0.6.9
-pandas==1.5.3
+pandas==2.2.3
 python-dotenv==1.0.1
 pydantic==2.9.2 
 pydantic-core==2.23.4
