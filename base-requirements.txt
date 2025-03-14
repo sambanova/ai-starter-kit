@@ -1,26 +1,26 @@
 # Core dependencies
-llama-index==0.11.17
-llama-index-llms-langchain==0.4.2
-langchain==0.3.16
-langchain-sambanova==0.1.0
-langchain-core==0.3.33
-langchain-milvus==0.1.7rc2
-langchain-chroma == 0.2.1
-langchain-community==0.3.16
-langchain-experimental==0.3.2
+llama-index==0.12.24
+llama-index-llms-langchain==0.6.0
+langchain==0.3.20
+langchain-sambanova==0.1.2
+langchain-core==0.3.44
+langchain-milvus==0.1.8
+langchain-chroma == 0.2.2
+langchain-community==0.3.19
+langchain-experimental==0.3.4
 langchain-huggingface==0.1.2
 langgraph==0.2.28
 crewai==0.100.1
 crewai-tools==0.0.1
-pandasai==2.2.15
+pandasai==2.4.2
 pydantic==2.9.2 
 pydantic-core==2.23.4
 python-dotenv==1.0.1
-streamlit==1.40.2
+streamlit==1.43.2
 st-pages==0.5.0
-streamlit-extras==0.3.6
+streamlit-extras==0.6.0
 sseclient-py==1.8.0
-torch==2.2.2
+torch==2.6.0
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
