@@ -21,7 +21,7 @@ backoff==2.2.1
 bcrypt==4.1.2
 beautifulsoup4==4.12.3
 black==23.12.1
-blis==0.7.11
+blis==1.0.2
 build==1.0.3
 cachetools==5.3.2
 catalogue==2.0.10
