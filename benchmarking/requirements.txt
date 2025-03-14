@@ -7,7 +7,7 @@ matplotlib==3.8.0
 mypy==1.11.2
 nbformat==5.10.4
 num2words==0.5.13
-pandas==1.5.3
+pandas==2.2.3
 plotly==5.19.0
 poetry==1.8.3
 pre-commit==4.0.1
