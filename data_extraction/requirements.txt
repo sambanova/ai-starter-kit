@@ -74,7 +74,7 @@ nipype==1.8.6
 numexpr==2.8.7
 numpy==1.26.0
 orjson==3.10.6
-packaging==23.2
+packaging==24.2
 pandas==2.1.1
 parso==0.8.3
 pathlib==1.0.1
