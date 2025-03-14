@@ -1,0 +1,187 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directories:
+      - "/"
+      - "/benchmarking"
+      - "/bundle_jump_start"
+      - "/data_extraction"
+      - "/document_comparison"
+      - "/e2e_fine_tuning"
+      - "/enterprise_knowledge_retriever"
+      - "/eval_jumpstart"
+      - "/financial_assistant"
+      - "/fine_tuning_embeddings"
+      - "/fine_tuning_sql"
+      - "/funcion_calling"
+      - "/image_search"
+      - "/multimodal_knowledge_retriever"
+      - "/post_call_analysis"
+      - "/prompt_engineering"
+      - "/sambanova_scribe"
+      - "/search_assistant"
+      - "/tests"
+      - "/web_crawled_data_retriever"
+      - "/utils/*"
+    schedule:
+      interval: "daily"
+      time: "15:00"
+      timezone: "Etc/UTC"
+    commit-message:
+      prefix: "pip dependency update"
+    labels:
+      - "dependencies"
+    groups:
+      core-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "crewai*"
+          - "crewai-tools*"
+          - "langchain*"
+          - "langgraph*"
+          - "llama-index*"
+          - "pandasai"
+          - "pydantic*"
+          - "python-dotenv"
+          - "sseclient-py"
+          - "st-pages"
+          - "streamlit*"
+          - "streamlit-extras"
+          - "torch"
+        update-types:
+          - "minor"
+          - "patch"
+
+      ml-nlp-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "accelerate"
+          - "datasets"
+          - "evaluate"
+          - "huggingface-hub"
+          - "instructorembedding"
+          - "peft"
+          - "scikit-learn"
+          - "sentence-transformers"
+          - "transformers"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-processing-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "faiss-cpu"
+          - "numpy"
+          - "pandas"
+          - "PyMuPDF*"
+          - "pypandoc"
+          - "pypandoc_binary"
+          - "python-docx"
+          - "sqlitedict"
+          - "stqdm"
+          - "xlrd"
+        update-types:
+          - "minor"
+          - "patch"
+
+      web-and-api-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "aiohttp"
+          - "backoff"
+          - "boto3"
+          - "fastapi"
+          - "google-search-results"
+          - "httpx"
+          - "nest_asyncio"
+          - "requests"
+          - "streamlit-javascript"
+          - "uvicorn"
+        update-types:
+          - "minor"
+          - "patch"
+
+      visualization-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "librosa"
+          - "matplotlib"
+          - "plotly"
+          - "seaborn"
+        update-types:
+          - "minor"
+          - "patch"
+
+      text-processing-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "beautifulsoup4"
+          - "fpdf2"
+          - "html2text"
+          - "pypdf"
+          - "unstructured*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      audio-video-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "yt-dlp"
+        update-types:
+          - "minor"
+          - "patch"
+
+      miscellaneous-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "Jinja2"
+          - "jsonlines"
+          - "omegaconf"
+          - "pillow"
+          - "pycountry"
+          - "schedule"
+          - "tqdm"
+          - "watchdog"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-sources-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "sec-downloader"
+          - "yfinance"
+        update-types:
+          - "minor"
+          - "patch"
+
+      dev-tools-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "ipykernel"
+          - "mypy"
+          - "pre-commit"
+          - "ruamel.yaml"
+          - "ruff"
+        update-types:
+          - "minor"
+          - "patch"
+
+      llm-eval-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "wandb"
+          - "weave"
+        update-types:
+          - "minor"
+          - "patch"
+
+      client-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "openai"
+        update-types:
+          - "minor"
+          - "patch"
