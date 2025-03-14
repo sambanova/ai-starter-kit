@@ -23,7 +23,7 @@ pytesseract==0.3.10
 python-dotenv==1.0.0
 ruff==0.6.9
 seaborn==0.12.2
-sentence_transformers==2.2.2
+sentence_transformers==3.4.1
 sseclient-py==1.8.0
 streamlit-extras==0.4.3
 streamlit==1.36.0
