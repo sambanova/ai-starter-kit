@@ -1,6 +1,6 @@
 beautifulsoup4==4.12.3
 faiss-cpu==1.7.4
-fake-useragent==1.5.1
+fake-useragent==2.1.0
 html2text==2020.1.16
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
