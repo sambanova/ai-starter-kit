@@ -583,7 +583,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -972,7 +972,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -1257,9 +1257,9 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
-        # Use ThreadPoolExecutor to handle threads
         start_time = time.monotonic()
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        # Use ThreadPoolExecutor to handle threads
+        with ThreadPoolExecutor(max_workers=10000) as executor:
             # Store futures for the tasks
             futures = []
 
