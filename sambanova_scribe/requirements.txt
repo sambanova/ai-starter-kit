@@ -9,4 +9,4 @@ sseclient-py==1.8.0
 streamlit==1.40.2
 tqdm==4.66.5
 watchdog==4.0.2
-yt-dlp==2024.8.6
+yt-dlp==2025.2.19
