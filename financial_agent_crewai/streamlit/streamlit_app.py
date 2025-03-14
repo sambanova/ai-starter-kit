@@ -8,18 +8,11 @@ generation, and result display.
 
 import base64
 import os
-import sys
 import time
 from typing import Any
 from uuid import uuid4
-
 import streamlit
 from dotenv import load_dotenv
-
-# Add parent directory to Python path before importing from financial_agent_crewai
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(parent_dir)
 
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.main import FinancialFlow
@@ -170,6 +163,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    # -------------------- CREDENTAILS --------------------
     with streamlit.expander('Credentials', icon='🔑'):
         with streamlit.form('credentials'):
             if (
@@ -352,8 +346,6 @@ def init_session_state() -> None:
         streamlit.session_state.running = False
     if 'final_content' not in streamlit.session_state:
         streamlit.session_state.final_content = None
-    if 'show_api_warning' not in streamlit.session_state:
-        streamlit.session_state.show_api_warning = False
 
 
 @streamlit.fragment
