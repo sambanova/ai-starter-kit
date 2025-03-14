@@ -35,18 +35,18 @@ updates:
       core-dependencies:
         applies-to: version-updates
         patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "langgraph*"
           - "crewai*"
           - "crewai-tools*"
+          - "langchain*"
+          - "langgraph*"
+          - "llama-index*"
           - "pandasai"
           - "pydantic*"
           - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "streamlit-extras"
           - "sseclient-py"
+          - "st-pages"
+          - "streamlit*"
+          - "streamlit-extras"
           - "torch"
         update-types:
           - "minor"
@@ -55,15 +55,15 @@ updates:
       ml-nlp-dependencies:
         applies-to: version-updates
         patterns:
-          - "scikit-learn"
-          - "transformers"
-          - "sentence-transformers"
-          - "huggingface-hub"
-          - "instructorembedding"
+          - "accelerate"
           - "datasets"
           - "evaluate"
-          - "accelerate"
+          - "huggingface-hub"
+          - "instructorembedding"
           - "peft"
+          - "scikit-learn"
+          - "sentence-transformers"
+          - "transformers"
         update-types:
           - "minor"
           - "patch"
@@ -71,14 +71,14 @@ updates:
       data-processing-dependencies:
         applies-to: version-updates
         patterns:
-          - "pandas"
-          - "numpy"
-          - "sqlitedict"
           - "faiss-cpu"
+          - "numpy"
+          - "pandas"
           - "PyMuPDF*"
           - "pypandoc"
           - "pypandoc_binary"
           - "python-docx"
+          - "sqlitedict"
           - "stqdm"
           - "xlrd"
         update-types:
@@ -88,16 +88,16 @@ updates:
       web-and-api-dependencies:
         applies-to: version-updates
         patterns:
-          - "boto3"
-          - "requests"
           - "aiohttp"
-          - "fastapi"
-          - "uvicorn"
-          - "google-search-results"
-          - "nest_asyncio"
-          - "httpx"
           - "backoff"
+          - "boto3"
+          - "fastapi"
+          - "google-search-results"
+          - "httpx"
+          - "nest_asyncio"
+          - "requests"
           - "streamlit-javascript"
+          - "uvicorn"
         update-types:
           - "minor"
           - "patch"
@@ -105,10 +105,10 @@ updates:
       visualization-dependencies:
         applies-to: version-updates
         patterns:
-          - "plotly"
-          - "matplotlib"
-          - "seaborn"
           - "librosa"
+          - "matplotlib"
+          - "plotly"
+          - "seaborn"
         update-types:
           - "minor"
           - "patch"
@@ -136,14 +136,14 @@ updates:
       miscellaneous-dependencies:
         applies-to: version-updates
         patterns:
+          - "Jinja2"
+          - "jsonlines"
+          - "omegaconf"
+          - "pillow"
+          - "pycountry"
           - "schedule"
           - "tqdm"
           - "watchdog"
-          - "pillow"
-          - "pycountry"
-          - "omegaconf"
-          - "jsonlines"
-          - "Jinja2"
         update-types:
           - "minor"
           - "patch"
@@ -163,8 +163,8 @@ updates:
           - "ipykernel"
           - "mypy"
           - "pre-commit"
-          - "ruff"
           - "ruamel.yaml"
+          - "ruff"
         update-types:
           - "minor"
           - "patch"
@@ -172,8 +172,8 @@ updates:
       llm-eval-dependencies:
         applies-to: version-updates
         patterns:
-          - "weave"
           - "wandb"
+          - "weave"
         update-types:
           - "minor"
           - "patch"
