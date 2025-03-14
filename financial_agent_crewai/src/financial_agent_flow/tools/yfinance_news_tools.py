@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -8,8 +9,8 @@ from crewai.tools import BaseTool
 from requests.exceptions import HTTPError, ReadTimeout
 from urllib3.exceptions import ConnectionError
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import FilenameOutput, get_html_text
+from financial_agent_crewai.src.financial_agent_flow.config import *
+from financial_agent_crewai.src.financial_agent_flow.tools.general_tools import FilenameOutput, get_html_text
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
         'Useful for when you need to find financial news about a public company. '
         'Input should be a company ticker symbol. '
     )
+    cache_dir: Path
 
     def _run(
         self,
@@ -68,7 +70,7 @@ class YahooFinanceNewsTool(BaseTool):  # type: ignore
         filename_list = list()
 
         # Create the filename
-        filename = str(CACHE_DIR / f'yfinance_news_{ticker_symbol}.csv')
+        filename = str(self.cache_dir / f'yfinance_news_{ticker_symbol}.csv')
 
         # Webscraping by url
         report_count = 0

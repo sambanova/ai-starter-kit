@@ -1,17 +1,20 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
-from crewai import LLM, Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
+from financial_agent_crewai.src.financial_agent_flow.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
+from crewai import LLM
 
 
 @CrewBase
-class ReportCrew:
-    """ReportCrew crew."""
+class SortingHatCrew:
+    """SortingHatCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -21,10 +24,10 @@ class ReportCrew:
     def __init__(
         self,
         llm: LLM,
-        filename: str = 'report_section.txt',
+        cache_dir: Path,
         verbose: bool = True,
     ) -> None:
-        """Initialize the ReportCrew crew."""
+        """Initialize the SortingHatCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
@@ -32,36 +35,36 @@ class ReportCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
-        self.filename = filename
+        self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
-    def reporting_analyst(self) -> Agent:
-        """Add the Finance Reporting Analyst Agent."""
+    def extractor(self) -> Agent:
+        """Add the Information Extractor Agent."""
 
         return Agent(
-            config=self.agents_config['reporting_analyst'],
+            config=self.agents_config['extractor'],
             verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
-    def reporting_task(self) -> Task:
-        """Add the Reporting Task."""
+    def extraction_task(self) -> Task:
+        """Add the Extraction Task."""
 
         return Task(
-            config=self.tasks_config['reporting_task'],
-            output_file=self.filename,
+            config=self.tasks_config['extraction_task'],
+            output_pydantic=FilingsInputsList,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the ReportCrew crew."""
+        """Create the SortingHatCrew crew."""
 
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )

@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+from pathlib import Path
 from typing import Dict
 
 import requests
@@ -8,9 +9,8 @@ from crewai.tools import BaseTool
 from sec_downloader import Downloader
 from sec_downloader.types import RequestedFilings
 
-from financial_agent_crewai.src.financial_agent_crewai.config import CACHE_DIR
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import FilenameOutput, get_html_text
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInput
+from financial_agent_crewai.src.financial_agent_flow.tools.general_tools import FilenameOutput, get_html_text
+from financial_agent_crewai.src.financial_agent_flow.tools.sorting_hat_tools import FilingsInput
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class SecEdgarFilingRetriever(BaseTool):  # type: ignore
     name: str = 'SEC Edgar Filing Retriever'
     description: str = 'Retrieve a financial filing from SEC Edgar and then answer the original user question.'
     filing_metadata: FilingsInput
+    cache_dir: Path
 
     def _run(self) -> FilenameOutput:
         # Check the filing type
@@ -78,7 +79,7 @@ class SecEdgarFilingRetriever(BaseTool):  # type: ignore
         html_text = downloader.download_filing(url=metadata.primary_doc_url)
 
         # Create the filename
-        filename = CACHE_DIR / (
+        filename = self.cache_dir / (
             f"filing_id_{self.filing_metadata.filing_type.replace('-', '')}_{self.filing_metadata.filing_quarter}_"
             + f'{self.filing_metadata.ticker_symbol}_{self.filing_metadata.year}.csv'
         )
