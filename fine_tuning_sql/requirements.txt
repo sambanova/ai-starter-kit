@@ -1,5 +1,5 @@
 SQLAlchemy==2.0.30
-datasets==2.20.0
+datasets==3.3.2
 huggingface-hub==0.25.2
 jupyter_client==8.6.0
 jupyter_core==5.7.1
