@@ -27,38 +27,38 @@ kit_dir_1 = os.path.abspath(os.path.join(kit_dir_2, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir_1, '..'))
 sys.path.append(repo_dir)
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
+from financial_agent_crewai.src.financial_agent_flow.config import *
+from financial_agent_crewai.src.financial_agent_flow.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.generic_research_crew.generic_research_crew import (
     GenericResearchCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sorting_hat_crew.sorting_hat_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.rag_crew.rag_crew import RAGCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.report_crew.report_crew import ReportCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.sorting_hat_crew.sorting_hat_crew import (
     SortingHatCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.summarization_crew.summarization_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.summarization_crew.summarization_crew import (
     SummarizationCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_news_crew.yfinance_news_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.yfinance_news_crew.yfinance_news_crew import (
     YFinanceNewsCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
     YFinanceStocksCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.exceptions import APIKeyNotFoundError
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
+from financial_agent_crewai.src.financial_agent_flow.exceptions import APIKeyNotFoundError
+from financial_agent_crewai.src.financial_agent_flow.tools.general_tools import (
     SubQueriesList,
     convert_csv_source_to_txt_report_filename,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.src.financial_agent_flow.tools.report_tools import ReportSummary
+from financial_agent_crewai.src.financial_agent_flow.tools.sorting_hat_tools import FilingsInputsList
 from financial_agent_crewai.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')

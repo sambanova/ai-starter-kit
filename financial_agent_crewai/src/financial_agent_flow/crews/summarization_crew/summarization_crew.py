@@ -5,17 +5,15 @@ from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import FilenameOutput
-from financial_agent_crewai.src.financial_agent_crewai.tools.sec_edgar_tools import SecEdgarFilingRetriever
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInput
+from financial_agent_crewai.src.financial_agent_flow.tools.report_tools import ReportSummary
 from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
 
 @CrewBase
-class SECEdgarCrew:
-    """SECEdgarCrew crew."""
+class SummarizationCrew:
+    """ReportCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -24,46 +22,43 @@ class SECEdgarCrew:
 
     def __init__(
         self,
-        input_variables: FilingsInput,
         llm: LLM,
         cache_dir: Path,
         verbose: bool = True,
     ) -> None:
-        """Initialize the SECEdgarCrew crew."""
+        """Initialize the ReportCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
         self.tasks_config = dict()
         self.agents = list()
         self.tasks = list()
-        self.input_variables = input_variables
         self.llm = llm
         self.cache_dir = cache_dir
         self.verbose = verbose
 
     @agent  # type: ignore
-    def sec_researcher(self) -> Agent:
-        """Add the SEC EDGAR Curator Agent."""
+    def summarizer(self) -> Agent:
+        """Add the Finance Reporting Analyst Agent."""
 
         return Agent(
-            config=self.agents_config['sec_researcher'],
+            config=self.agents_config['summarizer'],
             verbose=self.verbose,
             llm=self.llm,
-            tools=[SecEdgarFilingRetriever(filing_metadata=self.input_variables, cache_dir=self.cache_dir)],
         )
 
     @task  # type: ignore
-    def sec_research_task(self) -> Task:
-        """Add the SEC Research Task."""
+    def summarization(self) -> Task:
+        """Add the Reporting Task."""
 
         return Task(
-            config=self.tasks_config['sec_research_task'],
-            output_pydantic=FilenameOutput,
+            config=self.tasks_config['summarization'],
+            output_pydantic=ReportSummary,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the SECEdgarCrew crew."""
+        """Create the ReportCrew crew."""
 
         return Crew(
             agents=self.agents,

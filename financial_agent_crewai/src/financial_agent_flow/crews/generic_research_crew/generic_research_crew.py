@@ -1,22 +1,21 @@
+import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
-    convert_csv_source_to_txt_report_filename,
-)
-from financial_agent_crewai.src.financial_agent_crewai.tools.rag_tools import TXTSearchTool, TXTSearchToolSchema
+from financial_agent_crewai.src.financial_agent_flow.config import CACHE_DIR, MAX_NEWS
 from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
 
 @CrewBase
-class RAGCrew:
-    """RAGCrew crew."""
+class GenericResearchCrew:
+    """GenericResearchCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -25,52 +24,50 @@ class RAGCrew:
 
     def __init__(
         self,
-        filename: str,
         llm: LLM,
         cache_dir: Path,
+        serper_api_key: str,
+        filename: Optional[str] = None,
         verbose: bool = True,
     ) -> None:
-        """Initialize the RAGCrew crew."""
+        """Initialize the GenericResearchCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
         self.tasks_config = dict()
         self.agents = list()
         self.tasks = list()
-        self.filename = filename
         self.llm = llm
         self.cache_dir = cache_dir
+        self.filename = filename if filename is not None else str(CACHE_DIR / 'report.txt')
         self.verbose = verbose
 
+        # Set the Google Serper API KEY
+        os.environ['SERPER_API_KEY'] = serper_api_key
+
     @agent  # type: ignore
-    def rag_researcher(self) -> Agent:
-        """Add the RAG Agent."""
+    def researcher(self) -> Agent:
+        """Add the Specialized Finance Researcher Agent."""
 
         return Agent(
-            config=self.agents_config['rag_researcher'],
+            config=self.agents_config['researcher'],
             verbose=self.verbose,
             llm=self.llm,
-            tools=[
-                TXTSearchTool(
-                    txt_path=TXTSearchToolSchema(txt=self.filename),
-                    rag_llm=self.llm,
-                )
-            ],
-            allow_delegation=False,
+            tools=[SerperDevTool(n_results=MAX_NEWS)],
         )
 
     @task  # type: ignore
-    def rag_research_task(self) -> Task:
-        """Add the RAG Research Task."""
+    def research_task(self) -> Task:
+        """Add the Research Task."""
 
         return Task(
-            config=self.tasks_config['rag_research_task'],
-            output_file=convert_csv_source_to_txt_report_filename(self.filename),
+            config=self.tasks_config['research_task'],
+            output_file=self.filename,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the RAGCrew crew."""
+        """Create the GenericResearchCrew crew."""
 
         return Crew(
             agents=self.agents,

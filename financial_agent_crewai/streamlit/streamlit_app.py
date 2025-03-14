@@ -15,8 +15,8 @@ from uuid import uuid4
 import streamlit
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.src.financial_agent_crewai.main import FinancialFlow
+from financial_agent_crewai.src.financial_agent_flow.config import *
+from financial_agent_crewai.src.financial_agent_flow.main import FinancialFlow
 from financial_agent_crewai.utils.utilities import *
 
 # Load environment variables

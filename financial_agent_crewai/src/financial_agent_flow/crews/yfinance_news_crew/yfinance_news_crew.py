@@ -1,20 +1,20 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.src.financial_agent_flow.tools.general_tools import FilenameOutput
+from financial_agent_crewai.src.financial_agent_flow.tools.yfinance_news_tools import YahooFinanceNewsTool
 from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
-from crewai import LLM
 
 
 @CrewBase
-class SortingHatCrew:
-    """SortingHatCrew crew."""
+class YFinanceNewsCrew:
+    """YFinanceNewsCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -27,7 +27,7 @@ class SortingHatCrew:
         cache_dir: Path,
         verbose: bool = True,
     ) -> None:
-        """Initialize the SortingHatCrew crew."""
+        """Initialize the YFinanceNewsCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
@@ -39,27 +39,28 @@ class SortingHatCrew:
         self.verbose = verbose
 
     @agent  # type: ignore
-    def extractor(self) -> Agent:
-        """Add the Information Extractor Agent."""
+    def yahoo_finance_researcher(self) -> Agent:
+        """Add the Yahoo Finance News Curator Agent."""
 
         return Agent(
-            config=self.agents_config['extractor'],
+            config=self.agents_config['yahoo_finance_researcher'],
             verbose=self.verbose,
             llm=self.llm,
+            tools=[YahooFinanceNewsTool(cache_dir=self.cache_dir)],
         )
 
     @task  # type: ignore
-    def extraction_task(self) -> Task:
-        """Add the Extraction Task."""
+    def yahoo_finance_research_task(self) -> Task:
+        """Add the Yahoo Finance Research Task."""
 
         return Task(
-            config=self.tasks_config['extraction_task'],
-            output_pydantic=FilingsInputsList,
+            config=self.tasks_config['yahoo_finance_research_task'],
+            output_pydantic=FilenameOutput,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the SortingHatCrew crew."""
+        """Create the YFinanceNewsCrew crew."""
 
         return Crew(
             agents=self.agents,

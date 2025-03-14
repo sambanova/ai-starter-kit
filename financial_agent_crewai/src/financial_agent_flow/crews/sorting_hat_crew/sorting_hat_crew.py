@@ -1,19 +1,20 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from crewai import LLM, Agent, Crew, Process, Task
+from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
+from financial_agent_crewai.src.financial_agent_flow.tools.sorting_hat_tools import FilingsInputsList
 from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
+from crewai import LLM
 
 
 @CrewBase
-class SummarizationCrew:
-    """ReportCrew crew."""
+class SortingHatCrew:
+    """SortingHatCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -26,7 +27,7 @@ class SummarizationCrew:
         cache_dir: Path,
         verbose: bool = True,
     ) -> None:
-        """Initialize the ReportCrew crew."""
+        """Initialize the SortingHatCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
@@ -38,27 +39,27 @@ class SummarizationCrew:
         self.verbose = verbose
 
     @agent  # type: ignore
-    def summarizer(self) -> Agent:
-        """Add the Finance Reporting Analyst Agent."""
+    def extractor(self) -> Agent:
+        """Add the Information Extractor Agent."""
 
         return Agent(
-            config=self.agents_config['summarizer'],
+            config=self.agents_config['extractor'],
             verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
-    def summarization(self) -> Task:
-        """Add the Reporting Task."""
+    def extraction_task(self) -> Task:
+        """Add the Extraction Task."""
 
         return Task(
-            config=self.tasks_config['summarization'],
-            output_pydantic=ReportSummary,
+            config=self.tasks_config['extraction_task'],
+            output_pydantic=FilingsInputsList,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the ReportCrew crew."""
+        """Create the SortingHatCrew crew."""
 
         return Crew(
             agents=self.agents,
