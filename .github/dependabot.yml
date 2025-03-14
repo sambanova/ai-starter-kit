@@ -1,949 +1,28 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/benchmarking"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/bundle_jump_start"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/data_extraction"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/document_comparison"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/e2e_fine_tuning"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/enterprise_knowledge_retriever"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/eval_jumpstart"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/financial_assistant"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/fine_tuning_embeddings"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/fine_tuning_sql"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/funcion_calling"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/image_search"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/multimodal_knowledge_retriever"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/post_call_analysis"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/prompt_engineering"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/sambanova_scribe"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/search_assistant"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/tests"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
-    directory: "/web_crawled_data_retriever"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: "daily"
-      time: "15:00"
-      timezone: "Etc/UTC"
-    commit-message:
-      prefix: "pip dependency update"
-    labels:
-      - "dependencies"
-    groups:
-      core-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-      other-dependencies:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "pip"
     directories:
+      - "/"
+      - "/benchmarking"
+      - "/bundle_jump_start"
+      - "/data_extraction"
+      - "/document_comparison"
+      - "/e2e_fine_tuning"
+      - "/enterprise_knowledge_retriever"
+      - "/eval_jumpstart"
+      - "/financial_assistant"
+      - "/fine_tuning_embeddings"
+      - "/fine_tuning_sql"
+      - "/funcion_calling"
+      - "/image_search"
+      - "/multimodal_knowledge_retriever"
+      - "/post_call_analysis"
+      - "/prompt_engineering"
+      - "/sambanova_scribe"
+      - "/search_assistant"
+      - "/tests"
+      - "/web_crawled_data_retriever"
       - "/utils/*"
-    open-pull-requests-limit: 5
     schedule:
       interval: "daily"
       time: "15:00"
@@ -958,32 +37,158 @@ updates:
         patterns:
           - "llama-index*"
           - "langchain*"
+          - "langgraph*"
           - "crewai*"
+          - "crewai-tools*"
           - "pandasai"
-          - "pydantic"
+          - "pydantic*"
           - "python-dotenv"
           - "streamlit*"
           - "st-pages"
+          - "streamlit-extras"
           - "sseclient-py"
           - "torch"
         update-types:
           - "minor"
           - "patch"
-      other-dependencies:
+
+      ml-nlp-dependencies:
         applies-to: version-updates
         patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
+          - "scikit-learn"
+          - "transformers"
+          - "sentence-transformers"
+          - "huggingface-hub"
+          - "instructorembedding"
+          - "datasets"
+          - "evaluate"
+          - "accelerate"
+          - "peft"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-processing-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "pandas"
+          - "numpy"
+          - "sqlitedict"
+          - "faiss-cpu"
+          - "PyMuPDF*"
+          - "pypandoc"
+          - "pypandoc_binary"
+          - "python-docx"
+          - "stqdm"
+          - "xlrd"
+        update-types:
+          - "minor"
+          - "patch"
+
+      web-and-api-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "boto3"
+          - "requests"
+          - "aiohttp"
+          - "fastapi"
+          - "uvicorn"
+          - "google-search-results"
+          - "nest_asyncio"
+          - "httpx"
+          - "backoff"
+          - "streamlit-javascript"
+        update-types:
+          - "minor"
+          - "patch"
+
+      visualization-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "plotly"
+          - "matplotlib"
+          - "seaborn"
+          - "librosa"
+        update-types:
+          - "minor"
+          - "patch"
+
+      text-processing-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "beautifulsoup4"
+          - "fpdf2"
+          - "html2text"
+          - "pypdf"
+          - "unstructured*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      audio-video-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "yt-dlp"
+        update-types:
+          - "minor"
+          - "patch"
+
+      miscellaneous-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "tqdm"
+          - "watchdog"
+          - "pillow"
+          - "pycountry"
+          - "omegaconf"
+          - "jsonlines"
+          - "Jinja2"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-sources-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "sec-downloader"
+          - "yfinance"
+        update-types:
+          - "minor"
+          - "patch"
+
+      dev-tools-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "ipykernel"
+          - "mypy"
+          - "pre-commit"
+          - "ruff"
+          - "ruamel.yaml"
+        update-types:
+          - "minor"
+          - "patch"
+
+      schedule-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "schedule"
+        update-types:
+          - "minor"
+          - "patch"
+
+      llm-eval-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "weave"
+          - "wandb"
+        update-types:
+          - "minor"
+          - "patch"
+
+      client-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "openai"
         update-types:
           - "minor"
           - "patch"
