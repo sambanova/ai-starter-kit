@@ -23,5 +23,5 @@ sseclient-py==1.8.0
 streamlit-extras==0.3.6
 streamlit==1.40.2
 unstructured[pdf]==0.12.4
-watchdog==4.0.0
+watchdog==6.0.0
 weave==0.51.31
