@@ -6,10 +6,9 @@
 </a>
 
 # SambaNova Financial Agent using CrewAI (Financial Flow)
+======================
 
 Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
-
-# Financial Flow
 
 Welcome to the Financial Flow project, powered by [crewAI](https://crewai.com)!
 
@@ -38,13 +37,12 @@ and retrieval-augmented generation (RAG).
 Use the navigation menu to explore various features including:
 
 -- **Generic Google Search**: Scrape the web using
-<a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
-
+  <a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
 - **Stock Data Analysis**: Query and analyze stocks based on
   <a href="https://pypi.org/project/yfinance/" target="_blank">Yahoo Finance</a> data.
-- **Financial Filings Analysis**: Query and analyze financial filings based on
+- **Financial Filings Analysis**: Query and analyze financial filings based on 
   <a href="https://www.sec.gov/edgar/search/" target="_blank">SEC EDGAR </a> data.
-- **Financial News Scraping**: Scrape financial news articles from
+- **Financial News Scraping**: Scrape financial news articles from 
   <a href="https://uk.finance.yahoo.com/" target="_blank">Yahoo Finance</a> News.
 
 ## 2. Setup
@@ -54,21 +52,20 @@ Use the navigation menu to explore various features including:
 2. Add your `SERPER_API_KEY` to the `.env` file.
 
 3. For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
-   USER_AGENT: `<Company Name> <Email Address>`.
+  USER_AGENT: ```<Company Name> <Email Address>```.
 
-   Add the following to the `.env` file:
+  Add the following to the `.env` file:
+  ```
+  # Your organization
+  SEC_API_ORGANIZATION="<your organization>"
 
-   ```
-   # Your organization
-   SEC_API_ORGANIZATION="<your organization>"
-
-   # Your email address
-   SEC_API_EMAIL="<user@email_provider.com>"
-   ```
+  # Your email address
+  SEC_API_EMAIL="<user@email_provider.com>"
+  ```
 
 4. (Optional, only if you want to use `LangTrace`)
-   Add your `LANGTRACE_API_KEY` to the `.env` file.
-
+  Add your `LANGTRACE_API_KEY` to the `.env` file.
+    
 ## 3. Installation
 
 Ensure you have Python `>=3.11 <3.13` installed on your system.
@@ -103,7 +100,6 @@ After activating the virtual environment, you can run the flow by executing one 
 ```bash
 crewai flow kickoff
 ```
-
 or
 
 ```bash
@@ -141,42 +137,22 @@ This example, unmodified, will generate a `report.md` file and a `report.pdf` fi
 as the outputs of a financial research and analyais in the `cache` folder.
 
 ### 3.3 The `Streamlit` app
-
 After building your virtual environment, either using `uv` or using `pip`,
 you can run our `streamlit` app for an interactive interface and monitoring.
 
 Run the following command:
 
 ```bash
-streamlit run streamlit/app.py --browser.gatherUsageStats false
+streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
 You can now enter your query and select which data sources you want to use among the following:
-
-1. Generic Google Search.
-2. SEC EDGAR Filings.
-3. Yahoo Finance News.
-4. Yahoo Finance Stocks.
-
-### 3.4 The web app
-
-You can also use the functionalities via a local web app built with React and FastAPI and deployed with Docker, following these steps:
-
-1. Create the respective `.env` files. On both `backend/` and `frontend/` directories you can find `.env.example` files with a structure on how to set up your `.env` files for each directory.
-2. On a terminal go to the `/financial_agent_crewai/` folder.
-3. (Make sure to have the Docker daemon running) Run the command `docker compose build` and wait for the containers to build.
-4. Once the step 2 is complete, run the command `docker compose up` and wait for the containers to start their execution.
-5. Once they're up and running, go to your browser and navigate to `localhost:5173` to access the app.
-
-Similar to the Streamlit app, you can now set up your API keys, enter your query and select which data sources you want to use among the following:
-
 1. Generic Google Search.
 2. SEC EDGAR Filings.
 3. Yahoo Finance News.
 4. Yahoo Finance Stocks.
 
 ## 4. Customization
-
 You can modify the following hyperparameters of the flow and of the crews,
 as well as the corresponding agents and tasks of the latter,
 in the `config.py` file.
@@ -191,7 +167,6 @@ in the `config.py` file.
   `MAX_SECTION_WORDS`
 
 - The default data sources to use in case they are not given to the `FinancialFlow` as hyperparameters.
-
   1. Generic Google Search: `SOURCE_GENERIC_SEARCH`.
   2. SEC EDGAR Filings: `SOURCE_SEC_FILINGS`.
   3. Yahoo Finance News: `SOURCE_YFINANCE_NEWS`.
