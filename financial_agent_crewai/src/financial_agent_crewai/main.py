@@ -8,6 +8,7 @@ It handles the coordination between research and content creation phases.
 import json
 import logging
 import os
+import sys
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -19,7 +20,13 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud
 
-from financial_agent_crewai.src.financial_agent_crewai.exceptions import APIKeyNotFoundError
+# Main directories
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir_2 = os.path.abspath(os.path.join(current_dir, '..'))
+kit_dir_1 = os.path.abspath(os.path.join(kit_dir_2, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir_1, '..'))
+sys.path.append(repo_dir)
+
 from financial_agent_crewai.src.financial_agent_crewai.config import *
 from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
@@ -45,6 +52,7 @@ from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_news_crew.
 from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
     YFinanceStocksCrew,
 )
+from financial_agent_crewai.src.financial_agent_crewai.exceptions import APIKeyNotFoundError
 from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
     SubQueriesList,
     convert_csv_source_to_txt_report_filename,
@@ -618,7 +626,7 @@ def plot() -> None:
     """Generate and display a visualization of the flow structure."""
 
     finance_flow = FinancialFlow(query=USER_QUERY)
-    plot_filename = str(Path('financial_agent_crewai') / 'flow')
+    plot_filename = str(Path(kit_dir_1) / 'flow')
     finance_flow.plot(filename=plot_filename)
 
 
