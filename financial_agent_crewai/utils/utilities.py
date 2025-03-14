@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import json
 import logging
@@ -9,9 +8,8 @@ import time
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
-from queue import Queue
 from threading import Thread
-from typing import Any, AsyncGenerator, Dict, Generator, List, Match, Optional
+from typing import Any, Dict, Generator, List, Match, Optional
 
 import markdown
 import pandas
@@ -20,75 +18,6 @@ import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
-
-
-def read_json_from_file(file_path: str) -> Optional[List[Dict[str, str]]]:
-    """
-    Reads JSON data from a file.
-
-    Args:
-        file_path: The path to the JSON file.
-
-    Returns:
-        The JSON data as a dictionary.
-    """
-    try:
-        with open(file_path, 'r') as file:
-            json_dict = json.load(file)
-            return json_dict if isinstance(json_dict, list) else None
-    except FileNotFoundError:
-        return None
-    except json.JSONDecodeError:
-        return None
-
-
-def remove_ansi_escape_codes(text: str) -> str:
-    """
-    Function to remove ANSI escape sequences
-
-    Args:
-        text: string to clean.
-
-    Returns:
-        clean text.
-    """
-    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-    return ansi_escape.sub('', text)
-
-
-async def log_stream(queue: Queue[str], cache_dir: Path) -> AsyncGenerator[str, None]:
-    """
-    Async generator that yields logs as they appear in the queue.
-
-    Args:
-        queue: The queue to retrieve log messages from.
-
-    Returns:
-        AsyncGenerator: An asynchronous generator that yields log
-                                   messages (as strings) from the queue. The
-                                   generator stops when a `None` value is
-                                   encountered in the queue.
-    """
-    agent_cache = set()
-    while True:
-        try:
-            log_message = queue.get(timeout=0.1)
-            if log_message is None:
-                break
-
-            clean_message = remove_ansi_escape_codes(log_message)
-            agents_output = read_json_from_file(create_log_path(cache_dir))
-            current_agent_output = (
-                json.dumps(agents_output[-1])
-                if agents_output is not None and agents_output[-1].get('status') == 'completed'
-                else None
-            )
-
-            if current_agent_output is not None and current_agent_output not in agent_cache:
-                agent_cache.add(current_agent_output)
-                yield current_agent_output
-        except:
-            await asyncio.sleep(0.01)
 
 
 def clear_directory(directory: str | Path) -> Optional[str]:
@@ -202,25 +131,6 @@ def dict_to_markdown_table(table_data: Dict[str, Any], title: str) -> str:
 
     # Combine all lines into a single string
     return '\n'.join(lines)
-
-
-def convert_image_path_to_markdown(image_path: str, alt_text: str = 'Image') -> str:
-    """
-    Convert an image path to a Markdown image reference.
-
-    Args:
-        image_path: The filesystem path (or URL) pointing to the image.
-        alt_text: The alt text describing the image. Defaults to "Image".
-
-    Returns:
-        str: A string in the Markdown format for embedding images.
-
-    Example:
-        >>> convert_image_path_to_markdown("plots/graph.png", "Stock graph")
-        '![Stock graph](plots/graph.png)'
-    """
-    # In Markdown: ![alt_text](image_path)
-    return f'![{alt_text}]({image_path})'
 
 
 def convert_file_of_image_paths_to_markdown(
