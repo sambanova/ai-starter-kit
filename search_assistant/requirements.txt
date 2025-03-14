@@ -1,6 +1,6 @@
 #llm-eval
 faiss-cpu==1.7.4
-fake-useragent==1.5.1
+fake-useragent==2.1.0
 google-search-results==2.4.2
 html2text==2024.2.26
 huggingface-hub==0.25.2
