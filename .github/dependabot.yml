@@ -1,94 +1,187 @@
 version: 2
 updates:
-  # Define updates for Python dependencies using pip
   - package-ecosystem: "pip"
-    # Folders with requirements.txt file
     directories:
+      - "/"
       - "/benchmarking"
+      - "/bundle_jump_start"
+      - "/data_extraction"
+      - "/document_comparison"
+      - "/e2e_fine_tuning"
+      - "/enterprise_knowledge_retriever"
+      - "/eval_jumpstart"
       - "/financial_assistant"
+      - "/fine_tuning_embeddings"
+      - "/fine_tuning_sql"
       - "/funcion_calling"
+      - "/image_search"
       - "/multimodal_knowledge_retriever"
+      - "/post_call_analysis"
+      - "/prompt_engineering"
+      - "/sambanova_scribe"
       - "/search_assistant"
+      - "/tests"
+      - "/web_crawled_data_retriever"
+      - "/utils/*"
     schedule:
-      # Check for updates every day
       interval: "daily"
-      # Optional: set a specific time for daily updates
       time: "15:00"
-      # Optional timezone definition
       timezone: "Etc/UTC"
     commit-message:
       prefix: "pip dependency update"
-    # Optional: Use labels on PRs for easier sorting/filtering
     labels:
       - "dependencies"
     groups:
-      # All the Python core dependencies: minor + patch
       core-dependencies:
         applies-to: version-updates
         patterns:
-          - "llama-index*"
-          - "langchain*"
           - "crewai*"
+          - "crewai-tools*"
+          - "langchain*"
+          - "langgraph*"
+          - "llama-index*"
           - "pandasai"
-          - "pydantic"
+          - "pydantic*"
           - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
           - "sseclient-py"
+          - "st-pages"
+          - "streamlit*"
+          - "streamlit-extras"
           - "torch"
         update-types:
           - "minor"
           - "patch"
-      # All the other Python packages: minor + patch
-      other-dependencies:
+
+      ml-nlp-dependencies:
         applies-to: version-updates
         patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
+          - "accelerate"
+          - "datasets"
+          - "evaluate"
+          - "huggingface-hub"
+          - "instructorembedding"
+          - "peft"
+          - "scikit-learn"
+          - "sentence-transformers"
+          - "transformers"
         update-types:
           - "minor"
           - "patch"
-      # All the Python core dependencies: major
-      core-dependencies:
+
+      data-processing-dependencies:
         applies-to: version-updates
         patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
+          - "faiss-cpu"
+          - "numpy"
+          - "pandas"
+          - "PyMuPDF*"
+          - "pypandoc"
+          - "pypandoc_binary"
+          - "python-docx"
+          - "sqlitedict"
+          - "stqdm"
+          - "xlrd"
         update-types:
-          - "major"
-      # All the other Python packages: major
-      other-dependencies:
+          - "minor"
+          - "patch"
+
+      web-and-api-dependencies:
         applies-to: version-updates
         patterns:
-          - "*"
-        exclude-patterns:
-          - "llama-index*"
-          - "langchain*"
-          - "crewai*"
-          - "pandasai"
-          - "pydantic"
-          - "python-dotenv"
-          - "streamlit*"
-          - "st-pages"
-          - "sseclient-py"
-          - "torch"
+          - "aiohttp"
+          - "backoff"
+          - "boto3"
+          - "fastapi"
+          - "google-search-results"
+          - "httpx"
+          - "nest_asyncio"
+          - "requests"
+          - "streamlit-javascript"
+          - "uvicorn"
         update-types:
-          - "major"
+          - "minor"
+          - "patch"
+
+      visualization-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "librosa"
+          - "matplotlib"
+          - "plotly"
+          - "seaborn"
+        update-types:
+          - "minor"
+          - "patch"
+
+      text-processing-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "beautifulsoup4"
+          - "fpdf2"
+          - "html2text"
+          - "pypdf"
+          - "unstructured*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      audio-video-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "yt-dlp"
+        update-types:
+          - "minor"
+          - "patch"
+
+      miscellaneous-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "Jinja2"
+          - "jsonlines"
+          - "omegaconf"
+          - "pillow"
+          - "pycountry"
+          - "schedule"
+          - "tqdm"
+          - "watchdog"
+        update-types:
+          - "minor"
+          - "patch"
+
+      data-sources-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "sec-downloader"
+          - "yfinance"
+        update-types:
+          - "minor"
+          - "patch"
+
+      dev-tools-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "ipykernel"
+          - "mypy"
+          - "pre-commit"
+          - "ruamel.yaml"
+          - "ruff"
+        update-types:
+          - "minor"
+          - "patch"
+
+      llm-eval-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "wandb"
+          - "weave"
+        update-types:
+          - "minor"
+          - "patch"
+
+      client-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "openai"
+        update-types:
+          - "minor"
+          - "patch"

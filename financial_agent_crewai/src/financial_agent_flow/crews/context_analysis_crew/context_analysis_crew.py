@@ -1,18 +1,18 @@
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import OUTPUT_LOG_FILE
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
 
 @CrewBase
-class SummarizationCrew:
-    """ReportCrew crew."""
+class ContextAnalysisCrew:
+    """ContextAnalysisCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -22,9 +22,11 @@ class SummarizationCrew:
     def __init__(
         self,
         llm: LLM,
+        cache_dir: Path,
+        output_file: Optional[str] = None,
         verbose: bool = True,
     ) -> None:
-        """Initialize the ReportCrew crew."""
+        """Initialize the ContextAnalysisCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
@@ -32,35 +34,37 @@ class SummarizationCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
+        self.cache_dir = cache_dir
+        self.output_file = output_file if output_file else 'context_analysis.txt'
         self.verbose = verbose
 
     @agent  # type: ignore
-    def summarizer(self) -> Agent:
+    def context_analyst(self) -> Agent:
         """Add the Finance Reporting Analyst Agent."""
 
         return Agent(
-            config=self.agents_config['summarizer'],
+            config=self.agents_config['context_analyst'],
             verbose=self.verbose,
             llm=self.llm,
         )
 
     @task  # type: ignore
-    def summarization(self) -> Task:
-        """Add the Reporting Task."""
+    def context_analysis_task(self) -> Task:
+        """Add the Context Analysis Task."""
 
         return Task(
-            config=self.tasks_config['summarization'],
-            output_pydantic=ReportSummary,
+            config=self.tasks_config['context_analysis_task'],
+            output_file=self.output_file,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the ReportCrew crew."""
+        """Create the ContextAnalysisCrew crew."""
 
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )

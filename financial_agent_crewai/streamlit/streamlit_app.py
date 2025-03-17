@@ -8,24 +8,23 @@ generation, and result display.
 
 import base64
 import os
-import sys
 import time
 from typing import Any
+from uuid import uuid4
 
 import streamlit
 from dotenv import load_dotenv
 
-# Add parent directory to Python path before importing from financial_agent_crewai
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(parent_dir)
-
-from financial_agent_crewai.main import FinancialFlow
-from financial_agent_crewai.src.financial_agent_crewai.config import *
+from financial_agent_crewai.src.financial_agent_flow.config import *
+from financial_agent_crewai.src.financial_agent_flow.main import FinancialFlow
 from financial_agent_crewai.utils.utilities import *
 
 # Load environment variables
 load_dotenv()
+
+# Unset API KEYS
+os.environ.pop('SAMBANOVA_API_KEY', None)
+os.environ.pop('SERPER_API_KEY', None)
 
 
 def main() -> None:
@@ -165,6 +164,42 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    # -------------------- CREDENTAILS --------------------
+    with streamlit.expander('Credentials', icon='🔑'):
+        with streamlit.form('credentials'):
+            if (
+                streamlit.session_state.get(['SAMBANOVA_API_KEY']) is None  # type: ignore
+                and streamlit.session_state.get(['SERPER_API_KEY']) is None  # type: ignore
+            ):
+                sambanova_api_key = streamlit.session_state.get(['SAMBANOVA_API_KEY'])  # type: ignore
+                if sambanova_api_key is None:
+                    streamlit.write('**SAMBANOVA_API_KEY**')
+                    sambanova_api_key = streamlit.text_input(
+                        label='Enter API key (hidden)',
+                        type='password',
+                        help='Enter your API key',
+                        key=f'sambanova_api_key',
+                        label_visibility='collapsed',
+                    )
+
+                serper_api_key = streamlit.session_state.get(['SERPER_API_KEY'])  # type: ignore
+                if serper_api_key is None:
+                    streamlit.write('**SERPER_API_KEY (Optional)**')
+                    serper_api_key = streamlit.text_input(
+                        label='Enter API key (hidden)',
+                        type='password',
+                        help='Enter your API key',
+                        key=f'serper_api_key',
+                        label_visibility='collapsed',
+                    )
+
+                if streamlit.form_submit_button('Save Credentials'):
+                    os.environ['SAMBANOVA_API_KEY'] = sambanova_api_key
+                    os.environ['SERPER_API_KEY'] = serper_api_key
+                    streamlit.session_state['SAMBANOVA_API_KEY'] = sambanova_api_key
+                    streamlit.session_state['SERPER_API_KEY'] = serper_api_key
+                    streamlit.session_state['SESSION_ID'] = str(uuid4())
+
     # -------------------- FORM --------------------
     with streamlit.form('generation_form'):
         streamlit.write('**User query**')
@@ -185,30 +220,6 @@ def main() -> None:
                 yfinance_news_option = streamlit.checkbox('Yahoo Finance News', value=False)
                 yfinance_stocks_option = streamlit.checkbox('Yahoo Finance Stocks', value=False)
 
-            if not os.getenv('SAMBANOVA_API_KEY'):
-                streamlit.write('**SAMBANOVA_API_KEY**')
-                sambanova_api_key = streamlit.text_input(
-                    label='Enter API key (hidden)',
-                    type='password',
-                    help='Enter your API key',
-                    key='sambanova_api_key',
-                    label_visibility='collapsed',
-                )
-                if sambanova_api_key:
-                    os.environ['SAMBANOVA_API_KEY'] = sambanova_api_key
-
-            if not os.getenv('SERPER_API_KEY'):
-                streamlit.write('**SERPER_API_KEY (Optional)**')
-                serper_api_key = streamlit.text_input(
-                    label='Enter API key (hidden)',
-                    type='password',
-                    help='Enter your API key',
-                    key='serper_api_key',
-                    label_visibility='collapsed',
-                )
-                if serper_api_key:
-                    os.environ['SERPER_API_KEY'] = serper_api_key
-
         # Generate button
         generate_button = streamlit.form_submit_button(
             label='🚀 Generate',
@@ -223,8 +234,11 @@ def main() -> None:
             streamlit.error('❌ Please enter a query.')
             return
 
-        if not os.getenv('SAMBANOVA_API_KEY'):
-            streamlit.error('❌ Please provide an API key.')
+        if (
+            streamlit.session_state.get('SAMBANOVA_API_KEY') is None
+            or streamlit.session_state.get('SERPER_API_KEY') is None
+        ):
+            streamlit.error('❌ Please set your API keys.')
             return
 
         if (
@@ -254,6 +268,8 @@ def main() -> None:
                                 source_sec_filings=sec_edgar_option,
                                 source_yfinance_news=yfinance_news_option,
                                 source_yfinance_stocks=yfinance_stocks_option,
+                                sambanova_api_key=streamlit.session_state['SAMBANOVA_API_KEY'],
+                                serper_api_key=streamlit.session_state['SERPER_API_KEY'],
                             )
                             financial_flow.kickoff()
 
@@ -270,7 +286,6 @@ def main() -> None:
                 streamlit.markdown(f"{time_msg} using SambaNova's lightning-fast inference engine")
 
                 # If the output file was written, show it
-
                 if os.path.exists(output_file):
                     output_col1, output_col2 = streamlit.columns([0.5, 0.5], gap='large')
                     with output_col1:
@@ -332,8 +347,6 @@ def init_session_state() -> None:
         streamlit.session_state.running = False
     if 'final_content' not in streamlit.session_state:
         streamlit.session_state.final_content = None
-    if 'show_api_warning' not in streamlit.session_state:
-        streamlit.session_state.show_api_warning = False
 
 
 @streamlit.fragment
