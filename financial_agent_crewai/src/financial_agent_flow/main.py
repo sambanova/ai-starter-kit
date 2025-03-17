@@ -8,6 +8,7 @@ It handles the coordination between research and content creation phases.
 import json
 import logging
 import os
+import sys
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -19,42 +20,51 @@ from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
 from langchain_sambanova import ChatSambaNovaCloud
 
-from financial_agent_crewai.src.financial_agent_crewai.config import *
-from financial_agent_crewai.src.financial_agent_crewai.crews.context_analysis_crew.context_analysis_crew import (
+# Main directories
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir_2 = os.path.abspath(os.path.join(current_dir, '..'))
+kit_dir_1 = os.path.abspath(os.path.join(kit_dir_2, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir_1, '..'))
+sys.path.append(repo_dir)
+
+from financial_agent_crewai.src.financial_agent_flow.config import *
+from financial_agent_crewai.src.financial_agent_flow.crews.context_analysis_crew.context_analysis_crew import (
     ContextAnalysisCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.decomposition_crew.decomposition_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.decomposition_crew.decomposition_crew import (
     DecompositionCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.generic_research_crew.generic_research_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.generic_research_crew.generic_research_crew import (
     GenericResearchCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.rag_crew.rag_crew import RAGCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.report_crew.report_crew import ReportCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
-from financial_agent_crewai.src.financial_agent_crewai.crews.sorting_hat_crew.sorting_hat_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.rag_crew.rag_crew import RAGCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.report_crew.report_crew import ReportCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.sec_edgar_crew.sec_edgar_crew import SECEdgarCrew
+from financial_agent_crewai.src.financial_agent_flow.crews.sorting_hat_crew.sorting_hat_crew import (
     SortingHatCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.summarization_crew.summarization_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.summarization_crew.summarization_crew import (
     SummarizationCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_news_crew.yfinance_news_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.yfinance_news_crew.yfinance_news_crew import (
     YFinanceNewsCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
+from financial_agent_crewai.src.financial_agent_flow.crews.yfinance_stocks_crew.yfinance_stocks_crew import (
     YFinanceStocksCrew,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.general_tools import (
+from financial_agent_crewai.src.financial_agent_flow.exceptions import APIKeyNotFoundError
+from financial_agent_crewai.src.financial_agent_flow.tools.general_tools import (
     SubQueriesList,
     convert_csv_source_to_txt_report_filename,
 )
-from financial_agent_crewai.src.financial_agent_crewai.tools.report_tools import ReportSummary
-from financial_agent_crewai.src.financial_agent_crewai.tools.sorting_hat_tools import FilingsInputsList
+from financial_agent_crewai.src.financial_agent_flow.tools.report_tools import ReportSummary
+from financial_agent_crewai.src.financial_agent_flow.tools.sorting_hat_tools import FilingsInputsList
 from financial_agent_crewai.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
 
+# Uncomment this line for langtrace monitoring
 # langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
@@ -73,7 +83,7 @@ class FinancialFlow(Flow):  # type: ignore
         source_sec_filings: Whether to use SEC filings.
         source_yfinance_news: Whether to use YFinance news.
         source_yfinance_stocks: Whether to use YFinance stocks.
-        cache_path: The cache path.
+        cache_dir: The cache path.
         verbose: The level of verbosity.
     """
 
@@ -84,8 +94,10 @@ class FinancialFlow(Flow):  # type: ignore
         source_sec_filings: Optional[bool] = None,
         source_yfinance_news: Optional[bool] = None,
         source_yfinance_stocks: Optional[bool] = None,
-        cache_path: Optional[str | Path] = None,
+        cache_dir: Optional[str | Path] = None,
         verbose: bool = True,
+        sambanova_api_key: Optional[str] = None,
+        serper_api_key: Optional[str] = None,
     ) -> None:
         """Initialize the Finance Flow."""
         super().__init__()
@@ -99,42 +111,65 @@ class FinancialFlow(Flow):  # type: ignore
         self.source_yfinance_news = source_yfinance_news
         self.source_yfinance_stocks = source_yfinance_stocks
 
-        # Report paths
-        self.final_report_path = str(CACHE_DIR / 'report.md')
-        self.report_list: List[str] = list()
-        self.generic_report_name = str(CACHE_DIR / 'report_generic_search.txt')
-
-        # General LLM
-        self.llm = LLM(model=GENERAL_MODEL, temperature=TEMPERATURE)
-
         # Create cache path
-        if cache_path is not None:
-            if isinstance(cache_path, Path):
-                self.cache_path = cache_path
-            elif isinstance(cache_path, str):
-                self.cache_path = Path(cache_path)
+        if cache_dir is not None:
+            if isinstance(cache_dir, Path):
+                self.cache_dir = cache_dir
+            elif isinstance(cache_dir, str):
+                self.cache_dir = Path(cache_dir)
             else:
-                raise TypeError(f'`cache_path` must be a Path or str. Got {type(cache_path)}')
+                raise TypeError(f'`cache_dir` must be a Path or str. Got {type(cache_dir)}')
         else:
-            self.cache_path = CACHE_DIR if isinstance(CACHE_DIR, Path) else Path(CACHE_DIR)
+            self.cache_dir = CACHE_DIR if isinstance(CACHE_DIR, Path) else Path(CACHE_DIR)
 
         # Create the cache directory if it does not exist
-        os.makedirs(self.cache_path, exist_ok=True)
+        os.makedirs(self.cache_dir, exist_ok=True)
+
+        # Report paths
+        self.final_report_path = str(self.cache_dir / 'report.md')
+        self.report_list: List[str] = list()
+        self.generic_report_name = str(self.cache_dir / 'report_generic_search.txt')
 
         # Empty cache directory
-        clear_directory(self.cache_path)
+        clear_directory(self.cache_dir)
 
         # Set the level of verbosity
         self.verbose = verbose
+
+        # Set the SAMBANOVA_API_KEY
+        self.sambanova_api_key: Optional[str]
+        if sambanova_api_key is not None:
+            self.sambanova_api_key = sambanova_api_key
+        else:
+            self.sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+
+            if self.sambanova_api_key is None:
+                raise APIKeyNotFoundError('No SAMBANOVA API KEY defined')
+
+        # Set the SERPER_API_KEY
+        self.serper_api_key: Optional[str]
+        if serper_api_key is not None:
+            self.serper_api_key = serper_api_key
+        else:
+            self.serper_api_key = os.getenv('SERPER_API_KEY')
 
     @start()  # type: ignore
     def generic_research(self) -> Optional[str]:
         """Perform a generic research on the user query."""
 
         if self.source_generic_search:
+            if self.serper_api_key is None:
+                raise APIKeyNotFoundError('No SERPER API KEY defined.')
+
             # Call the Generic Research Crew
             GenericResearchCrew(
-                llm=LLM(model=GENERIC_RESEARCH_MODEL, temperature=TEMPERATURE),
+                llm=LLM(
+                    model=GENERIC_RESEARCH_MODEL,
+                    temperature=TEMPERATURE,
+                    api_key=self.sambanova_api_key,
+                ),
+                cache_dir=self.cache_dir,
+                serper_api_key=self.serper_api_key,
                 filename=self.generic_report_name,
             ).crew().kickoff(inputs={'query': self.query})
 
@@ -153,7 +188,14 @@ class FinancialFlow(Flow):  # type: ignore
         if self.source_sec_filings or self.source_yfinance_news or self.source_yfinance_stocks:
             # Call the Decomposition Crew
             query_list = (
-                DecompositionCrew(llm=LLM(model=DECOMPOSITION_MODEL, temperature=TEMPERATURE))
+                DecompositionCrew(
+                    llm=LLM(
+                        model=DECOMPOSITION_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
+                )
                 .crew()
                 .kickoff(inputs={'query': self.query})
                 .pydantic
@@ -177,7 +219,14 @@ class FinancialFlow(Flow):  # type: ignore
 
             # Lickoff the Sorting Hat Crew
             company_input_list = (
-                SortingHatCrew(llm=LLM(model=INFORMATION_EXTRACTION_MODEL, temperature=TEMPERATURE))
+                SortingHatCrew(
+                    llm=LLM(
+                        model=INFORMATION_EXTRACTION_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
+                )
                 .crew()
                 .kickoff(inputs={'query': decomposed_query})
                 .pydantic.inputs_list
@@ -193,14 +242,19 @@ class FinancialFlow(Flow):  # type: ignore
         """Retrieve the relevant SEC Edgar filings and perform RAG on the user query."""
 
         if self.source_sec_filings:
-            global_sec_filename = str(self.cache_path / 'comparison_sec_filings.txt')
+            global_sec_filename = str(self.cache_dir / 'comparison_sec_filings.txt')
 
             sec_reports_list = list()
             for filing_metadata in metadata_inputs_list:
                 # Call the SEC EDGAR Crew
                 filename = (
                     SECEdgarCrew(
-                        llm=LLM(model=SEC_EDGAR_MODEL, temperature=TEMPERATURE),
+                        llm=LLM(
+                            model=SEC_EDGAR_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        ),
+                        cache_dir=self.cache_dir,
                         input_variables=filing_metadata,  # type: ignore
                     )
                     .crew()
@@ -214,7 +268,12 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the RAG Crew
                 RAGCrew(
                     filename=filename,
-                    llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=RAG_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                 ).crew().kickoff(
                     {'query': filing_metadata.query},  # type: ignore
                 )
@@ -249,7 +308,12 @@ class FinancialFlow(Flow):  # type: ignore
 
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                     output_file=convert_csv_source_to_txt_report_filename(global_sec_filename),
                 ).crew().kickoff(
                     {
@@ -273,12 +337,19 @@ class FinancialFlow(Flow):  # type: ignore
 
         if self.source_yfinance_news:
             yfinace_news_reports_list: List[str] = list()
-            global_yfinance_news_filename = str(self.cache_path / 'comparison_yfinance_news.txt')
+            global_yfinance_news_filename = str(self.cache_dir / 'comparison_yfinance_news.txt')
 
             for filing_metadata in metadata_inputs_list:
                 # Call the Yahoo Finance News Crew
                 filename = (
-                    YFinanceNewsCrew(llm=LLM(model=YFINANCE_NEWS_MODEL, temperature=TEMPERATURE))
+                    YFinanceNewsCrew(
+                        llm=LLM(
+                            model=YFINANCE_NEWS_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        ),
+                        cache_dir=self.cache_dir,
+                    )
                     .crew()
                     .kickoff(
                         {'ticker_symbol': filing_metadata.ticker_symbol},  # type: ignore
@@ -289,7 +360,12 @@ class FinancialFlow(Flow):  # type: ignore
                 # Call the RAG Crew
                 RAGCrew(
                     filename=filename,
-                    llm=LLM(model=RAG_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=RAG_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                 ).crew().kickoff(
                     {'query': filing_metadata.query},  # type: ignore
                 )
@@ -325,7 +401,12 @@ class FinancialFlow(Flow):  # type: ignore
                     context = source.read()
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                     output_file=convert_csv_source_to_txt_report_filename(global_yfinance_news_filename),
                 ).crew().kickoff(
                     {
@@ -352,17 +433,26 @@ class FinancialFlow(Flow):  # type: ignore
         if self.source_yfinance_stocks:
             yfinace_stocks_reports_list: List[str] = list()
             yfinance_stocks_json_list: List[str] = list()
-            global_yfinance_stocks_filename = str(self.cache_path / 'comparison_yfinance_stocks.txt')
+            global_yfinance_stocks_filename = str(self.cache_dir / 'comparison_yfinance_stocks.txt')
             for filing_metadata in metadata_inputs_list:
                 # Call the YFinance Stocks Crew
                 filenames_list = (
                     YFinanceStocksCrew(
                         query=filing_metadata.query,  # type: ignore
                         ticker_symbol=filing_metadata.ticker_symbol,  # type: ignore
-                        llm=LLM(model=YFINANCE_STOCKS_MODEL, temperature=TEMPERATURE),
-                        pandasai_llm=ChatSambaNovaCloud(model=PANDASAI_MODEL, temperature=TEMPERATURE),
+                        llm=LLM(
+                            model=YFINANCE_STOCKS_MODEL,
+                            temperature=TEMPERATURE,
+                            api_key=self.sambanova_api_key,
+                        ),
+                        pandasai_llm=ChatSambaNovaCloud(
+                            model=PANDASAI_MODEL,
+                            temperature=TEMPERATURE,
+                            sambanova_api_key=self.sambanova_api_key,
+                        ),
                         start_date=filing_metadata.start_date,  # type: ignore
                         end_date=filing_metadata.end_date,  # type: ignore
+                        cache_dir=self.cache_dir,
                     )
                     .crew()
                     .kickoff()
@@ -425,7 +515,12 @@ class FinancialFlow(Flow):  # type: ignore
                     context = source.read()
                 # Call the Context Analysis Crew
                 ContextAnalysisCrew(
-                    llm=LLM(model=CONTEXT_ANALYSIS_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=CONTEXT_ANALYSIS_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                     output_file=global_yfinance_stocks_filename,
                 ).crew().kickoff(
                     {
@@ -456,11 +551,16 @@ class FinancialFlow(Flow):  # type: ignore
                 report_txt = f.read()
 
             # Create the section filename
-            section_filename = str(CACHE_DIR / ('section_' + str(Path(report).name)))
+            section_filename = str(self.cache_dir / ('section_' + str(Path(report).name)))
 
             # Call the Report Crew
             ReportCrew(
-                llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                llm=LLM(
+                    model=REPORT_MODEL,
+                    temperature=TEMPERATURE,
+                    api_key=self.sambanova_api_key,
+                ),
+                cache_dir=self.cache_dir,
                 filename=section_filename,
             ).crew().kickoff(
                 {
@@ -471,7 +571,12 @@ class FinancialFlow(Flow):  # type: ignore
             # Call the Summarization Crew
             summary_dict[report] = (
                 SummarizationCrew(
-                    llm=LLM(model=REPORT_MODEL, temperature=TEMPERATURE),
+                    llm=LLM(
+                        model=REPORT_MODEL,
+                        temperature=TEMPERATURE,
+                        api_key=self.sambanova_api_key,
+                    ),
+                    cache_dir=self.cache_dir,
                 )
                 .crew()
                 .kickoff(
@@ -487,8 +592,8 @@ class FinancialFlow(Flow):  # type: ignore
             final_report_path=self.final_report_path,
             query=self.query,
             summary_dict=summary_dict,
-            cache_dir=CACHE_DIR,
-            yfinance_stocks_dir=YFINANCE_STOCKS_DIR,
+            cache_dir=self.cache_dir,
+            yfinance_stocks_dir=create_yfinance_stock_dir(self.cache_dir),
         )
 
         # Read the Markdown file and convert it to HTML
@@ -499,6 +604,8 @@ class FinancialFlow(Flow):  # type: ignore
 
         # Convert the cleaned HTML to a PDF
         pdf_data = convert_html_to_pdf(cleaned_html, output_file=self.final_report_path.replace('md', 'pdf'))
+
+        return {'title': summary_dict[report].title, 'summary': summary_dict[report].summary}
 
 
 def kickoff() -> None:
@@ -519,7 +626,7 @@ def plot() -> None:
     """Generate and display a visualization of the flow structure."""
 
     finance_flow = FinancialFlow(query=USER_QUERY)
-    plot_filename = str(Path('financial_agent_crewai') / 'flow')
+    plot_filename = str(Path(kit_dir_1) / 'flow')
     finance_flow.plot(filename=plot_filename)
 
 

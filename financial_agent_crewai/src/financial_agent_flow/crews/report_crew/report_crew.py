@@ -1,18 +1,18 @@
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List
 
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
 
-from financial_agent_crewai.src.financial_agent_crewai.config import CACHE_DIR, MAX_NEWS, OUTPUT_LOG_FILE
+from financial_agent_crewai.utils.utilities import create_log_path
 
 load_dotenv()
 
 
 @CrewBase
-class GenericResearchCrew:
-    """GenericResearchCrew crew."""
+class ReportCrew:
+    """ReportCrew crew."""
 
     agents_config: Dict[str, Any]
     tasks_config: Dict[str, Any]
@@ -22,10 +22,11 @@ class GenericResearchCrew:
     def __init__(
         self,
         llm: LLM,
-        filename: Optional[str] = None,
+        cache_dir: Path,
+        filename: str = 'report_section.txt',
         verbose: bool = True,
     ) -> None:
-        """Initialize the GenericResearchCrew crew."""
+        """Initialize the ReportCrew crew."""
 
         super().__init__()
         self.agents_config = dict()
@@ -33,37 +34,37 @@ class GenericResearchCrew:
         self.agents = list()
         self.tasks = list()
         self.llm = llm
-        self.filename = filename if filename is not None else str(CACHE_DIR / 'report.txt')
+        self.cache_dir = cache_dir
+        self.filename = filename
         self.verbose = verbose
 
     @agent  # type: ignore
-    def researcher(self) -> Agent:
-        """Add the Specialized Finance Researcher Agent."""
+    def reporting_analyst(self) -> Agent:
+        """Add the Finance Reporting Analyst Agent."""
 
         return Agent(
-            config=self.agents_config['researcher'],
+            config=self.agents_config['reporting_analyst'],
             verbose=self.verbose,
             llm=self.llm,
-            tools=[SerperDevTool(n_results=MAX_NEWS)],
         )
 
     @task  # type: ignore
-    def research_task(self) -> Task:
-        """Add the Research Task."""
+    def reporting_task(self) -> Task:
+        """Add the Reporting Task."""
 
         return Task(
-            config=self.tasks_config['research_task'],
+            config=self.tasks_config['reporting_task'],
             output_file=self.filename,
         )
 
     @crew  # type: ignore
     def crew(self) -> Crew:
-        """Create the GenericResearchCrew crew."""
+        """Create the ReportCrew crew."""
 
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
             verbose=self.verbose,
-            output_log_file=OUTPUT_LOG_FILE,
+            output_log_file=create_log_path(self.cache_dir),
         )

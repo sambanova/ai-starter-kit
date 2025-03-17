@@ -10,11 +10,6 @@ if Path(os.getcwd()).name == 'ai-starter-kit':
 else:
     CACHE_DIR = Path('cache')
 
-YFINANCE_STOCKS_DIR = CACHE_DIR / 'yfinance_stocks'
-
-# CrewAI logging JSON file
-OUTPUT_LOG_FILE = str(CACHE_DIR / 'output_log_file.json')
-
 # Maximum number of words per section
 MAX_SECTION_WORDS = 1000
 
@@ -44,8 +39,6 @@ MAX_NEWS_PER_TICKER = 10
 # LLMs by crew
 BILLION_PARAMETERS = '70'
 MODEL_TEMPLATE = 'sambanova/Meta-Llama-3.3-{billion_parameters}B-Instruct'
-
-GENERAL_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 
 CONTEXT_ANALYSIS_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
 DECOMPOSITION_MODEL = MODEL_TEMPLATE.format(billion_parameters=BILLION_PARAMETERS)
