@@ -3,7 +3,7 @@ import sys
 
 import e2e_fine_tuning.backend.src.schemas as schemas
 from e2e_fine_tuning.backend.src.config import settings
-from e2e_fine_tuning.backend.src.routes import checkpoint, dataset
+from e2e_fine_tuning.backend.src.routes import checkpoint, dataset, project
 from e2e_fine_tuning.backend.src.service.sdk import SnsdkWrapperService
 from e2e_fine_tuning.backend.src.utils_functions import create_folder
 
@@ -51,8 +51,9 @@ hf_handler = get_hf_handler()
 redis_url = settings.redis_url
 celery_app = Celery(__name__, broker=redis_url, backend=redis_url)
 
-app.include_router(dataset.router)
 app.include_router(checkpoint.router)
+app.include_router(dataset.router)
+app.include_router(project.router)
 
 
 @app.get('/tasks/{task_id}')

@@ -42,10 +42,6 @@ class CheckPointCreate(BaseModel):
     messages: Optional[List[Dict[str, str]]] = test_messages
 
 
-class ExampleBody(BaseModel):
-    type: int
-
-
 class BaseResponse(BaseModel):
     id: str
     name: str
@@ -62,6 +58,30 @@ class Dataset(BaseModel):
 
 class Datasets(BaseModel):
     datasets: List[DatasetResponse]
+
+
+class Status(BaseModel):
+    status: str
+
+
+class ProjectResponse(BaseModel):
+    id: str
+    name: str
+    status: Status
+    owner: str
+
+
+class Projects(BaseModel):
+    projects: List[ProjectResponse]
+
+
+class Project(BaseModel):
+    project_id: str
+
+
+class ProjectCreate(BaseModel):
+    project_name: str
+    project_description: str
 
 
 class AvailableApps(BaseModel):

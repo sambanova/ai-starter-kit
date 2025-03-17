@@ -7,6 +7,8 @@ from e2e_fine_tuning.backend.src.exceptions.sdk_repository_exceptions import (
     DatasetCreateError,
     DatasetDeleteError,
     DatasetFetchError,
+    ProjectCreateError,
+    ProjectFetchError,
 )
 from e2e_fine_tuning.backend.src.repositories.sdk import SnsdkWrapperRepository
 
@@ -38,6 +40,36 @@ class SnsdkWrapperService:
             app['name'] for app in available_apps if model_family in app['name'].replace(' ', '').lower()
         ]
         return model_family_apps
+
+    def get_projects(self) -> schemas.Projects:
+        try:
+            logger.info('Fetching projects')
+            projects = self.repository.get_projects()
+            logger.info(f'Fetched {len(projects)} datasets')
+            return schemas.Projects(projects=projects)
+        except ProjectFetchError as e:
+            logger.error(f'Error fetching projects: {e}')
+            return None
+
+    def get_project(self, project_name: str) -> Optional[str]:
+        logger.info(f'Fetching project with name: {project_name}')
+        project_id = self.repository.get_project(project_name)
+        if project_id is None:
+            logger.warning(f"Project with name '{project_name}' not found")
+            return None
+        logger.info(f"Dataset '{project_name}' found")
+        return schemas.Project(project_id=project_id)
+
+    def create_project(self, project_name: str, project_description: str) -> Optional[str]:
+        try:
+            # todo check if it exists
+            logger.info(f'Fetching project with name: {project_name}')
+            project_id = self.repository.create_project(project_name, project_description)
+            logger.info(f"Dataset '{project_name}' found")
+            return schemas.Project(project_id=project_id)
+        except ProjectCreateError as e:
+            logger.error(f'Error creating project {project_name}: {e}')
+            raise e
 
     def get_datasets(self) -> Optional[schemas.Datasets]:
         try:

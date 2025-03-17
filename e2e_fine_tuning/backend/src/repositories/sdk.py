@@ -5,6 +5,8 @@ from e2e_fine_tuning.backend.src.exceptions.sdk_repository_exceptions import (
     DatasetCreateError,
     DatasetDeleteError,
     DatasetFetchError,
+    ProjectCreateError,
+    ProjectFetchError,
 )
 from utils.fine_tuning.src.snsdk_wrapper import SnsdkWrapper
 
@@ -13,18 +15,30 @@ class SnsdkWrapperRepository:
     def __init__(self, snsdk: SnsdkWrapper) -> None:
         self.__snsdk = snsdk
 
-    def create_project(self, project_info: dict) -> str:
-        project_id = self.__snsdk.create_project(
-            project_name=project_info['project_name'], project_description=project_info['project_description']
-        )
-        return project_id
-
     def get_apps(self) -> List[Dict[str, str]]:
         try:
             available_apps = self.__snsdk.list_apps()
             return available_apps
         except Exception as e:
             raise AppFetchError(f'Error fetching available apps: {e}')
+
+    def get_project(self, project_name: str) -> Optional[str]:
+        project_id = self.__snsdk.search_project(project_name)
+        return project_id
+
+    def get_projects(self) -> List[Dict[str, Any]]:
+        try:
+            projects = self.__snsdk.list_projects()
+            return projects
+        except ProjectFetchError as e:
+            raise ProjectFetchError(f'Error fetching projects: {e}')
+
+    def create_project(self, project_name: str, project_description: str) -> str:
+        try:
+            project_id = self.__snsdk.create_project(project_name=project_name, project_description=project_description)
+            return project_id
+        except ProjectCreateError as e:
+            raise ProjectCreateError(f'Error creating project: {e}')
 
     def get_datasets(self) -> List[Dict[str, str]]:
         try:

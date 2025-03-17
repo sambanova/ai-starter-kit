@@ -37,3 +37,18 @@ class DatasetDeleteError(SnsdkWrapperRepositoryrError):
     def __init__(self, dataset_name: str, message: str = 'Error deleting dataset.', *args: Any) -> None:
         super().__init__(message, *args)
         self.dataset_name = dataset_name
+
+
+class ProjectFetchError(SnsdkWrapperRepositoryrError):
+    """Exception raised when fetching projects fails."""
+
+    def __init__(self, message: str = 'Error fetching projects.', *args: Any) -> None:
+        super().__init__(message, *args)
+
+
+class ProjectCreateError(SnsdkWrapperRepositoryrError):
+    """Exception raised when creating a project fails."""
+
+    def __init__(self, project_name: str, message: str = 'Error creating project.', *args: Any) -> None:
+        super().__init__(message, *args)
+        self.project_name = project_name
