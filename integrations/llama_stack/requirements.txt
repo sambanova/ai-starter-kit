@@ -1,0 +1,2 @@
+llama-stack==0.1.7
+llama-stack-client==0.1.7
