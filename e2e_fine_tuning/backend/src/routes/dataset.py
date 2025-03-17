@@ -20,7 +20,7 @@ hf_handler = get_hf_handler()
 def get_datasets(sdk_service: SnsdkWrapperService = Depends(get_sdk_service)) -> Optional[schemas.Datasets]:
     datasets = sdk_service.get_datasets()
     if datasets is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='no datasets found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No datasets found')
     return datasets
 
 
@@ -57,5 +57,5 @@ def delete_dataset(dataset_name: str, sdk_service: SnsdkWrapperService = Depends
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"internal error occurred: could not delete dataset with name: '{dataset_name}'",
+            detail=f"Internal error occurred: could not delete dataset with name: '{dataset_name}'",
         )
