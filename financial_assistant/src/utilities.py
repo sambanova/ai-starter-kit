@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict, TypeVar
 import streamlit
 import yaml
 
+logger = logging.getLogger(__name__)
+
 # Generic function type
 F = TypeVar('F', bound=Callable[..., Any])
 

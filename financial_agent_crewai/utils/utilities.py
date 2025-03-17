@@ -1,17 +1,23 @@
 import base64
 import json
+import logging
 import os
 import re
 import shutil
+import time
 from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from threading import Thread
 from typing import Any, Dict, Generator, List, Match, Optional
 
 import markdown
 import pandas
+import schedule
 import weasyprint  # type: ignore
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 
 def clear_directory(directory: str | Path) -> Optional[str]:
@@ -125,25 +131,6 @@ def dict_to_markdown_table(table_data: Dict[str, Any], title: str) -> str:
 
     # Combine all lines into a single string
     return '\n'.join(lines)
-
-
-def convert_image_path_to_markdown(image_path: str, alt_text: str = 'Image') -> str:
-    """
-    Convert an image path to a Markdown image reference.
-
-    Args:
-        image_path: The filesystem path (or URL) pointing to the image.
-        alt_text: The alt text describing the image. Defaults to "Image".
-
-    Returns:
-        str: A string in the Markdown format for embedding images.
-
-    Example:
-        >>> convert_image_path_to_markdown("plots/graph.png", "Stock graph")
-        '![Stock graph](plots/graph.png)'
-    """
-    # In Markdown: ![alt_text](image_path)
-    return f'![{alt_text}]({image_path})'
 
 
 def convert_file_of_image_paths_to_markdown(
@@ -523,3 +510,43 @@ def generate_final_report(
                     with final_report_path.open('a', encoding='utf-8') as target:
                         target.write(f'\n### Data Sources Images - {company_ticker}\n\n')
                     convert_file_of_image_paths_to_markdown(images_list, final_report_path, f'Image {company_ticker}')
+
+
+def delete_temp_dir(temp_dir: str, verbose: bool = False) -> None:
+    """Delete the temporary directory and its contents."""
+
+    if os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+            if verbose:
+                logger.info(f'Temporary directory {temp_dir} deleted.')
+        except:
+            if verbose:
+                logger.warning(f'Could not delete temporary directory {temp_dir}.')
+
+
+def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
+    """Schedule the deletion of the temporary directory after a delay."""
+
+    schedule.every(delay_minutes).minutes.do(delete_temp_dir, temp_dir=temp_dir, verbose=False).tag(temp_dir)
+
+    def run_scheduler() -> None:
+        while schedule.get_jobs(temp_dir):
+            schedule.run_pending()
+            time.sleep(1)
+
+    # Run scheduler in a separate thread to be non-blocking
+    Thread(target=run_scheduler, daemon=True).start()
+
+
+def create_yfinance_stock_dir(cache_dir: Path) -> Path:
+    """Create the directory for Yahoo Finance stock images."""
+
+    return cache_dir / 'yfinance_stocks'
+
+
+def create_log_path(cache_dir: Path) -> str:
+    """Create the CrewAI log file JSON path."""
+
+    # CrewAI logging JSON file
+    return str(cache_dir / 'output_log_file.json')
