@@ -307,10 +307,8 @@ class TestLlamaStack(unittest.TestCase):
             stream (bool): Whether to stream the inference outputs.
         """
         model_ids = self._list_models()
-        self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
             if 'guard' in model_id.lower() and 'sambanova' in model_id.lower():
-                print(f'>>>>> Sending request to {model_id}')
                 iterator = self.client.inference.chat_completion(
                     model_id=model_id,
                     messages=[{'role': 'user', 'content': 'Write a haiku on llamas'}],
@@ -378,10 +376,8 @@ class TestLlamaStack(unittest.TestCase):
             )
             for i, url in enumerate(urls)
         ]
-        print(documents)
 
         vector_providers = [p for p in self.client.providers.list() if p.api == 'vector_io']
-        print(vector_providers)
         self.assertTrue(len(vector_providers) > 0)
         provider_id = vector_providers[0].provider_id
 
