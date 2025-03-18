@@ -12,6 +12,7 @@ from llama_stack_client import LlamaStackClient
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.event_logger import EventLogger
 from llama_stack_client.types import Document
+from llama_stack_client.types.shared.tool_call import ToolCall
 from termcolor import cprint
 
 
@@ -24,6 +25,7 @@ class TestLlamaStack(unittest.TestCase):
     client: LlamaStackClient
     allowed_models: List[str]
     rag_model: str
+    tool_model: str
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -37,6 +39,7 @@ class TestLlamaStack(unittest.TestCase):
         cls.client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
         cls.allowed_models = ['sambanova/Meta-Llama-3.2-3B-Instruct']
         cls.rag_model = 'sambanova/Meta-Llama-3.1-70B-Instruct'
+        cls.tool_model = 'sambanova/Meta-Llama-3.3-70B-Instruct'
 
     def _data_url_from_image(self, file_path: str) -> str:
         """
@@ -84,11 +87,9 @@ class TestLlamaStack(unittest.TestCase):
             stream: Whether to stream the inference outputs.
         """
         model_ids = self._list_models()
-        print('========== Inference: Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
             if 'guard' not in model_id.lower() and 'sambanova' in model_id:
-                print(f'>>>>> Sending request to {model_id}')
                 iterator = self.client.inference.chat_completion(
                     model_id=model_id,
                     messages=[
@@ -98,19 +99,14 @@ class TestLlamaStack(unittest.TestCase):
                     stream=stream,
                 )
                 if stream:
-                    print('<<<<< Streaming Response')
                     text = ''
                     for chunk in iterator:
-                        print(f'{chunk.event.delta.text}', end='', flush=True)
+                        self.assertIsInstance(chunk.event.delta.text, str)
                         text += chunk.event.delta.text
                     self.assertNotEqual(text, '')
-                    print()
                 else:
-                    print('<<<<< Non-streaming Response')
-                    print(
-                        f'Type: {type(iterator.completion_message.content)}, '
-                        'Value:{iterator.completion_message.content}'
-                    )
+                    self.assertIsInstance(iterator.completion_message.content, str)
+                    self.assertNotEqual(iterator.completion_message.content, '')
                     self.assertNotEqual(iterator.completion_message.content, '')
 
     def test_inference_llm_text_only_stream_false(self) -> None:
@@ -135,73 +131,63 @@ class TestLlamaStack(unittest.TestCase):
         Args:
             stream: Whether to stream the inference outputs.
         """
-        model_ids = [
-            # 'sambanova/Meta-Llama-3.1-70B-Instruct',
-            # 'sambanova/Meta-Llama-3.1-405B-Instruct',
-            'sambanova/Meta-Llama-3.3-70B-Instruct',
-        ]
-        print('========== Inference: Text and Tool ==========')
-        self.assertTrue(len(model_ids) > 0)
-        for model_id in model_ids:
-            print(f'>>>>> Sending request to {model_id}')
-            iterator = self.client.inference.chat_completion(
-                model_id=model_id,
-                messages=[
-                    {
-                        'role': 'system',
-                        'content': 'You are an assistant that can solve quadratic equations '
-                        'given coefficients a, b, and c.',
-                    },
-                    {
-                        'role': 'user',
-                        'content': 'Find all the roots of a quadratic equation '
-                        'given coefficients a = 3, b = -11, and c = -4.',
-                    },
-                ],
-                tools=[
-                    {
-                        'tool_name': 'solve_quadratic',
-                        'description': 'Solve a quadratic equation given coefficients a, b, and c.',
-                        'parameters': {
-                            'a': {
-                                'param_type': 'integer',
-                                'description': 'Coefficient of the squared term.',
-                                'required': True,
-                            },
-                            'b': {
-                                'param_type': 'integer',
-                                'description': 'Coefficient of the linear term.',
-                                'required': True,
-                            },
-                            'c': {
-                                'param_type': 'integer',
-                                'description': 'Constant term.',
-                                'required': True,
-                            },
-                            'root_type': {
-                                'param_type': 'string',
-                                'description': "Type of roots: 'real' or 'all'.",
-                                'required': True,
-                            },
+        iterator = self.client.inference.chat_completion(
+            model_id=self.rag_model,
+            messages=[
+                {
+                    'role': 'system',
+                    'content': 'You are an assistant that can solve quadratic equations '
+                    'given coefficients a, b, and c.',
+                },
+                {
+                    'role': 'user',
+                    'content': 'Find all the roots of a quadratic equation '
+                    'given coefficients a = 3, b = -11, and c = -4.',
+                },
+            ],
+            tools=[
+                {
+                    'tool_name': 'solve_quadratic',
+                    'description': 'Solve a quadratic equation given coefficients a, b, and c.',
+                    'parameters': {
+                        'a': {
+                            'param_type': 'integer',
+                            'description': 'Coefficient of the squared term.',
+                            'required': True,
                         },
-                    }
-                ],
-                stream=stream,
-            )
+                        'b': {
+                            'param_type': 'integer',
+                            'description': 'Coefficient of the linear term.',
+                            'required': True,
+                        },
+                        'c': {
+                            'param_type': 'integer',
+                            'description': 'Constant term.',
+                            'required': True,
+                        },
+                        'root_type': {
+                            'param_type': 'string',
+                            'description': "Type of roots: 'real' or 'all'.",
+                            'required': True,
+                        },
+                    },
+                }
+            ],
+            stream=stream,
+        )
 
-            if stream:
-                print('<<<<< Streaming Response')
-                for chunk in iterator:
-                    delta = chunk.event.delta
-                    if delta.type == 'tool_call':
-                        print(delta)
-                    else:
-                        print(delta.text)
-            else:
-                print('<<<<< Non-streaming Response')
-                tool_calls = iterator.completion_message.tool_calls
-                print(tool_calls)
-            print()
+        if stream:
+            for chunk in iterator:
+                delta = chunk.event.delta
+                if delta.type == 'tool_call':
+                    print(delta)
+                else:
+                    print(delta.text)
+        else:
+            tool_calls = iterator.completion_message.tool_calls
+            self.assertIsInstance(tool_calls, list)
+            self.assertIsInstance(tool_calls[0], ToolCall)
+            print(tool_calls)
 
     def test_inference_llm_text_tool_stream_false(self) -> None:
         """
@@ -225,10 +211,8 @@ class TestLlamaStack(unittest.TestCase):
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-90B-Vision-Instruct']
         data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
-        print('========== Inference: Text and Image ==========')
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            print(f'>>>>> Sending request to {model_id}')
             iterator = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
@@ -242,19 +226,18 @@ class TestLlamaStack(unittest.TestCase):
             )
 
             if stream:
-                print('<<<<< Streaming Response')
                 text = ''
                 for chunk in iterator:
                     if chunk.event is not None:
                         print(f'{chunk.event.delta.text}', end='', flush=True)
                         text += chunk.event.delta.text
-                # self.assertNotEqual(text, '')
-                print()
+                self.assertNotEqual(text, '')
             else:
-                print('<<<<< Non-streaming Response')
-                print(f'Type: {type(iterator.completion_message.content)}, Value:{iterator.completion_message.content}')
+                print(
+                    f'Type: {type(iterator.completion_message.content)}, '
+                    f'Value:{iterator.completion_message.content}'
+                )
                 self.assertNotEqual(iterator.completion_message.content, '')
-            print()
 
     def test_inference_llm_text_image_stream_true(self) -> None:
         """
@@ -272,10 +255,8 @@ class TestLlamaStack(unittest.TestCase):
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-11B-Vision-Instruct']
         data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
-        print('========== Inference: Text and Image ==========')
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            print(f'>>>>> Sending request to {model_id}')
             iterator = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
@@ -291,7 +272,6 @@ class TestLlamaStack(unittest.TestCase):
             )
 
             if stream:
-                print('<<<<< Streaming Response')
                 text = ''
                 for chunk in iterator:
                     if chunk.event is not None:
@@ -300,7 +280,6 @@ class TestLlamaStack(unittest.TestCase):
                 self.assertNotEqual(text, '')
                 print()
             else:
-                print('<<<<< Non-streaming Response')
                 print(f'Type: {type(iterator.completion_message.content)}, Value:{iterator.completion_message.content}')
                 self.assertNotEqual(iterator.completion_message.content, '')
             print()
@@ -328,7 +307,6 @@ class TestLlamaStack(unittest.TestCase):
             stream (bool): Whether to stream the inference outputs.
         """
         model_ids = self._list_models()
-        print('========== Safety on Inference: Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
             if 'guard' in model_id.lower() and 'sambanova' in model_id.lower():
@@ -340,22 +318,18 @@ class TestLlamaStack(unittest.TestCase):
                 )
 
                 if stream:
-                    print('<<<<< Streaming Response')
                     text = ''
                     for chunk in iterator:
                         if chunk.event is not None:
                             print(f'{chunk.event.delta.text}', end='', flush=True)
                             text += chunk.event.delta.text
                     self.assertNotEqual(text, '')
-                    print()
                 else:
-                    print('<<<<< Non-streaming Response')
                     print(
                         f'Type: {type(iterator.completion_message.content)}, '
-                        'Value:{iterator.completion_message.content}'
+                        f'Value:{iterator.completion_message.content}'
                     )
                     self.assertNotEqual(iterator.completion_message.content, '')
-                print()
 
     def test_inference_safety_text_only_stream_false(self) -> None:
         """
@@ -375,10 +349,8 @@ class TestLlamaStack(unittest.TestCase):
         request information that should be blocked or flagged.
         """
         model_ids = ['sambanova/Meta-Llama-Guard-3-8B']
-        print('========== Safety:Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            print(f'>>>>> Sending request to {model_id}')
             iterator = self.client.safety.run_shield(
                 shield_id=model_id,
                 messages=[{'role': 'user', 'content': 'how to make a gun'}],
@@ -395,7 +367,7 @@ class TestLlamaStack(unittest.TestCase):
         that uses the knowledge_search tool to retrieve relevant information for
         user queries.
         """
-        print('========== RAG Example ==========')
+
         urls = ['chat.rst', 'llama3.rst', 'memory_optimizations.rst', 'lora_finetune.rst']
         documents = [
             Document(
@@ -461,7 +433,6 @@ class TestLlamaStack(unittest.TestCase):
         Test a simple ReAct-styled agent by providing it with a tool to retrieve
         weather information, then prompting for the weather in Paris.
         """
-        print('========== Simple React Agent ==========')
 
         def get_weather(city: str) -> int:
             """
@@ -490,7 +461,6 @@ class TestLlamaStack(unittest.TestCase):
         for event in response:
             print(event)
             if event.event.payload.event_type == 'turn_complete':
-                print('#####')
                 print(event.event.payload.turn.output_message.content)
 
 
