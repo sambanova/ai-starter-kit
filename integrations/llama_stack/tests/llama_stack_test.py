@@ -23,6 +23,7 @@ class TestLlamaStack(unittest.TestCase):
 
     client: LlamaStackClient
     allowed_models: List[str]
+    rag_model: str
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -35,6 +36,7 @@ class TestLlamaStack(unittest.TestCase):
         load_dotenv(override=True)
         cls.client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
         cls.allowed_models = ['sambanova/Meta-Llama-3.2-3B-Instruct']
+        cls.rag_model = 'sambanova/Meta-Llama-3.1-70B-Instruct'
 
     def _data_url_from_image(self, file_path: str) -> str:
         """
@@ -472,7 +474,7 @@ class TestLlamaStack(unittest.TestCase):
 
         agent = Agent(
             self.client,
-            model='sambanova/Meta-Llama-3.1-70B-Instruct',
+            model=self.rag_model,
             instructions='You are a helpful assistant. Use the tools you have access to for providing relevant answers',
             sampling_params={'strategy': {'type': 'top_p', 'temperature': 1.0, 'top_p': 0.9}},
             tools=[get_weather],
