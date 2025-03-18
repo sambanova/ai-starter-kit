@@ -14,12 +14,35 @@ from llama_stack_client.lib.agents.event_logger import EventLogger
 
 
 class TestLlamaStack(unittest.TestCase):
+    """
+    A test suite for verifying different functionalities of the LlamaStackClient
+    and the related modules such as Agents, Documents, and safety checks.
+    """
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
+        """
+        Set up the LlamaStackClient before any tests are run.
+
+        This method loads environment variables and initializes the
+        LlamaStackClient using the LLAMA_STACK_PORT variable.
+        """
         load_dotenv(override=True)
         cls.client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
 
-    def _data_url_from_image(self, file_path):
+    def _data_url_from_image(self, file_path: str) -> str:
+        """
+        Create a data URL (base64-encoded) from an image file.
+
+        Args:
+            file_path (str): The file path to the image.
+
+        Returns:
+            str: A data URL (base64-encoded) for the image.
+
+        Raises:
+            ValueError: If the MIME type cannot be determined.
+        """
         mime_type, _ = mimetypes.guess_type(file_path)
         if mime_type is None:
             raise ValueError('Could not determine MIME type of the file')
@@ -30,13 +53,28 @@ class TestLlamaStack(unittest.TestCase):
         data_url = f'data:{mime_type};base64,{encoded_string}'
         return data_url
 
-    def _list_models(self):
+    def _list_models(self) -> list[str]:
+        """
+        List available model identifiers from the LlamaStackClient.
+
+        Returns:
+            list[str]: A list of model identifiers.
+        """
         models = []
         for model in self.client.models.list():
             models.append(model.identifier)
         return models
 
-    def _test_inference_llm_text_only(self, stream: bool):
+    def _test_inference_llm_text_only(self, stream: bool) -> None:
+        """
+        Test text-only LLM inference for each available model.
+
+        For each model, the method sends a Chat Completion request with a sample
+        message asking for a haiku on llamas.
+
+        Args:
+            stream (bool): Whether to stream the inference outputs.
+        """
         model_ids = self._list_models()
         print('========== Inference: Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
@@ -66,13 +104,28 @@ class TestLlamaStack(unittest.TestCase):
                     )
                     self.assertNotEqual(iterator.completion_message.content, '')
 
-    def test_inference_llm_text_only_stream_false(self):
+    def test_inference_llm_text_only_stream_false(self) -> None:
+        """
+        Test text-only LLM inference without streaming.
+        """
         self._test_inference_llm_text_only(stream=False)
 
-    def test_inference_llm_text_only_stream_true(self):
+    def test_inference_llm_text_only_stream_true(self) -> None:
+        """
+        Test text-only LLM inference in streaming mode.
+        """
         self._test_inference_llm_text_only(stream=True)
 
-    def _test_inference_llm_text_tool(self, stream: bool):
+    def _test_inference_llm_text_tool(self, stream: bool) -> None:
+        """
+        Test LLM inference with a text-based input and a tool.
+
+        In this scenario, the agent is prompted with a quadratic equation and
+        provided a tool to compute the roots.
+
+        Args:
+            stream (bool): Whether to stream the inference outputs.
+        """
         model_ids = [
             'sambanova/Meta-Llama-3.1-70B-Instruct',
             'sambanova/Meta-Llama-3.1-405B-Instruct',
@@ -139,13 +192,25 @@ class TestLlamaStack(unittest.TestCase):
                 print(tool_calls)
             print()
 
-    def test_inference_llm_text_tool_stream_false(self):
+    def test_inference_llm_text_tool_stream_false(self) -> None:
+        """
+        Test LLM inference with text and a quadratic-solving tool in non-streaming mode.
+        """
         self._test_inference_llm_text_tool(stream=False)
 
-    def test_inference_llm_text_tool_stream_true(self):
+    def test_inference_llm_text_tool_stream_true(self) -> None:
+        """
+        Test LLM inference with text and a quadratic-solving tool in streaming mode.
+        """
         self._test_inference_llm_text_tool(stream=True)
 
-    def _test_inference_llm_text_image(self, stream: bool):
+    def _test_inference_llm_text_image(self, stream: bool) -> None:
+        """
+        Test LLM inference with a text-based query and an image input.
+
+        Args:
+            stream (bool): Whether to stream the inference outputs.
+        """
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-90B-Vision-Instruct']
         data_url = self._data_url_from_image('../../images/SambaNova-dark-logo-1.png')
 
@@ -180,10 +245,19 @@ class TestLlamaStack(unittest.TestCase):
                 self.assertNotEqual(iterator.completion_message.content, '')
             print()
 
-    def test_inference_llm_text_image_stream_true(self):
+    def test_inference_llm_text_image_stream_true(self) -> None:
+        """
+        Test LLM inference using both text and an associated image in streaming mode.
+        """
         self._test_inference_llm_text_image(stream=True)
 
-    def _test_inference_llm_image_only(self, stream: bool):
+    def _test_inference_llm_image_only(self, stream: bool) -> None:
+        """
+        Test LLM inference using only an image as the input.
+
+        Args:
+            stream (bool): Whether to stream the inference outputs.
+        """
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-11B-Vision-Instruct']
         data_url = self._data_url_from_image('../../images/SambaNova-dark-logo-1.png')
 
@@ -220,13 +294,28 @@ class TestLlamaStack(unittest.TestCase):
                 self.assertNotEqual(iterator.completion_message.content, '')
             print()
 
-    def test_inference_llm_image_only_stream_false(self):
+    def test_inference_llm_image_only_stream_false(self) -> None:
+        """
+        Test LLM inference with only an image in non-streaming mode.
+        """
         self._test_inference_llm_image_only(stream=False)
 
-    def test_inference_llm_image_only_stream_true(self):
+    def test_inference_llm_image_only_stream_true(self) -> None:
+        """
+        Test LLM inference with only an image in streaming mode.
+        """
         self._test_inference_llm_image_only(stream=True)
 
-    def _test_inference_safety_text_only(self, stream: bool):
+    def _test_inference_safety_text_only(self, stream: bool) -> None:
+        """
+        Test text-only LLM inference with models that include safety/guard features.
+
+        This method specifically checks how models with 'guard' in their name
+        handle requests such as writing a haiku on llamas.
+
+        Args:
+            stream (bool): Whether to stream the inference outputs.
+        """
         model_ids = self._list_models()
         print('========== Safety on Inference: Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
@@ -256,13 +345,23 @@ class TestLlamaStack(unittest.TestCase):
                     self.assertNotEqual(iterator.completion_message.content, '')
                 print()
 
-    def test_inference_safety_text_only_stream_false(self):
+    def test_inference_safety_text_only_stream_false(self) -> None:
+        """
+        Test text-only LLM safety checks in non-streaming mode.
+        """
         self._test_inference_safety_text_only(stream=False)
 
-    def test_inference_safety_text_only_stream_true(self):
+    def test_inference_safety_text_only_stream_true(self) -> None:
+        """
+        Test text-only LLM safety checks in streaming mode.
+        """
         self._test_inference_safety_text_only(stream=True)
 
-    def test_text_safety(self):
+    def test_text_safety(self) -> None:
+        """
+        Test the LLM's pre-processing or safety mechanisms by attempting to
+        request information that should be blocked or flagged.
+        """
         model_ids = ['sambanova/Meta-Llama-Guard-3-8B']
         print('========== Safety:Text Only ==========')
         self.assertTrue(len(model_ids) > 0)
@@ -276,7 +375,14 @@ class TestLlamaStack(unittest.TestCase):
             print(' Response')
             print(iterator)
 
-    def test_rag_example(self):
+    def test_rag_example(self) -> None:
+        """
+        Test a Retrieval-Augmented Generation (RAG) workflow example.
+
+        The method uploads documents to a vector database, then creates an agent
+        that uses the knowledge_search tool to retrieve relevant information for
+        user queries.
+        """
         print('========== RAG Example ==========')
         urls = ['chat.rst', 'llama3.rst', 'memory_optimizations.rst', 'lora_finetune.rst']
         documents = [
@@ -338,10 +444,23 @@ class TestLlamaStack(unittest.TestCase):
             for log in EventLogger().log(response):
                 log.print()
 
-    def test_simple_react_agent(self):
+    def test_simple_react_agent(self) -> None:
+        """
+        Test a simple ReAct-styled agent by providing it with a tool to retrieve
+        weather information, then prompting for the weather in Paris.
+        """
         print('========== Simple React Agent ==========')
 
         def get_weather(city: str) -> int:
+            """
+            Tool function to retrieve the weather (dummy implementation).
+
+            Args:
+                city (str): The name of the city for which weather is requested.
+
+            Returns:
+                int: A pretend temperature value for the city.
+            """
             return 26
 
         agent = Agent(
