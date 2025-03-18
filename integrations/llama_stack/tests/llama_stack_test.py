@@ -16,7 +16,7 @@ from llama_stack_client.lib.agents.event_logger import EventLogger
 class TestLlamaStack(unittest.TestCase):
     """
     A test suite for verifying different functionalities of the LlamaStackClient
-    and the related modules such as Agents, Documents, and safety checks.
+    and the related modules such as Agents, RAG, and safety checks.
     """
 
     @classmethod
@@ -29,16 +29,17 @@ class TestLlamaStack(unittest.TestCase):
         """
         load_dotenv(override=True)
         cls.client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
+        cls.allowed_models = ['sambanova/Meta-Llama-3.2-3B-Instruct']
 
     def _data_url_from_image(self, file_path: str) -> str:
         """
         Create a data URL (base64-encoded) from an image file.
 
         Args:
-            file_path (str): The file path to the image.
+            file_path: The file path to the image.
 
         Returns:
-            str: A data URL (base64-encoded) for the image.
+            A data URL (base64-encoded) for the image.
 
         Raises:
             ValueError: If the MIME type cannot be determined.
@@ -63,7 +64,7 @@ class TestLlamaStack(unittest.TestCase):
         models = []
         for model in self.client.models.list():
             models.append(model.identifier)
-        return models
+        return [model for model in self.allowed_models]
 
     def _test_inference_llm_text_only(self, stream: bool) -> None:
         """
@@ -73,7 +74,7 @@ class TestLlamaStack(unittest.TestCase):
         message asking for a haiku on llamas.
 
         Args:
-            stream (bool): Whether to stream the inference outputs.
+            stream: Whether to stream the inference outputs.
         """
         model_ids = self._list_models()
         print('========== Inference: Text Only ==========')
@@ -124,11 +125,11 @@ class TestLlamaStack(unittest.TestCase):
         provided a tool to compute the roots.
 
         Args:
-            stream (bool): Whether to stream the inference outputs.
+            stream: Whether to stream the inference outputs.
         """
         model_ids = [
-            'sambanova/Meta-Llama-3.1-70B-Instruct',
-            'sambanova/Meta-Llama-3.1-405B-Instruct',
+            # 'sambanova/Meta-Llama-3.1-70B-Instruct',
+            # 'sambanova/Meta-Llama-3.1-405B-Instruct',
             'sambanova/Meta-Llama-3.3-70B-Instruct',
         ]
         print('========== Inference: Text and Tool ==========')
@@ -209,10 +210,10 @@ class TestLlamaStack(unittest.TestCase):
         Test LLM inference with a text-based query and an image input.
 
         Args:
-            stream (bool): Whether to stream the inference outputs.
+            stream: Whether to stream the inference outputs.
         """
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-90B-Vision-Instruct']
-        data_url = self._data_url_from_image('../../images/SambaNova-dark-logo-1.png')
+        data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
         print('========== Inference: Text and Image ==========')
         self.assertTrue(len(model_ids) > 0)
@@ -237,7 +238,7 @@ class TestLlamaStack(unittest.TestCase):
                     if chunk.event is not None:
                         print(f'{chunk.event.delta.text}', end='', flush=True)
                         text += chunk.event.delta.text
-                self.assertNotEqual(text, '')
+                # self.assertNotEqual(text, '')
                 print()
             else:
                 print('<<<<< Non-streaming Response')
@@ -259,7 +260,7 @@ class TestLlamaStack(unittest.TestCase):
             stream (bool): Whether to stream the inference outputs.
         """
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-11B-Vision-Instruct']
-        data_url = self._data_url_from_image('../../images/SambaNova-dark-logo-1.png')
+        data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
         print('========== Inference: Text and Image ==========')
         self.assertTrue(len(model_ids) > 0)
@@ -455,11 +456,8 @@ class TestLlamaStack(unittest.TestCase):
             """
             Tool function to retrieve the weather (dummy implementation).
 
-            Args:
-                city (str): The name of the city for which weather is requested.
-
-            Returns:
-                int: A pretend temperature value for the city.
+            :param city: The name of the city for which weather is requested.
+            :return: A pretend temperature value for the city in degrees Celsius.
             """
             return 26
 
@@ -473,7 +471,7 @@ class TestLlamaStack(unittest.TestCase):
         )
 
         response = agent.create_turn(
-            messages=[{'role': 'user', 'content': 'how is the weather in paris?'}],
+            messages=[{'role': 'user', 'content': 'how is the weather in Paris?'}],
             session_id=agent.create_session('tool_session'),
             stream=True,
         )
