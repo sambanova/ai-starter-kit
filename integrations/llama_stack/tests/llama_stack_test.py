@@ -1,16 +1,18 @@
-import unittest
-import os
 import base64
 import mimetypes
+import os
+import unittest
 import uuid
-from termcolor import cprint
+from typing import List
+
 from dotenv import load_dotenv
 
 # LlamaStack client imports
 from llama_stack_client import LlamaStackClient
-from llama_stack_client.types import Document
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.event_logger import EventLogger
+from llama_stack_client.types import Document
+from termcolor import cprint
 
 
 class TestLlamaStack(unittest.TestCase):
@@ -18,6 +20,9 @@ class TestLlamaStack(unittest.TestCase):
     A test suite for verifying different functionalities of the LlamaStackClient
     and the related modules such as Agents, RAG, and safety checks.
     """
+
+    client: LlamaStackClient
+    allowed_models: List[str]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -101,7 +106,8 @@ class TestLlamaStack(unittest.TestCase):
                 else:
                     print('<<<<< Non-streaming Response')
                     print(
-                        f'Type: {type(iterator.completion_message.content)}, Value:{iterator.completion_message.content}'
+                        f'Type: {type(iterator.completion_message.content)}, '
+                        'Value:{iterator.completion_message.content}'
                     )
                     self.assertNotEqual(iterator.completion_message.content, '')
 
@@ -141,11 +147,13 @@ class TestLlamaStack(unittest.TestCase):
                 messages=[
                     {
                         'role': 'system',
-                        'content': 'You are an assistant that can solve quadratic equations given coefficients a, b, and c.',
+                        'content': 'You are an assistant that can solve quadratic equations '
+                        'given coefficients a, b, and c.',
                     },
                     {
                         'role': 'user',
-                        'content': 'Find all the roots of a quadratic equation given coefficients a = 3, b = -11, and c = -4.',
+                        'content': 'Find all the roots of a quadratic equation '
+                        'given coefficients a = 3, b = -11, and c = -4.',
                     },
                 ],
                 tools=[
@@ -341,7 +349,8 @@ class TestLlamaStack(unittest.TestCase):
                 else:
                     print('<<<<< Non-streaming Response')
                     print(
-                        f'Type: {type(iterator.completion_message.content)}, Value:{iterator.completion_message.content}'
+                        f'Type: {type(iterator.completion_message.content)}, '
+                        'Value:{iterator.completion_message.content}'
                     )
                     self.assertNotEqual(iterator.completion_message.content, '')
                 print()
