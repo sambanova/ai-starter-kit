@@ -163,14 +163,20 @@ llama stack run --image-type conda ~/.llama/distributions/sambanova/sambanova-ru
 
 We provide a series of [notebooks](./notebooks/) that demonstrate how to use the SambaNova Llama Stack distribution:
 
-1. [Quickstart](./notebooks/quickstart.ipynb) – A simple client usage covering: Listing available models, Using the SambaNova inference adaptor to interact with cloud-based LLM chat models, Using the safety adaptor.
+1. [Quickstart](./notebooks/quickstart.ipynb)
+    This notebook covers a simple client usage, including the following points:
+    - List available models.
+    - Use the inference adaptor to interact with the Sambanova cloud-based LLM chat models.
+    - Implement a chat loop conversation using the SambaNova inference adaptor.
 
-2. [Image Chat](./notebooks/image_chat.ipynb) – Demonstrates how to use the inference adaptor to interact with SambaNova cloud-based vision models.
+2. [Image Chat](./notebooks/image_chat.ipynb)
+    This notebook demonstrates how to use the inference adaptor to interact with the SambaNova cloud-based vision models.
 
-3. Loop Chat – Shows how to implement a loop conversation for chat using the SambaNova inference adaptor.
+3. [Tool Calling](./notebooks/tool_calling.ipynb)
+    This notebook demonstrates tool invocation using the inference adaptor and the tool runtime adaptors with the SambaNova cloud-based instruct models.
 
-4. Tool Calling – Demonstrates tool invocation using the SambaNova inference adaptor and tool runtime adaptors.
+5. [RAG Agent](./notebooks/rag_agent.ipynb)
+    This notebook provides an example of a simple Retrieval-Augmented Generation (RAG) agent using the inference adaptor, Vector I/O adaptors, inline embeddings, and the agent adaptor.
 
-5. RAG Agent – Provides an example of a simple Retrieval-Augmented Generation (RAG) agent using The SambaNova inference adaptor, Vector I/O adaptors, Inline embeddings,The agent adaptor.
-
-6. ReAct Agent – Implements a simple Reasoning + Acting (ReAct) agent with tool invocation capabilities.
+6. [Safety](./notebooks/safety.ipynb)
+    This notebooks shows how to evaluate the safety of the user query and how to provide safeguards to the LLM response using the safety adaptor.
