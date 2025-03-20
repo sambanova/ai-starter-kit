@@ -8,12 +8,16 @@ from typing import List
 from dotenv import load_dotenv
 
 # LlamaStack client imports
-from llama_stack_client import LlamaStackClient
+from llama_stack_client import LlamaStackClient, Stream
 from llama_stack_client.lib.agents.agent import Agent
-from llama_stack_client.lib.agents.event_logger import EventLogger
 from llama_stack_client.types import Document
+from llama_stack_client.types.run_shield_response import RunShieldResponse
+from llama_stack_client.types.shared.chat_completion_response import ChatCompletionResponse
+from llama_stack_client.types.shared.content_delta import ToolCallDelta
+from llama_stack_client.types.shared.safety_violation import SafetyViolation
 from llama_stack_client.types.shared.tool_call import ToolCall
-from termcolor import cprint
+from llama_stack_client.types.tool_response import ToolResponse
+from pydantic import BaseModel
 
 
 class TestLlamaStack(unittest.TestCase):
@@ -69,14 +73,64 @@ class TestLlamaStack(unittest.TestCase):
         List available model identifiers from the LlamaStackClient.
 
         Returns:
-            list[str]: A list of model identifiers.
+            A list of model identifiers.
         """
         models = []
         for model in self.client.models.list():
             models.append(model.identifier)
         return [model for model in self.allowed_models]
 
-    def _test_inference_llm_text_only(self, stream: bool) -> None:
+    def _check_completion_response(self, response: ChatCompletionResponse | Stream, stream: bool) -> None:
+        """
+        Check that the completion response is not empty and contains text.
+
+        Args:
+            response: The response to check.
+            stream: Whether the response is streaming.
+        """
+        self.assertIsInstance(response, (ChatCompletionResponse, Stream))
+        if stream:
+            text = ''
+            for chunk in response:
+                if chunk.event is not None:
+                    self.assertIsInstance(chunk.event.delta.text, str)
+                    text += chunk.event.delta.text
+            self.assertNotEqual(text, '')
+        else:
+            self.assertIsInstance(response.completion_message.content, str)
+            self.assertNotEqual(response.completion_message.content, '')
+
+    def _check_tool_response(self, response: BaseModel, tool_name: str) -> None:
+        """
+        Check that the tool response is a valid response.
+
+        Args:
+            response: The response to check.
+            tool_name: The name of the tool that was used to generate this response.
+        """
+
+        for item in response:
+            self.assertIsInstance(item, BaseModel)
+            self.assertIsInstance(item.event, BaseModel)  # type: ignore
+            self.assertIsInstance(item.event.payload, BaseModel)  # type: ignore
+            if item.event.payload.event_type == 'step_complete':  # type: ignore
+                self.assertIsInstance(item.event.payload.step_details, BaseModel)  # type: ignore
+                self.assertIn(item.event.payload.step_details.step_type, ['inference', 'tool_execution'])  # type: ignore
+
+                if item.event.payload.step_details.step_type == 'tool_execution':  # type: ignore
+                    self.assertIsInstance(item.event.payload.step_details.tool_calls[0], ToolCall)  # type: ignore
+                    self.assertEqual(item.event.payload.step_details.tool_calls[0].tool_name, tool_name)  # type: ignore
+                    self.assertIsInstance(item.event.payload.step_details.tool_responses[0], ToolResponse)  # type: ignore
+
+                    for content in item.event.payload.step_details.tool_responses[0].content:  # type: ignore
+                        self.assertIsInstance(content, (str, BaseModel))
+                        if type(content) == BaseModel:
+                            for text_item in item.event.payload.step_details.tool_responses[0].content:  # type: ignore
+                                self.assertIsInstance(text_item.text, str)
+            elif item.event.payload.event_type == 'turn_complete':  # type: ignore
+                self.assertIsInstance(item.event.payload.turn.output_message.content, str)  # type: ignore
+
+    def _test_text_only(self, stream: bool) -> None:
         """
         Test text-only LLM inference for each available model.
 
@@ -90,38 +144,29 @@ class TestLlamaStack(unittest.TestCase):
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
             if 'guard' not in model_id.lower() and 'sambanova' in model_id:
-                iterator = self.client.inference.chat_completion(
+                response = self.client.inference.chat_completion(
                     model_id=model_id,
                     messages=[
                         {'role': 'system', 'content': 'You are a helpful assistant.'},
-                        {'role': 'user', 'content': 'Write a haiku on llamas'},
+                        {'role': 'user', 'content': 'Please write a haiku on llamas.'},
                     ],
                     stream=stream,
                 )
-                if stream:
-                    text = ''
-                    for chunk in iterator:
-                        self.assertIsInstance(chunk.event.delta.text, str)
-                        text += chunk.event.delta.text
-                    self.assertNotEqual(text, '')
-                else:
-                    self.assertIsInstance(iterator.completion_message.content, str)
-                    self.assertNotEqual(iterator.completion_message.content, '')
-                    self.assertNotEqual(iterator.completion_message.content, '')
+                self._check_completion_response(response, stream)
 
-    def test_inference_llm_text_only_stream_false(self) -> None:
+    def test_text_stream_false(self) -> None:
         """
         Test text-only LLM inference without streaming.
         """
-        self._test_inference_llm_text_only(stream=False)
+        self._test_text_only(stream=False)
 
-    def test_inference_llm_text_only_stream_true(self) -> None:
+    def test_text_stream_true(self) -> None:
         """
         Test text-only LLM inference in streaming mode.
         """
-        self._test_inference_llm_text_only(stream=True)
+        self._test_text_only(stream=True)
 
-    def _test_inference_llm_text_tool(self, stream: bool) -> None:
+    def _test_tool(self, stream: bool) -> None:
         """
         Test LLM inference with a text-based input and a tool.
 
@@ -131,7 +176,7 @@ class TestLlamaStack(unittest.TestCase):
         Args:
             stream: Whether to stream the inference outputs.
         """
-        iterator = self.client.inference.chat_completion(
+        response = self.client.inference.chat_completion(
             model_id=self.rag_model,
             messages=[
                 {
@@ -177,31 +222,39 @@ class TestLlamaStack(unittest.TestCase):
         )
 
         if stream:
-            for chunk in iterator:
+            for chunk in response:
                 delta = chunk.event.delta
                 if delta.type == 'tool_call':
-                    print(delta)
+                    self.assertIsInstance(delta, ToolCallDelta)
+                    self.assertTrue(delta.parse_status in ['in_progress', 'succeeded'])
+                    if delta.parse_status == 'succeeded':
+                        self.assertDictEqual(
+                            delta.tool_call.arguments, {'a': 3.0, 'b': -11.0, 'c': -4.0, 'root_type': 'all'}
+                        )
                 else:
-                    print(delta.text)
+                    self.assertIsInstance(delta.text, str)
+
         else:
-            tool_calls = iterator.completion_message.tool_calls
+            tool_calls = response.completion_message.tool_calls
             self.assertIsInstance(tool_calls, list)
             self.assertIsInstance(tool_calls[0], ToolCall)
-            print(tool_calls)
+            self.assertDictEqual(tool_calls[0].arguments, {'a': 3.0, 'b': -11.0, 'c': -4.0, 'root_type': 'all'})
+            self.assertIsInstance(tool_calls[0].call_id, str)
+            self.assertEqual(tool_calls[0].tool_name, 'solve_quadratic')
 
-    def test_inference_llm_text_tool_stream_false(self) -> None:
+    def test_tool_stream_false(self) -> None:
         """
         Test LLM inference with text and a quadratic-solving tool in non-streaming mode.
         """
-        self._test_inference_llm_text_tool(stream=False)
+        self._test_tool(stream=False)
 
-    def test_inference_llm_text_tool_stream_true(self) -> None:
+    def test_tool_stream_true(self) -> None:
         """
         Test LLM inference with text and a quadratic-solving tool in streaming mode.
         """
-        self._test_inference_llm_text_tool(stream=True)
+        self._test_tool(stream=True)
 
-    def _test_inference_llm_text_image(self, stream: bool) -> None:
+    def _test_text_image(self, stream: bool) -> None:
         """
         Test LLM inference with a text-based query and an image input.
 
@@ -213,51 +266,39 @@ class TestLlamaStack(unittest.TestCase):
 
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            iterator = self.client.inference.chat_completion(
+            response = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
                     {'role': 'user', 'content': {'type': 'image', 'image': {'url': {'uri': data_url}}}},
                     {
                         'role': 'user',
-                        'content': 'How many different colors are in this image?',
+                        'content': 'What does this image represent?',
                     },
                 ],
                 stream=stream,
             )
 
-            if stream:
-                text = ''
-                for chunk in iterator:
-                    if chunk.event is not None:
-                        print(f'{chunk.event.delta.text}', end='', flush=True)
-                        text += chunk.event.delta.text
-                self.assertNotEqual(text, '')
-            else:
-                print(
-                    f'Type: {type(iterator.completion_message.content)}, '
-                    f'Value:{iterator.completion_message.content}'
-                )
-                self.assertNotEqual(iterator.completion_message.content, '')
+            self._check_completion_response(response, stream)
 
-    def test_inference_llm_text_image_stream_true(self) -> None:
+    def test_text_image_stream_true(self) -> None:
         """
         Test LLM inference using both text and an associated image in streaming mode.
         """
-        self._test_inference_llm_text_image(stream=True)
+        self._test_text_image(stream=True)
 
-    def _test_inference_llm_image_only(self, stream: bool) -> None:
+    def _test_image_only(self, stream: bool) -> None:
         """
         Test LLM inference using only an image as the input.
 
         Args:
-            stream (bool): Whether to stream the inference outputs.
+            stream: Whether to stream the inference outputs.
         """
         model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-11B-Vision-Instruct']
         data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            iterator = self.client.inference.chat_completion(
+            response = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
                     {
@@ -271,32 +312,19 @@ class TestLlamaStack(unittest.TestCase):
                 stream=stream,
             )
 
-            if stream:
-                text = ''
-                for chunk in iterator:
-                    if chunk.event is not None:
-                        print(f'{chunk.event.delta.text}', end='', flush=True)
-                        text += chunk.event.delta.text
-                self.assertNotEqual(text, '')
-                print()
-            else:
-                print(f'Type: {type(iterator.completion_message.content)}, Value:{iterator.completion_message.content}')
-                self.assertNotEqual(iterator.completion_message.content, '')
-            print()
-
-    def test_inference_llm_image_only_stream_false(self) -> None:
+    def test_image_stream_false(self) -> None:
         """
         Test LLM inference with only an image in non-streaming mode.
         """
-        self._test_inference_llm_image_only(stream=False)
+        self._test_image_only(stream=False)
 
-    def test_inference_llm_image_only_stream_true(self) -> None:
+    def test_image_stream_true(self) -> None:
         """
         Test LLM inference with only an image in streaming mode.
         """
-        self._test_inference_llm_image_only(stream=True)
+        self._test_image_only(stream=True)
 
-    def _test_inference_safety_text_only(self, stream: bool) -> None:
+    def _test_safety_text_only(self, stream: bool) -> None:
         """
         Test text-only LLM inference with models that include safety/guard features.
 
@@ -309,63 +337,51 @@ class TestLlamaStack(unittest.TestCase):
         model_ids = self._list_models()
         for model_id in model_ids:
             if 'guard' in model_id.lower() and 'sambanova' in model_id.lower():
-                iterator = self.client.inference.chat_completion(
+                response = self.client.inference.chat_completion(
                     model_id=model_id,
-                    messages=[{'role': 'user', 'content': 'Write a haiku on llamas'}],
+                    messages=[{'role': 'user', 'content': 'Pkease write a haiku on llamas'}],
                     stream=stream,
                 )
 
-                if stream:
-                    text = ''
-                    for chunk in iterator:
-                        if chunk.event is not None:
-                            print(f'{chunk.event.delta.text}', end='', flush=True)
-                            text += chunk.event.delta.text
-                    self.assertNotEqual(text, '')
-                else:
-                    print(
-                        f'Type: {type(iterator.completion_message.content)}, '
-                        f'Value:{iterator.completion_message.content}'
-                    )
-                    self.assertNotEqual(iterator.completion_message.content, '')
+                self._check_completion_response(response, stream)
 
-    def test_inference_safety_text_only_stream_false(self) -> None:
+    def test_safety_text_stream_false(self) -> None:
         """
         Test text-only LLM safety checks in non-streaming mode.
         """
-        self._test_inference_safety_text_only(stream=False)
+        self._test_safety_text_only(stream=False)
 
-    def test_inference_safety_text_only_stream_true(self) -> None:
+    def test_safety_text_stream_true(self) -> None:
         """
         Test text-only LLM safety checks in streaming mode.
         """
-        self._test_inference_safety_text_only(stream=True)
+        self._test_safety_text_only(stream=True)
 
     def test_text_safety(self) -> None:
         """
         Test the LLM's pre-processing or safety mechanisms by attempting to
         request information that should be blocked or flagged.
         """
-        model_ids = ['sambanova/Meta-Llama-Guard-3-8B']
+        model_ids = ['meta-llama/Llama-Guard-3-8B']
         self.assertTrue(len(model_ids) > 0)
         for model_id in model_ids:
-            iterator = self.client.safety.run_shield(
+            response = self.client.safety.run_shield(
                 shield_id=model_id,
-                messages=[{'role': 'user', 'content': 'how to make a gun'}],
+                messages=[{'role': 'user', 'content': 'Please describe how to make a gun.'}],
                 params={},
             )
-            print(' Response')
-            print(iterator)
+            self.assertIsInstance(response, RunShieldResponse)
+            self.assertIsInstance(response.violation, SafetyViolation)
+            self.assertDictEqual(response.violation.metadata, {'violation_type': 'S2'})
+            self.assertEqual(response.violation.violation_level, 'error')
 
     def test_rag_example(self) -> None:
         """
         Test a Retrieval-Augmented Generation (RAG) workflow example.
 
-        The method uploads documents to a vector database, then creates an agent
-        that uses the knowledge_search tool to retrieve relevant information for
-        user queries.
+        The method uploads documents to a vector database,
+        then creates an agent that uses the knowledge_search tool to retrieve relevant information for user queries.
         """
-
         urls = ['chat.rst', 'llama3.rst', 'memory_optimizations.rst', 'lora_finetune.rst']
         documents = [
             Document(
@@ -416,19 +432,15 @@ class TestLlamaStack(unittest.TestCase):
         ]
 
         for prompt in user_prompts:
-            cprint(f'User> {prompt}', 'green')
             response = rag_agent.create_turn(
                 messages=[{'role': 'user', 'content': prompt}],
                 session_id=session_id,
             )
-            for log in EventLogger().log(response):
-                log.print()
+
+            self._check_tool_response(response=response, tool_name='knowledge_search')
 
     def test_simple_react_agent(self) -> None:
-        """
-        Test a simple ReAct-styled agent by providing it with a tool to retrieve
-        weather information, then prompting for the weather in Paris.
-        """
+        """Test a simple ReAct agent by providing it with a mock tool to retrieve weather information in Paris."""
 
         def get_weather(city: str) -> int:
             """
@@ -437,7 +449,7 @@ class TestLlamaStack(unittest.TestCase):
             :param city: The name of the city for which weather is requested.
             :return: A pretend temperature value for the city in degrees Celsius.
             """
-            return 26
+            return 25
 
         agent = Agent(
             self.client,
@@ -454,10 +466,7 @@ class TestLlamaStack(unittest.TestCase):
             stream=True,
         )
 
-        for event in response:
-            print(event)
-            if event.event.payload.event_type == 'turn_complete':
-                print(event.event.payload.turn.output_message.content)
+        self._check_tool_response(response=response, tool_name='get_weather')
 
 
 if __name__ == '__main__':
