@@ -1,6 +1,8 @@
 # Core dependencies
 llama-index==0.11.17
 llama-index-llms-langchain==0.4.2
+llama-stack==0.1.7
+llama-stack-client==0.1.7
 langchain==0.3.16
 langchain-sambanova==0.1.0
 langchain-core==0.3.33
