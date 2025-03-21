@@ -1,3 +1,4 @@
+import sys
 import abc
 import json
 import os
@@ -35,11 +36,12 @@ from benchmarking.src.llmperf.llmperf_utils import (
 )
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
+from benchmarking.utils import CONFIG_PATH
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[logging.StreamHandler()],
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
@@ -59,7 +61,15 @@ class BasePerformanceEvaluator(abc.ABC):
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
+        config: Dict[str, Any] = {}
     ) -> None:
+        # Set kit's config file
+        if not config:
+            with open(CONFIG_PATH, 'r') as file:
+                self.config = yaml.safe_load(file)
+        else:
+            self.config = config
+        self.show_results_in_terminal = self.config['show_results_in_terminal']
         self.model_name = model_name
         self.results_dir = results_dir
         self.user_metadata = user_metadata
@@ -241,7 +251,8 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
         ]:
-            logger.info(f'Building Client Metrics Summary for metric: {metric}')
+            if self.show_results_in_terminal:
+                logger.info(f'Building Client Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
@@ -252,25 +263,24 @@ class BasePerformanceEvaluator(abc.ABC):
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
-                logger.info(f'    {reformatted_key} = {value}')
+                if self.show_results_in_terminal:
+                    logger.info(f'    {reformatted_key} = {value}')
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
-
             series_mean = round(series.mean(), 4)
-            logger.info(f'    mean = {series_mean}')
             metrics_summary[metric]['mean'] = series_mean
-
             series_min = round(series.min(), 4)
-            logger.info(f'    min = {series_min}')
             metrics_summary[metric]['min'] = series_min
-
             series_max = round(series.max(), 4)
-            logger.info(f'    max = {series_max}')
             metrics_summary[metric]['max'] = series_max
-
             series_std = round(series.std(), 4)
-            logger.info(f'    stddev = {series_std}')
             metrics_summary[metric]['stddev'] = series_std
+
+            if self.show_results_in_terminal:
+                logger.info(f'    mean = {series_mean}')
+                logger.info(f'    min = {series_min}')
+                logger.info(f'    max = {series_max}')
+                logger.info(f'    stddev = {series_std}')
             
         # Record descriptive statistics for the metrics in the following list
         for metric in [
@@ -281,7 +291,8 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
             common_metrics.ACCEPTANCE_RATE
         ]:
-            logger.info(f'Building Server Metrics Summary for metric: {metric}')
+            if self.show_results_in_terminal:
+                logger.info(f'Building Server Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
@@ -292,25 +303,24 @@ class BasePerformanceEvaluator(abc.ABC):
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
-                logger.info(f'    {reformatted_key} = {value}')
+                if self.show_results_in_terminal:
+                    logger.info(f'    {reformatted_key} = {value}')
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
-
             series_mean = round(series.mean(), 4)
-            logger.info(f'    mean = {series_mean}')
             metrics_summary[metric]['mean'] = series_mean
-
             series_min = round(series.min(), 4)
-            logger.info(f'    min = {series_min}')
             metrics_summary[metric]['min'] = series_min
-
             series_max = round(series.max(), 4)
-            logger.info(f'    max = {series_max}')
             metrics_summary[metric]['max'] = series_max
-
             series_std = round(series.std(), 4)
-            logger.info(f'    stddev = {series_std}')
             metrics_summary[metric]['stddev'] = series_std
+
+            if self.show_results_in_terminal:
+                logger.info(f'    mean = {series_mean}')
+                logger.info(f'    min = {series_min}')
+                logger.info(f'    max = {series_max}')
+                logger.info(f'    stddev = {series_std}')
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
@@ -320,14 +330,15 @@ class BasePerformanceEvaluator(abc.ABC):
         num_errors = len(error_codes)
         metrics_summary[common_metrics.ERROR_RATE] = num_errors / len(metrics) if len(metrics) else 0
         metrics_summary[common_metrics.NUM_ERRORS] = num_errors
-        logger.info(f'Number Of Errored Requests: {num_errors}')
+        if self.show_results_in_terminal:
+            logger.info(f'Number Of Errored Requests: {num_errors}')
 
         # Record specific error code frequencies
         error_code_frequency = dict(error_codes.value_counts())
         if num_errors:
-            error_code_frequency = dict(error_codes.value_counts())
-            logger.error('Error Code Frequency')
-            logger.error(error_code_frequency)
+            if self.show_results_in_terminal:
+                logger.error('Error Code Frequency')
+                logger.error(error_code_frequency)
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
@@ -335,16 +346,19 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum() / (end_time - start_time),
             4,
         )
-        logger.info(f'Overall Output Throughput: {overall_output_throughput}')
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
-
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
-        logger.info(f'Number Of Completed Requests: {num_completed_requests}')
+
+        if self.show_results_in_terminal:
+            logger.info(f'Overall Output Throughput: {overall_output_throughput}')
+            logger.info(f'Number Of Completed Requests: {num_completed_requests}')
         if self.num_concurrent_requests:
-            logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
-        logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
+            if self.show_results_in_terminal:
+                logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
+        if self.show_results_in_terminal:
+            logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
         metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = num_completed_requests_per_min
@@ -643,12 +657,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
         results = self.build_metrics_summary(
             metrics=[response.metrics for response in llm_responses],
             start_time=start_time,
@@ -1031,13 +1045,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
 
         # Calculate switching time
         llm_responses = self.calculate_switching_time(llm_responses)
@@ -1323,13 +1337,13 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
