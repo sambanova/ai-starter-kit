@@ -20,8 +20,9 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
+from benchmarking.utils import SAMBANOVA_URL
 
 warnings.filterwarnings('ignore')
 
@@ -580,7 +581,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-
+                
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
