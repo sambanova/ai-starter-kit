@@ -86,6 +86,7 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
         save_response_texts=st.session_state.save_llm_responses,
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
+        config=st.session_state.config
     )
 
     # set generic max tokens parameter
