@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
-SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
