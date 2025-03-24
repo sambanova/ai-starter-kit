@@ -28,5 +28,8 @@ def read_json_files(folder_path, type: str='individual_responses'):
                         data.append(json_data)
                 except json.JSONDecodeError as e:
                     print(f"Error reading {file_path}: {e}")
-    
-    return pd.DataFrame(data)
+
+    df = pd.DataFrame(data)
+    df = df.rename(columns=lambda x: x.replace('results_', '').replace('_quantiles', '').replace('_per_request', '')).copy()
+
+    return df
