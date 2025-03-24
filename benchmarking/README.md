@@ -106,6 +106,7 @@ The GUI for this starter kit uses Streamlit, a Python framework for building web
 Ensure you are in the `benchmarking` folder and run the following command:
 
 ```shell
+ulimit -n 4096
 streamlit run streamlit/app.py --browser.gatherUsageStats false 
 ```
 
@@ -135,7 +136,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
-- **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
+- **Number of total requests**: Number of requests sent. *Default*: 10. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 - **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
@@ -251,8 +252,8 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
-- **Number of total requests**: Number of requests sent. *Default*: 32. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-- **Queries per second**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits. *Default*: 1
+- **Number of total requests**: Number of requests sent. *Default*: 10. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
+- **Queries per second**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits. *Default*: 1.0
 - **Queries per second distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. *Default*: constant.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
@@ -399,7 +400,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Mistral,
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
-  - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
+  - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
   - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). If model is not multimodal, then leave the value to na. _Default:_ na.
   - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 

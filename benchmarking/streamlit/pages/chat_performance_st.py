@@ -163,7 +163,7 @@ def main() -> None:
 
         # st.session_state.do_sample = st.toggle("Do Sample")
         st.session_state.max_tokens_to_generate = st.number_input(
-            'Max tokens to generate', min_value=50, max_value=2048, value=250, step=1
+            'Max tokens to generate', min_value=50, max_value=2048, value=256, step=1
         )
         # st.session_state.repetition_penalty = st.slider('Repetition penalty', min_value=1.0, max_value=10.0,
         # step=0.01, value=1.0, format="%.2f")

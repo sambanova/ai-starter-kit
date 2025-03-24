@@ -6,6 +6,7 @@ import random
 import re
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -75,6 +76,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.stop_event = threading.Event()
         self.ui_progress_bar = None
         self.cli_progress_bar = None
+        self.run_uuid = uuid.uuid4()
 
         # To be set upon saving of results
         self.summary_file_path: Optional[str] = None
@@ -493,9 +495,9 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         generation_mode = ''
         if self.is_stream_mode:
             generation_mode = 'stream'
-            
-        output_file_name = f'custom_{self.model_name}_{self.file_name}_{self.num_concurrent_requests}_{generation_mode}'
-        
+
+        output_file_name = f'{self.run_uuid}_custom_{self.model_name}_{self.file_name}_\
+            {self.num_concurrent_requests}_{generation_mode}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -621,7 +623,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -815,7 +817,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
         output_file_name = (
-            f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'{self.run_uuid}_synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
         )
         
@@ -1022,7 +1024,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
             # Store futures for the tasks
             futures = []
 
@@ -1224,7 +1226,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
         output_file_name = (
-            f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'{self.run_uuid}_realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}'
         )
         
@@ -1324,11 +1326,10 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
+
         start_time = time.monotonic()
-        
         # Use ThreadPoolExecutor to handle threads
-        start_time = time.monotonic()
-        with ThreadPoolExecutor(max_workers=1000) as executor:
+        with ThreadPoolExecutor(max_workers=10000) as executor:
             # Store futures for the tasks
             futures = []
 

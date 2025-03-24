@@ -1,4 +1,3 @@
 prod_mode: False # available values: True or False
 pages_to_show: # available when prod_mode is True. Possible values: synthetic_eval, real_workload_eval, custom_eval, chat_eval
   - synthetic_eval
-  - real_workload_eval

@@ -1,6 +1,7 @@
 #!/bin/bash
 # run_real_workload_dataset.sh
 
+ulimit -n 4096
 python src/evaluator.py \
 --mode real_workload \
 --model-name "Meta-Llama-3.3-70B-Instruct" \

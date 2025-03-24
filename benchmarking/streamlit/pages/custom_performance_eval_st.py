@@ -66,6 +66,8 @@ def _initialize_sesion_variables() -> None:
         st.session_state.performance_evaluator = None
     if 'df_req_info' not in st.session_state:
         st.session_state.df_req_info = None
+    if 'batching_exposed' not in st.session_state:
+        st.session_state.batching_exposed = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
     if 'progress_bar' not in st.session_state:
@@ -101,8 +103,10 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
     df_user['concurrent_user'] = st.session_state.performance_evaluator.num_concurrent_requests
     valid_df = df_user[df_user['error_code'].isnull()]
 
-    if valid_df['batch_size_used'].isnull().all():
-        valid_df['batch_size_used'] = 1
+    # For non-batching endpoints, batching_exposed will be False
+    st.session_state.batching_exposed = True
+    if valid_df["batch_size_used"].isnull().all():
+        st.session_state.batching_exposed = False
 
     return valid_df
 
@@ -246,15 +250,18 @@ def main() -> None:
 
     if st.session_state.df_req_info is not None:
         st.subheader('Performance metrics plots')
+        
+        by_batch_size_suffix = ' by batch size' if st.session_state.batching_exposed else ''
         st.plotly_chart(
             plot_client_vs_server_barplots(
                 st.session_state.df_req_info,
                 'batch_size_used',
                 ['server_ttft_s', 'client_ttft_s'],
                 ['Server', 'Client'],
-                'Distribution of Time to First Token (TTFT) by batch size',
+                'Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
                 'TTFT (s), per request',
                 'Batch size',
+                st.session_state.batching_exposed
             )
         )
         st.plotly_chart(
@@ -263,9 +270,10 @@ def main() -> None:
                 'batch_size_used',
                 ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
                 ['Server', 'Client'],
-                'Distribution of end-to-end latency by batch size',
+                'Distribution of end-to-end latency' + by_batch_size_suffix,
                 'Latency (s), per request',
                 'Batch size',
+                st.session_state.batching_exposed
             )
         )
         st.plotly_chart(
@@ -277,13 +285,15 @@ def main() -> None:
                     'client_output_token_per_s_per_request',
                 ],
                 ['Server', 'Client'],
-                'Distribution of output throughput by batch size',
+                'Distribution of output throughput' + by_batch_size_suffix,
                 'Tokens per second, per request',
                 'Batch size',
+                st.session_state.batching_exposed
             )
         )
         # Compute total throughput per batch
-        st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
+        if st.session_state.batching_exposed:
+            st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
         st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
         # Once results are given, reset running state and ending threads just in case.
