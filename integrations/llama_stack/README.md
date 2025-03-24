@@ -9,7 +9,7 @@
 
 ## Overview
 
-Llama Stack is a framework that standardizes core building blocks to simplify AI application development. It encapsulates best practices across the Llama ecosystem, making it easier to build and deploy AI solutions efficiently. Llama Stack consists of two main components:
+Llama Stack is a framework that standardizes core building blocks to simplify AI application development. It integrates best practices across the Llama ecosystem, making it easier to build and deploy AI solutions efficiently. Llama Stack consists of two main components:
 
 - Server – A running distribution of Llama Stack that hosts various adaptors.
 - Client – A consumer of the server's API, interacting with the hosted adaptors.
@@ -49,8 +49,8 @@ To get started, you need to create a virtual environment and install the base Ll
 Run the following commands to set up a virtual environment:
 
 ``` bash
-    python -m venv llamastackenv
-    source llamastackenv/bin/activate
+    python -m venv .venv
+    source .venv/bin/activate
 ```
 
 2. Install Dependencies
@@ -61,11 +61,11 @@ Once the environment is activated, install the necessary packages:
     pip install llama-stack
 ```
 
-with the environment set now you can build the distribution
+## Building the SambaNova Distribution
 
-## Building the SambaNova Distribution  
+After the environment is set, you can build the distribution.
 
-You can build the SambaNova Llama Stack distribution using either a virtual environment (**venv**), a conda environmnet or a Docker image.  
+You can build the SambaNova Llama Stack distribution using either a virtual environment (**venv**), a conda environmnet, or a Docker image.  
 
 ### Build with venv (Recommended)  
 
@@ -105,9 +105,9 @@ To build the distribution in a conda environment, run:
 llama stack build --template sambanova --image-type conda
 ```
 
-Now The distribution is built the Llama Stack server can be deployed
-
 ## Running the SambaNova Distribution
+
+After the distribution has been built, the Llama Stack server can be deployed.
 
 Before deploying the distribution, set the required environment variables:
 
@@ -161,7 +161,7 @@ llama stack run --image-type conda ~/.llama/distributions/sambanova/sambanova-ru
 
 ## Usage:
 
-We provide a series of [notebooks](./notebooks/) that demonstrate how to use the SambaNova Llama Stack distribution:
+We provide a series of [notebooks](./notebooks/) that demonstrate how to use the SambaNova Llama Stack distribution.
 
 1. [Quickstart](./notebooks/01_Quickstart.ipynb)
     This notebook covers a simple client usage, including the following points:
