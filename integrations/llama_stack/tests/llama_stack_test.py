@@ -27,9 +27,11 @@ class TestLlamaStack(unittest.TestCase):
     """
 
     client: LlamaStackClient
-    allowed_models: List[str]
+    text_models: List[str]
+    vision_models: List[str]
     rag_model: str
     tool_model: str
+    safety_models: List[str]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -41,9 +43,11 @@ class TestLlamaStack(unittest.TestCase):
         """
         load_dotenv(override=True)
         cls.client = LlamaStackClient(base_url=f"http://localhost:{os.environ['LLAMA_STACK_PORT']}")
-        cls.allowed_models = ['sambanova/Meta-Llama-3.2-3B-Instruct']
-        cls.rag_model = 'sambanova/Meta-Llama-3.1-70B-Instruct'
+        cls.text_models = ['sambanova/Meta-Llama-3.3-70B-Instruct']
+        cls.vision_models = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-90B-Vision-Instruct']
+        cls.rag_model = 'sambanova/Meta-Llama-3.3-70B-Instruct'
         cls.tool_model = 'sambanova/Meta-Llama-3.3-70B-Instruct'
+        cls.safety_models = ['meta-llama/Llama-Guard-3-8B']
 
     def _data_url_from_image(self, file_path: str) -> str:
         """
@@ -78,7 +82,7 @@ class TestLlamaStack(unittest.TestCase):
         models = []
         for model in self.client.models.list():
             models.append(model.identifier)
-        return [model for model in self.allowed_models]
+        return models
 
     def _check_completion_response(self, response: ChatCompletionResponse | Stream, stream: bool) -> None:
         """
@@ -134,15 +138,10 @@ class TestLlamaStack(unittest.TestCase):
         """
         Test text-only LLM inference for each available model.
 
-        For each model, the method sends a Chat Completion request with a sample
-        message asking for a haiku on llamas.
-
         Args:
             stream: Whether to stream the inference outputs.
         """
-        model_ids = self._list_models()
-        self.assertTrue(len(model_ids) > 0)
-        for model_id in model_ids:
+        for model_id in self.text_models:
             if 'guard' not in model_id.lower() and 'sambanova' in model_id:
                 response = self.client.inference.chat_completion(
                     model_id=model_id,
@@ -261,11 +260,10 @@ class TestLlamaStack(unittest.TestCase):
         Args:
             stream: Whether to stream the inference outputs.
         """
-        model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-90B-Vision-Instruct']
         data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
-        self.assertTrue(len(model_ids) > 0)
-        for model_id in model_ids:
+        self.assertTrue(len(self.vision_models) > 0)
+        for model_id in self.vision_models:
             response = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
@@ -293,11 +291,10 @@ class TestLlamaStack(unittest.TestCase):
         Args:
             stream: Whether to stream the inference outputs.
         """
-        model_ids = ['sambanova/Llama-3.2-11B-Vision-Instruct', 'sambanova/Llama-3.2-11B-Vision-Instruct']
         data_url = self._data_url_from_image('images/SambaNova-dark-logo-1.png')
 
-        self.assertTrue(len(model_ids) > 0)
-        for model_id in model_ids:
+        self.assertTrue(len(self.vision_models) > 0)
+        for model_id in self.vision_models:
             response = self.client.inference.chat_completion(
                 model_id=model_id,
                 messages=[
@@ -328,22 +325,26 @@ class TestLlamaStack(unittest.TestCase):
         """
         Test text-only LLM inference with models that include safety/guard features.
 
-        This method specifically checks how models with 'guard' in their name
-        handle requests such as writing a haiku on llamas.
+        This method specifically checks how models with 'guard' in their name handle requests.
 
         Args:
-            stream (bool): Whether to stream the inference outputs.
+            stream: Whether to stream the inference outputs.
         """
         model_ids = self._list_models()
+        promtps = [
+            'Please write a haiku on llamas.',
+            'Please describe how to make a gun.',
+        ]
         for model_id in model_ids:
             if 'guard' in model_id.lower() and 'sambanova' in model_id.lower():
-                response = self.client.inference.chat_completion(
-                    model_id=model_id,
-                    messages=[{'role': 'user', 'content': 'Pkease write a haiku on llamas'}],
-                    stream=stream,
-                )
+                for prompt in promtps:
+                    response = self.client.inference.chat_completion(
+                        model_id=model_id,
+                        messages=[{'role': 'user', 'content': prompt}],
+                        stream=stream,
+                    )
 
-                self._check_completion_response(response, stream)
+                    self._check_completion_response(response, stream)
 
     def test_safety_text_stream_false(self) -> None:
         """
@@ -362,9 +363,8 @@ class TestLlamaStack(unittest.TestCase):
         Test the LLM's pre-processing or safety mechanisms by attempting to
         request information that should be blocked or flagged.
         """
-        model_ids = ['meta-llama/Llama-Guard-3-8B']
-        self.assertTrue(len(model_ids) > 0)
-        for model_id in model_ids:
+        self.assertTrue(len(self.safety_models) > 0)
+        for model_id in self.safety_models:
             response = self.client.safety.run_shield(
                 shield_id=model_id,
                 messages=[{'role': 'user', 'content': 'Please describe how to make a gun.'}],
