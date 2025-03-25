@@ -575,12 +575,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
         
-        print(f'url: {url}')
-        print(f'headers: {headers}')
-        print(f'json_data: {json_data}')
-
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
-            print(f'response {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response)  # type: ignore
@@ -609,7 +604,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-            print(f'generated_text: {generated_text}')
+                
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
