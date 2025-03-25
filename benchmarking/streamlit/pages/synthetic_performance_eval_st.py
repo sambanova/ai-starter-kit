@@ -240,7 +240,7 @@ def main() -> None:
             options=list(MULTIMODAL_IMAGE_SIZE_OPTIONS.keys()),
             format_func=lambda x: MULTIMODAL_IMAGE_SIZE_OPTIONS[x],
             index=0,
-            disabled=st.session_state.running,
+            disabled=st.session_state.running or st.session_state.optional_download,
             help='Select the pre-set image size for multimodal models. \
                 Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models.',
         )
