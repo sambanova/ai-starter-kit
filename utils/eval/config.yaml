@@ -2,6 +2,7 @@ eval_dataset:
   name: general_knowledge_data
   path: data/eval_data.csv
 
+# Note: LLM costs are per million tokens, please consider it if you require a change
 llms:
   - name: sncloud-llama3.3-70
     model_type: "sncloud"
