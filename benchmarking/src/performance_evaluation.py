@@ -619,7 +619,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
-        start_time = time.monotonic()
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
@@ -1020,7 +1019,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
-        start_time = time.monotonic()
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
