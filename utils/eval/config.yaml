@@ -59,8 +59,8 @@ rag:
     temperature: 0.0
 
   model_kwargs:
-    input_token_cost: 0.60
-    ouput_token_cost: 1.20
+    input_token_cost: 0.60 # per million tokens
+    ouput_token_cost: 1.20 # per million tokens
 
 eval_llm:
   model_type: "sncloud"
