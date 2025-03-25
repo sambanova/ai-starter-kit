@@ -67,7 +67,7 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     Returns:
         AutoTokenizer: generic HuggingFace tokenizer
     """
-    # Using NousrResearch for calling out model tokenizers without requesting access.
+    # Using multiple sources for calling out model tokenizers without requesting access.
     # Ref: https://huggingface.co/NousResearch
     # Ref: https://huggingface.co/TheBloke
     # Ref: https://huggingface.co/unsloth
@@ -113,16 +113,10 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
         else:
             print('using qwen')
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-72B-Instruct')
-    elif MODEL_TYPE_IDENTIFIER['qwen']['qwq'] in model_name.lower().replace('-', ''):
-        print('using qwq')
-        tokenizer = AutoTokenizer.from_pretrained('unsloth/QwQ-32B')
     elif MODEL_TYPE_IDENTIFIER['solar'] in model_name.lower().replace('-', ''):
         tokenizer = AutoTokenizer.from_pretrained('upstage/SOLAR-10.7B-Instruct-v1.0')
     elif MODEL_TYPE_IDENTIFIER['eeve'] in model_name.lower().replace('-', ''):
         tokenizer = AutoTokenizer.from_pretrained('yanolja/EEVE-Korean-10.8B-v1.0')
-    elif MODEL_TYPE_IDENTIFIER['llamaguard'] in model_name.lower().replace('-', ''):
-        print('using llama guard')
-        tokenizer = AutoTokenizer.from_pretrained('onnx-community/Llama-Guard-3-1B')
     else:
         tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
     return tokenizer
