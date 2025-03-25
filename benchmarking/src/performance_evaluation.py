@@ -496,8 +496,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'{self.run_uuid}_custom_{self.model_name}_{self.file_name}_\
-            {self.num_concurrent_requests}_{generation_mode}'
+        output_file_name = f'custom_{self.model_name}_{self.file_name}_\
+            {self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         return self.sanitize_file_prefix(output_file_name)
 
     def save_results(
@@ -817,8 +817,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
         output_file_name = (
-            f'{self.run_uuid}_synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}'
+            f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         )
         
         return self.sanitize_file_prefix(output_file_name)
@@ -1226,8 +1226,8 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
         output_file_name = (
-            f'{self.run_uuid}_realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
-            f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}'
+            f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}_{self.run_uuid}'
         )
         
         return self.sanitize_file_prefix(output_file_name)
