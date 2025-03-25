@@ -17,8 +17,11 @@ MODEL_TYPE_IDENTIFIER = {
     'llama2': 'llama2',
     'llamaguard': 'guard'
 }
-
-
+LVLM_IMAGE_PATHS = {
+    'small': './imgs/vision_perf_eval-small.jpg',
+    'medium': './imgs/vision_perf_eval-medium.jpg',
+    'large': './imgs/vision_perf_eval-large.jpg',
+}
 class LLMPerfResults:
     """Class with LLM Performance results"""
 

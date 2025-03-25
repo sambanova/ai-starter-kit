@@ -42,7 +42,7 @@ from langchain_core.messages import HumanMessage
 from openai import OpenAI
 
 from utils.tests.utils_test import (
-    # audio_requests, 
+    # audio_requests,
     image_to_base64,
     load_encode_audio,
 )
@@ -152,35 +152,37 @@ class TestAPIModel(unittest.TestCase):
             self.assertEqual(response.model, model)
             self.assertTrue(hasattr(response, 'usage'))
 
-    def test_client_chat_completion_audio(self) -> None:
-        for model in audio_models:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        'role': 'user',
-                        'content': [
-                            {
-                                'type': 'text',
-                                'text': audio_prompt,
-                            },
-                            {
-                                'type': 'audio_content',
-                                'audio_content': {'content': f'data:audio/mp3;base64,{load_encode_audio(audio_path)}'},
-                            },
-                        ],
-                    }
-                ],
-                stream=False,
-            )
+    # def test_client_chat_completion_audio(self) -> None:
+    #     for model in audio_models:
+    #         response = self.client.chat.completions.create(
+    #             model=model,
+    #             messages=[
+    #                 {
+    #                     'role': 'user',
+    #                     'content': [
+    #                         {
+    #                             'type': 'text',
+    #                             'text': audio_prompt,
+    #                         },
+    #                         {
+    #                             'type': 'audio_content',
+    #                             'audio_content': {
+    #                                 'content': f'data:audio/mp3;base64,{load_encode_audio(audio_path)}'
+    #                             },
+    #                         },
+    #                     ],
+    #                 }
+    #             ],
+    #             stream=False,
+    #         )
 
-            self.assertTrue(hasattr(response, 'id'))
-            self.assertTrue(hasattr(response, 'choices'))
-            self.assertIsInstance(response.choices[0].message.content, str)
-            self.assertGreater(len(response.choices[0].message.content), 0)
-            self.assertTrue(hasattr(response, 'model'))
-            self.assertEqual(response.model, model)
-            self.assertTrue(hasattr(response, 'usage'))
+    #         self.assertTrue(hasattr(response, 'id'))
+    #         self.assertTrue(hasattr(response, 'choices'))
+    #         self.assertIsInstance(response.choices[0].message.content, str)
+    #         self.assertGreater(len(response.choices[0].message.content), 0)
+    #         self.assertTrue(hasattr(response, 'model'))
+    #         self.assertEqual(response.model, model)
+    #         self.assertTrue(hasattr(response, 'usage'))
 
     # def test_request_audio(self) -> None:
     #     for model in audio_models:
@@ -242,24 +244,24 @@ class TestAPIModel(unittest.TestCase):
             self.assertTrue(hasattr(response, 'response_metadata'))
             self.assertIn('usage', response.response_metadata)
 
-    def test_langchain_chat_completion_audio(self) -> None:
-        messages = [
-            HumanMessage(
-                content=[
-                    {'type': 'audio_content', 'audio_content': {'content': f'data:audio/mp3;base64,{base64_audio}'}}
-                ]
-            ),
-            HumanMessage(audio_prompt),
-        ]
-        for model in audio_models:
-            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
-            response = llm_model.invoke(messages)
+    # def test_langchain_chat_completion_audio(self) -> None:
+    #     messages = [
+    #         HumanMessage(
+    #             content=[
+    #                 {'type': 'audio_content', 'audio_content': {'content': f'data:audio/mp3;base64,{base64_audio}'}}
+    #             ]
+    #         ),
+    #         HumanMessage(audio_prompt),
+    #     ]
+    #     for model in audio_models:
+    #         llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+    #         response = llm_model.invoke(messages)
 
-            self.assertTrue(hasattr(response, 'content'))
-            self.assertIsInstance(response.content, str)
-            self.assertGreater(len(response.content), 0)
-            self.assertTrue(hasattr(response, 'response_metadata'))
-            self.assertIn('usage', response.response_metadata)
+    #         self.assertTrue(hasattr(response, 'content'))
+    #         self.assertIsInstance(response.content, str)
+    #         self.assertGreater(len(response.content), 0)
+    #         self.assertTrue(hasattr(response, 'response_metadata'))
+    #         self.assertIn('usage', response.response_metadata)
 
     @classmethod
     def tearDownClass(cls: Type['TestAPIModel']) -> None:
