@@ -18,6 +18,7 @@ import plotly.graph_objects as go
 
 from .crews.crew import AddressSummaryCrew, TravelCrew
 
+
 def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figure:
     """
     Create a Map showing the points specified in the inputs.
