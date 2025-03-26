@@ -138,18 +138,8 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             str: adjusted text
         """
-        model = self.model_name.replace('Bundle/', '').replace('/', '_')
-        tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
-        tokenized_text_directory = f'{kit_location}/../../scratch/benchmarking/prompts'
-        tokenized_text_filepath = f'{tokenized_text_directory}/{tokenized_text_filename}'
-
-        if not Path(tokenized_text_directory).exists():
-            Path(tokenized_text_directory).mkdir(parents=True)
-
         # if not Path(tokenized_text_filepath).exists():
-        tokens = self.tokenizer.tokenize(text)
-        joblib.dump(tokens, tokenized_text_filepath)
-        
+        tokens = self.tokenizer.tokenize(text)        
         token_count = len(tokens)
 
         if token_count > target_token_count:
