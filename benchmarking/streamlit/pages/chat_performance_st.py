@@ -12,7 +12,13 @@ from st_pages import hide_pages
 
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.streamlit.streamlit_utils import APP_PAGES, LLM_API_OPTIONS, find_pages_to_hide
+from benchmarking.streamlit.streamlit_utils import (
+    APP_PAGES,
+    LLM_API_OPTIONS,
+    PRIMARY_ST_STYLE,
+    find_pages_to_hide,
+    save_uploaded_file,
+)
 
 warnings.filterwarnings('ignore')
 
@@ -21,7 +27,6 @@ with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
-
 
 def _get_params() -> Dict[str, Any]:
     """Get LLM params
@@ -67,6 +72,10 @@ def _initialize_sesion_variables() -> None:
         st.session_state.chat_history = []
     if 'perf_metrics_history' not in st.session_state:
         st.session_state.perf_metrics_history = []
+    if 'uploaded_file' not in st.session_state:
+        st.session_state.uploaded_file = None
+    if 'file_path' not in st.session_state:
+        st.session_state.file_path = None
     if 'llm' not in st.session_state:
         st.session_state.llm = None
     if 'llm_api' not in st.session_state:
@@ -139,6 +148,19 @@ def main() -> None:
                 'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
             )
 
+        st.session_state.uploaded_file = st.file_uploader(
+            'Upload image file', 
+            type=['jpg','png','webp'], 
+            help="For multimodal models, upload a JPG, PNG or WEBP image file"
+        )  
+        if st.session_state.uploaded_file:
+            st.session_state.file_path = save_uploaded_file(internal_save_path='data/chat_input_images')
+            from PIL import Image
+            image = Image.open(st.session_state.file_path)
+            st.image(image, caption=st.session_state.uploaded_file.name)
+        else:
+            st.session_state.file_path = ''
+
         # st.session_state.do_sample = st.toggle("Do Sample")
         st.session_state.max_tokens_to_generate = st.number_input(
             'Max tokens to generate', min_value=50, max_value=2048, value=256, step=1
@@ -152,7 +174,7 @@ def main() -> None:
         # format="%.2f")
 
         # Sets LLM
-        sidebar_run_option = st.sidebar.button('Run!')
+        sidebar_run_option = st.sidebar.button('Run!', type='primary')
 
         # Additional settings
         with st.expander('Additional settings', expanded=True):
@@ -176,7 +198,10 @@ def main() -> None:
             params = _get_params()
             if isinstance(st.session_state.llm_api, str):
                 st.session_state.selected_llm = ChatPerformanceEvaluator(
-                    model_name=llm_selected, llm_api=st.session_state.llm_api, params=params
+                    model_name=llm_selected, 
+                    llm_api=st.session_state.llm_api, 
+                    image_path=st.session_state.file_path, 
+                    params=params
                 )
                 st.toast('LLM setup ready! 🙌 Start asking!')
                 st.session_state.chat_disabled = False
@@ -241,6 +266,9 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
+    
+    # Defining styles
+    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 
