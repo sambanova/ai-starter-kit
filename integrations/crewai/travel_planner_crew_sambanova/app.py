@@ -11,9 +11,10 @@ A deployment is available at https://huggingface.co/spaces/sambanovasystems/trip
 import datetime
 import json
 import logging
+from typing import List, Tuple
+
 import gradio as gr  # type: ignore
 import plotly.graph_objects as go
-from typing import List, Tuple
 
 from .crews.crew import AddressSummaryCrew, TravelCrew
 
