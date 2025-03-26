@@ -6,7 +6,6 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-import weave
 import yaml
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
