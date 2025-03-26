@@ -56,6 +56,21 @@ class LLMPerfResults:
         data = self.to_dict()
         return json.dumps(data)
 
+def find_family_model_type(model_name: str) -> str:
+    """Finds family model type
+
+    Args:
+        model_name (str): model name
+
+    Returns:
+        str: family model type
+    """
+    for family, models in FAMILY_MODEL_TYPE_IDENTIFIER.items():
+        for model in models:
+            if model in model_name.lower().replace('-', '').replace('v', ''):
+                return family
+    return 'llama2'
+
 
 def get_tokenizer(model_name: str) -> AutoTokenizer:
     """Gets generic tokenizer according to model type
@@ -75,22 +90,7 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     # Ref: https://huggingface.co/yanolja
     # Ref: https://huggingface.co/QuantFactory
 
-    def _find_family_model_type(model_name: str) -> str:
-        """Finds family model type
-
-        Args:
-            model_name (str): model name
-
-        Returns:
-            str: family model type
-        """
-        for family, models in FAMILY_MODEL_TYPE_IDENTIFIER.items():
-            for model in models:
-                if model in model_name.lower().replace('-', '').replace('v', ''):
-                    return family
-        return 'llama2'
-    
-    family_model_type = _find_family_model_type(model_name)
+    family_model_type = find_family_model_type(model_name)
 
     if family_model_type == 'mistral':
         tokenizer = AutoTokenizer.from_pretrained('TheBloke/Mistral-7B-Instruct-v0.2-AWQ')
