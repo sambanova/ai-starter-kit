@@ -28,7 +28,6 @@ sys.path.append(repo_dir)
 
 from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
-from utils.visual.env_utils import get_wandb_key
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
@@ -44,19 +43,6 @@ logging.basicConfig(
 )
 # Create a logger object
 logger = logging.getLogger(__name__)
-
-
-# Handle the WANDB_API_KEY resolution before importing weave
-wandb_api_key = get_wandb_key()
-
-# If WANDB_API_KEY is set, proceed with weave initialization
-if wandb_api_key:
-    import weave
-
-    # Initialize Weave with your project name
-    weave.init('sambanova_ekr')
-else:
-    logger.info('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
