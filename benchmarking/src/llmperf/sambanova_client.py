@@ -242,12 +242,15 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         Returns:
             streaming_url: string with url to do streaming calls
-        """
+        """            
         if 'chat/completions' in self.base_url:
             stream_url = self.base_url
         else:
             if 'stream' in self.base_url:
                 stream_url = self.base_url
+                if self.request_config.image:
+                    raise ValueError(f'Image support not available for url: {self.base_url}.\
+                        Try with OpenAI compatible endpoint.')
             else:
                 if 'generic' in self.base_url:
                     stream_url = 'generic/stream'.join(self.base_url.split('generic'))
@@ -298,7 +301,17 @@ class SambaStudioAPI(BaseAPIEndpoint):
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
 
-        data = {'messages': [{'role': 'user', 'content': prompt}]}
+        # If an image is provided, add it to the content
+        content: Any = None
+        if self.request_config.image:
+            content = [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {'url': f'data:image/png;base64,{self.request_config.image}'}}
+            ]
+        else:
+            content = prompt
+
+        data = {'messages': [{'role': 'user', 'content': content}]}
         data.update(sampling_params)
 
         return data
@@ -314,6 +327,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         # build payload for api v2
         if '/api/v2' in url.lower().strip():
+            # if an image is provided, add it to the payload
             tuning_params = json.loads(json.dumps(sampling_params))
             data = {'items': [{'id': 'item1', 'value': prompt}], 'params': tuning_params}
         # support to build payload for api v1
@@ -521,9 +535,19 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
 
-        data = {'messages': [{'role': 'user', 'content': prompt}]}
-        data.update(sampling_params)
+        
+        # If an image is provided, add it to the content
+        content: Any = None
+        if self.request_config.image:
+            content = [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {'url': f'data:image/png;base64,{self.request_config.image}'}}       
+            ]
+        else:
+            content = prompt
 
+        data = {'messages': [{'role': 'user', 'content': content}]}
+        data.update(sampling_params)
         return data
 
     def compute_metrics(self, metrics: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
@@ -554,7 +578,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response) # type: ignore
+            client = sseclient.SSEClient(response)  # type: ignore
             generated_text = ''
 
             for event in client.events():
