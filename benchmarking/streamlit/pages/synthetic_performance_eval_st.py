@@ -265,7 +265,7 @@ def main() -> None:
 
         st.session_state.number_requests = st.number_input(
             'Number of total requests',
-            min_value=10,
+            min_value=1,
             max_value=2000,
             value=10,
             step=1,

@@ -28,7 +28,9 @@ class ChatPerformanceEvaluator:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        if llmperf_utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model.lower().replace('-', ''):
+        family_model_type = llmperf_utils.find_family_model_type(self.model)
+        
+        if family_model_type == 'llama3':
             prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
             <|start_header_id|>assistant<|end_header_id|>"""
         else:
