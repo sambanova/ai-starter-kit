@@ -25,20 +25,8 @@ sys.path.append(repo_dir)
 
 from function_calling.src.tools import QueryDb, Rag, ToolClass, Translate, calculator, get_time, python_repl
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.visual.env_utils import get_wandb_key
 
 load_dotenv(os.path.join(repo_dir, '.env'))
-# Handle the WANDB_API_KEY resolution before importing weave
-wandb_api_key = get_wandb_key()
-
-# If WANDB_API_KEY is set, proceed with weave initialization
-if wandb_api_key:
-    import weave
-
-    # Initialize Weave with your project name
-    weave.init('sambanova_search_assistant')
-else:
-    print('WANDB_API_KEY is not set. Weave initialization skipped.')
 
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
