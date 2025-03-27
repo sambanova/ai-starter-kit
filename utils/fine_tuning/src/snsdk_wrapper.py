@@ -753,6 +753,184 @@ class SnsdkWrapper:
             logging.error(f"Failed to get model's info. Details: {model_info_response['message']}")
             raise Exception(f'Error message: {model_info_response["message"]}')
 
+    def create_spec_decoding_model(
+        self,
+        model_name: Optional[str] = None,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[str] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[str] = None,
+        rdu_arch: Optional[str] = None,
+        job_type: Optional[str] = None,
+    ) -> str:
+        """
+        Creates a speculative decoding model by validating and creating a pair of models.
+
+        Args:
+        - model_name (str): The name of the new model.
+        - target_model (str): The name of the target model.
+        - target_model_version (str): The version of the target model.
+        - draft_model (str): The name of the draft model.
+        - draft_model_version (str): The version of the draft model.
+        - rdu_arch (str): The RDU architecture.
+        - job_type (str): The type of job.
+
+        Returns:
+        - The ID of the newly created model.
+
+        Raises:
+        - Exception: If the target or draft model does not exist, or if the target model does not support speculative
+          decoding.
+        - Exception: If there is an error during the validation or creation process.
+        """
+
+        target_model_query = self.search_model(target_model)
+        if target_model_query is None:
+            raise Exception(f"Model with name '{target_model}' does not exist.")
+        draft_model_query = self.search_model(draft_model)
+        if draft_model_query is None:
+            raise Exception(f"Model with name '{draft_model}' does not exist.")
+
+        target_model_info_response = self.model_info(target_model, job_type)
+        if target_model_info_response['hyperparams'][job_type][rdu_arch]['supports_speculative_decoding'] == False:
+            raise Exception(f"Model with name '{target_model}' does not support speculative decoding.")
+
+        snapi_validate_spec_decoding_command = self._build_snapi_validate_spec_decoding(
+            target_model, target_model_version, draft_model, draft_model_version, rdu_arch
+        )
+
+        echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
+        snapi_response = subprocess.run(
+            snapi_validate_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
+        )
+
+        errors_response = (
+            ('internal server error' in snapi_response.stdout.lower())
+            and ('failed to validate' in snapi_response.stdout.lower())
+        ) or (len(snapi_response.stderr) > 0)
+        # if errors coming in response
+        if errors_response:
+            error_message = snapi_response.stdout
+            # if all lines in stderr are warnings dont raise
+            if all('warning' in line.lower() for line in error_message.splitlines()):
+                logging.warning(f'message with warning: {error_message}')
+            else:
+                logging.error(f'Failed to validate speculative decoding. Details: {error_message}')
+                raise Exception(f'Error message: {error_message}')
+        # if there are no errors in reponse
+        else:
+            logging.info(f"Speculative decoding validation: '{snapi_response.stdout}'")
+
+        snapi_create_spec_decoding_command = self._build_snapi_create_spec_decoding_pair(
+            model_name, target_model, target_model_version, draft_model, draft_model_version, rdu_arch
+        )
+
+        echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
+        snapi_response = subprocess.run(
+            snapi_create_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
+        )
+
+        errors_response = (
+            ('internal server error' in snapi_response.stdout.lower())
+            and ('failed to validate' in snapi_response.stdout.lower())
+        ) or (len(snapi_response.stderr) > 0)
+        # if errors coming in response
+        if errors_response:
+            error_message = snapi_response.stdout
+            # if all lines in stderr are warnings dont raise
+            if all('warning' in line.lower() for line in error_message.splitlines()):
+                logging.warning(f'message with warning: {error_message}')
+            else:
+                logging.error(f'Failed to validate speculative decoding. Details: {error_message}')
+                raise Exception(f'Error message: {error_message}')
+        # if there are no errors in reponse
+        else:
+            logging.info(f"Speculative decoding creation message: '{snapi_response.stdout}'")
+            new_model_id = self.search_model(model_name)
+            return new_model_id
+
+    def _build_snapi_validate_spec_decoding(
+        self,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[int] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[int] = None,
+        rdu_arch: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Builds the SNAPI command to validate speculative decoding for a pair of models.
+
+        Args:
+        - target_model (str): The name of the target model.
+        - target_model_version (int): The version of the target model.
+        - draft_model (str): The name of the draft model.
+        - draft_model_version (int): The version of the draft model.
+        - rdu_arch (str): The RDU architecture.
+
+        Returns:
+        - The SNAPI command to validate speculative decoding.
+        """
+        command = [
+            'snapi',
+            'model',
+            'validate-spec-decoding',
+            '--target',
+            target_model,
+            '--target-version',
+            target_model_version,
+            '--draft',
+            draft_model,
+            '--draft-version',
+            draft_model_version,
+            '--rdu-arch',
+            rdu_arch,
+        ]
+
+        return command
+
+    def _build_snapi_create_spec_decoding_pair(
+        self,
+        model_name: Optional[str] = None,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[int] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[int] = None,
+        rdu_arch: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Builds the SNAPI command to create a speculative decoding pair.
+
+        Args:
+        - model_name (str): The name of the new model.
+        - target_model (str): The name of the target model.
+        - target_model_version (int): The version of the target model.
+        - draft_model (str): The name of the draft model.
+        - draft_model_version (int): The version of the draft model.
+        - rdu_arch (str): The RDU architecture.
+
+        Returns:
+        - The SNAPI command to create a speculative decoding pair.
+        """
+        command = [
+            'snapi',
+            'model',
+            'create-sd-pair',
+            '--name',
+            model_name,
+            '--target',
+            target_model,
+            '--target-version',
+            target_model_version,
+            '--draft',
+            draft_model,
+            '--draft-version',
+            draft_model_version,
+            '--rdu-arch',
+            rdu_arch,
+        ]
+
+        return command
+
     def list_models(
         self,
         filter_job_types: Optional[List[str]] = [],
@@ -1545,12 +1723,12 @@ class SnsdkWrapper:
             # create composite model
             dependencies = [{'name': model} for model in model_list]
             create_composite_model_response = self.snsdk_client.add_composite_model(
-                name=model_name, 
-                description=description, 
-                dependencies=dependencies, 
+                name=model_name,
+                description=description,
+                dependencies=dependencies,
                 rdu_required=rdu_required,
-                config_params={}, 
-                app="",
+                config_params={},
+                app='',
             )
 
             if create_composite_model_response['status_code'] == 200:
