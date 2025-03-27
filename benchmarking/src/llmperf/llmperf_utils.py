@@ -95,32 +95,31 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     if family_model_type == 'mistral':
         tokenizer = AutoTokenizer.from_pretrained('TheBloke/Mistral-7B-Instruct-v0.2-AWQ')
     elif family_model_type == 'llama3':
-        tokenizer = AutoTokenizer.from_pretrained('tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3')
-        # if ('3.1' in model_name) or ('3p1' in model_name):
-        #     if 'swallow' in model_name.lower():
-        #         tokenizer = AutoTokenizer.from_pretrained('tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3')
-        #     else:
-        #         tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.1-8B-Instruct')
-        # elif ('3.2' in model_name) or ('3p2' in model_name):
-        #     tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.2-1B-Instruct')
-        # elif ('3.3' in model_name) or ('3p3' in model_name):
-        #     tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.3-70B-Instruct')
-        # else:
-        #     tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
+        if ('3.1' in model_name) or ('3p1' in model_name):
+            if 'swallow' in model_name.lower():
+                tokenizer = AutoTokenizer.from_pretrained('tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3')
+            else:
+                tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.1-8B-Instruct')
+        elif ('3.2' in model_name) or ('3p2' in model_name):
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.2-1B-Instruct')
+        elif ('3.3' in model_name) or ('3p3' in model_name):
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.3-70B-Instruct')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
     elif family_model_type == 'deepseek':
         if 'coder' in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/deepseek-coder-1.3b-base')
-        # elif 'r1':
-        #     tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/DeepSeek-R1')
+        elif 'r1':
+            tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/DeepSeek-R1')
         else:
             tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/deepseek-llm-7b-base')
-    # elif family_model_type == 'qwen':
-    #     if 'qwq' in model_name.lower():
-    #         tokenizer = AutoTokenizer.from_pretrained('unsloth/QwQ-32B')
-    #     elif 'coder' in model_name.lower():
-    #         tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-Coder-32B-Instruct')
-    #     else:
-    #         tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-72B-Instruct')
+    elif family_model_type == 'qwen':
+        if 'qwq' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/QwQ-32B')
+        elif 'coder' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-Coder-32B-Instruct')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-72B-Instruct')
     elif family_model_type == 'solar':
         tokenizer = AutoTokenizer.from_pretrained('upstage/SOLAR-10.7B-Instruct-v1.0')
     elif family_model_type == 'eeve':
