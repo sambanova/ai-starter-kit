@@ -10,7 +10,6 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
 import yaml
 
 file_location = Path(__file__).parent.resolve()
@@ -138,18 +137,8 @@ class BasePerformanceEvaluator(abc.ABC):
         Returns:
             str: adjusted text
         """
-        model = self.model_name.replace('Bundle/', '').replace('/', '_')
-        tokenized_text_filename = f'tokenized_text_variable_{model}.bin'
-        tokenized_text_directory = f'{kit_location}/../../scratch/benchmarking/prompts'
-        tokenized_text_filepath = f'{tokenized_text_directory}/{tokenized_text_filename}'
-
-        if not Path(tokenized_text_directory).exists():
-            Path(tokenized_text_directory).mkdir(parents=True)
-
         # if not Path(tokenized_text_filepath).exists():
-        tokens = self.tokenizer.tokenize(text)
-        joblib.dump(tokens, tokenized_text_filepath)
-        
+        tokens = self.tokenizer.tokenize(text)        
         token_count = len(tokens)
 
         if token_count > target_token_count:
@@ -767,11 +756,13 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         )
 
         # Specific prompt templating for mistral models
-        if llmperf_utils.MODEL_TYPE_IDENTIFIER['mistral'] in self.model_name.lower().replace('-', ''):
+        family_model_type = llmperf_utils.find_family_model_type(self.model_name)
+
+        if family_model_type == 'mistral':
             prompt = '[INST]' + raw_prompt + '[/INST]'
 
         # Specific prompt templating for Llama-3 models
-        elif llmperf_utils.MODEL_TYPE_IDENTIFIER['llama3'] in self.model_name.lower().replace('-', ''):
+        elif family_model_type == 'llama3':
             system_prompt = (
                 f'<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>'
             )
@@ -784,7 +775,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             )
 
         # Specific prompt templating for Llama-2 models
-        elif llmperf_utils.MODEL_TYPE_IDENTIFIER['llama2'] in self.model_name.lower().replace('-', ''):
+        elif family_model_type == 'llama2':
             system_prompt = f'[INST]<<SYS>>{sys_prompt_template}<</SYS>>'
             prompt = system_prompt + raw_prompt + '[/INST]'
 
