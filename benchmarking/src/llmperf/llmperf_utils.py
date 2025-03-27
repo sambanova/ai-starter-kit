@@ -7,13 +7,14 @@ from transformers import AutoTokenizer
 
 SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
-MODEL_TYPE_IDENTIFIER = {
-    'mistral': 'mistral',
-    'llama3': 'llama3',
-    'deepseek': 'deepseek',
-    'solar': 'solar',
-    'eeve': 'eeve',
-    'llama2': 'llama2',
+FAMILY_MODEL_TYPE_IDENTIFIER = {
+    'mistral': ['mistral'],
+    'llama3': ['llama3'],
+    'deepseek': ['deepseek'],
+    'qwen': ['qwen', 'qwq'],
+    'solar': ['solar'],
+    'eeve': ['eeve'],
+    'llama2': ['llama2']
 }
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
@@ -55,6 +56,21 @@ class LLMPerfResults:
         data = self.to_dict()
         return json.dumps(data)
 
+def find_family_model_type(model_name: str) -> str:
+    """Finds family model type
+
+    Args:
+        model_name (str): model name
+
+    Returns:
+        str: family model type
+    """
+    for family, models in FAMILY_MODEL_TYPE_IDENTIFIER.items():
+        for model in models:
+            if model in model_name.lower().replace('-', '').replace('v', ''):
+                return family
+    return 'llama2'
+
 
 def get_tokenizer(model_name: str) -> AutoTokenizer:
     """Gets generic tokenizer according to model type
@@ -65,26 +81,48 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     Returns:
         AutoTokenizer: generic HuggingFace tokenizer
     """
-    # Using NousrResearch for calling out model tokenizers without requesting access.
+    # Using multiple sources for calling out model tokenizers without requesting access.
     # Ref: https://huggingface.co/NousResearch
     # Ref: https://huggingface.co/TheBloke
     # Ref: https://huggingface.co/unsloth
     # Ref: https://huggingface.co/deepseek-ai
     # Ref: https://huggingface.co/upstage
     # Ref: https://huggingface.co/yanolja
+    # Ref: https://huggingface.co/QuantFactory
 
-    if MODEL_TYPE_IDENTIFIER['mistral'] in model_name.lower().replace('-', ''):
+    family_model_type = find_family_model_type(model_name)
+
+    if family_model_type == 'mistral':
         tokenizer = AutoTokenizer.from_pretrained('TheBloke/Mistral-7B-Instruct-v0.2-AWQ')
-    elif MODEL_TYPE_IDENTIFIER['llama3'] in model_name.lower().replace('-', ''):
-        tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
-    elif MODEL_TYPE_IDENTIFIER['deepseek'] in model_name.lower().replace('-', ''):
+    elif family_model_type == 'llama3':
+        if ('3.1' in model_name) or ('3p1' in model_name):
+            if 'swallow' in model_name.lower():
+                tokenizer = AutoTokenizer.from_pretrained('tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3')
+            else:
+                tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.1-8B-Instruct')
+        elif ('3.2' in model_name) or ('3p2' in model_name):
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.2-1B-Instruct')
+        elif ('3.3' in model_name) or ('3p3' in model_name):
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.3-70B-Instruct')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
+    elif family_model_type == 'deepseek':
         if 'coder' in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/deepseek-coder-1.3b-base')
+        elif 'r1':
+            tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/DeepSeek-R1')
         else:
             tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/deepseek-llm-7b-base')
-    elif MODEL_TYPE_IDENTIFIER['solar'] in model_name.lower().replace('-', ''):
+    elif family_model_type == 'qwen':
+        if 'qwq' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/QwQ-32B')
+        elif 'coder' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-Coder-32B-Instruct')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Qwen2.5-72B-Instruct')
+    elif family_model_type == 'solar':
         tokenizer = AutoTokenizer.from_pretrained('upstage/SOLAR-10.7B-Instruct-v1.0')
-    elif MODEL_TYPE_IDENTIFIER['eeve'] in model_name.lower().replace('-', ''):
+    elif family_model_type == 'eeve':
         tokenizer = AutoTokenizer.from_pretrained('yanolja/EEVE-Korean-10.8B-v1.0')
     else:
         tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
