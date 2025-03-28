@@ -762,7 +762,7 @@ class SnsdkWrapper:
         draft_model_version: Optional[str] = None,
         rdu_arch: Optional[str] = None,
         job_type: Optional[str] = None,
-    ) -> str:
+    ) -> Optional[str]:
         """
         Creates a speculative decoding model by validating and creating a pair of models.
 
@@ -784,6 +784,34 @@ class SnsdkWrapper:
         - Exception: If there is an error during the validation or creation process.
         """
 
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['spec_decoding']['model_name']
+        
+        if target_model is None:
+            self._raise_error_if_config_is_none()
+            target_model = self.config['spec_decoding']['target_model']
+
+        if target_model_version is None:
+            self._raise_error_if_config_is_none()
+            target_model_version = self.config['spec_decoding']['target_model_version']
+        
+        if draft_model is None:
+            self._raise_error_if_config_is_none()
+            draft_model = self.config['spec_decoding']['draft_model']
+        
+        if draft_model_version is None:
+            self._raise_error_if_config_is_none()
+            draft_model_version = self.config['spec_decoding']['draft_model_version']
+        
+        if rdu_arch is None:
+            self._raise_error_if_config_is_none()
+            rdu_arch = self.config['sambastudio']['rdu_arch']
+        
+        if job_type is None:
+            self._raise_error_if_config_is_none()
+            job_type = self.config['job']['job_type']
+
         target_model_query = self.search_model(target_model)
         if target_model_query is None:
             raise Exception(f"Model with name '{target_model}' does not exist.")
@@ -804,21 +832,10 @@ class SnsdkWrapper:
             snapi_validate_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
         )
 
-        errors_response = (
-            ('internal server error' in snapi_response.stdout.lower())
-            and ('failed to validate' in snapi_response.stdout.lower())
-        ) or (len(snapi_response.stderr) > 0)
-        # if errors coming in response
-        if errors_response:
-            error_message = snapi_response.stdout
-            # if all lines in stderr are warnings dont raise
-            if all('warning' in line.lower() for line in error_message.splitlines()):
-                logging.warning(f'message with warning: {error_message}')
-            else:
-                logging.error(f'Failed to validate speculative decoding. Details: {error_message}')
-                raise Exception(f'Error message: {error_message}')
-        # if there are no errors in reponse
-        else:
+        error_message = 'Failed to validate speculative decoding. Details: '
+        errors_response = self._handle_error_spec_decoding(snapi_response, error_message)
+
+        if errors_response is None:
             logging.info(f"Speculative decoding validation: '{snapi_response.stdout}'")
 
         snapi_create_spec_decoding_command = self._build_snapi_create_spec_decoding_pair(
@@ -830,6 +847,15 @@ class SnsdkWrapper:
             snapi_create_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
         )
 
+        error_message = 'Failed to create speculative decoding. Details: '
+        errors_response = self._handle_error_spec_decoding(snapi_response, error_message)
+
+        if errors_response is None:
+            logging.info(f"Speculative decoding creation message: '{snapi_response.stdout}'")
+            new_model_id = self.search_model(model_name)
+            return new_model_id
+    
+    def _handle_error_spec_decoding(self, snapi_response: any, custom_error_message: str) -> None:
         errors_response = (
             ('internal server error' in snapi_response.stdout.lower())
             and ('failed to validate' in snapi_response.stdout.lower())
@@ -841,13 +867,11 @@ class SnsdkWrapper:
             if all('warning' in line.lower() for line in error_message.splitlines()):
                 logging.warning(f'message with warning: {error_message}')
             else:
-                logging.error(f'Failed to validate speculative decoding. Details: {error_message}')
+                logging.error(error_message + f'{error_message}')
                 raise Exception(f'Error message: {error_message}')
         # if there are no errors in reponse
         else:
-            logging.info(f"Speculative decoding creation message: '{snapi_response.stdout}'")
-            new_model_id = self.search_model(model_name)
-            return new_model_id
+            return None
 
     def _build_snapi_validate_spec_decoding(
         self,
