@@ -14,7 +14,9 @@ FAMILY_MODEL_TYPE_IDENTIFIER = {
     'qwen': ['qwen', 'qwq'],
     'solar': ['solar'],
     'eeve': ['eeve'],
+    'sarashina2': ['sarashina2'],
     'llama2': ['llama2']
+
 }
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
@@ -89,6 +91,7 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
     # Ref: https://huggingface.co/upstage
     # Ref: https://huggingface.co/yanolja
     # Ref: https://huggingface.co/QuantFactory
+    # Ref: https://huggingface.co/sbintuitions
 
     family_model_type = find_family_model_type(model_name)
 
@@ -124,6 +127,9 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
         tokenizer = AutoTokenizer.from_pretrained('upstage/SOLAR-10.7B-Instruct-v1.0')
     elif family_model_type == 'eeve':
         tokenizer = AutoTokenizer.from_pretrained('yanolja/EEVE-Korean-10.8B-v1.0')
+    elif family_model_type == 'sarashina2':
+        # print('using sarashina2 70b tokenizer')
+        tokenizer = AutoTokenizer.from_pretrained('sbintuitions/sarashina2-70b')
     else:
         tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
     return tokenizer
