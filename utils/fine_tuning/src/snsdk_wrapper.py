@@ -764,24 +764,24 @@ class SnsdkWrapper:
         job_type: Optional[str] = None,
     ) -> Optional[str]:
         """
-        Creates a speculative decoding model by validating and creating a pair of models.
+        Creates a speculative decoding model pair.
 
         Args:
-        - model_name (str): The name of the new model.
-        - target_model (str): The name of the target model.
-        - target_model_version (str): The version of the target model.
-        - draft_model (str): The name of the draft model.
-        - draft_model_version (str): The version of the draft model.
-        - rdu_arch (str): The RDU architecture.
-        - job_type (str): The type of job.
+            - model_name (str): The name of the new model. (e.g. Meta-Llama-3.3-70B-Instruct-SD)
+            - target_model (str): The name of the target model. (e.g. Meta-Llama-3.3-70B-Instruct)
+            - target_model_version (str): The version of the target model. (e.g. 1)
+            - draft_model (str): The name of the draft model. (e.g. Meta-Llama-3-8B-Instruct)
+            - draft_model_version (str): The version of the draft model. (e.g. 1)
+            - rdu_arch (str): The RDU architecture. (e.g. SN40L-8)
+            - job_type (str): The type of job. (e.g. deploy)
 
         Returns:
-        - The ID of the newly created model.
+            - The ID of the newly created model.
 
         Raises:
-        - Exception: If the target or draft model does not exist, or if the target model does not support speculative
-          decoding.
-        - Exception: If there is an error during the validation or creation process.
+            - Exception: If the target or draft model does not exist, or if the target model does not support 
+            speculative decoding (e.g. models are not compatible for spec decoding).
+            - Exception: If there is an error during the validation or creation process.
         """
 
         if model_name is None:
@@ -812,6 +812,7 @@ class SnsdkWrapper:
             self._raise_error_if_config_is_none()
             job_type = self.config['job']['job_type']
 
+        # check if models exist
         target_model_query = self.search_model(target_model)
         if target_model_query is None:
             raise Exception(f"Model with name '{target_model}' does not exist.")
@@ -823,6 +824,7 @@ class SnsdkWrapper:
         if target_model_info_response['hyperparams'][job_type][rdu_arch]['supports_speculative_decoding'] == False:
             raise Exception(f"Model with name '{target_model}' does not support speculative decoding.")
 
+        # check if models are compatible
         snapi_validate_spec_decoding_command = self._build_snapi_validate_spec_decoding(
             target_model, target_model_version, draft_model, draft_model_version, rdu_arch
         )
@@ -856,6 +858,21 @@ class SnsdkWrapper:
             return new_model_id
     
     def _handle_error_spec_decoding(self, snapi_response: any, custom_error_message: str) -> None:
+        """
+        Handles error decoding for a given SNAPI response.
+
+        Checks the response for internal server errors, validation failures, or non-empty stderr.
+        If an error is detected, logs the error message and raises an exception.
+        If all lines in the error message are warnings, logs a warning instead of raising an exception.
+
+        Args:
+            snapi_response (any): The response from the SNAPI.
+            custom_error_message (str): A custom error message to include in the exception.
+
+        Raises:
+            - Exception: custom error message.
+        
+        """
         errors_response = (
             ('internal server error' in snapi_response.stdout.lower())
             and ('failed to validate' in snapi_response.stdout.lower())
@@ -885,14 +902,14 @@ class SnsdkWrapper:
         Builds the SNAPI command to validate speculative decoding for a pair of models.
 
         Args:
-        - target_model (str): The name of the target model.
-        - target_model_version (int): The version of the target model.
-        - draft_model (str): The name of the draft model.
-        - draft_model_version (int): The version of the draft model.
-        - rdu_arch (str): The RDU architecture.
+            - target_model (str): The name of the target model.
+            - target_model_version (int): The version of the target model.
+            - draft_model (str): The name of the draft model.
+            - draft_model_version (int): The version of the draft model.
+            - rdu_arch (str): The RDU architecture.
 
         Returns:
-        - The SNAPI command to validate speculative decoding.
+            - The SNAPI command to validate speculative decoding.
         """
         command = [
             'snapi',
@@ -925,15 +942,15 @@ class SnsdkWrapper:
         Builds the SNAPI command to create a speculative decoding pair.
 
         Args:
-        - model_name (str): The name of the new model.
-        - target_model (str): The name of the target model.
-        - target_model_version (int): The version of the target model.
-        - draft_model (str): The name of the draft model.
-        - draft_model_version (int): The version of the draft model.
-        - rdu_arch (str): The RDU architecture.
+            - model_name (str): The name of the new model.
+            - target_model (str): The name of the target model.
+            - target_model_version (int): The version of the target model.
+            - draft_model (str): The name of the draft model.
+            - draft_model_version (int): The version of the draft model.
+            - rdu_arch (str): The RDU architecture.
 
         Returns:
-        - The SNAPI command to create a speculative decoding pair.
+            - The SNAPI command to create a speculative decoding pair.
         """
         command = [
             'snapi',
