@@ -1,0 +1,18 @@
+dataset_creation:
+  project:
+    project_name: "e2e-draft-model-training-project"
+    project_description: "This project will be used to test the E2E Draft Model Training pipeline implementation."
+
+  endpoint:
+    endpoint_name: "Llama-3.1-8B-Instruct"
+    endpoint_description: "Endpoint for Llama-3.1-8B-Instruct."
+    endpoint_instances: 1
+    hyperparams: null
+
+  sambastudio:
+    snapi_path: ""
+    rdu_arch: "SN40L-8"
+
+  files:
+   input_filename: "../data/datasets/bio_train_completions/bio_train_formatted.jsonl"
+   output_filename: "../data/datasets/bio_train_completions/bio_train_completions.jsonl"

@@ -1,0 +1,21 @@
+target:
+  model:
+    model_name: "Llama-3.1-8B-Instruct"
+    publisher: "meta-llama"
+    description: "The Meta Llama 3.1 collection of multilingual large language models (LLMs) is a collection of pretrained and instruction tuned generative models in 8B, 70B and 405B sizes (text in/text out)."
+    param_count: 8  # number in billions of parameters
+
+  sambastudio:
+    snapi_path: ""
+    rdu_arch: "SN40L-8"
+
+  # checkpoints:
+  #   - model_name: "Llama3-OpenBioLLM-8B"
+  #     checkpoint_path: '/Users/francescar/Documents/ai-starter-kit/e2e_draft_model_training/data/models/models--aaditya--Llama3-OpenBioLLM-8B/snapshots/70d6bb521cab6ca755b675ade38831eedf89d31c'
+  #     publisher: "aaditya"
+  #     description: "OpenBioLLM-8B is an advanced open source language model designed specifically for the biomedical domain."
+  #     param_count: 8
+  #     model_arch: "llama" 
+  #     seq_length: 8192 
+  #     vocab_size: 128256 
+  #     app_id: "61fa0993-04a2-42ca-9db1-1eff693ea978"
