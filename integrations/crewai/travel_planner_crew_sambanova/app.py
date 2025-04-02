@@ -16,7 +16,7 @@ from typing import List, Tuple
 import gradio as gr  # type: ignore
 import plotly.graph_objects as go
 
-from .crew import AddressSummaryCrew, TravelCrew
+from .crews.crew import AddressSummaryCrew, TravelCrew
 
 
 def filter_map(text_list: List[str], lat: List[str], lon: List[str]) -> go.Figure:
@@ -115,7 +115,7 @@ def run(
     json_addresses = None
     if addresses.json_dict is not None:
         json_addresses = addresses.json_dict
-    if json_addresses is not None:
+    if json_addresses is None:
         try:
             json_addresses = json.loads(addresses.raw)
         except json.JSONDecodeError as e:
@@ -130,7 +130,7 @@ def run(
                     logger.error('Error loading Crew Output for addresses')
                     logger.info(addresses.raw)
                     return (result, None)
-    fig = filter_map(json_addresses['name'], json_addresses['lat'], json_addresses['lon'])
+    fig = filter_map(json_addresses.get('name'), json_addresses.get('lat'), json_addresses.get('lon'))
     return (result, fig)
 
 
