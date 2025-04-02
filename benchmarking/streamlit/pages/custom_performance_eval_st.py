@@ -10,10 +10,13 @@ from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
     APP_PAGES,
     LLM_API_OPTIONS,
+    PRIMARY_ST_STYLE,
+    SECONDARY_ST_STYLE,
     find_pages_to_hide,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    save_uploaded_file,
     set_api_variables,
     update_progress_bar,
 )
@@ -35,6 +38,10 @@ def _initialize_sesion_variables() -> None:
         st.session_state.llm_api = None
 
     # Initialize llm params
+    if 'uploaded_file' not in st.session_state:
+        st.session_state.uploaded_file = None
+    if 'file_path' not in st.session_state:
+        st.session_state.file_path = None
     if 'do_sample' not in st.session_state:
         st.session_state.do_sample = None
     if 'max_tokens_to_generate' not in st.session_state:
@@ -104,7 +111,6 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
     return valid_df
 
-
 def main() -> None:
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
@@ -125,9 +131,10 @@ def main() -> None:
         # File Selection #
         ##################
         st.title('File Selection')
-        st.text_input(
-            'Full File Path', help='', key='file_path', disabled=st.session_state.running
-        )  # TODO: Fill in help
+        st.session_state.uploaded_file = st.file_uploader(
+            'Upload JSON File', type='jsonl', disabled=st.session_state.running
+        )  
+        st.session_state.file_path = save_uploaded_file(internal_save_path='data/custom_input_files')
 
         #########################
         # Runtime Configuration #
@@ -208,9 +215,9 @@ def main() -> None:
 
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
-        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button')
+        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button', type='primary')
 
-        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running)
+        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary')
 
         if st.session_state.prod_mode:
             if st.button('Back to Setup', disabled=st.session_state.running):
@@ -299,6 +306,10 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
+    
+    # Defining styles
+    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
+    st.markdown(SECONDARY_ST_STYLE,unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 

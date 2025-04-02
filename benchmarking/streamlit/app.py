@@ -94,6 +94,7 @@ def main() -> None:
 
             if not are_credentials_set(additional_env_vars):
                 api_key, additional_vars = env_input_fields(additional_env_vars, st.session_state.mode)
+
                 if st.button('Save Credentials'):
                     if st.session_state.mode == 'SambaNova Cloud':
                         message = save_credentials(api_key, additional_vars, prod_mode)

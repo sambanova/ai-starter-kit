@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List
 
 import numpy as np
@@ -8,6 +9,7 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
+MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
     'synthetic_eval': {
@@ -25,7 +27,60 @@ APP_PAGES = {
     'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
     'setup': {'file_path': 'streamlit/app.py', 'page_label': 'Setup'},
 }
+PRIMARY_ST_STYLE = """
+    <style>
+    /* Targeting the button inside the sidebar with a specific key */
+    button[kind="primary"] {
+        width: 100%; /* Match input width */
+        height: 50px; /* Adjust for size */
+        background-color: #ee7624 !important; /* Streamlit red */
+        color: white !important;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
 
+    button[kind="primary"]:hover {
+        background-color: #ce661f !important; /* Darker red on hover */
+    }
+    
+    button[kind="primary"]:disabled {
+        background-color: #bfbfbf !important; /* Greyed out */
+        color: #7a7a7a !important; /* Dimmed text */
+        cursor: not-allowed !important;
+    }
+    </style>
+    """
+SECONDARY_ST_STYLE = """
+    <style>
+    /* Targeting the button inside the sidebar with a specific key */
+    button[kind="secondary"] {
+        width: 100%; /* Match input width */
+        height: 50px; /* Adjust for size */
+    }
+    
+    button[kind="secondary"]:disabled {
+        background-color: #d3d3d3 !important; /* Light grey */
+        color: #9e9e9e !important; /* Dimmed text */
+        cursor: not-allowed !important;
+    }
+    </style>
+    """
+
+def save_uploaded_file(internal_save_path: str) -> str:    
+    uploaded_file = st.session_state.uploaded_file
+    temp_file_path = '.'
+    if st.session_state.uploaded_file is not None:
+        # Save the uploaded file to a temporary location
+        save_dir = os.path.join(os.getcwd(), internal_save_path)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        temp_file_path = os.path.join(save_dir, uploaded_file.name)
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(uploaded_file.getbuffer())
+    return temp_file_path
 
 def find_pages_to_hide() -> List[str]:
     pages_to_show = st.session_state.pages_to_show

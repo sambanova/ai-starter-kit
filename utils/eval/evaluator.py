@@ -19,7 +19,6 @@ from weave import Dataset
 from utils.eval.dataset import WeaveDatasetManager
 from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
 from utils.eval.rag import RAGChain
-from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
 
@@ -129,7 +128,7 @@ class BaseWeaveEvaluator(WeaveEvaluator):
 
             await asyncio.gather(*evaluation_tasks)
 
-    def _evaluate_model(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+    def _evaluate_model(self, params: Dict[str, Any], data: Dataset) -> None:
         """
         Evaluate a model using the provided parameters in a separate thread.
         This method runs in a thread pool. It creates a `WeaveChatModel` using the
@@ -260,22 +259,13 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
         if filepath is None:
             filepath = self.config_info['eval_dataset']['path']
 
-        data = self.dataset_manager.create_raw_dataset(filepath)
-
-        for i in range(len(data)):
-            response = self.rag_chain.predict(data[i].get('query', ''))
-            data[i]['context'] = [i.page_content for i in response['context']]
-            data[i]['completion'] = response['answer']
-
-        weave_data = self.dataset_manager.to_weave_dataset(name, data)
-
-        rag_model = WeaveRAGModel(**self.rag_info['llm'])
+        weave_data = self.dataset_manager.create_dataset(name, filepath)
 
         evaluation = weave.Evaluation(
             name=' '.join(str(value) for value in self.rag_info.values()), dataset=weave_data, scorers=[self.judge]
         )
 
-        await evaluation.evaluate(rag_model)
+        await evaluation.evaluate(self.rag_chain)
 
     def _init_chain(self) -> RAGChain:
         """
@@ -298,4 +288,12 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
         llm_info = rag_info['llm']
         embeddings_info = rag_info['embeddings']
         vectordb_info = rag_info['vectordb']
-        return RAGChain(SNCloudSchema(**llm_info), EmbeddingsSchema(**embeddings_info), VectorDBSchema(**vectordb_info))
+        model_kwargs = rag_info.get('model_kwargs')
+
+        return WeaveRAGModel(
+            name=rag_info.get('name'),
+            llm_params=llm_info,
+            embeddings_params=embeddings_info,
+            rag_params=vectordb_info,
+            model_kwargs=model_kwargs,
+        )
