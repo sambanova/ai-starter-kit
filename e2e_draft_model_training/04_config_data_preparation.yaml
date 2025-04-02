@@ -1,29 +1,30 @@
-dataset_train:
-  files:
-    
+target_model:
+  hf_name: "meta-llama/Llama-3.1-8B-Instruct"
+  model_name: "Llama-3.1-8B-Instruct"
+  publisher: "meta-llama"
+  max_seq_length: 8192
 
-  sambastudio:
-    snapi_path: ""
-    rdu_arch: "SN40L-8"
+files:
+  input_files: "data/datasets/bio_train_completions/bio_train_completions.jsonl"
+  output_path: "data/datasets/bio_train_completions/fine_tuning_bio_train_completions.jsonl"
 
-  dataset:
-    dataset_name: "publichealth"
-    dataset_description: "This dataset contains question and answer pairs sourced from Q&A pages and FAQs from CDC and WHO pertaining to COVID-19"
-    dataset_path: "/Users/my_user/Documents/ai-starter-kit/e2e_fine_tuning/data/datasets/fine_tuning-publichealth-qa"
-    dataset_apps_availability: 
-      - 'Llama 3'
-      - 'Samba1 Llama3 Experts'
-      - 'Samba1 Llama3.1 Experts'
-      - 'Samba1 Llama3.2 Experts'
-    dataset_job_types:
-      - "evaluation"
-      - "train"
-    dataset_source_type: "localMachine"
-    dataset_language: "english"
-    dataset_filetype: "hdf5"
-    dataset_url: "https://huggingface.co/datasets/xhluca/publichealth-qa"
-    dataset_metadata:
-      labels_file: ""
-      train_filepath: ""
-      validation_filepath: ""
-      test_filepath: ""
+sambastudio:
+  snapi_path: ""
+  rdu_arch: "SN40L-8"
+
+dataset:
+  dataset_name: "dummy_example"
+  dataset_description: "xxx"
+  dataset_path: "/Users/my_user/Documents/ai-starter-kit/e2e_fine_tuning/data/datasets/fine_tuning-publichealth-qa"
+  dataset_job_types:
+    - "evaluation"
+    - "train"
+  dataset_source_type: "localMachine"
+  dataset_language: "english"
+  dataset_filetype: "hdf5"
+  dataset_url: "https://huggingface.co/datasets/xhluca/publichealth-qa"
+  dataset_metadata:
+    labels_file: ""
+    train_filepath: ""
+    validation_filepath: ""
+    test_filepath: ""
