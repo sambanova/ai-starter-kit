@@ -1,100 +1,100 @@
-{"prompt": "Define AI in one sentence."}
-{"prompt": "Explain Newton’s first law of motion."}
-{"prompt": "Summarize the plot of Romeo and Juliet in one paragraph."}
-{"prompt": "Describe the process of photosynthesis in detail."}
 {"prompt": "What is the capital of France?"}
-{"prompt": "List three benefits of regular exercise."}
-{"prompt": "Explain the significance of the Industrial Revolution in world history."}
-{"prompt": "How does blockchain technology work?"}
-{"prompt": "What are the three primary colors?"}
-{"prompt": "Write a short story about a lost cat."}
-{"prompt": "Define the term 'machine learning' in a single sentence."}
-{"prompt": "Describe the structure of a water molecule."}
-{"prompt": "What are the main causes of climate change?"}
-{"prompt": "Summarize the theory of evolution in 2-3 sentences."}
-{"prompt": "List the planets in the solar system in order from the sun."}
-{"prompt": "How does a combustion engine function?"}
-{"prompt": "Write a persuasive argument for why people should vote."}
-{"prompt": "Explain the difference between a virus and a bacterium."}
-{"prompt": "Describe how WiFi works in simple terms."}
-{"prompt": "Write a haiku about the ocean."}
-{"prompt": "Explain Einstein’s theory of relativity in layman’s terms."}
-{"prompt": "Describe the importance of the Renaissance in European history."}
-{"prompt": "What is the significance of the number zero in mathematics?"}
-{"prompt": "Write a paragraph about the importance of mental health awareness."}
-{"prompt": "Explain the process of mitosis in detail."}
-{"prompt": "What is the Pythagorean theorem?"}
-{"prompt": "Summarize the main themes of George Orwell’s 1984."}
-{"prompt": "Describe how vaccines work."}
-{"prompt": "List five programming languages and their common uses."}
-{"prompt": "Explain how an electric car battery works."}
-{"prompt": "What is the importance of biodiversity in an ecosystem?"}
-{"prompt": "Define quantum computing in simple terms."}
-{"prompt": "Write a short dialogue between two robots in the future."}
-{"prompt": "Explain the concept of supply and demand in economics."}
-{"prompt": "What are the three states of matter?"}
-{"prompt": "Summarize the plot of The Great Gatsby in a paragraph."}
-{"prompt": "Write a limerick about a mischievous cat."}
-{"prompt": "Describe the function of the human heart."}
-{"prompt": "Explain why the sky appears blue."}
-{"prompt": "What are the benefits of learning a second language?"}
-{"prompt": "How does GPS technology determine location?"}
-{"prompt": "Write a brief history of the internet."}
-{"prompt": "Explain how photosynthesis contributes to the food chain."}
-{"prompt": "List three ways to reduce energy consumption at home."}
-{"prompt": "Describe the impact of social media on modern communication."}
-{"prompt": "Explain the importance of cybersecurity in the digital age."}
-{"prompt": "What are the different types of renewable energy sources?"}
-{"prompt": "Write a short story about a time traveler visiting the past."}
-{"prompt": "Describe the major differences between reptiles and amphibians."}
-{"prompt": "Summarize the key points of the US Declaration of Independence."}
-{"prompt": "What is the Fibonacci sequence and where is it found in nature?"}
-{"prompt": "Describe the role of DNA in genetics."}
-{"prompt": "Explain how a black hole forms."}
-{"prompt": "List five historical figures who changed the world and why."}
-{"prompt": "Write a fictional letter from an alien to a human."}
-{"prompt": "Describe the basic working principle of an airplane."}
-{"prompt": "Explain the concept of artificial neural networks."}
-{"prompt": "What is the greenhouse effect?"}
-{"prompt": "Write a poem about the changing seasons."}
-{"prompt": "Describe the cultural significance of the Olympic Games."}
-{"prompt": "What are the main causes of inflation?"}
-{"prompt": "Explain the scientific method in simple terms."}
-{"prompt": "Write a creative advertisement for a futuristic product."}
-{"prompt": "Describe the functions of the three branches of the US government."}
-{"prompt": "What is the importance of the ozone layer?"}
-{"prompt": "Explain the basics of cryptocurrency."}
-{"prompt": "Write a short horror story set in a deserted town."}
-{"prompt": "What are the different types of clouds and how do they form?"}
-{"prompt": "Explain the importance of the water cycle."}
-{"prompt": "Describe the effects of deforestation on the environment."}
-{"prompt": "What are the fundamental rights guaranteed by the Universal Declaration of Human Rights?"}
-{"prompt": "Explain how antibiotics work."}
-{"prompt": "Write a motivational speech for students preparing for exams."}
-{"prompt": "What are the differences between renewable and non-renewable resources?"}
-{"prompt": "Summarize the history of space exploration."}
-{"prompt": "Describe the role of the mitochondria in a cell."}
-{"prompt": "What are the ethical considerations of AI development?"}
-{"prompt": "Write a recipe for a simple homemade pizza."}
-{"prompt": "Describe how an earthquake occurs."}
-{"prompt": "Explain how machine learning is used in everyday life."}
-{"prompt": "What are the advantages and disadvantages of nuclear energy?"}
-{"prompt": "Write a fable with a moral lesson."}
-{"prompt": "Summarize the main conflicts in Shakespeare’s Hamlet."}
-{"prompt": "Describe the major effects of global warming."}
-{"prompt": "Explain the role of the immune system in fighting infections."}
-{"prompt": "Write a letter from a future historian describing today’s world."}
-{"prompt": "What is the significance of the periodic table?"}
-{"prompt": "Describe how an electric circuit works."}
-{"prompt": "Write a joke about computers."}
-{"prompt": "Explain the concept of gravitational waves."}
-{"prompt": "Describe how a camera captures an image."}
-{"prompt": "What is the function of the nervous system?"}
-{"prompt": "Summarize the plot of Moby Dick in a paragraph."}
-{"prompt": "Explain the difference between classical and quantum physics."}
-{"prompt": "Write a short monologue from the perspective of a villain."}
-{"prompt": "Describe the formation of a tornado."}
-{"prompt": "What is the role of enzymes in digestion?"}
-{"prompt": "Explain the concept of the butterfly effect."}
-{"prompt": "Describe the major themes of Mary Shelley’s Frankenstein."}
-{"prompt": "Write a short detective story with a twist ending."}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Define 'entropy' in one sentence."}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Describe the history of the Roman Empire in depth."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Summarize this paragraph in one sentence: 'The Industrial Revolution, which took place from the 18th to 19th centuries, was a period during which predominantly agrarian, rural societies in Europe and America became industrial and urban. The revolution saw the rise of mechanized production, improved transportation, and significant social and economic changes.'"}
+{"prompt": "Analyze the impact of artificial intelligence on modern society, considering ethical, economic, and technological aspects. Provide a well-reasoned argument with examples."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
+{"prompt": "What is the capital of France?"}
+{"prompt": "Explain the theory of relativity in detail."}
+{"prompt": "Here is a list of 20 numbers: 5, 12, 8, 20, 3, 15, 9, 30, 2, 18, 7, 25, 11, 14, 6, 22, 19, 1, 10, 4. Find the median value."}
+{"prompt": "Given the following text, extract and summarize the key points in a structured format: 'In the past decade, renewable energy has grown significantly due to advancements in technology and governmental incentives. Solar and wind power have become cost-effective alternatives to fossil fuels. However, challenges such as energy storage and infrastructure adaptation remain. Many countries are implementing policies to accelerate the transition toward cleaner energy sources.'"}
