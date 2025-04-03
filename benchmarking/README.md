@@ -298,7 +298,7 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 1. Prep your dataset
 
-- The dataset needs to be in `.jsonl` format - these means a file with one JSON object per line.
+- The dataset needs to be in `.jsonl` format - these means a file with one JSON object per line. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
 - Each JSON object need to have a `prompt` key with the value being the prompt you want to pass to the LLM. If you want to benchmark a multimodal model, then also include the `image_path` key with an absolute path value.
 
 2. Upload the jsonl file using the option in the sidebar.
@@ -504,7 +504,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
-  - **input-file-path**: The location of the custom dataset that you want to evaluate with
+  - **input-file-path**: The location of the custom dataset that you want to evaluate with. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
   - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
 
   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use. 
