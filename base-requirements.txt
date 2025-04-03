@@ -73,7 +73,7 @@ html2text==2024.2.26
 pypdf>=4.0.1,<5.0.0
 unstructured[pdf]==0.17.2
 unstructured-client==0.18.0
-unstructured-inference==0.7.36
+unstructured-inference==0.8.10
 
 # Audio and Video
 yt-dlp==2024.8.6
