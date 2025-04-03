@@ -746,43 +746,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         Description:
         This method builds a prompt for the given raw prompt based on the model type.
-        It checks if the model type is'mistral' or 'llama3' and applies specific templating for those models.
-        For other models, it applies a default templating.
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
 
-        sys_prompt_template = (
-            'You are a helpful assistant that provides concise and helpful assistance on a variety of subjects'
-        )
-
-        # Specific prompt templating for mistral models
-        family_model_type = llmperf_utils.find_family_model_type(self.model_name)
-
-        if family_model_type == 'mistral':
-            prompt = '[INST]' + raw_prompt + '[/INST]'
-
-        # Specific prompt templating for Llama-3 models
-        elif family_model_type == 'llama3':
-            system_prompt = (
-                f'<|begin_of_text|><|start_header_id|>system<|end_header_id|>{sys_prompt_template}<|eot_id|>'
-            )
-
-            prompt = (
-                system_prompt
-                + '<|start_header_id|>user<|end_header_id|>'
-                + raw_prompt
-                + '<|eot_id|><|start_header_id|>assistant<|end_header_id|>Answer:'
-            )
-
-        # Specific prompt templating for Llama-2 models
-        elif family_model_type == 'llama2':
-            system_prompt = f'[INST]<<SYS>>{sys_prompt_template}<</SYS>>'
-            prompt = system_prompt + raw_prompt + '[/INST]'
-
-        # Prompt templating for other models (Deepseek, Solar, Eeve)
-        else:
-            system_prompt = f'{sys_prompt_template}'
-            prompt = system_prompt + raw_prompt
+        prefix_prompt = 'You are a helpful assistant that provides concise and\
+              helpful assistance on a variety of subjects. Ask: '
+        prompt = prefix_prompt + raw_prompt
 
         return (prompt, self.get_token_length(prompt))
 
