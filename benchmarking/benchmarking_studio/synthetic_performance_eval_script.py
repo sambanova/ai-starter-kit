@@ -17,7 +17,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')
 sys.path.insert(0, project_root)
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
-from benchmarking.utils import read_json_files
+from benchmarking.utils import read_synthetic_json_files
 
 from dotenv import load_dotenv
 import logging
@@ -85,7 +85,7 @@ for model_name, input_tokens, output_tokens, concurrent_requests  in zip(model_c
 if config['consolidated_results_dir']:
     logging.info(f"Writting consolidated results to {config['consolidated_results_dir']}")
     try:
-        df = read_json_files(output_files_dir, type='summary')
+        df = read_synthetic_json_files(output_files_dir, type='summary')
         df = df[[
             'model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests',
             'server_ttft_s_min', 'server_ttft_s_p50', 'server_ttft_s_max',
