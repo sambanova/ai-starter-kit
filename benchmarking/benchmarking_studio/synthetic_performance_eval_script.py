@@ -2,7 +2,9 @@ import os
 import sys
 import yaml
 import time
-from typing import Any, Dict
+import json
+from datetime import datetime
+from typing import Any, Dict, Tuple, List
 import pandas as pd
 
 sys.path.append('../')
@@ -31,6 +33,24 @@ logger = logging.getLogger(__name__)
 
 load_dotenv(os.path.join(project_root,'.env'), override=True)
 
+
+def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[int]]:
+    """Generate grouping and batching info from DataFrame."""
+    df = df.sort_values('end_time').reset_index(drop=True)
+    df['group'] = (df['server_ttft_s'] != df['server_ttft_s'].shift()).cumsum()
+
+    consecutive_counts = df.groupby(['group', 'server_ttft_s']).size().reset_index(name='consecutive_count')
+    requests_grouping = consecutive_counts['consecutive_count'].tolist()
+    requests_batching = [1 << (x - 1).bit_length() for x in requests_grouping]
+
+    return requests_grouping, requests_batching
+
+def extract_file_info(file_name: str) -> Tuple[str, str, str, str]:
+    """Extract model, input, output, and concurrency from file name."""
+    _, _, model, in_tok, out_tok, con, *_ = file_name.split('_')
+    return model, int(in_tok), int(out_tok), int(con)
+
+
 # Read config file
 CONFIG_FILE_PATH = os.path.join(current_dir, 'config.yaml')
 with open(CONFIG_FILE_PATH) as file:
@@ -41,14 +61,15 @@ config['model_configs_path'] = os.path.expanduser(config['model_configs_path'])
 model_configs_df = pd.read_csv(config['model_configs_path'])
 
 # Additional parameters:
-run_time = time.strftime("%Y%m%d-%H%M%S")
+run_time = datetime.now().strftime('%Y%m%d-%H%M%S.%f')
 output_files_dir = os.path.join(config['output_files_dir'], run_time)
 sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
 
 # Loop over models and configs to run performance evaluation
 for model_name, input_tokens, output_tokens, concurrent_requests  in zip(model_configs_df['model_names'], model_configs_df['input_tokens'], model_configs_df['output_tokens'], model_configs_df['concurrent_requests']):
-    num_requests = concurrent_requests * config['ratio']
+    # num_requests = concurrent_requests * config['ratio']
+    num_requests = max(64, concurrent_requests)
     
     logging.info(
         f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens},'
@@ -85,8 +106,9 @@ for model_name, input_tokens, output_tokens, concurrent_requests  in zip(model_c
 if config['consolidated_results_dir']:
     logging.info(f"Writting consolidated results to {config['consolidated_results_dir']}")
     try:
-        df = read_synthetic_json_files(output_files_dir, type='summary')
-        df = df[[
+        # Read summary files
+        df_summary = read_synthetic_json_files(output_files_dir, type='summary')
+        df_summary = df_summary[[
             'model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests',
             'server_ttft_s_min', 'server_ttft_s_p50', 'server_ttft_s_max',
             'server_end_to_end_latency_s_min', 'server_end_to_end_latency_s_p50', 'server_end_to_end_latency_s_max',
@@ -97,13 +119,35 @@ if config['consolidated_results_dir']:
             'client_end_to_end_latency_s_min', 'client_end_to_end_latency_s_p50', 'client_end_to_end_latency_s_max',
             'client_output_token_per_s_min', 'client_output_token_per_s_p50', 'client_output_token_per_s_max',
             'num_requests_started', 'num_completed_requests', 'number_errors', 'error_code_frequency'
-        ]].sort_values(['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests']).copy()
+        ]].copy()
+        df_summary['model'] = df_summary['model'].str.replace('.', '-')
+        df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
+        df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
+        df_summary = df_summary.set_index(['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests'])
+
+        # Read individual responses
+        df = read_synthetic_json_files(output_files_dir, type='individual_responses')
+        
+        # Process individual files and add requests batching approximation
+        for filename in os.listdir(output_files_dir):
+            if 'individual_responses' in filename:
+                model, in_tok, out_tok, con = extract_file_info(filename)
+                df_file = df[df['filename'] == filename].copy()
+                df_file = df_file[df_file['error_code'].isnull()]
+
+                requests_grouping, requests_batching = get_grouping_and_batching_info(df_file)
+
+                key = (model, in_tok, out_tok, con)
+
+                if key in df_summary.index:
+                    df_summary.at[key,'requests_grouping'] = requests_grouping
+                    df_summary.at[key,'requests_batching'] = requests_batching
+                else:
+                    raise KeyError(f"Key {key} not found in dictionary. File: {file}")
 
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
-        consolidated_results_dir = os.path.join(consolidated_results_dir, run_time)
-
-        os.makedirs(consolidated_results_dir, exist_ok=True)
-        df.to_excel(os.path.join(consolidated_results_dir, 'consolidated_results.xlsx'), index=False)
+        df_summary.to_excel(os.path.join(consolidated_results_dir, f'consolidated_results_{run_time}.xlsx'))
+        
     except Exception as e:
         logging.error(f"Error while writing consolidated results to {config['consolidated_results_dir']}")
         logging.error(e)
