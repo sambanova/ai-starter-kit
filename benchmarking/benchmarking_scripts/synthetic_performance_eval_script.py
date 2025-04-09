@@ -1,11 +1,11 @@
 import os
 import sys
-import yaml
 import time
-import json
 from datetime import datetime
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, List, Tuple
+
 import pandas as pd
+import yaml
 
 sys.path.append('../')
 sys.path.append('../src')
@@ -18,11 +18,12 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')
 
 sys.path.insert(0, project_root)
 
-from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
-from benchmarking.utils import read_synthetic_json_files
+import logging
 
 from dotenv import load_dotenv
-import logging
+
+from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+from benchmarking.utils import read_synthetic_json_files
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,7 +46,7 @@ def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[in
 
     return requests_grouping, requests_batching
 
-def extract_file_info(file_name: str) -> Tuple[str, str, str, str]:
+def extract_file_info(file_name: str) -> Tuple[str, int, int, int]:
     """Extract model, input, output, and concurrency from file name."""
     _, _, model, in_tok, out_tok, con, *_ = file_name.split('_')
     return model, int(in_tok), int(out_tok), int(con)
@@ -67,7 +68,9 @@ sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
 
 # Loop over models and configs to run performance evaluation
-for model_name, input_tokens, output_tokens, concurrent_requests  in zip(model_configs_df['model_names'], model_configs_df['input_tokens'], model_configs_df['output_tokens'], model_configs_df['concurrent_requests']):
+for model_name, input_tokens, output_tokens, concurrent_requests in zip(
+    model_configs_df['model_names'], model_configs_df['input_tokens'], 
+    model_configs_df['output_tokens'], model_configs_df['concurrent_requests']):
     # num_requests = concurrent_requests * config['ratio']
     num_requests = max(64, concurrent_requests)
     
@@ -96,7 +99,11 @@ for model_name, input_tokens, output_tokens, concurrent_requests  in zip(model_c
             sampling_params=sampling_params,
         )
     except Exception as e:
-        logging.error(f"Error while running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, concurrent_requests {concurrent_requests}, num_requests {num_requests}")
+        logging.error(f"Error while running model_name {model_name}, \
+            input_tokens {input_tokens}, \
+            output_tokens {output_tokens}, \
+            concurrent_requests {concurrent_requests}, \
+            num_requests {num_requests}")
         logging.error(e)
         
     logging.info(f"Time delay: {config['time_delay']} seconds")

@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 import pandas as pd
 
@@ -39,7 +39,9 @@ def read_synthetic_json_files(folder_path: str, type: str='individual_responses'
                     print(f"Error reading {file_path}: {e}")
 
     df = pd.DataFrame(data)
-    df = df.rename(columns=lambda x: x.replace('results_', '').replace('_quantiles', '').replace('_per_request', '')).copy()
+    df = df.rename(columns=lambda x: x.replace('results_', '')
+                   .replace('_quantiles', '')
+                   .replace('_per_request', '')).copy()
 
     return df
 

@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES
-from benchmarking.utils import SAMBANOVA_URL, CONFIG_PATH
+from benchmarking.utils import CONFIG_PATH, SAMBANOVA_URL
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
