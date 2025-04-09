@@ -267,6 +267,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 - Click the `Run!` button. This will start the program and a progress bar will be shown in the UI.
 - Depending on the parameter configurations, it should take between 1 min and 10 min. 
+- If needed, you can stop the process at any time by clicking the `Stop` button. **Warning** Stopping a run with multiple concurrent requests and a high number of input/output tokens may leave some requests still running on the API. To allow the API to recover, it's recommended to wait one to two minutes before starting a new run.
 
 5. Analyze results
 
