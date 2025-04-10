@@ -20,8 +20,9 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
+from benchmarking.utils import SAMBANOVA_URL
 
 warnings.filterwarnings('ignore')
 

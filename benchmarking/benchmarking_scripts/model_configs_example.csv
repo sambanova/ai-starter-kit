@@ -1,0 +1,7 @@
+model_names,input_tokens,output_tokens,concurrent_requests
+Meta-Llama-3.3-70B-Instruct,128,128,1
+Meta-Llama-3.3-70B-Instruct,128,128,2
+Meta-Llama-3.3-70B-Instruct,128,128,4
+Meta-Llama-3.3-70B-Instruct,128,128,8
+Meta-Llama-3.3-70B-Instruct,128,128,16
+Meta-Llama-3.3-70B-Instruct,128,128,32

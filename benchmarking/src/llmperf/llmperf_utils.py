@@ -5,7 +5,6 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from transformers import AutoTokenizer
 
-SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 FAMILY_MODEL_TYPE_IDENTIFIER = {
     'mistral': ['mistral'],
