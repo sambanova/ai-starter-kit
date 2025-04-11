@@ -242,7 +242,7 @@ class BasePerformanceEvaluator(abc.ABC):
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
@@ -282,7 +282,7 @@ class BasePerformanceEvaluator(abc.ABC):
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
