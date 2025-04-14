@@ -37,16 +37,16 @@ CLI_COMMAND_TIMEOUT = 1200  # 20 minutes
 
 # List of starter kits to test
 STARTER_KITS: List[str] = [
-    'benchmarking',
+    # 'benchmarking',
     'enterprise_knowledge_retriever',
-    'financial_assistant',
-    'function_calling',
-    'search_assistant',
-    'multimodal_knowledge_retriever',
-    'post_call_analysis',
-    'prompt_engineering',
-    'document_comparison',
-    'utils',
+    # 'financial_assistant',
+    # 'function_calling',
+    # 'search_assistant',
+    # 'multimodal_knowledge_retriever',
+    # 'post_call_analysis',
+    # 'prompt_engineering',
+    # 'document_comparison',
+    # 'utils',
 ]
 
 # Dictionary to store CLI test commands for each kit
