@@ -378,7 +378,7 @@ class ModelWrapperTestCase(unittest.TestCase):
         format_query = [{'role': 'user', 'content': query}]
         raw_response = self.sn_chat_model._handle_request(format_query, **tools_data)
 
-        llm = ChatSambaNovaCloud(model='Meta-Llama-3.1-70B-Instruct', max_tokens=1024, temperature=0.0)
+        llm = ChatSambaNovaCloud(model='Meta-Llama-3.3-70B-Instruct', max_tokens=1024, temperature=0.0)
         llm_with_tools = llm.bind_tools(tools)
         query_2 = 'What is 3 * 12? Also, what is 11 + 49?'
         response = llm_with_tools.invoke(query_2).tool_calls

@@ -127,7 +127,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
   - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.3-70B-Instruct`.
   - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A. 
@@ -178,7 +178,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     1. Dynamic batching speed  
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 250
         - Number of output tokens: 250
@@ -197,7 +197,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     2. High input and ouput tokens
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 2000
         - Number of output tokens: 2000
@@ -216,7 +216,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     3. Running multiple concurrent requests
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.1-70B-Instruct
+        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
         - API type: SambaStudio
         - Number of input tokens: 250
         - Number of output tokens: 250
@@ -247,7 +247,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
   - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
     - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
+  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.3-70B-Instruct`.
   - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
