@@ -239,7 +239,7 @@ class DocumentRetrieval:
         self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
         self.sambanova_api_key = sambanova_api_key
-        self.llm = self.set_llm()
+        self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
         """
@@ -275,7 +275,7 @@ class DocumentRetrieval:
             process_prompt=False,
             sambanova_api_key=self.sambanova_api_key,
         )
-        return llm
+        self.llm = llm
 
     def parse_doc(self, doc_folder: str, additional_metadata: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
