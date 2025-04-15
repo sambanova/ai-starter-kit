@@ -29,7 +29,6 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 
 
-
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
@@ -333,10 +332,7 @@ class SyntheticDataGen:
                 json_obj = json.loads(unique_line)  # ensure it's valid JSON
 
                 # Reconstruct dict with prompt first
-                reordered = {
-                    "prompt": json_obj["prompt"],
-                    "completion": json_obj["completion"]
-                }
-                outfile.write(json.dumps(reordered) + "\n")
+                reordered = {'prompt': json_obj['prompt'], 'completion': json_obj['completion']}
+                outfile.write(json.dumps(reordered) + '\n')
 
         logging.info(f'removed repeated lines, out file: {file_path}.')
