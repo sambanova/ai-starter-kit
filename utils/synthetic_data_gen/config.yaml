@@ -19,7 +19,7 @@ splitting:
   min_doc_length: 80
 
 generation:
-  output_path: "./output/synthetic_data.jsonl"
+  output_path: "./synthetic_data.jsonl"
   amount_per_document: 5
   include_context: true
   include_thoughts: true

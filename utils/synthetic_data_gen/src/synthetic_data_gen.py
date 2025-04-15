@@ -330,6 +330,13 @@ class SyntheticDataGen:
         # Write the unique lines back to the same file
         with open(file_path, 'w') as outfile:
             for unique_line in unique_lines:
-                outfile.write(unique_line + '\n')
+                json_obj = json.loads(unique_line)  # ensure it's valid JSON
+
+                # Reconstruct dict with prompt first
+                reordered = {
+                    "prompt": json_obj["prompt"],
+                    "completion": json_obj["completion"]
+                }
+                outfile.write(json.dumps(reordered) + "\n")
 
         logging.info(f'removed repeated lines, out file: {file_path}.')
