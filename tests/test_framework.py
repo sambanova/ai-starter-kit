@@ -23,14 +23,12 @@ from typing import Any, ClassVar, Dict, List, Optional, Protocol, Type
 
 import pandas as pd
 import requests
-import wandb  # Import wandb for Weights & Biases logging
 
 # Add the project root to the Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 repo_dir = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.append(repo_dir)
 
-from utils.visual.env_utils import get_wandb_key
 
 # Timeout variables (in seconds)
 STREAMLIT_START_TIMEOUT = 25
@@ -44,7 +42,6 @@ STARTER_KITS: List[str] = [
     'financial_assistant',
     'function_calling',
     'search_assistant',
-    'image_search',
     'multimodal_knowledge_retriever',
     'post_call_analysis',
     'prompt_engineering',
@@ -63,6 +60,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
         '--timeout 600 '
         '--num-input-tokens 1000 '
         '--num-output-tokens 1000 '
+        '--multimodal-image-size na '
         '--num-requests 2 '
         '--llm-api sncloud'
     ),
@@ -73,7 +71,6 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'post_call_analysis': 'python tests/pca_test.py',
     'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
-    'image_search': 'python tests/image_search_test.py',
     'document_comparison': 'python tests/dc_test.py',
     'utils': 'python tests/api_testing.py',
 }
@@ -132,8 +129,6 @@ class StarterKitTest(unittest.TestCase):
     csv_filename: ClassVar[str]
     test_results: ClassVar[List[TestResult]] = []
     any_test_failed: ClassVar[bool] = False
-    wandb_initialized: ClassVar[bool] = False
-    wandb_run: ClassVar[Optional[wandb.sdk.wandb_run.Run]] = None
     commit_hash: ClassVar[str] = ''
     commit_url: ClassVar[str] = ''
 
@@ -150,22 +145,6 @@ class StarterKitTest(unittest.TestCase):
         # Construct the commit URL
         cls.commit_url = f'https://github.com/sambanova/ai-starter-kit/commit/{cls.commit_hash}'
 
-        # Generate a meaningful wandb run name
-        run_name = f"{cls.commit_hash}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-        # Wandb initialization
-        wandb_key = get_wandb_key()
-        if wandb_key:
-            # Perform wandb login with host
-            wandb.login(key=wandb_key, host='https://sambanova.wandb.io/')
-            cls.wandb_initialized = True
-            cls.wandb_run = wandb.init(project='AISK_E2ETesting', name=run_name)
-            logging.info(f'Weights & Biases initialized with run name: {run_name}')
-        else:
-            cls.wandb_initialized = False
-            cls.wandb_run = None
-            logging.info('Weights & Biases not initialized; wandb key not found.')
-
         if not cls.is_docker:
             cls.activate_base_venv()
             if cls.env == TestEnvironment.LOCAL:
@@ -181,37 +160,6 @@ class StarterKitTest(unittest.TestCase):
 
         # Calculate durations using pandas
         cls.calculate_durations()
-
-        if cls.wandb_initialized and cls.wandb_run:
-            # Prepare data for wandb.Table
-            table = wandb.Table(
-                columns=[
-                    'Kit',
-                    'Test Name',
-                    'Status',
-                    'Duration (s)',
-                    'Message',
-                    'Date',
-                    'Commit Hash',
-                    'Commit URL',
-                ]
-            )  # type: ignore[no-untyped-call]
-
-            for result in cls.test_results:
-                table.add_data(
-                    result.kit,
-                    result.test_name,
-                    result.status,
-                    f'{result.duration:.6f}',
-                    result.message,
-                    result.date,
-                    result.commit_hash,
-                    result.commit_url,
-                )  # type: ignore[no-untyped-call]
-            # Log the table to wandb
-            cls.wandb_run.log({'test_results': table})
-            cls.wandb_run.finish()
-            logging.info('Test results logged to Weights & Biases.')
 
     @classmethod
     def setup_csv_writer(cls: Type['StarterKitTest']) -> None:

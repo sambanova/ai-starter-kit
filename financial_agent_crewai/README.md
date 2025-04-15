@@ -1,4 +1,3 @@
-
 <a href="https://sambanova.ai/">
 <picture>
  <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
@@ -6,12 +5,10 @@
 </picture>
 </a>
 
-SambaNova Financial Agent using CrewAI (Financial Flow)
+# SambaNova Financial Agent using CrewAI (Financial Flow)
 ======================
 
 Questions? Just <a href="https://discord.gg/54bNAqRw" target="_blank">message us</a> on Discord <a href="https://discord.gg/54bNAqRw" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Discord" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
-
-# Financial Flow
 
 Welcome to the Financial Flow project, powered by [crewAI](https://crewai.com)!
 
@@ -20,9 +17,9 @@ Table of Contents:
 - [1. Overview](#overview)
 - [2. Setup](#setup)
 - [3. Installation](#installation)
-    - [3.1 Using UV and the CrewAI commands](#uv-crewai-commands)
-    - [3.2 Using pip and venv](#pip-venv)
-    - [3.3 The Streamlit app](#streamlit)
+  - [3.1 Using UV and the CrewAI commands](#uv-crewai-commands)
+  - [3.2 Using pip and venv](#pip-venv)
+  - [3.3 The Streamlit app](#streamlit)
 - [4. Customization](#customization)
 - [5. Understanding and monitoring your crews](#understanding-monitoring)
 
@@ -40,13 +37,13 @@ and retrieval-augmented generation (RAG).
 Use the navigation menu to explore various features including:
 
 -- **Generic Google Search**: Scrape the web using
-    <a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
+  <a href="https://serper.dev/" target="_blank">Serper</a> Google Search API.
 - **Stock Data Analysis**: Query and analyze stocks based on
-    <a href="https://pypi.org/project/yfinance/" target="_blank">Yahoo Finance</a> data.
+  <a href="https://pypi.org/project/yfinance/" target="_blank">Yahoo Finance</a> data.
 - **Financial Filings Analysis**: Query and analyze financial filings based on 
-     <a href="https://www.sec.gov/edgar/search/" target="_blank">SEC EDGAR </a> data.
+  <a href="https://www.sec.gov/edgar/search/" target="_blank">SEC EDGAR </a> data.
 - **Financial News Scraping**: Scrape financial news articles from 
-    <a href="https://uk.finance.yahoo.com/" target="_blank">Yahoo Finance</a> News.
+  <a href="https://uk.finance.yahoo.com/" target="_blank">Yahoo Finance</a> News.
 
 ## 2. Setup
 
@@ -55,19 +52,19 @@ Use the navigation menu to explore various features including:
 2. Add your `SERPER_API_KEY` to the `.env` file.
 
 3. For the `SEC-EDGAR` functionalities, company name and email are used to form a user-agent of the form:
-    USER_AGENT: ```<Company Name> <Email Address>```.
+  USER_AGENT: ```<Company Name> <Email Address>```.
 
-    Add the following to the `.env` file:
-    ```
-    # Your organization
-    SEC_API_ORGANIZATION="<your organization>"
+  Add the following to the `.env` file:
+  ```
+  # Your organization
+  SEC_API_ORGANIZATION="<your organization>"
 
-    # Your email address
-    SEC_API_EMAIL="<user@email_provider.com>"
-    ```
+  # Your email address
+  SEC_API_EMAIL="<user@email_provider.com>"
+  ```
 
 4. (Optional, only if you want to use `LangTrace`)
-    Add your `LANGTRACE_API_KEY` to the `.env` file.
+  Add your `LANGTRACE_API_KEY` to the `.env` file.
     
 ## 3. Installation
 
@@ -97,21 +94,6 @@ Once all of the dependencies are installed, you need to activate the virtual env
 ```bash
 source .venv/bin/activate
 ```
-
-After activating the virtual environment, you can run the flow by executing one of the following commands:
-
-```bash
-crewai flow kickoff
-```
-or
-
-```bash
-uv run kickoff
-```
-
-This command initializes the `FinancialFLow` Flow, assembling the agents and assigning them tasks as defined in your configuration.
-This example, unmodified, will generate a `report.md` file and a `report.pdf` file
-as the outputs of a financial research and analyais in the `cache` folder.
 
 ### 3.2 Using `pip` and `venv`
 
@@ -161,36 +143,36 @@ as well as the corresponding agents and tasks of the latter,
 in the `config.py` file.
 
 - Level of verbosity
-    `VERBOSE`
+  `VERBOSE`
 
 - Specify the directory and file path of the `cache`
-    `CACHE_DIR`
+  `CACHE_DIR`
 
 - Maximum number of words per section
-    `MAX_SECTION_WORDS`
+  `MAX_SECTION_WORDS`
 
 - The default data sources to use in case they are not given to the `FinancialFlow` as hyperparameters.
-    1. Generic Google Search: `SOURCE_GENERIC_SEARCH`.
-    2. SEC EDGAR Filings: `SOURCE_SEC_FILINGS`.
-    3. Yahoo Finance News: `SOURCE_YFINANCE_NEWS`.
-    4. Yahoo Finance News: `SOURCE_YFINANCE_STOCK`.
+  1. Generic Google Search: `SOURCE_GENERIC_SEARCH`.
+  2. SEC EDGAR Filings: `SOURCE_SEC_FILINGS`.
+  3. Yahoo Finance News: `SOURCE_YFINANCE_NEWS`.
+  4. Yahoo Finance News: `SOURCE_YFINANCE_STOCK`.
 
 - User query:
-    `USER_QUERY`
+  `USER_QUERY`
 
 - Number of documents to use for RAG
-    `NUM_RAG_SOURCES`
+  `NUM_RAG_SOURCES`
 
 - Maximum number of urls in generic Google web search or Yahoo Finance web search
-    `MAX_NEWS`
+  `MAX_NEWS`
 
 - Maximum news per ticker symbol
-    `MAX_NEWS_PER_TICKER`
+  `MAX_NEWS_PER_TICKER`
 
 - LLMs by crew
 
 - LLM temperature
-    `TEMPERATURE`
+  `TEMPERATURE`
 
 ## 5. Understanding and monitoring your crews
 
@@ -208,5 +190,3 @@ If you wish to monitor your Crews within the `FinancialFlow`, you can uncomment 
 from langtrace_python_sdk import langtrace
 langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 ```
-
-

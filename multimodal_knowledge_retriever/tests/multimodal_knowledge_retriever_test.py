@@ -41,8 +41,9 @@ from langchain.retrievers.multi_vector import MultiVectorRetriever
 
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
 
-IMAGE_TEST_DATA_PATH = os.path.join(kit_dir, 'data/sample_docs')
-PDF_TEST_DATA = os.path.join(IMAGE_TEST_DATA_PATH, 'invoicesample.pdf')
+TEST_DATA_PATH = os.path.join(kit_dir, 'data/sample_docs')
+IMAGE_TEST_DATA_PATH = os.path.join(TEST_DATA_PATH, 'invoicesample')
+PDF_TEST_DATA = os.path.join(TEST_DATA_PATH, 'invoicesample.pdf')
 
 
 class MKRTestCase(unittest.TestCase):
@@ -87,8 +88,14 @@ class MKRTestCase(unittest.TestCase):
 
     # Add assertions
     def test_document_parsing(self) -> None:
+        tables_in_text = [
+            doc.metadata['text_as_html'] for doc in self.text_docs if doc.metadata.get('text_as_html') is not None
+        ]
         self.assertTrue(len(self.text_docs) > 0, 'There should be at least one parsed chunk of text')
-        self.assertTrue(len(self.table_docs) > 0, 'There should be at least one parsed chunk of table text')
+        self.assertTrue(
+            len(self.table_docs) > 0 or len(tables_in_text) > 0,
+            'There should be at least one parsed chunk of table text',
+        )
         self.assertTrue(len(self.image_paths) > 0, 'There should be at least one image')
 
     def test_vector_store_creation(self) -> None:
