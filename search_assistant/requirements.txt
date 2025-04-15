@@ -22,6 +22,6 @@ sentence_transformers==3.3.1
 sseclient-py==1.8.0
 streamlit-extras==0.3.6
 streamlit==1.40.2
-unstructured[pdf]==0.12.4
+unstructured[pdf]==0.17.2
 watchdog==4.0.0
 weave==0.51.31
