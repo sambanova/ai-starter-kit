@@ -39,9 +39,9 @@ llms:
     max_tokens: 1024
     temperature: 0.0
 
-  - name: sncloud-llama3.1-70
+  - name: sncloud-llama3.3-70
     model_type: "sncloud"
-    model_name: "Meta-Llama-3.1-70B-Instruct"
+    model_name: "Meta-Llama-3.3-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
 

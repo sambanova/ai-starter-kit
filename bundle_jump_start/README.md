@@ -97,7 +97,7 @@ The config.yaml file is crucial for customizing the behavior of the bundle LLM R
       "do_sample": False
       "max_tokens_to_generate": 1200
       "bundle": True #set as true if using Sambastudio bundle endpoint
-      "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio bundle llm expert
+      "select_expert": "Meta-Llama-3.3-70B-Instruct" #set if using SambaStudio bundle llm expert
   ```
   These settings define the API to use and the parameters for the language model.
 

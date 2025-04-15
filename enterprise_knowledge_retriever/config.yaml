@@ -3,7 +3,7 @@ llm:
     "temperature": 0.0
     "do_sample": False
     "max_tokens": 1200
-    "model": "Meta-Llama-3.1-70B-Instruct" 
+    "model": "Meta-Llama-3.3-70B-Instruct" 
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu

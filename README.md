@@ -380,7 +380,7 @@ const apiKey = "your-api-key";
 
 const SambaNovaCloudChatModel = new ChatOpenAI({
   temperature: 0.9,
-  model: "Meta-Llama-3.1-70B-Instruct",
+  model: "Meta-Llama-3.3-70B-Instruct",
   configuration: {
     baseURL: SambaNovaCloudBaseURL,
     apiKey: apiKey,
