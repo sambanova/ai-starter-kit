@@ -4,7 +4,7 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "Meta-Llama-3.1-70B-Instruct Meta-Llama-3.3-70B-Instruct" \
+--model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct" \
 --results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \

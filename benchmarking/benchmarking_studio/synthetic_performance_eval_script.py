@@ -18,7 +18,7 @@ from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluato
 # SambaNova Cloud example:
 #
 # General parameters:
-# model_names = ['Meta-Llama-3.1-70B-Instruct', 'Meta-Llama-3.1-8B-Instruct', ...]
+# model_names = ['Meta-Llama-3.3-70B-Instruct', 'Meta-Llama-3.1-8B-Instruct', ...]
 # llm_api = 'sncloud'
 # results_dir = 'data/results/path/to/studio/name'
 #
@@ -37,7 +37,7 @@ from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluato
 # To run the script, go to the kit's root and run:
 
 # General parameters:
-model_names = ['Meta-Llama-3.1-8B-Instruct', 'Meta-Llama-3.1-70B-Instruct']  # add more models if necessary
+model_names = ['Meta-Llama-3.1-8B-Instruct', 'Meta-Llama-3.3-70B-Instruct']  # add more models if necessary
 llm_api = 'sncloud'  # it could be sncloud or sambastudio
 results_dir = 'data/results/path/'  # set the path where results will be saved
 
