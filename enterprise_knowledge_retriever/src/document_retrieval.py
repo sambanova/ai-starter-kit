@@ -257,7 +257,7 @@ class DocumentRetrieval:
 
         return llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
-    def set_llm(self, model: Optional[str] = None) -> BaseChatModel:
+    def set_llm(self, model: Optional[str] = None) -> None:
         """
         Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
