@@ -24,10 +24,10 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 
+from utils.model_wrappers.api_gateway import APIGateway
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
