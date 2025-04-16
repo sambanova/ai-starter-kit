@@ -25,3 +25,4 @@ streamlit==1.40.2
 unstructured[pdf]==0.17.2
 watchdog==4.0.0
 weave==0.51.31
+schedule==1.2.2
