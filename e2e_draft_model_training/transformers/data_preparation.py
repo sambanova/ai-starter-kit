@@ -60,7 +60,7 @@ def get_dataset(file_paths: List[str], tokenizer: PreTrainedTokenizerBase, outpu
             When processing multiple files, this must be provided.
             For a single file, a default name based on the input file is derived if not provided.
     """
-    logging.info('File paths:', file_paths)
+    logging.info('File paths:' + (', ').join(file_paths))
 
     if len(file_paths) > 1:
         dataset = datasets.load_dataset('json', data_files=file_paths, split='train', streaming=False)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     Otherwise, it assumes that multiple paths are comma-separated.
     """
     # Read the configuration parameters from a YAML configuration file.
-    with open('02_config_data_preparation', 'r', encoding='utf-8') as file:
+    with open('02_config_data_preparation.yaml', 'r', encoding='utf-8') as file:
         config: Dict[str, Any] = yaml.safe_load(file)
 
     file_path: str = config['file_path']

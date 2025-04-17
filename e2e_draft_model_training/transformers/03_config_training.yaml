@@ -1,0 +1,14 @@
+train_data: "data/datasets/bio_train_completions_templated.json"
+output_dir: "transformers/results"
+run_name: "draft_model_training"
+learning_rate: !!float 2e-5
+epochs: 5
+lr_scheduler_type: "cosine"
+response_template: "<|start_header_id|>assistant<|end_header_id|>\n\n"
+dataset_text_field: "training_text"
+base_model: "meta-llama/Llama-3.2-1B-Instruct"
+save_strategy: "epoch"
+save_steps: 500
+gradient_accumulation_steps: 1
+batch_size: 8
+devices: "0"

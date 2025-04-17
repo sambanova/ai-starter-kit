@@ -1,0 +1,10 @@
+test_data: "data/datasets/train_set.json"
+output_dir: "transformers/results"
+dataset_text_field: "training_text"
+inference_model: "TsinghuaC3I/Llama-3.1-8B-UltraMedical"
+devices: "0"
+temperature: 0.7
+top_p: 0.90
+max_tokens: 1024
+stop: ["<|eot_id|>"]
+tensor_parallel_size: 1  # Number of GPUs to use for inference

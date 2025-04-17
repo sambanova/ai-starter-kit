@@ -13,6 +13,8 @@ from datasets import load_dataset  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer  # type: ignore
 
+import wandb
+
 
 class DraftModelTrainer:
     """
@@ -88,8 +90,8 @@ class DraftModelTrainer:
             'lr_scheduler_type': self.lr_scheduler_type,
         }
 
-        # # Initialize wandb run
-        # wandb.init(project='Draft_Model_Training', config=config, name=self.run_name)
+        # Initialize wandb run
+        wandb.init(project='Draft_Model_Training', config=config, name=self.run_name)
 
         # Load dataset
         dataset = load_dataset(
@@ -149,8 +151,8 @@ class DraftModelTrainer:
         trainer.model.save_pretrained(self.output_dir)
         trainer.tokenizer.save_pretrained(self.output_dir)
 
-        # # Finish the wandb run
-        # wandb.finish()
+        # Finish the wandb run
+        wandb.finish()
 
 
 def main() -> None:
