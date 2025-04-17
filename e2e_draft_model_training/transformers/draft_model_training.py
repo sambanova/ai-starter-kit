@@ -1,14 +1,16 @@
 """Module for Draft Model Training using SFTTrainer."""
 
 import os
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import torch
-import wandb
-from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from trl import SFTTrainer, DataCollatorForCompletionOnlyLM, SFTConfig
 import yaml
-from typing import Optional
+from datasets import load_dataset  # type: ignore
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer  # type: ignore
+
+import wandb
 
 
 class DraftModelTrainer:
