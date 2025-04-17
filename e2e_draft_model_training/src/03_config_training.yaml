@@ -1,5 +1,5 @@
-train_data: "data/datasets/bio_train_completions_templated.json"
-output_dir: "transformers/results"
+train_data: "data/datasets/train_completions_templated.json"
+output_dir: "data/results/"
 run_name: "draft_model_training"
 learning_rate: !!float 2e-5
 epochs: 5

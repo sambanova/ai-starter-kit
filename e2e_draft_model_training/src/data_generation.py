@@ -12,7 +12,6 @@ The generated completions are then assembled into conversation objects and saved
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -54,9 +53,7 @@ class HuggingFaceLLMCompletions:
             self.config: Dict[str, Any] = yaml.safe_load(f)
 
         # Read configuration settings.
-        self.test_data: str = self.config.get('test_data', 'data/datasets/train.json')
-        self.run_name: str = self.config.get('run_name', 'example_run')
-        self.output_dir: str = self.config.get('output_dir', f'transformers/results/{self.run_name}')
+        self.data: str = self.config.get('data', 'data/datasets/train.json')
 
         # This field might be used if the dataset uses a different field name for user text.
         self.dataset_text_field: str = self.config.get('dataset_text_field', 'training_text')
@@ -67,8 +64,8 @@ class HuggingFaceLLMCompletions:
         # Determine device: use "cuda:<device>" if CUDA is available, otherwise fallback to CPU.
         devices: str = self.config.get('devices', '0')
         self.device: str = f'cuda:{devices}' if torch.cuda.is_available() else 'cpu'
-        logging.info('Using device: %s', self.device)
-        logging.info('Loading model %s ...', model_name_or_path)
+        logging.info(f'Using device: {self.device}')
+        logging.info(f'Loading model {model_name_or_path} ...')
 
         # Load the model with vLLM and and tokenizer from HuggingFace.
         tensor_parallel_size = self.config.get('tensor_parallel_size', torch.cuda.device_count())
@@ -121,8 +118,8 @@ class HuggingFaceLLMCompletions:
         Returns:
             List[Dict[str, Any]]: A list of records from the input dataset.
         """
-        logging.info('Loading input data from %s ...', self.test_data)
-        with open(self.test_data, 'r', encoding='utf-8') as f:
+        logging.info(f'Loading input data from {self.data} ...')
+        with open(self.data, 'r', encoding='utf-8') as f:
             data: List[Dict[str, Any]] = json.load(f)
         return data
 
@@ -163,11 +160,12 @@ class HuggingFaceLLMCompletions:
         Parameters:
             results (List[Dict[str, Any]]): The list of conversation records to save.
         """
-        os.makedirs(self.output_dir, exist_ok=True)
-        output_file: str = os.path.join(self.output_dir, f'{self.run_name}_completions.json')
-        with open(output_file, 'w', encoding='utf-8') as f:
+        base_name = self.data.rsplit('.json', 1)[0]
+        output_path = base_name + '_completions.json'
+
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=4)
-        logging.info('Results saved to %s', output_file)
+        logging.info(f'Results saved to {output_path}')
 
 
 def main() -> None:

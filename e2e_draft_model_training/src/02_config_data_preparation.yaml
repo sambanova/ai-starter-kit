@@ -1,2 +1,2 @@
-file_path: 'data/datasets/bio_train_completions.json'
+file_path: 'data/datasets/train_completions.json'
 model: 'meta-llama/Llama-3.2-1B-Instruct'
