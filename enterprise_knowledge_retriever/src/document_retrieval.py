@@ -239,7 +239,7 @@ class DocumentRetrieval:
         self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
         self.sambanova_api_key = sambanova_api_key
-        self.llm = self.set_llm()
+        self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
         """
@@ -257,7 +257,7 @@ class DocumentRetrieval:
 
         return llm_info, embedding_model_info, retrieval_info, prompts, prod_mode, pdf_only_mode
 
-    def set_llm(self, model: Optional[str] = None) -> BaseChatModel:
+    def set_llm(self, model: Optional[str] = None) -> None:
         """
         Sets the sncloud, or sambastudio LLM based on the llm type attribute.
 
@@ -275,7 +275,7 @@ class DocumentRetrieval:
             process_prompt=False,
             sambanova_api_key=self.sambanova_api_key,
         )
-        return llm
+        self.llm = llm
 
     def parse_doc(self, doc_folder: str, additional_metadata: Optional[Dict[str, Any]] = None) -> List[Document]:
         """

@@ -7,8 +7,6 @@ from typing import Any, Dict, List, Optional, Union
 import yaml
 from dotenv import load_dotenv
 from langchain.prompts import load_prompt
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-from langchain_community.llms.sambanova import SambaStudio
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_experimental.text_splitter import SemanticChunker
@@ -26,9 +24,10 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
+from langchain_core.embeddings import Embeddings
+from langchain_core.language_models.chat_models import BaseChatModel
+
 from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.langchain_embeddings import SambaStudioEmbeddings
-from utils.model_wrappers.langchain_llms import SambaNovaCloud
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
@@ -89,7 +88,7 @@ class SyntheticDataGen:
             config = yaml.safe_load(file)
             return config
 
-    def set_llm(self) -> Union[SambaStudio, SambaNovaCloud]:
+    def set_llm(self) -> BaseChatModel:
         """
         Set the LLM to use for generation.
 
@@ -99,19 +98,18 @@ class SyntheticDataGen:
         Returns:
         SambaStudio, or SambaNovaCloud instance
         """
-        llm = APIGateway.load_llm(
+        llm = APIGateway.load_chat(
             type=self.llm_info['api'],
             streaming=True,
-            bundle=self.llm_info['bundle'],
             do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            max_tokens=self.llm_info['max_tokens'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            model=self.llm_info['model'],
             process_prompt=False,
         )
         return llm
 
-    def set_embedding_model(self) -> Union[SambaStudioEmbeddings, HuggingFaceInstructEmbeddings]:
+    def set_embedding_model(self) -> Embeddings:
         embedding_model = APIGateway.load_embedding_model(
             type=self.embedding_model_info['type'],
             batch_size=self.embedding_model_info['batch_size'],
@@ -331,6 +329,10 @@ class SyntheticDataGen:
         # Write the unique lines back to the same file
         with open(file_path, 'w') as outfile:
             for unique_line in unique_lines:
-                outfile.write(unique_line + '\n')
+                json_obj = json.loads(unique_line)  # ensure it's valid JSON
+
+                # Reconstruct dict with prompt first
+                reordered = {'prompt': json_obj['prompt'], 'completion': json_obj['completion']}
+                outfile.write(json.dumps(reordered) + '\n')
 
         logging.info(f'removed repeated lines, out file: {file_path}.')

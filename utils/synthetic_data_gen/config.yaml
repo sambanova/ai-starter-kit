@@ -1,11 +1,9 @@
 llm: 
-  "api": "sambastudio"  # set either sambastudio, sncloud
+  "api": "sncloud"  # set either sambastudio, sncloud
   "do_sample": False
   "temperature": 0.01
-  "max_tokens_to_generate": 2048
-  "bundle": True #set as true if using Sambastudio Bundle endpoint
-  "select_expert": "Meta-Llama-3-70B-Instruct-4096" 
-  #sncloud expert name -> "llama3-405b"
+  "max_tokens": 2048
+  "model": "Meta-Llama-3.3-70B-Instruct" 
 
 embedding_model: 
     "type": "cpu" # set either sambastudio or cpu
@@ -21,7 +19,7 @@ splitting:
   min_doc_length: 80
 
 generation:
-  output_path: "./output/synthetic_data.jsonl"
+  output_path: "./synthetic_data.jsonl"
   amount_per_document: 5
   include_context: true
   include_thoughts: true
