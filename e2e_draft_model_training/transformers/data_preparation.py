@@ -1,4 +1,10 @@
+"""
+This module prepares one or more datasets for training a draft model.
+It should be used in conjunction with the `02_config_data_preparation.yaml` configuration.
+"""
+
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
@@ -7,16 +13,18 @@ import yaml
 from transformers import AutoTokenizer
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
+logging.basicConfig(level=logging.INFO)
+
 
 def tokenize_dialog(item: Dict[str, Any], tokenizer: PreTrainedTokenizerBase) -> Dict[str, Any]:
     """
     Tokenizes a dialog entry using the provided tokenizer.
 
-    Constructs the dialog from the 'conversation' key if available; otherwise,
-    it creates a conversation using the 'prompt' and 'completion' keys.
+    Constructs the dialog from the 'conversation' key if available.
+    Otherwise, it creates a conversation using the 'prompt' and 'completion' keys.
     This dialog is then processed through the tokenizer's chat template API.
 
-    Parameters:
+    Args:
         item (Dict[str, Any]): A dictionary containing dialog information. The expected keys are:
                                - 'conversation': The conversation list (if available); or,
                                - 'prompt' and 'completion': Used to create a conversation.
@@ -45,17 +53,14 @@ def get_dataset(file_paths: List[str], tokenizer: PreTrainedTokenizerBase, outpu
       - For a single file: Loads the dataset (with streaming if '.jsonl'), tokenizes each entry,
         and saves the full list of tokenized entries as a JSON array.
 
-    Parameters:
+    Args:
         file_paths (List[str]): A list of paths for input data files.
         tokenizer (PreTrainedTokenizerBase): The tokenizer used for processing dialogs.
-        output_path (Optional[str]): The path to store the tokenized dataset. When processing multiple
-                                     files, this must be provided. For a single file, a default name based
-                                     on the input file is derived if not provided.
-
-    Returns:
-        None
+        output_path (Optional[str]): The path to store the tokenized dataset.
+            When processing multiple files, this must be provided.
+            For a single file, a default name based on the input file is derived if not provided.
     """
-    print('File paths:', file_paths)
+    logging.info('File paths:', file_paths)
 
     if len(file_paths) > 1:
         dataset = datasets.load_dataset('json', data_files=file_paths, split='train', streaming=False)
@@ -93,7 +98,7 @@ def get_dataset(file_paths: List[str], tokenizer: PreTrainedTokenizerBase, outpu
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(data_list, f, indent=4, ensure_ascii=False)
 
-    print(f'Processed file saved at: {output_path}')
+    logging.info(f'Processed file saved at: {output_path}')
 
 
 if __name__ == '__main__':
@@ -110,7 +115,7 @@ if __name__ == '__main__':
     Otherwise, it assumes that multiple paths are comma-separated.
     """
     # Read the configuration parameters from a YAML configuration file.
-    with open('01_config_data_preparation', 'r', encoding='utf-8') as file:
+    with open('02_config_data_preparation', 'r', encoding='utf-8') as file:
         config: Dict[str, Any] = yaml.safe_load(file)
 
     file_path: str = config['file_path']

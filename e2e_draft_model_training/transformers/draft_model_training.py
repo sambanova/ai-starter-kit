@@ -1,4 +1,7 @@
-"""Module for Draft Model Training using SFTTrainer."""
+"""
+This module implements Draft Model Training using `trl.SFTTrainer`.
+It should be used in conjunction with the `03_config_training.yaml` configuration.
+"""
 
 import os
 from pathlib import Path
@@ -10,12 +13,10 @@ from datasets import load_dataset  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer  # type: ignore
 
-import wandb
-
 
 class DraftModelTrainer:
     """
-    Trainer class for fine-tuning language models using the SFTTrainer.
+    Trainer class for fine-tuning language models using `trl.SFTTrainer`.
 
     Attributes:
         train_data (str): Path to the training data JSON file.
@@ -30,7 +31,7 @@ class DraftModelTrainer:
         save_steps (int): Frequency of saving steps.
         gradient_accumulation_steps (int): Number of gradient accumulation steps.
         batch_size (int): Batch size for training.
-        devices (str): CUDA devices to use.
+        devices (str): CUDA devices to use, e.g. "0" or "1".
         dataset_text_field (str): Key name for the text field in the dataset.
     """
 
@@ -47,10 +48,11 @@ class DraftModelTrainer:
         if not config_file.is_file():
             raise FileNotFoundError(f"Configuration file '{config_path}' not found.")
 
+        # Load YAML configuration.
         with open(config_file, 'r', encoding='utf-8') as file:
             config: Dict[str, Any] = yaml.safe_load(file)
 
-        # Set the attributes from the loaded config
+        # Read configuration settings.
         self.train_data: str = config.get('train_data', '')
         self.output_dir: str = config.get('output_dir', '')
         self.run_name: str = config.get('run_name', '')
@@ -72,9 +74,8 @@ class DraftModelTrainer:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def train(self) -> None:
-        """
-        Set up the training pipeline and start model training.
-        """
+        """Set up the training pipeline and start model training."""
+
         # Setup configuration for wandb
         config = {
             'learning_rate': self.learning_rate,
@@ -148,18 +149,18 @@ class DraftModelTrainer:
         trainer.model.save_pretrained(self.output_dir)
         trainer.tokenizer.save_pretrained(self.output_dir)
 
-        # Finish the wandb run
-        wandb.finish()
+        # # Finish the wandb run
+        # wandb.finish()
 
 
 def main() -> None:
     """
-    Main function to demonstrate training with DraftModelTrainer.
+    Main function to train with DraftModelTrainer.
 
     The configuration is loaded via the path passed to the DraftModelTrainer constructor.
     """
     # Configuration file path
-    config_path: str = '02_config_training.yaml'
+    config_path: str = '03_config_training.yaml'
 
     # Instantiate the DraftModelTrainer with the configuration file path.
     trainer = DraftModelTrainer(config_path)
