@@ -20,5 +20,5 @@ sentence_transformers==3.3.1
 sseclient-py==1.8.0
 streamlit-extras
 streamlit==1.32.0
-unstructured[pdf]==0.13.6
+unstructured[pdf]==0.17.2
 unstructured_inference==0.7.29

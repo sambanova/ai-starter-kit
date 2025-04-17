@@ -130,7 +130,9 @@ This option allows you to evaluate the performance of the selected LLM on synthe
   - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.1-70B-Instruct`.
   - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
-2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
+2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A. 
+
+    **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue.
 
 3. Set the configuration parameters
 
@@ -144,6 +146,8 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 - Click the `Run!` button. This will start the program and a progress bar will be shown in the UI.
 - Depending on the parameter configurations, it should take between 1 min and 10 min. 
+- If needed, you can stop the process at any time by clicking the `Stop` button. **Warning** Stopping a run with multiple concurrent requests and a high number of input/output tokens may leave some requests still running on the API. To allow the API to recover, it's recommended to wait one to two minutes before starting a new run.
+- Once the process is complete, you can download the output files to analyze performance metrics per request or review summary statistics.
 
 5. Analyze results
 
@@ -248,6 +252,8 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
 
+    **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue.
+
 3. Set the configuration parameters
 
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
@@ -261,6 +267,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 - Click the `Run!` button. This will start the program and a progress bar will be shown in the UI.
 - Depending on the parameter configurations, it should take between 1 min and 10 min. 
+- If needed, you can stop the process at any time by clicking the `Stop` button. **Warning** Stopping a run with multiple concurrent requests and a high number of input/output tokens may leave some requests still running on the API. To allow the API to recover, it's recommended to wait one to two minutes before starting a new run.
 
 5. Analyze results
 
@@ -298,8 +305,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 1. Prep your dataset
 
-- The dataset needs to be in `.jsonl` format - these means a file with one JSON object per line.
-- Each JSON object need to have a `prompt` key with the value being the prompt you want to pass to the LLM. If you want to benchmark a multimodal model, then also include the `image_path` key with an absolute path value.
+- The dataset needs to be in `.jsonl` format - these means a file with one JSON object per line. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
+- Each JSON object need to have a `prompt` key with the value being the prompt you want to pass to the LLM. If you want to benchmark a multimodal model, then also include the `image_path` key with an absolute path value. **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing prompt may help to solve the issue.
 
 2. Upload the jsonl file using the option in the sidebar.
 
@@ -357,7 +364,7 @@ This option allows you to measure performance during a multi-turn conversation w
   - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card.
   - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
-2. If the model to benchmark is multimodal, then you can upload an image using the option in the sidebar. (Limit size: 200MB)
+2. If the model to benchmark is multimodal, then you can upload an image using the option in the sidebar. (Limit size: 200MB) **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing prompt may help to solve the issue.
 
 2. Set the configuration parameters
 
@@ -401,7 +408,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
-  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). If model is not multimodal, then leave the value to na. _Default:_ na.
+  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
   - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 
    _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use.
@@ -454,7 +461,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1
   - **timeout**: Timeout in seconds. _Default_: 600
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
-  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). If model is not multimodal, then leave the value to na. _Default:_ na.
+  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
   - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 
    _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use.
@@ -504,7 +511,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
   - **timeout**: Timeout in seconds. _Default_: 600
-  - **input-file-path**: The location of the custom dataset that you want to evaluate with
+  - **input-file-path**: The location of the custom dataset that you want to evaluate with. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
   - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
 
   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use. 
