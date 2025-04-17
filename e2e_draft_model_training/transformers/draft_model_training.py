@@ -7,7 +7,7 @@ import wandb
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM, SFTConfig
-
+import yaml
 from typing import Optional
 
 
@@ -28,56 +28,46 @@ class DraftModelTrainer:
         save_steps (int): Frequency of saving steps.
         gradient_accumulation_steps (int): Number of gradient accumulation steps.
         batch_size (int): Batch size for training.
-        devices (str): CUDA devices to use (default "0").
+        devices (str): CUDA devices to use.
+        dataset_text_field (str): Key name for the text field in the dataset.
     """
 
-    def __init__(
-        self,
-        train_data: str,
-        output_dir: str,
-        run_name: str,
-        learning_rate: float = 2e-5,
-        epochs: int = 2,
-        lr_scheduler_type: Optional[str] = 'constant',
-        response_template: str = '<|start_header_id|>assistant<|end_header_id|>\n\n',
-        base_model: str = '',
-        save_strategy: str = 'epoch',
-        save_steps: int = 1,
-        gradient_accumulation_steps: int = 1,
-        batch_size: int = 8,
-        devices: str = '0',
-    ) -> None:
+    def __init__(self, config_path: str) -> None:
         """
-        Initialize the DraftModelTrainer with configuration values.
+        Initialize the DraftModelTrainer using a YAML configuration file.
+
+        The configuration file is expected to contain keys corresponding to the trainer's attributes.
 
         Args:
-            train_data (str): Path to the training data file.
-            output_dir (str): Directory to save checkpoints.
-            run_name (str): Name of the wandb run.
-            learning_rate (float): Learning rate to use.
-            epochs (int): Number of epochs for training.
-            lr_scheduler_type (Optional[str]): Scheduler type to use.
-            response_template (str): Template for formatting responses.
-            base_model (str): Identifier or path to the pretrained base model.
-            save_strategy (str): Strategy for saving checkpoints.
-            save_steps (int): Number of steps between saves.
-            gradient_accumulation_steps (int): Steps for gradient accumulation.
-            batch_size (int): Per device training batch size.
-            devices (str): GPU devices to use.
+            config_path (str): Path to the YAML configuration file.
         """
-        self.train_data = train_data
-        self.output_dir = output_dir
-        self.run_name = run_name
-        self.learning_rate = learning_rate
-        self.epochs = epochs
-        self.lr_scheduler_type = lr_scheduler_type
-        self.response_template = response_template.replace('\\n', '\n')
-        self.base_model = base_model
-        self.save_strategy = save_strategy
-        self.save_steps = save_steps
-        self.gradient_accumulation_steps = gradient_accumulation_steps
-        self.batch_size = batch_size
-        self.devices = devices
+        config_file = Path(config_path)
+        if not config_file.is_file():
+            raise FileNotFoundError(f"Configuration file '{config_path}' not found.")
+
+        with open(config_file, 'r', encoding='utf-8') as file:
+            config: Dict[str, Any] = yaml.safe_load(file)
+
+        # Set the attributes from the loaded config
+        self.train_data: str = config.get('train_data', '')
+        self.output_dir: str = config.get('output_dir', '')
+        self.run_name: str = config.get('run_name', '')
+        self.learning_rate: float = config.get('learning_rate', 2e-5)
+        self.epochs: int = config.get('epochs', 2)
+        self.lr_scheduler_type: Optional[str] = config.get('lr_scheduler_type', 'constant')
+        self.response_template: str = config.get(
+            'response_template', '<|start_header_id|>assistant<|end_header_id|>\n\n'
+        ).replace('\\n', '\n')
+        self.dataset_text_field: str = config.get('dataset_text_field', 'text')
+        self.base_model: str = config.get('base_model', '')
+        self.save_strategy: str = config.get('save_strategy', 'epoch')
+        self.save_steps: int = config.get('save_steps', 1)
+        self.gradient_accumulation_steps: int = config.get('gradient_accumulation_steps', 1)
+        self.batch_size: int = config.get('batch_size', 8)
+        self.devices: str = config.get('devices', '0')
+
+        # Create the output directory if it doesn't exist yet
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def train(self) -> None:
         """
@@ -95,8 +85,8 @@ class DraftModelTrainer:
             'lr_scheduler_type': self.lr_scheduler_type,
         }
 
-        # Initialize wandb run
-        wandb.init(project='Draft_Model_Training', config=config, name=self.run_name)
+        # # Initialize wandb run
+        # wandb.init(project='Draft_Model_Training', config=config, name=self.run_name)
 
         # Load dataset
         dataset = load_dataset(
@@ -127,7 +117,7 @@ class DraftModelTrainer:
             save_steps=self.save_steps,
             run_name=self.run_name,
             warmup_ratio=0.03,
-            dataset_text_field='training_text',
+            dataset_text_field=self.dataset_text_field,
         )
 
         # Load model using the base model identifier
@@ -162,26 +152,16 @@ class DraftModelTrainer:
 
 def main() -> None:
     """
-    Example main function to demonstrate training with DraftModelTrainer.
+    Main function to demonstrate training with DraftModelTrainer.
 
-    Replace the placeholder paths and model identifier with actual values when running.
+    The configuration is loaded via the path passed to the DraftModelTrainer constructor.
     """
-    # Instantiate the DraftModelTrainer with example parameters
-    trainer = DraftModelTrainer(
-        train_data='e2e_draft_model_training/data/datasets/bio_train_completions/bio_train.json',
-        output_dir='e2e_draft_model_training/transformers/results',
-        run_name='example_run',
-        learning_rate=2e-5,
-        epochs=5,
-        lr_scheduler_type='cosine',
-        response_template='<|start_header_id|>assistant<|end_header_id|>\n\n',
-        base_model='meta-llama/Llama-3.2-1B-Instruct',
-        save_strategy='epoch',
-        save_steps=500,
-        gradient_accumulation_steps=1,
-        batch_size=8,
-        devices='0',
-    )
+    # Configuration file path
+    config_path: str = '02_config_training.yaml'
+
+    # Instantiate the DraftModelTrainer with the configuration file path.
+    trainer = DraftModelTrainer(config_path)
+
     # Start training
     trainer.train()
 
