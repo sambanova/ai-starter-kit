@@ -21,4 +21,4 @@ sseclient-py==1.8.0
 streamlit-extras
 streamlit==1.32.0
 unstructured[pdf]==0.17.2
-unstructured_inference==0.7.29
+unstructured_inference==0.8.10

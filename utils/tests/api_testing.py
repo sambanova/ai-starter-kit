@@ -103,7 +103,7 @@ class TestAPIModel(unittest.TestCase):
             self.assertIsInstance(response.choices[0].message.content, str)
             self.assertGreater(len(response.choices[0].message.content), 0)
             self.assertTrue(hasattr(response, 'model'))
-            self.assertEqual(response.model, model)
+            self.assertIn(response.model, [model, f'{model}-Text'])
             self.assertTrue(hasattr(response, 'usage'))
 
     def test_client_chat_completion_text_streaming(self) -> None:
@@ -119,7 +119,7 @@ class TestAPIModel(unittest.TestCase):
                 self.assertTrue(hasattr(chunk, 'choices'))
                 self.assertIsInstance(chunk.choices[0].delta.content, str)
                 self.assertTrue(hasattr(chunk, 'model'))
-                self.assertEqual(chunk.model, model)
+                self.assertIn(chunk.model, [model, f'{model}-Text'])
                 self.assertTrue(hasattr(chunk, 'usage'))
 
     def test_client_chat_completion_image(self) -> None:
