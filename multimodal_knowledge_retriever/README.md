@@ -85,7 +85,7 @@ This overview should help users understand the strengths and limitations of the 
 # Before you begin
 
 This starter kit, you need both a LVLM and a LLM. 
-* We use the Llama3.2 11B LVLM, which is currently available in SambaNovaCloud.
+* We use the Llama4 Maverick as LVLM, which is currently available in SambaNovaCloud.
 * You can use a LLM of your choice, from SambaStudio or SambaNovaCloud. 
 
 It might make sense to use two SambaNovaCloud models.
