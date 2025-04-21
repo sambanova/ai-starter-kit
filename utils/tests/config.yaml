@@ -11,8 +11,7 @@ models:
     - "Meta-Llama-Guard-3-8B"
 
   text-image:
-    - "Llama-3.2-11B-Vision-Instruct"
-    - "Llama-3.2-11B-Vision-Instruct"
+    - "Llama-4-Maverick-17B-128E-Instruct"
 
   text-audio:
     - "Qwen2-Audio-7B-Instruct"
