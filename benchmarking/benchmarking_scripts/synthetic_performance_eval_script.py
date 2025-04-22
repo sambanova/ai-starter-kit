@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import pandas as pd
 import yaml
@@ -22,7 +22,7 @@ import logging
 
 from dotenv import load_dotenv
 
-from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator, RealWorkLoadPerformanceEvaluator
+from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator, SyntheticPerformanceEvaluator
 from benchmarking.utils import read_perf_eval_json_files
 
 logging.basicConfig(
@@ -46,7 +46,7 @@ def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[in
 
     return requests_grouping, requests_batching
 
-def extract_file_info(file_name: str) -> Tuple[str, int, int, int]:
+def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Optional[float]]:
     """Extract model, input, output, and concurrency from file name."""
     
     if "multimodal" in file_name:
@@ -85,8 +85,8 @@ for idx, row in model_configs_df.iterrows():
     input_tokens = int(row['input_tokens'])
     output_tokens = int(row['output_tokens'])
     num_requests = int(row['num_requests'])
-    concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else None
-    qps = float(row['qps']) if pd.notna(row['qps']) else None
+    concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
+    qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
     qps_distribution = row['qps_distribution']
     multimodal_img_size = row['multimodal_img_size']
     multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
@@ -95,13 +95,18 @@ for idx, row in model_configs_df.iterrows():
     qps_set = pd.notna(qps) and qps != 0
     
     if cr_set and qps_set:
-        print(f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-{concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set. Set only one of them, skipping run.")
+        print(f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-\
+            {concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set.\
+            Set only one of them, skipping run.")
         continue
+    
+    evaluator: SyntheticPerformanceEvaluator | RealWorkLoadPerformanceEvaluator
     
     if cr_set:
         logging.info(
-            f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens},'
-            f'concurrent_requests {concurrent_requests}, num_requests {num_requests}, multimodal_img_size {multimodal_img_size}'
+            f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, '
+            f'concurrent_requests {concurrent_requests}, num_requests {num_requests}, ' 
+            f'multimodal_img_size {multimodal_img_size}'
         )
         
         # Instantiate evaluator
@@ -137,7 +142,8 @@ for idx, row in model_configs_df.iterrows():
         
     else:
         logging.error(
-            f'Set either concurrent_requests or qps for model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}. Skipping run.'
+            f'Set either concurrent_requests or qps for model_name {model_name}, \
+            input_tokens {input_tokens}, output_tokens {output_tokens}. Skipping run.'
         )
         continue
     
@@ -172,11 +178,14 @@ if config['consolidated_results_dir']:
         df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
         
         # Fill missing values
-        df_summary['num_concurrent_requests'] = None if 'num_concurrent_requests' not in df_summary.columns else df_summary['num_concurrent_requests']
+        df_summary['num_concurrent_requests'] = None if 'num_concurrent_requests' not in df_summary.columns \
+            else df_summary['num_concurrent_requests']
         df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
         df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
-        df_summary['qps_distribution'] = None if 'qps_distribution' not in df_summary.columns else df_summary['qps_distribution']
-        df_summary['multimodal_img_size'] = df_summary['name'].str.extract(r'multimodal_(small|medium|large)', expand=False)
+        df_summary['qps_distribution'] = None if 'qps_distribution' not in df_summary.columns \
+            else df_summary['qps_distribution']
+        df_summary['multimodal_img_size'] = df_summary['name'].str.extract(r'multimodal_(small|medium|large)'\
+            , expand=False)
     
         df_summary = df_summary[[
             'model', 'num_input_tokens', 'num_output_tokens', 
@@ -195,7 +204,8 @@ if config['consolidated_results_dir']:
         df_summary['model'] = df_summary['model'].str.replace('.', '-')
         df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
         df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
-        df_summary = df_summary.set_index(['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'])
+        df_summary = df_summary.set_index(['model', 'num_input_tokens', 'num_output_tokens',\
+            'num_concurrent_requests', 'qps'])
 
         # Read individual responses
         df = read_perf_eval_json_files(output_files_dir, type='individual_responses')
@@ -203,13 +213,20 @@ if config['consolidated_results_dir']:
         # Process individual files and add requests batching approximation
         for filename in os.listdir(output_files_dir):
             if 'individual_responses' in filename:
-                model, in_tok, out_tok, con, qps = extract_file_info(filename)
+                model_finame: str
+                in_tok_finame: int
+                out_tok_finame: int
+                concurrency_finame: Optional[int]
+                qps_finame: Optional[float]
+
+                model_finame, in_tok_finame, out_tok_finame, \
+                    concurrency_finame, qps_finame = extract_file_info(filename)
                 df_file = df[df['filename'] == filename].copy()
                 df_file = df_file[df_file['error_code'].isnull()]
 
                 requests_grouping, requests_batching = get_grouping_and_batching_info(df_file)
 
-                key = (model, in_tok, out_tok, con, qps)
+                key = (model_finame, in_tok_finame, out_tok_finame, concurrency_finame, qps_finame)
 
                 if key in df_summary.index:
                     df_summary.at[key,'requests_grouping'] = requests_grouping
@@ -218,7 +235,8 @@ if config['consolidated_results_dir']:
                     raise KeyError(f"Key {key} not found in dictionary. File: {file}")
 
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
-        df_summary.sort_values(by=['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'], inplace=True)
+        df_summary.sort_values(by=['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'],\
+            inplace=True)
         df_summary.to_excel(os.path.join(consolidated_results_dir, f'consolidated_results_{run_time}.xlsx'))
         
     except Exception as e:
