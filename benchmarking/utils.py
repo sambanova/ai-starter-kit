@@ -8,7 +8,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), './'))
 SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 CONFIG_PATH = os.path.join(project_root, 'config.yaml')
 
-def read_synthetic_json_files(folder_path: str, type: str='individual_responses') -> pd.DataFrame:
+def read_perf_eval_json_files(folder_path: str, type: str='individual_responses') -> pd.DataFrame:
     """ Read all JSON files in a folder and return a DataFrame.
 
     Args:
@@ -44,5 +44,3 @@ def read_synthetic_json_files(folder_path: str, type: str='individual_responses'
                    .replace('_per_request', '')).copy()
 
     return df
-
-# TODO: implement based on the real workloads
