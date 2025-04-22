@@ -7,7 +7,7 @@ llm:
     "select_expert": "Meta-Llama-3.3-70B-Instruct"  #set if using SambaNovaCloud or SambaStudio bundle llm expert
 
 lvlm:
-    "model": "Llama-3.2-11B-Vision-Instruct"
+    "model": "Llama-4-Maverick-17B-128E-Instruct"
     "do_sample": false
     "max_tokens_to_generate": 512 
     "temperature": 1
