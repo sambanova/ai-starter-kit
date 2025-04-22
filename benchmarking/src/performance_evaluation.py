@@ -1179,7 +1179,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
 
 class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, qps: float, qps_distribution: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, qps: float, qps_distribution: str = 'constant', *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.qps = qps
         self.qps_distribution = qps_distribution
