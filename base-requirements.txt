@@ -4,11 +4,11 @@ llama-index-llms-langchain==0.4.2
 langchain==0.3.16
 langchain-sambanova==0.1.0
 langchain-core==0.3.33
-langchain-milvus==0.1.9
 langchain-chroma == 0.2.1
 langchain-community==0.3.16
 langchain-experimental==0.3.2
 langchain-huggingface==0.1.2
+langchain-milvus==0.1.9
 langgraph==0.2.28
 crewai==0.100.1
 crewai-tools==0.0.1
