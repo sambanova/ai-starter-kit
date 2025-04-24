@@ -38,15 +38,15 @@ CLI_COMMAND_TIMEOUT = 1200  # 20 minutes
 # List of starter kits to test
 STARTER_KITS: List[str] = [
     'benchmarking',
-    # 'enterprise_knowledge_retriever',
-    # 'financial_assistant',
-    # 'function_calling',
-    # 'search_assistant',
-    # 'multimodal_knowledge_retriever',
-    # 'post_call_analysis',
-    # 'prompt_engineering',
-    # 'document_comparison',
-    # 'utils',
+    'enterprise_knowledge_retriever',
+    'financial_assistant',
+    'function_calling',
+    'search_assistant',
+    'multimodal_knowledge_retriever',
+    'post_call_analysis',
+    'prompt_engineering',
+    'document_comparison',
+    'utils',
 ]
 
 # Dictionary to store CLI test commands for each kit
@@ -64,15 +64,15 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
         '--num-requests 2 '
         '--llm-api sncloud'
     ),
-    # 'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
-    # 'financial_assistant': 'python tests/financial_assistant_test.py',
-    # 'function_calling': 'python tests/fc_test.py',
-    # 'multimodal_knowledge_retriever': ('python tests/multimodal_knowledge_retriever_test.py'),
-    # 'post_call_analysis': 'python tests/pca_test.py',
-    # 'prompt_engineering': 'python tests/prompt_engineering_test.py',
-    # 'search_assistant': 'python tests/search_assistant_test.py',
-    # 'document_comparison': 'python tests/dc_test.py',
-    # 'utils': 'python tests/api_testing.py',
+    'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
+    'financial_assistant': 'python tests/financial_assistant_test.py',
+    'function_calling': 'python tests/fc_test.py',
+    'multimodal_knowledge_retriever': ('python tests/multimodal_knowledge_retriever_test.py'),
+    'post_call_analysis': 'python tests/pca_test.py',
+    'prompt_engineering': 'python tests/prompt_engineering_test.py',
+    'search_assistant': 'python tests/search_assistant_test.py',
+    'document_comparison': 'python tests/dc_test.py',
+    'utils': 'python tests/api_testing.py',
 }
 
 
