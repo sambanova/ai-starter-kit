@@ -78,7 +78,7 @@ def env_input_fields(
     additional_vars = {}
         
     if mode == 'SambaStudio':
-        url = st.text_input(
+        st.session_state.SAMBASTUDIO_URL = st.text_input(
             'SAMBASTUDIO URL', 
             value=st.session_state.get('SAMBASTUDIO_URL', ''), 
             type='password'
@@ -114,7 +114,7 @@ def env_input_fields(
         if isinstance(additional_env_vars, List):
             # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key  
             if 'SAMBANOVA_URL' in additional_env_vars:
-                url = st.text_input(
+                additional_vars['SAMBANOVA_URL'] = st.text_input(
                     'SAMBANOVA CLOUD URL', 
                     value=st.session_state.get('SAMBANOVA_URL', ''), 
                     type='password'
@@ -144,7 +144,7 @@ def env_input_fields(
         elif isinstance(additional_env_vars, Dict):
             # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key  
             if 'SAMBANOVA_URL' in additional_env_vars:
-                url = st.text_input(
+                additional_vars['SAMBANOVA_URL']  = st.text_input(
                     'SAMBANOVA CLOUD URL', 
                     value=st.session_state.get('SAMBANOVA_URL', ''), 
                     type='password'
