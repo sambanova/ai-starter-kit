@@ -27,8 +27,7 @@ from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTex
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.vectorstores import FAISS, Qdrant
-
-# from langchain_milvus import Milvus
+from langchain_milvus import Milvus
 
 vectordb_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(vectordb_dir, '..'))
@@ -201,7 +200,7 @@ class VectorDb:
             collection_name = f'collection_{self.collection_id}'
             logger.info(f'This is the collection name: {collection_name}')
 
-        vector_store: FAISS | Qdrant | Chroma #| Milvus
+        vector_store: FAISS | Qdrant | Chroma | Milvus
         if db_type == 'faiss':
             vector_store = FAISS.from_documents(documents=chunks, embedding=embeddings)
             if output_db:
@@ -234,24 +233,24 @@ class VectorDb:
                     embedding=embeddings,
                     collection_name='test_collection',
                 )
-        # elif db_type == 'milvus':
-        #     if output_db:
-        #         os.makedirs(output_db, exist_ok=True)
-        #         uri = os.path.join(output_db, 'milvus.db')
-        #     else:
-        #         os.makedirs('./data/tmp', exist_ok=True)
-        #         uri = './data/tmp/milvus.db'
-        #     vector_store = Milvus.from_documents(
-        #         documents=chunks,
-        #         embedding=embeddings,
-        #         collection_name=collection_name,
-        #         connection_args={'uri': uri},
-        #         index_params={
-        #             'metric_type': 'L2',
-        #             'index_type': 'AUTOINDEX',
-        #             'params': {},
-        #         },
-        #     )
+        elif db_type == 'milvus':
+            if output_db:
+                os.makedirs(output_db, exist_ok=True)
+                uri = os.path.join(output_db, 'milvus.db')
+            else:
+                os.makedirs('./data/tmp', exist_ok=True)
+                uri = './data/tmp/milvus.db'
+            vector_store = Milvus.from_documents(
+                documents=chunks,
+                embedding=embeddings,
+                collection_name=collection_name,
+                connection_args={'uri': uri},
+                index_params={
+                    'metric_type': 'L2',
+                    'index_type': 'AUTOINDEX',
+                    'params': {},
+                },
+            )
 
         logger.info(f'Vector store saved to {output_db}')
 
@@ -264,7 +263,7 @@ class VectorDb:
         db_type: str = 'chroma',
         collection_name: Optional[str] = None,
     ) -> Any:
-        vector_store: FAISS | Qdrant | Chroma #| Milvus
+        vector_store: FAISS | Qdrant | Chroma | Milvus
         if db_type == 'faiss':
             vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)  # type: ignore
         elif db_type == 'chroma':
@@ -279,24 +278,24 @@ class VectorDb:
         elif db_type == 'qdrant':
             # TODO: Implement Qdrant loading
             pass
-        # elif db_type == 'milvus':
-        #     if collection_name is None:
-        #         collection_name = 'LangChainCollection'
-        #     if persist_directory.endswith('.db'):
-        #         persist_directory = os.path.dirname(persist_directory)
-        #     uri = os.path.join(persist_directory, 'milvus.db')
-        #     vector_store = Milvus(
-        #         embedding_function=embedding_model,
-        #         collection_name=collection_name,
-        #         connection_args={
-        #             'uri': uri,
-        #         },
-        #         index_params={
-        #             'metric_type': 'L2',
-        #             'index_type': 'AUTOINDEX',
-        #             'params': {},
-        #         },
-        #     )
+        elif db_type == 'milvus':
+            if collection_name is None:
+                collection_name = 'LangChainCollection'
+            if persist_directory.endswith('.db'):
+                persist_directory = os.path.dirname(persist_directory)
+            uri = os.path.join(persist_directory, 'milvus.db')
+            vector_store = Milvus(
+                embedding_function=embedding_model,
+                collection_name=collection_name,
+                connection_args={
+                    'uri': uri,
+                },
+                index_params={
+                    'metric_type': 'L2',
+                    'index_type': 'AUTOINDEX',
+                    'params': {},
+                },
+            )
         else:
             raise ValueError(f'Unsupported database type: {db_type}')
 
@@ -323,9 +322,9 @@ class VectorDb:
         elif db_type == 'qdrant':
             # TODO implement update method for qdrant
             pass
-        # elif db_type == 'milvus':
-        #     # TODO implement update method for milvus
-        #     pass
+        elif db_type == 'milvus':
+            # TODO implement update method for milvus
+            pass
 
         return vector_store
 
