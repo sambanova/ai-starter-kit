@@ -410,6 +410,7 @@ _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1
   - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
   - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
   - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
+  - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
 
    _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use.
 
