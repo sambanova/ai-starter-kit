@@ -211,7 +211,15 @@ def main() -> None:
             help="""The number of requests to make from the synthetic dataset. Note that it is possible for the test 
                 to timeout first. (default: %(default)s)""",
         )
-
+        
+        parser.add_argument(
+            '--save-llm-responses',
+            type=str2bool,
+            required=False,
+            default=False,
+            help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
+        )
+        
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
@@ -227,6 +235,7 @@ def main() -> None:
                 num_concurrent_requests=args.num_concurrent_requests,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
+                save_response_texts=args.save_llm_responses,
                 llm_api=args.llm_api,
             )
 
