@@ -1,8 +1,9 @@
 model:
-  hf_name: "meta-llama/Llama-3.1-8B-Instruct"
-  model_name: "Llama-3.1-8B-Instruct"
-  publisher: "meta-llama"
-  description: "The Meta Llama 3.1 collection of multilingual large language models (LLMs) is a collection of pretrained and instruction tuned generative models in 8B, 70B and 405B sizes (text in/text out)."
+  # hf_name: "meta-llama/Llama-3.1-8B-Instruct"
+  hf_name: "TsinghuaC3I/Llama-3.1-8B-UltraMedical"
+  model_name: "Llama-3.1-8B-UltraMedical"
+  publisher: "TsinghuaC3I"
+  description: "Llama-3.1-8B-UltraMedical is an open-access large language model (LLM) specialized in biomedicine. Developed by the Tsinghua C3I Lab, this model aims to enhance medical examination access, literature comprehension, and clinical knowledge."
   param_count: 8  # number in billions of parameters
 
 sambastudio:
