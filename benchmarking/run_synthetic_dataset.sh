@@ -12,6 +12,7 @@ python src/evaluator.py \
 --num-output-tokens 1000 \
 --multimodal-image-size na \
 --num-requests 16 \
+--save-llm-responses True \
 --llm-api sncloud
 
 
@@ -31,6 +32,7 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size na \
 # --num-requests 16 \
+# --save-llm-responses False \
 # --llm-api sambastudio
 
 #   1.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
@@ -45,6 +47,7 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size medium \
 # --num-requests 16 \
+# --save-llm-responses False \
 # --llm-api sambastudio
 
 # 2. SambaNova Cloud 
@@ -61,6 +64,7 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size na \
 # --num-requests 16 \
+# --save-llm-responses False \
 # --llm-api sncloud
 
 #   2.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
@@ -75,4 +79,5 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size medium \
 # --num-requests 16 \
+# --save-llm-responses False \
 # --llm-api sncloud
