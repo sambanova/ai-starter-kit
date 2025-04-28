@@ -12,7 +12,7 @@ python src/evaluator.py \
 --num-output-tokens 1000 \
 --multimodal-image-size na \
 --num-requests 16 \
---save-llm-responses True \
+--save-llm-responses False \
 --llm-api sncloud
 
 
