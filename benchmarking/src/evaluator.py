@@ -129,18 +129,21 @@ def main() -> None:
             default=10,
             help='The number of concurrent requests used to send requests. (default: %(default)s)',
         )
+        
         parser.add_argument(
             '--model-name',
             type=str,
             required=True,
             help='The name of the model to use for this performance evaluation.',
         )
+        
         parser.add_argument(
             '--input-file-path',
             type=str,
             required=True,
             help='The absolute path to the dataset to be used for running the custom performance evaluation.',
         )
+        
         parser.add_argument(
             '--save-llm-responses',
             type=str2bool,
@@ -148,6 +151,7 @@ def main() -> None:
             default=False,
             help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
         )
+        
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         custom_evaluator = CustomPerformanceEvaluator(
@@ -213,6 +217,15 @@ def main() -> None:
         )
         
         parser.add_argument(
+            '--use-multiple-prompts',
+            type=str2bool,
+            required=True,
+            default=False,
+            help="""Whether to use multiple prompts selected randomly from prompt file. 
+                Only works on text instruct models. (default: %(default)s)""",
+        )
+        
+        parser.add_argument(
             '--save-llm-responses',
             type=str2bool,
             required=False,
@@ -235,6 +248,7 @@ def main() -> None:
                 num_concurrent_requests=args.num_concurrent_requests,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
+                use_multiple_prompts=args.use_multiple_prompts,
                 save_response_texts=args.save_llm_responses,
                 llm_api=args.llm_api,
             )
