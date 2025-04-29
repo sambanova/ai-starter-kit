@@ -392,7 +392,7 @@ After entering the model name and configuring the parameters, press `Run!` to ac
 Users are able to ask anything and get a generated answer to their questions, as shown in the image below. In addition to the back and forth conversations between the user and the LLM, there is a expander option that users can click to see the following metrics per each LLM response:
 - **Latency (s)**
 - **Throughput (tokens/s)**
-- **Time to first token (s)**
+- **Time to first token (s)** 
 
 ![perf_on_chat_image](./imgs/performance_on_chat_results.png)
 </details>
