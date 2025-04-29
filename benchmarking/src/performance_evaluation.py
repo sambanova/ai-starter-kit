@@ -772,9 +772,16 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, num_concurrent_requests: int, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, 
+        num_concurrent_requests: int, 
+        save_response_texts: bool = False,
+        *args: Any, 
+        **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
+        self.save_response_texts = save_response_texts
 
     def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
@@ -796,6 +803,53 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         )
         
         return self.sanitize_file_prefix(output_file_name)
+    
+    def save_results(
+        self,
+        filename: str,
+        summary: Dict[str, Any],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
+    ) -> None:
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is
+        setup as True
+
+        Args:
+            filename (str): The base name of the file to save the results to.
+            summary (Dict[str, Any]): A dictionary containing the summary of the performance evaluation.
+            individual_responses (List[LLMResponse]): A list of individual responses from the performance evaluation.
+
+        Raises:
+            e: if an error happens when creating the output file related to prompts and completions, an error will be
+            raised
+        """
+        
+        super().save_results(filename, summary, individual_responses)
+
+        # If specified, save the llm responses to output file
+        if self.save_response_texts:
+            # Create response texts file name
+            response_texts_file_name = f'{filename}_response_texts'
+            results_dir = Path(self.results_dir)
+
+            # Save response texts
+            try:
+                self.response_texts_file_path = f'{results_dir}/{response_texts_file_name}.jsonl'
+                with open(self.response_texts_file_path, 'w') as f:
+                    for response in individual_responses:
+                        if isinstance(response, LLMResponse):
+                            output_json = {
+                                'prompt': response.request_config.prompt_tuple[0],
+                                'completion': str(response.response_text),
+                            }
+                            f.write(json.dumps(output_json))
+                            f.write('\n')
+            except Exception as e:
+                logger.error('ERROR SAVING LLM OUTPUTS')
+                raise e
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
