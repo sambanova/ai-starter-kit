@@ -1,4 +1,15 @@
-prompts:
+default_prompt:
+
+  - name: "default"
+    template: |
+        Write a detailed, in-depth guide on the evolution of deep learning.Cover 
+        the historical milestones, key breakthroughs, architectures (such as CNNs, 
+        RNNs, and Transformers), training methodologies, hardware advancements, 
+        ethical concerns, and future trends. Include real-world applications, 
+        case studies, and a comparison of deep learning with traditional machine 
+        learning. Provide citations and technical explanations where necessary.
+
+multiple_prompts:
   
   - name: "prompt1"
     template: "Write all the sorting algorithms in python, C, C++ and Rust with detailed comments on every line."
