@@ -33,19 +33,18 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 ADDITIONAL_ENV_VARS: list[str] = []
 # Available models in dropdown menu
 LVLM_MODELS = [
-    'Llama-3.2-11B-Vision-Instruct',
-    'Llama-3.2-90B-Vision-Instruct',
+    'Llama-4-Maverick-17B-128E-Instruct',
 ]
 # Available models in dropdown menu
 LLM_MODELS = [
-    'Meta-Llama-3.1-70B-Instruct',
+    'Llama-4-Scout-17B-16E-Instruct',
+    'Llama-4-Maverick-17B-128E-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
-    'DeepSeek-R1',
     'DeepSeek-R1-Distill-Llama-70B',
-    'Llama-3.1-Tulu-3-405B',
+    'DeepSeek-R1',
+    'DeepSeek-V3-0324',
     'Meta-Llama-3.1-405B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
-    'Qwen2.5-72B-Instruct',
     'QwQ-32B-Preview',
 ]
 # Minutes for scheduled cache deletion

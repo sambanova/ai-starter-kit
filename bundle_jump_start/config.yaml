@@ -5,7 +5,7 @@ llm:
     "do_sample": False
     "max_tokens_to_generate": 1200
     "bundle": True #set as true if using Sambastudio Bundle endpoint
-    "select_expert": "Meta-Llama-3.1-70B-Instruct" #set if using SambaStudio Bundle llm expert
+    "select_expert": "Meta-Llama-3.3-70B-Instruct" #set if using SambaStudio Bundle llm expert
     
 
 embedding_model: 
@@ -75,9 +75,9 @@ expert_prompt: |
   <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 bundle_name_map:
-  Finance expert: "Meta-Llama-3.1-70B-Instruct"
-  Math expert: "Meta-Llama-3.1-70B-Instruct"
-  Code expert: "Meta-Llama-3.1-70B-Instruct"
+  Finance expert: "Meta-Llama-3.3-70B-Instruct"
+  Math expert: "Meta-Llama-3.3-70B-Instruct"
+  Code expert: "Meta-Llama-3.3-70B-Instruct"
   Medical expert: "medicine-chat"
   Legal expert: "law-chat"
   History expert: "Meta-Llama-3-70B-Instruct"
@@ -86,4 +86,4 @@ bundle_name_map:
   Literature expert: "Meta-Llama-3-8B-Instruct"
   Science expert: "Mistral-7B-Instruct-v0.2"
   Social Science expert: "Mistral-7B-Instruct-v0.2"
-  Generalist: "Meta-Llama-3.1-70B-Instruct"
+  Generalist: "Meta-Llama-3.3-70B-Instruct"

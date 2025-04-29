@@ -21,15 +21,26 @@ This guide walks through setting up an API key, performing a few sample queries 
 
 ## Supported Models
 
-Access Meta and Qwen families of models at **full precision** via the SambaNova Cloud API!
+Access Meta, Deepseek and Qwen families of models at **full precision** via the SambaNova Cloud API!
 
-**Model details for DeepSeek R1 family**:
+**Model details for DeepSeek family**:
 1. DeepSeek R1 671B:
    - Model ID: `DeepSeek-R1`
-   - Context length: 4k
+   - Context length: 4k, 8k
 2. DeepSeek R1 Distill Llama 70B:
    - Model ID: `DeepSeek-R1-Distill-Llama-70B`
    - Context length: 4k, 8k, 16k, 32k
+3. DeepSeek V3:
+   - Model ID: `DeepSeek-V3-0324`
+   - Context length: 4k, 8k
+
+**Model details for Llama 4 family**:
+1. Llama 4 Scout:
+   - Model ID: `Llama-4-Scout-17B-16E-Instruct`
+   - Context length: 4k, 8k
+2. Llama 4 Maverick:
+   - Model ID: `Llama-4-Maverick-17B-128E-Instruct`
+   - Context length: 4k, 8k
 
 **Model details for Llama 3.3 family**:
 1. Llama 3.3 70B:
@@ -43,51 +54,31 @@ Access Meta and Qwen families of models at **full precision** via the SambaNova 
 2. Llama 3.2 3B:
    - Model ID: `Meta-Llama-3.2-3B-Instruct`
    - Context length: 4k
-3. Llama 3.2 11B:
-   - Model ID: `Llama-3.2-11B-Vision-Instruct`
-   - Context length: 16k
-4. Llama 3.2 90B:
-   - Model ID: `Llama-3.2-90B-Vision-Instruct`
-   - Context length: 16k
 
 **Model details for Llama 3.1 family**:
 1. Llama 3.1 8B:
    - Model ID: `Meta-Llama-3.1-8B-Instruct`
-   - Context length: 4k, 8k, 16k
-2. Llama 3.1 70B:
-   - Model ID: `Meta-Llama-3.1-70B-Instruct`
    - Context length: 4k, 8k, 16k, 32k, 64k, 128k
 3. Llama 3.1 405B:
    - Model ID: `Meta-Llama-3.1-405B-Instruct`
    - Context length: 4k, 8k, 16k
-
-**Model details for Tulu 3 family**:
-1. Llama 3.1 Tulu 3 405B:
-   - Model ID: `Llama-3.1-Tulu-3-405B`
-   - Context length: 4k, 8k, 16k
-
-**Model details for Swallow family**:
-1. Llama 3.1 Swallow 70B:
-   - Model ID: `Llama-3.1-Swallow-70B-Instruct-v0.3`
-   - Context length: 4k, 8k, 16k
-1. Llama 3.1 Swallow 8B:
-   - Model ID: `Llama-3.1-Swallow-8B-Instruct-v0.3`
-   - Context length: 4k, 8k, 16k
    
-**Model details for Qwen2  family**
-1. Qwen 2.5 Coder 32B:
-    - Model ID: `Qwen2.5-Coder-32B-Instruct`
-    - Context length: 8k
-2. Qwen 2.5 72B:
-    - Model ID: `Qwen2.5-72B-Instruct`
-    - Context length: 8k
-2. QwQ 32B:
-    - Model ID: `QwQ-32B-Preview`
-    - Context length: 8k
+**Model details for Qwen  family**
+1. QwQ 32B:
+    - Model ID: `QwQ-32B`
+    - Context length: 8k, 16k
+2. Qwen2 Audio 7B:
+    - Model ID: `Qwen2-Audio-7B-Instruct`
+    - Context length: 4k
 
 **Model details for Llama Guard family**:
 1. Llama Guard 3 8B:
    - Model ID: `Meta-Llama-Guard-3-8B`
+   - Context length: 8k
+
+**Model details for E5 Embeddings family**:
+1. E5 Mistral 7B:
+   - Model ID: `E5-Mistral-7B-Instruct`
    - Context length: 8k
 
 > You can also get the full list of models runing in your teminal:
@@ -155,7 +146,7 @@ api_key = os.environ.get("SAMBANOVA_API_KEY")
 llm = ChatSambaNovaCloud(
     api_key=api_key,
     streaming=True,
-    model="Meta-Llama-3.1-70B-Instruct",
+    model="Meta-Llama-3.3-70B-Instruct",
 )
 
 response = llm.invoke('What is the capital of France?')

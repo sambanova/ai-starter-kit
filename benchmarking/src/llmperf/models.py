@@ -20,6 +20,7 @@ class RequestConfig(BaseModel):
     request_idx: int
     model: str
     prompt_tuple: Tuple[Dict[str, Any], int]
+    image: Optional[str] = None
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
     api_variables: Dict[str, str] = {}

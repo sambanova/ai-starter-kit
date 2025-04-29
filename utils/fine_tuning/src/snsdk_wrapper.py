@@ -753,6 +753,225 @@ class SnsdkWrapper:
             logging.error(f"Failed to get model's info. Details: {model_info_response['message']}")
             raise Exception(f'Error message: {model_info_response["message"]}')
 
+    def create_spec_decoding_model(
+        self,
+        model_name: Optional[str] = None,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[str] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[str] = None,
+        rdu_arch: Optional[str] = None,
+        job_type: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Creates a speculative decoding model pair.
+
+        Args:
+            - model_name (str): The name of the new model. (e.g. Meta-Llama-3.3-70B-Instruct-SD)
+            - target_model (str): The name of the target model. (e.g. Meta-Llama-3.3-70B-Instruct)
+            - target_model_version (str): The version of the target model. (e.g. 1)
+            - draft_model (str): The name of the draft model. (e.g. Meta-Llama-3-8B-Instruct)
+            - draft_model_version (str): The version of the draft model. (e.g. 1)
+            - rdu_arch (str): The RDU architecture. (e.g. SN40L-8)
+            - job_type (str): The type of job. (e.g. deploy)
+
+        Returns:
+            - The ID of the newly created model.
+
+        Raises:
+            - Exception: If the target or draft model does not exist, or if the target model does not support 
+            speculative decoding (e.g. models are not compatible for spec decoding).
+            - Exception: If there is an error during the validation or creation process.
+        """
+
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['spec_decoding']['model_name']
+        
+        if target_model is None:
+            self._raise_error_if_config_is_none()
+            target_model = self.config['spec_decoding']['target_model']
+
+        if target_model_version is None:
+            self._raise_error_if_config_is_none()
+            target_model_version = self.config['spec_decoding']['target_model_version']
+        
+        if draft_model is None:
+            self._raise_error_if_config_is_none()
+            draft_model = self.config['spec_decoding']['draft_model']
+        
+        if draft_model_version is None:
+            self._raise_error_if_config_is_none()
+            draft_model_version = self.config['spec_decoding']['draft_model_version']
+        
+        if rdu_arch is None:
+            self._raise_error_if_config_is_none()
+            rdu_arch = self.config['sambastudio']['rdu_arch']
+        
+        if job_type is None:
+            self._raise_error_if_config_is_none()
+            job_type = self.config['job']['job_type']
+
+        # check if models exist
+        target_model_query = self.search_model(target_model)
+        if target_model_query is None:
+            raise Exception(f"Model with name '{target_model}' does not exist.")
+        draft_model_query = self.search_model(draft_model)
+        if draft_model_query is None:
+            raise Exception(f"Model with name '{draft_model}' does not exist.")
+
+        target_model_info_response = self.model_info(target_model, job_type)
+        if target_model_info_response['hyperparams'][job_type][rdu_arch]['supports_speculative_decoding'] == False:
+            raise Exception(f"Model with name '{target_model}' does not support speculative decoding.")
+
+        # check if models are compatible
+        snapi_validate_spec_decoding_command = self._build_snapi_validate_spec_decoding(
+            target_model, target_model_version, draft_model, draft_model_version, rdu_arch
+        )
+
+        echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
+        snapi_response = subprocess.run(
+            snapi_validate_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
+        )
+
+        error_message = 'Failed to validate speculative decoding. Details: '
+        errors_response = self._handle_error_spec_decoding(snapi_response, error_message)
+
+        if errors_response is None:
+            logging.info(f"Speculative decoding validation: '{snapi_response.stdout}'")
+
+        snapi_create_spec_decoding_command = self._build_snapi_create_spec_decoding_pair(
+            model_name, target_model, target_model_version, draft_model, draft_model_version, rdu_arch
+        )
+
+        echo_response = subprocess.run(['echo', 'yes'], capture_output=True, text=True)
+        snapi_response = subprocess.run(
+            snapi_create_spec_decoding_command, input=echo_response.stdout, capture_output=True, text=True
+        )
+
+        error_message = 'Failed to create speculative decoding. Details: '
+        errors_response = self._handle_error_spec_decoding(snapi_response, error_message)
+
+        if errors_response is None:
+            logging.info(f"Speculative decoding creation message: '{snapi_response.stdout}'")
+            new_model_id = self.search_model(model_name)
+            return new_model_id
+    
+    def _handle_error_spec_decoding(self, snapi_response: any, custom_error_message: str) -> None:
+        """
+        Handles error decoding for a given SNAPI response.
+
+        Checks the response for internal server errors, validation failures, or non-empty stderr.
+        If an error is detected, logs the error message and raises an exception.
+        If all lines in the error message are warnings, logs a warning instead of raising an exception.
+
+        Args:
+            snapi_response (any): The response from the SNAPI.
+            custom_error_message (str): A custom error message to include in the exception.
+
+        Raises:
+            - Exception: custom error message.
+        
+        """
+        errors_response = (
+            ('internal server error' in snapi_response.stdout.lower())
+            and ('failed to validate' in snapi_response.stdout.lower())
+        ) or (len(snapi_response.stderr) > 0)
+        # if errors coming in response
+        if errors_response:
+            error_message = snapi_response.stdout
+            # if all lines in stderr are warnings dont raise
+            if all('warning' in line.lower() for line in error_message.splitlines()):
+                logging.warning(f'message with warning: {error_message}')
+            else:
+                logging.error(error_message + f'{error_message}')
+                raise Exception(f'Error message: {error_message}')
+        # if there are no errors in reponse
+        else:
+            return None
+
+    def _build_snapi_validate_spec_decoding(
+        self,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[int] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[int] = None,
+        rdu_arch: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Builds the SNAPI command to validate speculative decoding for a pair of models.
+
+        Args:
+            - target_model (str): The name of the target model.
+            - target_model_version (int): The version of the target model.
+            - draft_model (str): The name of the draft model.
+            - draft_model_version (int): The version of the draft model.
+            - rdu_arch (str): The RDU architecture.
+
+        Returns:
+            - The SNAPI command to validate speculative decoding.
+        """
+        command = [
+            'snapi',
+            'model',
+            'validate-spec-decoding',
+            '--target',
+            target_model,
+            '--target-version',
+            target_model_version,
+            '--draft',
+            draft_model,
+            '--draft-version',
+            draft_model_version,
+            '--rdu-arch',
+            rdu_arch,
+        ]
+
+        return command
+
+    def _build_snapi_create_spec_decoding_pair(
+        self,
+        model_name: Optional[str] = None,
+        target_model: Optional[str] = None,
+        target_model_version: Optional[int] = None,
+        draft_model: Optional[str] = None,
+        draft_model_version: Optional[int] = None,
+        rdu_arch: Optional[str] = None,
+    ) -> List[str]:
+        """
+        Builds the SNAPI command to create a speculative decoding pair.
+
+        Args:
+            - model_name (str): The name of the new model.
+            - target_model (str): The name of the target model.
+            - target_model_version (int): The version of the target model.
+            - draft_model (str): The name of the draft model.
+            - draft_model_version (int): The version of the draft model.
+            - rdu_arch (str): The RDU architecture.
+
+        Returns:
+            - The SNAPI command to create a speculative decoding pair.
+        """
+        command = [
+            'snapi',
+            'model',
+            'create-sd-pair',
+            '--name',
+            model_name,
+            '--target',
+            target_model,
+            '--target-version',
+            target_model_version,
+            '--draft',
+            draft_model,
+            '--draft-version',
+            draft_model_version,
+            '--rdu-arch',
+            rdu_arch,
+        ]
+
+        return command
+
     def list_models(
         self,
         filter_job_types: Optional[List[str]] = [],
@@ -1545,12 +1764,12 @@ class SnsdkWrapper:
             # create composite model
             dependencies = [{'name': model} for model in model_list]
             create_composite_model_response = self.snsdk_client.add_composite_model(
-                name=model_name, 
-                description=description, 
-                dependencies=dependencies, 
+                name=model_name,
+                description=description,
+                dependencies=dependencies,
                 rdu_required=rdu_required,
-                config_params={}, 
-                app="",
+                config_params={},
+                app='',
             )
 
             if create_composite_model_response['status_code'] == 200:

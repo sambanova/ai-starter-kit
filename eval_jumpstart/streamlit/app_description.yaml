@@ -8,5 +8,6 @@ app_overview: "This example application for LLM evaluation automates multi-step 
   \ If you choose 'Evaluate multiple LLMs', upload a file with questions and answers in the specified format, \
   \ with 'query' and 'expected_answer' as the main columns.\ 
   \ If you choose 'Evaluate RAG chain', upload a PDF file along with questions and answers extracted from the PDF file.\n\ 
+  \ - Remember, when adding cost to the LLMs, these costs are per million tokens.\n\ 
   \ - Finally, hit the 'Evaluate' button and wait for the results. When the app finishes logging the results, it will \ 
   \ display a link to your Wandb workspace, where you can visualize the results."
