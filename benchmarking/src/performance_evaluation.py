@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
@@ -781,7 +780,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         self.use_multiple_prompts = use_multiple_prompts
         self.save_response_texts = save_response_texts
         
-    def load_prompts(self, prompts_file_path: str) -> Dict[str,Dict[str, Any]]:
+    def load_prompts(self, prompts_file_path: str) -> Any:
         """ Loads prompts from yaml file.
 
         Raises:
@@ -1525,14 +1524,23 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
+        # Instantiate image variable
+        image = None
+        
+        # Load prompts based on the model type
+        if self.multimodal_image_size == 'na':
+            # Read prompt for text-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]
+            
+        else:
+            # Read prompt for vision-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]                
+            image = self.get_image() 
 
         # Build input prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
-
-        # Encode image to be sent in LLM request if exists
-        image = None
-        if self.multimodal_image_size != 'na':
-           image = self.get_image() 
+        prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
@@ -1557,37 +1565,3 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
             request_configs.append(request_config)
 
         return request_configs
-
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
-        """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
-        multiple times to reach a user set input_token_count.
-
-        Args:
-            num_input_tokens (int): The user specified length of the input prompt.
-
-        Returns:
-            Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
-        """
-
-        # Load from prompt files
-        if self.multimodal_image_size == 'na':
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template
-            )['template']
-        else:
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template
-            )['template']
-
-        max_words = num_input_tokens  # User-defined word limit
-
-        # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
-
-        # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
-
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-
-        return (full_input_prompt, self.get_token_length(full_input_prompt))
