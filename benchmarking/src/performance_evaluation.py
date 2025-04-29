@@ -718,7 +718,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             }
             
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
+            prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
             
             # Image to be sent in LLM request if exists
             image = None
