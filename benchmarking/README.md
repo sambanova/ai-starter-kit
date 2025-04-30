@@ -69,10 +69,11 @@ The next step is to set up your environment variables to use one of the models a
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables. 
-_Note: In case you're using a **SambaStudio Turbo** endpoint, please update the URL variable and include `api/v2` like the following to ensure the use of dynamic batching:_
+_Note: In case of OpenAI compatible SambaNova endpoints, dynamic batching is already supported. However, in case you're using a **SambaStudio Turbo** endpoint, please update the URL variable and include `api/v2` like the following to ensure the use of dynamic batching:_
 ``` bash
 SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/v2/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 ```
+
 
 **Note**: You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key to either SambaStudio or SambaNova Cloud environment variables.
 
