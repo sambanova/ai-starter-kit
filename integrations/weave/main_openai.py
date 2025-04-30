@@ -1,30 +1,33 @@
-from typing import Optional
-import weave
-from langchain_core.prompts import PromptTemplate
-from langchain_sambanova import ChatSambaNovaCloud
-from dotenv import load_dotenv
-import os
 import json
-from openai import OpenAI
-import requests, random
+import os
+import random
+from typing import Any, Dict, Optional
+
 import litellm
+import requests
+import weave
+from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
 # Initialize Weave with your project name
-weave.init('weave_integration')
+weave.init('weave_integration_openai')
 SAMBANOVA_URL = os.getenv('SAMBANOVA_URL')
 SAMBANOVA_API_KEY = os.getenv('SAMBANOVA_API_KEY')
 sambanova_client = OpenAI(base_url=SAMBANOVA_URL, api_key=SAMBANOVA_API_KEY)
 model = 'Meta-Llama-3.3-70B-Instruct'
 
-PROMPT = """Emulate the Pokedex from early Pokémon episodes. State the name of the Pokemon and then describe it.
-        Your tone is informative yet sassy, blending factual details with a touch of dry humor. Be concise, no more than 3 sentences. """
+PROMPT = """
+Emulate the Pokedex from early Pokémon episodes. State the name of the Pokemon and then describe it.
+Your tone is informative yet sassy, blending factual details with a touch of dry humor.
+Be concise, no more than 3 sentences.
+"""
 POKEMON = ['pikachu', 'charmander', 'squirtle', 'bulbasaur', 'jigglypuff', 'meowth', 'eevee']
 
 
-@weave.op()  # 🐝 Decorator to track requests
-def extract_fruit(sentence: str) -> dict:
+@weave.op()  # type: ignore
+def extract_fruit(sentence: str) -> Optional[Any]:
     system_prompt = 'Parse sentences into a JSON dict with keys: fruit, color and flavor. Only return the JSON object.'
     response = sambanova_client.chat.completions.create(
         model=model,
@@ -39,18 +42,20 @@ def extract_fruit(sentence: str) -> dict:
         response_format={'type': 'json_object'},
     )
     extracted = response.choices[0].message.content
-    extracted_json = json.loads(extracted)
+    if isinstance(extracted, str):
+        extracted_json = json.loads(extracted)
     return extracted_json
 
 
-@weave.op
-def emoji_bot(question: str) -> str:
+@weave.op  # type: ignore
+def emoji_bot(question: str) -> Optional[str]:
     response = sambanova_client.chat.completions.create(
         model=model,
         messages=[
             {
                 'role': 'system',
-                'content': 'You are AGI. You will be provided with a message, and your task is to respond using emojis only.',
+                'content': 'You are AGI. '
+                'You will be provided with a message, and your task is to respond using emojis only.',
             },
             {'role': 'user', 'content': question},
         ],
@@ -61,14 +66,8 @@ def emoji_bot(question: str) -> str:
     return response.choices[0].message.content
 
 
-PROMPT = """Emulate the Pokedex from early Pokémon episodes. State the name of the Pokemon and then describe it.
-        Your tone is informative yet sassy, blending factual details with a touch of dry humor. Be concise, no more than 3 sentences. """
-POKEMON = ['pikachu', 'charmander', 'squirtle', 'bulbasaur', 'jigglypuff', 'meowth', 'eevee']
-client = OpenAI()
-
-
-@weave.op
-def get_pokemon_data(pokemon_name: str) -> Optional[str]:
+@weave.op  # type: ignore
+def get_pokemon_data(pokemon_name: str) -> Optional[Dict[str, Any]]:
     # This is a step within your application, like the retrieval step within a RAG app
     url = f'https://pokeapi.co/api/v2/pokemon/{pokemon_name}'
     response = requests.get(url)
@@ -88,8 +87,8 @@ def get_pokemon_data(pokemon_name: str) -> Optional[str]:
         return None
 
 
-@weave.op
-def pokedex(name: str, prompt: str) -> str:
+@weave.op  # type: ignore
+def pokedex(name: str, prompt: str) -> Optional[str]:
     # This is your root op that calls out to other ops
     data = get_pokemon_data(name)
     if not data:
@@ -104,13 +103,12 @@ def pokedex(name: str, prompt: str) -> str:
     return response.choices[0].message.content
 
 
-class GrammarCorrectorModel(weave.Model):
+class GrammarCorrectorModel(weave.Model):  # type: ignore
     model: str
     system_message: str
 
-    @weave.op()
-    def predict(self, user_input: str) -> str:  # Change to `predict`
-        client = OpenAI()
+    @weave.op()  # type: ignore
+    def predict(self, user_input: str) -> Optional[str]:
         response = sambanova_client.chat.completions.create(
             model=self.model,
             messages=[{'role': 'system', 'content': self.system_message}, {'role': 'user', 'content': user_input}],
@@ -119,27 +117,7 @@ class GrammarCorrectorModel(weave.Model):
         return response.choices[0].message.content
 
 
-class TranslatorModel(weave.Model):
-    model: str
-    temperature: float
-
-    @weave.op()
-    def predict(self, text: str, target_language: str) -> str:
-        response = litellm.completion(
-            model=self.model,
-            messages=[
-                {'role': 'system', 'content': f'You are a translator. Translate the given text to {target_language}.'},
-                {'role': 'user', 'content': text},
-            ],
-            max_tokens=1024,
-            temperature=self.temperature,
-        )
-        return response.choices[0].message.content
-
-
-def main() -> None:
-    weave.init('integration')  # 🐝
-
+if __name__ == '__main__':
     # Fruit extraction
     sentence = (
         'There are many fruits that were found on the recently discovered planet Goocrux. '
@@ -160,20 +138,3 @@ def main() -> None:
     )
     result = corrector.predict('That was so easy, it was a piece of pie!')
     print(result)
-
-    # Create instances with different models
-    gpt_translator = TranslatorModel(model='sambanova/' + model, temperature=0.3)
-    claude_translator = TranslatorModel(model='sambanova/' + model, temperature=0.1)
-
-    # Use different models for translation
-    english_text = 'Hello, how are you today?'
-
-    print('GPT-3.5 Translation to French:')
-    print(gpt_translator.predict(english_text, 'French'))
-
-    print('\nClaude-3.5 Sonnet Translation to Spanish:')
-    print(claude_translator.predict(english_text, 'Spanish'))
-
-
-if __name__ == '__main__':
-    main()
