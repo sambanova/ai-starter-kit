@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
@@ -122,7 +121,7 @@ class BasePerformanceEvaluator(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def build_prompt(self, *args: Any, **kwargs: Any) -> Tuple[str, int]:
+    def build_prompt(self, *args: Any, **kwargs: Any) -> Tuple[Dict[str, Any], int]:
         pass
 
     def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
@@ -138,7 +137,7 @@ class BasePerformanceEvaluator(abc.ABC):
             str: adjusted text
         """
         # if not Path(tokenized_text_filepath).exists():
-        tokens = self.tokenizer.tokenize(text)        
+        tokens = self.tokenizer.tokenize(text)
         token_count = len(tokens)
 
         if token_count > target_token_count:
@@ -271,6 +270,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.TTFT_SERVER,
             common_metrics.E2E_LAT_SERVER,
             common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER,
+            common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN,
             common_metrics.NUM_INPUT_TOKENS_SERVER,
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
             common_metrics.ACCEPTANCE_RATE
@@ -583,7 +583,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             This function uses threading to send requests concurrently. It splits the total request count evenly among
             the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         request_configs = self.build_request_configs(
             sampling_params,
@@ -711,8 +711,14 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Iterate through data points and build a request config for each
         for request_idx, data_point in enumerate(self.dataset):
+            # Make raw prompt dictionary
+            raw_prompt = {
+                'name': 'custom_prompt',
+                'template': data_point[self.prompt_key]
+            }
+            
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
+            prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
             
             # Image to be sent in LLM request if exists
             image = None
@@ -735,14 +741,14 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         return request_configs
 
-    def build_prompt(self, raw_prompt: str) -> Tuple[str, int]:
+    def build_prompt(self, raw_prompt: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         """Builds an input prompt from the given raw prompt by applying prompt templating based on the model type.
 
         Args:
-        - raw_prompt (str): The raw input prompt to be used in building a processed input prompt.
+        - raw_prompt (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input prompt.
 
         Returns:
-        - A tuple containing the processed prompt and the token length of the prompt.
+        - A tuple containing the processed prompt dictionary and the token length of the prompt.
 
         Description:
         This method builds a prompt for the given raw prompt based on the model type.
@@ -751,22 +757,59 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         prefix_prompt = 'You are a helpful assistant that provides concise and '\
             'helpful assistance on a variety of subjects. Ask: '
-        prompt = prefix_prompt + raw_prompt
+        prompt_text = prefix_prompt + raw_prompt['template']
+        
+        # Output prompt
+        custom_prompt = raw_prompt
+        custom_prompt['template'] = prompt_text
 
-        return (prompt, self.get_token_length(prompt))
+        return (custom_prompt, self.get_token_length(prompt_text))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
         self, 
         num_concurrent_requests: int, 
+        use_multiple_prompts: bool = False,
         save_response_texts: bool = False,
         *args: Any, 
         **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
+        self.use_multiple_prompts = use_multiple_prompts
         self.save_response_texts = save_response_texts
+        
+    def load_prompts(self, prompts_file_path: str) -> Any:
+        """ Loads prompts from yaml file.
+
+        Raises:
+            ValueError: Validates if entries have the right structure.
+            ValueError: Validates performance level entry values
+
+        Returns:
+            Dict[Dict[str, Any]]: List of dictionaries containing the name, performance level 
+            and text template of each prompt.
+        """
+        with open(prompts_file_path, 'r') as file:
+            data = yaml.safe_load(file)
+        
+        valid_prompt_structure = ["name", "template"]
+        
+        # Validate the structure of the default prompt
+        for prompt in data.get('default_prompt', []):
+            if not all(key in prompt for key in valid_prompt_structure):
+                raise ValueError(f"Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.")
+        
+        # Validate the structure of the multiple prompts
+        for prompt in data.get('multiple_prompts', []):
+            if not all(key in prompt for key in valid_prompt_structure):
+                raise ValueError(f"Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.")
+
+        return data
+        
 
     def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
@@ -1009,7 +1052,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1125,6 +1168,21 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return metadata, llm_responses
 
+    def select_raw_prompts(self, raw_prompts: List[Dict[str,Any]], num_requests: int) -> List[Dict[str,Any]]:
+        """ Selects prompts randomly 
+
+        Args:
+            num_requests (int): Number of requests to be generated
+
+        Returns:
+            List[Dict[str,Any]]: List of randomly selected prompts
+        """
+
+        random_selected_prompts = random.choices(raw_prompts, k = num_requests)
+        assert len(random_selected_prompts) == num_requests, "Number of selected prompts \
+            does not match the requested count"
+        return random_selected_prompts
+
     def build_request_configs(
         self,
         num_requests: int,
@@ -1149,77 +1207,130 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
-
-        # Build input text prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
-        
-        # Encode image to be sent in LLM request if exists
+        # Instantiate image variable
         image = None
-        if self.multimodal_image_size != 'na':
-           image = self.get_image() 
+        
+        # If not using multiple prompts
+        if not self.use_multiple_prompts:
+            
+            # Load prompts based on the model type
+            if self.multimodal_image_size == 'na':
+                # Read prompt for text-instruct model
+                prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
+                raw_prompt = prompts_data['default_prompt'][0]
+                
+            else:
+                # Read prompt for vision-instruct model
+                prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
+                raw_prompt = prompts_data['default_prompt'][0]                
+                image = self.get_image() 
+            
+            # Build input text prompt to be sent in LLM request
+            prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
-        # Iterate through data points and build a request config for each
-        for request_idx in range(num_requests):
-            # Add generic max tokens parameter to `sampling_params` dictionary
-            updated_sampling_params = {
-                'max_tokens_to_generate': output_token_count,
-            }
-            updated_sampling_params.update(sampling_params)
+            # Iterate through data points and build a request config for each
+            for request_idx in range(num_requests):
+                # Add generic max tokens parameter to `sampling_params` dictionary
+                updated_sampling_params = {
+                    'max_tokens_to_generate': output_token_count,
+                }
+                updated_sampling_params.update(sampling_params)
 
-            # Create request config object
-            request_config = RequestConfig(
-                request_idx=request_idx,
-                model=self.model_name,
-                prompt_tuple=prompt_tuple,
-                image=image,
-                sampling_params=updated_sampling_params,
-                llm_api=self.llm_api,
-                api_variables=self.api_variables,
-                is_stream_mode=self.is_stream_mode,
-                num_concurrent_requests=self.num_concurrent_requests,
-            )
+                # Create request config object
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    image=image,
+                    sampling_params=updated_sampling_params,
+                    llm_api=self.llm_api,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
 
-            request_configs.append(request_config)
+                request_configs.append(request_config)
+        
+        # If using multiple prompts
+        else:
+        
+            if self.multimodal_image_size != 'na':
+                raise ValueError(
+                    'Multiple prompts are not supported for multimodal models. ' \
+                    'Please set use_multiple_prompts to False.')
+            
+            # Load text-instruct prompts
+            with open(USER_PROMPT_TEXT_INSTRUCT_PATH, 'r') as file:
+                prompts_data = yaml.safe_load(file)
+            raw_prompts = prompts_data['multiple_prompts']
+        
+            # Select text prompts randomly equal to the number of requests
+            selected_raw_prompts = self.select_raw_prompts(raw_prompts, num_requests)
+
+            # Build input prompt to be sent in LLM request
+            # Iterate through data points and build a request config for each            
+            for request_idx, raw_prompt in enumerate(selected_raw_prompts):
+                prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
+
+                updated_sampling_params = {'max_tokens_to_generate': output_token_count}
+                updated_sampling_params.update(sampling_params)
+                
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    image=image,
+                    sampling_params=updated_sampling_params,
+                    llm_api=self.llm_api,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
+                
+                request_configs.append(request_config)
 
         return request_configs
 
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
+    def build_prompt(self, prompt_dict: Dict[str, Any], num_input_tokens: int) -> Tuple[Dict[str, Any], int]:
         """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
         multiple times to reach a user set input_token_count.
 
         Args:
+            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input 
+            prompt.
             num_input_tokens (int): The user specified length of the input prompt.
 
         Returns:
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
-        # Load from prompt files
-        if self.multimodal_image_size == 'na':
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template
-            )['template']
-        else:
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template
-            )['template']
-
         max_words = num_input_tokens  # User-defined word limit
 
         # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
+        num_repeats = max(1, max_words // len(prompt_dict['template'].split()) + 1)
 
         # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
+        repeated_prompt_text = (prompt_dict['template'] + ' ') * num_repeats
 
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-        return (full_input_prompt, self.get_token_length(full_input_prompt))
+        # Adjust prompt according to desired input tokens
+        full_input_prompt_text = self.adjust_to_exact_tokens(repeated_prompt_text, num_input_tokens)
+        
+        # Output prompt
+        adjusted_prompt = prompt_dict
+        adjusted_prompt['template'] = full_input_prompt_text
+    
+        return (adjusted_prompt, self.get_token_length(full_input_prompt_text))
 
 
-class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, qps: float, qps_distribution: str, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
+    def __init__(self, 
+                 qps: float, 
+                 qps_distribution: str, 
+                 num_concurrent_requests: int = 0, 
+                 *args: Any, 
+                 **kwargs: Any
+    ) -> None:
+        super().__init__(num_concurrent_requests, *args, **kwargs)
         self.qps = qps
         self.qps_distribution = qps_distribution
 
@@ -1243,50 +1354,6 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         )
         
         return self.sanitize_file_prefix(output_file_name)
-
-    def run_benchmark(
-        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
-        """Run a benchmark test for the specified LLM using real workload synthetic data.
-
-        Args:
-            num_input_tokens (int): The number of input tokens to be sent.
-            num_output_tokens (int): The number of output tokens to be received.
-            num_requests (int): The number of requests to be made.
-            sampling_params (str): The sampling parameters in JSON format.
-
-        Raises:
-            ValueError: If the number of input tokens is less than 40.
-
-        Returns:
-            summary (dict): structure with performance metrics and stats for the run
-            individual_responses (tuple): list of performance metrics per request
-        """
-        num_input_tokens = kwargs.get('num_input_tokens', 1000)
-        num_output_tokens = kwargs.get('num_output_tokens', 10)
-        num_requests = kwargs.get('num_requests', 1)
-
-        self.cli_progress_bar = tqdm(total=num_requests, desc='Running Requests')
-        self.ui_progress_bar = kwargs.get('progress_bar', None)
-
-        if num_input_tokens < 40:
-            raise ValueError(
-                'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
-            )
-
-        # Calculate performance metrics individually and summary
-        summary, individual_responses = self.get_token_throughput_latencies(
-            num_input_tokens=num_input_tokens,
-            num_output_tokens=num_output_tokens,
-            num_requests=num_requests,
-            sampling_params=sampling_params,
-        )
-
-        if self.results_dir:
-            filename = self.create_output_filename(num_input_tokens, num_output_tokens)
-            self.save_results(filename, summary, individual_responses)
-
-        return summary, individual_responses
 
     def _get_wait_time(self) -> float:
         mean_wait = 1 / self.qps
@@ -1330,7 +1397,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1457,14 +1524,23 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
+        # Instantiate image variable
+        image = None
+        
+        # Load prompts based on the model type
+        if self.multimodal_image_size == 'na':
+            # Read prompt for text-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]
+            
+        else:
+            # Read prompt for vision-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]                
+            image = self.get_image() 
 
         # Build input prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
-
-        # Encode image to be sent in LLM request if exists
-        image = None
-        if self.multimodal_image_size != 'na':
-           image = self.get_image() 
+        prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
@@ -1489,37 +1565,3 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             request_configs.append(request_config)
 
         return request_configs
-
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
-        """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
-        multiple times to reach a user set input_token_count.
-
-        Args:
-            num_input_tokens (int): The user specified length of the input prompt.
-
-        Returns:
-            Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
-        """
-
-        # Load from prompt files
-        if self.multimodal_image_size == 'na':
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template
-            )['template']
-        else:
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template
-            )['template']
-
-        max_words = num_input_tokens  # User-defined word limit
-
-        # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
-
-        # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
-
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-
-        return (full_input_prompt, self.get_token_length(full_input_prompt))

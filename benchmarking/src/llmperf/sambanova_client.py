@@ -276,7 +276,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         Returns:
             dict: API call body according to Bundle and streaming conditions
         """
-        prompt = self.request_config.prompt_tuple[0]
+        prompt = self.request_config.prompt_tuple[0]['template']
         sampling_params = self.request_config.sampling_params
 
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
@@ -526,7 +526,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             dict: API call body
         """
 
-        prompt = self.request_config.prompt_tuple[0]
+        prompt = self.request_config.prompt_tuple[0]['template']
         sampling_params = self.request_config.sampling_params
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
@@ -649,6 +649,7 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
     metrics: Dict[str, Any] = {}
     metrics[common_metrics.ERROR_CODE] = None
     metrics[common_metrics.ERROR_MSG] = ''
+    metrics[common_metrics.PROMPT_NAME] = request_config.prompt_tuple[0]['name']
 
     try:
         if request_config.llm_api == 'sncloud':
@@ -689,7 +690,12 @@ if __name__ == '__main__':
     llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 
-    prompt = 'This is a test example, so tell me about anything'
+    prompt_text = 'This is a test example, so tell me about anything'
+    prompt = {
+        'name': 'test',
+        'template': prompt_text
+    }
+    
     request_config = RequestConfig(
         request_idx=1,
         prompt_tuple=(prompt, 10),
