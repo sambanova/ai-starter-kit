@@ -13,5 +13,5 @@ sambastudio:
   rdu_arch: "SN40L-8"
 
 files:
-  input_filename: "../data/datasets/bio_train_completions/bio_train_formatted.jsonl"
-  output_filename: "../data/datasets/bio_train_completions/bio_train_completions.jsonl"
+  input_filename: "../data/datasets/train.json"
+  output_filename: "../data/datasets/train_completions.jsonl"
