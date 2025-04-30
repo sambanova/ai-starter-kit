@@ -1,0 +1,5 @@
+dotenv==0.9.9
+langchain-core==0.3.33
+langchain-sambanova==0.1.0
+openai==1.76.0
+weave==0.51.44
