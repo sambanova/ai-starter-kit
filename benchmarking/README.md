@@ -177,7 +177,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 6. Customize synthetic prompts.
 
-    Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+    Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
 7. Synthetic Performance common examples
     1. Dynamic batching speed  
@@ -301,7 +301,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 5. Customize synthetic prompts:
 
-    Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+    Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
 </details>
 
@@ -459,7 +459,7 @@ synthetic_<MODEL_IDX>_<MODEL_NAME><MULTIMODAL_SUFFIX>_{NUM_INPUT_TOKENS}_{NUM_OU
 
 4. Customize synthetic prompts
 
-Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
 </details>
 
@@ -517,7 +517,7 @@ realworkload_<MODEL_IDX>_<MODEL_NAME><MULTIMODAL_SUFFIX>_{NUM_INPUT_TOKENS}_{NUM
 
 4. Customize synthetic prompts
 
-Synthetic prompts for performance evaluation can be found [here](./prompts/user-prompt_template.yaml). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
+Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
 </details>
 
