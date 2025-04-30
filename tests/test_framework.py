@@ -62,6 +62,8 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
         '--num-output-tokens 1000 '
         '--multimodal-image-size na '
         '--num-requests 2 '
+        '--use-multiple-prompts False',
+        '--save-llm-responses False',
         '--llm-api sncloud'
     ),
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',
