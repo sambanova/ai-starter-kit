@@ -299,7 +299,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
 
-5. Customize synthetic prompts:
+6. Customize synthetic prompts:
 
     Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
 
@@ -375,7 +375,7 @@ This option allows you to measure performance during a multi-turn conversation w
 
 2. If the model to benchmark is multimodal, then you can upload an image using the option in the sidebar. (Limit size: 200MB) **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing prompt may help to solve the issue.
 
-2. Set the configuration parameters
+3. Set the configuration parameters
 
 - **Max tokens to generate**: Maximum number of tokens to generate. *Default*: 256
 <!-- - **Do sample**: 
@@ -384,11 +384,11 @@ This option allows you to measure performance during a multi-turn conversation w
 - **Top k**:
 - **Top p**: -->
 
-3. Start the chat session
+4. Start the chat session
 
 After entering the model name and configuring the parameters, press `Run!` to activate the chat session.
 
-4. Ask anything and see results
+5. Ask anything and see results
 
 Users are able to ask anything and get a generated answer to their questions, as shown in the image below. In addition to the back and forth conversations between the user and the LLM, there is a expander option that users can click to see the following metrics per each LLM response:
 - **Latency (s)**
