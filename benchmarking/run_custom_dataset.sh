@@ -8,7 +8,7 @@ python src/evaluator.py \
 --results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "<CUSTOM DATASET PATH HERE>" \
+--input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
 --save-llm-responses False \
 --sampling-params '{"max_tokens_to_generate": 256}' \
 --llm-api sncloud
@@ -25,7 +25,7 @@ python src/evaluator.py \
 # --results-dir "./data/results/llmperf" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
-# --input-file-path "/Users/rodrigom/Desktop/aisk/benchmarking/custom_benchmark_test_data.jsonl" \
+# --input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
 # --save-llm-responses False \
 # --sampling-params '{"max_tokens_to_generate": 256}' \
 # --llm-api sambastudio
