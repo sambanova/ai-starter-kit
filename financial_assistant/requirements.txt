@@ -20,4 +20,3 @@ streamlit==1.41.1
 streamlit-extras==0.4.7
 tiktoken==0.9.0
 yfinance==0.2.57
-weave==0.51.44
