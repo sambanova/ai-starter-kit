@@ -95,10 +95,11 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     # Read config file
     with open(CONFIG_PATH, 'r') as yaml_file:
         config = yaml.safe_load(yaml_file)
-    api_info = config['llm']['api']
+
+    prod_mode = config['prod_mode']
+
     embedding_model_info = config['rag']['embedding_model']
     retrieval_info = config['rag']['retrieval']
-    prod_mode = config['prod_mode']
 
     return embedding_model_info, retrieval_info
 
