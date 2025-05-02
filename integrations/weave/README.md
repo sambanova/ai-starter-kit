@@ -1,6 +1,6 @@
 # Weave @SambaNova
 
-This document demonstrates how to use [W&B Weave](https://weave-docs.wandb.ai/) with [SambaNova](https://sambanova.ai/) as your fastest model provider of choice for open source models.
+This document demonstrates how to use [W&B Weave](https://weave-docs.wandb.ai/){:target="_blank"} with [SambaNova](https://sambanova.ai/){:target="_blank"} as your fastest LLM provider of choice for open source models.
 
 `Weights & Biases (W&B) Weave` is a framework for tracking, experimenting with, evaluating, deploying, and improving LLM-based applications. Designed for flexibility and scalability, Weave supports every stage of your LLM application development workflow:
 
@@ -12,18 +12,17 @@ This document demonstrates how to use [W&B Weave](https://weave-docs.wandb.ai/) 
 
 In order to use `Weave` @`SambaNova`, you need to set the environment variable `SAMBANOVA_API_KEY`: your API 
  for accessing the SambaNova Cloud. You can create your API 
- [here](https://cloud.sambanova.ai/apis).
+ [here](https://cloud.sambanova.ai/apis){:target="_blank"}.
 
 1. To get started, simply call `weave.init()` at the beginning of your script, with the project name as attribute.
 
-2. `Weave` ops make results reproducible by automatically versioning code as you experiment, and they capture their inputs and outputs.
-Simply create a function decorated with `@weave.op()` that calls into each completion function and `Weave` will track the inputs and outputs for you. 
+2. `Weave` ops make results reproducible by automatically versioning code as you experiment.
+Simply create a function decorated with `@weave.op()` that invokes each completion function and `Weave` will track the inputs and outputs of the function for you. 
 
-3. By using the `weave.Model` class, you can capture and organize the experimental details of your app like your system prompt or the model you're using. This helps organize and compare different iterations of your app.
+3. By using the `weave.Model` class, you can capture and organize the experimental details of your app like your system prompt or the model that you are using. This helps organize and compare different iterations of your app.
 
 ## Pre-requisites: 
-1. Create a SambaNova Cloud account and get an API 
-.
+1. Create a [SambaNova Cloud](https://cloud.sambanova.ai/){:target="_blank"} account and get an API key.
 
 2. Install the packages recommended in the `requirements.txt` file.
 ```bash
@@ -43,7 +42,7 @@ pip install weave
 ```
 
 ## Notebooks
-The `Weave@SambaNova.ipynb` notebook show how to use Weave with Sambanova usign the three connectors:
+The `Weave@SambaNova.ipynb` notebook show how to use `Weave` with `Sambanova` using the three connectors:
 - SambaNova LangChain chat object.
 - liteLLM.
 - OpenAI SDK.
@@ -61,7 +60,7 @@ load_dotenv()
 # If you have SAMBANOVA_API_KEY in your .env file
 SAMBANOVA_API_KEY = os.getenv('SAMBANOVA_API_KEY')
 
-# Initialize Weave with your project name
+# Choose your model
 model = 'Meta-Llama-3.3-70B-Instruct'
 ```
 
