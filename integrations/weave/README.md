@@ -1,6 +1,6 @@
 # Weave @SambaNova
 
-This document demonstrates how to use <a href="https://weave-docs.wandb.ai/" target="_blank">W&B Weave</a> with [SambaNova](https://sambanova.ai/){:target="_blank"} as your fastest LLM provider of choice for open source models.
+This document demonstrates how to use [W&B Weave](https://weave-docs.wandb.ai/) with [SambaNova](https://sambanova.ai/) as your fastest LLM provider of choice for open source models.
 
 `Weights & Biases (W&B) Weave` is a framework for tracking, experimenting with, evaluating, deploying, and improving LLM-based applications. Designed for flexibility and scalability, Weave supports every stage of your LLM application development workflow:
 
@@ -12,7 +12,7 @@ This document demonstrates how to use <a href="https://weave-docs.wandb.ai/" tar
 
 In order to use `Weave` @`SambaNova`, you need to set the environment variable `SAMBANOVA_API_KEY`: your API 
  for accessing the SambaNova Cloud. You can create your API 
- [here](https://cloud.sambanova.ai/apis){:target="_blank"}.
+ [here](https://cloud.sambanova.ai/apis).
 
 1. To get started, simply call `weave.init()` at the beginning of your script, with the project name as attribute.
 
@@ -22,7 +22,7 @@ Simply create a function decorated with `@weave.op()` that invokes each completi
 3. By using the `weave.Model` class, you can capture and organize the experimental details of your app like your system prompt or the model that you are using. This helps organize and compare different iterations of your app.
 
 ## Pre-requisites: 
-1. Create a [SambaNova Cloud](https://cloud.sambanova.ai/){:target="_blank"} account and get an API key.
+1. Create a [SambaNova Cloud](https://cloud.sambanova.ai/) account and get an API key.
 
 2. Install the packages recommended in the `requirements.txt` file.
 ```bash
@@ -36,7 +36,7 @@ or install them separately:
 ```bash
 pip install dotenv
 pip install langchain-sambanova  # If you want to use our SambaNova LangChain Chat object
-pip install litellm  # If you want to use the liteLLM chat object
+pip install litellm  # If you want to use the LiteLLM chat object
 pip install openai  # If you want to use the OpenAI SDK
 pip install weave
 ```
@@ -44,7 +44,7 @@ pip install weave
 ## Notebooks
 The `Weave@SambaNova.ipynb` notebook show how to use `Weave` with `Sambanova` using the three connectors:
 - SambaNova LangChain chat object.
-- liteLLM.
+- LiteLLM.
 - OpenAI SDK.
 
 ## Setup
@@ -95,7 +95,7 @@ llm_chain = prompt | llm
 
 ### Simple call
 ```python
-# Invoke the LLM on the prompt
+# Invoke the LLM chain on the prompt
 output = llm_chain.invoke({'number': 2})
 
 print(output.content)
@@ -105,7 +105,7 @@ print(output.content)
 To track metadata from your `LangChain` calls, you can use the `weave.attributes` context manager. This context manager allows you to set custom metadata for a specific block of code, such as a chain or a single request.
 
 ```python
-# The LLM chain with Weave attributes
+# Invoke the LLM chain with Weave attributes
 with weave.attributes({'number_to_increment': 'value'}):
     output = llm_chain.invoke({'number': 2})
 
@@ -114,7 +114,7 @@ print(output.content)
 
 ## Via LiteLLM
 
-`Weave` automatically tracks and logs LLM calls made via LiteLLM, after `weave.init()` is called.
+`Weave` automatically tracks and logs LLM calls made via `LiteLLM`, after `weave.init()` is called.
 
 You can access all the features of the `Weave` + `LiteLLM` integration, by specifying the `SambaNova` model name in the `LiteLLM` constructor, as explained in [LiteLLM @SambaNova](https://docs.litellm.ai/docs/providers/sambanova).
 
@@ -125,6 +125,8 @@ import litellm
 
 # Initialize Weave project
 weave.init('weave_integration_sambanova_litellm')
+
+# Choose the Sambanova LiteLLM model
 model_litellm = 'sambanova/' + model
 ```
 
@@ -190,7 +192,7 @@ print(french_text)
 
 `SambaNova` supports the `OpenAI` SDK compatibility ([docs](https://docs.sambanova.ai/cloud/docs/capabilities/openai-compatibility)), which `Weave` automatically detects and integrates with.
 
-To use the SambaNova API, simply switch out the `api_key` to your SambaNova API key, `base_url` to https://api.sambanova.ai/v1, and `model` to one of our chat models.
+To use the `SambaNova` API, simply switch the `api_key` to your `SambaNova` API key, `base_url` to your `SambaNova` Cloud URL (e.g. https://api.sambanova.ai/v1), and `model` to one of our chat models.
 
 ```python
 from openai import OpenAI
@@ -257,11 +259,14 @@ class GrammarCorrectorModel(weave.Model):
         )
         return response.choices[0].message.content
 
-# Correct grammar
+# Create an instance of the grammar corrector weave.Model
 corrector = GrammarCorrectorModel(
     model=model, system_message='You are a grammar checker, correct the following user input.'
 )
+
+# Correct grammar
 result = corrector.predict('That was so easy, it was a piece of pie!')
+
 print(result)
 ```
 
