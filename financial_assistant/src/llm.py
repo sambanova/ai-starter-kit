@@ -14,7 +14,7 @@ from financial_assistant.src.utilities import get_logger, time_llm
 
 logger = get_logger()
 
-# LLM constants
+# Max number of retries for tool invocation
 MAX_RETRIES = 3
 
 
