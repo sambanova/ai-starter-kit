@@ -1,18 +1,16 @@
-import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import yaml
-from langchain_core.language_models.llms import LLM
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
+from langchain_core.language_models import LanguageModelInput
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool, StructuredTool, Tool
+from langchain_sambanova import ChatSambaNovaCloud
 from pydantic import BaseModel
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
-from financial_assistant.src.exceptions import LLMException, ToolNotFoundException
 from financial_assistant.src.utilities import get_logger, time_llm
-from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
 
@@ -55,6 +53,8 @@ class SambaNovaLLM:
         self.llm = self.set_llm(sambanova_api_key=sambanova_api_key)
 
         # Set the tools
+        if tools is not None and not isinstance(tools, list):
+            tools = [tools]
         self._tools = tools
 
         # Set the system prompt
@@ -91,8 +91,6 @@ class SambaNovaLLM:
         if default_tool is not None:
             if not isinstance(default_tool, (StructuredTool, Tool, type(BaseModel))):
                 raise TypeError('Default tool must be a StructuredTool.')
-        tools_schemas = self.get_tools_schemas(tools)
-        self.tools_schemas = '\n'.join([json.dumps(tool, indent=2) for tool in tools_schemas])
 
     def get_llm_config_info(self, config_path: str) -> Any:
         """
@@ -140,7 +138,7 @@ class SambaNovaLLM:
         if not isinstance(self.llm_info['select_expert'], str):
             raise TypeError('LLM `select_expert` must be a string.')
 
-    def set_llm(self, sambanova_api_key: Optional[str] = None) -> LLM:
+    def set_llm(self, sambanova_api_key: Optional[str] = None) -> ChatSambaNovaCloud:
         """
         Set the LLM to use.
 
@@ -170,15 +168,10 @@ class SambaNovaLLM:
                 sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
 
             # Instantiate the LLM
-            llm = APIGateway.load_llm(
-                type=self.llm_info['api'],
-                streaming=False,
-                bundle=self.llm_info['bundle'],
-                do_sample=self.llm_info['do_sample'],
+            llm = ChatSambaNovaCloud(
                 max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
                 temperature=self.llm_info['temperature'],
-                select_expert=self.llm_info['select_expert'],
-                process_prompt=False,
+                model=self.llm_info['select_expert'],
                 sambanova_api_key=sambanova_api_key,
             )
         else:
@@ -187,51 +180,11 @@ class SambaNovaLLM:
             )
         return llm
 
-    def get_tools_schemas(
-        self,
-        tools: Optional[Union[BaseTool, Tool, StructuredTool, List[Union[BaseTool, Tool, StructuredTool]]]] = None,
-    ) -> List[Dict[str, str]]:
-        """
-        Get the tools schemas.
-
-        Args:
-            tools: The tools to use.
-
-        Returns:
-            The list of tools schemas, where each tool schema is a dictionary with the following keys:
-                - `name`: The tool name.
-                - `description`: The tool description.
-                - `parameters`: The tool parameters.
-
-        Raises:
-            TypeError: If `tools` is not a `langchain_core.tools.Tool` or a list of `langchain_core.tools.Tools`.
-        """
-        if tools is None or isinstance(tools, list):
-            pass
-        elif isinstance(tools, Tool) or isinstance(tools, StructuredTool):
-            tools = [tools]
-        else:
-            raise TypeError('tools must be a Tool or a list of Tools')
-
-        # Get the tools schemas
-        tools_schemas = []
-        if tools is not None:
-            for tool in tools:
-                tool_schema = tool.get_input_schema().schema()
-                schema = {
-                    'name': tool.name,
-                    'description': tool_schema['description'],
-                    'parameters': tool_schema['properties'],
-                }
-                tools_schemas.append(schema)
-
-        return tools_schemas
-
     def invoke_tools(self, query: str) -> Any:
         """
         Invocation method for the function calling workflow.
 
-        Find the relevant tools and execute them with the given query.
+        Bind the relevant tools and execute them with the given query.
 
         Args:
             query: The query to execute.
@@ -246,78 +199,64 @@ class SambaNovaLLM:
         if not isinstance(query, str):
             raise TypeError(f'Query must be a string. Got {type(query)}.')
 
-        # Find the relevant tool
-        invoked_tool = self.find_relevant_tool(query)
+        # Bind the tools to the LLM
+        llm_with_tools, messages, ai_message = self.bind_tools(query)
 
-        # Extract the tool parameters
-        tool_name = invoked_tool['name']
-        tool_parameters = invoked_tool['parameters']
+        # Invoke the tools
+        if self._tools is not None:
+            for tool_call in ai_message.tool_calls:
+                for i in range(MAX_RETRIES):
+                    try_count = 0
+                    # Extract the tool to call
+                    selected_tool = {tool.name: tool for tool in self._tools}[tool_call['name'].lower()]
+                    try:
+                        # Invoke the tool
+                        answer = selected_tool.invoke(tool_call['args'])
+                        if answer is not None:
+                            messages.append(ToolMessage(answer, tool_call_id=tool_call['id']))
+                            break
+                    except:
+                        continue
 
-        # Create a map of tools with their names
-        if self.tools is not None:
-            tools_map = {tool.name: tool for tool in self.tools if hasattr(tool, 'name')}  # type: ignore
+        # Conversational response
+        if self._tools is None or 'conversational' in ai_message.tool_calls[-1]['name'].lower():
+            conversational_answer = llm_with_tools.invoke(messages).content
+            return conversational_answer
         else:
-            tools_map = dict()
-
-        if tools_map.get(tool_name) is None:
-            raise ToolNotFoundException(f'The tool {tool_name} does not feature in the list of available tools.')
-
-        # Invoke the tool with the retrieved inputs
-        answer = tools_map[tool_name].invoke(tool_parameters)  # type: ignore
-
-        return answer
+            try:
+                return answer
+            except:
+                raise Exception('The tools could not be invoked successfully.')
 
     @time_llm
-    def find_relevant_tool(self, query: str) -> Any:
+    def bind_tools(
+        self, query: str
+    ) -> Tuple[Runnable[LanguageModelInput, BaseMessage], List[BaseMessage], BaseMessage]:
         """
-        Find the relevant tool to be invoked based on the query.
+        Bind the relevant tools to be invoked based on the query.
 
         Args:
             query: The query to be used.
 
         Returns:
-            The relevant tool to be invoked based on the query.
-
-        Raises:
-            Exception: If the LLM response does not provide exactly one tool.
+            A tuple with the following elements:
+                - The LLM with tools if tools are available to call, otherwise the simple LLM.
+                - A list of messages.
+                - The AI message.
         """
-        # JSON output parser
-        function_calling_parser = JsonOutputParser()
+        # Initialize the list of messages with the Human Message of the query
+        messages: List[BaseMessage] = [HumanMessage(query)]
 
-        # Prompt template for function calling
-        function_calling_prompt = PromptTemplate(
-            template=FUNCTION_CALLING_PROMPT_TEMPLATE,
-            input_variables=['tools', 'user_query'],
-            partial_variables={'format_instructions': function_calling_parser.get_format_instructions()},
-        )
+        if self._tools is not None:
+            #  Bind the tools to the LLM and retrieve the tool call arguments
+            llm_with_tools = self.llm.bind_tools(tools=self._tools)
+            ai_message = llm_with_tools.invoke(messages, tool_choice='required')
+        else:
+            # Use the LLM without tools
+            llm_with_tools = self.llm
+            ai_message = self.llm.invoke(messages)
 
-        # Chain for function calling
-        chain_function_calling = function_calling_prompt | self.llm | function_calling_parser
+        # Append the AI Message to the list of messages
+        messages.append(ai_message)
 
-        # Invoke the LLM to find the relevant tools
-        for i in range(MAX_RETRIES):
-            try:
-                invoked_tools = chain_function_calling.invoke({'tools': self.tools_schemas, 'user_query': query})
-                if invoked_tools is None:
-                    raise Exception(f'Expected a tool to call.')
-                if len(invoked_tools) != 1:
-                    raise Exception(f'Expected one tool, got {len(invoked_tools)}.')
-                break
-            except:
-                continue
-
-        try:
-            logger.info(f'Invoked tool: {invoked_tools[0]["name"]}')
-            if not isinstance(invoked_tools, list) or len(invoked_tools) != 1:
-                raise Exception(f'Expected one tool to call.')
-
-            logger.info('Parameters:')
-            parameter_dict = invoked_tools[0]['parameters']
-            for parameter_key, parameter_value in parameter_dict.items():
-                logger.info(f'{parameter_key}: {parameter_value}')
-        except:
-            raise LLMException()
-
-        invoked_tool = invoked_tools[0]
-
-        return invoked_tool
+        return llm_with_tools, messages, ai_message

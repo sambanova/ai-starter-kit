@@ -5,8 +5,8 @@ import yaml
 from langchain.schema import Document
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
+from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables.base import RunnableBinding
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from financial_assistant.constants import *
@@ -39,6 +39,7 @@ Answer any use questions based solely on the context below:
 """
 
 
+@time_llm
 def get_qa_response(user_request: str, documents: List[Document]) -> Dict[str, str | List[Document]]:
     """
     Elaborate an answer to user request using RetrievalQA chain.
@@ -80,16 +81,13 @@ def get_qa_response(user_request: str, documents: List[Document]) -> Dict[str, s
 
     # Build the response with the answer and the urls
     response: Dict[str, str | List[Document]] = dict()
-    response['answer'] = answer
+    if isinstance(answer, AIMessage) and isinstance(answer.content, str):
+        response['answer'] = answer.content
+    else:
+        response['answer'] = ''
     response['context'] = retrieved_docs
 
     return response
-
-
-@time_llm
-def invoke_qa_chain(qa_chain: RunnableBinding[Dict[str, Any], Dict[str, Any]], user_query: str) -> Dict[str, Any]:
-    """Invoke the chain to answer the question using RAG."""
-    return qa_chain.invoke({'input': user_query})
 
 
 def get_retrieval_config_info() -> Tuple[Any, Any]:

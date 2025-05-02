@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Set, Tuple
+from typing import Any, List, Optional, Set, Tuple
 
 import pandas
 import requests
@@ -178,7 +178,7 @@ def retrieve_text_yahoo_finance_news(link_urls: List[str]) -> None:
     df_text_url.to_csv(streamlit.session_state.web_scraping_path, index=False)
 
 
-def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
+def get_url_list(symbol_list: Optional[List[str]] = None) -> List[Any]:
     """
     Get the most relevant urls from Yahoo Finance News for a given list of company ticker symbols.
 
@@ -233,7 +233,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[str]:
             if url in general_urls:
                 # Find all the links mentioned in the webpage
                 links = soup.find_all('a')
-                link_urls.extend([link['href'] for link in links])
+                link_urls.extend([link['href'] for link in links])  # type: ignore
             else:
                 link_urls.append(url)
         else:

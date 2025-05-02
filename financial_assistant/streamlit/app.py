@@ -3,7 +3,6 @@ import os
 import sys
 import time
 
-import weave
 from dotenv import load_dotenv
 
 # Main directories
@@ -96,10 +95,6 @@ from financial_assistant.streamlit.app_stock_data import get_stock_data_analysis
 from financial_assistant.streamlit.app_stock_database import get_stock_database
 from financial_assistant.streamlit.app_yfinance_news import get_yfinance_news
 from financial_assistant.streamlit.utilities_methods import stream_chat_history
-
-# Initialize Weave with your project name
-if os.getenv('WANDB_API_KEY') is not None:
-    weave.init('sambanova_financial_assistant')
 
 logger = get_logger()
 
