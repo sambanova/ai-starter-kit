@@ -204,7 +204,8 @@ class BYOC(SnsdkWrapper):
         checkpoint_path: str,
         app_id: str,
         publisher: Optional[str] = None,
-        description: Optional[str] = None,
+        description: Optional[str] = None,        
+        ignore_transformers_version: Optional[bool] = True
     ) -> List[str]:
         """Build the command to import a model into Snapi
 
@@ -255,6 +256,8 @@ class BYOC(SnsdkWrapper):
         if description is not None:
             if len(description) > 0:
                 command.extend(['--description', description])
+        if ignore_transformers_version:            
+            command.extend(['--ignore-transformers-version'])            
 
         return command
 
@@ -270,6 +273,7 @@ class BYOC(SnsdkWrapper):
         publisher: str = '',
         description: str = '',
         retries: int = 3,
+        ignore_transformers_version: bool = True
     ) -> Optional[str]:
         """Upload the checkpoint to Snapi
 
@@ -318,6 +322,7 @@ class BYOC(SnsdkWrapper):
                 app_id,
                 publisher,
                 description,
+                ignore_transformers_version
             )
             # attempt to upload retries times
             for i in range(retries + 1):
@@ -375,6 +380,7 @@ class BYOC(SnsdkWrapper):
         checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
         max_parallel_jobs: int = 4,
         retries: int = 3,
+        verbose: Optional[bool] = True
     ) -> str:
         """
         Upload checkpoints to sambastudio
@@ -385,6 +391,7 @@ class BYOC(SnsdkWrapper):
         - max_parallel_jobs (int): maximum number of upload parallel jobs. Defaults to 4.
         - retries (int): max number of retries to upload a checkpoint when
             upload process fails. Defaults to 3.
+        - verbose (bool): show log outputs
         """
 
         if checkpoints is None:
@@ -444,6 +451,5 @@ class BYOC(SnsdkWrapper):
         model_statuses = []
         for model in model_names:
             model_status = self.snsdk_client.import_status(model_id=model)
-            model_statuses.append(model_status)
-            logging.info(f'model {model} status: \n {model_status}')
+            model_statuses.append(model_status)            
         return model_statuses
