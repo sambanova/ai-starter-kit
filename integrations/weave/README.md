@@ -1,6 +1,6 @@
 # Weave @SambaNova
 
-This document demonstrates how to use [W&B Weave](https://weave-docs.wandb.ai/){:target="_blank"} with [SambaNova](https://sambanova.ai/){:target="_blank"} as your fastest LLM provider of choice for open source models.
+This document demonstrates how to use <a href="https://weave-docs.wandb.ai/" target="_blank">W&B Weave</a> with [SambaNova](https://sambanova.ai/){:target="_blank"} as your fastest LLM provider of choice for open source models.
 
 `Weights & Biases (W&B) Weave` is a framework for tracking, experimenting with, evaluating, deploying, and improving LLM-based applications. Designed for flexibility and scalability, Weave supports every stage of your LLM application development workflow:
 
