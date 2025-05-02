@@ -233,7 +233,7 @@ def get_url_list(symbol_list: Optional[List[str]] = None) -> List[Any]:
             if url in general_urls:
                 # Find all the links mentioned in the webpage
                 links = soup.find_all('a')
-                link_urls.extend([link['href'] for link in links])  # type: ignore
+                link_urls.extend([link['href'] for link in links])
             else:
                 link_urls.append(url)
         else:
