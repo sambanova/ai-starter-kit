@@ -1,13 +1,9 @@
 prod_mode: False
 
 llm: 
-    "api": "sncloud" #  Set either `sambastudio` or `sncloud`
-    "temperature": 0.0
-    "do_sample": False
-    "max_tokens_to_generate": 1024
-    "bundle": True # Set as true if using a Bundle endpoint
-    "select_expert": "Meta-Llama-3.3-70B-Instruct"
-
+  temperature: 0.0
+  max_tokens_to_generate: 1024
+  select_expert: "Meta-Llama-3.3-70B-Instruct"
 
 rag:
   embedding_model: 

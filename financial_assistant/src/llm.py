@@ -125,18 +125,12 @@ class SambaNovaLLM:
         if not all(isinstance(key, str) for key in self.llm_info):
             raise TypeError('LLM information keys must be strings')
 
-        if not isinstance(self.llm_info['api'], str):
-            raise TypeError('LLM `api` must be a string.')
-        if not isinstance(self.llm_info['bundle'], bool):
-            raise TypeError('LLM `bundle` must be a boolean.')
-        if not isinstance(self.llm_info['do_sample'], bool):
-            raise TypeError('LLM `do_sample` must be a boolean.')
+        if not isinstance(self.llm_info['select_expert'], str):
+            raise TypeError('LLM `select_expert` must be a string.')
         if not isinstance(self.llm_info['max_tokens_to_generate'], int):
             raise TypeError('LLM `max_tokens_to_generate` must be an integer.')
         if not isinstance(self.llm_info['temperature'], float):
             raise TypeError('LLM `temperature` must be a float.')
-        if not isinstance(self.llm_info['select_expert'], str):
-            raise TypeError('LLM `select_expert` must be a string.')
 
     def set_llm(self, sambanova_api_key: Optional[str] = None) -> ChatSambaNovaCloud:
         """
@@ -149,35 +143,17 @@ class SambaNovaLLM:
             ValueError: If the LLM API is not one of `sncloud` or `sambastudio`.
             TypeError: If the LLM API parameters are not of the expected type.
         """
-        # Check config parameters
-        if not isinstance(self.llm_info['api'], str):
-            raise TypeError(f'LLM API must be a string. Got type{type(self.llm_info["api"])}')
+        # Get the Sambanova API key
+        if sambanova_api_key is None:
+            sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
 
-        if self.llm_info['api'] in ['sncloud', 'sambastudio']:
-            if not isinstance(self.llm_info['bundle'], bool):
-                raise TypeError('`bundle` must be a boolean.')
-            if not isinstance(self.llm_info['do_sample'], bool):
-                raise TypeError('`do_sample` must be a boolean.')
-            if not isinstance(self.llm_info['max_tokens_to_generate'], int):
-                raise TypeError('`max_tokens_to_generate` must be an integer.')
-            if not isinstance(self.llm_info['select_expert'], str):
-                raise TypeError('`select_expert` must be a string.')
-
-            # Get the Sambanova API key
-            if sambanova_api_key is None:
-                sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
-
-            # Instantiate the LLM
-            llm = ChatSambaNovaCloud(
-                max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
-                temperature=self.llm_info['temperature'],
-                model=self.llm_info['select_expert'],
-                sambanova_api_key=sambanova_api_key,
-            )
-        else:
-            raise ValueError(
-                f'Invalid LLM API: {self.llm_info["api"]}. Only `sncloud` and `sambastudio` are supported.'
-            )
+        # Instantiate the LLM
+        llm = ChatSambaNovaCloud(
+            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
+            temperature=self.llm_info['temperature'],
+            model=self.llm_info['select_expert'],
+            sambanova_api_key=sambanova_api_key,
+        )
         return llm
 
     def invoke_tools(self, query: str) -> Any:
