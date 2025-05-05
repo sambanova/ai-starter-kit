@@ -48,13 +48,13 @@ SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_templ
 USER_PROMPT_TEXT_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-text_instruct.yaml')
 USER_PROMPT_VISION_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-vision_instruct.yaml')
 
- 
+
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
         self,
         model_name: str,
         results_dir: str,
-        multimodal_image_size: str = 'na', 
+        multimodal_image_size: str = 'na',
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
         api_variables: Dict[str, str] = {},
@@ -264,7 +264,7 @@ class BasePerformanceEvaluator(abc.ABC):
             series_std = round(series.std(), 4)
             logger.info(f'    stddev = {series_std}')
             metrics_summary[metric]['stddev'] = series_std
-            
+
         # Record descriptive statistics for the metrics in the following list
         for metric in [
             common_metrics.TTFT_SERVER,
@@ -273,7 +273,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN,
             common_metrics.NUM_INPUT_TOKENS_SERVER,
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
-            common_metrics.ACCEPTANCE_RATE
+            common_metrics.ACCEPTANCE_RATE,
         ]:
             logger.info(f'Building Server Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
@@ -408,7 +408,7 @@ class BasePerformanceEvaluator(abc.ABC):
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
         logger.info('Benchmarking process has been stopped.')
-    
+
     def get_image(self, image_location: str = '') -> str:
         """Utility function for encoding an image to base64.
 
@@ -423,6 +423,7 @@ class BasePerformanceEvaluator(abc.ABC):
         with open(image_location, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_image
+
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
@@ -456,23 +457,27 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         with open(input_file_path, 'r') as file:
             data = [json.loads(line) for line in file]
-            
+
         # check if dataframe headers contain 'prompt'
         if not all([list(d.keys())[0] == 'prompt' for d in data]):
-            raise ValueError('All rows in input file must contain the same first column name "prompt" \
-                and its respective text value')
-        
+            raise ValueError(
+                'All rows in input file must contain the same first column name "prompt" \
+                and its respective text value'
+            )
+
         # check if dataframe headers contain 'img_path' if there are two columns
         if all([len(list(d.keys())) == 2 for d in data]):
             if not all([list(d.keys())[1] == 'image_path' for d in data]):
-                raise ValueError('If input file has two columns, all rows in input file must contain \
-                    the same second column name "image_path" and its respective text value')
+                raise ValueError(
+                    'If input file has two columns, all rows in input file must contain \
+                    the same second column name "image_path" and its respective text value'
+                )
             if any([d['image_path'].startswith('http') for d in data]):
                 raise ValueError('Urls are not supported for image_path. Please provide local image paths.')
         # check if there are more than two columns
         elif any([len(list(d.keys())) > 2 for d in data]):
-            raise ValueError('Input file can not contain more then two columns.')           
-        
+            raise ValueError('Input file can not contain more then two columns.')
+
         return data
 
     def create_output_filename(self) -> str:
@@ -712,18 +717,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         # Iterate through data points and build a request config for each
         for request_idx, data_point in enumerate(self.dataset):
             # Make raw prompt dictionary
-            raw_prompt = {
-                'name': 'custom_prompt',
-                'template': data_point[self.prompt_key]
-            }
-            
+            raw_prompt = {'name': 'custom_prompt', 'template': data_point[self.prompt_key]}
+
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
             prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
-            
+
             # Image to be sent in LLM request if exists
             image = None
             if self.img_path_key:
-                image = self.get_image(data_point[self.img_path_key]) 
+                image = self.get_image(data_point[self.img_path_key])
 
             request_config = RequestConfig(
                 request_idx=request_idx,
@@ -755,10 +757,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
 
-        prefix_prompt = 'You are a helpful assistant that provides concise and '\
+        prefix_prompt = (
+            'You are a helpful assistant that provides concise and '
             'helpful assistance on a variety of subjects. Ask: '
+        )
         prompt_text = prefix_prompt + raw_prompt['template']
-        
+
         # Output prompt
         custom_prompt = raw_prompt
         custom_prompt['template'] = prompt_text
@@ -768,48 +772,47 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
-        self, 
-        num_concurrent_requests: int, 
+        self,
+        num_concurrent_requests: int,
         use_multiple_prompts: bool = False,
         save_response_texts: bool = False,
-        *args: Any, 
-        **kwargs: Any
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
         self.use_multiple_prompts = use_multiple_prompts
         self.save_response_texts = save_response_texts
-        
+
     def load_prompts(self, prompts_file_path: str) -> Any:
-        """ Loads prompts from yaml file.
+        """Loads prompts from yaml file.
 
         Raises:
             ValueError: Validates if entries have the right structure.
             ValueError: Validates performance level entry values
 
         Returns:
-            Dict[Dict[str, Any]]: List of dictionaries containing the name, performance level 
+            Dict[Dict[str, Any]]: List of dictionaries containing the name, performance level
             and text template of each prompt.
         """
         with open(prompts_file_path, 'r') as file:
             data = yaml.safe_load(file)
-        
-        valid_prompt_structure = ["name", "template"]
-        
+
+        valid_prompt_structure = ['name', 'template']
+
         # Validate the structure of the default prompt
         for prompt in data.get('default_prompt', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f"Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.")
-        
+                raise ValueError(f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.')
+
         # Validate the structure of the multiple prompts
         for prompt in data.get('multiple_prompts', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f"Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.")
+                raise ValueError(f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.')
 
         return data
-        
 
     def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
@@ -829,9 +832,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         )
-        
+
         return self.sanitize_file_prefix(output_file_name)
-    
+
     def save_results(
         self,
         filename: str,
@@ -854,7 +857,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             e: if an error happens when creating the output file related to prompts and completions, an error will be
             raised
         """
-        
+
         super().save_results(filename, summary, individual_responses)
 
         # If specified, save the llm responses to output file
@@ -1168,8 +1171,8 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return metadata, llm_responses
 
-    def select_raw_prompts(self, raw_prompts: List[Dict[str,Any]], num_requests: int) -> List[Dict[str,Any]]:
-        """ Selects prompts randomly 
+    def select_raw_prompts(self, raw_prompts: List[Dict[str, Any]], num_requests: int) -> List[Dict[str, Any]]:
+        """Selects prompts randomly
 
         Args:
             num_requests (int): Number of requests to be generated
@@ -1178,9 +1181,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             List[Dict[str,Any]]: List of randomly selected prompts
         """
 
-        random_selected_prompts = random.choices(raw_prompts, k = num_requests)
-        assert len(random_selected_prompts) == num_requests, "Number of selected prompts \
-            does not match the requested count"
+        random_selected_prompts = random.choices(raw_prompts, k=num_requests)
+        assert len(random_selected_prompts) == num_requests, 'Number of selected prompts \
+            does not match the requested count'
         return random_selected_prompts
 
     def build_request_configs(
@@ -1209,22 +1212,21 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         request_configs = []
         # Instantiate image variable
         image = None
-        
+
         # If not using multiple prompts
         if not self.use_multiple_prompts:
-            
             # Load prompts based on the model type
             if self.multimodal_image_size == 'na':
                 # Read prompt for text-instruct model
                 prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
                 raw_prompt = prompts_data['default_prompt'][0]
-                
+
             else:
                 # Read prompt for vision-instruct model
                 prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
-                raw_prompt = prompts_data['default_prompt'][0]                
-                image = self.get_image() 
-            
+                raw_prompt = prompts_data['default_prompt'][0]
+                image = self.get_image()
+
             # Build input text prompt to be sent in LLM request
             prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
@@ -1250,31 +1252,31 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 )
 
                 request_configs.append(request_config)
-        
+
         # If using multiple prompts
         else:
-        
             if self.multimodal_image_size != 'na':
                 raise ValueError(
-                    'Multiple prompts are not supported for multimodal models. ' \
-                    'Please set use_multiple_prompts to False.')
-            
+                    'Multiple prompts are not supported for multimodal models. '
+                    'Please set use_multiple_prompts to False.'
+                )
+
             # Load text-instruct prompts
             with open(USER_PROMPT_TEXT_INSTRUCT_PATH, 'r') as file:
                 prompts_data = yaml.safe_load(file)
             raw_prompts = prompts_data['multiple_prompts']
-        
+
             # Select text prompts randomly equal to the number of requests
             selected_raw_prompts = self.select_raw_prompts(raw_prompts, num_requests)
 
             # Build input prompt to be sent in LLM request
-            # Iterate through data points and build a request config for each            
+            # Iterate through data points and build a request config for each
             for request_idx, raw_prompt in enumerate(selected_raw_prompts):
                 prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
                 updated_sampling_params = {'max_tokens_to_generate': output_token_count}
                 updated_sampling_params.update(sampling_params)
-                
+
                 request_config = RequestConfig(
                     request_idx=request_idx,
                     model=self.model_name,
@@ -1286,7 +1288,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     is_stream_mode=self.is_stream_mode,
                     num_concurrent_requests=self.num_concurrent_requests,
                 )
-                
+
                 request_configs.append(request_config)
 
         return request_configs
@@ -1296,7 +1298,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         multiple times to reach a user set input_token_count.
 
         Args:
-            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input 
+            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input
             prompt.
             num_input_tokens (int): The user specified length of the input prompt.
 
@@ -1314,21 +1316,17 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Adjust prompt according to desired input tokens
         full_input_prompt_text = self.adjust_to_exact_tokens(repeated_prompt_text, num_input_tokens)
-        
+
         # Output prompt
         adjusted_prompt = prompt_dict
         adjusted_prompt['template'] = full_input_prompt_text
-    
+
         return (adjusted_prompt, self.get_token_length(full_input_prompt_text))
 
 
 class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
-    def __init__(self, 
-                 qps: float, 
-                 qps_distribution: str, 
-                 num_concurrent_requests: int = 0, 
-                 *args: Any, 
-                 **kwargs: Any
+    def __init__(
+        self, qps: float, qps_distribution: str, num_concurrent_requests: int = 0, *args: Any, **kwargs: Any
     ) -> None:
         super().__init__(num_concurrent_requests, *args, **kwargs)
         self.qps = qps
@@ -1343,7 +1341,7 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         generation_mode = ''
         if self.is_stream_mode:
             generation_mode = 'stream'
-            
+
         multimodal_suffix = ''
         if self.multimodal_image_size != 'na':
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
@@ -1352,7 +1350,7 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
             f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}_{self.run_uuid}'
         )
-        
+
         return self.sanitize_file_prefix(output_file_name)
 
     def _get_wait_time(self) -> float:
@@ -1526,18 +1524,18 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         request_configs = []
         # Instantiate image variable
         image = None
-        
+
         # Load prompts based on the model type
         if self.multimodal_image_size == 'na':
             # Read prompt for text-instruct model
             prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
             raw_prompt = prompts_data['default_prompt'][0]
-            
+
         else:
             # Read prompt for vision-instruct model
             prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
-            raw_prompt = prompts_data['default_prompt'][0]                
-            image = self.get_image() 
+            raw_prompt = prompts_data['default_prompt'][0]
+            image = self.get_image()
 
         # Build input prompt to be sent in LLM request
         prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
