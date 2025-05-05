@@ -1,7 +1,7 @@
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+ <source media="(prefers-color-scheme: dark)" srcset="../../images/SambaNova-light-logo-1.png" height="60">
+  <img alt="SambaNova logo" src="../../images/SambaNova-dark-logo-1.png" height="60">
 </picture>
 </a>
 
@@ -18,3 +18,12 @@ Welcome to this section of API examples that are available exclusively to custom
 SAMBASTUDIO_HOST_NAME = '<host name without any trailing "/">'
 SAMBASTUDIO_ACCESS_KEY = '<access key>'
 SAMBASTUDIO_TENANT_NAME = '<tenant name if provided, else "default">'
+```
+
+## Workflows Enabled
+
+The notebooks in the folder demonstrate how the following workflows can be accomplished:
+1. [Deploy an endpoint](<./Deploy a Model or Bundle to an Endpoint.ipynb>) with existing models or bundles.
+2. [Create a new bundle](<./Create a Model Bundle.ipynb>) and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
+3. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>) and [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
+4. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>), [create a new bundle](<./Create a Model Bundle.ipynb>) with it, and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) the bundle.
