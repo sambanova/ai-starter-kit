@@ -85,7 +85,7 @@ def main() -> None:
 
             additional_env_vars: Dict[str, Any] = {}
             additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
-            
+
             if st.session_state.mode == 'SambaNova Cloud':
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio

@@ -129,21 +129,21 @@ def main() -> None:
             default=10,
             help='The number of concurrent requests used to send requests. (default: %(default)s)',
         )
-        
+
         parser.add_argument(
             '--model-name',
             type=str,
             required=True,
             help='The name of the model to use for this performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--input-file-path',
             type=str,
             required=True,
             help='The absolute path to the dataset to be used for running the custom performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--save-llm-responses',
             type=str2bool,
@@ -151,7 +151,7 @@ def main() -> None:
             default=False,
             help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
         )
-        
+
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         custom_evaluator = CustomPerformanceEvaluator(
@@ -177,14 +177,14 @@ def main() -> None:
             default=10,
             help='The number of concurrent requests used to send requests. (default: %(default)s)',
         )
-        
+
         parser.add_argument(
             '--model-names',
             type=str,
             required=True,
             help='The name of the models to use for this performance evaluation.',
         )
-        
+
         parser.add_argument(
             '--multimodal-image-size',
             choices=['na', 'small', 'medium', 'large'],
@@ -199,7 +199,7 @@ def main() -> None:
             help="""The number of tokens to include in the prompt for each request made from the synthetic 
                 dataset. (default: %(default)s)""",
         )
-        
+
         parser.add_argument(
             '--num-output-tokens',
             type=int,
@@ -207,7 +207,7 @@ def main() -> None:
             help="""The number of tokens to generate from each llm request. This is the `max_tokens` param for the 
                 completions API. (default: %(default)s)""",
         )
-        
+
         parser.add_argument(
             '--num-requests',
             type=int,
@@ -215,7 +215,7 @@ def main() -> None:
             help="""The number of requests to make from the synthetic dataset. Note that it is possible for the test 
                 to timeout first. (default: %(default)s)""",
         )
-        
+
         parser.add_argument(
             '--use-multiple-prompts',
             type=str2bool,
@@ -224,7 +224,7 @@ def main() -> None:
             help="""Whether to use multiple prompts selected randomly from prompt file. 
                 Only works on text instruct models. (default: %(default)s)""",
         )
-        
+
         parser.add_argument(
             '--save-llm-responses',
             type=str2bool,
@@ -232,7 +232,7 @@ def main() -> None:
             default=False,
             help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
         )
-        
+
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
@@ -292,7 +292,7 @@ def main() -> None:
             help="The image size to select if a vision model is going to be evaluated.\
                 If no multimodal model will be used, select 'na'.",
         )
-        
+
         parser.add_argument(
             '--num-input-tokens',
             type=int,
@@ -330,7 +330,7 @@ def main() -> None:
                 qps_distribution=args.qps_distribution,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
-                llm_api=args.llm_api
+                llm_api=args.llm_api,
             )
 
             # Run performance evaluation

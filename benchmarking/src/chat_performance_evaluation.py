@@ -29,33 +29,30 @@ class ChatPerformanceEvaluator:
             tuple: contains the api response, generated text and input parameters
         """
         family_model_type = llmperf_utils.find_family_model_type(self.model)
-        
+
         if family_model_type == 'llama3':
             prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
             <|start_header_id|>assistant<|end_header_id|>"""
         else:
             prompt_template = f'[INST]{prompt}[/INST]'
-            
+
         # Build prompt dict for Request Config
-        prompt_dict = {
-            'name': 'chat_prompt',
-            'template': prompt_template
-        }
+        prompt_dict = {'name': 'chat_prompt', 'template': prompt_template}
 
         tokenizer = llmperf_utils.get_tokenizer(self.model)
 
         api_variables = set_api_variables()
-        
+
         # Image to be sent in LLM request if exists
         image = None
         if self.image_path:
             with open(self.image_path, 'rb') as image_file:
                 image = base64.b64encode(image_file.read()).decode('utf-8')
-                
+
         request_config = RequestConfig(
             request_idx=1,
             prompt_tuple=(prompt_dict, 0),
-            image = image,
+            image=image,
             model=self.model,
             llm_api=self.llm_api,
             api_variables=api_variables,
