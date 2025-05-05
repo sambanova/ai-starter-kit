@@ -212,9 +212,7 @@ class SnsdkWrapper:
 
         return host_name, tenant_id, access_key.strip()
 
-    def _load_config(self, 
-        file_path: str,
-        verbose: Optional[bool] = True) -> Dict[str, Any]:
+    def _load_config(self, file_path: str, verbose: Optional[bool] = True) -> Dict[str, Any]:
         """Loads a YAML configuration file.
 
         Args:
@@ -226,7 +224,7 @@ class SnsdkWrapper:
         try:
             with open(file_path, 'r') as file:
                 config: Dict[str, Any] = yaml.safe_load(file)
-            if verbose:   
+            if verbose:
                 logging.info(f'Using config file located in {file_path}')
         except FileNotFoundError:
             raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
@@ -1716,7 +1714,7 @@ class SnsdkWrapper:
         description: Optional[str] = None,
         model_list: Optional[List[str]] = None,
         rdu_required: Optional[int] = None,
-        verbose: Optional[bool] = True
+        verbose: Optional[bool] = True,
     ) -> Optional[str]:
         """Create a composite model in SambaStudio
 

@@ -45,10 +45,10 @@ class BYOC(SnsdkWrapper):
         super().__init__(config_path=config_path)
 
     def find_config_params(
-        self, 
-        checkpoint_paths: Optional[Union[List[str], str]] = None, 
+        self,
+        checkpoint_paths: Optional[Union[List[str], str]] = None,
         update_config_file: bool = False,
-        verbose: Optional[bool] = True
+        verbose: Optional[bool] = True,
     ) -> List[Dict[str, Any]]:
         """
         Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
@@ -102,16 +102,16 @@ class BYOC(SnsdkWrapper):
                 assert isinstance(self.config_path, str)
                 with open(self.config_path, 'w') as outfile:
                     yaml.dump(self.config, outfile)
-                if verbose:    
+                if verbose:
                     logging.info(f'config file updated with checkpoints parameters')
 
         return checkpoint_params
 
     def check_chat_templates(
-        self, 
-        test_messages: List[str], 
+        self,
+        test_messages: List[str],
         checkpoint_paths: Optional[Union[List[str], str]] = None,
-        verbose: Optional[bool] = True        
+        verbose: Optional[bool] = True,
     ) -> None:
         """
         Checks the chat templates for the given checkpoint paths.
@@ -164,9 +164,7 @@ class BYOC(SnsdkWrapper):
                 logging.error(f'Raw chat template for checkpoint in {checkpoint_path}: is not a string')
 
     def get_suitable_apps(
-        self, 
-        checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
-        verbose: Optional[bool] = True
+        self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None, verbose: Optional[bool] = True
     ) -> List[List[Dict[str, Any]]]:
         """
         find suitable sambastudio apps for the given checkpoints
@@ -220,8 +218,8 @@ class BYOC(SnsdkWrapper):
         checkpoint_path: str,
         app_id: str,
         publisher: Optional[str] = None,
-        description: Optional[str] = None,        
-        ignore_transformers_version: Optional[bool] = True
+        description: Optional[str] = None,
+        ignore_transformers_version: Optional[bool] = True,
     ) -> List[str]:
         """Build the command to import a model into Snapi
 
@@ -272,8 +270,8 @@ class BYOC(SnsdkWrapper):
         if description is not None:
             if len(description) > 0:
                 command.extend(['--description', description])
-        if ignore_transformers_version:            
-            command.extend(['--ignore-transformers-version'])            
+        if ignore_transformers_version:
+            command.extend(['--ignore-transformers-version'])
 
         return command
 
@@ -290,7 +288,7 @@ class BYOC(SnsdkWrapper):
         description: str = '',
         retries: int = 3,
         ignore_transformers_version: bool = True,
-        verbose: Optional[bool] = True
+        verbose: Optional[bool] = True,
     ) -> Optional[str]:
         """Upload the checkpoint to Snapi
 
@@ -340,7 +338,7 @@ class BYOC(SnsdkWrapper):
                 app_id,
                 publisher,
                 description,
-                ignore_transformers_version
+                ignore_transformers_version,
             )
             # attempt to upload retries times
             for i in range(retries + 1):
@@ -359,7 +357,7 @@ class BYOC(SnsdkWrapper):
                     if len(snapi_response.stderr) > 0:
                         error_message = snapi_response.stderr
                         # if all lines in stderr are warnings set errors_response as false
-                        if all('warning' in line.lower() for line in error_message.splitlines()):                            
+                        if all('warning' in line.lower() for line in error_message.splitlines()):
                             logging.warning(f'Warnings when uploading checkpoint : {error_message}')
                             errors_response = False
                         else:
@@ -401,7 +399,7 @@ class BYOC(SnsdkWrapper):
         checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
         max_parallel_jobs: int = 4,
         retries: int = 3,
-        verbose: Optional[bool] = True
+        verbose: Optional[bool] = True,
     ) -> str:
         """
         Upload checkpoints to sambastudio
@@ -454,14 +452,15 @@ class BYOC(SnsdkWrapper):
                     logging.error(f'Error uploading checkpoint for model {model_name}: {e}', exc_info=True)
         return models
 
-    def get_checkpoints_status(self, 
-                               model_names: Optional[Union[List[str], str]] = None,                               
-                               ) -> List[Dict[str, Any]]:
+    def get_checkpoints_status(
+        self,
+        model_names: Optional[Union[List[str], str]] = None,
+    ) -> List[Dict[str, Any]]:
         """
         Get status of uploaded checkpoints
 
         Parameters:
-        - model_names (Optional[List[str]], optional): list of model names.        
+        - model_names (Optional[List[str]], optional): list of model names.
 
         Return
         - model_statuses: list of model checkpoints status
@@ -475,5 +474,5 @@ class BYOC(SnsdkWrapper):
         model_statuses = []
         for model in model_names:
             model_status = self.snsdk_client.import_status(model_id=model)
-            model_statuses.append(model_status)            
+            model_statuses.append(model_status)
         return model_statuses
