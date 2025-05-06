@@ -120,7 +120,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
     # For non-batching endpoints, batching_exposed will be False
     st.session_state.batching_exposed = True
-    if valid_df["batch_size_used"].isnull().all():
+    if valid_df['batch_size_used'].isnull().all():
         st.session_state.batching_exposed = False
 
     return valid_df
@@ -190,7 +190,7 @@ def main() -> None:
                 index=0,
                 disabled=st.session_state.running,
             )
-            
+
         st.session_state.multimodal_image_size = st.selectbox(
             'Multimodal image size',
             options=list(MULTIMODAL_IMAGE_SIZE_OPTIONS.keys()),
@@ -249,8 +249,9 @@ def main() -> None:
             'Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running
         )
 
-        st.session_state.running = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button',
-                                                     type='primary')
+        st.session_state.running = st.sidebar.button(
+            'Run!', disabled=st.session_state.running, key='run_button', type='primary'
+        )
 
         sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary')
 
@@ -302,7 +303,7 @@ def main() -> None:
                 'Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
                 'TTFT (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -314,7 +315,7 @@ def main() -> None:
                 'Distribution of end-to-end latency' + by_batch_size_suffix,
                 'Latency (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -329,7 +330,7 @@ def main() -> None:
                 'Distribution of output throughput' + by_batch_size_suffix,
                 'Tokens per second, per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         # Compute total throughput per batch
@@ -346,10 +347,10 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     # Defining styles
-    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
-    st.markdown(SECONDARY_ST_STYLE,unsafe_allow_html=True)
+    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
+    st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_session_variables()
 

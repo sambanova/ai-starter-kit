@@ -4,7 +4,7 @@
 line-length = 120
 
 # Exclude jupyter notebooks and given folders
-extend-exclude = ["*.ipynb", "utils/parsing/unstructured-api"]
+extend-exclude = ["*.ipynb", "utils/parsing/unstructured-api", "utils/fine_tuning/generative_data_prep"]
 
 [lint]
 # Add the flake8-annotations rules

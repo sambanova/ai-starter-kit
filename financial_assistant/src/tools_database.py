@@ -9,6 +9,7 @@ import streamlit
 from langchain.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
+from langchain_core.messages import AIMessage
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
@@ -329,7 +330,10 @@ def sql_finder(text: str) -> Any:
         Exception: If no SQL query was found in the input text.
     """
     sql_code_pattern = re.compile(r'```sql\s+(.*?)\s+```', re.DOTALL)
-    match = sql_code_pattern.search(text)
+    if isinstance(text, AIMessage):
+        match = sql_code_pattern.search(text.content)
+    else:
+        raise Exception('Input must be an AIMessage.')
     if match is not None:
         query = match.group(1)
         return query

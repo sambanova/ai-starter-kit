@@ -69,7 +69,8 @@ SECONDARY_ST_STYLE = """
     </style>
     """
 
-def save_uploaded_file(internal_save_path: str) -> str:    
+
+def save_uploaded_file(internal_save_path: str) -> str:
     uploaded_file = st.session_state.uploaded_file
     temp_file_path = '.'
     if st.session_state.uploaded_file is not None:
@@ -81,6 +82,7 @@ def save_uploaded_file(internal_save_path: str) -> str:
         with open(temp_file_path, 'wb') as temp_file:
             temp_file.write(uploaded_file.getbuffer())
     return temp_file_path
+
 
 def find_pages_to_hide() -> List[str]:
     pages_to_show = st.session_state.pages_to_show
@@ -104,8 +106,8 @@ def set_api_variables() -> Dict[str, Any]:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
             api_variables = {
-                'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL, 
-                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY
+                'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL,
+                'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY,
             }
         # SambaStudio
         elif st.session_state.llm_api == 'sambastudio':
@@ -193,14 +195,14 @@ def plot_dataframe_summary(df_req_info: pd.DataFrame) -> Figure:
 
 
 def plot_client_vs_server_barplots(
-    df_user: pd.DataFrame, 
-    x_col: str, 
-    y_cols: List[str], 
-    legend_labels: List[str], 
-    title: str, 
-    ylabel: str, 
-    xlabel: str, 
-    batching_exposed: bool
+    df_user: pd.DataFrame,
+    x_col: str,
+    y_cols: List[str],
+    legend_labels: List[str],
+    title: str,
+    ylabel: str,
+    xlabel: str,
+    batching_exposed: bool,
 ) -> Figure:
     """
     Plots bar plots for client vs server metrics from a DataFrame.
@@ -221,7 +223,7 @@ def plot_client_vs_server_barplots(
     value_vars = y_cols
     title_text = title
     yaxis_title = ylabel
-    xaxis_title = xlabel if batching_exposed else ""
+    xaxis_title = xlabel if batching_exposed else ''
 
     df_melted = df_user.melt(
         id_vars=[x_col],
@@ -311,11 +313,8 @@ def plot_client_vs_server_barplots(
         hovermode='x unified',
     )
 
-    fig.update_xaxes(
-        hoverformat="foo",
-        showticklabels=batching_exposed
-    )
-    
+    fig.update_xaxes(hoverformat='foo', showticklabels=batching_exposed)
+
     return fig
 
 

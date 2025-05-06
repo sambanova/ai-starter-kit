@@ -9,7 +9,7 @@ langchain-chroma == 0.2.1
 langchain-community==0.3.16
 langchain-core==0.3.33
 langchain-huggingface==0.1.2
-langchain-milvus==0.1.7rc2
+langchain-milvus==0.1.10
 langchain==0.3.16
 langchain-sambanova==0.1.0
 mypy==1.11.2

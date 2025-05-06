@@ -779,7 +779,7 @@ class SnsdkWrapper:
             - The ID of the newly created model.
 
         Raises:
-            - Exception: If the target or draft model does not exist, or if the target model does not support 
+            - Exception: If the target or draft model does not exist, or if the target model does not support
             speculative decoding (e.g. models are not compatible for spec decoding).
             - Exception: If there is an error during the validation or creation process.
         """
@@ -787,7 +787,7 @@ class SnsdkWrapper:
         if model_name is None:
             self._raise_error_if_config_is_none()
             model_name = self.config['spec_decoding']['model_name']
-        
+
         if target_model is None:
             self._raise_error_if_config_is_none()
             target_model = self.config['spec_decoding']['target_model']
@@ -795,19 +795,19 @@ class SnsdkWrapper:
         if target_model_version is None:
             self._raise_error_if_config_is_none()
             target_model_version = self.config['spec_decoding']['target_model_version']
-        
+
         if draft_model is None:
             self._raise_error_if_config_is_none()
             draft_model = self.config['spec_decoding']['draft_model']
-        
+
         if draft_model_version is None:
             self._raise_error_if_config_is_none()
             draft_model_version = self.config['spec_decoding']['draft_model_version']
-        
+
         if rdu_arch is None:
             self._raise_error_if_config_is_none()
             rdu_arch = self.config['sambastudio']['rdu_arch']
-        
+
         if job_type is None:
             self._raise_error_if_config_is_none()
             job_type = self.config['job']['job_type']
@@ -856,7 +856,7 @@ class SnsdkWrapper:
             logging.info(f"Speculative decoding creation message: '{snapi_response.stdout}'")
             new_model_id = self.search_model(model_name)
             return new_model_id
-    
+
     def _handle_error_spec_decoding(self, snapi_response: any, custom_error_message: str) -> None:
         """
         Handles error decoding for a given SNAPI response.
@@ -871,7 +871,7 @@ class SnsdkWrapper:
 
         Raises:
             - Exception: custom error message.
-        
+
         """
         errors_response = (
             ('internal server error' in snapi_response.stdout.lower())

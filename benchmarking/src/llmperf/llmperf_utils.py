@@ -14,13 +14,15 @@ FAMILY_MODEL_TYPE_IDENTIFIER = {
     'deepseek': ['deepseek'],
     'qwen': ['qwen', 'qwq'],
     'solar': ['solar'],
-    'eeve': ['eeve']
+    'eeve': ['eeve'],
 }
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
     'medium': './imgs/vision_perf_eval-medium.jpg',
     'large': './imgs/vision_perf_eval-large.jpg',
 }
+
+
 class LLMPerfResults:
     """Class with LLM Performance results"""
 
@@ -55,6 +57,7 @@ class LLMPerfResults:
         """
         data = self.to_dict()
         return json.dumps(data)
+
 
 def find_family_model_type(model_name: str) -> str:
     """Finds family model type
@@ -107,9 +110,9 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
         else:
             tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
     elif family_model_type == 'llama4':
-        if ('maverick' in model_name.lower()):
+        if 'maverick' in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Maverick-17B-128E-Instruct')
-        elif ('scout' in model_name.lower()):
+        elif 'scout' in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Scout-17B-16E-Instruct')
         else:
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Scout-17B-16E-Instruct')

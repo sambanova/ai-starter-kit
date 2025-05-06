@@ -69,7 +69,7 @@ def _initialize_session_variables() -> None:
     if 'run_button' in st.session_state and st.session_state.run_button == True:
         st.session_state.running = True
     else:
-        st.session_state.running = False    
+        st.session_state.running = False
     if 'zip_buffer' not in st.session_state:
         st.session_state.zip_buffer = None
     if 'performance_evaluator' not in st.session_state:
@@ -83,6 +83,7 @@ def _initialize_session_variables() -> None:
     if 'progress_bar' not in st.session_state:
         st.session_state.progress_bar = None
 
+
 def read_performance_evaluation_output_files() -> Dict[str, Any]:
     """Reads performance evaluation output files and returns dictionary with each file name and content.
 
@@ -94,19 +95,17 @@ def read_performance_evaluation_output_files() -> Dict[str, Any]:
     individual_file_name = st.session_state.performance_evaluator.individual_responses_file_path.split('/')[-1]
     with open(st.session_state.performance_evaluator.individual_responses_file_path, 'r') as f:
         individual_file_content = json.loads(f.read())
-    
+
     # Get summmary file information
     summary_file_name = st.session_state.performance_evaluator.summary_file_path.split('/')[-1]
     with open(st.session_state.performance_evaluator.summary_file_path, 'r') as f:
         summary_file_content = json.loads(f.read())
-        
+
     # Make output dictionary
-    json_data = {
-        individual_file_name: individual_file_content,
-        summary_file_name: summary_file_content
-    }
-    
+    json_data = {individual_file_name: individual_file_content, summary_file_name: summary_file_content}
+
     return json_data
+
 
 def create_zip(json_data: Dict[str, Any]) -> io.BytesIO:
     """Creates a zip file out of a JSON data in a dictionary
@@ -117,7 +116,7 @@ def create_zip(json_data: Dict[str, Any]) -> io.BytesIO:
     Returns:
         io.BytesIO: zip buffer containing all data in json_data
     """
-    
+
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for filename, data in json_data.items():
@@ -166,7 +165,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
     # For non-batching endpoints, batching_exposed will be False
     st.session_state.batching_exposed = True
-    if valid_df["batch_size_used"].isnull().all():
+    if valid_df['batch_size_used'].isnull().all():
         st.session_state.batching_exposed = False
 
     return valid_df
@@ -245,7 +244,7 @@ def main() -> None:
             help='Select the pre-set image size for multimodal models. \
                 Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models.',
         )
-        
+
         st.session_state.input_tokens = st.number_input(
             'Number of input tokens',
             min_value=50,
@@ -283,52 +282,52 @@ def main() -> None:
         )
 
         st.session_state.timeout = st.number_input(
-            'Timeout', 
-            min_value=60, 
-            max_value=1800, 
-            value=600, 
-            step=1, 
-            disabled=st.session_state.running or st.session_state.optional_download
+            'Timeout',
+            min_value=60,
+            max_value=1800,
+            value=600,
+            step=1,
+            disabled=st.session_state.running or st.session_state.optional_download,
         )
 
         st.session_state.running = st.sidebar.button(
-            'Run!', 
-            disabled=st.session_state.running or st.session_state.optional_download, 
+            'Run!',
+            disabled=st.session_state.running or st.session_state.optional_download,
             key='run_button',
-            type='primary'
+            type='primary',
         )
 
         if st.session_state.optional_download:
             st.sidebar.download_button(
-                label="Download Results",
+                label='Download Results',
                 data=st.session_state.zip_buffer,
-                file_name="output_files.zip",
-                mime="application/zip"
+                file_name='output_files.zip',
+                mime='application/zip',
             )
         else:
             st.sidebar.download_button(
-                label="Download Results", 
-                data='', 
-                disabled=not st.session_state.running or not st.session_state.optional_download
+                label='Download Results',
+                data='',
+                disabled=not st.session_state.running or not st.session_state.optional_download,
             )
-        
+
         # Disable stop button if app is not running and download button is not available
         sidebar_stop = st.sidebar.button(
-            'Stop', 
-            disabled=(not st.session_state.running) and (not st.session_state.optional_download), 
-            type='secondary'
+            'Stop',
+            disabled=(not st.session_state.running) and (not st.session_state.optional_download),
+            type='secondary',
         )
 
         if st.session_state.prod_mode:
             if st.button('Back to Setup', disabled=st.session_state.running or st.session_state.optional_download):
                 st.session_state.setup_complete = False
                 st.switch_page('app.py')
-        
+
     if sidebar_stop:
         st.session_state.optional_download = False
         st.session_state.zip_buffer = None
         st.session_state.performance_evaluator.stop_benchmark()
-        
+
         st.rerun()
 
     if st.session_state.running:
@@ -339,13 +338,13 @@ def main() -> None:
             do_rerun = False
             try:
                 st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
-                
+
                 json_data = read_performance_evaluation_output_files()
-                
+
                 st.session_state.zip_buffer = create_zip(json_data)
                 st.session_state.running = False
                 st.session_state.optional_download = True
-                
+
                 # workareound to avoid rerun within try block
                 do_rerun = True
             except Exception as e:
@@ -365,7 +364,7 @@ def main() -> None:
                 tokens ({generated_output_tokens}) is {abs(expected_output_tokens-generated_output_tokens)}
                     token(s)"""
             )
-        
+
         by_batch_size_suffix = ' by batch size' if st.session_state.batching_exposed else ''
         st.plotly_chart(
             plot_client_vs_server_barplots(
@@ -376,7 +375,7 @@ def main() -> None:
                 'Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
                 'TTFT (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -388,7 +387,7 @@ def main() -> None:
                 'Distribution of end-to-end latency' + by_batch_size_suffix,
                 'Latency (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -403,7 +402,7 @@ def main() -> None:
                 'Distribution of output throughput' + by_batch_size_suffix,
                 'Tokens per second, per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         # Compute total throughput per batch
@@ -420,10 +419,10 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     # Defining styles
-    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
-    st.markdown(SECONDARY_ST_STYLE,unsafe_allow_html=True)
+    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
+    st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_session_variables()
 

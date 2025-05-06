@@ -6,8 +6,7 @@ import streamlit as st
 
 
 def initialize_env_variables(
-    prod_mode: bool = False, 
-    additional_env_vars: Optional[Union[List[str], Dict[str,Any]]] = None
+    prod_mode: bool = False, additional_env_vars: Optional[Union[List[str], Dict[str, Any]]] = None
 ) -> None:
     if additional_env_vars is None:
         additional_env_vars = []
@@ -39,7 +38,7 @@ def initialize_env_variables(
             st.session_state.SAMBASTUDIO_URL = ''
         if 'SAMBASTUDIO_API_KEY' not in st.session_state:
             st.session_state.SAMBASTUDIO_API_KEY = ''
-        
+
         if isinstance(additional_env_vars, List):
             for var in additional_env_vars:
                 if var not in st.session_state:
@@ -52,11 +51,7 @@ def initialize_env_variables(
             raise ValueError('additional_env_vars must be a List or Dict')
 
 
-def set_env_variables(
-    api_key: str, 
-    additional_vars: Optional[Dict[str, Any]] = None, 
-    prod_mode: bool = False
-) -> None:
+def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> None:
     st.session_state.SAMBANOVA_API_KEY = api_key
     if additional_vars:
         for key, value in additional_vars.items():
@@ -70,111 +65,76 @@ def set_env_variables(
 
 
 def env_input_fields(
-    additional_env_vars: Union[List[str], Dict[str, Any]] = None, 
-    mode: str = 'SambaNova Cloud'
+    additional_env_vars: Union[List[str], Dict[str, Any]] = None, mode: str = 'SambaNova Cloud'
 ) -> Tuple[str, Any]:
     if additional_env_vars is None:
         additional_env_vars = []
     additional_vars = {}
-        
+
     if mode == 'SambaStudio':
-        url = st.text_input(
-            'SAMBASTUDIO URL', 
-            value=st.session_state.get('SAMBASTUDIO_URL', ''), 
-            type='password'
+        st.session_state.SAMBASTUDIO_URL = st.text_input(
+            'SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password'
         )
         api_key = st.text_input(
-            'SAMBASTUDIO API KEY', 
-            value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
+            'SAMBASTUDIO API KEY', value=st.session_state.get('SAMBASTUDIO_API_KEY', ''), type='password'
         )
-        
+
         if isinstance(additional_env_vars, List):
             for var in additional_env_vars:
                 # Not show SAMBANOVA_URL additional env var in SambaStudio mode
                 if mode == 'SambaStudio' and var == 'SAMBANOVA_URL':
                     continue
-                additional_vars[var] = st.text_input(
-                    f'{var}', 
-                    value=st.session_state.get(var, ''), 
-                    type='password'
-                )
+                additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
         elif isinstance(additional_env_vars, Dict):
             for key, val in additional_env_vars.items():
                 # Not show SAMBANOVA_URL additional env var in SambaStudio mode
                 if mode == 'SambaStudio' and key == 'SAMBANOVA_URL':
                     continue
-                additional_vars[key] = st.text_input(
-                    f'{key}', 
-                    value=st.session_state.get(key, val), 
-                    type='password'
-                )
-    
+                additional_vars[key] = st.text_input(f'{key}', value=st.session_state.get(key, val), type='password')
+
     elif mode == 'SambaNova Cloud':
-                
         if isinstance(additional_env_vars, List):
-            # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key  
+            # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key
             if 'SAMBANOVA_URL' in additional_env_vars:
-                url = st.text_input(
-                    'SAMBANOVA CLOUD URL', 
-                    value=st.session_state.get('SAMBANOVA_URL', ''), 
-                    type='password'
+                additional_vars['SAMBANOVA_URL'] = st.text_input(
+                    'SAMBANOVA CLOUD URL', value=st.session_state.get('SAMBANOVA_URL', ''), type='password'
                 )
                 api_key = st.text_input(
-                    'SAMBANOVA CLOUD API KEY', 
-                    value=st.session_state.get('SAMBANOVA_API_KEY', ''), 
-                    type='password'
+                    'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
                 )
             # If SAMBANOVA_URL not in additional env vars, show cloud api key only
             else:
                 api_key = st.text_input(
-                    'SAMBANOVA CLOUD API KEY', 
-                    value=st.session_state.get('SAMBANOVA_API_KEY', ''), 
-                    type='password'
+                    'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
                 )
             for var in additional_env_vars:
                 # Skip SAMBANOVA_URL since it has been handled above
                 if 'SAMBANOVA_URL' == var:
                     continue
-                additional_vars[var] = st.text_input(
-                    f'{var}', 
-                    value=st.session_state.get(var, ''), 
-                    type='password'
-                )
-                
+                additional_vars[var] = st.text_input(f'{var}', value=st.session_state.get(var, ''), type='password')
+
         elif isinstance(additional_env_vars, Dict):
-            # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key  
+            # If SAMBANOVA_URL in additional env vars, show it first and then cloud api key
             if 'SAMBANOVA_URL' in additional_env_vars:
-                url = st.text_input(
-                    'SAMBANOVA CLOUD URL', 
-                    value=st.session_state.get('SAMBANOVA_URL', ''), 
-                    type='password'
+                additional_vars['SAMBANOVA_URL'] = st.text_input(
+                    'SAMBANOVA CLOUD URL', value=st.session_state.get('SAMBANOVA_URL', ''), type='password'
                 )
                 api_key = st.text_input(
-                    'SAMBANOVA CLOUD API KEY', 
-                    value=st.session_state.get('SAMBANOVA_API_KEY', ''), 
-                    type='password'
+                    'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
                 )
             # If SAMBANOVA_URL not in additional env vars, show cloud api key only
             else:
                 api_key = st.text_input(
-                    'SAMBANOVA CLOUD API KEY', 
-                    value=st.session_state.get('SAMBANOVA_API_KEY', ''), 
-                    type='password'
+                    'SAMBANOVA CLOUD API KEY', value=st.session_state.get('SAMBANOVA_API_KEY', ''), type='password'
                 )
             for key, val in additional_env_vars.items():
                 # Skip SAMBANOVA_URL since it has been handled above
                 if 'SAMBANOVA_URL' == key:
                     continue
-                additional_vars[key] = st.text_input(
-                    f'{key}', 
-                    value=st.session_state.get(key, val), 
-                    type='password'
-                )
+                additional_vars[key] = st.text_input(f'{key}', value=st.session_state.get(key, val), type='password')
 
     else:
         raise Exception('Setup mode not supported.')
-
-    
 
     return api_key, additional_vars
 
@@ -184,7 +144,7 @@ def are_credentials_set(additional_env_vars: Optional[Union[List[str], Dict[str,
         additional_env_vars = []
 
     base_creds_set = bool(st.session_state.SAMBANOVA_API_KEY)
-    
+
     if isinstance(additional_env_vars, List):
         additional_creds_set = all(bool(st.session_state.get(var, '')) for var in additional_env_vars)
     elif isinstance(additional_env_vars, Dict):
