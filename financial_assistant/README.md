@@ -114,11 +114,6 @@ SEC_API_ORGANIZATION="<your organization>"
 SEC_API_EMAIL="<user@email_provider.com>"
 ```
 
-For `Weave` users:
-```
-WANDB_API_KEY = "<your-wandb-api-key>"
-```
-
 ## Exit the app
 Once you have finished using the app, you can exit the app by clicking on `Exit` at the top of the sidebar.
 This will clear the cache.
