@@ -27,6 +27,7 @@ warnings.filterwarnings('ignore')
 def _init() -> None:
     load_dotenv('../.env', override=True)
 
+
 with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']

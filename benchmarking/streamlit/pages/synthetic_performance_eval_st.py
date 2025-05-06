@@ -147,7 +147,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
         user_metadata={'model_idx': 0},
-        config=st.session_state.config
+        config=st.session_state.config,
     )
 
     st.session_state.performance_evaluator.run_benchmark(

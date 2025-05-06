@@ -62,7 +62,7 @@ class BasePerformanceEvaluator(abc.ABC):
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
-        config: Dict[str, Any] = {}
+        config: Dict[str, Any] = {},
     ) -> None:
         # Set kit's config file
         if not config:
@@ -274,7 +274,7 @@ class BasePerformanceEvaluator(abc.ABC):
                 logger.info(f'    min = {series_min}')
                 logger.info(f'    max = {series_max}')
                 logger.info(f'    stddev = {series_std}')
-            
+
         # Record descriptive statistics for the metrics in the following list
         for metric in [
             common_metrics.TTFT_SERVER,
@@ -1341,7 +1341,12 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
 class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
     def __init__(
-        self, qps: float, qps_distribution: str = 'constant', num_concurrent_requests: int = 0, *args: Any, **kwargs: Any
+        self,
+        qps: float,
+        qps_distribution: str = 'constant',
+        num_concurrent_requests: int = 0,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(num_concurrent_requests, *args, **kwargs)
         self.qps = qps
