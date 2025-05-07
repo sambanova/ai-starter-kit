@@ -2,10 +2,10 @@ datasets==3.3.0
 huggingface-hub==0.30.2
 Jinja2==3.1.4
 python-dotenv==1.0.1
-langchain==0.3.18
+langchain==0.3.25
 langchain-sambanova==0.1.4
 langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-core==0.3.58
 torch==2.6.0
 transformers==4.51.0
 trl==0.16.1
