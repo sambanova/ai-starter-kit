@@ -28,6 +28,7 @@ with open(CONFIG_PATH) as file:
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
+
 def _get_params() -> Dict[str, Any]:
     """Get LLM params
 
@@ -149,13 +150,14 @@ def main() -> None:
             )
 
         st.session_state.uploaded_file = st.file_uploader(
-            'Upload image file', 
-            type=['jpg','png','webp'], 
-            help="For multimodal models, upload a JPG, PNG or WEBP image file"
-        )  
+            'Upload image file',
+            type=['jpg', 'png', 'webp'],
+            help='For multimodal models, upload a JPG, PNG or WEBP image file',
+        )
         if st.session_state.uploaded_file:
             st.session_state.file_path = save_uploaded_file(internal_save_path='data/chat_input_images')
             from PIL import Image
+
             image = Image.open(st.session_state.file_path)
             st.image(image, caption=st.session_state.uploaded_file.name)
         else:
@@ -198,10 +200,10 @@ def main() -> None:
             params = _get_params()
             if isinstance(st.session_state.llm_api, str):
                 st.session_state.selected_llm = ChatPerformanceEvaluator(
-                    model_name=llm_selected, 
-                    llm_api=st.session_state.llm_api, 
-                    image_path=st.session_state.file_path, 
-                    params=params
+                    model_name=llm_selected,
+                    llm_api=st.session_state.llm_api,
+                    image_path=st.session_state.file_path,
+                    params=params,
                 )
                 st.toast('LLM setup ready! 🙌 Start asking!')
                 st.session_state.chat_disabled = False
@@ -266,9 +268,9 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     # Defining styles
-    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
+    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 

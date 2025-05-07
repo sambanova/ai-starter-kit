@@ -4,6 +4,7 @@ import json
 import os
 import random
 import re
+import sys
 import threading
 import time
 import uuid
@@ -22,7 +23,6 @@ import numpy as np
 import pandas as pd
 import transformers
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
@@ -35,11 +35,12 @@ from benchmarking.src.llmperf.llmperf_utils import (
 )
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
+from benchmarking.utils import CONFIG_PATH
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[logging.StreamHandler()],
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 transformers.logging.set_verbosity_error()
@@ -49,19 +50,27 @@ SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_templ
 USER_PROMPT_TEXT_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-text_instruct.yaml')
 USER_PROMPT_VISION_INSTRUCT_PATH = os.path.join(file_location, '../prompts/user-prompt_template-vision_instruct.yaml')
 
- 
+
 class BasePerformanceEvaluator(abc.ABC):
     def __init__(
         self,
         model_name: str,
         results_dir: str,
-        multimodal_image_size: str = 'na', 
+        multimodal_image_size: str = 'na',
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
+        config: Dict[str, Any] = {},
     ) -> None:
+        # Set kit's config file
+        if not config:
+            with open(CONFIG_PATH, 'r') as file:
+                self.config = yaml.safe_load(file)
+        else:
+            self.config = config
+        self.show_results_in_terminal = self.config['show_results_in_terminal']
         self.multimodal_image_size = multimodal_image_size
         self.model_name = model_name
         self.results_dir = results_dir
@@ -122,7 +131,7 @@ class BasePerformanceEvaluator(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def build_prompt(self, *args: Any, **kwargs: Any) -> Tuple[str, int]:
+    def build_prompt(self, *args: Any, **kwargs: Any) -> Tuple[Dict[str, Any], int]:
         pass
 
     def adjust_to_exact_tokens(self, text: str, target_token_count: int) -> str:
@@ -138,7 +147,7 @@ class BasePerformanceEvaluator(abc.ABC):
             str: adjusted text
         """
         # if not Path(tokenized_text_filepath).exists():
-        tokens = self.tokenizer.tokenize(text)        
+        tokens = self.tokenizer.tokenize(text)
         token_count = len(tokens)
 
         if token_count > target_token_count:
@@ -235,7 +244,8 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
         ]:
-            logger.info(f'Building Client Metrics Summary for metric: {metric}')
+            if self.show_results_in_terminal:
+                logger.info(f'Building Client Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
@@ -246,36 +256,38 @@ class BasePerformanceEvaluator(abc.ABC):
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
-                logger.info(f'    {reformatted_key} = {value}')
+                if self.show_results_in_terminal:
+                    logger.info(f'    {reformatted_key} = {value}')
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
-
             series_mean = round(series.mean(), 4)
-            logger.info(f'    mean = {series_mean}')
             metrics_summary[metric]['mean'] = series_mean
-
             series_min = round(series.min(), 4)
-            logger.info(f'    min = {series_min}')
             metrics_summary[metric]['min'] = series_min
-
             series_max = round(series.max(), 4)
-            logger.info(f'    max = {series_max}')
             metrics_summary[metric]['max'] = series_max
-
             series_std = round(series.std(), 4)
-            logger.info(f'    stddev = {series_std}')
             metrics_summary[metric]['stddev'] = series_std
-            
+
+            if self.show_results_in_terminal:
+                logger.info(f'    mean = {series_mean}')
+                logger.info(f'    min = {series_min}')
+                logger.info(f'    max = {series_max}')
+                logger.info(f'    stddev = {series_std}')
+
         # Record descriptive statistics for the metrics in the following list
         for metric in [
             common_metrics.TTFT_SERVER,
             common_metrics.E2E_LAT_SERVER,
             common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER,
+            common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN,
+            common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN,
             common_metrics.NUM_INPUT_TOKENS_SERVER,
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
-            common_metrics.ACCEPTANCE_RATE
+            common_metrics.ACCEPTANCE_RATE,
         ]:
-            logger.info(f'Building Server Metrics Summary for metric: {metric}')
+            if self.show_results_in_terminal:
+                logger.info(f'Building Server Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
 
             # Get flattened list from metric column in metrics df
@@ -286,25 +298,24 @@ class BasePerformanceEvaluator(abc.ABC):
             quantiles_reformatted_keys = {}
             for quantile, value in quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
-                logger.info(f'    {reformatted_key} = {value}')
+                if self.show_results_in_terminal:
+                    logger.info(f'    {reformatted_key} = {value}')
                 quantiles_reformatted_keys[reformatted_key] = value
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
-
             series_mean = round(series.mean(), 4)
-            logger.info(f'    mean = {series_mean}')
             metrics_summary[metric]['mean'] = series_mean
-
             series_min = round(series.min(), 4)
-            logger.info(f'    min = {series_min}')
             metrics_summary[metric]['min'] = series_min
-
             series_max = round(series.max(), 4)
-            logger.info(f'    max = {series_max}')
             metrics_summary[metric]['max'] = series_max
-
             series_std = round(series.std(), 4)
-            logger.info(f'    stddev = {series_std}')
             metrics_summary[metric]['stddev'] = series_std
+
+            if self.show_results_in_terminal:
+                logger.info(f'    mean = {series_mean}')
+                logger.info(f'    min = {series_min}')
+                logger.info(f'    max = {series_max}')
+                logger.info(f'    stddev = {series_std}')
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
@@ -314,14 +325,15 @@ class BasePerformanceEvaluator(abc.ABC):
         num_errors = len(error_codes)
         metrics_summary[common_metrics.ERROR_RATE] = num_errors / len(metrics) if len(metrics) else 0
         metrics_summary[common_metrics.NUM_ERRORS] = num_errors
-        logger.info(f'Number Of Errored Requests: {num_errors}')
+        if self.show_results_in_terminal:
+            logger.info(f'Number Of Errored Requests: {num_errors}')
 
         # Record specific error code frequencies
         error_code_frequency = dict(error_codes.value_counts())
         if num_errors:
-            error_code_frequency = dict(error_codes.value_counts())
-            logger.error('Error Code Frequency')
-            logger.error(error_code_frequency)
+            if self.show_results_in_terminal:
+                logger.error('Error Code Frequency')
+                logger.error(error_code_frequency)
         metrics_summary[common_metrics.ERROR_CODE_FREQ] = str(error_code_frequency)
 
         # Record overall throughput
@@ -329,16 +341,19 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_df[common_metrics.NUM_OUTPUT_TOKENS].sum() / (end_time - start_time),
             4,
         )
-        logger.info(f'Overall Output Throughput: {overall_output_throughput}')
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
-
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
-        logger.info(f'Number Of Completed Requests: {num_completed_requests}')
+
+        if self.show_results_in_terminal:
+            logger.info(f'Overall Output Throughput: {overall_output_throughput}')
+            logger.info(f'Number Of Completed Requests: {num_completed_requests}')
         if self.num_concurrent_requests:
-            logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
-        logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
+            if self.show_results_in_terminal:
+                logger.info(f'Number Of Concurrent Requests: {self.num_concurrent_requests}')
+        if self.show_results_in_terminal:
+            logger.info(f'Completed Requests Per Minute: {num_completed_requests_per_min}')
 
         metrics_summary[common_metrics.NUM_COMPLETED_REQUESTS] = num_completed_requests
         metrics_summary[common_metrics.COMPLETED_REQUESTS_PER_MIN] = num_completed_requests_per_min
@@ -408,7 +423,7 @@ class BasePerformanceEvaluator(abc.ABC):
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
         logger.info('Benchmarking process has been stopped.')
-    
+
     def get_image(self, image_location: str = '') -> str:
         """Utility function for encoding an image to base64.
 
@@ -423,6 +438,7 @@ class BasePerformanceEvaluator(abc.ABC):
         with open(image_location, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_image
+
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
@@ -456,23 +472,27 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
         with open(input_file_path, 'r') as file:
             data = [json.loads(line) for line in file]
-            
+
         # check if dataframe headers contain 'prompt'
         if not all([list(d.keys())[0] == 'prompt' for d in data]):
-            raise ValueError('All rows in input file must contain the same first column name "prompt" \
-                and its respective text value')
-        
+            raise ValueError(
+                'All rows in input file must contain the same first column name "prompt" \
+                and its respective text value'
+            )
+
         # check if dataframe headers contain 'img_path' if there are two columns
         if all([len(list(d.keys())) == 2 for d in data]):
             if not all([list(d.keys())[1] == 'image_path' for d in data]):
-                raise ValueError('If input file has two columns, all rows in input file must contain \
-                    the same second column name "image_path" and its respective text value')
+                raise ValueError(
+                    'If input file has two columns, all rows in input file must contain \
+                    the same second column name "image_path" and its respective text value'
+                )
             if any([d['image_path'].startswith('http') for d in data]):
                 raise ValueError('Urls are not supported for image_path. Please provide local image paths.')
         # check if there are more than two columns
         elif any([len(list(d.keys())) > 2 for d in data]):
-            raise ValueError('Input file can not contain more then two columns.')           
-        
+            raise ValueError('Input file can not contain more then two columns.')
+
         return data
 
     def create_output_filename(self) -> str:
@@ -583,7 +603,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             This function uses threading to send requests concurrently. It splits the total request count evenly among
             the threads. If there is a remainder, it assigns one extra request to the first threads.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         request_configs = self.build_request_configs(
             sampling_params,
@@ -671,12 +691,12 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
         results = self.build_metrics_summary(
             metrics=[response.metrics for response in llm_responses],
             start_time=start_time,
@@ -711,13 +731,16 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Iterate through data points and build a request config for each
         for request_idx, data_point in enumerate(self.dataset):
+            # Make raw prompt dictionary
+            raw_prompt = {'name': 'custom_prompt', 'template': data_point[self.prompt_key]}
+
             # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(raw_prompt=data_point[self.prompt_key])
-            
+            prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
+
             # Image to be sent in LLM request if exists
             image = None
             if self.img_path_key:
-                image = self.get_image(data_point[self.img_path_key]) 
+                image = self.get_image(data_point[self.img_path_key])
 
             request_config = RequestConfig(
                 request_idx=request_idx,
@@ -735,31 +758,76 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         return request_configs
 
-    def build_prompt(self, raw_prompt: str) -> Tuple[str, int]:
+    def build_prompt(self, raw_prompt: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         """Builds an input prompt from the given raw prompt by applying prompt templating based on the model type.
 
         Args:
-        - raw_prompt (str): The raw input prompt to be used in building a processed input prompt.
+        - raw_prompt (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input prompt.
 
         Returns:
-        - A tuple containing the processed prompt and the token length of the prompt.
+        - A tuple containing the processed prompt dictionary and the token length of the prompt.
 
         Description:
         This method builds a prompt for the given raw prompt based on the model type.
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
 
-        prefix_prompt = 'You are a helpful assistant that provides concise and\
-              helpful assistance on a variety of subjects. Ask: '
-        prompt = prefix_prompt + raw_prompt
+        prefix_prompt = (
+            'You are a helpful assistant that provides concise and '
+            'helpful assistance on a variety of subjects. Ask: '
+        )
+        prompt_text = prefix_prompt + raw_prompt['template']
 
-        return (prompt, self.get_token_length(prompt))
+        # Output prompt
+        custom_prompt = raw_prompt
+        custom_prompt['template'] = prompt_text
+
+        return (custom_prompt, self.get_token_length(prompt_text))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, num_concurrent_requests: int, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        num_concurrent_requests: int,
+        use_multiple_prompts: bool = False,
+        save_response_texts: bool = False,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.num_concurrent_requests = num_concurrent_requests
+        self.use_multiple_prompts = use_multiple_prompts
+        self.save_response_texts = save_response_texts
+
+    def load_prompts(self, prompts_file_path: str) -> Any:
+        """Loads prompts from yaml file.
+
+        Raises:
+            ValueError: Validates if entries have the right structure.
+            ValueError: Validates performance level entry values
+
+        Returns:
+            Dict[Dict[str, Any]]: List of dictionaries containing the name, performance level
+            and text template of each prompt.
+        """
+        with open(prompts_file_path, 'r') as file:
+            data = yaml.safe_load(file)
+
+        valid_prompt_structure = ['name', 'template']
+
+        # Validate the structure of the default prompt
+        for prompt in data.get('default_prompt', []):
+            if not all(key in prompt for key in valid_prompt_structure):
+                raise ValueError(f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.')
+
+        # Validate the structure of the multiple prompts
+        for prompt in data.get('multiple_prompts', []):
+            if not all(key in prompt for key in valid_prompt_structure):
+                raise ValueError(f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.')
+
+        return data
 
     def create_output_filename(self, num_input_tokens: int, num_output_tokens: int) -> str:
         """Utility for creating a unique filename for a synthetic benchmarking experiment given user specified params.
@@ -779,8 +847,55 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         )
-        
+
         return self.sanitize_file_prefix(output_file_name)
+
+    def save_results(
+        self,
+        filename: str,
+        summary: Dict[str, Any],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
+    ) -> None:
+        """Save the performance evaluation results to a file, and completion texts if save_response_text condition is
+        setup as True
+
+        Args:
+            filename (str): The base name of the file to save the results to.
+            summary (Dict[str, Any]): A dictionary containing the summary of the performance evaluation.
+            individual_responses (List[LLMResponse]): A list of individual responses from the performance evaluation.
+
+        Raises:
+            e: if an error happens when creating the output file related to prompts and completions, an error will be
+            raised
+        """
+
+        super().save_results(filename, summary, individual_responses)
+
+        # If specified, save the llm responses to output file
+        if self.save_response_texts:
+            # Create response texts file name
+            response_texts_file_name = f'{filename}_response_texts'
+            results_dir = Path(self.results_dir)
+
+            # Save response texts
+            try:
+                self.response_texts_file_path = f'{results_dir}/{response_texts_file_name}.jsonl'
+                with open(self.response_texts_file_path, 'w') as f:
+                    for response in individual_responses:
+                        if isinstance(response, LLMResponse):
+                            output_json = {
+                                'prompt': response.request_config.prompt_tuple[0],
+                                'completion': str(response.response_text),
+                            }
+                            f.write(json.dumps(output_json))
+                            f.write('\n')
+            except Exception as e:
+                logger.error('ERROR SAVING LLM OUTPUTS')
+                raise e
 
     def run_benchmark(
         self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
@@ -955,7 +1070,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1041,13 +1156,13 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
 
         # Calculate switching time
         llm_responses = self.calculate_switching_time(llm_responses)
@@ -1070,6 +1185,21 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         }
 
         return metadata, llm_responses
+
+    def select_raw_prompts(self, raw_prompts: List[Dict[str, Any]], num_requests: int) -> List[Dict[str, Any]]:
+        """Selects prompts randomly
+
+        Args:
+            num_requests (int): Number of requests to be generated
+
+        Returns:
+            List[Dict[str,Any]]: List of randomly selected prompts
+        """
+
+        random_selected_prompts = random.choices(raw_prompts, k=num_requests)
+        assert len(random_selected_prompts) == num_requests, 'Number of selected prompts \
+            does not match the requested count'
+        return random_selected_prompts
 
     def build_request_configs(
         self,
@@ -1095,77 +1225,130 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
-
-        # Build input text prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
-        
-        # Encode image to be sent in LLM request if exists
+        # Instantiate image variable
         image = None
-        if self.multimodal_image_size != 'na':
-           image = self.get_image() 
 
-        # Iterate through data points and build a request config for each
-        for request_idx in range(num_requests):
-            # Add generic max tokens parameter to `sampling_params` dictionary
-            updated_sampling_params = {
-                'max_tokens_to_generate': output_token_count,
-            }
-            updated_sampling_params.update(sampling_params)
+        # If not using multiple prompts
+        if not self.use_multiple_prompts:
+            # Load prompts based on the model type
+            if self.multimodal_image_size == 'na':
+                # Read prompt for text-instruct model
+                prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
+                raw_prompt = prompts_data['default_prompt'][0]
 
-            # Create request config object
-            request_config = RequestConfig(
-                request_idx=request_idx,
-                model=self.model_name,
-                prompt_tuple=prompt_tuple,
-                image=image,
-                sampling_params=updated_sampling_params,
-                llm_api=self.llm_api,
-                api_variables=self.api_variables,
-                is_stream_mode=self.is_stream_mode,
-                num_concurrent_requests=self.num_concurrent_requests,
-            )
+            else:
+                # Read prompt for vision-instruct model
+                prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
+                raw_prompt = prompts_data['default_prompt'][0]
+                image = self.get_image()
 
-            request_configs.append(request_config)
+            # Build input text prompt to be sent in LLM request
+            prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
+
+            # Iterate through data points and build a request config for each
+            for request_idx in range(num_requests):
+                # Add generic max tokens parameter to `sampling_params` dictionary
+                updated_sampling_params = {
+                    'max_tokens_to_generate': output_token_count,
+                }
+                updated_sampling_params.update(sampling_params)
+
+                # Create request config object
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    image=image,
+                    sampling_params=updated_sampling_params,
+                    llm_api=self.llm_api,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
+
+                request_configs.append(request_config)
+
+        # If using multiple prompts
+        else:
+            if self.multimodal_image_size != 'na':
+                raise ValueError(
+                    'Multiple prompts are not supported for multimodal models. '
+                    'Please set use_multiple_prompts to False.'
+                )
+
+            # Load text-instruct prompts
+            with open(USER_PROMPT_TEXT_INSTRUCT_PATH, 'r') as file:
+                prompts_data = yaml.safe_load(file)
+            raw_prompts = prompts_data['multiple_prompts']
+
+            # Select text prompts randomly equal to the number of requests
+            selected_raw_prompts = self.select_raw_prompts(raw_prompts, num_requests)
+
+            # Build input prompt to be sent in LLM request
+            # Iterate through data points and build a request config for each
+            for request_idx, raw_prompt in enumerate(selected_raw_prompts):
+                prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
+
+                updated_sampling_params = {'max_tokens_to_generate': output_token_count}
+                updated_sampling_params.update(sampling_params)
+
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    image=image,
+                    sampling_params=updated_sampling_params,
+                    llm_api=self.llm_api,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
+
+                request_configs.append(request_config)
 
         return request_configs
 
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
+    def build_prompt(self, prompt_dict: Dict[str, Any], num_input_tokens: int) -> Tuple[Dict[str, Any], int]:
         """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
         multiple times to reach a user set input_token_count.
 
         Args:
+            prompt_dict (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input
+            prompt.
             num_input_tokens (int): The user specified length of the input prompt.
 
         Returns:
             Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
         """
 
-        # Load from prompt files
-        if self.multimodal_image_size == 'na':
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template
-            )['template']
-        else:
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template
-            )['template']
-
         max_words = num_input_tokens  # User-defined word limit
 
         # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
+        num_repeats = max(1, max_words // len(prompt_dict['template'].split()) + 1)
 
         # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
+        repeated_prompt_text = (prompt_dict['template'] + ' ') * num_repeats
 
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-        return (full_input_prompt, self.get_token_length(full_input_prompt))
+        # Adjust prompt according to desired input tokens
+        full_input_prompt_text = self.adjust_to_exact_tokens(repeated_prompt_text, num_input_tokens)
+
+        # Output prompt
+        adjusted_prompt = prompt_dict
+        adjusted_prompt['template'] = full_input_prompt_text
+
+        return (adjusted_prompt, self.get_token_length(full_input_prompt_text))
 
 
-class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
-    def __init__(self, qps: float, qps_distribution: str, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
+    def __init__(
+        self,
+        qps: float,
+        qps_distribution: str = 'constant',
+        num_concurrent_requests: int = 0,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(num_concurrent_requests, *args, **kwargs)
         self.qps = qps
         self.qps_distribution = qps_distribution
 
@@ -1178,7 +1361,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         generation_mode = ''
         if self.is_stream_mode:
             generation_mode = 'stream'
-            
+
         multimodal_suffix = ''
         if self.multimodal_image_size != 'na':
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
@@ -1187,52 +1370,8 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}_{self.run_uuid}'
         )
-        
+
         return self.sanitize_file_prefix(output_file_name)
-
-    def run_benchmark(
-        self, sampling_params: Dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> Tuple[Dict[str, Any], List[LLMResponse]]:
-        """Run a benchmark test for the specified LLM using real workload synthetic data.
-
-        Args:
-            num_input_tokens (int): The number of input tokens to be sent.
-            num_output_tokens (int): The number of output tokens to be received.
-            num_requests (int): The number of requests to be made.
-            sampling_params (str): The sampling parameters in JSON format.
-
-        Raises:
-            ValueError: If the number of input tokens is less than 40.
-
-        Returns:
-            summary (dict): structure with performance metrics and stats for the run
-            individual_responses (tuple): list of performance metrics per request
-        """
-        num_input_tokens = kwargs.get('num_input_tokens', 1000)
-        num_output_tokens = kwargs.get('num_output_tokens', 10)
-        num_requests = kwargs.get('num_requests', 1)
-
-        self.cli_progress_bar = tqdm(total=num_requests, desc='Running Requests')
-        self.ui_progress_bar = kwargs.get('progress_bar', None)
-
-        if num_input_tokens < 40:
-            raise ValueError(
-                'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
-            )
-
-        # Calculate performance metrics individually and summary
-        summary, individual_responses = self.get_token_throughput_latencies(
-            num_input_tokens=num_input_tokens,
-            num_output_tokens=num_output_tokens,
-            num_requests=num_requests,
-            sampling_params=sampling_params,
-        )
-
-        if self.results_dir:
-            filename = self.create_output_filename(num_input_tokens, num_output_tokens)
-            self.save_results(filename, summary, individual_responses)
-
-        return summary, individual_responses
 
     def _get_wait_time(self) -> float:
         mean_wait = 1 / self.qps
@@ -1276,7 +1415,7 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         Raises:
             Exception: If an unexpected error occurs during the execution of requests.
         """
-        random.seed(11111)
+        # random.seed(11111)
 
         # Build the request config objects that are to be sent to the LLM API endpoint
         request_configs = self.build_request_configs(num_requests, num_input_tokens, num_output_tokens, sampling_params)
@@ -1351,13 +1490,13 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             raise Exception(
                 f"""Unexpected error happened when executing requests:\
                 {nl}{f'{nl}'.join([f'- {error_code}' for error_code in unique_error_codes])}\
-                {nl}{nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
+                {nl}Additional messages:{nl}{f'{nl}'.join([f'- {error_msg}' for error_msg in unique_error_msgs])}"""
             )
 
         # Capture end time and notify user
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
-        logger.info(f'Results for token benchmark for {self.model_name} queried with the {self.llm_api} api.')
+        logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
@@ -1403,14 +1542,23 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
         """
         # Empty list to be filled with valid request configs and then returned
         request_configs = []
+        # Instantiate image variable
+        image = None
+
+        # Load prompts based on the model type
+        if self.multimodal_image_size == 'na':
+            # Read prompt for text-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_TEXT_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]
+
+        else:
+            # Read prompt for vision-instruct model
+            prompts_data = self.load_prompts(USER_PROMPT_VISION_INSTRUCT_PATH)
+            raw_prompt = prompts_data['default_prompt'][0]
+            image = self.get_image()
 
         # Build input prompt to be sent in LLM request
-        prompt_tuple = self.build_prompt(input_token_count)
-
-        # Encode image to be sent in LLM request if exists
-        image = None
-        if self.multimodal_image_size != 'na':
-           image = self.get_image() 
+        prompt_tuple = self.build_prompt(raw_prompt, input_token_count)
 
         # Iterate through data points and build a request config for each
         for request_idx in range(num_requests):
@@ -1435,37 +1583,3 @@ class RealWorkLoadPerformanceEvaluator(BasePerformanceEvaluator):
             request_configs.append(request_config)
 
         return request_configs
-
-    def build_prompt(self, num_input_tokens: int) -> Tuple[str, int]:
-        """Synthesizes an input prompt for the LLM to be queried. This prompt is created by repeating a prompt_template
-        multiple times to reach a user set input_token_count.
-
-        Args:
-            num_input_tokens (int): The user specified length of the input prompt.
-
-        Returns:
-            Tuple[str, int]: A tuple containing the generated prompt and its length in tokens.
-        """
-
-        # Load from prompt files
-        if self.multimodal_image_size == 'na':
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_TEXT_INSTRUCT_PATH).template
-            )['template']
-        else:
-            prompt_template = yaml.safe_load(
-                PromptTemplate.from_file(USER_PROMPT_VISION_INSTRUCT_PATH).template
-            )['template']
-
-        max_words = num_input_tokens  # User-defined word limit
-
-        # Calculate the maximum number of repetitions
-        num_repeats = max(1, max_words // len(prompt_template.split()) + 1)
-
-        # Repeat the prompt
-        prompt_template = (prompt_template + ' ') * num_repeats
-
-        #  Adjust prompt according to desired input tokens
-        full_input_prompt = self.adjust_to_exact_tokens(prompt_template, num_input_tokens)
-
-        return (full_input_prompt, self.get_token_length(full_input_prompt))

@@ -15,7 +15,8 @@ import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES, SAMBANOVA_URL
+from benchmarking.streamlit.streamlit_utils import APP_PAGES
+from benchmarking.utils import CONFIG_PATH, SAMBANOVA_URL
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -27,7 +28,6 @@ def _init() -> None:
     load_dotenv('../.env', override=True)
 
 
-CONFIG_PATH = './config.yaml'
 with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
@@ -85,7 +85,7 @@ def main() -> None:
 
             additional_env_vars: Dict[str, Any] = {}
             additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
-            
+
             if st.session_state.mode == 'SambaNova Cloud':
                 st.session_state.llm_api = 'sncloud'
             else:  # SambaStudio

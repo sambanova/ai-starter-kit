@@ -20,8 +20,9 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer
 
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import SAMBANOVA_URL, get_tokenizer
+from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
+from benchmarking.utils import SAMBANOVA_URL
 
 warnings.filterwarnings('ignore')
 
@@ -215,7 +216,8 @@ class BaseAPIEndpoint(abc.ABC):
             )
 
         metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN] = response_dict.get(
-            'completion_tokens_after_first_per_sec_first_ten')
+            'completion_tokens_after_first_per_sec_first_ten'
+        )
         metrics[common_metrics.BATCH_SIZE_USED] = response_dict.get('batch_size_used')
         metrics[common_metrics.ACCEPTANCE_RATE] = response_dict.get('acceptance_rate')
 
@@ -242,7 +244,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
 
         Returns:
             streaming_url: string with url to do streaming calls
-        """            
+        """
         if 'chat/completions' in self.base_url:
             stream_url = self.base_url
         else:
@@ -276,7 +278,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         Returns:
             dict: API call body according to Bundle and streaming conditions
         """
-        prompt = self.request_config.prompt_tuple[0]
+        prompt = self.request_config.prompt_tuple[0]['template']
         sampling_params = self.request_config.sampling_params
 
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
@@ -305,8 +307,8 @@ class SambaStudioAPI(BaseAPIEndpoint):
         content: Any = None
         if self.request_config.image:
             content = [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {'url': f'data:image/png;base64,{self.request_config.image}'}}
+                {'type': 'text', 'text': prompt},
+                {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{self.request_config.image}'}},
             ]
         else:
             content = prompt
@@ -418,7 +420,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
         events_received = []
         events_timings = []
 
-        client = sseclient.SSEClient(response) # type: ignore
+        client = sseclient.SSEClient(response)  # type: ignore
 
         for event in client.events():
             try:
@@ -513,7 +515,11 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+        return {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/json',
+            'ss-sn-options': 'accuracy_debug',
+        }
 
     def _get_json_data(self) -> Dict[str, Any]:
         """Gets json body for API call
@@ -522,7 +528,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             dict: API call body
         """
 
-        prompt = self.request_config.prompt_tuple[0]
+        prompt = self.request_config.prompt_tuple[0]['template']
         sampling_params = self.request_config.sampling_params
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
@@ -535,13 +541,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
 
-        
         # If an image is provided, add it to the content
         content: Any = None
         if self.request_config.image:
             content = [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {'url': f'data:image/png;base64,{self.request_config.image}'}}       
+                {'type': 'text', 'text': prompt},
+                {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{self.request_config.image}'}},
             ]
         else:
             content = prompt
@@ -574,7 +579,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
-        
+
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
@@ -604,7 +609,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-                
+
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
@@ -645,6 +650,7 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
     metrics: Dict[str, Any] = {}
     metrics[common_metrics.ERROR_CODE] = None
     metrics[common_metrics.ERROR_MSG] = ''
+    metrics[common_metrics.PROMPT_NAME] = request_config.prompt_tuple[0]['name']
 
     try:
         if request_config.llm_api == 'sncloud':
@@ -685,7 +691,9 @@ if __name__ == '__main__':
     llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 
-    prompt = 'This is a test example, so tell me about anything'
+    prompt_text = 'This is a test example, so tell me about anything'
+    prompt = {'name': 'test', 'template': prompt_text}
+
     request_config = RequestConfig(
         request_idx=1,
         prompt_tuple=(prompt, 10),

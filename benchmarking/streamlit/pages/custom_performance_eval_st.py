@@ -93,6 +93,7 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
         save_response_texts=st.session_state.save_llm_responses,
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
+        config=st.session_state.config,
     )
 
     # set generic max tokens parameter
@@ -105,10 +106,11 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
     # For non-batching endpoints, batching_exposed will be False
     st.session_state.batching_exposed = True
-    if valid_df["batch_size_used"].isnull().all():
+    if valid_df['batch_size_used'].isnull().all():
         st.session_state.batching_exposed = False
 
     return valid_df
+
 
 def main() -> None:
     if st.session_state.prod_mode:
@@ -132,7 +134,7 @@ def main() -> None:
         st.title('File Selection')
         st.session_state.uploaded_file = st.file_uploader(
             'Upload JSON File', type='jsonl', disabled=st.session_state.running
-        )  
+        )
         st.session_state.file_path = save_uploaded_file(internal_save_path='data/custom_input_files')
 
         #########################
@@ -250,7 +252,7 @@ def main() -> None:
 
     if st.session_state.df_req_info is not None:
         st.subheader('Performance metrics plots')
-        
+
         by_batch_size_suffix = ' by batch size' if st.session_state.batching_exposed else ''
         st.plotly_chart(
             plot_client_vs_server_barplots(
@@ -261,7 +263,7 @@ def main() -> None:
                 'Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
                 'TTFT (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -273,7 +275,7 @@ def main() -> None:
                 'Distribution of end-to-end latency' + by_batch_size_suffix,
                 'Latency (s), per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         st.plotly_chart(
@@ -288,7 +290,7 @@ def main() -> None:
                 'Distribution of output throughput' + by_batch_size_suffix,
                 'Tokens per second, per request',
                 'Batch size',
-                st.session_state.batching_exposed
+                st.session_state.batching_exposed,
             )
         )
         # Compute total throughput per batch
@@ -305,10 +307,10 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
     )
-    
+
     # Defining styles
-    st.markdown(PRIMARY_ST_STYLE,unsafe_allow_html=True)
-    st.markdown(SECONDARY_ST_STYLE,unsafe_allow_html=True)
+    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
+    st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 

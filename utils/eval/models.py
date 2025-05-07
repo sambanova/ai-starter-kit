@@ -265,6 +265,7 @@ class WeaveDummyModel(Model):
     Attributes:
         model_kwargs (Optional[Dict[str, Any]]): model-specific parameters.
     """
+
     model_kwargs: Optional[Dict[str, Any]] = None
 
     @weave.op()

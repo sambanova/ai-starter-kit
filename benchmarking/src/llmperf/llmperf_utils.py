@@ -5,22 +5,24 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from transformers import AutoTokenizer
 
-SAMBANOVA_URL = 'https://api.sambanova.ai/v1/chat/completions'
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 FAMILY_MODEL_TYPE_IDENTIFIER = {
     'mistral': ['mistral'],
+    'llama2': ['llama2'],
     'llama3': ['llama3'],
+    'llama4': ['llama4'],
     'deepseek': ['deepseek'],
     'qwen': ['qwen', 'qwq'],
     'solar': ['solar'],
     'eeve': ['eeve'],
-    'llama2': ['llama2']
 }
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
     'medium': './imgs/vision_perf_eval-medium.jpg',
     'large': './imgs/vision_perf_eval-large.jpg',
 }
+
+
 class LLMPerfResults:
     """Class with LLM Performance results"""
 
@@ -55,6 +57,7 @@ class LLMPerfResults:
         """
         data = self.to_dict()
         return json.dumps(data)
+
 
 def find_family_model_type(model_name: str) -> str:
     """Finds family model type
@@ -106,6 +109,13 @@ def get_tokenizer(model_name: str) -> AutoTokenizer:
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.3-70B-Instruct')
         else:
             tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct')
+    elif family_model_type == 'llama4':
+        if 'maverick' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Maverick-17B-128E-Instruct')
+        elif 'scout' in model_name.lower():
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Scout-17B-16E-Instruct')
+        else:
+            tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-4-Scout-17B-16E-Instruct')
     elif family_model_type == 'deepseek':
         if 'coder' in model_name.lower():
             tokenizer = AutoTokenizer.from_pretrained('deepseek-ai/deepseek-coder-1.3b-base')

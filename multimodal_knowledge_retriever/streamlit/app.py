@@ -33,8 +33,7 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 ADDITIONAL_ENV_VARS: list[str] = []
 # Available models in dropdown menu
 LVLM_MODELS = [
-    'Llama-3.2-11B-Vision-Instruct',
-    'Llama-3.2-90B-Vision-Instruct',
+    'Llama-4-Maverick-17B-128E-Instruct',
 ]
 # Available models in dropdown menu
 LLM_MODELS = [

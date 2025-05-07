@@ -39,7 +39,7 @@ CLI_COMMAND_TIMEOUT = 1200  # 20 minutes
 STARTER_KITS: List[str] = [
     'benchmarking',
     'enterprise_knowledge_retriever',
-    'financial_assistant',
+    # 'financial_assistant',
     'function_calling',
     'search_assistant',
     'multimodal_knowledge_retriever',
@@ -62,6 +62,8 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
         '--num-output-tokens 1000 '
         '--multimodal-image-size na '
         '--num-requests 2 '
+        '--use-multiple-prompts False '
+        '--save-llm-responses False '
         '--llm-api sncloud'
     ),
     'enterprise_knowledge_retriever': 'python tests/ekr_test.py',

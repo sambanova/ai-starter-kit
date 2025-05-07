@@ -39,7 +39,7 @@ Access Meta, Deepseek and Qwen families of models at **full precision** via the 
    - Model ID: `Llama-4-Scout-17B-16E-Instruct`
    - Context length: 4k, 8k
 2. Llama 4 Maverick:
-   - Model ID: `Llama-4-Scout-17B-16E-Instruct`
+   - Model ID: `Llama-4-Maverick-17B-128E-Instruct`
    - Context length: 4k, 8k
 
 **Model details for Llama 3.3 family**:
@@ -53,12 +53,6 @@ Access Meta, Deepseek and Qwen families of models at **full precision** via the 
    - Context length: 16k
 2. Llama 3.2 3B:
    - Model ID: `Meta-Llama-3.2-3B-Instruct`
-   - Context length: 4k
-3. Llama 3.2 11B:
-   - Model ID: `Llama-3.2-11B-Vision-Instruct`
-   - Context length: 4k
-4. Llama 3.2 90B:
-   - Model ID: `Llama-3.2-90B-Vision-Instruct`
    - Context length: 4k
 
 **Model details for Llama 3.1 family**:

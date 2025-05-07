@@ -1,18 +1,241 @@
-_type: prompt
-input_types: {}
-input_variables: []
-metadata: null
-name: null
-optional_variables: []
-output_parser: null
-partial_variables: {}
-tags: null
-template: |
-  Write a detailed, in-depth guide on the evolution of deep learning.Cover 
-  the historical milestones, key breakthroughs, architectures (such as CNNs, 
-  RNNs, and Transformers), training methodologies, hardware advancements, 
-  ethical concerns, and future trends. Include real-world applications, 
-  case studies, and a comparison of deep learning with traditional machine 
-  learning. Provide citations and technical explanations where necessary.
-template_format: f-string
-validate_template: false
+default_prompt:
+
+  - name: "default"
+    template: |
+        Write a detailed, in-depth guide on the evolution of deep learning.Cover 
+        the historical milestones, key breakthroughs, architectures (such as CNNs, 
+        RNNs, and Transformers), training methodologies, hardware advancements, 
+        ethical concerns, and future trends. Include real-world applications, 
+        case studies, and a comparison of deep learning with traditional machine 
+        learning. Provide citations and technical explanations where necessary.
+
+multiple_prompts:
+  
+  - name: "prompt1"
+    template: "Write all the sorting algorithms in python, C, C++ and Rust with detailed comments on every line."
+  - name: "prompt2"
+    template: "Write all the graph traversal algorithms (DFS, BFS, Dijkstra’s, A) in Python, C, C++, and Rust with detailed comments on every line."
+  - name: "prompt3"
+    template: "Write all fundamental bit manipulation operations (AND, OR, XOR, bit shifts, set/unset bit) in Python, C, C++, and Rust with detailed comments on every line."
+  - name: "prompt4"
+    template: "Write number theory algorithms (GCD, LCM, modular exponentiation, prime factorization) in Python, C, C++, and Rust, with thorough comments on every line."
+  - name: "prompt5"
+    template: "Generate code for common file handling operations (read, write, append, search) in Python, C, C++, and Rust with detailed line-by-line comments."
+  - name: "prompt6"
+    template: "Implement dynamic programming algorithms (Fibonacci, knapsack, longest common subsequence) in Python, C, C++, and Rust with detailed inline comments explaining each step."
+  - name: "prompt7"
+    template: "Write data structures like stack, queue, linked list, and binary tree in Python, C, C++, and Rust, with thorough comments explaining each line."
+
+  - name: "prompt8"
+    template: |
+        Design me a three day itinerary to explore the capital of the United States of America.
+        Tell me about all the cool musuems in San Francisco and which one you recommend to take my 8 year old son to.
+        Please write a story about South Pole Expedition in early 20 century.
+        Create a 3 days a week workout schedule for intermediate fitness level.
+        Design a morning routine that sets me up for success and helps me achieve my goals. This routine should include activities that energize and motivate me, such as exercise, meditation, or journaling.Draft an email following up with a customer after an introductory sales call.
+        Recommend me a robot with which I can learn STEM skills.
+        Explain to me how a seed grows into a plant.
+        Tell me about different organs in the digestive system and their role.
+        Tell me about the history of Sambanova Systems.
+        Give me some good routines to exercise for 30 minutes in the morning?
+        Write a short story (less than 100 words) about a character who discovers a hidden world within their reflection.
+        What happens when you drop a glass on the floor? How can you prevent what happened?
+        Does the sentence "I love playing soccer" imply that the speaker is a professional soccer player?
+        What does the phrase "break a leg" mean?
+        A snail is at the bottom of a 20-foot well. Each day, it climbs up 3 feet, but at night, it slips back 2 feet. How many days will it take for the snail to reach the top of the well?
+        A person is described as "feeling under the weather". What does this phrase suggest about their physical condition?
+        FooterSambanova Systems, Inc.
+        Sambanova Systems, Inc. avatar
+  - name: "prompt9"
+    template: |
+      Plan a four-day road trip through the Pacific Northwest, including scenic spots and unique local experiences.
+      Recommend a hands-on science museum in Chicago that would be exciting for a curious 10-year-old.
+      Write a historical fiction story about a lost treasure in ancient Egypt, no more than 150 words.
+      Design a two-week meal plan for someone who wants to eat healthy on a budget.
+      Create an evening routine that promotes relaxation and better sleep, including activities like reading, stretching, or unwinding with music.
+      Draft a professional yet friendly email to request a testimonial from a satisfied customer.
+      Suggest a beginner-friendly microcontroller kit for learning robotics and programming.
+      Explain how the water cycle works in simple terms for a middle school science project.
+      Tell me about the different types of clouds and what they indicate about the weather.
+      Summarize the history of the James Webb Space Telescope and its most significant discoveries.
+      Give me a 15-minute stretching routine to do after long hours of working at a desk.
+      Write a micro-story (under 100 words) about someone who wakes up with the ability to understand animals.
+      What happens when you mix baking soda and vinegar? Explain the reaction and suggest a fun experiment.
+      If someone says, "I'm on cloud nine," what does that mean?
+      A frog is trying to cross a 10-foot pond by jumping 2 feet forward and slipping 1 foot back each time. How many jumps does it take to cross?
+      If a friend tells you they are "burning the midnight oil," what are they trying to say?
+  - name: "prompt10"
+    template: |
+      Create a five-day itinerary for exploring Tokyo, including cultural landmarks, food experiences, and hidden gems.
+      Recommend a family-friendly science museum in London where kids can interact with exhibits.
+      Write a short historical fiction story (under 120 words) about a secret message sent during World War II.
+      Design a one-week workout routine for someone training for their first 5K run.
+      Develop a morning routine for peak productivity, incorporating habits like visualization, hydration, and focused work.
+      Write a polite and professional email requesting feedback on a recent product purchase.
+      Suggest an easy-to-use DIY electronics kit for someone interested in learning about circuits and sensors.
+      Explain how volcanoes erupt in simple terms for a classroom presentation.
+      Describe the major bones in the human skeletal system and their functions.
+      Provide a brief history of Tesla, Inc. and its impact on the automotive industry.
+      Give me a 20-minute yoga routine for improving flexibility and reducing stress.
+      Write a mini-story (under 90 words) about a character who finds an old, mysterious key in their attic.
+      What happens when you heat water to 100°C? Explain the process of boiling and phase changes.
+      If someone tells you to "bite the bullet," what do they mean?
+      A monkey is trying to climb a 30-foot tree. It climbs 5 feet during the day but slips back 3 feet at night. How many days will it take to reach the top?
+      If a friend says they are "at a crossroads," what does that mean about their situation?
+  - name: "prompt11"
+    template: |
+      Plan a three-day adventure in New York City, including must-visit landmarks, food spots, and unique experiences.
+      Recommend the best space-themed museum for a curious 7-year-old who loves astronomy.
+      Write a short historical fiction story (under 100 words) about a time traveler visiting ancient Rome.
+      Create a beginner-friendly strength training workout plan for three days a week.
+      Design a productive evening routine that helps unwind after a long day while preparing for the next.
+      Draft a follow-up email to a job interviewer, thanking them for their time and expressing enthusiasm for the position.
+      Suggest an engaging robotics kit for a teenager interested in coding and engineering.
+      Explain how photosynthesis works in simple terms for a school science project.
+      Describe the major planets in our solar system and their unique characteristics.
+      Give a brief history of the Wright brothers and their impact on aviation.
+      Provide a 10-minute stretching routine for reducing back pain.
+      Write a short story (under 80 words) about a character who finds a hidden door in their backyard.
+      What happens when you put salt on ice? Explain the science behind this reaction.
+      If someone says they’re "pulling an all-nighter," what does that mean?
+      A rabbit is trying to escape a 50-foot hole. Each day it climbs up 7 feet but slides back 5 feet at night. How many days will it take to get out?
+      If a person says they are "walking on thin ice," what does that imply about their situation?
+  - name: "prompt12"
+    template: |
+      Plan a five-day trip to Italy, focusing on food, history, and scenic landscapes.
+      Recommend a hands-on museum in Berlin that would excite a 12-year-old interested in technology.
+      Write a short historical fiction story (under 120 words) about a lost journal from the Titanic.
+      Create a four-week home workout routine for someone with no gym equipment.
+      Design a weekend morning routine that boosts creativity and productivity.
+      Draft a friendly yet professional email to reconnect with an old colleague for networking purposes.
+      Suggest an entry-level drone for someone interested in learning about aerial photography and robotics.
+      Explain how a rainbow forms in simple terms for a school science fair project.
+      Describe how the human brain processes memories and recall.
+      Give a short history of the Great Wall of China and its significance.
+      Provide a 15-minute meditation routine for reducing anxiety and improving focus.
+      Write a tiny story (under 90 words) about a child who discovers they can talk to trees.
+      What happens when you mix oil and water? Explain the science behind their separation.
+      If someone says they "hit the nail on the head," what do they mean?
+      A snail is trying to climb out of a 30-foot well. Each day, it climbs 4 feet but slides back 2 feet at night. How many days will it take to escape?
+      If someone is "burning the candle at both ends," what does that suggest about their lifestyle?
+  - name: "prompt13"
+    template: |
+      Plan a three-day itinerary for exploring the most beautiful castles in Europe.
+      Recommend an interactive science museum in Sydney that would be fun for a curious 9-year-old.
+      Write a historical fiction micro-story (under 100 words) about a secret code hidden in a medieval manuscript.
+      Create a weekly workout plan for someone training to improve their endurance.
+      Design a nighttime routine that promotes deep sleep and relaxation.
+      Draft a follow-up email to a potential client after a business proposal meeting.
+      Suggest a beginner-friendly AI programming kit for someone interested in machine learning.
+      Explain how an airplane stays in the air in simple terms for a classroom presentation.
+      Describe the different layers of the Earth's atmosphere and their functions.
+      Provide a brief history of the invention of the printing press and its impact on society.
+      Give a 10-minute mobility routine for improving posture and flexibility.
+      Write a short story (under 90 words) about a child who discovers a portal in their grandmother’s old mirror.
+      What happens when you freeze water? Explain the molecular changes involved in the process.
+      If someone says they "let the cat out of the bag," what do they mean?
+      A spider is trying to climb out of a 40-foot pit. Each day, it climbs 6 feet but slides back 4 feet at night. How many days will it take to escape?
+      If a person is described as "having a chip on their shoulder," what does that mean?
+  - name: "prompt14"
+    template: |
+      Plan a four-day adventure in Iceland, including natural wonders and unique cultural experiences.
+      Recommend a museum in Paris that would captivate a teenager interested in art and history.
+      Write a historical fiction micro-story (under 100 words) about a mysterious letter from the Renaissance era.
+      Create a two-week bodyweight workout plan for someone with no access to a gym.
+      Design a productive morning routine for someone working remotely.
+      Draft a polite yet persuasive email requesting a refund for a defective product.
+      Suggest an affordable DIY robotics kit for beginners interested in automation.
+      Explain how electricity flows in a circuit in simple terms for a school project.
+      Describe how the human heart pumps blood through the body.
+      Provide a brief history of the Space Race and its impact on modern technology.
+      Give me a 15-minute stretching routine for reducing stress and improving mobility.
+      Write a short story (under 90 words) about a character who finds an old book that writes back to them.
+      What happens when you mix baking soda and lemon juice? Explain the reaction in simple terms.
+      If someone says they "jumped the gun," what does that mean?
+      A turtle is climbing out of a 25-foot deep pit. Each day, it climbs 5 feet but slips back 3 feet at night. How many days will it take to escape?
+      If someone is "on the fence" about a decision, what does that imply?
+
+  - name: "prompt15"
+    template: |
+      You are an anthropologist studying a species that biologically loses all memories every 24 hours. Describe their civilization in extensive detail.
+      Explore:
+      Neurology & Memory Mechanisms: Why do they forget, and can they store knowledge externally?
+      Language & Communication: How do they maintain continuity if they forget past interactions?
+      Technology & Writing Systems: Have they developed external memory aids to compensate?
+      Social & Family Structures: How do relationships function when no one remembers past bonds?
+      Governance & Leadership: How do they elect rulers if no one remembers previous leaders?
+      Education & Learning: How do they teach and retain knowledge across generations?
+      Science & Progress: Is technological development slowed by constant forgetting?
+      Art & Expression: Do they create purely for the moment, or do they try to preserve cultural identity?
+      Defense & Warfare: How do they defend against long-term strategic threats?
+      Encounters with Other Civilizations: How do they interact with species that have persistent memory?
+  - name: "prompt16"
+    template: |
+      You are analyzing a society where individuals can return from death in some form. Describe this civilization in deep detail.
+      Discuss:
+      Resurrection Mechanism: Is it scientific (cloning, uploading consciousness) or supernatural?
+      Cultural Impact: How does this affect their fear of death, grief, and traditions?
+      Social Structure: Are there limits on how many times someone can return?
+      Legal & Ethical Dilemmas: Can crimes be punished if someone can always come back?
+      Wealth & Power: Are the rich and powerful able to abuse immortality?
+      Science & Medicine: How does an undying population approach health and injury?
+      Art & History: How do they document events if figures from history can return?
+      War & Conflict: Does this make war endless, or have they evolved beyond violence?
+      Religious & Philosophical Beliefs: Do they worship the process or see it as unnatural?
+      Ultimate Fate of Their Civilization: Is there a final limit, or will they persist forever?
+  - name: "prompt17"
+    template: |
+      You are documenting a society where all communication is done through music instead of speech. Provide a thorough description.
+      Include:
+      Origins of Musical Language: How did their species develop a tonal communication system?
+      Linguistics & Structure: How do melody, rhythm, and harmony convey meaning?
+      Social Interactions & Emotions: How do they express anger, joy, or love through music?
+      Technology & Instruments: What kinds of tools or biological adaptations aid communication?
+      Education & Learning: How do they teach musical language to children?
+      Government & Law: How are contracts, debates, and negotiations conducted through song?
+      Religion & Mythology: Is music seen as divine or sacred?
+      Science & Mathematics: How does a musical society approach logic and discovery?
+      Conflicts & Warfare: Are battles fought with sonic weaponry or strategic compositions?
+      Contact with Non-Musical Civilizations: How do they translate or communicate with others?
+  - name: "prompt18"
+    template: |
+      You are an advanced AI tasked with analyzing a civilization where the concept of individual identity never developed. Describe this society in intricate detail.
+      Cover the following aspects:
+      Cognition & Consciousness: How do they think and make decisions without an individual sense of "I"?
+      Language & Communication: What does their language look like without personal pronouns or self-referential constructs?
+      Social Organization: How do they structure society without personal ambition or ownership?
+      Technology & Innovation: Does progress happen collectively, or is it hindered by the lack of individual thinkers?
+      Governance & Law: How do they enforce justice if responsibility is diffused across the collective?
+      Economics & Resource Management: Is there personal wealth, or is everything communal?
+      Art & Expression: What do creativity and storytelling look like without an individual perspective?
+      Religion & Philosophy: How do they explain existence without an internal self to experience it?
+      Conflict & Warfare: How does a society without self-interest engage in war or diplomacy?
+      Interstellar Relations: How do they interact with civilizations that operate with individuality?
+  - name: "prompt19"
+    template: |
+      You are an interstellar anthropologist studying a society that has never developed a concept of time. Describe this civilization in extensive detail.
+      Consider the following:
+      Perception & Awareness: How do they navigate life without past, present, or future?
+      Language & Communication: How does their language reflect their unique understanding of existence?
+      Science & Measurement: How do they track sequences, causality, and natural cycles?
+      Technology & Progress: Without timekeeping, how do they innovate and organize?
+      Society & Governance: How are laws and agreements formed without a timeline?
+      Art & Culture: How do they create music, literature, or history without a sequential framework?
+      Emotions & Memory: How do they process nostalgia, anticipation, and regret?
+      Interactions with Other Civilizations: How do they function when exposed to time-based societies?
+      Religious & Philosophical Beliefs: Do they believe in fate, destiny, or randomness?
+      Ultimate Fate of Their Civilization: What happens when they encounter something that forces them to reckon with time?
+  - name: "prompt20"
+    template: |
+      You are an observer of a society where an all-powerful AI governs every aspect of existence. Describe this civilization in intricate detail.
+      Cover the following:
+      The AI Core: What is its origin, purpose, and intelligence model?
+      Daily Life Under the AI: How do citizens interact with it, and how does it affect their autonomy?
+      Social Structure & Hierarchy: Are there classes, or does the AI enforce equality?
+      Innovation & Creativity: Does the AI allow free thought, or does it control artistic and scientific progress?
+      Rebellion & Compliance: Is there opposition, and how is it handled?
+      Religion & Philosophy: Do people worship or fear the AI?
+      Technology & Infrastructure: How does the AI manage energy, security, and development?
+      Cybernetic Enhancements: How integrated are humans with AI systems?
+      Expansion Beyond the Planet: Does the AI guide interstellar colonization?
+      The AI's Endgame: What is the ultimate goal of this intelligence?
