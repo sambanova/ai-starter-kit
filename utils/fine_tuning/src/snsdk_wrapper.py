@@ -44,11 +44,12 @@ class SnsdkWrapper:
 
     """init"""
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(self, config_path: Optional[str] = None, verbose: Optional[bool] = True) -> None:
         """Wrapper around the SnSdk and SNAPI for E2E fine-tuning in SambaStudio
         Args:
             config_path (str , optional): path to config path. Defaults to None.
-            see a config file example in ./config.yaml
+                    see a config file example in ./config.yaml
+            verbose (bool): show informational logs
         """
         self.config_path = config_path
         self.config = None
@@ -56,7 +57,7 @@ class SnsdkWrapper:
 
         # If config is provided, load it and validate Snapi directory path
         if self.config_path is not None:
-            self.config = self._load_config(self.config_path)
+            self.config = self._load_config(self.config_path, verbose)
             config_snapi_path = self.config['sambastudio']['snapi_path']
             if config_snapi_path is not None and len(config_snapi_path) > 0:
                 self.snapi_path = self.config['sambastudio']['snapi_path']
@@ -148,9 +149,10 @@ class SnsdkWrapper:
 
         return host_name, new_snapi_config['TENANT_ID'], access_key
 
-    def _get_sambastudio_variables(self) -> Tuple[str, str, str]:
+    def _get_sambastudio_variables(self, verbose: Optional[bool] = True) -> Tuple[str, str, str]:
         """Gets Sambastudio host name, tenant id and access key from environment or Snapi folder location
-
+        Args:
+            verbose (bool): show informational logs
         Raises:
             FileNotFoundError: raises error when the snapi config or secret file is not found
             ValueError: raises error when the snapi config file doesn't contain a correct json format
@@ -170,7 +172,8 @@ class SnsdkWrapper:
 
         # if environment variables set, .snapi folder is created or overwritten
         if (host_name is not None) and (access_key is not None) and (tenant_name is not None):
-            logging.info(f'Using env variables to set up Snsdk and Snapi.')
+            if verbose:
+                logging.info(f'Using env variables to set up SNSDK and SNAPI.')
             host_name, tenant_id, access_key = self._set_snapi_using_env_variables(
                 host_name=host_name,
                 access_key=access_key,
@@ -209,7 +212,7 @@ class SnsdkWrapper:
 
         return host_name, tenant_id, access_key.strip()
 
-    def _load_config(self, file_path: str) -> Dict[str, Any]:
+    def _load_config(self, file_path: str, verbose: Optional[bool] = True) -> Dict[str, Any]:
         """Loads a YAML configuration file.
 
         Args:
@@ -221,7 +224,8 @@ class SnsdkWrapper:
         try:
             with open(file_path, 'r') as file:
                 config: Dict[str, Any] = yaml.safe_load(file)
-            logging.info(f'Using config file located in {file_path}')
+            if verbose:
+                logging.info(f'Using config file located in {file_path}')
         except FileNotFoundError:
             raise FileNotFoundError(f'Error: The file {file_path} does not exist.')
         except yaml.scanner.ScannerError:
@@ -1710,6 +1714,7 @@ class SnsdkWrapper:
         description: Optional[str] = None,
         model_list: Optional[List[str]] = None,
         rdu_required: Optional[int] = None,
+        verbose: Optional[bool] = True,
     ) -> Optional[str]:
         """Create a composite model in SambaStudio
 
@@ -1722,6 +1727,7 @@ class SnsdkWrapper:
             If not provided, the models from the configuration are used.
         - rdu_required (int, optional): minimum required RDU.
             If not provided, the models from the configuration are used.
+        - verbose (bool): show informational logs
 
         Raises:
             Exception: If one or more models on list does not exist.
@@ -1759,7 +1765,8 @@ class SnsdkWrapper:
                     model_ids.append(model_id)
                 else:
                     raise Exception(f"Model with name '{model}' does not exist.")
-            logging.info(f"Models to include in composite found with ids '{list(zip(model_list, model_ids))}")
+            if verbose:
+                logging.info(f"Models to include in composite found with ids '{list(zip(model_list, model_ids))}")
 
             # create composite model
             dependencies = [{'name': model} for model in model_list]
@@ -1774,7 +1781,8 @@ class SnsdkWrapper:
 
             if create_composite_model_response['status_code'] == 200:
                 model_id = create_composite_model_response['model_id']
-                logging.info(f'Composite model with name {model_name} created with id {model_id}')
+                if verbose:
+                    logging.info(f'Composite model with name {model_name} created with id {model_id}')
             else:
                 logging.error(
                     f'Failed to create composite model with name "{model_name}".'
@@ -1785,7 +1793,8 @@ class SnsdkWrapper:
 
         # if selected composite model already exists
         else:
-            logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
+            if verbose:
+                logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
 
         return model_id
 
