@@ -431,15 +431,16 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     # performance metrics
                     if data.get('usage') is None:
                         # if streams still don't hit a finish reason
-                        if data['choices'][0]['finish_reason'] is None:
-                            if data['choices'][0]['delta'].get('content') is not None:
-                                # log s timings
-                                events_timings.append(time.monotonic() - event_start_time)
-                                event_start_time = time.monotonic()
-                                # concatenate streaming text pieces
-                                stream_content = data['choices'][0]['delta']['content']
-                                events_received.append(stream_content)
-                                generated_text += stream_content
+                        if data.get('choices'):
+                            if data['choices'][0]['finish_reason'] is None:
+                                if data['choices'][0]['delta'].get('content') is not None:
+                                    # log s timings
+                                    events_timings.append(time.monotonic() - event_start_time)
+                                    event_start_time = time.monotonic()
+                                    # concatenate streaming text pieces
+                                    stream_content = data['choices'][0]['delta']['content']
+                                    events_received.append(stream_content)
+                                    generated_text += stream_content
                     # process streaming chunk when performance usage is provided
                     else:
                         response_dict = data['usage']
@@ -595,15 +596,16 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # performance metrics
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data['choices'][0]['finish_reason'] is None:
-                                if data['choices'][0]['delta'].get('content') is not None:
-                                    # log s timings
-                                    events_timings.append(time.monotonic() - event_start_time)
-                                    event_start_time = time.monotonic()
-                                    # concatenate streaming text pieces
-                                    stream_content = data['choices'][0]['delta']['content']
-                                    events_received.append(stream_content)
-                                    generated_text += stream_content
+                            if data.get('choices'):
+                                if data['choices'][0]['finish_reason'] is None:
+                                    if data['choices'][0]['delta'].get('content') is not None:
+                                        # log s timings
+                                        events_timings.append(time.monotonic() - event_start_time)
+                                        event_start_time = time.monotonic()
+                                        # concatenate streaming text pieces
+                                        stream_content = data['choices'][0]['delta']['content']
+                                        events_received.append(stream_content)
+                                        generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
