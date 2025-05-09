@@ -1,0 +1,11 @@
+model:
+  # hf_name: "meta-llama/Llama-3.1-8B-Instruct"
+  hf_name: "TsinghuaC3I/Llama-3.1-8B-UltraMedical"
+  model_name: "Llama-3.1-8B-UltraMedical"
+  publisher: "TsinghuaC3I"
+  description: "Llama-3.1-8B-UltraMedical is an open-access large language model (LLM) specialized in biomedicine. Developed by the Tsinghua C3I Lab, this model aims to enhance medical examination access, literature comprehension, and clinical knowledge."
+  param_count: 8  # number in billions of parameters
+
+sambastudio:
+  snapi_path: ""
+  rdu_arch: "SN40L-8"
