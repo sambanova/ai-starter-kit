@@ -79,12 +79,14 @@ output_files_dir = os.path.join(config['output_files_dir'], run_time)
 sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
 
+model_configs_df[["input_tokens", "output_tokens", "num_requests"]] = \
+    model_configs_df[["input_tokens", "output_tokens", "num_requests"]].astype('Int64')
 # Loop over models and configs to run performance evaluation
 for idx, row in model_configs_df.iterrows():
     model_name = row['model_name']
-    input_tokens = int(row['input_tokens'])
-    output_tokens = int(row['output_tokens'])
-    num_requests = int(row['num_requests'])
+    input_tokens = row['input_tokens']
+    output_tokens = row['output_tokens']
+    num_requests = row['num_requests']
     concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
     qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
     qps_distribution = row['qps_distribution']
@@ -264,6 +266,8 @@ if config['consolidated_results_dir']:
                     raise KeyError(f'Key {key} not found in dictionary. File: {file}')
 
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
+        if not os.path.exists(consolidated_results_dir):
+            os.makedirs(consolidated_results_dir)
         df_summary.sort_values(
             by=['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'], inplace=True
         )
