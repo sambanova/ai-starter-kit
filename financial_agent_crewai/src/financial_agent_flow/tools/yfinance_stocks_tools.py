@@ -64,7 +64,7 @@ class YFinanceSources(BaseModel):
         ...,
         description='Mapping where each key is a potentially relevant data source name or identifier '
         'and each value is a list of its corresponding column names that might be relevant for the query, '
-        ', in their original spelling/casing.',
+        ' in their original spelling/casing.',
     )
 
 
