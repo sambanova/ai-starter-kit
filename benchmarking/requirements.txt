@@ -26,3 +26,4 @@ torch==2.2.2
 tqdm>=4.66.3
 transformers==4.50.1
 joblib==1.4.2
+openpyxl==3.1.5

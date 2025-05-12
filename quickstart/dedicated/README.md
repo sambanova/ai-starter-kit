@@ -25,5 +25,7 @@ SAMBASTUDIO_TENANT_NAME = '<tenant name if provided, else "default">'
 The notebooks in the folder demonstrate how the following workflows can be accomplished:
 1. [Deploy an endpoint](<./Deploy a Model or Bundle to an Endpoint.ipynb>) with existing models or bundles.
 2. [Create a new bundle](<./Create a Model Bundle.ipynb>) and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
-3. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>) and [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
-4. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>), [create a new bundle](<./Create a Model Bundle.ipynb>) with it, and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) the bundle.
+3. [Create a new speculative decoding pair](<./Create a Speculative Decoding Pair.ipynb>) and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
+4. [Create a new speculative decoding pair](<./Create a Speculative Decoding Pair.ipynb>), [create a new bundle](<./Create a Model Bundle.ipynb>) with it, and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) the bundle.
+5. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>) and [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) it.
+6. [Bring your own checkpoint](<./Bring Your Own Checkpoint (BYOC).ipynb>), [create a new bundle](<./Create a Model Bundle.ipynb>) with it, and then [deploy](<./Deploy a Model or Bundle to an Endpoint.ipynb>) the bundle.
