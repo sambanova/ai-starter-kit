@@ -131,6 +131,7 @@ Run the following command:
 streamlit run streamlit/streamlit_app.py --browser.gatherUsageStats false 
 ```
 or, if Streamlit does not recognize your virtual environment due to a path mismatch, run the following command:
+
 ```bash
 python -m streamlit run streamlit/streamlit_app.py --browser.gatherUsageStats false 
 ```
