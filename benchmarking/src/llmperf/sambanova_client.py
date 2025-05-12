@@ -102,11 +102,7 @@ class BaseAPIEndpoint(abc.ABC):
         if number_chunks_recieved <= 1:
             ttft = total_request_time
         else:
-            # calculate tpot
-            tpot = self._calculate_tpot_from_streams_after_first(chunks_received, chunks_timings)
-            # calculate ttft
-            total_tokens_in_first_chunk = self._get_token_length(chunks_received[0])
-            ttft = chunks_timings[0] - (total_tokens_in_first_chunk - 1) * tpot
+            ttft = chunks_timings[0]
         return ttft
 
     def _populate_client_metrics(
