@@ -214,7 +214,6 @@ class TestFCAPIModel(unittest.TestCase):
                 response = function_calling(
                     client=self.client, model=model, messages=messages, tools=test_case[1], stream=False
                 )
-                print(model, response)
 
                 function_names = [tool['function']['name'] for tool in test_case[1]]
 
