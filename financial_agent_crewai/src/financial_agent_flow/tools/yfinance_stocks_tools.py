@@ -14,7 +14,7 @@ from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas.api.types import is_datetime64_any_dtype
-from pandasai import Agent
+from pandasai import Agent  # type: ignore
 from pydantic import BaseModel, Field
 
 from financial_agent_crewai.src.financial_agent_flow.config import *
@@ -54,30 +54,17 @@ Query: {query}
 """
 
 
-class YFinanceSource(BaseModel):
+class YFinanceSources(BaseModel):
     """
-    Represents a relevant data source from Yahoo Finance (YFinance)
-    and the columns related to the user's query.
+    Represents a dictionary of relevant data sources from Yahoo Finance (YFinance)
+    and their corresponding relevant columns, pertinent to the user's query.
     """
 
-    name: str = Field(..., description='The name or identifier of the data source.')
-    columns: List[str] = Field(
+    sources: Dict[str, List[str]] = Field(
         ...,
-        description='The list of column names that might be relevant for the query, in their original spelling/casing.',
-    )
-
-
-class YFinanceSourceList(BaseModel):
-    """
-    A collection of YFinanceSource objects, each specifying a data source
-    and its relevant columns, pertinent to the user's query.
-    """
-
-    sources: List[YFinanceSource] = Field(
-        ...,
-        min_length=1,
-        max_length=MAX_DATA_SOURCES,
-        description='A list of YFinanceSource objects representing potentially relevant data sources and columns.',
+        description='Mapping where each key is a potentially relevant data source name or identifier '
+        'and each value is a list of the corresponding column names that might be relevant for the query, '
+        ', in their original spelling/casing.',
     )
 
 
@@ -113,7 +100,7 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
             PROMPT_TEMPLATE += data[data_source][1] + '\n\n'
 
         # Bind the schema to the model
-        model_with_structure = self.llm.with_structured_output(YFinanceSourceList)
+        model_with_structure = self.llm.with_structured_output(YFinanceSources)
 
         # Invoke the model
         structured_output = model_with_structure.invoke(PROMPT_TEMPLATE)
@@ -122,17 +109,17 @@ class YFinanceStocksTool(BaseTool):  # type: ignore
         answer_data_dict = dict()
         dataframe_dict = dict()
         meta_data_dict = dict()
-        for count, source in enumerate(list(structured_output.sources)):  # type: ignore
+        for count, source in enumerate(structured_output.sources.items()):  # type: ignore
             # Coerce the retrieved data to a `pandas.DataFrame`
-            dataframe = convert_data_to_frame(data[source.name][0], source.name)
+            dataframe = convert_data_to_frame(data[source[0]][0], source[0])
             # Retrieve the columns and exclude the columns that are not present in the data
-            columns = [column for column in source.columns if column in dataframe.columns]
+            columns = [column for column in source[1] if column in dataframe.columns]
             # Retrieve the dataframe description, without the list of columns
-            meta_data_dict[source.name] = data[source.name][1].strip('columns')
+            meta_data_dict[source[0]] = data[source[0]][1].strip('columns')
             # Store only the relevant columns
-            dataframe_dict[source.name] = dataframe[columns]
+            dataframe_dict[source[0]] = dataframe[columns]
             # Convert the selected dataframe columns to JSON
-            answer_data_dict[source.name] = dataframe[columns].to_json(orient='split')
+            answer_data_dict[source[0]] = dataframe[columns].to_json(orient='split')
             # Break if we exceed the maximum number of data sources
             if count >= MAX_DATA_SOURCES:
                 break
