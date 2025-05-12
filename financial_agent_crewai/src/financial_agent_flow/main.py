@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
-from langchain_sambanova import ChatSambaNovaCloud  # type: ignore
+from langchain_sambanova import ChatSambaNovaCloud
 
 # Main directories
 current_dir = os.path.dirname(os.path.abspath(__file__))
