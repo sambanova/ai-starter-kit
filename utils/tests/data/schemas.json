@@ -1,0 +1,70 @@
+{
+    "data_extraction": {
+      "name": "data_extraction",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["section", "products"],
+        "additionalProperties": false
+      },
+      "strict": false
+    },
+    "contact_form": {
+      "name": "contact_form",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone_number": {
+            "type": "number"
+          }
+        },
+        "required": ["name", "phone_number"],
+        "additionalProperties": false
+      },
+      "strict": false
+    },
+    "math_reasoning": {
+      "name": "math_reasoning",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "explanation": {
+                  "type": "string"
+                },
+                "output": {
+                  "type": "string"
+                }
+              },
+              "required": ["explanation", "output"],
+              "additionalProperties": false
+            }
+          },
+          "final_answer": {
+            "type": "string"
+          }
+        },
+        "required": ["steps", "final_answer"],
+        "additionalProperties": false
+      },
+      "strict": false
+    }
+  }
+  
