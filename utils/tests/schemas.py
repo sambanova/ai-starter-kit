@@ -1,10 +1,12 @@
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 
 class DataExtraction(BaseModel):
     section: str
     products: List[str]
+
 
 class ContactForm(BaseModel):
     name: str

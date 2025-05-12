@@ -1,9 +1,9 @@
 import base64
+import json
 from typing import Any, Dict, List, Optional
-from openai import OpenAI
 
 import requests
-import json
+from openai import OpenAI
 
 
 def read_json_file(file_path: str) -> Any:
@@ -26,10 +26,10 @@ def read_json_file(file_path: str) -> Any:
             data = json.load(file)
             return data
     except FileNotFoundError:
-        print(f"File not found at {file_path}")
+        print(f'File not found at {file_path}')
         return None
     except json.JSONDecodeError as e:
-        print(f"Error parsing JSON: {e}")
+        print(f'Error parsing JSON: {e}')
         return None
 
 
@@ -93,43 +93,34 @@ def audio_requests(
         return response.text
 
 
-def function_calling(messages: List[Dict[str, Any]],
-                   client: OpenAI,
-                   model: str,
-                   tools: List[Dict[str, Any]] = None,
-                   tool_choise: str = "auto",
-                   parallel_tool_calls: bool = False,
-                   response_format: Dict[str, Any] = None,
-                   stream: bool = False,
-                   ) -> Any:
-    """
-    
-    """
+def function_calling(
+    messages: List[Dict[str, Any]],
+    client: OpenAI,
+    model: str,
+    tools: List[Dict[str, Any]] = None,
+    tool_choise: str = 'auto',
+    parallel_tool_calls: bool = False,
+    response_format: Dict[str, Any] = None,
+    stream: bool = False,
+) -> Any:
+    """ """
     if tools is not None:
-      tools_args={
-          "tools": tools,
-          "tool_choice": tool_choise,
-          "parallel_tool_calls": parallel_tool_calls
-          }
+        tools_args = {'tools': tools, 'tool_choice': tool_choise, 'parallel_tool_calls': parallel_tool_calls}
     else:
-      tools_args={}
+        tools_args = {}
 
     results = []
 
     try:
         completion = client.chat.completions.create(
-        model=model,
-        messages = messages,
-        stream = stream,
-        response_format = response_format,
-        **tools_args
+            model=model, messages=messages, stream=stream, response_format=response_format, **tools_args
         )
         if stream:
             for chunk in completion:
                 results.append(chunk.choices)
         else:
-            if completion and hasattr(completion, "error"):
-                results = f"Error: {completion.error}"
+            if completion and hasattr(completion, 'error'):
+                results = f'Error: {completion.error}'
             else:
                 results = completion.choices[0].message
     except Exception as e:

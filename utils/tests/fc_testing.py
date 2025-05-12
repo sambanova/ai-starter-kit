@@ -35,13 +35,13 @@ sys.path.append(curr_dir)
 sys.path.append(repo_dir)
 os.path.join(repo_dir, 'utils', 'tests', 'config.yaml')
 
-import openai
-from dotenv import load_dotenv
-from openai import OpenAI
 import json
 
-from utils.tests.utils_test import read_json_file, function_calling
-from utils.tests.schemas import DataExtraction, ContactForm, Solution
+from dotenv import load_dotenv
+from openai import OpenAI
+
+from utils.tests.schemas import ContactForm, DataExtraction, Solution
+from utils.tests.utils_test import function_calling, read_json_file
 
 load_dotenv()
 
@@ -59,56 +59,132 @@ schemas_path = 'tests/data/schemas.json'
 available_tools = read_json_file(tools_path)
 available_schemas = read_json_file(schemas_path)
 
-tool_calling_test_cases=[
-    ([{"role": "user", "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"}], [available_tools['get_current_time'], available_tools['tavily_search']]),
-    ([{"role": "user", "content": "What is beta risk metric?"}], [available_tools['get_current_time'], available_tools['tavily_search'], available_tools['yahoo_finance_search'], available_tools['exa_news_search']]),
-    ([{"role": "user", "content": "How are you?"}], [available_tools['get_current_time'], available_tools['tavily_search']]),
-    ([{"role": "user", "content": "What is a Large Language Model"}], [available_tools['get_current_time'], available_tools['tavily_search'], available_tools['yahoo_finance_search'], available_tools['exa_news_search']]),
-    ([{"role": "user", "content": "What time is it right now?"}], [available_tools['get_current_time']]),
-    ([{"role": "user", "content": "Find recent news about AI advancements."}], [available_tools['tavily_search']]),
-    ([{"role": "user", "content": "Tell me the time and also find the latest SpaceX launch updates."}], [available_tools['tavily_search']]),
-    ([{"role": "user", "content": "Search for research papers about large language models published in the last 6 months."}], [available_tools['tavily_search']]),
-    ([{"role": "user", "content": "What is the current weather in San Francisco?"}], [available_tools['get_current_weather']]),
-    ([{"role": "user", "content": "What is 1 + 2"},
-      {"role": "assistant", "content": None, "tool_calls": [{"id": "8007d97c-eb39-43de-8bef-a8e6b83b8244", "type": "function", "function": {"name": "my_adder_tool", "arguments": "{\"a\":1,\"b\":2}"}}]},
-      {"role": "tool", "content": "{\"result\": 3}", "tool_call_id": "8007d97c-eb39-43de-8bef-a8e6b83b8244"},
-      {"role": "assistant", "content": "{\"result\": 3}"},
-      {"role": "user", "content": "What is 3 + 4"}],
-     [available_tools['sum_of_integers']]),
-     ([{"role": "user", "content": "What's the weather like in scotland today?"},
-    {"role": "assistant", "content": None, "tool_calls": [{"id": "8007d97c-eb39-43de-8bef-a8e6b83b8244", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\":\"Scotland\"}"}}]},
-    {"role": "tool", "content": "{\"city\": \"Scotland\" ,\"temperature_celsius\": 25}"}], [available_tools['get_weather']])
+tool_calling_test_cases = [
+    (
+        [
+            {
+                'role': 'user',
+                'content': "I am based in Cambridge and need to catch a train soon. What's the current time?",
+            }
+        ],
+        [available_tools['get_current_time'], available_tools['tavily_search']],
+    ),
+    (
+        [{'role': 'user', 'content': 'What is beta risk metric?'}],
+        [
+            available_tools['get_current_time'],
+            available_tools['tavily_search'],
+            available_tools['yahoo_finance_search'],
+            available_tools['exa_news_search'],
+        ],
+    ),
+    (
+        [{'role': 'user', 'content': 'How are you?'}],
+        [available_tools['get_current_time'], available_tools['tavily_search']],
+    ),
+    (
+        [{'role': 'user', 'content': 'What is a Large Language Model'}],
+        [
+            available_tools['get_current_time'],
+            available_tools['tavily_search'],
+            available_tools['yahoo_finance_search'],
+            available_tools['exa_news_search'],
+        ],
+    ),
+    ([{'role': 'user', 'content': 'What time is it right now?'}], [available_tools['get_current_time']]),
+    ([{'role': 'user', 'content': 'Find recent news about AI advancements.'}], [available_tools['tavily_search']]),
+    (
+        [{'role': 'user', 'content': 'Tell me the time and also find the latest SpaceX launch updates.'}],
+        [available_tools['tavily_search']],
+    ),
+    (
+        [
+            {
+                'role': 'user',
+                'content': 'Search for research papers about large language models published in the last 6 months.',
+            }
+        ],
+        [available_tools['tavily_search']],
+    ),
+    (
+        [{'role': 'user', 'content': 'What is the current weather in San Francisco?'}],
+        [available_tools['get_current_weather']],
+    ),
+    (
+        [
+            {'role': 'user', 'content': 'What is 1 + 2'},
+            {
+                'role': 'assistant',
+                'content': None,
+                'tool_calls': [
+                    {
+                        'id': '8007d97c-eb39-43de-8bef-a8e6b83b8244',
+                        'type': 'function',
+                        'function': {'name': 'my_adder_tool', 'arguments': '{"a":1,"b":2}'},
+                    }
+                ],
+            },
+            {'role': 'tool', 'content': '{"result": 3}', 'tool_call_id': '8007d97c-eb39-43de-8bef-a8e6b83b8244'},
+            {'role': 'assistant', 'content': '{"result": 3}'},
+            {'role': 'user', 'content': 'What is 3 + 4'},
+        ],
+        [available_tools['sum_of_integers']],
+    ),
+    (
+        [
+            {'role': 'user', 'content': "What's the weather like in scotland today?"},
+            {
+                'role': 'assistant',
+                'content': None,
+                'tool_calls': [
+                    {
+                        'id': '8007d97c-eb39-43de-8bef-a8e6b83b8244',
+                        'type': 'function',
+                        'function': {'name': 'get_weather', 'arguments': '{"city":"Scotland"}'},
+                    }
+                ],
+            },
+            {'role': 'tool', 'content': '{"city": "Scotland" ,"temperature_celsius": 25}'},
+        ],
+        [available_tools['get_weather']],
+    ),
 ]
 
-structured_output_test_cases=[
-    ([
-        {
-        "role": "system",
-        "content": "You are an expert at structured data extraction. You will be given unstructured text should convert it into the given structure."
-        },
-        {
-            "role": "user",
-            "content": "the section 24 has appliances, and videogames"
-        }
-    ], available_schemas['data_extraction'], DataExtraction),
-
-    ([
-        {
-        "role":"user",
-        "content":"generate the contact info from following customer message \n hi my name is jason tiller i have an issue with my new tv, my number is 35554774, plese call me back"
-        }
-    ], available_schemas['contact_form'], ContactForm),
-
-    ([
-      {
-        "role": "system",
-        "content": "You are a helpful math tutor. Guide the user through the solution step by step."
-      },
-      {
-        "role": "user",
-        "content": "how can I solve 8x + 7 = -23"
-      }
-    ], available_schemas['math_reasoning'], Solution)
+structured_output_test_cases = [
+    (
+        [
+            {
+                'role': 'system',
+                'content': """You are an expert at structured data extraction. You will be given unstructured text
+                  should convert it into the given structure.""",
+            },
+            {'role': 'user', 'content': 'the section 24 has appliances, and videogames'},
+        ],
+        available_schemas['data_extraction'],
+        DataExtraction,
+    ),
+    (
+        [
+            {
+                'role': 'user',
+                'content': 'generate the contact info from following customer message \n hi my name is jason tiller'
+                ' i have an issue with my new tv, my number is 35554774, plese call me back',
+            }
+        ],
+        available_schemas['contact_form'],
+        ContactForm,
+    ),
+    (
+        [
+            {
+                'role': 'system',
+                'content': 'You are a helpful math tutor. Guide the user through the solution step by step.',
+            },
+            {'role': 'user', 'content': 'how can I solve 8x + 7 = -23'},
+        ],
+        available_schemas['math_reasoning'],
+        Solution,
+    ),
 ]
 
 
@@ -130,13 +206,14 @@ class TestFCAPIModel(unittest.TestCase):
             api_key=cls.sambanova_api_key,
         )
         return client
-    
+
     def test_client_function_calling(self) -> None:
         for test_case in tool_calling_test_cases:
             for model in fc_models:
                 messages = test_case[0]
-                response = function_calling(client=self.client, model=model, messages=messages, tools=test_case[1],
-                                             stream = False)
+                response = function_calling(
+                    client=self.client, model=model, messages=messages, tools=test_case[1], stream=False
+                )
                 print(model, response)
 
                 function_names = [tool['function']['name'] for tool in test_case[1]]
@@ -146,20 +223,20 @@ class TestFCAPIModel(unittest.TestCase):
                 self.assertIsNone(response.content)
                 self.assertIsNotNone(response.tool_calls)
                 self.assertTrue(response.tool_calls[0].function.name in function_names)
-    
+
     def test_client_structured_output(self) -> None:
         for test_case in structured_output_test_cases:
             for model in fc_models:
                 messages = test_case[0]
                 response_format = {
-                                "type": "json_schema",
-                                "json_schema":  test_case[1],
-                            }
-                response = function_calling(client=self.client, model=model, messages=messages,
-                                             response_format=response_format, stream = False)
+                    'type': 'json_schema',
+                    'json_schema': test_case[1],
+                }
+                response = function_calling(
+                    client=self.client, model=model, messages=messages, response_format=response_format, stream=False
+                )
 
                 test_case[2](**json.loads(response.content))
-
 
     @classmethod
     def tearDownClass(cls: Type['TestFCAPIModel']) -> None:
