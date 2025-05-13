@@ -128,7 +128,12 @@ you can run our `streamlit` app for an interactive interface and monitoring.
 Run the following command:
 
 ```bash
-streamlit run streamlit/app.py --browser.gatherUsageStats false 
+streamlit run streamlit/streamlit_app.py --browser.gatherUsageStats false 
+```
+or, if Streamlit does not recognize your virtual environment due to a path mismatch, run the following command:
+
+```bash
+python -m streamlit run streamlit/streamlit_app.py --browser.gatherUsageStats false 
 ```
 
 You can now enter your query and select which data sources you want to use among the following:
