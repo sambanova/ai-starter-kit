@@ -15,8 +15,8 @@ sys.path.append('../prompts')
 sys.path.append('../src/llmperf')
 
 # Get the absolute path of my_project
-current_dir = os.path.dirname(os.path.realpath(__file__))
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+current_dir = os.path.abspath('')
+project_root = os.path.abspath(os.path.join(os.path.abspath(''), '../../'))
 
 sys.path.insert(0, project_root)
 
@@ -119,10 +119,21 @@ for idx, row in model_configs_df.iterrows():
     output_tokens = row['output_tokens']
     num_requests = row['num_requests']
     concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
-    qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
-    qps_distribution = row['qps_distribution']
-    multimodal_img_size = row['multimodal_img_size']
-    multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
+    
+    qps = None
+    qps_distribution = None
+    multimodal_img_size = 'na'
+    
+    if 'qps' in row:
+        qps = float(row['qps']) if pd.notna(row['qps']) else 0.0    
+        
+    if 'qps_distribution' in row:
+        qps_distribution = row['qps_distribution']
+        
+    if "multimodal_img_size" in row:
+        multimodal_img_size = row['multimodal_img_size']
+        multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
+ 
 
     cr_set = pd.notna(concurrent_requests) and concurrent_requests != 0
     qps_set = pd.notna(qps) and qps != 0
@@ -204,7 +215,7 @@ for idx, row in model_configs_df.iterrows():
 
 # Consolidate results
 if config['consolidated_results_dir']:
-    logging.info(f"Writting consolidated results to {config['consolidated_results_dir']}")
+    logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
     try:
         # Read summary files
         df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
@@ -213,18 +224,23 @@ if config['consolidated_results_dir']:
         df_summary['num_concurrent_requests'] = (
             None if 'num_concurrent_requests' not in df_summary.columns else df_summary['num_concurrent_requests']
         )
-        df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
-        df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
-        df_summary['qps_distribution'] = (
-            None if 'qps_distribution' not in df_summary.columns else df_summary['qps_distribution']
-        )
+
+        missing_columns = []
+        if 'qps' not in df_summary.columns:
+            missing_columns.append('qps')
+        
+        if 'qps_distribution' not in df_summary.columns:
+            missing_columns.append('qps_distribution')        
+
         df_summary['multimodal_img_size'] = df_summary['name'].str.extract(
             r'multimodal_(small|medium|large)', expand=False
         )
 
+        if df_summary['multimodal_img_size'].isnull().all():
+            missing_columns.append('multimodal_img_size')
+
         # Set fields to report
-        df_summary = df_summary[
-            [
+        selected_columns = [
                 'name',
                 'model',
                 'num_input_tokens',
@@ -263,8 +279,10 @@ if config['consolidated_results_dir']:
                 'number_errors',
                 'error_code_frequency',
             ]
-        ].copy()
 
+        selected_columns = [c for c in selected_columns if c not in missing_columns]
+        # Set fields to report
+        df_summary = df_summary[selected_columns]
         df_summary['model'] = df_summary['model'].str.replace('.', '-')
         df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
         df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
@@ -308,8 +326,12 @@ if config['consolidated_results_dir']:
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
         if not os.path.exists(consolidated_results_dir):
             os.makedirs(consolidated_results_dir)
+
+        sort_columns = ['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests']
+        if 'qps' in df_summary.columns:
+            sort_columns.append('qps')
         df_summary.sort_values(
-            by=['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'], inplace=True
+            by=sort_columns, inplace=True
         )
         df_summary.to_excel(os.path.join(consolidated_results_dir, f'consolidated_results_{run_time}.xlsx'))
 
