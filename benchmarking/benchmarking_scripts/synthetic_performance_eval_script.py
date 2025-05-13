@@ -59,7 +59,7 @@ def find_median_in_batches(lst: List[int]) -> Optional[int]:
         if value_sum / total_sum > 0.5:
             return value
 
-    return pd.NA
+    return None
 
 
 def find_uuid(file_name: str) -> Optional[str]:
