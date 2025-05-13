@@ -1,12 +1,11 @@
 import os
-import sys
-import ast
 import re
+import sys
 import time
+from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from collections import Counter
 import pandas as pd
 import yaml
 
@@ -49,16 +48,17 @@ def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[in
 
     return requests_grouping, requests_batching
 
+
 def find_median_in_batches(lst: List[int]) -> Optional[int]:
     """Find the median in a list of batches."""
     total_sum = sum(lst)
     counter = Counter(lst)
-    
+
     for value, count in counter.items():
         value_sum = value * count
         if value_sum / total_sum > 0.5:
             return value
-    
+
     return pd.NA
 
 
@@ -69,9 +69,9 @@ def find_uuid(file_name: str) -> Optional[str]:
     if match:
         uuid = match.group()
     else:
-        logger.error(f"UUID not found in filename {file_name}")
-        raise ValueError(f"UUID not found in filename {file_name}")
-        
+        logger.error(f'UUID not found in filename {file_name}')
+        raise ValueError(f'UUID not found in filename {file_name}')
+
     return uuid
 
 
@@ -108,9 +108,10 @@ sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
 
 # Set fields to int values
-model_configs_df[["input_tokens", "output_tokens", "num_requests"]] = \
-    model_configs_df[["input_tokens", "output_tokens", "num_requests"]].astype('Int64')
-    
+model_configs_df[['input_tokens', 'output_tokens', 'num_requests']] = model_configs_df[
+    ['input_tokens', 'output_tokens', 'num_requests']
+].astype('Int64')
+
 # Loop over models and configs to run performance evaluation
 for idx, row in model_configs_df.iterrows():
     model_name = row['model_name']
@@ -267,11 +268,11 @@ if config['consolidated_results_dir']:
         df_summary['model'] = df_summary['model'].str.replace('.', '-')
         df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
         df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
-        
+
         # Add UUID to summary and set as index
         df_summary['uuid'] = df_summary.apply(lambda x: find_uuid(x['name']), axis=1)
         df_summary = df_summary.set_index('uuid')
-            
+
         # Read individual responses
         df = read_perf_eval_json_files(output_files_dir, type='individual_responses')
 
@@ -299,8 +300,10 @@ if config['consolidated_results_dir']:
                     df_summary.at[key, 'requests_batching'] = requests_batching
                 else:
                     raise KeyError(f'Key {key} not found in dictionary. File: {file}')
-        df_summary['representative_batch_size'] = df_summary['requests_batching'].apply(lambda x: find_median_in_batches(x))
-        
+        df_summary['representative_batch_size'] = df_summary['requests_batching'].apply(
+            lambda x: find_median_in_batches(x)
+        )
+
         # Sort and save the summary DataFrame
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
         if not os.path.exists(consolidated_results_dir):
