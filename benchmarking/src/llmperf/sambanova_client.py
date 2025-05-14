@@ -529,6 +529,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
         sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
+        sampling_params['ignore_eos'] = True
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
