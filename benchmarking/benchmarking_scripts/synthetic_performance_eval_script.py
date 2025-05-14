@@ -15,8 +15,8 @@ sys.path.append('../prompts')
 sys.path.append('../src/llmperf')
 
 # Get the absolute path of my_project
-current_dir = os.path.abspath('')
-project_root = os.path.abspath(os.path.join(os.path.abspath(''), '../../'))
+current_dir = os.path.dirname(os.path.realpath(__file__))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 
 sys.path.insert(0, project_root)
 
@@ -118,11 +118,14 @@ for idx, row in model_configs_df.iterrows():
     input_tokens = row['input_tokens']
     output_tokens = row['output_tokens']
     num_requests = row['num_requests']
-    concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
     
+    concurrent_requests = None
     qps = None
     qps_distribution = None
     multimodal_img_size = 'na'
+    
+    if 'concurrent_requests' in row:
+        concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
     
     if 'qps' in row:
         qps = float(row['qps']) if pd.notna(row['qps']) else 0.0    
@@ -221,11 +224,12 @@ if config['consolidated_results_dir']:
         df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
 
         # Fill missing values
-        df_summary['num_concurrent_requests'] = (
-            None if 'num_concurrent_requests' not in df_summary.columns else df_summary['num_concurrent_requests']
-        )
-
+        
         missing_columns = []
+        
+        if 'num_concurrent_requests' not in df_summary.columns:
+            missing_columns.append('num_concurrent_requests')
+        
         if 'qps' not in df_summary.columns:
             missing_columns.append('qps')
         
@@ -327,7 +331,9 @@ if config['consolidated_results_dir']:
         if not os.path.exists(consolidated_results_dir):
             os.makedirs(consolidated_results_dir)
 
-        sort_columns = ['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests']
+        sort_columns = ['model', 'num_input_tokens', 'num_output_tokens']
+        if 'num_concurrent_requests' in df_summary.columns:
+            sort_columns.append('num_concurrent_requests')
         if 'qps' in df_summary.columns:
             sort_columns.append('qps')
         df_summary.sort_values(
