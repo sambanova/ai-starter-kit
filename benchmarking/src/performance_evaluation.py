@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 file_location = Path(__file__).parent.resolve()
-kit_location = os.path.join(file_location, '../..')
+kit_location = os.path.join(file_location, '../')
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -435,6 +435,7 @@ class BasePerformanceEvaluator(abc.ABC):
         """
         if len(image_location) == 0:
             image_location = llmperf_utils.LVLM_IMAGE_PATHS[self.multimodal_image_size]
+            image_location = os.path.join(kit_location, image_location)
         with open(image_location, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_image

@@ -102,11 +102,7 @@ class BaseAPIEndpoint(abc.ABC):
         if number_chunks_recieved <= 1:
             ttft = total_request_time
         else:
-            # calculate tpot
-            tpot = self._calculate_tpot_from_streams_after_first(chunks_received, chunks_timings)
-            # calculate ttft
-            total_tokens_in_first_chunk = self._get_token_length(chunks_received[0])
-            ttft = chunks_timings[0] - (total_tokens_in_first_chunk - 1) * tpot
+            ttft = chunks_timings[0]
         return ttft
 
     def _populate_client_metrics(
@@ -533,6 +529,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
         sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
+        sampling_params['ignore_eos'] = True
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True

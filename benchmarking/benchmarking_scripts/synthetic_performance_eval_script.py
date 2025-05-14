@@ -1,6 +1,8 @@
 import os
+import re
 import sys
 import time
+from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -47,6 +49,32 @@ def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[in
     return requests_grouping, requests_batching
 
 
+def find_median_in_batches(lst: List[int]) -> Optional[int]:
+    """Find the median in a list of batches."""
+    total_sum = sum(lst)
+    counter = Counter(lst)
+
+    for value, count in counter.items():
+        value_sum = value * count
+        if value_sum / total_sum > 0.5:
+            return value
+
+    return None
+
+
+def find_uuid(file_name: str) -> Optional[str]:
+    """Extract UUID from filename."""
+    match = re.search(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', file_name)
+    uuid = None
+    if match:
+        uuid = match.group()
+    else:
+        logger.error(f'UUID not found in filename {file_name}')
+        raise ValueError(f'UUID not found in filename {file_name}')
+
+    return uuid
+
+
 def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Optional[float]]:
     """Extract model, input, output, and concurrency from file name."""
 
@@ -79,19 +107,35 @@ output_files_dir = os.path.join(config['output_files_dir'], run_time)
 sampling_params: Dict[str, Any] = {}
 user_metadata: Dict[str, Any] = {}
 
-model_configs_df[["input_tokens", "output_tokens", "num_requests"]] = \
-    model_configs_df[["input_tokens", "output_tokens", "num_requests"]].astype('Int64')
+# Set fields to int values
+model_configs_df[['input_tokens', 'output_tokens', 'num_requests']] = model_configs_df[
+    ['input_tokens', 'output_tokens', 'num_requests']
+].astype('Int64')
+
 # Loop over models and configs to run performance evaluation
 for idx, row in model_configs_df.iterrows():
     model_name = row['model_name']
     input_tokens = row['input_tokens']
     output_tokens = row['output_tokens']
     num_requests = row['num_requests']
-    concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
-    qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
-    qps_distribution = row['qps_distribution']
-    multimodal_img_size = row['multimodal_img_size']
-    multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
+
+    concurrent_requests = 0
+    qps = 0.0
+    qps_distribution = 'constant'
+    multimodal_img_size = 'na'
+
+    if 'concurrent_requests' in row:
+        concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
+
+    if 'qps' in row:
+        qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
+
+    if 'qps_distribution' in row:
+        qps_distribution = row['qps_distribution']
+
+    if 'multimodal_img_size' in row:
+        multimodal_img_size = row['multimodal_img_size']
+        multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
 
     cr_set = pd.notna(concurrent_requests) and concurrent_requests != 0
     qps_set = pd.notna(qps) and qps != 0
@@ -173,69 +217,82 @@ for idx, row in model_configs_df.iterrows():
 
 # Consolidate results
 if config['consolidated_results_dir']:
-    logging.info(f"Writting consolidated results to {config['consolidated_results_dir']}")
+    logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
     try:
         # Read summary files
         df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
 
         # Fill missing values
-        df_summary['num_concurrent_requests'] = (
-            None if 'num_concurrent_requests' not in df_summary.columns else df_summary['num_concurrent_requests']
-        )
-        df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
-        df_summary['qps'] = None if 'qps' not in df_summary.columns else df_summary['qps']
-        df_summary['qps_distribution'] = (
-            None if 'qps_distribution' not in df_summary.columns else df_summary['qps_distribution']
-        )
+
+        missing_columns = []
+
+        if 'num_concurrent_requests' not in df_summary.columns:
+            missing_columns.append('num_concurrent_requests')
+
+        if 'qps' not in df_summary.columns:
+            missing_columns.append('qps')
+
+        if 'qps_distribution' not in df_summary.columns:
+            missing_columns.append('qps_distribution')
+
         df_summary['multimodal_img_size'] = df_summary['name'].str.extract(
             r'multimodal_(small|medium|large)', expand=False
         )
 
-        df_summary = df_summary[
-            [
-                'model',
-                'num_input_tokens',
-                'num_output_tokens',
-                'num_concurrent_requests',
-                'qps',
-                'qps_distribution',
-                'multimodal_img_size',
-                'server_ttft_s_min',
-                'server_ttft_s_p50',
-                'server_ttft_s_max',
-                'server_end_to_end_latency_s_min',
-                'server_end_to_end_latency_s_p50',
-                'server_end_to_end_latency_s_max',
-                'server_output_token_per_s_min',
-                'server_output_token_per_s_p50',
-                'server_output_token_per_s_max',
-                'acceptance_rate_min',
-                'acceptance_rate_p50',
-                'acceptance_rate_max',
-                'server_number_input_tokens_p50',
-                'server_number_output_tokens_p50',
-                'client_ttft_s_min',
-                'client_ttft_s_p50',
-                'client_ttft_s_max',
-                'client_end_to_end_latency_s_min',
-                'client_end_to_end_latency_s_p50',
-                'client_end_to_end_latency_s_max',
-                'client_output_token_per_s_min',
-                'client_output_token_per_s_p50',
-                'client_output_token_per_s_max',
-                'num_requests_started',
-                'num_completed_requests',
-                'number_errors',
-                'error_code_frequency',
-            ]
-        ].copy()
+        if df_summary['multimodal_img_size'].isnull().all():
+            missing_columns.append('multimodal_img_size')
 
+        # Set fields to report
+        selected_columns = [
+            'name',
+            'model',
+            'num_input_tokens',
+            'num_output_tokens',
+            'num_concurrent_requests',
+            'qps',
+            'qps_distribution',
+            'multimodal_img_size',
+            'server_ttft_s_min',
+            'server_ttft_s_p50',
+            'server_ttft_s_max',
+            'server_end_to_end_latency_s_min',
+            'server_end_to_end_latency_s_p50',
+            'server_end_to_end_latency_s_max',
+            'server_output_token_per_s_min',
+            'server_output_token_per_s_p50',
+            'server_output_token_per_s_max',
+            'acceptance_rate_min',
+            'acceptance_rate_p50',
+            'acceptance_rate_max',
+            'server_number_input_tokens_p50',
+            'server_number_output_tokens_p50',
+            'client_ttft_s_min',
+            'client_ttft_s_p50',
+            'client_ttft_s_max',
+            'client_end_to_end_latency_s_min',
+            'client_end_to_end_latency_s_p50',
+            'client_end_to_end_latency_s_max',
+            'client_output_token_per_s_min',
+            'client_output_token_per_s_p50',
+            'client_output_token_per_s_max',
+            'client_mean_output_token_per_s',
+            'num_requests_started',
+            'num_completed_requests',
+            'num_completed_requests_per_min',
+            'number_errors',
+            'error_code_frequency',
+        ]
+
+        selected_columns = [c for c in selected_columns if c not in missing_columns]
+        # Set fields to report
+        df_summary = df_summary[selected_columns]
         df_summary['model'] = df_summary['model'].str.replace('.', '-')
         df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
         df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
-        df_summary = df_summary.set_index(
-            ['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps']
-        )
+
+        # Add UUID to summary and set as index
+        df_summary['uuid'] = df_summary.apply(lambda x: find_uuid(x['name']), axis=1)
+        df_summary = df_summary.set_index('uuid')
 
         # Read individual responses
         df = read_perf_eval_json_files(output_files_dir, type='individual_responses')
@@ -257,20 +314,28 @@ if config['consolidated_results_dir']:
 
                 requests_grouping, requests_batching = get_grouping_and_batching_info(df_file)
 
-                key = (model_finame, in_tok_finame, out_tok_finame, concurrency_finame, qps_finame)
+                key = find_uuid(filename)
 
                 if key in df_summary.index:
                     df_summary.at[key, 'requests_grouping'] = requests_grouping
                     df_summary.at[key, 'requests_batching'] = requests_batching
                 else:
                     raise KeyError(f'Key {key} not found in dictionary. File: {file}')
+        df_summary['representative_batch_size'] = df_summary['requests_batching'].apply(
+            lambda x: find_median_in_batches(x)
+        )
 
+        # Sort and save the summary DataFrame
         consolidated_results_dir = os.path.expanduser(config['consolidated_results_dir'])
         if not os.path.exists(consolidated_results_dir):
             os.makedirs(consolidated_results_dir)
-        df_summary.sort_values(
-            by=['model', 'num_input_tokens', 'num_output_tokens', 'num_concurrent_requests', 'qps'], inplace=True
-        )
+
+        sort_columns = ['model', 'num_input_tokens', 'num_output_tokens']
+        if 'num_concurrent_requests' in df_summary.columns:
+            sort_columns.append('num_concurrent_requests')
+        if 'qps' in df_summary.columns:
+            sort_columns.append('qps')
+        df_summary.sort_values(by=sort_columns, inplace=True)
         df_summary.to_excel(os.path.join(consolidated_results_dir, f'consolidated_results_{run_time}.xlsx'))
 
     except Exception as e:
