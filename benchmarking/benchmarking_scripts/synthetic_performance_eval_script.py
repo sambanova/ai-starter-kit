@@ -118,25 +118,24 @@ for idx, row in model_configs_df.iterrows():
     input_tokens = row['input_tokens']
     output_tokens = row['output_tokens']
     num_requests = row['num_requests']
-    
-    concurrent_requests = None
-    qps = None
-    qps_distribution = None
+
+    concurrent_requests = 0
+    qps = 0.0
+    qps_distribution = 'constant'
     multimodal_img_size = 'na'
-    
+
     if 'concurrent_requests' in row:
         concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
-    
+
     if 'qps' in row:
-        qps = float(row['qps']) if pd.notna(row['qps']) else 0.0    
-        
+        qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
+
     if 'qps_distribution' in row:
         qps_distribution = row['qps_distribution']
-        
-    if "multimodal_img_size" in row:
+
+    if 'multimodal_img_size' in row:
         multimodal_img_size = row['multimodal_img_size']
         multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
- 
 
     cr_set = pd.notna(concurrent_requests) and concurrent_requests != 0
     qps_set = pd.notna(qps) and qps != 0
@@ -224,17 +223,17 @@ if config['consolidated_results_dir']:
         df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
 
         # Fill missing values
-        
+
         missing_columns = []
-        
+
         if 'num_concurrent_requests' not in df_summary.columns:
             missing_columns.append('num_concurrent_requests')
-        
+
         if 'qps' not in df_summary.columns:
             missing_columns.append('qps')
-        
+
         if 'qps_distribution' not in df_summary.columns:
-            missing_columns.append('qps_distribution')        
+            missing_columns.append('qps_distribution')
 
         df_summary['multimodal_img_size'] = df_summary['name'].str.extract(
             r'multimodal_(small|medium|large)', expand=False
@@ -245,44 +244,44 @@ if config['consolidated_results_dir']:
 
         # Set fields to report
         selected_columns = [
-                'name',
-                'model',
-                'num_input_tokens',
-                'num_output_tokens',
-                'num_concurrent_requests',
-                'qps',
-                'qps_distribution',
-                'multimodal_img_size',
-                'server_ttft_s_min',
-                'server_ttft_s_p50',
-                'server_ttft_s_max',
-                'server_end_to_end_latency_s_min',
-                'server_end_to_end_latency_s_p50',
-                'server_end_to_end_latency_s_max',
-                'server_output_token_per_s_min',
-                'server_output_token_per_s_p50',
-                'server_output_token_per_s_max',
-                'acceptance_rate_min',
-                'acceptance_rate_p50',
-                'acceptance_rate_max',
-                'server_number_input_tokens_p50',
-                'server_number_output_tokens_p50',
-                'client_ttft_s_min',
-                'client_ttft_s_p50',
-                'client_ttft_s_max',
-                'client_end_to_end_latency_s_min',
-                'client_end_to_end_latency_s_p50',
-                'client_end_to_end_latency_s_max',
-                'client_output_token_per_s_min',
-                'client_output_token_per_s_p50',
-                'client_output_token_per_s_max',
-                'client_mean_output_token_per_s',
-                'num_requests_started',
-                'num_completed_requests',
-                'num_completed_requests_per_min',
-                'number_errors',
-                'error_code_frequency',
-            ]
+            'name',
+            'model',
+            'num_input_tokens',
+            'num_output_tokens',
+            'num_concurrent_requests',
+            'qps',
+            'qps_distribution',
+            'multimodal_img_size',
+            'server_ttft_s_min',
+            'server_ttft_s_p50',
+            'server_ttft_s_max',
+            'server_end_to_end_latency_s_min',
+            'server_end_to_end_latency_s_p50',
+            'server_end_to_end_latency_s_max',
+            'server_output_token_per_s_min',
+            'server_output_token_per_s_p50',
+            'server_output_token_per_s_max',
+            'acceptance_rate_min',
+            'acceptance_rate_p50',
+            'acceptance_rate_max',
+            'server_number_input_tokens_p50',
+            'server_number_output_tokens_p50',
+            'client_ttft_s_min',
+            'client_ttft_s_p50',
+            'client_ttft_s_max',
+            'client_end_to_end_latency_s_min',
+            'client_end_to_end_latency_s_p50',
+            'client_end_to_end_latency_s_max',
+            'client_output_token_per_s_min',
+            'client_output_token_per_s_p50',
+            'client_output_token_per_s_max',
+            'client_mean_output_token_per_s',
+            'num_requests_started',
+            'num_completed_requests',
+            'num_completed_requests_per_min',
+            'number_errors',
+            'error_code_frequency',
+        ]
 
         selected_columns = [c for c in selected_columns if c not in missing_columns]
         # Set fields to report
@@ -336,9 +335,7 @@ if config['consolidated_results_dir']:
             sort_columns.append('num_concurrent_requests')
         if 'qps' in df_summary.columns:
             sort_columns.append('qps')
-        df_summary.sort_values(
-            by=sort_columns, inplace=True
-        )
+        df_summary.sort_values(by=sort_columns, inplace=True)
         df_summary.to_excel(os.path.join(consolidated_results_dir, f'consolidated_results_{run_time}.xlsx'))
 
     except Exception as e:
