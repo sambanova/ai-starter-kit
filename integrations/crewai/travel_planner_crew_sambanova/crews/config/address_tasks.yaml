@@ -1,6 +1,0 @@
-address_compilation_task:
-  description: >
-    Extract the list of addresses from {text} and convert them to latitudes and longitudes.
-
-  expected_output: >
-    Output is expected in simple JSON format with three lists. The first list should contain the name of the venue or the name of the restaurant or the activity and should be indexed by the keyword "name". The second list should contain the latitudes and indexed with the keyword "lat". The third list should contain the longitudes and indexed with the keyword "lon".

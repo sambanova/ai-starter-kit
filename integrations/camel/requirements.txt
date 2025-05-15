@@ -1,5 +1,0 @@
-camel-ai[all]==0.2.11
-starlette
-nest_asyncio
-ipywidgets
-jupyter

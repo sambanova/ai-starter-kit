@@ -1,5 +1,0 @@
-plotly==6.0.0
-crewai==0.100.1
-crewai-tools==0.33.0
-gradio==5.15.0
-gradio_client==1.7.0
