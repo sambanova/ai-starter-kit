@@ -22,7 +22,6 @@ models:
     - "Llama-4-Scout-17B-16E-Instruct"
     - "Llama-4-Maverick-17B-128E-Instruct"
     - "DeepSeek-V3-0324"
-    - "DeepSeek-R1"
     - "Qwen3-32B"
 
 urls:

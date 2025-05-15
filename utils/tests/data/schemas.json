@@ -65,6 +65,50 @@
         "additionalProperties": false
       },
       "strict": false
+    },
+  "YFinanceSourceList": {
+    "name": "YFinanceSourceList", 
+    "description": "A collection of YFinanceSource objects, each specifying a data source and its relevant columns, pertinent to the user's query.", 
+    "strict": false, 
+    "schema": {
+        "$defs": {
+            "YFinanceSource": {
+                "description": "Represents a relevant data source from Yahoo Finance (YFinance) and the columns related to the user's query.", 
+                "properties": {
+                    "name": {
+                        "description": "The name or identifier of the data source.", 
+                        "title": "Name", 
+                        "type": "string"
+                    }, 
+                    "columns": {
+                        "description": "The list of column names that might be relevant for the query, in their original spelling/casing.", 
+                        "items": {
+                            "type": "string"
+                        }, 
+                        "title": "Columns", 
+                        "type": "array"
+                    }
+                }, 
+                "required": ["name", "columns"], 
+                "title": "YFinanceSource", 
+                "type": "object"
+            }
+        }, 
+        "properties": {
+            "sources": {
+                "description": "A list of YFinanceSource objects representing potentially relevant data sources and columns.", 
+                "items": {
+                    "$ref": "#/$defs/YFinanceSource"
+                }, 
+                "maxItems": 3, 
+                "minItems": 1, 
+                "title": "Sources", 
+                "type": "array"
+            }
+        }, 
+        "required": ["sources"], 
+        "type": "object"
     }
-  }
+  }   
+}
   

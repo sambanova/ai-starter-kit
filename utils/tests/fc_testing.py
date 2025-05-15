@@ -35,13 +35,14 @@ sys.path.append(curr_dir)
 sys.path.append(repo_dir)
 os.path.join(repo_dir, 'utils', 'tests', 'config.yaml')
 
+import asyncio
 import json
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from utils.tests.schemas import ContactForm, DataExtraction, Solution
-from utils.tests.utils_test import function_calling, read_json_file
+from utils.tests.schemas import ContactForm, DataExtraction, Solution, YFinanceSourceList
+from utils.tests.utils_test import function_calling, mcp_client, read_json_file
 
 load_dotenv()
 
@@ -67,35 +68,35 @@ tool_calling_test_cases = [
                 'content': "I am based in Cambridge and need to catch a train soon. What's the current time?",
             }
         ],
-        [available_tools['get_current_time'], available_tools['tavily_search']],
+        ['get_current_time', 'tavily_search'],
     ),
     (
         [{'role': 'user', 'content': 'What is beta risk metric?'}],
         [
-            available_tools['get_current_time'],
-            available_tools['tavily_search'],
-            available_tools['yahoo_finance_search'],
-            available_tools['exa_news_search'],
+            'get_current_time',
+            'tavily_search',
+            'yahoo_finance_search',
+            'exa_news_search',
         ],
     ),
     (
         [{'role': 'user', 'content': 'How are you?'}],
-        [available_tools['get_current_time'], available_tools['tavily_search']],
+        ['get_current_time', 'tavily_search'],
     ),
     (
         [{'role': 'user', 'content': 'What is a Large Language Model'}],
         [
-            available_tools['get_current_time'],
-            available_tools['tavily_search'],
-            available_tools['yahoo_finance_search'],
-            available_tools['exa_news_search'],
+            'get_current_time',
+            'tavily_search',
+            'yahoo_finance_search',
+            'exa_news_search',
         ],
     ),
-    ([{'role': 'user', 'content': 'What time is it right now?'}], [available_tools['get_current_time']]),
-    ([{'role': 'user', 'content': 'Find recent news about AI advancements.'}], [available_tools['tavily_search']]),
+    ([{'role': 'user', 'content': 'What time is it right now?'}], ['get_current_time']),
+    ([{'role': 'user', 'content': 'Find recent news about AI advancements.'}], ['tavily_search']),
     (
         [{'role': 'user', 'content': 'Tell me the time and also find the latest SpaceX launch updates.'}],
-        [available_tools['tavily_search']],
+        ['tavily_search'],
     ),
     (
         [
@@ -104,11 +105,11 @@ tool_calling_test_cases = [
                 'content': 'Search for research papers about large language models published in the last 6 months.',
             }
         ],
-        [available_tools['tavily_search']],
+        ['tavily_search'],
     ),
     (
         [{'role': 'user', 'content': 'What is the current weather in San Francisco?'}],
-        [available_tools['get_current_weather']],
+        ['get_current_weather'],
     ),
     (
         [
@@ -128,7 +129,7 @@ tool_calling_test_cases = [
             {'role': 'assistant', 'content': '{"result": 3}'},
             {'role': 'user', 'content': 'What is 3 + 4'},
         ],
-        [available_tools['sum_of_integers']],
+        ['sum_of_integers'],
     ),
     (
         [
@@ -146,8 +147,28 @@ tool_calling_test_cases = [
             },
             {'role': 'tool', 'content': '{"city": "Scotland" ,"temperature_celsius": 25}'},
         ],
-        [available_tools['get_weather']],
+        ['get_weather'],
     ),
+    (
+        [ {"role": "system", "content": "You are a helpful math and conversion assistant. Use tools when needed."}, {"role": "user", "content": "How many cups are in 3 gallons?"} ],
+        ['solve_addition', 'convert_units', 'convert_currency', 'calculate_date_difference'],
+    ),
+    (
+        [ {"role": "system", "content": "You are a helpful math and conversion assistant. Use tools when needed."}, {"role": "user", "content": "what is 4 + 5?"} ],
+        ['solve_addition', 'convert_units', 'convert_currency', 'calculate_date_difference']
+    ),
+    (
+        [ {"role": "system", "content": "You are a helpful math and conversion assistant. Use tools when needed."}, {"role": "user", "content": "what is 5 km in miles?"} ],
+        ['solve_addition', 'convert_units', 'convert_currency', 'calculate_date_difference']
+    ),
+    (
+        [ {"role": "system", "content": "You are a helpful math and conversion assistant. Use tools when needed."}, {"role": "user", "content": "how many pints are in 6 cups?"} ],
+        ['solve_addition', 'convert_units', 'convert_currency', 'calculate_date_difference']
+    ),
+    (
+        [ {"role": "system", "content": "You are a helpful math and conversion assistant. Use tools when needed."}, {"role": "user", "content": "I need to pay my card. It says I owe 347 euros, but I pay in dollars. How much is that?"} ],
+        ['solve_addition', 'convert_units', 'convert_currency', 'calculate_date_difference']
+    )
 ]
 
 structured_output_test_cases = [
@@ -185,6 +206,11 @@ structured_output_test_cases = [
         available_schemas['math_reasoning'],
         Solution,
     ),
+    (
+        [{ "role": "user", "content": "YFinance results:\nMeta: income 234M, debt: 34M, headcount: 38314\nGoogle: income 634M, debt: 314M, headcount: 667314\n\nWhat is the current income and loans that meta has?"} ],
+        available_schemas['YFinanceSourceList'],
+        YFinanceSourceList
+    )
 ]
 
 
@@ -211,12 +237,25 @@ class TestFCAPIModel(unittest.TestCase):
         for test_case in tool_calling_test_cases:
             for model in fc_models:
                 messages = test_case[0]
+                function_names = test_case[1]
                 response = function_calling(
-                    client=self.client, model=model, messages=messages, tools=test_case[1], stream=False
+                    client=self.client, model=model, messages=messages,
+                      tools=[available_tools[tool] for tool in function_names], stream=False
                 )
 
-                function_names = [tool['function']['name'] for tool in test_case[1]]
+                self.assertTrue(hasattr(response, 'content'))
+                self.assertTrue(hasattr(response, 'tool_calls'))
+                self.assertIsNone(response.content)
+                self.assertIsNotNone(response.tool_calls)
+                self.assertTrue(response.tool_calls[0].function.name in function_names)
 
+    def test_client_function_calling_mcp(self) -> None:
+        for test_case in tool_calling_test_cases:
+            for model in fc_models:
+                messages = test_case[0]
+                function_names = test_case[1]
+
+                response = asyncio.run(mcp_client([available_tools[tool] for tool in function_names], self.client, model, messages, False))
                 self.assertTrue(hasattr(response, 'content'))
                 self.assertTrue(hasattr(response, 'tool_calls'))
                 self.assertIsNone(response.content)

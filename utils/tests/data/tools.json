@@ -159,7 +159,7 @@
     "sum_of_integers": {
         "type": "function",
         "function": {
-            "name": "my_adder_tool",
+            "name": "sum_of_integers",
             "description": "Takes two integers, a and b, and returns their sum.",
             "parameters": {
                 "type": "object",
@@ -174,5 +174,108 @@
                 "required": ["a", "b"]
             }
         }
+    },
+    "solve_addition": {
+    "type": "function",
+    "function": {
+      "name": "solve_addition",
+      "description": "Solve simple addition",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "number"
+          },
+          "b": {
+            "type": "number"
+          }
+        },
+        "required": ["a", "b"]
+      }
     }
+  },
+  "convert_units": {
+    "type": "function",
+    "function": {
+      "name": "convert_units",
+      "description": "Convert between common measurement units (supports bidirectional conversions)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "from_unit": {
+            "type": "string",
+            "enum": [
+              "miles", "km", "inches", "cm", "feet", "meters",
+              "pounds", "kg", "ounces", "grams", "gallons", "liters",
+              "fahrenheit", "celsius"
+            ]
+          },
+          "to_unit": {
+            "type": "string",
+            "enum": [
+              "miles", "km", "inches", "cm", "feet", "meters",
+              "pounds", "kg", "ounces", "grams", "gallons", "liters",
+              "fahrenheit", "celsius"
+            ]
+          }
+        },
+        "required": ["value", "from_unit", "to_unit"]
+      }
+    }
+  },
+  "convert_currency": {
+    "type": "function",
+    "function": {
+      "name": "convert_currency",
+      "description": "Convert between currencies using exchange rate",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Amount to convert"
+          },
+          "from_currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "GBP"]
+          },
+          "to_currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "GBP"]
+          },
+          "exchange_rate": {
+            "type": "number",
+            "description": "Optional custom exchange rate"
+          }
+        },
+        "required": ["amount", "from_currency", "to_currency"]
+      }
+    }
+  },
+  "calculate_date_difference": {
+    "type": "function",
+    "function": {
+      "name": "calculate_date_difference",
+      "description": "Calculate number of days between two dates",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date in YYYY-MM-DD format"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "End date in YYYY-MM-DD format"
+          }
+        },
+        "required": ["start_date", "end_date"]
+      }
+    }
+  }
 }
