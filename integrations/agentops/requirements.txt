@@ -1,5 +1,0 @@
-agentops
-openai
-jupyter
-ipykernel
-dotenv
