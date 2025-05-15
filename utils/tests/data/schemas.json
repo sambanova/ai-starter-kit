@@ -1,0 +1,114 @@
+{
+    "data_extraction": {
+      "name": "data_extraction",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["section", "products"],
+        "additionalProperties": false
+      },
+      "strict": false
+    },
+    "contact_form": {
+      "name": "contact_form",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone_number": {
+            "type": "number"
+          }
+        },
+        "required": ["name", "phone_number"],
+        "additionalProperties": false
+      },
+      "strict": false
+    },
+    "math_reasoning": {
+      "name": "math_reasoning",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "explanation": {
+                  "type": "string"
+                },
+                "output": {
+                  "type": "string"
+                }
+              },
+              "required": ["explanation", "output"],
+              "additionalProperties": false
+            }
+          },
+          "final_answer": {
+            "type": "string"
+          }
+        },
+        "required": ["steps", "final_answer"],
+        "additionalProperties": false
+      },
+      "strict": false
+    },
+  "YFinanceSourceList": {
+    "name": "YFinanceSourceList", 
+    "description": "A collection of YFinanceSource objects, each specifying a data source and its relevant columns, pertinent to the user's query.", 
+    "strict": false, 
+    "schema": {
+        "$defs": {
+            "YFinanceSource": {
+                "description": "Represents a relevant data source from Yahoo Finance (YFinance) and the columns related to the user's query.", 
+                "properties": {
+                    "name": {
+                        "description": "The name or identifier of the data source.", 
+                        "title": "Name", 
+                        "type": "string"
+                    }, 
+                    "columns": {
+                        "description": "The list of column names that might be relevant for the query, in their original spelling/casing.", 
+                        "items": {
+                            "type": "string"
+                        }, 
+                        "title": "Columns", 
+                        "type": "array"
+                    }
+                }, 
+                "required": ["name", "columns"], 
+                "title": "YFinanceSource", 
+                "type": "object"
+            }
+        }, 
+        "properties": {
+            "sources": {
+                "description": "A list of YFinanceSource objects representing potentially relevant data sources and columns.", 
+                "items": {
+                    "$ref": "#/$defs/YFinanceSource"
+                }, 
+                "maxItems": 3, 
+                "minItems": 1, 
+                "title": "Sources", 
+                "type": "array"
+            }
+        }, 
+        "required": ["sources"], 
+        "type": "object"
+    }
+  }   
+}
+  
