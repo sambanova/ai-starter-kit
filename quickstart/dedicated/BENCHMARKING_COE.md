@@ -13,7 +13,7 @@ The required steps for CoE benchmarking are the following:
 - Create a CoE model bundle (if not already created). Cf. (<./Create a Model Bundle.ipynb>).
 - Create a project and an endpoint (if not already created). Cf. <./Deploy a Model or Bundle to an Endpoint.ipynb>.
 - Deploy the CoE model bundle to the endpoint (if not already deployed). <./Deploy a Model or Bundle to an Endpoint.ipynb>
-- Run the benchmarking script. Cf. (<./Benchmark_Model_Bundle>).
+- Run the benchmarking script. Cf. (<./Benchmark_Model_Bundle.ipynb>).
 
 ## Setup
 
@@ -22,28 +22,34 @@ The next step is to set up your environment variables to use one of the models a
 - If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
 
 - If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables. 
+
 _Note: In case of OpenAI compatible SambaNova endpoints, dynamic batching is already supported. However, in case you're using a **SambaStudio Turbo** endpoint, please update the URL variable and include `api/v2` like the following to ensure the use of dynamic batching:_
+
 ``` bash
 SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/v2/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
 ```
 
 1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
+
     ```bash
     python<version> -m venv <virtual-environment-name>
     source <virtual-environment-name>/bin/activate
     ```
 
 2. Install the required dependencies:
+
     ```bash
     cd benchmarking # If not already in the benchmarking folder
     pip install -r requirements.txt
     ```
 
 1.  Install the following libraries using the wheels provided to you by your SambaNova representative:  
+
     - `pip install ~/Downloads/snsdk-<version>-py3-none-any.whl`  
     - `pip install ~/Downloads/SambaStudio_API_Client-<version>-py3-none-any.whl`
 
 3.  Set the following environment variables in your `.env` file as provided by your SambaNova representative:
+
     - For the creation of model bundles and the and deployment of endpoints.
     ```.env
     SAMBASTUDIO_HOST_NAME = '<host name without any trailing "/">'
@@ -171,3 +177,6 @@ For example, if your bundle has 3 models configurations that would trigger a swi
 
 The switching time is estimated as follows.
 Based on the first request TTFT in `individual_responses.json`, if this value is significantly larger (more than 3 standard deviations) than the average TTFT of the remaining requests, then switching time will be the difference between first TTFT and the average of the remaining TTFTs.
+
+## Notebook
+The E2E notebook <./Benchmark_Model_Bundle.ipynb> contains a full example on how to create a CoE bundle, create an endpoint, deploy the CoE bundle to an endpoint, and finally run the CoE benchmarking script.
