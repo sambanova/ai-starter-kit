@@ -72,7 +72,7 @@ You will be notified with a warning message that explains the issue. You will ne
 
 __Model Compatibility__. Conflicts can occur when selecting a new expert that is technically incompatible with the experts already chosen. This incompatibility could be due to technical restrictions that exist among experts. The system is designed to detect such conflicts during expert selection. When a conflict is identified, the system will alert you with an error message and will block the selection to avoid potential issues. You will need to modify your selected experts to add by choosing different experts in order to proceed.
 
-__RDU Compatibility__. SN40L-16 will provide faster CoE creation times.
+__RDU Compatibility__. The latest SN40L-16 RDU architecture will provide faster CoE creation times.
 You will only be able to add expert models to your Composition of Experts that are compatible with your selection of SN40L-8 or SN40L-16 RDUs.
 
 ## Benchmarking script
