@@ -19,7 +19,7 @@ Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">
 
 The table below lists the available kits, which are grouped into four categories: 1) Data Ingestion & Preparation, 2) Model Development & Optimization, 3) Intelligent Information Retrieval, and 4) Advanced AI Capabilities.
 
-For functionalities related to third-party integrations, find a list in our [Integrations folder](https://github.com/sambanova/integrations).
+For functionalities related to third-party integrations, find a list in our [Integrations Repository](https://github.com/sambanova/integrations) and [Integrations Docs](https://docs.sambanova.ai/cloud/docs/integrations).
 
 **Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
 
