@@ -13,8 +13,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Must precede any llm module imports
-# from langtrace_python_sdk import langtrace
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
@@ -63,9 +61,6 @@ from financial_agent_crewai.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
-
-# Uncomment this line for langtrace monitoring
-# langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
 
