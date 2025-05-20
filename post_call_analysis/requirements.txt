@@ -3,10 +3,10 @@ huggingface-hub==0.25.2
 instructorembedding==1.0.1
 langchain-chroma == 0.1.4
 langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-core==0.3.60
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
-langchain==0.3.16
+langchain==0.3.25
 langchain-sambanova==0.1.0
 librosa==0.10.1
 mypy==1.11.2
@@ -20,7 +20,7 @@ ruff==0.6.9
 sentence_transformers==3.3.1
 sseclient-py==1.8.0
 streamlit-extras==0.3.6
-streamlit==1.40.1
+streamlit==1.37.0
 streamlit_javascript==0.1.5
 unstructured[pdf]==0.17.2
 watchdog==4.0.0

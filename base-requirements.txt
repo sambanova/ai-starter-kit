@@ -1,9 +1,9 @@
 # Core dependencies
-llama-index==0.11.17
+llama-index==0.12.9
 llama-index-llms-langchain==0.4.2
-langchain==0.3.16
+langchain==0.3.25
 langchain-sambanova==0.1.0
-langchain-core==0.3.33
+langchain-core==0.3.60
 langchain-chroma == 0.2.1
 langchain-community==0.3.16
 langchain-experimental==0.3.2
@@ -12,11 +12,11 @@ langchain-milvus==0.1.10
 langgraph==0.2.28
 crewai==0.100.1
 crewai-tools==0.0.1
-pandasai==2.2.15
+pandasai==3.0.0a1
 pydantic==2.9.2 
 pydantic-core==2.23.4
 python-dotenv==1.0.1
-streamlit==1.40.2
+streamlit==1.37.0
 st-pages==0.5.0
 streamlit-extras==0.3.6
 sseclient-py==1.8.0
@@ -24,7 +24,7 @@ torch==2.2.2
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
-transformers==4.50.1
+transformers==4.50.0
 sentence-transformers==3.3.1
 huggingface-hub==0.26.0
 instructorembedding==1.0.1
@@ -49,7 +49,7 @@ xlrd==2.0.1
 # Web and API
 boto3==1.35.56
 requests>=2.32.2
-aiohttp==3.9.1
+aiohttp==3.11.0b0
 fastapi==0.110.1
 uvicorn==0.23.2
 google-search-results==2.4.2
@@ -86,7 +86,7 @@ pillow==10.2.0
 pycountry==23.12.11
 omegaconf==2.3.0
 jsonlines==4.0.0
-Jinja2==3.1.4
+Jinja2==3.1.6
 
 # Data sources
 sec-downloader==0.11.1

@@ -1,7 +1,7 @@
 Requests==2.31.0
 langchain-community==0.3.16
-langchain-core==0.3.33
-langchain==0.3.16
+langchain-core==0.3.60
+langchain==0.3.25
 langchain-sambanova==0.1.0
 mypy==1.11.2
 pre-commit==4.0.1
@@ -11,4 +11,4 @@ python-dotenv==1.0.0
 ruff==0.6.9
 sseclient-py==1.8.0
 streamlit-extras==0.3.6
-streamlit==1.25.0
+streamlit==1.37.0
