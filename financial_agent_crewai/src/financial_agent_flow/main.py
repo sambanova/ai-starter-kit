@@ -13,8 +13,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Must precede any llm module imports
-# from langtrace_python_sdk import langtrace
 from crewai import LLM
 from crewai.flow.flow import Flow, and_, listen, start
 from dotenv import load_dotenv
@@ -63,9 +61,6 @@ from financial_agent_crewai.utils.utilities import *
 
 warnings.filterwarnings('ignore', category=SyntaxWarning, module='pysbd')
 load_dotenv()
-
-# Uncomment this line for langtrace monitoring
-# langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 
 logger = logging.getLogger(__name__)
 
@@ -626,7 +621,7 @@ def plot() -> None:
     """Generate and display a visualization of the flow structure."""
 
     finance_flow = FinancialFlow(query=USER_QUERY)
-    plot_filename = str(Path(kit_dir_1) / 'flow')
+    plot_filename = str('flow')
     finance_flow.plot(filename=plot_filename)
 
 

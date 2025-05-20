@@ -61,6 +61,8 @@ class SecEdgarFilingRetriever(BaseTool):  # type: ignore
         # Yearly filings
         elif self.filing_metadata.filing_type == '10-K':
             delta = current_year - self.filing_metadata.year + 1
+            if delta == 0:
+                delta += 1
         else:
             raise ValueError('The filing type must be either "10-K" or "10-Q".')
 

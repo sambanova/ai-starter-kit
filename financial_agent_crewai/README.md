@@ -62,40 +62,11 @@ Use the navigation menu to explore various features including:
   # Your email address
   SEC_API_EMAIL="<user@email_provider.com>"
   ```
-
-4. (Optional, only if you want to use `LangTrace`)
-  Add your `LANGTRACE_API_KEY` to the `.env` file.
     
 ## 3. Installation
 
 Ensure you have Python `>=3.11 <3.13` installed on your system.
-All the packages/tools are listed in the `requirements.txt` file,
-as well as in the `pyproject.toml` file, in the project root directory.
-
-### 3.1 Using UV and the CrewAI commands
-
-This project supports [UV](https://docs.astral.sh/uv/) for dependency management and package handling,
-offering a seamless setup and execution experience.
-
-First, if you haven't already, install `uv`:
-
-```bash
-pip install uv
-```
-
-Next, navigate to your project directory and install the dependencies:
-
-```bash
-crewai install
-```
-
-Once all of the dependencies are installed, you need to activate the virtual environment by running:
-
-```bash
-source .venv/bin/activate
-```
-
-### 3.2 Using `pip` and `venv`
+All the packages/tools are listed in the `requirements.txt` file in the project root directory.
 
 If you want to create a Python virtual environment with its built-in module `venv`
 and then install the dependencies using `pip`,
@@ -187,11 +158,4 @@ The `FinancialFlow` consists of multiple crews, each one composed of AI agents, 
 The `config/agents.yaml` files outline the capabilities and configurations of each agent in your crew.
 These agents collaborate on a series of tasks, defined in the `config/tasks.yaml` files,
 leveraging their collective skills to achieve complex objectives.
-
-If you wish to monitor your Crews within the `FinancialFlow`, you can uncomment the following lines in `main.py`.
-
-```python
-# Must precede any llm module imports
-from langtrace_python_sdk import langtrace
-langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 ```
