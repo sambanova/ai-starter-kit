@@ -621,7 +621,7 @@ def plot() -> None:
     """Generate and display a visualization of the flow structure."""
 
     finance_flow = FinancialFlow(query=USER_QUERY)
-    plot_filename = str(Path(kit_dir_1) / 'flow')
+    plot_filename = str('flow')
     finance_flow.plot(filename=plot_filename)
 
 
