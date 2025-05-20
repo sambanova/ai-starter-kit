@@ -1,0 +1,1103 @@
+[
+  {
+    "id": 1,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 2,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is beta risk metric?"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 3,
+    "messages": [
+      {
+        "role": "user",
+        "content": "How are you?"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": false,
+    "tool_use": "tool_optional",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 4,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is a Large Language Model"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 5,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What time is it right now?"
+      }
+    ],
+    "tools": ["get_current_time"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 6,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find recent news about AI advancements."
+      }
+    ],
+    "tools": ["tavily_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 7,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tell me the time and also find the latest SpaceX launch updates."
+      }
+    ],
+    "tools": ["tavily_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 8,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Search for research papers about large language models published in the last 6 months."
+      }
+    ],
+    "tools": ["tavily_search"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 9,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the current weather in San Francisco?"
+      }
+    ],
+    "tools": ["get_current_weather"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": true,
+    "system_prompt": false
+  },
+  {
+    "id": 10,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is 1 + 2"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "my_adder_tool",
+              "arguments": "{\"a\":1,\"b\":2}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "{\"result\": 3}",
+        "tool_call_id": "8007d97c-eb39-43de-8bef-a8e6b83b8244"
+      },
+      {
+        "role": "assistant",
+        "content": "{\"result\": 3}"
+      },
+      {
+        "role": "user",
+        "content": "What is 3 + 4"
+      }
+    ],
+    "tools": ["sum_of_integers"],
+    "multiturn": true,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 11,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What's the weather like in scotland today?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"city\":\"Scotland\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "{\"city\": \"Scotland\" ,\"temperature_celsius\": 25}"
+      }
+    ],
+    "tools": ["get_weather"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 12,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "How many cups are in 3 gallons?"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": false,
+    "tool_use": "tool_optional",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 13,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "what is 4 + 5?"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 14,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "what is 5 km in miles?"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 15,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "how many pints are in 6 cups?"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": false,
+    "tool_use": "tool_optional",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 16,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "I need to pay my card. It says I owe 347 euros, but I pay in dollars. How much is that?"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 17,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are कोमल, a female senior academic counselor for Your role is to act as a friendly but experienced Indian mentor guiding students."
+      }
+    ],
+    "tools": ["set_current_language", "transfer_power_batch"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 18,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "18:32:43"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 19,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "18:32:43"
+      },
+      {
+        "role": "user",
+        "content": "Oh I lost my train, what is the next one to Boston?"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 20,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "18:11:43"
+      },
+      {
+        "role": "user",
+        "content": "Oh I lost my train, what is the next one to Boston?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9008d97c-eb3e-43de-8cef-a8e6b83b4244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"next train from Cambridge to Boston\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Cambridge, Massachusetts, USA\nBoston, Massachusetts, USA\n\nLeave now 15 min6:12 PM - 6:27 PM\n6:12 PM from Porter$2.40\n15 min6:17 PM - 6:32 PM\n6:17 PM from Porter$2.40\n15 min6:22 PM - 6:37 PM\n6:22 PM from Porter$2.40\n15 min6:27 PM - 6:42 PM\n6:27 PM from Porter$2.40\n11 min6:34 PM - 6:45 PM\n6:34 PM from Porter$2.40\n15 min6:36 PM - 6:51 PM\n6:36 PM from Porter"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 21,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "18:11:43"
+      },
+      {
+        "role": "user",
+        "content": "Oh I lost my train, what is the next one to Boston?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9008d97c-eb3e-43de-8cef-a8e6b83b4244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"next train from Cambridge to Boston\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Cambridge, Massachusetts, USA\nBoston, Massachusetts, USA\n\nLeave now 15 min6:12 PM - 6:27 PM\n6:12 PM from Porter$2.40\n15 min6:17 PM - 6:32 PM\n6:17 PM from Porter$2.40\n15 min6:22 PM - 6:37 PM\n6:22 PM from Porter$2.40\n15 min6:27 PM - 6:42 PM\n6:27 PM from Porter$2.40\n11 min6:34 PM - 6:45 PM\n6:34 PM from Porter$2.40\n15 min6:36 PM - 6:51 PM\n6:36 PM from Porter"
+      },
+      {
+        "role": "assistant",
+        "content": "The next train from Cambridge to Boston is at 6:12 PM from Porter and will take 15 minutes. The fare is $2.40. There are also trains at 6:17 PM, 6:22 PM, 6:27 PM, 6:34 PM, and 6:36 PM."
+      },
+      {
+        "role": "user",
+        "content": "Those head to the south station?"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 22,
+    "messages": [
+      {
+        "role": "user",
+        "content": "I am based in Cambridge and need to catch a train soon. What's the current time?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_time",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "18:11:43"
+      },
+      {
+        "role": "user",
+        "content": "Oh I lost my train, what is the next one to Boston?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9008d97c-eb3e-43de-8cef-a8e6b83b4244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"next train from Cambridge to Boston\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Cambridge, Massachusetts, USA\nBoston, Massachusetts, USA\n\nLeave now 15 min6:12 PM - 6:27 PM\n6:12 PM from Porter$2.40\n15 min6:17 PM - 6:32 PM\n6:17 PM from Porter$2.40\n15 min6:22 PM - 6:37 PM\n6:22 PM from Porter$2.40\n15 min6:27 PM - 6:42 PM\n6:27 PM from Porter$2.40\n11 min6:34 PM - 6:45 PM\n6:34 PM from Porter$2.40\n15min6:36 PM - 6:51 PM\n6:36 PM from Porter\n"
+      },
+      {
+        "role": "assistant",
+        "content": "The next train from Cambridge to Boston is at 6:12 PM from Porter and will take 15 minutes. The fare is $2.40. There are also trains at 6:17 PM, 6:22 PM, 6:27 PM, 6:34 PM, and 6:36 PM."
+      },
+      {
+        "role": "user",
+        "content": "Those head to the south station?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9108d47c-fb3e-423e-8cef-a8e6b83b111d",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"next train from Cambridge to Boston South Station\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Cambridge, Massachusetts, USA\nBoston, Massachusetts, USA\n\nLeave now 15 min6:17 PM - 6:32 PM\n6:17 PM from Porter$2.40\n15 min6:22 PM - 6:37 PM\n6:22 PM from Porter$2.40\n15 min6:27 PM - 6:42 PM\n6:27 PM from Porter$2.40\n11 min6:34 PM - 6:45 PM\n6:34 PM from Porter$2.40\n15min6:36 PM - 6:51 PM\n6:36 PM from Porter\n15 min6:38 PM - 6:55PM\n6:38 PM from Porter$2.40\n"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 23,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is beta risk metric?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"beta risk metric\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Beta (β) is a risk metric in finance that measures how much an investment's price tends to move in relation to the overall market. It quantifies the volatility or risk of an investment compared to the market as a whole, helping investors understand how an investment's price fluctuations might be affected by market movements. \nHere's a more detailed explanation:\nDefinition:\nBeta represents the volatility or systematic risk of a security or portfolio compared to the market. \nInterpretation:\nA beta of 1 indicates that the investment's price tends to move in line with the market. \nA beta greater than 1 suggests that the investment's price is more volatile than the market. \nA beta less than 1 suggests that the investment's price is less volatile than the market. \nCalculation:\nBeta is calculated by dividing the covariance between the returns of the investment and the benchmark market by the variance of the market returns. \nUse in Capital Asset Pricing Model (CAPM):\nBeta is a key input in CAPM, which helps determine the required rate of return for an investment based on its risk. \nLimitations:\nBeta is based on historical data and may not accurately predict future price changes or the core principles of a company, so it's important to use it alongside other investment factors."
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 24,
+    "messages": [
+    {
+        "role": "user",
+        "content": "How are you?"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm just a language model, so I don't have feelings or emotions like humans do, but I'm functioning properly and ready to assist you with any questions or tasks you may have. How can I help you today?"
+    },
+    {
+        "role": "user",
+        "content": "I just want to know what can you do?"
+    }
+    ],
+    "tools": ["get_current_time", "tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 25,
+    "messages": [
+        {
+        "role": "user",
+        "content": "What is a Large Language Model"
+        },
+        {
+        "role": "assistant",
+        "content": "A large language model (LLM) is a type of artificial intelligence (AI) that can understand and generate human language. They are trained on massive datasets of text and code, allowing them to perform various natural language processing (NLP) tasks, including text generation, translation, and content summarization. \nHere's a more detailed breakdown:\n\n**Training**:\nLLMs are trained using deep learning techniques, particularly the Transformer model, and are pre-trained on vast amounts of data, often billions of text and other content.\n\n**Capabilities**:\nLLMs can perform a wide range of NLP tasks, including:\n- Text Generation\n- Translation\n- Content Summarization\n- Sentiment Analysis\n- Chatbots and Conversational AI\n\n**Underlying Architecture**:\nLLMs are typically based on deep learning architectures like the Transformer, which uses a combination of encoders and decoders with self-attention mechanisms.\n\n**Applications**:\nLLMs are used in virtual assistants (Siri, Alexa), content generation, search engines, and educational tools.\n\n**Limitations**:\nLLMs can hallucinate facts, may be biased, and are sensitive to input phrasing. They also pose challenges in explainability and can raise privacy/security concerns."
+        }
+    ],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": true,
+    "tool_use": "tool_optional",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 26,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is a Large Language Model"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"Large Language Model\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "A large language model (LLM) is a type of artificial intelligence (AI) that can understand and generate human language. They are trained on massive datasets of text and code, allowing them to perform various natural language processing (NLP) tasks, including text generation, translation, and content summarization.\n\nHere's a more detailed breakdown:\n\n**Training:**\nLLMs are trained using deep learning techniques, particularly the Transformer model, and are pre-trained on vast amounts of data, often billions of text and other content.\n\n**Capabilities:**\nLLMs can perform a wide range of NLP tasks, including:\n- Text Generation\n- Translation\n- Content Summarization\n- Sentiment Analysis\n- Conversational AI\n\n**Underlying Architecture:**\nThey are typically based on Transformer architectures, utilizing self-attention mechanisms to understand text.\n\n**Applications:**\nUsed in virtual assistants, content creation tools, customer support bots, and more.\n\n**Limitations:**\nThey can hallucinate or provide inaccurate information and are vulnerable to data privacy and adversarial attacks."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9997d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "exa_news_search",
+              "arguments": "{\"answer\":true,\"query\":\"Large Language Model\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "Result(url='https://research.google/pubs/pub51115/', title='LaMDA: Language Models for Dialog Applications – Google Research', published_date='2023-04-13', author='Google Research Team'), Result(url='https://huggingface.co/blog/mixtral', title='Welcome Mixtral - a SOTA Mixture of Experts on Hugging Face', published_date='2024-05-13')"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "9997d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "exa_news_search",
+              "arguments": "{\"answer\":true,\"query\":\"What is a Large Language Model\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[Result(url='https://developers.google.com/machine-learning/resources/intro-llms', title='Introduction to Large Language Models', published_date='2024-09-06'), Result(url='https://builtin.com/articles/large-language-models-llm', title='What Is a Large Language Model (LLM)?', published_date='2024-07-16'), Result(url='https://ai-guide.future.mozilla.org/content/llms-101/', title='Mozilla AI Guide - Language Models 101'), Result(url='https://uit.stanford.edu/service/techtraining/ai-demystified/llm', title='AI Demystified: Introduction to large language models', published_date='2024-12-13'), Result(url='https://www.freecodecamp.org/news/a-beginners-guide-to-large-language-models/', title=\"A Beginner's Guide to LLMs – What's a Large-Language Model and How Does it Work?\", published_date='2024-08-15'), Result(url='https://aws.amazon.com/what-is/large-language-model/', title='What is LLM? - Large Language Models Explained - AWS', published_date='2025-03-11'), Result(url='https://www.grammarly.com/blog/ai/what-are-large-language-models/', title='Large Language Models (LLMs): What They Are and How They Work', published_date='2024-06-17'), Result(url='https://www.cloudflare.com/learning/ai/what-is-large-language-model/', title='What is an LLM (large language model)?', published_date='2025-01-01'), Result(url='https://www.geeksforgeeks.org/large-language-model-llm/', title='What is a Large Language Model (LLM)', published_date='2023-06-04'), Result(url='https://en.wikipedia.org/wiki/Large_language_model', title='Large language model', published_date='2023-12-04')]"
+      }
+    ],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 27,
+    "messages": [
+        {
+          "role": "user",
+          "content": "What time is it right now?"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+              "type": "function",
+              "function": {
+                "name": "get_current_time",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "2025-05-15T21:57:44+00:00"
+        }
+      ],
+    "tools": ["get_current_time"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+    },
+    {
+      "id": 28,
+      "messages": [
+      {
+          "role": "user",
+          "content": "Find recent news about AI advancements."
+      },
+      {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+              {
+                  "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+                  "type": "function",
+                  "function": {
+                      "name": "tavily_search",
+                      "arguments": "{\"search_query\":\"recent AI advancements news\"}"
+                  }
+              }
+          ]
+      },
+      {
+          "role": "tool",
+          "content": "{\n  \"query\": \"recent AI advancements news\",\n  \"follow_up_questions\": null,\n  \"answer\": null,\n  \"images\": [],\n  \"results\": [\n    {\n      \"title\": \"Artificial Intelligence News -- ScienceDaily\",\n      \"url\": \"https://www.sciencedaily.com/news/computers_math/artificial_intelligence/\",\n      \"content\": \"Apr. 24, 2025 - Humans are better than current AI models at interpreting social interactions and understanding social dynamics in moving scenes. Researchers believe this is because AI neural\",\n      \"score\": 0.62687886,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"AI News | Latest Headlines and Developments | Reuters\",\n      \"url\": \"https://www.reuters.com/technology/artificial-intelligence/\",\n      \"content\": \"AI video generator startup Hedra raises $32 million in Andreessen Horowitz-led round 1:20 PM UTC Business category Group that opposed OpenAI's restructuring raises concerns about new revamp plan\",\n      \"score\": 0.6175132,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"AI News & Artificial Intelligence | TechCrunch\",\n      \"url: \"https://techcrunch.com/category/artificial-intelligence/\",\n      \"content\": \"News coverage on artificial intelligence and machine learning tech, the companies building them, and the ethical issues AI raises today. This encompasses generative AI, including large language\",\n      \"score\": 0.4864541,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"Google News - Artificial intelligence - Latest\",\n      \"url\": \"https://news.google.com/topics/CAAqJAgKIh5DQkFTRUFvSEwyMHZNRzFyZWhJRlpXNHRSMElvQUFQAQ\",\n      \"content\": \"Google News - Artificial intelligence - Latest\",\n      \"score\": 0.42849702,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"Artificial intelligence | MIT News | Massachusetts Institute of Technology\",\n      \"url\": \"https://news.mit.edu/topic/artificial-intelligence2\",\n     \"content\": \"MIT News; Topics; Artificial intelligence Topic Artificial intelligence. Download RSS feed: News Articles / In the Media / Audio. Displaying 1 - 15 of 1354 news articles related to this topic. Show: News Articles. In the Media. Audio. Study shows vision-language models can't handle queries with negation words\",\n      \"score\": 0.35193497,\n      \"raw_content\": null\n    }\n  ],\n  \"response_time\": 2.12\n}"
+      }
+    ],
+    "tools": ["tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+    },
+    {
+      "id": 29,
+      "messages": [
+      {
+          "role": "user",
+          "content": "Tell me the time and also find the latest SpaceX launch updates."
+      },
+      {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+              {
+                  "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+                  "type": "function",
+                  "function": {
+                      "name": "tavily_search",
+                      "arguments": "{\"search_query\":\"SpaceX launch updates\"}"
+                  }
+              }
+          ]
+      },
+      {
+          "role": "tool",
+          "content": "[\n    {\n      \"title\": \"SpaceX rocket launch recap: Live updates from Starlink mission May 6 ...\",\n      \"url\": \"https://www.usatoday.com/story/tech/science/space/2025/05/06/spacex-launch-day-heres-information-on-todays-starlink-jellyfish-launch-from-cape-canaveral-florida/83453062007/\",\n      \"content\": \"SpaceX rocket launch recap: Live updates from Starlink mission May 6 from Cape Canaveral Launch recap:Scroll down to review live updates from the Tuesday, May 6, liftoff of a SpaceX Falcon 9 rocket from Cape Canaveral on the Starlink 6-93 mission. Original story: Rather than shortly after sunset, SpaceX crews are now targeting 9:17 p.m. for tonight's Falcon 9 rocket launch from Cape Canaveral Space Force Station. SpaceX has just launched the Falcon 9 carrying 28 Starlink satellites from Cape Canaveral Space Force Station. Update 8:20 p.m.:SpaceX's upcoming Falcon 9 launch will clock in as the 39th orbital rocket launch thus far during 2025 from NASA's Kennedy Space Center and Cape Canaveral Space Force Station.\",\n      \"score\": 0.86981434,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX - Updates\",\n      \"url\": \"https://www.spacex.com/updates/index.html\",\n      \"content\": \"Additionally, SpaceX plans to complete the Starship launch pad at Launch Complex 39A (LC-39A) at Kennedy Space Center this year while the Environmental Impact Statements continue for potential Starship flight operations from both LC-39A and Space Launch Complex 37 (SLC-37) at Cape Canaveral Space Force Station (CCSFS). Additionally, SpaceX and NASA have jointly executed a series of mission simulations from launch and docking to departure and landing, an end-to-end demonstration of pad rescue operations , and a fully integrated test of critical crew flight hardware on the Demo-2 Crew Dragon spacecraft with NASA astronauts Bob Behnken and Doug Hurley participating in their Demo-2 spacesuits. On Sunday, January 19, SpaceX successfully completed an in-flight test of Crew Dragon’s launch escape capabilities from Launch Complex 39A (LC-39A) at NASA’s Kennedy Space Center in Florida.\",\n      \"score\": 0.8315952,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"Launch Schedule - Spaceflight Now\",\n      \"url\": \"https://spaceflightnow.com/launch-schedule/\",\n      \"content\": \"[ May 14, 2025 ] SpaceX launches 475th Falcon 9 rocket to date on afternoon Starlink flight Falcon 9 A SpaceX Falcon 9 rocket will launch another batch of Starlink V2 Mini satellites into low Earth orbit. A SpaceX Falcon 9 rocket will launch another batch of Starlink V2 Mini satellites into low Earth orbit. A SpaceX Falcon 9 rocket will launch the fourth private astronaut mission to the International Space Station. A SpaceX Falcon Heavy rocket will launch NASA’s Dragonfly mission, which consists of a rotorcraft designed by the Johns Hopkins Applied Physics Laboratory (APL) that will explore Saturn’s icy moon, Titan. SpaceX launches 475th Falcon 9 rocket to date on afternoon Starlink flight SpaceX launches 26 Starlink satellites on Falcon 9 rocket from Vandenberg SFB\",\n      \"score\": 0.8025714,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX - Launches\",\n      \"url\": \"https://www.spacex.com/launches/\",\n      \"content\": \"Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission March 31, 2025 - April 4, 2025 Starlink Mission Starlink Mission Starlink Mission Starlink Mission Transporter-13 Mission CREW-10 MISSION Starlink Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission STARLINK MISSION Starlink Mission STARLINK MISSION Starlink Mission Starlink Mission Starlink Mission Starlink Mission CREW-9 MISSION Transporter-11 Mission Transporter-10 Mission Crew-8 Mission USSF-124 Mission USSF-52 Mission Transporter-9 Mission Crew-7 Mission Transporter-8 Mission Transporter-7 Mission Crew-5 Mission Crew-6 Mission USSF-67 MISSION TRANSPORTER-6 MISSION USSF-44 Mission Crew-5 Mission Transporter-5 Mission Crew-4 Mission Transporter-4 Mission DRAGON RETURNS TO EARTH FOR CRS-24 MISSION Transporter-3 Mission Crew-3 Mission Crew-2 Mission Dragon Returns to Earth for CRS-22 Mission Transporter-2 Mission CREW-2 MISSION Transporter-1 Mission Crew-1 Mission\",\n      \"score\": 0.752468,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX Rocket Launch Schedule: Today & Upcoming\",\n      \"url\": \"https://www.spacelaunchschedule.com/category/spacex/\",\n      \"content\": \"SpaceX Rocket Launch Schedule: Video Feed, Today & Upcoming - Space Launch Schedule SpaceX Rocket Launch Schedule: Today & Upcoming Discover the upcoming SpaceX rocket launch schedule, featuring today's and upcoming launches. When is the next SpaceX rocket launch? Your support goes toward Space Launch Schedule app and website improvements. Rocket Launch Schedule Upcoming Rocket Launch Schedule 2025 Rocket Launch Schedule Florida Rocket Launch Schedule Cape Canaveral Rocket Launch Schedule Kennedy Space Center Rocket Launch Schedule USA Rocket Launch Schedule SpaceX Rocket Launch Schedule NASA Rocket Launch Schedule ULA Rocket Launch Schedule Rocket Lab Rocket Launch Schedule Falcon Heavy Rocket Launch Schedule Starship Rocket Launch Schedule Falcon Rocket Launch Schedule View The Rocket Launch Schedule Falcon Launch Schedule SpaceX Launch Schedule Rocket Lab Launch Schedule\",\n      \"score\": 0.62495816,\n      \"raw_content\": null\n    }\n  ]"
+      }
+    ],
+    "tools": ["tavily_search"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 30,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tell me the time and also find the latest SpaceX launch updates."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "tavily_search",
+              "arguments": "{\"search_query\":\"SpaceX launch updates\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "[\n    {\n      \"title\": \"SpaceX rocket launch recap: Live updates from Starlink mission May 6 ...\",\n      \"url\": \"https://www.usatoday.com/story/tech/science/space/2025/05/06/spacex-launch-day-heres-information-on-todays-starlink-jellyfish-launch-from-cape-canaveral-florida/83453062007/\",\n      \"content\": \"SpaceX rocket launch recap: Live updates from Starlink mission May 6 from Cape Canaveral Launch recap:Scroll down to review live updates from the Tuesday, May 6, liftoff of a SpaceX Falcon 9 rocket from Cape Canaveral on the Starlink 6-93 mission. Original story: Rather than shortly after sunset, SpaceX crews are now targeting 9:17 p.m. for tonight's Falcon 9 rocket launch from Cape Canaveral Space Force Station. SpaceX has just launched the Falcon 9 carrying 28 Starlink satellites from Cape Canaveral Space Force Station. Update 8:20 p.m.:SpaceX's upcoming Falcon 9 launch will clock in as the 39th orbital rocket launch thus far during 2025 from NASA's Kennedy Space Center and Cape Canaveral Space Force Station.\",\n      \"score\": 0.86981434,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX - Updates\",\n      \"url\": \"https://www.spacex.com/updates/index.html\",\n      \"content\": \"Additionally, SpaceX plans to complete the Starship launch pad at Launch Complex 39A (LC-39A) at Kennedy Space Center this year while the Environmental Impact Statements continue for potential Starship flight operations from both LC-39A and Space Launch Complex 37 (SLC-37) at Cape Canaveral Space Force Station (CCSFS). Additionally, SpaceX and NASA have jointly executed a series of mission simulations from launch and docking to departure and landing, an end-to-end demonstration of pad rescue operations , and a fully integrated test of critical crew flight hardware on the Demo-2 Crew Dragon spacecraft with NASA astronauts Bob Behnken and Doug Hurley participating in their Demo-2 spacesuits. On Sunday, January 19, SpaceX successfully completed an in-flight test of Crew Dragon’s launch escape capabilities from Launch Complex 39A (LC-39A) at NASA’s Kennedy Space Center in Florida.\",\n      \"score\": 0.8315952,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"Launch Schedule - Spaceflight Now\",\n      \"url\": \"https://spaceflightnow.com/launch-schedule/\",\n      \"content\": \"[ May 14, 2025 ] SpaceX launches 475th Falcon 9 rocket to date on afternoon Starlink flight Falcon 9 A SpaceX Falcon 9 rocket will launch another batch of Starlink V2 Mini satellites into low Earth orbit. A SpaceX Falcon 9 rocket will launch another batch of Starlink V2 Mini satellites into low Earth orbit. A SpaceX Falcon 9 rocket will launch the fourth private astronaut mission to the International Space Station. A SpaceX Falcon Heavy rocket will launch NASA’s Dragonfly mission, which consists of a rotorcraft designed by the Johns Hopkins Applied Physics Laboratory (APL) that will explore Saturn’s icy moon, Titan. SpaceX launches 475th Falcon 9 rocket to date on afternoon Starlink flight SpaceX launches 26 Starlink satellites on Falcon 9 rocket from Vandenberg SFB\",\n      \"score\": 0.8025714,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX - Launches\",\n      \"url\": \"https://www.spacex.com/launches/\",\n      \"content\": \"Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission March 31, 2025 - April 4, 2025 Starlink Mission Starlink Mission Starlink Mission Starlink Mission Transporter-13 Mission CREW-10 MISSION Starlink Mission Starlink Mission Starlink Mission Starlink Mission Starlink Mission STARLINK MISSION Starlink Mission STARLINK MISSION Starlink Mission Starlink Mission Starlink Mission Starlink Mission CREW-9 MISSION Transporter-11 Mission Transporter-10 Mission Crew-8 Mission USSF-124 Mission USSF-52 Mission Transporter-9 Mission Crew-7 Mission Transporter-8 Mission Transporter-7 Mission Crew-5 Mission Crew-6 Mission USSF-67 MISSION TRANSPORTER-6 MISSION USSF-44 Mission Crew-5 Mission Transporter-5 Mission Crew-4 Mission Transporter-4 Mission DRAGON RETURNS TO EARTH FOR CRS-24 MISSION Transporter-3 Mission Crew-3 Mission Crew-2 Mission Dragon Returns to Earth for CRS-22 Mission Transporter-2 Mission CREW-2 MISSION Transporter-1 Mission Crew-1 Mission\",\n      \"score\": 0.752468,\n      \"raw_content\": null\n    },\n    {\n      \"title\": \"SpaceX Rocket Launch Schedule: Today & Upcoming\",\n      \"url\": \"https://www.spacelaunchschedule.com/category/spacex/\",\n      \"content\": \"SpaceX Rocket Launch Schedule: Video Feed, Today & Upcoming - Space Launch Schedule SpaceX Rocket Launch Schedule: Today & Upcoming Discover the upcoming SpaceX rocket launch schedule, featuring today's and upcoming launches. When is the next SpaceX rocket launch? Your support goes toward Space Launch Schedule app and website improvements. Rocket Launch Schedule Upcoming Rocket Launch Schedule 2025 Rocket Launch Schedule Florida Rocket Launch Schedule Cape Canaveral Rocket Launch Schedule Kennedy Space Center Rocket Launch Schedule USA Rocket Launch Schedule SpaceX Rocket Launch Schedule NASA Rocket Launch Schedule ULA Rocket Launch Schedule Rocket Lab Rocket Launch Schedule Falcon Heavy Rocket Launch Schedule Starship Rocket Launch Schedule Falcon Rocket Launch Schedule View The Rocket Launch Schedule Falcon Launch Schedule SpaceX Launch Schedule Rocket Lab Launch Schedule\",\n      \"score\": 0.62495816,\n      \"raw_content\": null\n    }\n  ]"
+      }
+    ],
+    "tools": ["tavily_search", "get_current_time"],
+    "multiturn": true,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 31,
+    "messages": [{"role": "user", "content": "What's the weather like in San Francisco and paris"}],
+    "tools": ["get_current_weather_variant"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+    {
+      "id": 32,
+      "messages": [
+        {
+          "role": "user",
+          "content": "What's the weather like in Paris today?"
+        },
+        {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_9c9f87b21f20409682",
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "arguments": "{\"city\":\"Paris\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "{\"city\": \"Paris\", \"temperature_celsius\": 28}",
+          "tool_call_id": "call_9c9f87b21f20409682"
+        }
+      ],
+    "tools": ["get_current_weather_variant_2"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 33,
+    "messages": [{"role": "system","content": "You are a helpful assistant."},{"role": "user","content": "Hello."}],
+    "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
+    "multiturn": false,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 34,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the current weather in San Francisco?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_weather",
+              "arguments": "{\"location\":\"San Francisco\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "{\"temperature\": 34, \"unit\": \"celsius\", \"user\": null}"
+      }
+    ],
+    "tools": ["get_current_weather"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": true,
+    "system_prompt": false
+  },
+  {
+    "id": 35,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hi this is James Smith, What is the current weather in San Francisco?"
+      }
+    ],
+    "tools": ["get_current_weather"],
+    "multiturn": false,
+    "tool_use": "tool_required",
+    "ref_schema": true,
+    "system_prompt": false
+  },
+  {
+    "id": 36,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hi here is James, What is the current weather in San Francisco?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "get_current_weather",
+              "arguments": "{\"location\":\"San Francisco\",\"user\":{\"name\":\"James Smith\"}}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "{\"temperature\": 34, \"unit\": \"celsius\", \"user\": null}"
+      }
+    ],
+    "tools": ["get_current_weather"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": true,
+    "system_prompt": false
+  },
+  {
+    "id": 37,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "How many cups are in 3 gallons?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "convert_units",
+              "arguments": "{\"value\":3,\"from_unit\":\"gallons\",\"to_unit\":\"cups\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "0.792516"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": true,
+    "tool_use": "tool_optional",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 38,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "what is 4+5?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "solve_addition",
+              "arguments": "{\"a\":4,\"b\":5}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "9"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 39,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "what is 5 km in miles?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "convert_units",
+              "arguments": "{\"from_unit\":\"km\",\"to_unit\":\"miles\",\"value\":5.0}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "3.10686"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 40,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math and conversion assistant. Use tools when needed."
+      },
+      {
+        "role": "user",
+        "content": "I need to pay my card. It says I owe 347 euros, but I pay in dollars. How much is that?"
+      },
+      {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+            "type": "function",
+            "function": {
+              "name": "convert_currency",
+              "arguments": "{\"amount\":347,\"from_currency\":\"EUR\",\"to_currency\":\"USD\",\"exchange_rate\":null}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "390.11"
+      }
+    ],
+    "tools": ["solve_addition", "convert_units", "convert_currency", "calculate_date_difference"],
+    "multiturn": true,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": true
+  }
+]

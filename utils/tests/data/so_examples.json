@@ -1,0 +1,113 @@
+[
+  {
+    "id": 1,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert at structured data extraction. You will be given unstructured text should convert it into the given structure."
+      },
+      {
+        "role": "user",
+        "content": "the section 24 has appliances, and videogames"
+      }
+    ],
+    "schema": "data_extraction",
+    "multiturn": false,
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 2,
+    "messages": [
+      {
+        "role": "user",
+        "content": "generate the contact info from following customer message \n hi my name is jason tiller i have an issue with my new tv, my number is 35554774, plese call me back"
+      }
+    ],
+    "schema": "contact_form",
+    "multiturn": false,
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 3,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful math tutor. Guide the user through the solution step by step."
+      },
+      {
+        "role": "user",
+        "content": "how can I solve 8x + 7 = -23"
+      }
+    ],
+    "schema": "math_reasoning",
+    "multiturn": false,
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 4,
+    "messages": [
+      {
+        "role": "user",
+        "content": "YFinance results:\nMeta: income 234M, debt: 34M, headcount: 38314\nGoogle: income 634M, debt: 314M, headcount: 667314\n\nWhat is the current income and loans that meta has?"
+      }
+    ],
+    "schema": "YFinanceSourceList",
+    "multiturn": false,
+    "ref_schema": true,
+    "system_prompt": false
+  },
+  {
+    "id": 5,
+    "messages": [
+             {
+        "role": "system",
+        "content": "You are an expert at structured data extraction. You will be given unstructured text should convert it into the given structure."
+        },
+        {
+            "role": "user",
+            "content": "the section 24 has appliances, and videogames"
+        },
+        {
+            "role": "assistant",
+            "content": "{\"section\": \"24\", \"products\": [\"appliances\", \"videogames\"]}"
+        },
+        {
+            "role": "user",
+            "content": "appliances in the third hall"
+        }
+    ],
+    "schema": "data_extraction",
+    "multiturn": true,
+    "ref_schema": false,
+    "system_prompt": true
+  },
+  {
+    "id": 6,
+    "messages": [
+        {
+            "role": "user",
+            "content": "current indian prime minister on january 1st 2023"
+        }
+    ],
+    "schema": "person",
+    "multiturn": false,
+    "ref_schema": false,
+    "system_prompt": false
+  },
+  {
+    "id": 7,
+    "messages": [
+        {
+            "role": "user",
+            "content": "Which came first?"
+        }
+    ],
+    "schema": "chicken-egg",
+    "multiturn": false,
+    "ref_schema": false,
+    "system_prompt": false
+  }
+]
