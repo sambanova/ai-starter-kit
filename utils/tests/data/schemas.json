@@ -109,6 +109,50 @@
         "required": ["sources"], 
         "type": "object"
     }
-  }   
+  },
+  "person": {
+    "name": "default",
+    "strict": false,
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "first_name": {
+          "title": "First Name",
+          "type": "string"
+        },
+        "last_name": {
+          "title": "Last Name",
+          "type": "string"
+        },
+        "age": {
+          "title": "Age",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "first_name",
+        "last_name",
+        "age"
+      ],
+      "title": "Person",
+      "type": "object"
+    }
+  },
+  "chicken-egg": {
+    "name": "default",
+    "strict": false,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": [
+            "Chicken",
+            "Egg"
+          ]
+        }
+      }
+    }
+  }
 }
   

@@ -1,181 +1,181 @@
 {
-    "get_current_time": {
-        "type": "function",
-        "function": {
-            "name": "get_current_time",
-            "description": "Get the current time.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    },
-    "tavily_search": {
-        "type": "function",
-        "function": {
-            "name": "tavily_search",
-            "description": "Performs a web search using the Tavily API.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "search_query": {
-                        "description": "search_query",
-                        "title": "Search Query",
-                        "type": "string"
-                    }
-                },
-                "required": ["search_query"]
-            }
-        }
-    },
-    "get_weather": {
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get weather info for places",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "city": {
-                        "type": "string",
-                        "description": "The name of the city to get the weather for"
-                    },
-                    "metric": {
-                        "type": "string",
-                        "description": "The metric for weather. Options are: celsius, fahrenheit",
-                        "default": "celsius"
-                    }
-                },
-                "required": ["city"]
-            }
-        }
-    },
-    "get_current_weather": {
-        "type": "function",
-        "function": {
-          "name": "get_current_weather",
-          "description": "Get the current weather in a given location, customized to the user's details",
-          "parameters": {
+  "get_current_time": {
+    "type": "function",
+    "function": {
+      "name": "get_current_time",
+      "description": "Get the current time.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  },
+  "tavily_search": {
+    "type": "function",
+    "function": {
+      "name": "tavily_search",
+      "description": "Performs a web search using the Tavily API.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "search_query": {
+            "description": "search_query",
+            "title": "Search Query",
+            "type": "string"
+          }
+        },
+        "required": ["search_query"]
+      }
+    }
+  },
+  "get_weather": {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get weather info for places",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The name of the city to get the weather for"
+          },
+          "metric": {
+            "type": "string",
+            "description": "The metric for weather. Options are: celsius, fahrenheit",
+            "default": "celsius"
+          }
+        },
+        "required": ["city"]
+      }
+    }
+  },
+  "get_current_weather": {
+    "type": "function",
+    "function": {
+      "name": "get_current_weather",
+      "description": "Get the current weather in a given location, customized to the user's details",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA"
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["celsius", "fahrenheit"]
+          },
+          "user": {
+            "$ref": "#/$defs/UserDetails"
+          }
+        },
+        "required": ["location"],
+        "$defs": {
+          "UserDetails": {
             "type": "object",
+            "title": "Feedback",
             "properties": {
-              "location": {
-                "type": "string",
-                "description": "The city and state, e.g. San Francisco, CA"
+              "name": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
-              "unit": {
-                "type": "string",
-                "enum": ["celsius", "fahrenheit"]
-              },
-              "user": {
-                "$ref": "#/$defs/UserDetails"
+              "age": {
+                "type": "integer"
               }
             },
-            "required": ["location"],
-            "$defs": {
-              "UserDetails": {
-                "type": "object",
-                "title": "Feedback",
-                "properties": {
-                  "name": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "age": {
-                    "type": "integer"
-                  }
-                },
-                "required": ["name"]
-              }
-            }
+            "required": ["name"]
           }
         }
-      },      
-    "get_user_info": {
-        "type": "function",
-        "function": {
-            "name": "get_user_info",
-            "description": "Retrieve details for a specific user by their unique identifier. Note that the provided function is in Python 3 syntax.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "user_id": {
-                        "type": "integer",
-                        "description": "The unique identifier of the user. It is used to fetch the specific user details from the database."
-                    },
-                    "special": {
-                        "type": "string",
-                        "description": "Any special information or parameters that need to be considered while fetching user details.",
-                        "default": "none"
-                    }
-                },
-                "required": ["user_id"]
-            }
-        }
-    },
-    "yahoo_finance_search": {
-        "type": "function",
-        "function": {
-            "name": "yahoo_finance_search",
-            "description": "Get current stock information for a given symbol.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "symbol": {
-                        "description": "symbol",
-                        "title": "Symbol",
-                        "type": "string"
-                    }
-                },
-                "required": ["symbol"]
-            }
-        }
-    },
-    "exa_news_search": {
-        "type": "function",
-        "function": {
-            "name": "exa_news_search",
-            "description": "partial(func, *args, **keywords) - new function with partial application of the given arguments and keywords.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "description": "query",
-                        "title": "Query",
-                        "type": "string"
-                    },
-                    "answer": {
-                        "default": false,
-                        "description": "answer",
-                        "title": "Answer",
-                        "type": "boolean"
-                    }
-                },
-                "required": ["query"]
-            }
-        }
-    },
-    "sum_of_integers": {
-        "type": "function",
-        "function": {
-            "name": "sum_of_integers",
-            "description": "Takes two integers, a and b, and returns their sum.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {
-                        "type": "integer"
-                    },
-                    "b": {
-                        "type": "integer"
-                    }
-                },
-                "required": ["a", "b"]
-            }
-        }
-    },
-    "solve_addition": {
+      }
+    }
+  },
+  "get_user_info": {
+    "type": "function",
+    "function": {
+      "name": "get_user_info",
+      "description": "Retrieve details for a specific user by their unique identifier. Note that the provided function is in Python 3 syntax.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The unique identifier of the user. It is used to fetch the specific user details from the database."
+          },
+          "special": {
+            "type": "string",
+            "description": "Any special information or parameters that need to be considered while fetching user details.",
+            "default": "none"
+          }
+        },
+        "required": ["user_id"]
+      }
+    }
+  },
+  "yahoo_finance_search": {
+    "type": "function",
+    "function": {
+      "name": "yahoo_finance_search",
+      "description": "Get current stock information for a given symbol.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "description": "symbol",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": ["symbol"]
+      }
+    }
+  },
+  "exa_news_search": {
+    "type": "function",
+    "function": {
+      "name": "exa_news_search",
+      "description": "partial(func, *args, **keywords) - new function with partial application of the given arguments and keywords.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "query",
+            "title": "Query",
+            "type": "string"
+          },
+          "answer": {
+            "default": false,
+            "description": "answer",
+            "title": "Answer",
+            "type": "boolean"
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  },
+  "sum_of_integers": {
+    "type": "function",
+    "function": {
+      "name": "sum_of_integers",
+      "description": "Takes two integers, a and b, and returns their sum.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer"
+          },
+          "b": {
+            "type": "integer"
+          }
+        },
+        "required": ["a", "b"]
+      }
+    }
+  },
+  "solve_addition": {
     "type": "function",
     "function": {
       "name": "solve_addition",
@@ -275,6 +275,78 @@
           }
         },
         "required": ["start_date", "end_date"]
+      }
+    }
+  },
+  "set_current_language": {
+    "type": "function",
+    "function": {
+      "name": "set_current_language",
+      "description": "Set the current_language context variable",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Tracks if user forces switch to English. Valid values: \"hindi\" or \"en\""
+          }
+        },
+        "required": ["value"]
+      }
+    }
+  },
+  "transfer_power_batch": {
+    "type": "function",
+    "function": {
+      "name": "transfer_power_batch",
+      "description": "transfer_power_batch",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "text to say to user before transferring the call"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  "get_current_weather_variant": {
+    "type": "function",
+    "function": {
+      "name": "get_current_weather",
+      "description": "Get the current weather in a given location.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA."
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["celsius", "fahrenheit"]
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  },
+  "get_current_weather_variant_2": {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "Get weather of a location, the user should supply a location first.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA"
+          }
+        },
+        "required": ["city"]
       }
     }
   }
