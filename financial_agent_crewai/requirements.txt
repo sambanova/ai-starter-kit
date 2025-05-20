@@ -6,12 +6,12 @@ crewai==0.120.1
 crewai-tools==0.45.0
 Markdown==3.8
 numpy<2.0.0
-pandasai==2.3.0
+pandasai==3.0.0a1
 pre-commit==4.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 schedule==1.2.2
 sec-downloader==0.12.1
-streamlit==1.45.1
+streamlit==1.37.0
 weasyprint==65.1
 yfinance==0.2.61
