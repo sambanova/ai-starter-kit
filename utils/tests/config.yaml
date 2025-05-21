@@ -17,8 +17,8 @@ models:
     - "Qwen2-Audio-7B-Instruct"
   
   function-calling:
-    - "Meta-Llama-3.1-405B-Instruct"
     - "Meta-Llama-3.3-70B-Instruct"
+    - "Meta-Llama-3.1-405B-Instruct"
     - "Llama-4-Scout-17B-16E-Instruct"
     - "Llama-4-Maverick-17B-128E-Instruct"
     - "DeepSeek-V3-0324"
