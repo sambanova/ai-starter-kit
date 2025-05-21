@@ -74,7 +74,10 @@ def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Opt
 
     return model, int(in_tok), int(out_tok), con, qps
 
-def run_benchmarking(config: Dict, benchmarking_dir: str="../", run_name: Optional[str]=None, replace_dot_in_model_name: bool=True) -> None:
+def run_benchmarking(config: Dict, 
+        benchmarking_dir: str="../", 
+        run_name: Optional[str]=None, 
+        replace_dot_in_model_name: bool=True) -> None:
     sys.path.append(benchmarking_dir)
     sys.path.append(benchmarking_dir + "../")
     sys.path.append(benchmarking_dir + "src")
