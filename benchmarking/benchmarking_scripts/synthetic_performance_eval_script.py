@@ -74,7 +74,7 @@ def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Opt
 
     return model, int(in_tok), int(out_tok), con, qps
 
-def run_benchmarking(config: Dict, benchmarking_dir="../", run_name=None):
+def run_benchmarking(config: Dict, benchmarking_dir="../", run_name=None, replace_dot_in_model_name=True):
     sys.path.append(benchmarking_dir)
     sys.path.append(benchmarking_dir + "../")
     sys.path.append(benchmarking_dir + "src")
@@ -274,7 +274,8 @@ def run_benchmarking(config: Dict, benchmarking_dir="../", run_name=None):
             selected_columns = [c for c in selected_columns if c not in missing_columns]
             # Set fields to report
             df_summary = df_summary[selected_columns]
-            df_summary['model'] = df_summary['model'].str.replace('.', '-')
+            if replace_dot_in_model_name:
+                df_summary['model'] = df_summary['model'].str.replace('.', '-')
             df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
             df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
 
