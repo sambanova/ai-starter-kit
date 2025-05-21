@@ -18,6 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[int]]:
     """Generate grouping and batching info from DataFrame."""
     df = df.sort_values('end_time').reset_index(drop=True)
@@ -73,18 +74,19 @@ def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Opt
 
     return model, int(in_tok), int(out_tok), con, qps
 
-def run_benchmarking(config: Dict, 
-        benchmarking_dir: str="../", 
-        run_name: Optional[str]=None, 
-        replace_dot_in_model_name: bool=True) -> None:
+
+def run_benchmarking(
+    config: Dict[str, Any], benchmarking_dir: str = '../', run_name: Optional[str] = None, replace_dot_in_model_name: bool = True
+) -> None:
     sys.path.append(benchmarking_dir)
-    sys.path.append(benchmarking_dir + "../")
-    sys.path.append(benchmarking_dir + "src")
-    sys.path.append(benchmarking_dir + "src/llmperf")
-    sys.path.append(benchmarking_dir + "prompts")
+    sys.path.append(benchmarking_dir + '../')
+    sys.path.append(benchmarking_dir + 'src')
+    sys.path.append(benchmarking_dir + 'src/llmperf')
+    sys.path.append(benchmarking_dir + 'prompts')
 
     from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator, SyntheticPerformanceEvaluator
     from benchmarking.utils import read_perf_eval_json_files
+
     config['output_files_dir'] = os.path.expanduser(config['output_files_dir'])
     config['model_configs_path'] = os.path.expanduser(config['model_configs_path'])
     model_configs_df = pd.read_csv(config['model_configs_path'])
@@ -338,8 +340,8 @@ if __name__ == '__main__':
     # Get the absolute path of my_project
     current_dir = os.path.dirname(os.path.realpath(__file__))
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
-    sys.path.insert(0, project_root)  
-    
+    sys.path.insert(0, project_root)
+
     load_dotenv(os.path.join(project_root, '.env'), override=True)
 
     # Read config file
@@ -347,4 +349,3 @@ if __name__ == '__main__':
     with open(CONFIG_FILE_PATH) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
     run_benchmarking(config)
-
