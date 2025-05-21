@@ -14,7 +14,7 @@ def function_calling(
     model: str,
     tools: List[Dict[str, Any]] = None,
     tool_choice: str = 'auto',
-    parallel_tool_calls: bool = False,
+    parallel_tool_calls: bool = True,
     response_format: Dict[str, Any] = None,
     stream: bool = False,
 ) -> Any:
