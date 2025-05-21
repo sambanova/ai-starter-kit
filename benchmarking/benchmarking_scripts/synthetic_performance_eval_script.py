@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -8,8 +9,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import yaml
-
-import logging
 from dotenv import load_dotenv
 
 logging.basicConfig(
