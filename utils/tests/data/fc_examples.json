@@ -624,12 +624,26 @@
     "id": 25,
     "messages": [
         {
-        "role": "user",
-        "content": "What is a Large Language Model"
+            "role": "user",
+            "content": "What is a Large Language Model"
+        },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+                {
+                    "id": "8007d97c-eb39-43de-8bef-a8e6b83b8244",
+                    "type": "function",
+                    "function": {
+                        "name": "tavily_search",
+                        "arguments": "{\"search_query\":\"Large Language Model\"}"
+                    }
+                }
+            ]
         },
         {
-        "role": "assistant",
-        "content": "A large language model (LLM) is a type of artificial intelligence (AI) that can understand and generate human language. They are trained on massive datasets of text and code, allowing them to perform various natural language processing (NLP) tasks, including text generation, translation, and content summarization. \nHere's a more detailed breakdown:\n\n**Training**:\nLLMs are trained using deep learning techniques, particularly the Transformer model, and are pre-trained on vast amounts of data, often billions of text and other content.\n\n**Capabilities**:\nLLMs can perform a wide range of NLP tasks, including:\n- Text Generation\n- Translation\n- Content Summarization\n- Sentiment Analysis\n- Chatbots and Conversational AI\n\n**Underlying Architecture**:\nLLMs are typically based on deep learning architectures like the Transformer, which uses a combination of encoders and decoders with self-attention mechanisms.\n\n**Applications**:\nLLMs are used in virtual assistants (Siri, Alexa), content generation, search engines, and educational tools.\n\n**Limitations**:\nLLMs can hallucinate facts, may be biased, and are sensitive to input phrasing. They also pose challenges in explainability and can raise privacy/security concerns."
+            "role": "tool",
+            "content": "A large language model (LLM) is a type of artificial intelligence (AI) that can understand and generate human language. They are trained on massive datasets of text and code, allowing them to perform various natural language processing (NLP) tasks, including text generation, translation, and content summarization. \n Here's a more detailed breakdown:\n Training:\nLLMs are trained using deep learning techniques, particularly the Transformer model, and are pre-trained on vast amounts of data, often billions of text and other content.\n Capabilities:\nLLMs can perform a wide range of NLP tasks, including: \nText Generation: Creating new text on various topics. \nTranslation: Translating text between different languages. \nContent Summarization: Summarizing large blocks of text. \nSentiment Analysis: Analyzing the sentiment of text (positive, negative, neutral). \nChatbots and Conversational AI: Engaging in natural language conversations with \nusers. \nUnderlying Architecture:\nLLMs are typically based on deep learning architectures like the Transformer, which \nuses a combination of encoders and decoders with self-attention mechanisms to process and understand text. \nApplications:\nLLMs are used in a wide range of applications, including virtual assistants (Siri, Alexa, Google Assistant), content generation, and more. \nLimitations:\nLLMs can sometimes \"hallucinate\" or provide incorrect information, and they can be vulnerable to security issues like data exposure and malicious inputs. "
         }
     ],
     "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
@@ -877,7 +891,7 @@
   },
   {
     "id": 33,
-    "messages": [{"role": "system","content": "You are a helpful assistant."},{"role": "user","content": "Hello."}],
+    "messages": [{"role": "user", "content": "Hello"}],
     "tools": ["get_current_time", "tavily_search", "yahoo_finance_search", "exa_news_search"],
     "multiturn": false,
     "tool_use": "tool_not_required",
