@@ -110,13 +110,15 @@ def main() -> None:
         default='{}',
         help='Sampling parameters to send with the each request to the LLM API. (default: %(default)s)',
     )
-    
+
     parser.add_argument(
         '--use-debugging-mode',
         type=str2bool,
         required=False,
         default=False,
-        help='Whether to use or not the debug mode. WARNING: Debug mode will provide more detailed response at the cost of increased latency. (default: %(default)s)',
+        help='Whether to use or not the debug mode. \
+            WARNING: Debug mode will provide more detailed response at the cost of increased latency. \
+            (default: %(default)s)',
     )
 
     args, _ = parser.parse_known_args()

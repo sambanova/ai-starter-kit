@@ -511,15 +511,15 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        
+
         header = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
         }
-        
+
         if self.request_config.use_debugging_mode:
             header['ss-sn-options'] = 'accuracy_debug'
-        
+
         return header
 
     def _get_json_data(self) -> Dict[str, Any]:

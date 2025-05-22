@@ -19,7 +19,7 @@ class RequestConfig(BaseModel):
         is_stream_mode: Optional flag to enable streaming mode
         num_concurrent_requests: Optional number of concurrent requests
         metadata: Optional additional metadata to attach to the request for logging or validation purposes.
-        
+
     """
 
     request_idx: int
