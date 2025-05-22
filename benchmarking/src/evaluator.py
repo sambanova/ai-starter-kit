@@ -110,6 +110,14 @@ def main() -> None:
         default='{}',
         help='Sampling parameters to send with the each request to the LLM API. (default: %(default)s)',
     )
+    
+    parser.add_argument(
+        '--use-debugging-mode',
+        type=str2bool,
+        required=False,
+        default=False,
+        help='Whether to use or not the debug mode. WARNING: Debug mode will provide more detailed response at the cost of increased latency. (default: %(default)s)',
+    )
 
     args, _ = parser.parse_known_args()
 
@@ -162,6 +170,7 @@ def main() -> None:
             user_metadata=user_metadata,
             input_file_path=args.input_file_path,
             save_response_texts=args.save_llm_responses,
+            use_debugging_mode=args.use_debugging_mode,
             llm_api=args.llm_api,
         )
 
@@ -250,6 +259,7 @@ def main() -> None:
                 user_metadata=user_metadata,
                 use_multiple_prompts=args.use_multiple_prompts,
                 save_response_texts=args.save_llm_responses,
+                use_debugging_mode=args.use_debugging_mode,
                 llm_api=args.llm_api,
             )
 
@@ -330,6 +340,7 @@ def main() -> None:
                 qps_distribution=args.qps_distribution,
                 timeout=args.timeout,
                 user_metadata=user_metadata,
+                use_debugging_mode=args.use_debugging_mode,
                 llm_api=args.llm_api,
             )
 
