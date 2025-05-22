@@ -59,6 +59,7 @@ class BasePerformanceEvaluator(abc.ABC):
         multimodal_image_size: str = 'na',
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
+        use_debugging_mode: bool = False,
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
@@ -77,6 +78,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.user_metadata = user_metadata
         self.num_concurrent_requests: Optional[int] = None
         self.llm_api = llm_api
+        self.use_debugging_mode = use_debugging_mode
         self.api_variables = api_variables
         self.is_stream_mode = is_stream_mode
         self.timeout = timeout
@@ -750,6 +752,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 image=image,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
+                use_debugging_mode=self.use_debugging_mode,
                 api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
                 num_concurrent_requests=self.num_concurrent_requests,
@@ -1262,6 +1265,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     image=image,
                     sampling_params=updated_sampling_params,
                     llm_api=self.llm_api,
+                    use_debugging_mode=self.use_debugging_mode,
                     api_variables=self.api_variables,
                     is_stream_mode=self.is_stream_mode,
                     num_concurrent_requests=self.num_concurrent_requests,
@@ -1577,6 +1581,7 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
                 image=image,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
+                use_debugging_mode=self.use_debugging_mode,
                 api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
             )
