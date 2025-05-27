@@ -5,15 +5,21 @@ import re
 import subprocess
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+import jinja2
 import yaml
 from dotenv import load_dotenv
+from jinja2 import meta
+from jinja2.sandbox import ImmutableSandboxedEnvironment
+from packaging import version
+
 from snapi.snapi import USER_AGENT  # type: ignore
 from snsdk import SnSdk  # type: ignore
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-utils_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
@@ -36,7 +42,7 @@ JOB_TYPES = [
 
 # TODO: future support for other types
 SOURCE_TYPES = ['localMachine']
-SOURCE_FILE_PATH = os.path.join(utils_dir, 'fine_tuning', 'src', 'tmp_source_file.json')
+SOURCE_FILE_PATH = os.path.join(current_dir, 'tmp_source_file.json')
 
 
 class SnsdkWrapper:
@@ -470,9 +476,9 @@ class SnsdkWrapper:
             dataset_name = self.config['dataset']['dataset_name']
 
         # Search dataset
-        search_dataset_response = self.snsdk_client.search_dataset(dataset_name=dataset_name)
-        if search_dataset_response['status_code'] == 200:
-            dataset_id = search_dataset_response['data']['dataset_id']
+        datasets=self.list_datasets()
+        if dataset_name in [dataset["dataset_name"] for dataset in datasets]:
+            dataset_id = [dataset["id"] for dataset in datasets if dataset["dataset_name"]==dataset_name][0]
             logging.info(f"Dataset with name '{dataset_name}' found with id {dataset_id}")
             return dataset_id
         else:
@@ -663,7 +669,7 @@ class SnsdkWrapper:
             # if errors coming in response
             if errors_response:
                 if len(snapi_response.stderr) > 0:
-                    error_message = snapi_response.stderr
+                    error_message = snapi_response.stdout + snapi_response.stderr
                     # if all lines in stderr are warnings dont raise
                     if all('warning' in line.lower() for line in error_message.splitlines()):
                         logging.warning(f"dataset with name '{dataset_name} created with warnings: {error_message}")
@@ -672,6 +678,7 @@ class SnsdkWrapper:
                         raise Exception(f'Error message: {error_message}')
                 else:
                     error_search = re.search(r'message:\s*(.*)', snapi_response.stdout)
+                    error_message = snapi_response.stdout + snapi_response.stderr
                     if error_search:
                         error_message = error_search[0]
                     logging.error(f"Failed to create dataset with name '{dataset_name}'. Details: {error_message}")
@@ -724,6 +731,53 @@ class SnsdkWrapper:
         else:
             logging.info(f"App with name '{app_name}' not found")
             return None
+    
+    """app - BYOC"""
+    
+    def get_suitable_apps(
+        self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None, verbose: Optional[bool] = True
+    ) -> List[List[Dict[str, Any]]]:
+        """
+        find suitable sambastudio apps for the given checkpoints
+
+        Parameters:
+            - checkpoints (list of dict or dict, optional): checkpoints.
+                if not set checkpoints in config.yaml file will be used
+            - verbose (bool): show informational logs
+        """
+        if isinstance(checkpoints, dict):
+            checkpoints = [checkpoints]
+        if checkpoints is None:
+            self._raise_error_if_config_is_none()
+            checkpoints = self.config['checkpoints']
+
+        sstudio_models = self.list_models(verbose=True)
+
+        checkpoints_suitable_apps = []
+
+        for checkpoint in checkpoints:
+            assert isinstance(checkpoint, dict)
+            suitable_apps: Set[str] = set()
+            for model in sstudio_models:
+                params = model.get('params', {})
+                if params is not None:
+                    model_params = params.get('invalidates_checkpoint')
+                    if model_params is not None:
+                        # if byoc_params["model_arch"].lower() in model["architecture"].lower():
+                        if str(checkpoint['param_count']) + 'b' == model_params.get('model_parameter_count'):
+                            if checkpoint['vocab_size'] == model_params.get('vocab_size'):
+                                if checkpoint['seq_length'] == model_params.get('max_seq_length'):
+                                    suitable_apps.add(model['app_id'])
+            app_list = self.list_apps()
+            named_suitable_apps = []
+            assert app_list is not None
+            for app in app_list:
+                if app['id'] in suitable_apps:
+                    named_suitable_apps.append(app)
+            if verbose:
+                logging.info(f'Checkpoint {checkpoint["model_name"]} suitable apps:' + '\n' + f'{named_suitable_apps}')
+            checkpoints_suitable_apps.append(named_suitable_apps)
+        return checkpoints_suitable_apps
 
     """models"""
 
@@ -757,6 +811,127 @@ class SnsdkWrapper:
             logging.error(f"Failed to get model's info. Details: {model_info_response['message']}")
             raise Exception(f'Error message: {model_info_response["message"]}')
 
+    def list_models(
+        self,
+        filter_job_types: Optional[List[str]] = [],
+        verbose: Optional[bool] = False,
+    ) -> List[Dict[str, Any]]:
+        """
+        List models in sambastudio based on the provided filter.
+
+        Parameters:
+        filter_job_types (list[str], optional): A list of job types to filter the models. Defaults to [].
+            Should include the job types supported by the models to filter
+            example: ['train', 'batch_predict', 'deploy']
+        verbose (bool, optional): If True, return detailed information about each model. Defaults to False.
+
+        Returns:
+        list[dict]: A list of dictionaries, each representing a model.
+            If verbose is True, each dictionary contains all model information.
+            Otherwise, each dictionary contains only the model's checkpoint name and ID.
+
+        Raises:
+        Exception: If there is an error in listing models.
+        """
+
+        list_models_response = self.snsdk_client.list_models()
+        if list_models_response['status_code'] == 200:
+            models = []
+            for model in list_models_response['models']:
+                if filter_job_types is None:
+                    filter_job_types = []
+                if set(filter_job_types).issubset(model.get('jobTypes')):
+                    if verbose:
+                        models.append({k: v for k, v in model.items()})
+                    else:
+                        models.append(
+                            {k: v for k, v in model.items() if k in ['model_checkpoint_name', 'model_id', 'version']}
+                        )
+            return models
+        else:
+            logging.error(f'Failed to list models. Details: {list_models_response["detail"]}')
+            raise Exception(f'Error message: {list_models_response["detail"]}')
+
+    def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a model in the SambaStudio by its name.
+
+        Parameters:
+        model_name (str, optional): The name of the model to search for.
+            If not provided, the name from the configs file is used.
+
+        Returns:
+        str or None: The ID of the model if found, otherwise None.
+        """
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['job']['model']
+
+        search_model_response = self.snsdk_client.search_model(model_name=model_name)
+        if search_model_response['status_code'] == 200:
+            model_id = search_model_response['data']['model_id']
+            logging.info(f"Model with name '{model_name}' found with id {model_id}")
+            return model_id
+        else:
+            logging.info(f"Model with name '{model_name}' not found")
+            return None
+
+    def search_trainable_model(self, model_name: Optional[str] = None) -> Optional[str]:
+        """
+        Search for a trainable and deployable  model in the SambaStudio by its name.
+
+        Parameters:
+        model_name (str, optional): The name of the model to search for.
+            If not provided, the name from the configs file is used.
+
+        Returns:
+        str or None: The ID of the model if found and is trainable and deployable, otherwise None.
+        """
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['job']['model']
+
+        models = self.list_models(filter_job_types=['train'])
+        model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
+        if len(model_id) > 0:
+            logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
+            return model_id[0]
+        else:
+            logging.info(f"Model '{model_name}' available for training and deployment not found")
+            return None
+
+    def delete_model(self, model_name: Optional[str] = None) -> None:
+        """
+        Deletes a model from the SambaStudio.
+
+        Parameters:
+        model_name (str, optional): The name of the model to be deleted.
+            If not provided, the name from the configs file will be used.
+
+        Returns:
+        None
+
+        Raises:
+        Exception: If the model is not found or if there is an error in deleting the model.
+        """
+        if model_name is None:
+            self._raise_error_if_config_is_none()
+            model_name = self.config['model_checkpoint']['model_name']
+
+        # Check if the model exists
+        model_id = self.search_model(model_name=model_name)
+        if model_id is None:
+            raise Exception(f"Model with name '{model_name}' not found")
+
+        delete_model_response = self.snsdk_client.delete_model(model=model_id)
+        if delete_model_response['status_code'] == 200:
+            logging.info(f"Model with name '{model_name}' deleted")
+        else:
+            logging.error(f"Failed to delete model with name or id '{model_name}'. Details: {delete_model_response}")
+            raise Exception(f'Error message: {delete_model_response}')
+
+    """models - speculative decoding"""
+    
     def create_spec_decoding_model(
         self,
         model_name: Optional[str] = None,
@@ -975,125 +1150,219 @@ class SnsdkWrapper:
         ]
 
         return command
-
-    def list_models(
+    
+    """models - bundles"""
+    
+    def create_composite_model(
         self,
-        filter_job_types: Optional[List[str]] = [],
-        verbose: Optional[bool] = False,
-    ) -> List[Dict[str, Any]]:
-        """
-        List models in sambastudio based on the provided filter.
+        model_name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_list: Optional[List[str]] = None,
+        rdu_required: Optional[int] = None,
+        verbose: Optional[bool] = True,
+    ) -> Optional[str]:
+        """Create a composite model in SambaStudio
 
         Parameters:
-        filter_job_types (list[str], optional): A list of job types to filter the models. Defaults to [].
-            Should include the job types supported by the models to filter
-            example: ['train', 'batch_predict', 'deploy']
-        verbose (bool, optional): If True, return detailed information about each model. Defaults to False.
-
-        Returns:
-        list[dict]: A list of dictionaries, each representing a model.
-            If verbose is True, each dictionary contains all model information.
-            Otherwise, each dictionary contains only the model's checkpoint name and ID.
+        - model_name (str, optional): name of the composite model.
+            If not provided, the project name from the configuration is used.
+        - description (str, optional): description of the composite model. Defaults to None.
+            If not provided, the project name from the configuration is used.
+        - model_list (List[str], optional): list of models to include in the composite model.
+            If not provided, the models from the configuration are used.
+        - rdu_required (int, optional): minimum required RDU.
+            If not provided, the models from the configuration are used.
+        - verbose (bool): show informational logs
 
         Raises:
-        Exception: If there is an error in listing models.
-        """
-
-        list_models_response = self.snsdk_client.list_models()
-        if list_models_response['status_code'] == 200:
-            models = []
-            for model in list_models_response['models']:
-                if filter_job_types is None:
-                    filter_job_types = []
-                if set(filter_job_types).issubset(model.get('jobTypes')):
-                    if verbose:
-                        models.append({k: v for k, v in model.items()})
-                    else:
-                        models.append(
-                            {k: v for k, v in model.items() if k in ['model_checkpoint_name', 'model_id', 'version']}
-                        )
-            return models
-        else:
-            logging.error(f'Failed to list models. Details: {list_models_response["detail"]}')
-            raise Exception(f'Error message: {list_models_response["detail"]}')
-
-    def search_model(self, model_name: Optional[str] = None) -> Optional[str]:
-        """
-        Search for a model in the SambaStudio by its name.
-
-        Parameters:
-        model_name (str, optional): The name of the model to search for.
-            If not provided, the name from the configs file is used.
+            Exception: If one or more models on list does not exist.
+            Exception: If there is an error in creating the composite model.
 
         Returns:
-        str or None: The ID of the model if found, otherwise None.
+        - str: The ID of the created composite models if successful or the composite model already exists.
+            If unsuccessful, None is returned.
         """
+
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['job']['model']
+            model_name = self.config['composite_model']['model_name']
 
-        search_model_response = self.snsdk_client.search_model(model_name=model_name)
-        if search_model_response['status_code'] == 200:
-            model_id = search_model_response['data']['model_id']
-            logging.info(f"Model with name '{model_name}' found with id {model_id}")
-            return model_id
-        else:
-            logging.info(f"Model with name '{model_name}' not found")
-            return None
-
-    def search_trainable_model(self, model_name: Optional[str] = None) -> Optional[str]:
-        """
-        Search for a trainable and deployable  model in the SambaStudio by its name.
-
-        Parameters:
-        model_name (str, optional): The name of the model to search for.
-            If not provided, the name from the configs file is used.
-
-        Returns:
-        str or None: The ID of the model if found and is trainable and deployable, otherwise None.
-        """
-        if model_name is None:
+        if model_list is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['job']['model']
+            model_list = self.config['composite_model']['model_list']
 
-        models = self.list_models(filter_job_types=['train'])
-        model_id = [model['model_id'] for model in models if model['model_checkpoint_name'] == model_name]
-        if len(model_id) > 0:
-            logging.info(f"Model '{model_name}' with id '{model_id[0]}' available for training and deployment found")
-            return model_id[0]
-        else:
-            logging.info(f"Model '{model_name}' available for training and deployment not found")
-            return None
-
-    def delete_model(self, model_name: Optional[str] = None) -> None:
-        """
-        Deletes a model from the SambaStudio.
-
-        Parameters:
-        model_name (str, optional): The name of the model to be deleted.
-            If not provided, the name from the configs file will be used.
-
-        Returns:
-        None
-
-        Raises:
-        Exception: If the model is not found or if there is an error in deleting the model.
-        """
-        if model_name is None:
+        if description is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['model_checkpoint']['model_name']
+            description = self.config['composite_model']['description']
 
-        # Check if the model exists
+        if rdu_required is None:
+            self._raise_error_if_config_is_none()
+            rdu_required = self.config['composite_model']['rdu_required']
+
+        # check if selected composite model doesn't exist already
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
-            raise Exception(f"Model with name '{model_name}' not found")
+            # check if listed models to include in composite exist
+            model_ids = []
+            for model in model_list:
+                model_id = self.search_model(model_name=model)
+                if model_id is not None:
+                    model_ids.append(model_id)
+                else:
+                    raise Exception(f"Model with name '{model}' does not exist.")
+            if verbose:
+                logging.info(f"Models to include in composite found with ids '{list(zip(model_list, model_ids))}")
 
-        delete_model_response = self.snsdk_client.delete_model(model=model_id)
-        if delete_model_response['status_code'] == 200:
-            logging.info(f"Model with name '{model_name}' deleted")
+            # create composite model
+            dependencies = [{'name': model} for model in model_list]
+            create_composite_model_response = self.snsdk_client.add_composite_model(
+                name=model_name,
+                description=description,
+                dependencies=dependencies,
+                rdu_required=rdu_required,
+                config_params={},
+                app='',
+            )
+
+            if create_composite_model_response['status_code'] == 200:
+                model_id = create_composite_model_response['model_id']
+                if verbose:
+                    logging.info(f'Composite model with name {model_name} created with id {model_id}')
+            else:
+                logging.error(
+                    f'Failed to create composite model with name "{model_name}".'
+                    f'Message: {create_composite_model_response["message"]}.'
+                    f'Details: {create_composite_model_response["details"]}'
+                )
+                raise Exception(f'Error message: {create_composite_model_response["details"]}')
+
+        # if selected composite model already exists
         else:
-            logging.error(f"Failed to delete model with name or id '{model_name}'. Details: {delete_model_response}")
-            raise Exception(f'Error message: {delete_model_response}')
+            if verbose:
+                logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
+
+        return model_id
+    
+    """models - BYOC utils"""
+    
+    def find_config_params(
+        self,
+        checkpoint_paths: Optional[Union[List[str], str]] = None,
+        update_config_file: bool = False,
+        verbose: Optional[bool] = True,
+    ) -> List[Dict[str, Any]]:
+        """
+        Finds and returns the model architecture, sequence length, and vocabulary size for config.json files
+        in given checkpoint paths.
+
+        Parameters:
+            - checkpoint_paths (list of str or str, optional): checkpoint paths.
+                if not set config paths in config,yaml file will be used
+            - update_config_file (bool, optional): Whether to update the config file
+                with the found parameters. Defaults to False.
+            - verbose (bool): show informational logs
+
+        Returns:
+            checkpoint_parameters (list): list of dicts with the model_arch,
+                seq_length and vocab size found for each model
+        """
+        if isinstance(checkpoint_paths, str):
+            checkpoint_paths = [checkpoint_paths]
+
+        if checkpoint_paths is None:
+            self._raise_error_if_config_is_none()
+            checkpoint_paths = [checkpoint['checkpoint_path'] for checkpoint in self.config['checkpoints']]
+
+        checkpoint_params = []
+        for checkpoint_path in checkpoint_paths:
+            with open(os.path.join(checkpoint_path, 'config.json')) as file:
+                checkpoint_config = json.load(file)
+                checkpoint_params.append(
+                    {
+                        'model_arch': checkpoint_config['model_type'],
+                        'seq_length': checkpoint_config['max_position_embeddings'],
+                        'vocab_size': checkpoint_config['vocab_size'],
+                    }
+                )
+                if verbose:
+                    logging.info(f'Params for checkpoint in {checkpoint_path}:\n{checkpoint_params}')
+
+        if self.config is not None:
+            checkpoints = []
+            for checkpoint, params in zip(self.config['checkpoints'], checkpoint_params):
+                checkpoint['model_arch'] = params['model_arch']
+                checkpoint['seq_length'] = params['seq_length']
+                checkpoint['vocab_size'] = params['vocab_size']
+                checkpoints.append(checkpoint)
+            self.config['checkpoints'] = checkpoints
+            if verbose:
+                logging.info(f'config updated with checkpoints parameters')
+
+            if update_config_file:
+                self._raise_error_if_config_is_none()
+                assert isinstance(self.config_path, str)
+                with open(self.config_path, 'w') as outfile:
+                    yaml.dump(self.config, outfile)
+                if verbose:
+                    logging.info(f'config file updated with checkpoints parameters')
+
+        return checkpoint_params
+
+    def check_chat_templates(
+        self,
+        test_messages: List[str],
+        checkpoint_paths: Optional[Union[List[str], str]] = None,
+        verbose: Optional[bool] = True,
+    ) -> None:
+        """
+        Checks the chat templates for the given checkpoint paths.
+
+        Reads the tokenizer config file for each checkpoint path, extracts the chat template,
+        and checks if it can be rendered with the provided test messages.
+
+        Parameters:
+            - test_messages (List[str]): A list of test messages to use for rendering the chat template.
+            - checkpoint_paths (list of str or str, optional): checkpoint paths.
+                if not set config paths in config.yaml file will be used
+            - verbose (bool): show informational logs
+
+        Returns:
+            None
+        """
+        if isinstance(checkpoint_paths, str):
+            checkpoint_paths = [checkpoint_paths]
+
+        if checkpoint_paths is None:
+            self._raise_error_if_config_is_none()
+            checkpoint_paths = [checkpoint['checkpoint_path'] for checkpoint in self.config['checkpoints']]
+
+        for checkpoint_path in checkpoint_paths:
+            with open(os.path.join(checkpoint_path, 'tokenizer_config.json')) as file:
+                tokenizer_config = json.load(file)
+                chat_template = tokenizer_config.get('chat_template')
+            if isinstance(chat_template, str):
+                if verbose:
+                    logging.info(f'Raw chat template for checkpoint in {checkpoint_path}:\n{chat_template}\n')
+                if version.parse(jinja2.__version__) <= version.parse('3.0.0'):
+                    raise ImportError(
+                        'apply_chat_template requires jinja2>=3.0.0 to be installed. Your version is '
+                        f'{jinja2.__version__}.'
+                    )
+                try:
+                    jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+                    undeclared_variables = meta.find_undeclared_variables(jinja_env.parse(chat_template))
+                    special_tokens_map = {'messages': test_messages, **tokenizer_config}
+                    missing_variables = set(undeclared_variables) - set(special_tokens_map.keys())
+                    if len(missing_variables) > 0:
+                        logging.error(f'Missing variables to render template: {missing_variables}')
+                    else:
+                        compiled_template = jinja_env.from_string(chat_template)
+                        rendered = compiled_template.render(**special_tokens_map)
+                        logging.info(f'Rendered template with input test messages:\n\n{rendered}')
+                except Exception as e:
+                    logging.error(f'Failed to render template: {str(e)}')
+            else:
+                logging.error(f'Raw chat template for checkpoint in {checkpoint_path}: is not a string')
 
     """Job"""
 
@@ -1119,7 +1388,7 @@ class SnsdkWrapper:
         """
         if model_name is None:
             self._raise_error_if_config_is_none()
-            model_name = self.config['model_checkpoint']['model_name']
+            model_name = self.config['job']['model']
         if job_type is None:
             self._raise_error_if_config_is_none()
             job_type = self.config['job']['job_type']
@@ -1708,95 +1977,276 @@ class SnsdkWrapper:
             logging.error(f"Failed to delete checkpoint '{checkpoint}'. Details: {delete_checkpoint_response}")
             raise Exception(f'Error message: {delete_checkpoint_response}')
 
-    def create_composite_model(
+    """checkpoints - BYOC"""
+    
+    def _build_snapi_import_model_create_command(
         self,
-        model_name: Optional[str] = None,
+        model_name: str,
+        model_arch: str,
+        param_count: int,
+        seq_length: int,
+        vocab_size: int,
+        checkpoint_path: str,
+        app_id: str,
+        publisher: Optional[str] = None,
         description: Optional[str] = None,
-        model_list: Optional[List[str]] = None,
-        rdu_required: Optional[int] = None,
-        verbose: Optional[bool] = True,
-    ) -> Optional[str]:
-        """Create a composite model in SambaStudio
+        ignore_transformers_version: Optional[bool] = True,
+    ) -> List[str]:
+        """Build the command to import a model into Snapi
 
         Parameters:
-        - model_name (str, optional): name of the composite model.
-            If not provided, the project name from the configuration is used.
-        - description (str, optional): description of the composite model. Defaults to None.
-            If not provided, the project name from the configuration is used.
-        - model_list (List[str], optional): list of models to include in the composite model.
-            If not provided, the models from the configuration are used.
-        - rdu_required (int, optional): minimum required RDU.
-            If not provided, the models from the configuration are used.
+        - model_name (str): name of the model
+        - model_arch (str): architecture of the model
+        - param_count (int): number of parameters in the model in billions of parameters
+        - seq_length (int): sequence length of the model
+        - vocab_size (int): vocabulary size of the model
+        - checkpoint_path (str): path to the checkpoint folder
+        - app_id (str): id of the application
+        - publisher (str, optional): publisher of the model. Defaults to None.
+        - description (str, optional): description of the model. Defaults to None.
+
+        Returns:
+        - str: command to byoc with Snapi
+        """
+
+        command = [
+            'snapi',
+            'import',
+            'model',
+            'create',
+            '--model-name',
+            model_name,
+            '--app',
+            app_id,
+            '--source-type',
+            'LOCAL',
+            '--source-path',
+            checkpoint_path,
+            '--model-arch',
+            model_arch,
+            '--parameter-count',
+            str(param_count) + 'b',
+            '--sequence-length',
+            str(seq_length),
+            '--vocab-size',
+            str(vocab_size),
+            '-ni',  # -ni flag is used to  use non interactive mode
+        ]
+
+        # --publisher and --description flags and values are optional and only sent
+        #   if provided in the config file or arguments
+        if publisher is not None:
+            if len(publisher) > 0:
+                command.extend(['--publisher', publisher])
+        if description is not None:
+            if len(description) > 0:
+                command.extend(['--description', description])
+        if ignore_transformers_version:
+            command.extend(['--ignore-transformers-version'])
+
+        return command
+
+    def upload_checkpoint(
+        self,
+        model_name: str,
+        model_arch: str,
+        param_count: int,
+        seq_length: int,
+        vocab_size: int,
+        checkpoint_path: str,
+        app_id: str,
+        publisher: str = '',
+        description: str = '',
+        retries: int = 3,
+        ignore_transformers_version: bool = True,
+        verbose: Optional[bool] = True,
+    ) -> Optional[str]:
+        """Upload the checkpoint to Snapi
+
+        Parameters:
+        - model_name (str): name of the model.
+        - model_arch (str): architecture of the model.
+        - param_count (int): number of parameters in the model in billions of parameters.
+        - seq_length (int): sequence length of the model.
+        - vocab_size (int): vocabulary size of the model.
+        - checkpoint_path (str): path to the checkpoint folder.
+        - app_id (str): id of the application.
+        - publisher (str, optional): publisher of the model. Defaults to "".
+        - description (str, optional): description of the model. Defaults to "".
+        - retries (int): max number of retries to upload a checkpoint when
+            upload process fails. Defaults to 3.
         - verbose (bool): show informational logs
 
         Raises:
-            Exception: If one or more models on list does not exist.
-            Exception: If there is an error in creating the composite model.
+            Exception: If checkpoint upload fails
 
         Returns:
-        - str: The ID of the created composite models if successful or the composite model already exists.
-            If unsuccessful, None is returned.
+        - str: model id if model uploaded successfully. None otherwise.
         """
 
-        if model_name is None:
-            self._raise_error_if_config_is_none()
-            model_name = self.config['composite_model']['model_name']
-
-        if model_list is None:
-            self._raise_error_if_config_is_none()
-            model_list = self.config['composite_model']['model_list']
-
-        if description is None:
-            self._raise_error_if_config_is_none()
-            description = self.config['composite_model']['description']
-
-        if rdu_required is None:
-            self._raise_error_if_config_is_none()
-            rdu_required = self.config['composite_model']['rdu_required']
-
-        # check if selected composite model doesn't exist already
+        # validate if model already exist
         model_id = self.search_model(model_name=model_name)
         if model_id is None:
-            # check if listed models to include in composite exist
-            model_ids = []
-            for model in model_list:
-                model_id = self.search_model(model_name=model)
-                if model_id is not None:
-                    model_ids.append(model_id)
-                else:
-                    raise Exception(f"Model with name '{model}' does not exist.")
-            if verbose:
-                logging.info(f"Models to include in composite found with ids '{list(zip(model_list, model_ids))}")
+            # Validate if path exist
+            if not os.path.isdir(checkpoint_path):
+                logging.error(f'path: {checkpoint_path} for checkpoint with name: {model_name} does not exist')
+                raise ValueError(f'{checkpoint_path} does not exist')
 
-            # create composite model
-            dependencies = [{'name': model} for model in model_list]
-            create_composite_model_response = self.snsdk_client.add_composite_model(
-                name=model_name,
-                description=description,
-                dependencies=dependencies,
-                rdu_required=rdu_required,
-                config_params={},
-                app='',
+            # Validate if app exist
+            found_app_id = self.search_app(app_id)
+            if found_app_id is None:
+                logging.error(f'app: {app_id} for checkpoint with name: {model_name} does not exist')
+                raise ValueError(f'app: {app_id} does not exist')
+
+            # upload the checkpoint
+            command = self._build_snapi_import_model_create_command(
+                model_name,
+                model_arch,
+                param_count,
+                seq_length,
+                vocab_size,
+                checkpoint_path,
+                app_id,
+                publisher,
+                description,
+                ignore_transformers_version,
             )
-
-            if create_composite_model_response['status_code'] == 200:
-                model_id = create_composite_model_response['model_id']
+            # attempt to upload retries times
+            for i in range(retries + 1):
+                # execute snapi import model create command
                 if verbose:
-                    logging.info(f'Composite model with name {model_name} created with id {model_id}')
-            else:
-                logging.error(
-                    f'Failed to create composite model with name "{model_name}".'
-                    f'Message: {create_composite_model_response["message"]}.'
-                    f'Details: {create_composite_model_response["details"]}'
-                )
-                raise Exception(f'Error message: {create_composite_model_response["details"]}')
+                    logging.info(f'running snapi upload command:\n {" ".join(command)}\nThis could take a while')
+                snapi_response = subprocess.run(command, capture_output=True, text=True)
 
-        # if selected composite model already exists
+                # check if errors in execution
+                errors_response = (
+                    ('aborted' in snapi_response.stdout.lower()) and ('error occurred' in snapi_response.stdout.lower())
+                ) or (len(snapi_response.stderr) > 0)
+
+                # capture errors coming in response
+                if errors_response:
+                    if len(snapi_response.stderr) > 0:
+                        error_message = snapi_response.stderr
+                        # if all lines in stderr are warnings set errors_response as false
+                        if all('warning' in line.lower() for line in error_message.splitlines()):
+                            logging.warning(f'Warnings when uploading checkpoint : {error_message}')
+                            errors_response = False
+                        else:
+                            logging.error(snapi_response.stdout)
+                            logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
+                            logging.error(error_message)
+                    else:
+                        error_search = re.search(r'Upload Error\s*(. *)', snapi_response.stdout)
+                        if error_search:
+                            error_message = error_search[0]
+                        logging.error(snapi_response.stdout)
+                        logging.error('Error uploading model checkpoint Process returned a non-zero exit code.')
+                        logging.error(error_message)
+
+                if errors_response:
+                    if i < retries:
+                        if verbose:
+                            logging.info(f'Retrying upload for {i + 1} time...')
+                        continue
+                    else:
+                        raise Exception(
+                            f'Error uploading model checkpoint after {retries} attempts\nmax retries exceed'
+                        )
+                # if there are no errors in response
+                else:
+                    model_id = self.search_model(model_name=model_name)
+                    if verbose:
+                        logging.info(f"Model checkpoint with name '{model_name}' created it with id {model_id}")
+                    break
+
+        # if checkpoint already exists
         else:
-            if verbose:
-                logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
+            logging.info(f"Model checkpoint with name '{model_name}' not created it already exist with id {model_id}")
 
         return model_id
+
+    def upload_checkpoints(
+        self,
+        checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+        max_parallel_jobs: int = 4,
+        retries: int = 3,
+        verbose: Optional[bool] = True,
+    ) -> str:
+        """
+        Upload checkpoints to sambastudio
+
+        Parameters:
+        - checkpoints (Optional[List[Dict[str, Any]]], optional): list of checkpoints.
+            If not provided, all checkpoints from config will be uploaded
+        - max_parallel_jobs (int): maximum number of upload parallel jobs. Defaults to 4.
+        - retries (int): max number of retries to upload a checkpoint when
+            upload process fails. Defaults to 3.
+        - verbose (bool): show informational logs
+        """
+
+        if checkpoints is None:
+            self._raise_error_if_config_is_none()
+            checkpoints = self.config['checkpoints']
+
+        if isinstance(checkpoints, Dict):
+            checkpoints = [checkpoints]
+
+        futures = {}
+        with ThreadPoolExecutor(max_workers=max_parallel_jobs) as executor:
+            # Submit all the upload tasks to the executor
+            for checkpoint in checkpoints:
+                # Create a future for the upload_checkpoint function
+                future = executor.submit(
+                    self.upload_checkpoint,
+                    checkpoint['model_name'],
+                    checkpoint['model_arch'],
+                    checkpoint['param_count'],
+                    checkpoint['seq_length'],
+                    checkpoint['vocab_size'],
+                    checkpoint['checkpoint_path'],
+                    checkpoint['app_id'],
+                    checkpoint.get('publisher', ''),
+                    checkpoint.get('description', ''),
+                    retries,
+                )
+                futures[checkpoint['model_name']] = future  # Add to the futures dictionary
+
+            # Wait for all tasks to complete and handle exceptions
+            models = []
+            for model_name, future in futures.items():
+                try:
+                    result = future.result()  # This will raise the exception if the thread raised one
+                    models.append({'name': model_name, 'id': result})
+                    if verbose:
+                        logging.info(f'Checkpoint for model {model_name} finished successfully with result {result} ')
+                except Exception as e:
+                    logging.error(f'Error uploading checkpoint for model {model_name}: {e}', exc_info=True)
+        return models
+
+    def get_checkpoints_status(
+        self,
+        model_names: Optional[Union[List[str], str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get status of uploaded checkpoints
+
+        Parameters:
+        - model_names (Optional[List[str]], optional): list of model names.
+
+        Return
+        - model_statuses: list of model checkpoints status
+        """
+        if model_names is None:
+            self._raise_error_if_config_is_none()
+            model_names = [checkpoint['model_name'] for checkpoint in self.config['checkpoints']]
+        if isinstance(model_names, str):
+            model_names = [model_names]
+
+        model_statuses = []
+        for model in model_names:
+            model_status = self.snsdk_client.import_status(model_id=model)
+            model_statuses.append(model_status)
+        return model_statuses    
 
     """endpoint"""
 

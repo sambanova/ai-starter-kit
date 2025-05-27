@@ -1,3 +1,3 @@
-[submodule "utils/fine_tuning/generative_data_prep"]
-	path = utils/fine_tuning/generative_data_prep
-	url = https://github.com/sambanova/generative_data_prep.git
+[submodule "utils/dedicated_env/generative_data_prep"]
+	path = utils/dedicated_env/generative_data_prep
+	url = https://github.com/sambanova/generative_data_prep
