@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 from jinja2 import meta
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from packaging import version
-
 from snapi.snapi import USER_AGENT  # type: ignore
 from snsdk import SnSdk  # type: ignore
 
@@ -476,9 +475,9 @@ class SnsdkWrapper:
             dataset_name = self.config['dataset']['dataset_name']
 
         # Search dataset
-        datasets=self.list_datasets()
-        if dataset_name in [dataset["dataset_name"] for dataset in datasets]:
-            dataset_id = [dataset["id"] for dataset in datasets if dataset["dataset_name"]==dataset_name][0]
+        datasets = self.list_datasets()
+        if dataset_name in [dataset['dataset_name'] for dataset in datasets]:
+            dataset_id = [dataset['id'] for dataset in datasets if dataset['dataset_name'] == dataset_name][0]
             logging.info(f"Dataset with name '{dataset_name}' found with id {dataset_id}")
             return dataset_id
         else:
@@ -731,9 +730,9 @@ class SnsdkWrapper:
         else:
             logging.info(f"App with name '{app_name}' not found")
             return None
-    
+
     """app - BYOC"""
-    
+
     def get_suitable_apps(
         self, checkpoints: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None, verbose: Optional[bool] = True
     ) -> List[List[Dict[str, Any]]]:
@@ -931,7 +930,7 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {delete_model_response}')
 
     """models - speculative decoding"""
-    
+
     def create_spec_decoding_model(
         self,
         model_name: Optional[str] = None,
@@ -1150,9 +1149,9 @@ class SnsdkWrapper:
         ]
 
         return command
-    
+
     """models - bundles"""
-    
+
     def create_composite_model(
         self,
         model_name: Optional[str] = None,
@@ -1242,9 +1241,9 @@ class SnsdkWrapper:
                 logging.info(f"Model with name '{model_name}' not created it already exist with id {model_id}")
 
         return model_id
-    
+
     """models - BYOC utils"""
-    
+
     def find_config_params(
         self,
         checkpoint_paths: Optional[Union[List[str], str]] = None,
@@ -1978,7 +1977,7 @@ class SnsdkWrapper:
             raise Exception(f'Error message: {delete_checkpoint_response}')
 
     """checkpoints - BYOC"""
-    
+
     def _build_snapi_import_model_create_command(
         self,
         model_name: str,
@@ -2246,7 +2245,7 @@ class SnsdkWrapper:
         for model in model_names:
             model_status = self.snsdk_client.import_status(model_id=model)
             model_statuses.append(model_status)
-        return model_statuses    
+        return model_statuses
 
     """endpoint"""
 
