@@ -284,10 +284,10 @@ utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
 
-# finetunning and byoc
-utils/fine_tuning/src/tmp_source_file.json
+# dedicated env fine-tuning and byoc
+utils/dedicated_env/tmp_source_file.json
 utils/fine_tuning/sambastudio_fine_tuning_dataset
-utils/byoc/models
+utils/dedicated_env/models
 e2e_fine_tuning/data
 
 # yoda llava_data_prep
