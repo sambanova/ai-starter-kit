@@ -76,10 +76,10 @@ def extract_file_info(file_name: str) -> Tuple[str, int, int, Optional[int], Opt
 
 
 def run_benchmarking(
-    config: Dict[str, Any], 
-    benchmarking_dir: str = '../', 
-    run_name: Optional[str] = None, 
-    replace_dot_in_model_name: bool = True
+    config: Dict[str, Any],
+    benchmarking_dir: str = '../',
+    run_name: Optional[str] = None,
+    replace_dot_in_model_name: bool = True,
 ) -> None:
     sys.path.append(benchmarking_dir)
     sys.path.append(benchmarking_dir + '../')

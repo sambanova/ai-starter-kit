@@ -11,6 +11,7 @@ python src/evaluator.py \
 --input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
 --save-llm-responses False \
 --sampling-params '{"max_tokens_to_generate": 256}' \
+--use-debugging-mode False \
 --llm-api sncloud
 
 # Notes:
@@ -28,6 +29,7 @@ python src/evaluator.py \
 # --input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
 # --save-llm-responses False \
 # --sampling-params '{"max_tokens_to_generate": 256}' \
+# --use-debugging-mode False \
 # --llm-api sambastudio
 
 #   1.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
@@ -41,6 +43,7 @@ python src/evaluator.py \
 # --input-file-path "<CUSTOM DATASET PATH HERE>" \
 # --save-llm-responses False \
 # --sampling-params '{"max_tokens_to_generate": 256}' \
+# --use-debugging-mode False \
 # --llm-api sambastudio
 
 # 2. SambaNova Cloud 
@@ -56,6 +59,7 @@ python src/evaluator.py \
 # --input-file-path "<CUSTOM DATASET PATH HERE>" \
 # --save-llm-responses False \
 # --sampling-params '{"max_tokens_to_generate": 256}' \
+# --use-debugging-mode False \
 # --llm-api sncloud
 
 #   2.2 Multimodal models (remember to use OpenAI compatible URL in .env SAMBASTUDIO_URL variable)
@@ -69,4 +73,5 @@ python src/evaluator.py \
 # --input-file-path "<CUSTOM DATASET PATH HERE>" \
 # --save-llm-responses False \
 # --sampling-params '{"max_tokens_to_generate": 256}' \
+# --use-debugging-mode False \
 # --llm-api sncloud
