@@ -156,7 +156,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
 
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')
         ):
             formatted_ans = ans.replace('$', '\$')
             st.write(f'{formatted_ans}')
@@ -171,7 +171,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             st.write(load_app_description().get('app_overview'))
 
@@ -206,7 +206,7 @@ def main() -> None:
 
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     if 'conversation' not in st.session_state:

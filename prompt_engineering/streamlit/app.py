@@ -70,7 +70,7 @@ def main() -> None:
     )  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:,
     col1, mid, col2 = st.columns([1, 1, 20])
     with col1:
-        render_svg(os.path.join(kit_dir, 'docs/sambanova-ai.svg'))
+        render_svg(os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'))
     with col2:
         st.title('Prompt Engineering Starter Kit')
 

@@ -118,7 +118,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             st.write(st_description.get('app_overview'))
 
@@ -133,7 +133,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
 
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             st.markdown(
                 f'{ans}',
@@ -162,7 +162,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
 def main() -> None:
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     initialize_env_variables(prod_mode, additional_env_vars)

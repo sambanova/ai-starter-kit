@@ -169,7 +169,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             st.write(st_description.get('app_overview'))
 
@@ -187,7 +187,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
             # show AI outputs (odd messages)
             with st.chat_message(
                 'ai',
-                avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+                avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
             ):
                 formatted_ans = st.session_state.chat_history[i].replace('$', '\$')
                 st.write(f'{formatted_ans}')
@@ -250,7 +250,7 @@ def set_fc_session_state_variables() -> None:
 def main() -> None:
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     initialize_env_variables(prod_mode, additional_env_vars)

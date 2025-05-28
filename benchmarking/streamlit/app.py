@@ -22,6 +22,10 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 
 warnings.filterwarnings('ignore')
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
+
 
 @st.cache_data
 def _init() -> None:
@@ -128,7 +132,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     _init()

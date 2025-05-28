@@ -1,3 +1,4 @@
+import os
 import sys
 
 import streamlit as st
@@ -21,6 +22,10 @@ from benchmarking.streamlit.streamlit_utils import (
 )
 
 warnings.filterwarnings('ignore')
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 CONFIG_PATH = './config.yaml'
 with open(CONFIG_PATH) as file:
@@ -239,7 +244,7 @@ def main() -> None:
                         st.write(f"{user['question']}")
                     with st.chat_message(
                         'ai',
-                        avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+                        avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
                     ):
                         st.write(f"{system['answer']}")
                         with st.expander('Performance metrics'):
@@ -266,7 +271,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     # Defining styles

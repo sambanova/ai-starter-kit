@@ -17,7 +17,7 @@ from image_search.src.image_search import ImageSearch
 
 st.set_page_config(
     page_title='AI Starter Kit',
-    page_icon='https://sambanova.ai/wp-content/uploads/2021/05/logo_icon-footer.svg',
+    page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     layout='wide',
 )
 

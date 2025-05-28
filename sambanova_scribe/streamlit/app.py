@@ -149,7 +149,7 @@ def render_chat(chat_history: List[Union[str, BytesIO]]) -> None:
 
             with st.chat_message(
                 'ai',
-                avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+                avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
             ):
                 st.write(f'{ans}')
         st.session_state.spinner_placeholder = st.empty()
@@ -286,7 +286,9 @@ def main() -> None:
 
 if __name__ == '__main__':
     st.set_page_config(
-        page_title='AI Starter Kit', page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png', layout='wide'
+        page_title='AI Starter Kit',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'), 
+        layout='wide'
     )
 
     llm_type, prod_mode = init()
