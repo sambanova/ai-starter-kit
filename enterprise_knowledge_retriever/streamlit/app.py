@@ -7,6 +7,7 @@ import uuid
 from threading import Thread
 from typing import Any, List, Optional
 
+import base64
 import schedule
 import streamlit as st
 import yaml
@@ -208,6 +209,31 @@ def main() -> None:
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
+    
+    # set buttons style
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+            border-radius: 8px;
+            padding: 0.5em 1em;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
 
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
@@ -235,10 +261,26 @@ def main() -> None:
             track=prod_mode,
         )
         st.session_state.mp_events.demo_launch()
-
-    st.title(':orange[SambaNova] Enterprise Knowledge Retriever')
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([4, 1, 4])
+    with col2:
+        st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
+    st.title('Enterprise Knowledge Retriever')
 
     with st.sidebar:
+        
+        # Inject HTML to display the logo in the sidebar at 70% width
+        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        with open(logo_path, "rb") as img_file:
+            encoded = base64.b64encode(img_file.read()).decode()
+        st.sidebar.markdown(f"""
+            <div style="text-align: center;">
+                <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+            </div>
+        """, unsafe_allow_html=True)
+        #st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+        
         st.title('Setup')
 
         # Callout to get SambaNova API Key
