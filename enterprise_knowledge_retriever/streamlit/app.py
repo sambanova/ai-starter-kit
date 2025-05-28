@@ -266,7 +266,18 @@ def main() -> None:
     col1, col2, col3 = st.columns([4, 1, 4])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
-    st.title('Enterprise Knowledge Retriever')
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">Enterprise Knowledge Retriever</div>
+    """, unsafe_allow_html=True)
 
     with st.sidebar:
         
