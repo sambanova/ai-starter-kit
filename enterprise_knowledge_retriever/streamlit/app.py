@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import shutil
@@ -7,7 +8,6 @@ import uuid
 from threading import Thread
 from typing import Any, List, Optional
 
-import base64
 import schedule
 import streamlit as st
 import yaml
