@@ -1,4 +1,14 @@
-# SambaCloud-Google-Integration
+
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+</picture>
+</a>
+
+SambaCloud-Google-Integration
+===============================
+
 App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces
 
 Getting Started:
