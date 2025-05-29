@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import sys
@@ -167,6 +168,17 @@ def reset_conversation() -> None:
 def setup_sidebar() -> None:
     """Setup sidebar for Scribe application."""
     with st.sidebar:
+        
+        # Inject HTML to display the logo in the sidebar at 70% width
+        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        with open(logo_path, "rb") as img_file:
+            encoded = base64.b64encode(img_file.read()).decode()
+        st.sidebar.markdown(f"""
+            <div style="text-align: center;">
+                <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+            </div>
+        """, unsafe_allow_html=True)
+        
         st.title('Setup')
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
@@ -203,7 +215,49 @@ def setup_sidebar() -> None:
 
 def main() -> None:
     """Main function for Scribe application."""
-    st.title(':orange[SambaNova] Scribe')
+    # set buttons style
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        div.stButton > button:hover, div.stButton > button:focus  {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([8, 1, 8])
+    with col2:
+        st.image(os.path.join(repo_dir, 'images', 'scribe_icon.png'))
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">SambaNova Scribe</div>
+    """, unsafe_allow_html=True)
+    
     if are_credentials_set(ADDITIONAL_ENV_VARS):
         active_tab = tabs(['Transcribe', 'Chat', 'Audio QA'], 1)
         if active_tab != st.session_state.active_tab:

@@ -12,7 +12,7 @@ def tabs(tabs: List[str] = [], default_active_tab: int = 0) -> Optional[str]:
         """  
             <style type="text/css">
             div[role=radiogroup] {
-                border-bottom: 2px solid rgba(49, 51, 63, 0.1);
+                border-bottom: 2px solid rgba(37, 14, 54, 0.3);
             }
             div[role=radiogroup] > label > div:first-of-type {
                display: none
@@ -35,12 +35,12 @@ def tabs(tabs: List[str] = [], default_active_tab: int = 0) -> Optional[str]:
             div[role=radiogroup] label:nth-child("""
         + str(child)
         + """) {    
-                border-bottom: 2px solid rgb(255, 75, 75);
+                border-bottom: 2px solid #4E22EB;
             }     
             div[role=radiogroup] label:nth-child("""
         + str(child)
         + """) p {    
-                color: rgb(255, 75, 75);
+                color: #4E22EB;
                 padding-right: 0;
             }            
             </style>
