@@ -43,6 +43,7 @@ def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> Any:
     completion_text = llm.invoke(prompt)
     return completion_text
 
+
 def main() -> None:
     # Set up title
     st.set_page_config(
@@ -51,9 +52,10 @@ def main() -> None:
         initial_sidebar_state='auto',
         menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'},
     )
-    
+
     # set buttons style
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         div.stButton > button {
             background-color: #250E36;  /* Button background */
@@ -64,10 +66,13 @@ def main() -> None:
             color: #FFFFFF;             /* Button text color */
         }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Load Inter font from Google Fonts and apply globally
-    st.markdown("""
+    st.markdown(
+        """
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
         <style>
@@ -76,13 +81,16 @@ def main() -> None:
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # add title and icon
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .kit-title {
                 text-align: center;
@@ -93,7 +101,9 @@ def main() -> None:
             }
         </style>
         <div class="kit-title">Prompt Engineering</div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Instantiate LLMManager class
     llm_manager = LLMManager()
