@@ -219,6 +219,10 @@ def main() -> None:
             border-radius: 8px;
             padding: 0.5em 1em;
         }
+        div.stButton > button:hover {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
         </style>
         """, unsafe_allow_html=True)
     
