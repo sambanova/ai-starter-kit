@@ -18,7 +18,10 @@ from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     PRIMARY_ST_STYLE,
     find_pages_to_hide,
+    render_logo,
+    render_title_icon,
     save_uploaded_file,
+    set_font,
 )
 
 warnings.filterwarnings('ignore')
@@ -107,6 +110,7 @@ def _initialize_sesion_variables() -> None:
 
 
 def main() -> None:
+    set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
@@ -114,13 +118,14 @@ def main() -> None:
     else:
         hide_pages([APP_PAGES['setup']['page_label']])
 
-    st.title(':orange[SambaNova] Chat Performance Evaluation')
+    render_title_icon('Chat Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         """With this option, users have a way to know performance metrics per response. Set your LLM first on the left
         side bar and then have a nice conversation, also know more about our performance metrics per each response."""
     )
 
     with st.sidebar:
+        render_logo()
         st.title('Set up the LLM')
         st.markdown('**Configure your LLM before starting to chat**')
 

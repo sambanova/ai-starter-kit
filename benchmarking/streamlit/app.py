@@ -15,7 +15,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, hide_pages, show_pages
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, render_logo, set_font
 from benchmarking.utils import CONFIG_PATH, SAMBANOVA_URL
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
@@ -56,6 +56,8 @@ def _initialize_session_variables() -> None:
 
 
 def main() -> None:
+    render_logo()
+    set_font()
     show_pages(
         [
             Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),

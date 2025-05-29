@@ -21,7 +21,10 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    render_logo,
+    render_title_icon,
     set_api_variables,
+    set_font,
     update_progress_bar,
 )
 
@@ -170,6 +173,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
+    set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
@@ -177,7 +181,8 @@ def main() -> None:
     else:
         hide_pages([APP_PAGES['setup']['page_label']])
 
-    st.title(':orange[SambaNova] Synthetic Performance Evaluation')
+    render_title_icon('Synthetic Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
+
     st.markdown(
         """This performance evaluation assesses the following LLM's performance metrics using concurrent processes.
         _client represents the metrics computed from the client-side (includes queue and round-trip time 
@@ -195,6 +200,7 @@ def main() -> None:
     st.markdown("""**Tokens/sec (Throughput)**: Total number of tokens generated per second for a given batch-size.""")
 
     with st.sidebar:
+        render_logo()
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
 
