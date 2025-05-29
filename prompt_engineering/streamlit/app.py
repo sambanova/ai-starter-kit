@@ -145,18 +145,21 @@ def main() -> None:
             \n:violet[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including
             answering questions, offering explanations, and giving advice. It's ideal for general knowledge, trivia,
             educational support, and everyday inquiries.
-            \n:violet[**Document Search:**] Specializes in locating and briefing relevant information from large documents
-            or databases. Useful for research, data analysis, and extracting key points from extensive text sources.
+            \n:violet[**Document Search:**] Specializes in locating and briefing relevant information from large 
+            documents or databases. Useful for research, data analysis, and extracting key points from extensive text
+            sources.
             \n:violet[**Product Selection:**] Assists in choosing products by comparing features, prices, and reviews.
             Ideal for shopping decisions, product comparisons, and understanding the pros and cons of different items.
             \n:violet[**Code Generation:**] Helps in writing, debugging, and explaining code. Useful for software 
             development, learning programming languages, and automating simple tasks through scripting.
             \n:violet[**Summarization:**] Outputs a summary based on a given context. Essential for condensing large
             volumes of text into concise representations, aiding efficient information retrieval and comprehension.
-            \n:violet[**Question & Answering:**] Answers questions regarding different topics given in a previous context.
+            \n:violet[**Question & Answering:**] Answers questions regarding different topics given in a previous 
+            context.
             Crucial for enabling users to directly obtain relevant information from textual data, facilitating efficient
             access to knowledge and aiding decision-making processes.
-            \n:violet[**Query decomposition:**] Aids on simplyfying complex queries into small and precise sub-questions.
+            \n:violet[**Query decomposition:**] Aids on simplifying complex queries into small and precise
+            sub-questions.
             Vital for breaking down complex queries into more manageable sub-tasks, facilitating more effective
             information retrieval and generation processes.
             """,
