@@ -9,7 +9,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-import base64  # for showing the SVG Sambanova icon
 from typing import Any
 
 import streamlit as st  # for gui elements, secrets management
@@ -44,22 +43,6 @@ def call_api(llm_manager: LLMManager, prompt: str, llm_expert: str) -> Any:
     completion_text = llm.invoke(prompt)
     return completion_text
 
-
-def render_svg(svg_path: str) -> None:
-    """Renders the given svg string.
-
-    Args:
-        svg_path (str): SVG file path
-    """
-
-    # Render SVG file
-    with open(svg_path, 'r') as file:
-        svg = file.read()
-    b64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
-    html = r'<img src="data:image/svg+xml;base64,%s" width="60"/>' % b64
-    st.write(html, unsafe_allow_html=True)
-
-
 def main() -> None:
     # Set up title
     st.set_page_config(
@@ -67,12 +50,50 @@ def main() -> None:
         layout='centered',
         initial_sidebar_state='auto',
         menu_items={'Get help': 'https://github.com/sambanova/ai-starter-kit/issues/new'},
-    )  #:mechanical-arm:, :toolbox:, :test-tube:, :play-button:,
-    col1, mid, col2 = st.columns([1, 1, 20])
-    with col1:
-        render_svg(os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'))
+    )
+    
+    # set buttons style
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        div.stButton > button:hover, div.stButton > button:focus  {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.title('Prompt Engineering Starter Kit')
+        st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">Prompt Engineering</div>
+    """, unsafe_allow_html=True)
 
     # Instantiate LLMManager class
     llm_manager = LLMManager()
@@ -100,8 +121,8 @@ def main() -> None:
     with col1:
         st.text_input('Model display', llm_expert, disabled=True)
         st.write(
-            f""":red[**Architecture:**]
-            {model_info[selected_model_for_prompt]['Model Architecture']}  \n:red[**Prompting Tips:**]
+            f""":violet[**Architecture:**]
+            {model_info[selected_model_for_prompt]['Model Architecture']}  \n:violet[**Prompting Tips:**]
             {model_info[selected_model_for_prompt]['Architecture Prompting Implications']}"""
         )
 
@@ -111,26 +132,26 @@ def main() -> None:
             'Use Case for Sample Prompt',
             prompt_use_cases,
             help="""
-            \n:red[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including
+            \n:violet[**General Assistant:**] Provides comprehensive assistance on a wide range of topics, including
             answering questions, offering explanations, and giving advice. It's ideal for general knowledge, trivia,
             educational support, and everyday inquiries.
-            \n:red[**Document Search:**] Specializes in locating and briefing relevant information from large documents
+            \n:violet[**Document Search:**] Specializes in locating and briefing relevant information from large documents
             or databases. Useful for research, data analysis, and extracting key points from extensive text sources.
-            \n:red[**Product Selection:**] Assists in choosing products by comparing features, prices, and reviews.
+            \n:violet[**Product Selection:**] Assists in choosing products by comparing features, prices, and reviews.
             Ideal for shopping decisions, product comparisons, and understanding the pros and cons of different items.
-            \n:red[**Code Generation:**] Helps in writing, debugging, and explaining code. Useful for software 
+            \n:violet[**Code Generation:**] Helps in writing, debugging, and explaining code. Useful for software 
             development, learning programming languages, and automating simple tasks through scripting.
-            \n:red[**Summarization:**] Outputs a summary based on a given context. Essential for condensing large
+            \n:violet[**Summarization:**] Outputs a summary based on a given context. Essential for condensing large
             volumes of text into concise representations, aiding efficient information retrieval and comprehension.
-            \n:red[**Question & Answering:**] Answers questions regarding different topics given in a previous context.
+            \n:violet[**Question & Answering:**] Answers questions regarding different topics given in a previous context.
             Crucial for enabling users to directly obtain relevant information from textual data, facilitating efficient
             access to knowledge and aiding decision-making processes.
-            \n:red[**Query decomposition:**] Aids on simplyfying complex queries into small and precise sub-questions.
+            \n:violet[**Query decomposition:**] Aids on simplyfying complex queries into small and precise sub-questions.
             Vital for breaking down complex queries into more manageable sub-tasks, facilitating more effective
             information retrieval and generation processes.
             """,
         )
-        st.write(f":red[**Meta Tag Format:**]  \n {model_info[selected_model_for_prompt]['Meta Tag Format']}")
+        st.write(f":violet[**Meta Tag Format:**]  \n {model_info[selected_model_for_prompt]['Meta Tag Format']}")
 
     # Set up prompting area. Show prompt depending on the model selected and use case
     assert isinstance(
