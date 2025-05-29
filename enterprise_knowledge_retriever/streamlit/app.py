@@ -196,15 +196,9 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
 
 
 def main() -> None:
-    config = load_config()
-
-    prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
-    conversational = config['retrieval'].get('conversational', False)
-    default_collection = 'ekr_default_collection'
-
-    initialize_env_variables(prod_mode)
-
+    
+    #Style and page config
+    
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
@@ -216,10 +210,8 @@ def main() -> None:
         div.stButton > button {
             background-color: #250E36;  /* Button background */
             color: #FFFFFF;             /* Button text color */
-            border-radius: 8px;
-            padding: 0.5em 1em;
         }
-        div.stButton > button:hover {
+        div.stButton > button:hover, div.stButton > button:focus  {
             background-color: #4E22EB;  /* Button background */
             color: #FFFFFF;             /* Button text color */
         }
@@ -237,8 +229,33 @@ def main() -> None:
             }
         </style>
         """, unsafe_allow_html=True)
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([4, 1, 4])
+    with col2:
+        st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">Enterprise Knowledge Retriever</div>
+    """, unsafe_allow_html=True)
+    
+    config = load_config()
 
+    prod_mode = config.get('prod_mode', False)
+    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
+    conversational = config['retrieval'].get('conversational', False)
+    default_collection = 'ekr_default_collection'
 
+    initialize_env_variables(prod_mode)
+    
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if 'chat_history' not in st.session_state:
@@ -265,23 +282,6 @@ def main() -> None:
             track=prod_mode,
         )
         st.session_state.mp_events.demo_launch()
-    
-    # add title and icon
-    col1, col2, col3 = st.columns([4, 1, 4])
-    with col2:
-        st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
-    st.markdown("""
-        <style>
-            .kit-title {
-                text-align: center;
-                color: #250E36 !important;
-                font-size: 3.0em;
-                font-weight: bold;
-                margin-bottom: 0.5em;
-            }
-        </style>
-        <div class="kit-title">Enterprise Knowledge Retriever</div>
-    """, unsafe_allow_html=True)
 
     with st.sidebar:
         
@@ -294,7 +294,6 @@ def main() -> None:
                 <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
             </div>
         """, unsafe_allow_html=True)
-        #st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
         
         st.title('Setup')
 
