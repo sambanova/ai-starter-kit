@@ -1,6 +1,6 @@
 import base64
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -107,7 +107,7 @@ def set_font() -> None:
     )
 
 
-def render_title_icon(title: str, icon: str = None) -> None:
+def render_title_icon(title: str, icon: Optional[str] = None) -> None:
     # add title and icon
     if icon is not None:
         col1, col2, col3 = st.columns([3, 1, 3])

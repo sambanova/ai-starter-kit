@@ -247,8 +247,10 @@ class SambaStudioAPI(BaseAPIEndpoint):
             if 'stream' in self.base_url:
                 stream_url = self.base_url
                 if self.request_config.image:
-                    raise ValueError(f'Image support not available for url: {self.base_url}.\
-                        Try with OpenAI compatible endpoint.')
+                    raise ValueError(
+                        f'Image support not available for url: {self.base_url}.\
+                        Try with OpenAI compatible endpoint.'
+                    )
             else:
                 if 'generic' in self.base_url:
                     stream_url = 'generic/stream'.join(self.base_url.split('generic'))

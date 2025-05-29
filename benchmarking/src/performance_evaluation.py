@@ -777,8 +777,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         prefix_prompt = (
-            'You are a helpful assistant that provides concise and '
-            'helpful assistance on a variety of subjects. Ask: '
+            'You are a helpful assistant that provides concise and helpful assistance on a variety of subjects. Ask: '
         )
         prompt_text = prefix_prompt + raw_prompt['template']
 
@@ -822,14 +821,18 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Validate the structure of the default prompt
         for prompt in data.get('default_prompt', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f'Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.')
+                raise ValueError(
+                    f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.'
+                )
 
         # Validate the structure of the multiple prompts
         for prompt in data.get('multiple_prompts', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f'Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.')
+                raise ValueError(
+                    f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.'
+                )
 
         return data
 
@@ -928,7 +931,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         if num_input_tokens < 40:
             raise ValueError(
-                'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
+                'The minimum number of input tokens that will be sent is 40 because of the prompting logic right now'
             )
 
         # Calculate performance metrics individually and summary
@@ -1387,8 +1390,10 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         elif self.qps_distribution == 'constant':
             wait = mean_wait
         else:
-            raise ValueError(f'Unknown distribution {self.qps_distribution}. \
-                Possible values: constant, uniform, exponential.')
+            raise ValueError(
+                f'Unknown distribution {self.qps_distribution}. \
+                Possible values: constant, uniform, exponential.'
+            )
         return wait
 
     def get_token_throughput_latencies(

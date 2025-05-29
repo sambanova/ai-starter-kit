@@ -246,26 +246,26 @@ def main() -> None:
                     st.session_state.perf_metrics_history,
                 ):
                     with st.chat_message(user['role']):
-                        st.write(f"{user['question']}")
+                        st.write(f'{user["question"]}')
                     with st.chat_message(
                         'ai',
                         avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
                     ):
-                        st.write(f"{system['answer']}")
+                        st.write(f'{system["answer"]}')
                         with st.expander('Performance metrics'):
                             st.markdown(
                                 f"""<font size="2" color="grey">Time to first token:
-                                  {round(perf_metric["time_to_first_token"],4)} seconds</font>""",
+                                  {round(perf_metric['time_to_first_token'], 4)} seconds</font>""",
                                 unsafe_allow_html=True,
                             )
                             st.markdown(
                                 f"""<font size="2" color="grey">Throughput: 
-                                {round(perf_metric["throughput"] if perf_metric["throughput"] else 0,4)} 
+                                {round(perf_metric['throughput'] if perf_metric['throughput'] else 0, 4)} 
                                 tokens/second</font>""",
                                 unsafe_allow_html=True,
                             )
                             st.markdown(
-                                f"""<font size="2" color="grey">Latency: {round(perf_metric["latency"],4 )}
+                                f"""<font size="2" color="grey">Latency: {round(perf_metric['latency'], 4)}
                                   seconds</font>""",
                                 unsafe_allow_html=True,
                             )

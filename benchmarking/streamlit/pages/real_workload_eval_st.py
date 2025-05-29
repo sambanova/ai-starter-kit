@@ -291,7 +291,7 @@ def main() -> None:
         if not pd.isnull(generated_output_tokens):
             st.markdown(
                 f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
-                tokens ({generated_output_tokens}) is {abs(expected_output_tokens-generated_output_tokens)}
+                tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
                     token(s)"""
             )
 
