@@ -2,7 +2,7 @@ fpdf2==2.8.3
 langchain==0.3.25
 langchain-chroma==0.2.3
 langchain-community==0.3.23
-langchain-core==0.3.58
+langchain-core==0.3.63
 langchain-huggingface==0.1.2
 langchain-sambanova==0.1.4
 mypy==1.11.2
@@ -16,7 +16,7 @@ schedule==1.2.2
 sentence-transformers==4.1.0
 sec-downloader==0.12.1
 sseclient-py==1.8.0
-streamlit==1.41.1
+streamlit==1.45.1
 streamlit-extras==0.4.7
 tiktoken==0.9.0
 yfinance==0.2.58

@@ -1,4 +1,4 @@
-Jinja2==3.1.4
+Jinja2==3.1.6
 langchain-community==0.3.16
 langchain-sambanova==0.1.0
 mypy==1.11.2
@@ -6,7 +6,7 @@ pre-commit==4.0.1
 python-dotenv==1.0.1
 ruff==0.6.9
 sseclient-py==1.8.0
-streamlit==1.40.2
+streamlit==1.45.1
 tqdm==4.66.5
 watchdog==4.0.2
 yt-dlp==2024.8.6

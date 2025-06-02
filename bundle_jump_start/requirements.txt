@@ -5,9 +5,9 @@ faiss-cpu==1.7.4
 instructorembedding==1.0.1
 ipython==8.26.0
 langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-core==0.3.63
 langchain-experimental==0.3.2
-langchain==0.3.16
+langchain==0.3.25
 langchain-sambanova==0.1.0
 langgraph==0.2.28
 matplotlib==3.8.0
@@ -26,8 +26,8 @@ seaborn==0.12.2
 sentence_transformers==2.2.2
 sseclient-py==1.8.0
 streamlit-extras==0.4.3
-streamlit==1.36.0
+streamlit==1.37.0
 tqdm==4.66.3
-unstructured==0.14.9
+unstructured==0.17.2
 unstructured_inference==0.7.36
 unstructured_pytesseract==0.3.12
