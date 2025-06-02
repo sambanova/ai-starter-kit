@@ -8,8 +8,7 @@ from typing import Any, List, Optional, Union
 from dotenv import load_dotenv
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-fine_tuning_dir = os.path.abspath(os.path.join(current_dir, '..'))
-utils_dir = os.path.abspath(os.path.join(fine_tuning_dir, '..'))
+utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
@@ -37,7 +36,7 @@ def setup_generative_data_prep(force_gen_data_prep_install: bool = False) -> Non
         None
     """
 
-    generative_data_prep_dir = os.path.join(fine_tuning_dir, 'generative_data_prep')
+    generative_data_prep_dir = os.path.join(current_dir, 'generative_data_prep')
 
     # Check if the package is already installed
     package_spec = importlib.util.find_spec('generative_data_prep')
