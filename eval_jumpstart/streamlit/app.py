@@ -121,7 +121,7 @@ def main() -> None:
 
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     if 'project_name' not in st.session_state:

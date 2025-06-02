@@ -45,7 +45,7 @@ def save_config() -> None:
 def main() -> None:
     st.set_page_config(
         page_title='Bundle LLM Router AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         layout='wide',
     )
 

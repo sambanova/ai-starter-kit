@@ -1,12 +1,13 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
 </picture>
 </a>
 
-# Function Calling kit
+Function Calling kit
+====================
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 <!-- TOC -->

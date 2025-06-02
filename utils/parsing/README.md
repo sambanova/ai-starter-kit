@@ -1,4 +1,12 @@
-# SambaParse
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../../images/SambaNova-light-logo-1.png" height="100">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+</picture>
+</a>
+
+SambaParse
+===========
 
 SambaParse is a Python library that simplifies the process of extracting and processing unstructured data using the Unstructured.io API. It provides a convenient wrapper around the Unstructured.io CLI tool, allowing you to ingest data from various sources, perform partitioning, chunking, embedding, and load the processed data into a vector database. It's designed to be used within AI Starter kits and SN Apps, unifying our data ingestion and document intelligence platform. This allows us to keep our code base centralized for data ingestion kits.
 

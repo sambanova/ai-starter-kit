@@ -61,7 +61,7 @@ def handle_userinput(instruction: str) -> None:
 
     with st.chat_message(
         'ai',
-        avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     ):
         st.write(completion)
         st.markdown(
@@ -154,16 +154,61 @@ def initialize_application_template() -> None:
 
 
 def main() -> None:
+    st.set_page_config(
+        page_title='AI Starter Kit', 
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'), 
+        layout='wide'
+    )
+    
+     # set buttons style
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        div.stButton > button:hover, div.stButton > button:focus  {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">Document Comparison</div>
+    """, unsafe_allow_html=True)
+    
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
     llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode)
-
-    st.set_page_config(
-        page_title='AI Starter Kit', page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png', layout='wide'
-    )
 
     # if 'conversation' not in st.session_state:
     #     st.session_state.conversation = None
@@ -195,8 +240,6 @@ def main() -> None:
         st.session_state.document_titles = {}
     if 'selected_app_template' not in st.session_state:
         st.session_state.selected_app_template = None
-
-    st.title(':orange[SambaNova] Document Comparison')
 
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')

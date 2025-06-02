@@ -136,9 +136,11 @@ def run_benchmarking(
         qps_set = pd.notna(qps) and qps != 0
 
         if cr_set and qps_set:
-            print(f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-\
+            print(
+                f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-\
                 {concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set.\
-                Set only one of them, skipping run.")
+                Set only one of them, skipping run."
+            )
             continue
 
         evaluator: SyntheticPerformanceEvaluator | RealWorkLoadPerformanceEvaluator
@@ -197,22 +199,24 @@ def run_benchmarking(
                 sampling_params=sampling_params,
             )
         except Exception as e:
-            logging.error(f'Error while running model_name {model_name}, \
+            logging.error(
+                f'Error while running model_name {model_name}, \
                 input_tokens {input_tokens}, \
                 output_tokens {output_tokens}, \
                 num_requests {num_requests}, \
                 concurrent_requests {concurrent_requests}, \
                 qps {qps}, \
                 qps_distribution {qps_distribution} \
-                multimodal_img_size {multimodal_img_size}')
+                multimodal_img_size {multimodal_img_size}'
+            )
             logging.error(e)
 
-        logging.info(f"Time delay: {config['time_delay']} seconds")
+        logging.info(f'Time delay: {config["time_delay"]} seconds')
         time.sleep(config['time_delay'])
 
     # Consolidate results
     if config['consolidated_results_dir']:
-        logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
+        logging.info(f'Writing consolidated results to {config["consolidated_results_dir"]}')
         try:
             # Read summary files
             df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
@@ -335,7 +339,7 @@ def run_benchmarking(
             df_summary.to_excel(os.path.join(consolidated_results_dir, f'{run_name}.xlsx'))
 
         except Exception as e:
-            logging.error(f"Error while writing consolidated results to {config['consolidated_results_dir']}")
+            logging.error(f'Error while writing consolidated results to {config["consolidated_results_dir"]}')
             logging.error(e)
 
 

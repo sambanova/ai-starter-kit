@@ -1,4 +1,13 @@
-# Eval Kit
+
+<a href="https://sambanova.ai/">
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+</picture>
+</a>
+
+Eval Kit
+======================
 
 A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.
 
