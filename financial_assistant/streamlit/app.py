@@ -120,10 +120,6 @@ def main() -> None:
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
-            else:
-                # In development mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
         if prod_mode:
