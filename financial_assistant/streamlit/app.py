@@ -78,10 +78,10 @@ with streamlit.sidebar:
         if prod_mode:
             streamlit.success('Credentials are set')
             with stylable_container(
-                key='blue-button',
+                key='blue-button-clear-credentials',
                 css_styles=get_blue_button_style(),
             ):
-                if streamlit.button('Clear Credentials', key='clear_credentials'):
+                if streamlit.button('Clear Credentials', key='clear-credentials'):
                     save_credentials(api_key='', prod_mode=prod_mode)
                     streamlit.success(r':orange[You have been logged out.]')
                     time.sleep(2)
@@ -120,15 +120,11 @@ def main() -> None:
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
-            else:
-                # In development mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
         if prod_mode:
             with stylable_container(
-                key='blue-button',
+                key='blue-button-exit-app',
                 css_styles=get_blue_button_style(),
             ):
                 time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
@@ -171,12 +167,12 @@ def main() -> None:
 
             # Custom button to clear all files
             with stylable_container(
-                key='blue-button',
+                key='blue-button-clear-files',
                 css_styles=get_blue_button_style(),
             ):
                 if streamlit.button(
                     label='Clear All Files',
-                    key='clear-button',
+                    key='clear-files',
                     help='This will delete all saved files',
                 ):
                     try:
@@ -245,7 +241,7 @@ def main() -> None:
         elif menu == 'Print Chat History':
             # Custom button to clear chat history
             with stylable_container(
-                key='blue-button',
+                key='blue-button-print-history',
                 css_styles=get_blue_button_style(),
             ):
                 if streamlit.button('Clear Chat History'):

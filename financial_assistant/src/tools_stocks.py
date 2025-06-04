@@ -1,5 +1,4 @@
 import datetime
-import shutil
 from typing import Any, Dict, List, Optional
 
 import pandas
@@ -168,14 +167,20 @@ def get_yahoo_connector_answer(user_query: str, symbol: str) -> Any:
     # Instantiate a `pandasai.connectors.yahoo_finance.YahooFinanceConnector` object with the relevant symbol
     yahoo_connector = YahooFinanceConnector(
         symbol,
-        config={'enable_cache': False},
+        config={
+            'open_charts': False,
+            'save_charts': True,
+            'save_charts_path': streamlit.session_state.stock_query_figures_dir,
+            'enable_cache': False,
+            'save_logs': False,
+            'verbose': False,
+        },
     )
 
-    # Delete the pandasai cache
-    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
-
     # Answer the user query by symbol
-    return interrogate_dataframe_pandasai(yahoo_connector, user_query)
+    response = interrogate_dataframe_pandasai(yahoo_connector, user_query)
+
+    return response
 
 
 @time_llm
@@ -200,16 +205,18 @@ def interrogate_dataframe_pandasai(df_pandas: pandas.DataFrame, user_query: str)
             'save_charts': True,
             'save_charts_path': streamlit.session_state.stock_query_figures_dir,
             'enable_cache': False,
+            'save_logs': False,
+            'verbose': False,
         },
     )
-
-    # Delete the pandasai cache
-    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
 
     # Add the plot instructions to the user query
     final_query = user_query + '\n' + PLOT_INSTRUCTIONS
 
-    return df.chat(final_query)
+    # Generate the answer
+    response = df.chat(final_query)
+
+    return response
 
 
 @time_llm

@@ -1,7 +1,6 @@
 import datetime
 import json
 import re
-import shutil
 from typing import Any, Dict, List
 
 import pandas
@@ -405,14 +404,13 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
             'save_charts': True,
             'save_charts_path': streamlit.session_state.db_query_figures_dir,
             'enable_cache': False,
+            'save_logs': False,
+            'verbose': False,
         },
     )
 
     # Interrogate the dataframe
     response = 'Table ' + table + ': ' + str(df.chat(user_query))
-
-    # Delete the pandasai cache
-    shutil.rmtree(streamlit.session_state.pandasai_cache, ignore_errors=True)
 
     return response
 

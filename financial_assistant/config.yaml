@@ -2,7 +2,7 @@ prod_mode: False
 
 llm: 
   temperature: 0.0
-  max_tokens_to_generate: 1024
+  max_tokens_to_generate: 2048
   select_expert: "Meta-Llama-3.3-70B-Instruct"
 
 rag:
