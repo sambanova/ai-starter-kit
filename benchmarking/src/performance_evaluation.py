@@ -776,17 +776,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         The method returns a tuple containing the processed prompt and the token length of the prompt.
         """
 
-        prefix_prompt = (
-            'You are a helpful assistant that provides concise and '
-            'helpful assistance on a variety of subjects. Ask: '
-        )
-        prompt_text = prefix_prompt + raw_prompt['template']
+        return (raw_prompt, self.get_token_length(raw_prompt['template']))
 
-        # Output prompt
-        custom_prompt = raw_prompt
-        custom_prompt['template'] = prompt_text
-
-        return (custom_prompt, self.get_token_length(prompt_text))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
