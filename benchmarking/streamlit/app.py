@@ -9,16 +9,14 @@ sys.path.append('./src')
 sys.path.append('./streamlit')
 
 import warnings
-from typing import Any, Dict
 
 import streamlit as st
 from dotenv import load_dotenv
-from st_pages import Page, hide_pages, show_pages
+from st_pages import Page, show_pages
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES
-from benchmarking.utils import CONFIG_PATH, SAMBANOVA_URL
+from benchmarking.utils import CONFIG_PATH
 from utils.events.mixpanel import MixpanelEvents
-from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 warnings.filterwarnings('ignore')
 
@@ -61,6 +59,7 @@ def main() -> None:
     )
 
     st.switch_page('pages/synthetic_performance_eval_st.py')
+
 
 if __name__ == '__main__':
     st.set_page_config(

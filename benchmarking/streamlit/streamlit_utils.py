@@ -7,8 +7,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
-from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
+
 from benchmarking.utils import SAMBANOVA_URL
+from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
 MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
@@ -71,20 +72,21 @@ SECONDARY_ST_STYLE = """
     </style>
     """
 
+
 def setup_credentials() -> None:
-    """ Sets up the credentials for the application."""
-    
+    """Sets up the credentials for the application."""
+
     st.title('Setup')
 
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
-    
+
     st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
     if st.session_state.mode == 'SambaNova Cloud':
         st.session_state.llm_api = 'sncloud'
     else:  # SambaStudio
         st.session_state.llm_api = 'sambastudio'
-    
+
     additional_env_vars: Dict[str, Any] = {}
     additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
 
@@ -110,6 +112,7 @@ def setup_credentials() -> None:
             else:
                 save_credentials('', {var: '' for var in additional_env_vars}, st.session_state.prod_mode)
             st.rerun()
+
 
 def save_uploaded_file(internal_save_path: str) -> str:
     uploaded_file = st.session_state.uploaded_file

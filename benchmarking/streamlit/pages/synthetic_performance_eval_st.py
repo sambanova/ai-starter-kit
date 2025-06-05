@@ -28,8 +28,8 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_dataframe_summary,
     plot_requests_gantt_chart,
     set_api_variables,
+    setup_credentials,
     update_progress_bar,
-    setup_credentials
 )
 from benchmarking.utils import CONFIG_PATH
 
@@ -173,9 +173,8 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
-    
     hide_pages([APP_PAGES['setup']['page_label']])
-    
+
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])

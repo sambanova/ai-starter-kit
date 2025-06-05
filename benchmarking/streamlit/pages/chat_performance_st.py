@@ -103,9 +103,8 @@ def _initialize_sesion_variables() -> None:
 
 
 def main() -> None:
-    
     hide_pages([APP_PAGES['setup']['page_label']])
-    
+
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['setup']['page_label'])
@@ -122,7 +121,7 @@ def main() -> None:
     with st.sidebar:
         # Set up credentials and API variables
         setup_credentials()
-        
+
         st.title('Set up the LLM')
         st.markdown('**Configure your LLM before starting to chat**')
 
