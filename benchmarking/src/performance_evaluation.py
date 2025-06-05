@@ -769,11 +769,11 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         - raw_prompt (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input prompt.
 
         Returns:
-        - A tuple containing the processed prompt dictionary and the token length of the prompt.
+        - A tuple containing the raw prompt dictionary and the token length of the prompt.
 
         Description:
         This method builds a prompt for the given raw prompt based on the model type.
-        The method returns a tuple containing the processed prompt and the token length of the prompt.
+        The method returns a tuple containing the raw prompt and the token length of the prompt.
         """
 
         return (raw_prompt, self.get_token_length(raw_prompt['template']))
