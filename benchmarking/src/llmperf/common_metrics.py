@@ -26,6 +26,7 @@ NUM_TOTAL_TOKENS = 'number_total_tokens'
 
 # Server-side metrics
 TTFT_SERVER = 'server_ttft_s'
+SWITCHING_TIME_SERVER = 'server_switching_time_s'
 E2E_LAT_SERVER = 'server_end_to_end_latency_s'
 REQ_OUTPUT_THROUGHPUT_SERVER = 'server_output_token_per_s_per_request'
 REQ_OUTPUT_THROUGHPUT_SERVER_FIRST_TEN = 'server_output_token_after_first_per_s_first_ten_per_request'

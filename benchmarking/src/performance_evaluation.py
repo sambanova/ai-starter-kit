@@ -310,12 +310,19 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_summary[metric]['max'] = series_max
             series_std = round(series.std(), 4)
             metrics_summary[metric]['stddev'] = series_std
-
+            
             if self.show_results_in_terminal:
                 logger.info(f'    mean = {series_mean}')
                 logger.info(f'    min = {series_min}')
                 logger.info(f'    max = {series_max}')
                 logger.info(f'    stddev = {series_std}')
+            
+        # Switching time
+        switching_time = 0
+        if metrics_df[common_metrics.SWITCHING_TIME_SERVER].loc[0]:
+            switching_time = metrics_df[common_metrics.SWITCHING_TIME_SERVER][0]
+        metrics_summary[common_metrics.SWITCHING_TIME_SERVER] = switching_time
+        logger.info(f'Switching time: {switching_time}')
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
@@ -1008,7 +1015,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         df_valid_responses = df_valid_responses.sort_values(by=['start_time'])
 
         # initialize a column for the switching time
-        df_valid_responses['server_switching_time'] = None
+        df_valid_responses[common_metrics.SWITCHING_TIME_SERVER] = None
 
         # check server ttft in case metric is not coming in response
         if df_valid_responses['server_ttft_s'].notna().all():
@@ -1023,20 +1030,20 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
             if switching_time > (mean_ttft + 3 * std_ttft):
                 outlier_switching_time = switching_time
-                df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
+                df_valid_responses[common_metrics.SWITCHING_TIME_SERVER].iloc[0] = outlier_switching_time
 
         # assign switching time back to request object
         for llm_response in llm_responses:
             metrics = llm_response.metrics
 
             if llm_response.request_config.request_idx == df_valid_responses.head(1)['request_idx'].values[0]:
-                server_switching_time = df_valid_responses.head(1)['server_switching_time'].values[0]
+                server_switching_time = df_valid_responses.head(1)[common_metrics.SWITCHING_TIME_SERVER].values[0]
             else:
                 server_switching_time = None
 
             llm_response.metrics = self.add_metric_after_key(
                 metrics,
-                new_key='server_switching_time',
+                new_key=common_metrics.SWITCHING_TIME_SERVER,
                 new_value=server_switching_time,
                 after_key=common_metrics.TTFT_SERVER,
             )
