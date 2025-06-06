@@ -72,7 +72,7 @@ def env_input_fields(
     additional_vars = {}
 
     if mode == 'SambaStudio':
-        st.session_state.SAMBASTUDIO_URL = st.text_input(
+        additional_vars['SAMBASTUDIO_URL'] = st.text_input(
             'SAMBASTUDIO URL', value=st.session_state.get('SAMBASTUDIO_URL', ''), type='password'
         )
         api_key = st.text_input(
