@@ -1,0 +1,6 @@
+model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
+llm_api: 'sncloud'
+output_files_dir: '../benchmarking/data/results/samsung_switching_time/'
+consolidated_results_dir: '../benchmarking/data/results/samsung_switching_time/consolidated_results'
+timeout: 7200
+time_delay: 0
