@@ -19,6 +19,7 @@ from benchmarking.streamlit.streamlit_utils import (
     find_pages_to_hide,
     save_uploaded_file,
     setup_credentials,
+    shared_session_variables_initialization
 )
 
 warnings.filterwarnings('ignore')
@@ -66,7 +67,6 @@ def _parse_llm_response(llm: ChatPerformanceEvaluator, prompt: str) -> Dict[str,
         'throughput': llm_output[0][common_metrics.REQ_OUTPUT_THROUGHPUT],
     }
     return response
-
 
 def _initialize_sesion_variables() -> None:
     # Initialize chat history
@@ -273,6 +273,7 @@ if __name__ == '__main__':
     # Defining styles
     st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
 
+    shared_session_variables_initialization()
     _initialize_sesion_variables()
 
     main()

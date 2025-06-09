@@ -28,6 +28,7 @@ from benchmarking.streamlit.streamlit_utils import (
     set_api_variables,
     setup_credentials,
     update_progress_bar,
+    shared_session_variables_initialization
 )
 
 warnings.filterwarnings('ignore')
@@ -37,7 +38,6 @@ with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
-
 
 def _initialize_session_variables() -> None:
     # Initialize llm
@@ -349,6 +349,7 @@ if __name__ == '__main__':
     st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
     st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
 
+    shared_session_variables_initialization()
     _initialize_session_variables()
 
     main()

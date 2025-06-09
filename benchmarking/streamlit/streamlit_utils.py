@@ -1,4 +1,5 @@
 import os
+import uuid
 from typing import Any, Dict, List
 
 import numpy as np
@@ -8,6 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
+from utils.events.mixpanel import MixpanelEvents
 from benchmarking.utils import SAMBANOVA_URL
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -71,7 +73,21 @@ SECONDARY_ST_STYLE = """
     }
     </style>
     """
-
+    
+def shared_session_variables_initialization() -> None:
+    """Initializes shared session variables for the Streamlit application."""
+    if 'prod_mode' not in st.session_state:
+        st.session_state.prod_mode = None
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='benchmarking',
+            track=st.session_state.prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
 
 def setup_credentials() -> None:
     """Sets up the credentials for the application."""
