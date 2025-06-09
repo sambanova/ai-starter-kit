@@ -514,7 +514,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         return {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
-            'ss-sn-options': 'accuracy_debug',
+            # 'ss-sn-options': 'accuracy_debug',
         }
 
     def _get_json_data(self) -> Dict[str, Any]:
