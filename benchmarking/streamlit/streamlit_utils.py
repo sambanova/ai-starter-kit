@@ -9,8 +9,8 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
-from utils.events.mixpanel import MixpanelEvents
 from benchmarking.utils import SAMBANOVA_URL
+from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}

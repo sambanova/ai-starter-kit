@@ -19,7 +19,7 @@ from benchmarking.streamlit.streamlit_utils import (
     find_pages_to_hide,
     save_uploaded_file,
     setup_credentials,
-    shared_session_variables_initialization
+    shared_session_variables_initialization,
 )
 
 warnings.filterwarnings('ignore')

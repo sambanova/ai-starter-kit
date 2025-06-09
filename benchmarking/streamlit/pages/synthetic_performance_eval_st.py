@@ -29,8 +29,8 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_requests_gantt_chart,
     set_api_variables,
     setup_credentials,
+    shared_session_variables_initialization,
     update_progress_bar,
-    shared_session_variables_initialization
 )
 from benchmarking.utils import CONFIG_PATH
 

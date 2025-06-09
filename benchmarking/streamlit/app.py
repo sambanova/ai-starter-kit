@@ -1,4 +1,3 @@
-import os
 import sys
 
 import yaml
@@ -15,7 +14,6 @@ from st_pages import Page, show_pages
 
 from benchmarking.streamlit.streamlit_utils import APP_PAGES, shared_session_variables_initialization
 from benchmarking.utils import CONFIG_PATH
-from utils.events.mixpanel import MixpanelEvents
 
 warnings.filterwarnings('ignore')
 
