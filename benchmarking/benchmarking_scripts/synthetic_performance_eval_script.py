@@ -215,6 +215,11 @@ for idx, row in model_configs_df.iterrows():
     logging.info(f"Time delay: {config['time_delay']} seconds")
     time.sleep(config['time_delay'])
 
+
+# run_time = "all_output_files"
+# output_files_dir = os.path.join(config['output_files_dir'], run_time)
+
+
 # Consolidate results
 if config['consolidated_results_dir']:
     logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
