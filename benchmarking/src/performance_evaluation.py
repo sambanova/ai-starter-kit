@@ -1444,6 +1444,8 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
                 for t in executor._threads:
                     add_script_run_ctx(t)
 
+                if time.monotonic() - start_time >= self.timeout:
+                    break
                 # Get wait time based on the distribution
                 wait_time = self._get_wait_time()
                 time.sleep(wait_time)
