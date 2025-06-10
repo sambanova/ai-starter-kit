@@ -1,5 +1,4 @@
 import os
-import uuid
 from typing import Any, Dict, List
 
 import numpy as np
@@ -10,7 +9,6 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 from benchmarking.utils import SAMBANOVA_URL
-from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
@@ -30,7 +28,7 @@ APP_PAGES = {
         'page_label': 'Custom Performance Evaluation',
     },
     'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
-    'setup': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
+    'main': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
 }
 PRIMARY_ST_STYLE = """
     <style>
@@ -73,21 +71,7 @@ SECONDARY_ST_STYLE = """
     }
     </style>
     """
-    
-def shared_session_variables_initialization() -> None:
-    """Initializes shared session variables for the Streamlit application."""
-    if 'prod_mode' not in st.session_state:
-        st.session_state.prod_mode = None
-    if 'st_session_id' not in st.session_state:
-        st.session_state.st_session_id = str(uuid.uuid4())
-    if 'mp_events' not in st.session_state:
-        st.session_state.mp_events = MixpanelEvents(
-            os.getenv('MIXPANEL_TOKEN'),
-            st_session_id=st.session_state.st_session_id,
-            kit_name='benchmarking',
-            track=st.session_state.prod_mode,
-        )
-        st.session_state.mp_events.demo_launch()
+
 
 def setup_credentials() -> None:
     """Sets up the credentials for the application."""
