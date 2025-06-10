@@ -1,4 +1,6 @@
+import os
 import sys
+import uuid
 
 import yaml
 
@@ -12,8 +14,9 @@ import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, show_pages
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES, shared_session_variables_initialization
+from benchmarking.streamlit.streamlit_utils import APP_PAGES
 from benchmarking.utils import CONFIG_PATH
+from utils.events.mixpanel import MixpanelEvents
 
 warnings.filterwarnings('ignore')
 
@@ -28,10 +31,26 @@ with open(CONFIG_PATH) as file:
     st.session_state.prod_mode = st.session_state.config['prod_mode']
     st.session_state.pages_to_show = st.session_state.config['pages_to_show']
 
+
+def _initialize_session_variables() -> None:
+    if 'prod_mode' not in st.session_state:
+        st.session_state.prod_mode = None
+    if 'st_session_id' not in st.session_state:
+        st.session_state.st_session_id = str(uuid.uuid4())
+    if 'mp_events' not in st.session_state:
+        st.session_state.mp_events = MixpanelEvents(
+            os.getenv('MIXPANEL_TOKEN'),
+            st_session_id=st.session_state.st_session_id,
+            kit_name='benchmarking',
+            track=st.session_state.prod_mode,
+        )
+        st.session_state.mp_events.demo_launch()
+
+
 def main() -> None:
     show_pages(
         [
-            Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),
+            Page(APP_PAGES['main']['file_path'], APP_PAGES['main']['page_label']),
             Page(APP_PAGES['synthetic_eval']['file_path'], APP_PAGES['synthetic_eval']['page_label']),
             Page(APP_PAGES['real_workload_eval']['file_path'], APP_PAGES['real_workload_eval']['page_label']),
             Page(APP_PAGES['custom_eval']['file_path'], APP_PAGES['custom_eval']['page_label']),
@@ -49,14 +68,5 @@ if __name__ == '__main__':
     )
 
     _init()
-    show_pages(
-        [
-            Page(APP_PAGES['synthetic_eval']['file_path'], APP_PAGES['synthetic_eval']['page_label']),
-            Page(APP_PAGES['real_workload_eval']['file_path'], APP_PAGES['real_workload_eval']['page_label']),
-            Page(APP_PAGES['custom_eval']['file_path'], APP_PAGES['custom_eval']['page_label']),
-            Page(APP_PAGES['chat_eval']['file_path'], APP_PAGES['chat_eval']['page_label']),
-        ]
-    )
-
-    shared_session_variables_initialization()
-    st.switch_page('pages/synthetic_performance_eval_st.py')
+    _initialize_session_variables()
+    main()
