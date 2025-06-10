@@ -28,7 +28,7 @@ APP_PAGES = {
         'page_label': 'Custom Performance Evaluation',
     },
     'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
-    'setup': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
+    'main': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
 }
 PRIMARY_ST_STYLE = """
     <style>

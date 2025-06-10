@@ -83,6 +83,8 @@ def _initialize_session_variables() -> None:
         st.session_state.setup_complete = None
     if 'progress_bar' not in st.session_state:
         st.session_state.progress_bar = None
+    if 'mp_events' not in st.session_state:
+        st.switch_page('app.py')
 
 
 def read_performance_evaluation_output_files() -> Dict[str, Any]:
@@ -173,11 +175,11 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['setup']['page_label']])
+    hide_pages([APP_PAGES['main']['page_label']])
 
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
 
     st.title(':orange[SambaNova] Synthetic Performance Evaluation')
@@ -312,11 +314,6 @@ def main() -> None:
             disabled=(not st.session_state.running) and (not st.session_state.optional_download),
             type='secondary',
         )
-
-        if st.session_state.prod_mode:
-            if st.button('Back to Setup', disabled=st.session_state.running or st.session_state.optional_download):
-                st.session_state.setup_complete = False
-                st.switch_page('app.py')
 
     if sidebar_stop:
         st.session_state.optional_download = False

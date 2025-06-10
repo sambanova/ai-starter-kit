@@ -73,6 +73,9 @@ def _initialize_sesion_variables() -> None:
         st.session_state.setup_complete = None
     if 'progress_bar' not in st.session_state:
         st.session_state.progress_bar = None
+    if 'mp_events' not in st.session_state:
+        st.switch_page('app.py')
+
 
 
 def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
@@ -114,14 +117,12 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['setup']['page_label']])
+    hide_pages([APP_PAGES['main']['page_label']])
 
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
-    else:
-        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Custom Performance Evaluation')
     st.markdown(
@@ -216,11 +217,6 @@ def main() -> None:
         job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button', type='primary')
 
         sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary')
-
-        if st.session_state.prod_mode:
-            if st.button('Back to Setup', disabled=st.session_state.running):
-                st.session_state.setup_complete = False
-                st.switch_page('app.py')
 
     if sidebar_stop:
         st.session_state.running = False

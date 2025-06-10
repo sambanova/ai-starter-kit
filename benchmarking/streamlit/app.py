@@ -50,7 +50,7 @@ def _initialize_session_variables() -> None:
 def main() -> None:
     show_pages(
         [
-            Page(APP_PAGES['setup']['file_path'], APP_PAGES['setup']['page_label']),
+            Page(APP_PAGES['main']['file_path'], APP_PAGES['main']['page_label']),
             Page(APP_PAGES['synthetic_eval']['file_path'], APP_PAGES['synthetic_eval']['page_label']),
             Page(APP_PAGES['real_workload_eval']['file_path'], APP_PAGES['real_workload_eval']['page_label']),
             Page(APP_PAGES['custom_eval']['file_path'], APP_PAGES['custom_eval']['page_label']),
@@ -68,14 +68,5 @@ if __name__ == '__main__':
     )
 
     _init()
-    show_pages(
-        [
-            Page(APP_PAGES['synthetic_eval']['file_path'], APP_PAGES['synthetic_eval']['page_label']),
-            Page(APP_PAGES['real_workload_eval']['file_path'], APP_PAGES['real_workload_eval']['page_label']),
-            Page(APP_PAGES['custom_eval']['file_path'], APP_PAGES['custom_eval']['page_label']),
-            Page(APP_PAGES['chat_eval']['file_path'], APP_PAGES['chat_eval']['page_label']),
-        ]
-    )
-
     _initialize_session_variables()
-    st.switch_page('pages/synthetic_performance_eval_st.py')
+    main()
