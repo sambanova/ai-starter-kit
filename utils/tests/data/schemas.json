@@ -153,6 +153,221 @@
         }
       }
     }
+  },
+  "countries_extraction": {
+    "name": "countries_extraction",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "Countries": {
+                "type": "array",
+                "items": { "type": "string" }
+            }
+        },
+        "required": ["Countries"],
+        "additionalProperties": false
+    },
+    "strict": false
+  },
+  "user_intent": {
+    "name": "JsonSchema",
+    "schema": {
+        "description": "The user's intent as an object with the intent as a string, and categorised as an enum",
+        "type": "object",
+        "properties": {
+            "userIntent": {
+                "description": "The user's intent as a sentence.",
+                "type": "string"
+            },
+            "userIntentCategory": {
+                "type": "string",
+                "description": "The category of the user's intent, which must be one of the values from the enum.",
+                "enum": [
+                    "Unspecified",
+                    "Asking_A_Question",
+                    "Searching",
+                    "Performing_An_Action",
+                    "Providing_Feedback",
+                    "Answering_Question",
+                    "Making_Statement",
+                    "Summarize",
+                    "Generate_Text",
+                    "Write_An_Email",
+                    "Create_A_Hubshare_Email",
+                    "Create_A_Digital_Sales_Room",
+                    "Create_A_Story_Or_Page",
+                    "Create_A_Brainshark_Presentation",
+                    "Create_A_Quiz",
+                    "Create_A_Roleplay_Scenario",
+                    "List_Content",
+                    "List_Popular_Content",
+                    "List_Recommended_Content",
+                    "List_Favourite_Content",
+                    "List_Shares",
+                    "Create_A_Hubshare_Link",
+                    "Create_A_Podcast",
+                    "Create_Scoring_Criteria",
+                    "Generate_A_Diagram"
+                ]
+            },
+            "searchQuery": {
+                "description": "The user's query rewritten as a question appropriate for a vector search query.",
+                "type": "string"
+            },
+            "searchKeywords": {
+                "description": "A space delimited list of keywords from the user's prompt for use as a keyword search query finding content that is relevant to their query.",
+                "type": "string"
+            },
+            "language": {
+                "description": "The IETF language code for the language the user is using.",
+                "type": "string"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "userIntent",
+            "userIntentCategory",
+            "searchQuery",
+            "searchKeywords",
+            "language"
+        ],
+        "strict": true
+    }
+  },
+  "AnswerSchema": {
+    "name": "AnswerSchema",
+    "strict": false,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "answer": {
+                "description": "The main text answer to the user\u0027s query. Answer in markdown format.",
+                "type": "string"
+            },
+            "chatTitle": {
+                "description": "A summary of the conversation for use as the title. Answer in plain text.",
+                "type": "string"
+            },
+            "subject": {
+                "description": "The subject of the email or message.",
+                "type": "string"
+            },
+            "message": {
+                "description": "The body text of the email, message or room.",
+                "type": "string"
+            },
+            "suggestions": {
+                "description": "Two (2) Follow on suggestions",
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "ableToAnswer": {
+                "description": "Set to true if you were able to provide an answer to the user\u0027s query. Set to false if you were not able to provide an answer.",
+                "type": "boolean"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "answer",
+            "chatTitle",
+            "subject",
+            "message",
+            "suggestions",
+            "ableToAnswer"
+        ],
+        "strict": true
+    }
+  },
+  "potcastGeneration": {
+    "name": "AnswerSchema",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "answer": {
+                "description": "The main text answer to the user\u0027s query. Answer in markdown format.",
+                "type": "string"
+            },
+            "podcast": {
+                "description": "The script for a podcast between at least two speakers about a specified topic",
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string"
+                    },
+                    "turns": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "speakerName": {
+                                    "type": "string"
+                                },
+                                "gender": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Male",
+                                        "Female"
+                                    ]
+                                },
+                                "content": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                                "speakerName",
+                                "gender",
+                                "content"
+                            ]
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "topic",
+                    "turns"
+                ]
+            },
+            "suggestions": {
+                "description": "Two (2) Follow on suggestions",
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "ableToAnswer": {
+                "description": "Set to true if you were able to provide an answer to the user\u0027s query. Set to false if you were not able to provide an answer.",
+                "type": "boolean"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "answer",
+            "podcast",
+            "suggestions",
+            "ableToAnswer"
+        ],
+        "strict": true
+    }
+  },
+  "Extract_name": {
+    "name": "extract_name",
+    "schema": {
+        "properties": {
+            "name": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "name"
+        ],
+        "title": "ExtractName",
+        "type": "object"
+    },
+    "strict":false
   }
 }
   

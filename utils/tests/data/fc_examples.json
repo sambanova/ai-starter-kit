@@ -1113,5 +1113,19 @@
     "tool_use": "tool_not_required",
     "ref_schema": false,
     "system_prompt": true
+  },
+  {
+    "id": 41,
+    "messages": [
+        {
+            "role": "user",
+            "content": "What's the name of the Sun in latin?"
+        }
+    ],
+    "tools": ["get_current_weather_variant"],
+    "multiturn": false,
+    "tool_use": "tool_not_required",
+    "ref_schema": false,
+    "system_prompt": false
   }
 ]
