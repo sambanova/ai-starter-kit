@@ -196,19 +196,19 @@ def run_test_4(output_files_dir: str, consolidated_results_dir: str, consolidate
 if __name__ == '__main__':
     load_dotenv(os.path.join(project_root, '.env'), override=True)
 
-    run_test_1(output_files_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_1", 
-               consolidated_results_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_1",
+    run_test_1(output_files_dir=f"{project_root}/benchmarking/data/results/sett/test_1", 
+               consolidated_results_dir=f"{project_root}/benchmarking/data/results/sett/test_1",
                consolidated_results_file_name="consolited_resulst-test_1")
     
-    run_test_2(output_files_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_2", 
-               consolidated_results_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_2",
-               consolidated_results_file_name="consolited_resulst-test_2")
+    # run_test_2(output_files_dir=f"{project_root}/benchmarking/data/results/sett/test_2", 
+    #            consolidated_results_dir=f"{project_root}/benchmarking/data/results/sett/test_2",
+    #            consolidated_results_file_name="consolited_resulst-test_2")
     
-    run_test_3(output_files_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_3", 
-               consolidated_results_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_3",
-               consolidated_results_file_name="consolited_resulst-test_3")
+    # run_test_3(output_files_dir=f"{project_root}/benchmarking/data/results/sett/test_3", 
+    #            consolidated_results_dir=f"{project_root}/benchmarking/data/results/sett/test_3",
+    #            consolidated_results_file_name="consolited_resulst-test_3")
     
-    run_test_4(output_files_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_4", 
-               consolidated_results_dir=f"{project_root}/benchmarking/data/results/runs_on_endpoint/test_4",
-               consolidated_results_file_name="consolited_resulst-test_4")
+    # run_test_4(output_files_dir=f"{project_root}/benchmarking/data/results/sett/test_4", 
+    #            consolidated_results_dir=f"{project_root}/benchmarking/data/results/sett/test_4",
+    #            consolidated_results_file_name="consolited_resulst-test_4")
     
