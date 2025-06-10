@@ -19,7 +19,6 @@ from benchmarking.streamlit.streamlit_utils import (
     find_pages_to_hide,
     save_uploaded_file,
     setup_credentials,
-    shared_session_variables_initialization,
 )
 
 warnings.filterwarnings('ignore')
@@ -68,6 +67,7 @@ def _parse_llm_response(llm: ChatPerformanceEvaluator, prompt: str) -> Dict[str,
     }
     return response
 
+
 def _initialize_sesion_variables() -> None:
     # Initialize chat history
     if 'chat_history' not in st.session_state:
@@ -100,17 +100,18 @@ def _initialize_sesion_variables() -> None:
     #     st.session_state.top_k = None
     # if "top_p" not in st.session_state:
     #     st.session_state.top_p = None
+    if 'mp_events' not in st.session_state:
+        st.switch_page('app.py')
+
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['setup']['page_label']])
+    hide_pages([APP_PAGES['main']['page_label']])
 
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
-    else:
-        hide_pages([APP_PAGES['setup']['page_label']])
 
     st.title(':orange[SambaNova] Chat Performance Evaluation')
     st.markdown(
@@ -188,11 +189,6 @@ def main() -> None:
                 st.session_state.perf_metrics_history = []
 
                 st.toast('Conversation reset. The next response will clear the history on the screen')
-
-        if st.session_state.prod_mode:
-            if st.button('Back to Setup'):
-                st.session_state.setup_complete = False
-                st.switch_page('app.py')
 
     try:
         # Sets LLM based on side bar parameters and bundle model selected
@@ -273,7 +269,6 @@ if __name__ == '__main__':
     # Defining styles
     st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
 
-    shared_session_variables_initialization()
     _initialize_sesion_variables()
 
     main()
