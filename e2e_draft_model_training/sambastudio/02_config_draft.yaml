@@ -2,7 +2,7 @@ model:
   hf_name: "meta-llama/Llama-3.2-1B-Instruct"
   model_name: "Llama-3.2-1B-Instruct"
   publisher: "meta-llama"
-  description: "The Meta Llama 3.1 collection of multilingual large language models (LLMs) is a collection of pretrained and instruction tuned generative models in 8B, 70B and 405B sizes (text in/text out)."
+  description: "The Llama 3.2 collection of multilingual large language models (LLMs) is a collection of pretrained and instruction-tuned generative models in 1B and 3B sizes (text in/text out)."
   param_count: 8  # number in billions of parameters
 
 sambastudio:

@@ -1,5 +1,4 @@
 model:
-  # hf_name: "meta-llama/Llama-3.1-8B-Instruct"
   hf_name: "TsinghuaC3I/Llama-3.1-8B-UltraMedical"
   model_name: "Llama-3.1-8B-UltraMedical"
   publisher: "TsinghuaC3I"

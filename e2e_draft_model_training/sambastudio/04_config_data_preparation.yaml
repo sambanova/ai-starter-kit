@@ -13,8 +13,8 @@ sambastudio:
   rdu_arch: "SN40L-8"
 
 dataset:
-  dataset_name: "dummy_example"
-  dataset_description: "xxx"
+  dataset_name: "fine_tuning-publichealth-qa"
+  dataset_description: "Dataset description."
   dataset_path: "/Users/my_user/Documents/ai-starter-kit/e2e_fine_tuning/data/datasets/fine_tuning-publichealth-qa"
   dataset_job_types:
     - "evaluation"
