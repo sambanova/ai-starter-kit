@@ -12,4 +12,4 @@ mypy==1.11.2
 pre-commit==4.0.1
 python-dotenv==1.0.1
 ruff==0.6.9
-transformers==4.41.2
+transformers==4.50.0
