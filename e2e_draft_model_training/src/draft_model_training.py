@@ -8,12 +8,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import torch
+import wandb
 import yaml
 from datasets import load_dataset  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer  # type: ignore
-
-import wandb
 
 
 class DraftModelTrainer:
