@@ -1,0 +1,9 @@
+datasets==3.6.0
+huggingface-hub==0.32.6
+Jinja2==3.1.6
+python-dotenv==1.1.0
+langchain-sambanova==0.1.5
+torch==2.7.1
+transformers==4.52.4
+trl==0.18.1
+wandb==0.20.1
