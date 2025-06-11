@@ -6,7 +6,7 @@ crewai==0.120.1
 crewai-tools==0.45.0
 Markdown==3.8
 numpy<2.0.0
-pandasai==2.3.0
+pandasai==3.0.0a1
 pre-commit==4.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
