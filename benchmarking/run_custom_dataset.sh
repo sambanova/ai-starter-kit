@@ -4,13 +4,13 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results/llmperf" \
+--model-name "llama-3.3-70b" \
+--results-dir "./data/results/llmperf/structured_output" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
---save-llm-responses False \
---sampling-params '{"max_tokens_to_generate": 256}' \
+--input-file-path "../benchmarking/prompts/structured_output.jsonl" \
+--save-llm-responses True \
+--sampling-params '{"max_tokens_to_generate": 1024, "temperature": 0.3, "top_p": 0.01, "response_format": { "type": "json_schema", "json_schema": { "name": "math_reasoning", "schema": { "type": "object", "properties": { "steps": { "type": "array", "items": { "type": "object", "properties": { "explanation": { "type": "string" }, "output": { "type": "string" } }, "required": ["explanation", "output"], "additionalProperties": false } }, "final_answer": { "type": "string" } }, "required": ["steps", "final_answer"], "additionalProperties": false }, "strict": true } }}' \
 --use-debugging-mode False \
 --llm-api sncloud
 
