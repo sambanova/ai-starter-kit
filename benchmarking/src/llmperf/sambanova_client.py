@@ -534,7 +534,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
         sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
-        sampling_params['ignore_eos'] = True
+        # sampling_params['ignore_eos'] = True
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
@@ -597,15 +597,16 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # performance metrics
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data['choices'][0]['finish_reason'] is None:
-                                if data['choices'][0]['delta'].get('content') is not None:
-                                    # log s timings
-                                    events_timings.append(time.monotonic() - event_start_time)
-                                    event_start_time = time.monotonic()
-                                    # concatenate streaming text pieces
-                                    stream_content = data['choices'][0]['delta']['content']
-                                    events_received.append(stream_content)
-                                    generated_text += stream_content
+                            if data['choices'][0].get('finish_reason'):
+                                if data['choices'][0]['finish_reason'] is None:
+                                    if data['choices'][0]['delta'].get('content') is not None:
+                                        # log s timings
+                                        events_timings.append(time.monotonic() - event_start_time)
+                                        event_start_time = time.monotonic()
+                                        # concatenate streaming text pieces
+                                        stream_content = data['choices'][0]['delta']['content']
+                                        events_received.append(stream_content)
+                                        generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
