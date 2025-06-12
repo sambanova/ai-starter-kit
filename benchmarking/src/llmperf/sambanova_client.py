@@ -597,22 +597,20 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # performance metrics
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data['choices'][0].get('finish_reason'):
-                                if data['choices'][0]['finish_reason'] is None:
-                                    if data['choices'][0]['delta'].get('content') is not None:
-                                        # log s timings
-                                        events_timings.append(time.monotonic() - event_start_time)
-                                        event_start_time = time.monotonic()
-                                        # concatenate streaming text pieces
-                                        stream_content = data['choices'][0]['delta']['content']
-                                        events_received.append(stream_content)
-                                        generated_text += stream_content
+                            if data['choices'][0].get('finish_reason') is None:                                    
+                                if data['choices'][0]['delta'].get('content') is not None:
+                                    # log s timings
+                                    events_timings.append(time.monotonic() - event_start_time)
+                                    event_start_time = time.monotonic()
+                                    # concatenate streaming text pieces
+                                    stream_content = data['choices'][0]['delta']['content']
+                                    events_received.append(stream_content)
+                                    generated_text += stream_content
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
