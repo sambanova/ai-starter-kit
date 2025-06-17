@@ -182,5 +182,5 @@ For example, if your bundle has 3 models configurations that could trigger a swi
 The switching time is estimated as follows.
 Based on the first request TTFT in `individual_responses.json`, if this value is significantly larger (more than 3 standard deviations) than the average TTFT of the remaining requests, then the switching time will be the difference between first TTFT and the average of the remaining TTFTs.
 
-## Notebook
-The E2E notebook [Benchmark Model Bundle](./Benchmark_Model_Bundle.ipynb) contains a full example on how to create a CoE bundle, create a project, create an endpoint, deploy the CoE bundle to an endpoint, and finally run the CoE benchmarking script.
+## Notebooks
+TODO: Add the links to all the relevant notebooks.
