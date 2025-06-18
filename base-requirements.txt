@@ -1,5 +1,5 @@
 # Core dependencies
-llama-index==0.11.17
+llama-index==0.12.28
 llama-index-llms-langchain==0.4.2
 langchain==0.3.16
 langchain-sambanova==0.1.0
@@ -20,11 +20,11 @@ streamlit==1.40.2
 st-pages==0.5.0
 streamlit-extras==0.3.6
 sseclient-py==1.8.0
-torch==2.2.2
+torch==2.7.1
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
-transformers==4.50.1
+transformers==4.50.0
 sentence-transformers==3.3.1
 huggingface-hub==0.26.0
 instructorembedding==1.0.1
@@ -86,7 +86,7 @@ pillow==10.2.0
 pycountry==23.12.11
 omegaconf==2.3.0
 jsonlines==4.0.0
-Jinja2==3.1.4
+Jinja2==3.1.6
 
 # Data sources
 sec-downloader==0.11.1
