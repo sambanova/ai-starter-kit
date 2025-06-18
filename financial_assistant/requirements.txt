@@ -6,7 +6,7 @@ langchain-core==0.3.61
 langchain-huggingface==0.2.0
 langchain-sambanova==0.1.5
 numpy<2.0.0
-pandasai==2.3.0
+pandasai==3.0.0a1
 pydantic==2.11.5
 pypdf>=4.0.1,<6.0.0
 python-dotenv==1.1.0
