@@ -1,6 +1,6 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/results/qwen_llama_switching_time/qwen3_32b_llama3.3_70b_4k-16k_copypefs/'
-consolidated_results_dir: '../benchmarking/data/results/qwen_llama_switching_time/qwen3_32b_llama3.3_70b_4k-16k_copypefs/consolidated_results'
+output_files_dir: '../benchmarking/data/results/qwen_llama_switching_time/qwen3_32b_llama3.3_70b_4k-32k_copypefs/'
+consolidated_results_dir: '../benchmarking/data/results/qwen_llama_switching_time/qwen3_32b_llama3.3_70b_4k-32k_copypefs/consolidated_results'
 timeout: 7200
 time_delay: 0
