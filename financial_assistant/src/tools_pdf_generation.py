@@ -39,11 +39,10 @@ class PDFReport(FPDF):  # type: ignore
 
     def header(self, title_name: str = DEFAULT_PDF_TITLE) -> None:
         """Overrides the FPDF header method."""
-        self.set_text_color(SAMBANOVA_ORANGE)
 
         # Rendering logo:
         self.image(
-            'https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            os.path.join(repo_dir, 'images', 'SambaNova-light-logo-1.png'),
             self.w - self.l_margin - LOGO_WIDTH,
             self.t_margin - self.t_margin / 2,
             LOGO_WIDTH,
@@ -76,7 +75,6 @@ class PDFReport(FPDF):  # type: ignore
 
     def chapter_title(self, title: str) -> None:
         """Writes the chapter title."""
-        self.set_text_color(SAMBANOVA_ORANGE)
         self.set_font(FONT, 'B', 12)
         self.cell(0, 10, title, 0, 1, 'L')
         self.ln(5)

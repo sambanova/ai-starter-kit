@@ -117,8 +117,8 @@ def stream_time_llm() -> None:
             data = json.load(file)
             while data:
                 streamlit.markdown(
-                    f'- **<span style="color:rgb{SAMBANOVA_ORANGE}">{data[0][0]}</span>'
-                    f'** took **<span style="color:rgb{SAMBANOVA_ORANGE}">'
+                    f'- **<span style="color:green">{data[0][0]}</span>'
+                    f'** took **<span style="color:green">'
                     f'{float(data[0][1]):.2f}</span>** seconds.',
                     unsafe_allow_html=True,
                 )
@@ -194,7 +194,7 @@ def stream_single_response(response: Any) -> None:
         response = str(response)
         with streamlit.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             if isinstance(response, str):
                 # If images are not present in the response, treat it as pure text

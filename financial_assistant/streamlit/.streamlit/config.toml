@@ -1,11 +1,10 @@
 [theme]
-base="dark"
-
-# Primary accent for interactive elements
-primaryColor='#EE7624'
-
-# Color used for almost all text
-textColor = 'e0e0e0'
+base = "light"
+primaryColor = "#250E36"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F2F2"
+textColor = "#000000"
+font = "sans serif"
 
 [global]
 # If True, will show a warning when you run a Streamlit-enabled script

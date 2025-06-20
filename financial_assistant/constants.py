@@ -38,10 +38,6 @@ RETRIEVE_HEADLINES = False
 TOP_K = 10
 MAX_URLS = 30
 
-# SambaNova
-SAMBANOVA_LOGO = 'https://sambanova.ai/hubfs/logotype_sambanova_orange.png'
-SAMBANOVA_ORANGE = (238, 118, 36)
-
 # STOCK INFO
 YFINANCE_COLUMNS_JSON = os.path.join(kit_dir, 'streamlit/yfinance_columns.json')
 

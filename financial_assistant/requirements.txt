@@ -6,6 +6,7 @@ langchain-core==0.3.58
 langchain-huggingface==0.1.2
 langchain-sambanova==0.1.4
 mypy==1.11.2
+numpy<2.0.0
 pandasai==2.4.2
 pre-commit==4.0.1
 pydantic==2.11.4
