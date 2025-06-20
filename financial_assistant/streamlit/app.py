@@ -79,7 +79,7 @@ with streamlit.sidebar:
     else:
         if prod_mode:
             streamlit.success('Credentials are set')
-            if streamlit.button('Clear Credentials', key='clear_credentials'):
+            if streamlit.button('Clear Credentials', key='clear-credentials'):
                 save_credentials(api_key='', prod_mode=prod_mode)
                 streamlit.success(r':orange[You have been logged out.]')
                 time.sleep(2)
@@ -117,10 +117,6 @@ def main() -> None:
                     schedule_temp_dir_deletion(streamlit.session_state.cache_dir, delay_minutes=EXIT_TIME_DELTA)
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
-
-            else:
-                # In development mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
 
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
@@ -166,7 +162,7 @@ def main() -> None:
             # Custom button to clear all files
             if streamlit.button(
                 label='Clear All Files',
-                key='clear-button',
+                key='clear-files',
                 help='This will delete all saved files',
             ):
                 try:
