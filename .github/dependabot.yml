@@ -1,32 +1,13 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directories:
-      - "/"
-      - "/benchmarking"
-      - "/bundle_jump_start"
-      - "/data_extraction"
-      - "/document_comparison"
-      - "/e2e_fine_tuning"
-      - "/enterprise_knowledge_retriever"
-      - "/eval_jumpstart"
-      - "/financial_assistant"
-      - "/fine_tuning_embeddings"
-      - "/fine_tuning_sql"
-      - "/funcion_calling"
-      - "/image_search"
-      - "/multimodal_knowledge_retriever"
-      - "/post_call_analysis"
-      - "/prompt_engineering"
-      - "/sambanova_scribe"
-      - "/search_assistant"
-      - "/tests"
-      - "/web_crawled_data_retriever"
-      - "/utils/*"
+    # All Python packages in every subdirectory
+    directory: "/"
     schedule:
       interval: "daily"
       time: "15:00"
       timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "pip dependency update"
     labels:
