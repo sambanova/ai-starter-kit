@@ -15,7 +15,7 @@ asttokens==2.4.0
 async-timeout==4.0.3
 attrs==23.1.0
 backcall==0.2.0
-certifi==2023.7.22
+certifi==2024.7.4
 charset-normalizer==3.3.0
 chromadb==0.4.22
 ci-info==0.3.0
@@ -37,7 +37,7 @@ fonttools==4.43.0
 frontend==0.0.3
 frozenlist==1.4.0
 future==0.18.3
-h11==0.14.0
+h11==0.16.0
 html2text==2020.1.16
 httplib2==0.22.0
 huggingface-hub==0.25.2
@@ -101,7 +101,7 @@ pytz==2023.3.post1
 pyxnat==1.6
 pyzmq==25.1.1
 rdflib==7.0.0
-requests==2.31.0
+requests==2.32.4
 ruff==0.6.9
 scikit-learn==1.4.0 
 scipy==1.11.3
@@ -115,7 +115,7 @@ stack-data==0.6.3
 starlette==0.31.1
 tenacity==8.2.3
 threadpoolctl==3.2.0
-tornado==6.3.3
+tornado==6.5
 traitlets==5.11.2
 traits==6.3.2
 typing-inspect==0.9.0
