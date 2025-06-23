@@ -1,7 +1,0 @@
-summarization:
-  description: |
-    Examine the provided context to generate a well-structured summary and an appropriate title.
-  expected_output: |
-    1. A concise summary of the provided report section. 
-    2. A short, compelling title.
-  agent: "summarizer"
