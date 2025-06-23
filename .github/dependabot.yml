@@ -1,7 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    # All Python packages in every subdirectory
     directory: "/"
     schedule:
       interval: "daily"
