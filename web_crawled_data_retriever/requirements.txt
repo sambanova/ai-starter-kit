@@ -1,5 +1,5 @@
 beautifulsoup4==4.12.3
-faiss-cpu==1.7.4
+faiss-cpu==1.11.0
 fake-useragent==1.5.1
 html2text==2020.1.16
 huggingface-hub==0.25.2
