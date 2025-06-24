@@ -1,8 +1,0 @@
-reformulation_task:
-  description: >
-    Analyze and decompose the query into a minimal list of sub-queries,
-    with each sub-query corresponding to a single company.
-  expected_output: >
-    A minimal, comprehensive list of sub-queries, 
-    each focusing on only one company.
-  agent: reformulator
