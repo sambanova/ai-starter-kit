@@ -1,7 +1,0 @@
-sec_research_task:
-  description: >
-    Retrieve and save the relevant SEC EDGAR financial filings in response to a user's query,
-    given that the current year is 2025 and the current month is February.
-  expected_output: >
-    The complete file path to the saved SEC EDGAR text file.
-  agent: sec_researcher

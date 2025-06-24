@@ -1,7 +1,0 @@
-__pycache__/
-lib/
-.DS_Store
-.env
-.lock
-.venv
-financial_agent_crewai/cache/*
