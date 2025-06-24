@@ -1,0 +1,7 @@
+# This file indicates which files to exclude when running Prettier formatting.
+# Ignore artifacts:
+build
+coverage
+
+# Ignore all HTML files:
+**/*.html
