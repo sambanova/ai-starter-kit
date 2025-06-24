@@ -119,7 +119,7 @@ def main() -> None:
         if prod_mode:
             time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
             if (
-                streamlit.button('Exit App', help='This will delete the cache!')
+                streamlit.button('Exit App', help='This will delete the cache')
                 or time_delta.seconds / 30 > EXIT_TIME_DELTA
             ):
                 # Crear the chat history
@@ -226,7 +226,7 @@ def main() -> None:
         # Print Chat History page
         elif menu == 'Print Chat History':
             # Custom button to clear chat history
-            if streamlit.button('Clear Chat History'):
+            if streamlit.button('Clear Chat History', help='This will delete the chat history.'):
                 streamlit.session_state.chat_history = list()
                 # Log message
                 streamlit.success(f'Cleared chat history.')
