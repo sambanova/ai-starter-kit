@@ -119,7 +119,7 @@ def main() -> None:
         if prod_mode:
             time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
             if (
-                streamlit.button('Exit App', help='This will delete the cache')
+                streamlit.button('Exit App', help='This will delete the cache.')
                 or time_delta.seconds / 30 > EXIT_TIME_DELTA
             ):
                 # Crear the chat history
@@ -159,7 +159,7 @@ def main() -> None:
             if streamlit.button(
                 label='Clear All Files',
                 key='clear-files',
-                help='This will delete all saved files',
+                help='This will delete all saved files.',
             ):
                 try:
                     clear_cache(delete=False)
