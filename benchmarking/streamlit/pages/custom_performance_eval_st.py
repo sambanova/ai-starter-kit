@@ -1,3 +1,4 @@
+import os
 import warnings
 from typing import Any
 
@@ -16,13 +17,20 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    render_logo,
+    render_title_icon,
     save_uploaded_file,
     set_api_variables,
+    set_font,
     setup_credentials,
     update_progress_bar,
 )
 
 warnings.filterwarnings('ignore')
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 CONFIG_PATH = './config.yaml'
 with open(CONFIG_PATH) as file:
@@ -119,12 +127,12 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 def main() -> None:
     hide_pages([APP_PAGES['main']['page_label']])
 
+    set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
-
-    st.title(':orange[SambaNova] Custom Performance Evaluation')
+    render_title_icon('Custom Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         'Here you can select a custom dataset that you want to benchmark performance with. Note that with models that \
           support dynamic batching, you are limited to the number of cpus available on your machine to send concurrent \
@@ -135,6 +143,7 @@ def main() -> None:
         # Set up credentials and API variables
         setup_credentials()
 
+        render_logo()
         ##################
         # File Selection #
         ##################
@@ -298,7 +307,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     # Defining styles

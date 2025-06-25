@@ -1,3 +1,4 @@
+import base64
 import datetime
 import os
 import sys
@@ -32,26 +33,16 @@ if not prod_mode:
 # Initialize session
 initialize_session(streamlit.session_state, prod_mode)
 
-# Streamlit app setup
-streamlit.set_page_config(
-    page_title='Finance App',
-    page_icon=SAMBANOVA_LOGO,
-    layout='wide',
-)
 
 # Set CSS styles
 set_css_styles()
 
 # Add SambaNova logo
-streamlit.logo(
-    image=SAMBANOVA_LOGO,
-    link=SAMBANOVA_LOGO,
-    icon_image=SAMBANOVA_LOGO,
-)
+streamlit.logo(image=os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
 
 # Title of the main page
 columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
-columns[0].image(SAMBANOVA_LOGO, width=100)
+columns[0].image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
 columns[1].title('SambaNova Financial Assistant')
 
 # Home page
@@ -61,6 +52,19 @@ if not are_credentials_set():
 
 # Add sidebar
 with streamlit.sidebar:
+    # Inject HTML to display the logo in the sidebar at 70% width
+    logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+    with open(logo_path, 'rb') as img_file:
+        encoded = base64.b64encode(img_file.read()).decode()
+    streamlit.sidebar.markdown(
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
     if not are_credentials_set():
         # Get the SambaNova API Key
         streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')

@@ -302,3 +302,6 @@ yoda/llava_data_prep/scripts/yolov8n.pt
 kits_to_deploy.json
 deploy_kits.sh
 test_results
+
+#temp logos
+images/SambaNova*

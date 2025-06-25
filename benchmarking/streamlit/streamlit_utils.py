@@ -1,5 +1,6 @@
+import base64
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,10 @@ from plotly.graph_objs import Figure
 
 from benchmarking.utils import SAMBANOVA_URL
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
 MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
@@ -36,7 +41,7 @@ PRIMARY_ST_STYLE = """
     button[kind="primary"] {
         width: 100%; /* Match input width */
         height: 50px; /* Adjust for size */
-        background-color: #ee7624 !important; /* Streamlit red */
+        background-color: #250E36 !important; /* Streamlit red */
         color: white !important;
         font-size: 18px;
         font-weight: bold;
@@ -46,7 +51,7 @@ PRIMARY_ST_STYLE = """
     }
 
     button[kind="primary"]:hover {
-        background-color: #ce661f !important; /* Darker red on hover */
+        background-color: #4E22EB !important; /* Darker red on hover */
     }
     
     button[kind="primary"]:disabled {
@@ -71,6 +76,61 @@ SECONDARY_ST_STYLE = """
     }
     </style>
     """
+
+
+def render_logo() -> None:
+    # Inject HTML to display the logo in the sidebar at 70% width
+    logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+    with open(logo_path, 'rb') as img_file:
+        encoded = base64.b64encode(img_file.read()).decode()
+    st.sidebar.markdown(
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+
+def set_font() -> None:
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown(
+        """
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_title_icon(title: str, icon: Optional[str] = None) -> None:
+    # add title and icon
+    if icon is not None:
+        col1, col2, col3 = st.columns([3, 1, 3])
+        with col2:
+            st.image(icon)
+    st.markdown(
+        f"""
+        <style>
+            .kit-title {{
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }}
+        </style>
+        <div class="kit-title">{title}</div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def setup_credentials() -> None:
