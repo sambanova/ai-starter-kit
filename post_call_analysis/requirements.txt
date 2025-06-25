@@ -2,7 +2,7 @@ faiss-cpu==1.7.4
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
 langchain-chroma == 0.1.4
-langchain-community==0.3.16
+langchain-community==0.3.26
 langchain-core==0.3.33
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
@@ -15,7 +15,7 @@ nltk==3.8.1
 plotly==5.19.0
 pre-commit==4.0.1
 python-dotenv==1.0.1
-requests==2.31.0
+requests==2.32.4
 ruff==0.6.9
 sentence_transformers==3.3.1
 sseclient-py==1.8.0
