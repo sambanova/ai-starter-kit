@@ -23,6 +23,7 @@ from benchmarking.streamlit.streamlit_utils import (
     render_title_icon,
     set_api_variables,
     set_font,
+    setup_credentials,
     update_progress_bar,
 )
 
@@ -79,6 +80,8 @@ def _initialize_session_variables() -> None:
         st.session_state.setup_complete = None
     if 'progress_bar' not in st.session_state:
         st.session_state.progress_bar = None
+    if 'mp_events' not in st.session_state:
+        st.switch_page('app.py')
 
 
 def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
@@ -128,13 +131,13 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
+    hide_pages([APP_PAGES['main']['page_label']])
+
     set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
-    else:
-        hide_pages([APP_PAGES['setup']['page_label']])
     render_title_icon('Real Workload Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         """This performance evaluation assesses the following LLM's performance metrics using requests sent 
@@ -154,6 +157,9 @@ def main() -> None:
     st.markdown("""**Tokens/sec (Throughput)**: Total number of tokens generated per second for a given batch-size.""")
 
     with st.sidebar:
+        # Set up credentials and API variables
+        setup_credentials()
+
         render_logo()
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
@@ -167,30 +173,21 @@ def main() -> None:
         )
         st.session_state.llm = f'{llm_model}'
 
-        if st.session_state.prod_mode:
-            if st.session_state.llm_api == 'sncloud':
-                st.selectbox(
-                    'API type',
-                    options=list(LLM_API_OPTIONS.keys()),
-                    format_func=lambda x: LLM_API_OPTIONS[x],
-                    index=0,
-                    disabled=True,
-                )
-            elif st.session_state.llm_api == 'sambastudio':
-                st.selectbox(
-                    'API type',
-                    options=list(LLM_API_OPTIONS.keys()),
-                    format_func=lambda x: LLM_API_OPTIONS[x],
-                    index=1,
-                    disabled=True,
-                )
-        else:
-            st.session_state.llm_api = st.selectbox(
+        if st.session_state.llm_api == 'sncloud':
+            st.selectbox(
                 'API type',
                 options=list(LLM_API_OPTIONS.keys()),
                 format_func=lambda x: LLM_API_OPTIONS[x],
                 index=0,
-                disabled=st.session_state.running,
+                disabled=True,
+            )
+        elif st.session_state.llm_api == 'sambastudio':
+            st.selectbox(
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=1,
+                disabled=True,
             )
 
         st.session_state.multimodal_image_size = st.selectbox(
@@ -256,11 +253,6 @@ def main() -> None:
         )
 
         sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary')
-
-        if st.session_state.prod_mode:
-            if st.button('Back to Setup', disabled=st.session_state.running):
-                st.session_state.setup_complete = False
-                st.switch_page('app.py')
 
     if sidebar_stop:
         st.session_state.running = False
@@ -356,10 +348,4 @@ if __name__ == '__main__':
 
     _initialize_session_variables()
 
-    if st.session_state.prod_mode:
-        if st.session_state.setup_complete:
-            main()
-        else:
-            st.switch_page('./app.py')
-    else:
-        main()
+    main()

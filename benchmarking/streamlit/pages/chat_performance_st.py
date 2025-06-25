@@ -22,6 +22,7 @@ from benchmarking.streamlit.streamlit_utils import (
     render_title_icon,
     save_uploaded_file,
     set_font,
+    setup_credentials,
 )
 
 warnings.filterwarnings('ignore')
@@ -107,16 +108,19 @@ def _initialize_sesion_variables() -> None:
     #     st.session_state.top_k = None
     # if "top_p" not in st.session_state:
     #     st.session_state.top_p = None
+    if 'mp_events' not in st.session_state:
+        st.switch_page('app.py')
+
 
 
 def main() -> None:
+    hide_pages([APP_PAGES['main']['page_label']])
+
     set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['setup']['page_label'])
+        pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
-    else:
-        hide_pages([APP_PAGES['setup']['page_label']])
 
     render_title_icon('Chat Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
@@ -125,6 +129,9 @@ def main() -> None:
     )
 
     with st.sidebar:
+        # Set up credentials and API variables
+        setup_credentials()
+
         render_logo()
         st.title('Set up the LLM')
         st.markdown('**Configure your LLM before starting to chat**')
@@ -137,26 +144,21 @@ def main() -> None:
                 of the model/expert here following the Readme.',
         )
         llm_selected = f'{llm_model}'
-        if st.session_state.prod_mode:
-            if st.session_state.llm_api == 'sncloud':
-                st.selectbox(
-                    'API type',
-                    options=list(LLM_API_OPTIONS.keys()),
-                    format_func=lambda x: LLM_API_OPTIONS[x],
-                    index=0,
-                    disabled=True,
-                )
-            elif st.session_state.llm_api == 'sambastudio':
-                st.selectbox(
-                    'API type',
-                    options=list(LLM_API_OPTIONS.keys()),
-                    format_func=lambda x: LLM_API_OPTIONS[x],
-                    index=1,
-                    disabled=True,
-                )
-        else:
-            st.session_state.llm_api = st.selectbox(
-                'API type', options=list(LLM_API_OPTIONS.keys()), format_func=lambda x: LLM_API_OPTIONS[x], index=0
+        if st.session_state.llm_api == 'sncloud':
+            st.selectbox(
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=0,
+                disabled=True,
+            )
+        elif st.session_state.llm_api == 'sambastudio':
+            st.selectbox(
+                'API type',
+                options=list(LLM_API_OPTIONS.keys()),
+                format_func=lambda x: LLM_API_OPTIONS[x],
+                index=1,
+                disabled=True,
             )
 
         st.session_state.uploaded_file = st.file_uploader(
@@ -186,7 +188,7 @@ def main() -> None:
         # format="%.2f")
 
         # Sets LLM
-        sidebar_run_option = st.sidebar.button('Run!', type='primary')
+        sidebar_run_option = st.sidebar.button('Set up!', type='primary')
 
         # Additional settings
         with st.expander('Additional settings', expanded=True):
@@ -197,11 +199,6 @@ def main() -> None:
                 st.session_state.perf_metrics_history = []
 
                 st.toast('Conversation reset. The next response will clear the history on the screen')
-
-        if st.session_state.prod_mode:
-            if st.button('Back to Setup'):
-                st.session_state.setup_complete = False
-                st.switch_page('app.py')
 
     try:
         # Sets LLM based on side bar parameters and bundle model selected
@@ -284,10 +281,4 @@ if __name__ == '__main__':
 
     _initialize_sesion_variables()
 
-    if st.session_state.prod_mode:
-        if st.session_state.setup_complete:
-            main()
-        else:
-            st.switch_page('./app.py')
-    else:
-        main()
+    main()
