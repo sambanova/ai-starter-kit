@@ -7,6 +7,6 @@ pillow == 10.2.0
 pre-commit==4.0.1
 python-dotenv == 1.0.1
 ruff==0.6.9
-scikit-learn == 1.2.1
+scikit-learn == 1.6.1
 streamlit == 1.32.0
 watchdog == 4.0.0
