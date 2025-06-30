@@ -1,4 +1,4 @@
-faiss-cpu==1.7.4
+faiss-cpu==1.11.0
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
 langchain-chroma == 0.1.4
