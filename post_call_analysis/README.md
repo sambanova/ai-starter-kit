@@ -99,7 +99,7 @@ You must perform SambaStudio setup.
 
 You have the following options to set up your embedding model:
 
-* **SambaNovaCloud embedding model (Option 3)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
+* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
 
 * **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
