@@ -427,7 +427,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     # performance metrics
                     if data.get('usage') is None:
                         # if streams still don't hit a finish reason
-                        if data['choices'][0]['finish_reason'] is None:
+                        if data['choices'][0].get('finish_reason') is None:
                             if data['choices'][0]['delta'].get('content') is not None:
                                 # log s timings
                                 events_timings.append(time.monotonic() - event_start_time)
@@ -597,7 +597,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # performance metrics
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data['choices'][0]['finish_reason'] is None:
+                            if data['choices'][0].get('finish_reason') is None:
                                 if data['choices'][0]['delta'].get('content') is not None:
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)
