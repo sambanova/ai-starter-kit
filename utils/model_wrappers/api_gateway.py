@@ -14,7 +14,7 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from langchain_sambanova import ChatSambaNovaCloud, ChatSambaStudio, SambaStudioEmbeddings
+from langchain_sambanova import ChatSambaNovaCloud, ChatSambaStudio, SambaStudioEmbeddings, SambaNovaCloudEmbeddings
 
 from utils.model_wrappers.langchain_llms import SambaNovaCloud, SambaStudio
 
@@ -35,52 +35,87 @@ logger = logging.getLogger(__name__)
 class APIGateway:
     @staticmethod
     def load_embedding_model(
-        type: str = 'cpu',
+        type: str,
         batch_size: Optional[int] = None,
         bundle: bool = False,
+        model: Optional[str] = None,
         select_expert: Optional[str] = None,
-        sambastudio_embeddings_base_url: Optional[str] = None,
-        sambastudio_embeddings_base_uri: Optional[str] = None,
-        sambastudio_embeddings_project_id: Optional[str] = None,
-        sambastudio_embeddings_endpoint_id: Optional[str] = None,
-        sambastudio_embeddings_api_key: Optional[str] = None,
+        dimensions: Optional[int] = None,
+        max_characters: Optional[int] = None,
+        sambastudio_url: Optional[str] = None,
+        sambastudio_api_key: Optional[str] = None,
+        sambanova_url: Optional[str] = None,
+        sambanova_api_key: Optional[str] = None,
     ) -> Embeddings:
         """Loads a langchain embedding model given a type and parameters
         Args:
             type (str): wether to use sambastudio embedding model or in local cpu model
             batch_size (int, optional): batch size for sambastudio model. Defaults to None.
             bundle (bool, optional): whether to use bundle model. Defaults to False. only for sambastudio models
-            select_expert (str, optional): expert model to be used when bundle selected. Defaults to None.
-                only for sambastudio models.
-            sambastudio_embeddings_base_url (str, optional): base url for sambastudio model. Defaults to None.
-            sambastudio_embeddings_base_uri (str, optional): endpoint base uri for sambastudio model. Defaults to None.
-            sambastudio_embeddings_project_id (str, optional): project id for sambastudio model. Defaults to None.
-            sambastudio_embeddings_endpoint_id (str, optional): endpoint id for sambastudio model. Defaults to None.
-            sambastudio_embeddings_api_key (str, optional): api key for sambastudio model. Defaults to None.
+            
+            model (str) : Optional expert to use when using CoE models or cloud.
+            select_expert (str) : Optional alias for model.
+            
+            dimensions (int) : shorten embeddings by trimming some values from the end of the sequence
+            max_characters (int) : max characters, longer will be trimmed
+            
+            sambastudio_url (str): Optional SambaStudio environment URL".
+            sambastudio_api_token (str): Optional SambaStudio endpoint API key.
+
+            sambanova_url (str): Optional SambaNova Cloud URL",
+            sambanova_api_key (str): Optional SambaNovaCloud API key.
+        
         Returns:
             langchain embedding model
         """
-
-        if type == 'sambastudio':
+        if type == 'sncloud':
             envs = {
-                'sambastudio_embeddings_base_url': sambastudio_embeddings_base_url,
-                'sambastudio_embeddings_base_uri': sambastudio_embeddings_base_uri,
-                'sambastudio_embeddings_project_id': sambastudio_embeddings_project_id,
-                'sambastudio_embeddings_endpoint_id': sambastudio_embeddings_endpoint_id,
-                'sambastudio_embeddings_api_key': sambastudio_embeddings_api_key,
+                    'sambanova_url': sambanova_url,
+                    'sambanova_api_key': sambanova_api_key,
+                }
+            envs = {k: v for k, v in envs.items() if v is not None}
+            if batch_size is None:
+                batch_size = 16
+            if max_characters is None:
+                max_characters = 16384
+            embeddings = SambaNovaCloudEmbeddings(
+                **envs,
+                batch_size=batch_size, 
+                model = model or select_expert,
+                max_characters = max_characters,
+                dimensions = dimensions
+            ) 
+        
+
+        elif type == 'sambastudio':
+            envs = {
+                'sambastudio_url': sambastudio_url,
+                'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
+            extra_args = {
+                "max_characters": max_characters,
+                "dimensions": dimensions
+            }
+            extra_args = {k: v for k, v in extra_args.items() if v is not None}
 
             if bundle:
                 if batch_size is None:
                     batch_size = 1
                 embeddings = SambaStudioEmbeddings(
-                    **envs, batch_size=batch_size, model_kwargs={'select_expert': select_expert}
+                    **envs, 
+                    **extra_args,
+                    batch_size=batch_size, 
+                    model = model or select_expert,
                 )
             else:
                 if batch_size is None:
                     batch_size = 32
-                embeddings = SambaStudioEmbeddings(**envs, batch_size=batch_size)
+                embeddings = SambaStudioEmbeddings(
+                    **envs, 
+                    **extra_args,
+                    batch_size=batch_size,
+                    )
         elif type == 'cpu':
             encode_kwargs = {
                 'normalize_embeddings': NORMALIZE_EMBEDDINGS,
@@ -126,7 +161,7 @@ class APIGateway:
             max_tokens (int) : Optional max number of tokens to generate.
             max_tokens_to_generate (int) : Optional alias for max_tokens.
             temperature (float) : Optional model temperature.
-            model (str) : Optional expert to use when using CoE models.
+            model (str) : Optional expert to use when using CoE models or cloud.
             select_expert (str) : Optional alias for model.
             top_p (float) : Optional model top_p.
             top_k (int) : Optional model top_k.
