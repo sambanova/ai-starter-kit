@@ -37,7 +37,7 @@ class APIGateway:
     def load_embedding_model(
         type: Any,
         batch_size: Optional[int] = None,
-        bundle: bool = False,
+        bundle: Optional[bool] = False,
         model: Optional[str] = None,
         select_expert: Optional[str] = None,
         dimensions: Optional[int] = None,
