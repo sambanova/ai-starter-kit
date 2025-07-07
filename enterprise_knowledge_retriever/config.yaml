@@ -7,7 +7,7 @@ llm:
 
 embedding_model: 
     "type": "sncloud" # set either sncloud, sambastudio or cpu
-    "model": "E5-Mistral-7B-Instruct" #set if using SambaStudio bundle embedding expert
+    "model": "E5-Mistral-7B-Instruct" #set if using Cloud, or SambaStudio bundle embedding expert
 
 retrieval:
     "db_type": "chroma"
