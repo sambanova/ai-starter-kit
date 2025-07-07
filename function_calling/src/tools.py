@@ -408,7 +408,7 @@ class Rag(ToolClass):
             type=rag_info['embedding_model'].get('type'),
             batch_size=rag_info['embedding_model'].get('batch_size'),
             bundle=rag_info['embedding_model'].get('bundle'),
-            select_expert=rag_info['embedding_model'].get('model'),
+            model=rag_info['embedding_model'].get('model'),
         )
 
         # set vectorstore and retriever

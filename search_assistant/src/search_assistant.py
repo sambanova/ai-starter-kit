@@ -531,7 +531,7 @@ class SearchAssistant:
             type=self.embedding_model_info.get('type'),
             batch_size=self.embedding_model_info.get('batch_size'),
             bundle=self.embedding_model_info.get('bundle'),
-            select_expert=self.embedding_model_info.get('model'),
+            model=self.embedding_model_info.get('model'),
         )
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
