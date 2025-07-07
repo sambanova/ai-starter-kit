@@ -110,17 +110,17 @@ def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmb
     if embedding_model_info['type'] == 'cpu':
         embeddings_cpu = HuggingFaceEmbeddings(model_name='paraphrase-mpnet-base-v2')
         return embeddings_cpu
-    elif embedding_model_info['type'] == 'sambastudio':
+    elif embedding_model_info['type'] == 'sambastudio' or embedding_model_info['type'] == 'sncloud':
         embeddings_sambastudio = APIGateway.load_embedding_model(
-            type=embedding_model_info['type'],
-            batch_size=embedding_model_info['batch_size'],
-            bundle=embedding_model_info['bundle'],
-            select_expert=embedding_model_info['select_expert'],
+            type=embedding_model_info.get('type'),
+            batch_size=embedding_model_info.get('batch_size'),
+            bundle=embedding_model_info.get('bundle'),
+            model=embedding_model_info.get('model'),
         )
         return embeddings_sambastudio
     else:
         raise ValueError(
-            f'`config.rag["embedding_model"]["type"]` can only be `cpu` or `sambastudio. '
+            f'`config.rag["embedding_model"]["type"]` can only be `cpu` , `sncloud `or `sambastudio. '
             f'Got {embedding_model_info["type"]}.'
         )
 
