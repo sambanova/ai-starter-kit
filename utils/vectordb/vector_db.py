@@ -354,7 +354,7 @@ class VectorDb:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
         embeddings = APIGateway.load_embedding_model(
-            type=embedding_type, batch_size=batch_size, bundle=bundle, model= model or select_expert
+            type=embedding_type, batch_size=batch_size, bundle=bundle, model=model or select_expert
         )
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)

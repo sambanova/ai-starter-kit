@@ -31,6 +31,7 @@ TEST_KITS: List[str] = [
     'web_crawled_data_retriever',
 ]
 
+
 def update_tools(config: Dict[str, Any]) -> None:
     """Update 'st_tools' configurations in the config dictionary for prod mode.
 

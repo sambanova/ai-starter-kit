@@ -52,27 +52,27 @@ class APIGateway:
             type (str): wether to use sambastudio embedding model or in local cpu model
             batch_size (int, optional): batch size for sambastudio model. Defaults to None.
             bundle (bool, optional): whether to use bundle model. Defaults to False. only for sambastudio models
-            
+
             model (str) : Optional expert to use when using CoE models or cloud.
             select_expert (str) : Optional alias for model.
-            
+
             dimensions (int) : shorten embeddings by trimming some values from the end of the sequence
             max_characters (int) : max characters, longer will be trimmed
-            
+
             sambastudio_url (str): Optional SambaStudio environment URL".
             sambastudio_api_token (str): Optional SambaStudio endpoint API key.
 
             sambanova_url (str): Optional SambaNova Cloud URL",
             sambanova_api_key (str): Optional SambaNovaCloud API key.
-        
+
         Returns:
             langchain embedding model
         """
         if type == 'sncloud':
             envs = {
-                    'sambanova_url': sambanova_url,
-                    'sambanova_api_key': sambanova_api_key,
-                }
+                'sambanova_url': sambanova_url,
+                'sambanova_api_key': sambanova_api_key,
+            }
             envs = {k: v for k, v in envs.items() if v is not None}
             if batch_size is None:
                 batch_size = 16
@@ -80,12 +80,11 @@ class APIGateway:
                 max_characters = 16384
             embeddings = SambaNovaCloudEmbeddings(
                 **envs,
-                batch_size=batch_size, 
-                model = model or select_expert,
-                max_characters = max_characters,
-                dimensions = dimensions
-            ) 
-        
+                batch_size=batch_size,
+                model=model or select_expert,
+                max_characters=max_characters,
+                dimensions=dimensions,
+            )
 
         elif type == 'sambastudio':
             envs = {
@@ -93,29 +92,26 @@ class APIGateway:
                 'sambastudio_api_key': sambastudio_api_key,
             }
             envs = {k: v for k, v in envs.items() if v is not None}
-            extra_args = {
-                "max_characters": max_characters,
-                "dimensions": dimensions
-            }
+            extra_args = {'max_characters': max_characters, 'dimensions': dimensions}
             extra_args = {k: v for k, v in extra_args.items() if v is not None}
 
             if bundle:
                 if batch_size is None:
                     batch_size = 1
                 embeddings = SambaStudioEmbeddings(
-                    **envs, 
+                    **envs,
                     **extra_args,
-                    batch_size=batch_size, 
-                    model = model or select_expert,
+                    batch_size=batch_size,
+                    model=model or select_expert,
                 )
             else:
                 if batch_size is None:
                     batch_size = 32
                 embeddings = SambaStudioEmbeddings(
-                    **envs, 
+                    **envs,
                     **extra_args,
                     batch_size=batch_size,
-                    )
+                )
         elif type == 'cpu':
             encode_kwargs = {
                 'normalize_embeddings': NORMALIZE_EMBEDDINGS,
