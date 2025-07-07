@@ -245,7 +245,7 @@ class WebCrawlingRetrieval:
             do_sample=self.llm_info['do_sample'],
             max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
             temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
+            select_expert=self.llm_info['model'],
             process_prompt=False,
         )
 
@@ -259,10 +259,10 @@ class WebCrawlingRetrieval:
         persist_directory = self.config.get('persist_directory', 'NoneDirectory')
 
         self.embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info['type'],
-            batch_size=self.embedding_model_info['batch_size'],
-            bundle=self.embedding_model_info['bundle'],
-            select_expert=self.embedding_model_info['select_expert'],
+            type=self.embedding_model_info.get('type'),
+            batch_size=self.embedding_model_info.get('batch_size'),
+            bundle=self.embedding_model_info.get('bundle'),
+            model=self.embedding_model_info.get('model'),
         )
 
         if os.path.exists(persist_directory) and not force_reload and not update:
@@ -306,10 +306,10 @@ class WebCrawlingRetrieval:
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
         self.embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info['type'],
-            batch_size=self.embedding_model_info['batch_size'],
-            bundle=self.embedding_model_info['bundle'],
-            select_expert=self.embedding_model_info['select_expert'],
+            type=self.embedding_model_info.get('type'),
+            batch_size=self.embedding_model_info.get('batch_size'),
+            bundle=self.embedding_model_info.get('bundle'),
+            model=self.embedding_model_info.get('model'),
         )
         if update:
             self.config['update'] = True
