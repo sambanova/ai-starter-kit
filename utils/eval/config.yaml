@@ -48,10 +48,8 @@ rag:
     collection_name: "demo"
   
   embeddings:
-    type: "cpu"
-    batch_size: 1
-    bundle: True
-    select_expert: "e5-mistral-7b-instruct"
+    type: "sncloud"
+    model: "E5-Mistral-7B-Instruct"
 
   llm:
     type: "sncloud"

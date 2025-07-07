@@ -107,7 +107,7 @@ class EmbeddingsBaseModel(BaseModel):
     type: str
     batch_size: int
     bundle: bool
-    select_expert: str
+    model: str
 
 
 class LLMBaseModel(BaseModel):

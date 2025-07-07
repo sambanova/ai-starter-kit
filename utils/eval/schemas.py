@@ -11,10 +11,10 @@ class SNCloudSchema(BaseModel):
 
 
 class EmbeddingsSchema(BaseModel):
-    type: Literal['cpu', 'sambastudio'] = 'cpu'
+    type: Literal['sncloud' ,'cpu', 'sambastudio'] = 'sncloud'
     batch_size: int = 1
     bundle: bool = True
-    select_expert: str
+    model: str
 
 
 class VectorDBSchema(BaseModel):

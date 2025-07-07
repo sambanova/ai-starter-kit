@@ -31,34 +31,6 @@ TEST_KITS: List[str] = [
     'web_crawled_data_retriever',
 ]
 
-
-def update_all_embedding_models(config: Any) -> None:
-    """Recursively update all 'embedding_model' configurations in the config dictionary.
-
-    This function traverses the entire configuration dictionary recursively,
-    finds all occurrences of the 'embedding_model' key regardless of their nesting,
-    and updates their settings to standardize the embedding model to use 'sambastudio'.
-
-    Args:
-        config: The configuration dictionary or list to update.
-    """
-    if isinstance(config, dict):
-        for key, value in config.items():
-            if key == 'embedding_model' and isinstance(value, dict):
-                # Overwrite the embedding model settings to use 'sambastudio'
-                value['type'] = 'sambastudio'
-                value['batch_size'] = 32
-                value['bundle'] = False
-                # We standardize the embedding model settings to use 'sambastudio',
-                # which is suitable for hosted kits that can utilize our embeddings.
-            else:
-                # Recursively call the function for nested dictionaries or lists
-                update_all_embedding_models(value)
-    elif isinstance(config, list):
-        for item in config:
-            update_all_embedding_models(item)
-
-
 def update_tools(config: Dict[str, Any]) -> None:
     """Update 'st_tools' configurations in the config dictionary for prod mode.
 
@@ -85,7 +57,6 @@ def update_config_prod(config: Dict[str, Any]) -> None:
     # Enforcing 'prod_mode' ensures that production-specific optimizations
     # and configurations are active.
     config['prod_mode'] = True
-    update_all_embedding_models(config)
     update_tools(config)
 
     # This overwrite is to use a currently supported audio model in prod_mode
@@ -193,9 +164,6 @@ def update_configs(mode: str = 'prod', port: int = 8501) -> None:
 
         if mode == 'prod':
             update_config_prod(config)
-        else:
-            # Only runs embedding changes; used for running global tests
-            update_all_embedding_models(config)
 
         with open(config_path, 'w', encoding='utf-8') as file:
             yaml.dump(config, file)
