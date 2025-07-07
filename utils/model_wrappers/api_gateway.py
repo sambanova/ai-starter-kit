@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class APIGateway:
     @staticmethod
     def load_embedding_model(
-        type: str,
+        type: Any,
         batch_size: Optional[int] = None,
         bundle: bool = False,
         model: Optional[str] = None,
