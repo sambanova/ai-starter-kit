@@ -6,12 +6,12 @@ html2text==2024.2.26
 huggingface-hub==0.25.2
 instructorembedding==1.0.1
 langchain-chroma == 0.2.1
-langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-community==0.3.27
+langchain-core==0.3.68
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
-langchain==0.3.16
-langchain-sambanova==0.1.0
+langchain==0.3.26
+langchain-sambanova==0.1.5
 mypy==1.11.2
 pydantic-core==2.23.4
 pydantic==2.9.2 

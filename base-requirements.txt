@@ -1,11 +1,11 @@
 # Core dependencies
 llama-index==0.11.17
 llama-index-llms-langchain==0.4.2
-langchain==0.3.16
-langchain-sambanova==0.1.0
-langchain-core==0.3.33
+langchain==0.3.26
+langchain-sambanova==0.1.5
+langchain-core==0.3.68
 langchain-chroma == 0.2.1
-langchain-community==0.3.16
+langchain-community==0.3.27
 langchain-experimental==0.3.2
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
@@ -35,7 +35,7 @@ peft==0.9.0
 
 # Data processing and storage
 pandas==1.5.3
-numpy==1.26.0
+numpy==1.26.4
 sqlitedict==2.1.0
 faiss-cpu==1.7.4
 PyMuPDF==1.25.2

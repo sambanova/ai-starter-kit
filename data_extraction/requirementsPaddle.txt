@@ -59,12 +59,12 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.7.1
 kiwisolver==1.4.5
-langchain-chroma == 0.1.4
-langchain-community==0.3.16
-langchain-core==0.3.33
+langchain-chroma == 0.2.1
+langchain-community==0.3.27
+langchain-core==0.3.68
 langchain-huggingface==0.1.2
-langchain==0.3.16
-langchain-sambanova==0.1.0
+langchain==0.3.26
+langchain-sambanova==0.1.5
 lazy_loader==0.3
 lmdb==1.4.1
 lxml==5.1.0
@@ -76,7 +76,7 @@ mypy-extensions==1.0.0
 mypy==1.11.2
 nest-asyncio==1.5.9
 networkx==3.2.1
-numpy==1.23.5
+numpy==1.26.4
 opencv-contrib-python==4.9.0.80
 opencv-python==4.9.0.80
 openpyxl==3.1.2
@@ -100,8 +100,8 @@ ptyprocess==0.7.0
 pure-eval==0.2.2
 pyclipper==1.3.0.post5
 pycryptodome==3.20.0
-pydantic==1.10.14
-pydantic_core==2.10.1
+pydantic==2.9.2 
+pydantic_core==2.23.4
 pyparsing==3.1.1
 python-dateutil==2.8.2
 pytz==2023.3.post1
