@@ -2,7 +2,7 @@
 llama-index==0.11.17
 llama-index-llms-langchain==0.4.2
 langchain==0.3.26
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 langchain-core==0.3.68
 langchain-chroma == 0.2.1
 langchain-community==0.3.27

@@ -10,7 +10,7 @@ langchain-core==0.3.68
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
 langchain==0.3.26
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 mypy==1.11.2
 nest_asyncio==1.6.0
 pre-commit==4.0.1

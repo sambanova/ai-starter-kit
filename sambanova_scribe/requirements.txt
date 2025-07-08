@@ -1,6 +1,6 @@
 Jinja2==3.1.4
 langchain-community==0.3.27
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 mypy==1.11.2
 pre-commit==4.0.1
 python-dotenv==1.0.1

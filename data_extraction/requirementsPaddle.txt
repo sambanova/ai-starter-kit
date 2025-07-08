@@ -64,7 +64,7 @@ langchain-community==0.3.27
 langchain-core==0.3.68
 langchain-huggingface==0.1.2
 langchain==0.3.26
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 lazy_loader==0.3
 lmdb==1.4.1
 lxml==5.1.0

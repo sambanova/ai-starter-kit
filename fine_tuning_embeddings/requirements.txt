@@ -85,7 +85,7 @@ kubernetes==29.0.0
 langchain==0.3.26
 langchain-community==0.3.27
 langchain-core==0.3.68
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 langcodes==3.3.0
 langdetect==1.0.9
 langgraph==0.2.28

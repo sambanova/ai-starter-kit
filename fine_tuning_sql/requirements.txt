@@ -7,7 +7,7 @@ jupyterlab-widgets==3.0.9
 langchain==0.3.26
 langchain-community==0.3.27
 langchain-core==0.3.68
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 mypy==1.11.2
 pre-commit==4.0.1
 python-dotenv==1.0.1

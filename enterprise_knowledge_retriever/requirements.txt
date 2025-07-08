@@ -18,7 +18,7 @@ langchain-core==0.3.68
 langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
 langchain==0.3.26
-langchain-sambanova==0.1.5
+langchain-sambanova==0.1.6
 langgraph==0.2.28
 mypy==1.11.2
 nltk==3.9.1
