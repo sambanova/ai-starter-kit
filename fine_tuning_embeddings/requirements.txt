@@ -88,10 +88,10 @@ langchain-core==0.3.68
 langchain-sambanova==0.1.6
 langcodes==3.3.0
 langdetect==1.0.9
-langgraph==0.2.28
+langgraph==0.5.1
 langsmith==0.4.4
 llama-hub==0.0.50
-llama-index==0.9.45.post1
+llama-index==0.12.47
 lxml==5.1.0
 marshmallow==3.20.2
 matplotlib-inline==0.1.6
@@ -145,12 +145,12 @@ pyarrow-hotfix==0.6
 pyarrow==15.0.0
 pyasn1-modules==0.3.0
 pyasn1==0.5.1
-pydantic==2.9.2
-pydantic_core==2.23.4
+pydantic==2.11.7
+pydantic_core==2.35.2
 pypdf==3.17.4
 pyproject_hooks==1.0.0
 python-dateutil==2.8.2
-python-dotenv==1.0.1
+python-dotenv==1.1.1
 python-iso639==2024.1.2
 python-magic==0.4.27
 pytz==2024.1
@@ -191,7 +191,7 @@ threadpoolctl==3.2.0
 tiktoken==0.5.2
 tokenize-rt==5.2.0
 tokenizers==0.15.1
-torch==2.2.0
+torch==2.7.1
 tornado==6.4
 tqdm==4.66.1
 traitlets==5.14.1

@@ -5,8 +5,8 @@ matplotlib == 3.6.3
 mypy==1.11.2
 pillow == 10.2.0
 pre-commit==4.0.1
-python-dotenv == 1.0.1
+python-dotenv == 1.1.1
 ruff==0.6.9
 scikit-learn == 1.2.1
-streamlit == 1.32.0
+streamlit == 1.46.1
 watchdog == 4.0.0
