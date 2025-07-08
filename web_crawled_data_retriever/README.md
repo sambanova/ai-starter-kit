@@ -86,19 +86,13 @@ The next step is to set up your environment variables to use one of the models a
 
 ### Update the Embeddings API information
 
-You have these options to specify the embedding API info:
+You have the following options to set up your embedding model:
 
-* **Option 1: Use a CPU embedding model**
+* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
 
-    In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`
+* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
 
-* **Option 2: Set a SambaStudio embedding model**
-
-To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embeddings.
-
-1. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) for setting up your environment variables.
-
-2. In the [config file](./config.yaml), set the variable `type` `embedding_model` to `"sambastudio"` and set the configs `batch_size`, `bundle` and `select_expert` according your sambastudio endpoint
+* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
 
     > NOTE: Using different embedding models (cpu or sambastudio) may change the results, and change How the embedding model is set and what the parameters are.
 

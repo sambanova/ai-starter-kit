@@ -3,7 +3,7 @@ llm:
   "do_sample": False
   "temperature": 0.01
   "max_tokens": 1024
-  "model": "Meta-Llama-3.1-405B-Instruct"
+  "model": "DeepSeek-V3-0324"
 
 tools:
     query_db:
@@ -12,7 +12,7 @@ tools:
         "do_sample": False
         "temperature": 0.01 
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct" 
+        "model": "DeepSeek-V3-0324" 
       db:
         "path": "data/chinook.db" 
 
@@ -22,7 +22,7 @@ tools:
         "do_sample": False
         "temperature": 0.0
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct" 
+        "model": "DeepSeek-V3-0324" 
 
     rag:
       llm:
@@ -30,12 +30,10 @@ tools:
         "do_sample": False
         "temperature": 0.0 
         "max_tokens": 1024
-        "model": "Meta-Llama-3.1-405B-Instruct"
+        "model": "DeepSeek-V3-0324"
       embedding_model: 
-        "type": "cpu" # set either sambastudio or cpu
-        "batch_size": 1 #set depending of your endpoint configuration (1 if bundle embedding expert)
-        "bundle": True #set true if using Sambastudio embeddings in a bundle endpoint 
-        "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio bundle embedding expert
+        "type": "sncloud" # set either sncloud, sambastudio or cpu
+        "model": "E5-Mistral-7B-Instruct" #set if using Cloud or SambaStudio bundle embedding expert
       vector_db:
         "path": "data/my-vector-db" # path to your previously created chroma vdb
       retrieval:

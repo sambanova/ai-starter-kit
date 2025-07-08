@@ -1,8 +1,8 @@
 embedding_model: 
-    type: "sambastudio"
+    type: "sncloud"
     batch_size: 1
     bundle: True
-    select_expert: "e5-mistral-7b-instruct-8192"
+    model: "E5-mistral-7B-Instruct"
 
 sn_llm:
     model: "Meta-Llama-3.3-70B-Instruct"
@@ -51,40 +51,40 @@ bad_format_embeddings_model:
       - type: "string"
         batch_size: 1
         bundle: True
-        select_expert: "e5-mistral-7b-instruct"
+        model: "e5-mistral-7b-instruct"
 
     string:
       - type: "cpu"
         batch_size: 1
         bundle: True
-        select_expert: 1
+        model: 1
       
       - type: "sambastudio"
         batch_size: 1
         bundle: True
-        select_expert: 1
+        model: 1
 
     boolean:
       - type: "cpu"
         batch_size: 1
         bundle: "string"
-        select_expert: "e5-mistral-7b-instruct"
+        model: "e5-mistral-7b-instruct"
       
       - type: "sambastudio"
         batch_size: 1
         bundle: "string"
-        select_expert: "e5-mistral-7b-instruct"
+        model: "e5-mistral-7b-instruct"
 
     integer:
       - type: "cpu"
         batch_size: "string"
         bundle: True
-        select_expert: "e5-mistral-7b-instruct"
+        model: "e5-mistral-7b-instruct"
       
       - type: "sambastudio"
         batch_size: "string"
         bundle: True
-        select_expert: "e5-mistral-7b-instruct"
+        model: "e5-mistral-7b-instruct"
 
 bad_format_llm_model:
     string:
