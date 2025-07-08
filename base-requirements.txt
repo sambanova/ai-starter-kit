@@ -1,5 +1,5 @@
 # Core dependencies
-llama-index==0.11.17
+llama-index==0.12.28
 llama-index-llms-langchain==0.4.2
 langchain==0.3.26
 langchain-sambanova==0.1.6
@@ -20,7 +20,7 @@ streamlit==1.40.2
 st-pages==0.5.0
 streamlit-extras==0.3.6
 sseclient-py==1.8.0
-torch==2.2.2
+torch==2.7.1
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
