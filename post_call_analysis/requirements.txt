@@ -1,5 +1,5 @@
 faiss-cpu==1.7.4
-huggingface-hub==0.25.2
+huggingface-hub==0.33.2
 instructorembedding==1.0.1
 langchain-chroma == 0.1.4
 langchain-community==0.3.27

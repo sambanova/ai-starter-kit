@@ -1,6 +1,6 @@
 SQLAlchemy==2.0.30
 datasets==2.20.0
-huggingface-hub==0.25.2
+huggingface-hub==0.33.2
 jupyter_client==8.6.0
 jupyter_core==5.7.1
 jupyterlab-widgets==3.0.9
@@ -12,4 +12,4 @@ mypy==1.11.2
 pre-commit==4.0.1
 python-dotenv==1.0.1
 ruff==0.6.9
-transformers==4.41.2
+transformers==4.53.1
