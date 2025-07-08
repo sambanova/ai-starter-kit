@@ -550,113 +550,41 @@ def delete_all_subdirectories(directory: str, exclude: List[str], verbose: bool 
 def set_css_styles() -> None:
     """Set the CSS style for the streamlit app."""
 
+    # Streamlit app setup
+    streamlit.set_page_config(
+        page_title='Finance App',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        layout='wide',
+    )
+
+    # set buttons style
     streamlit.markdown(
         """
         <style>
-        /* General body styling */
-
-        html, body {
-            font-size: 16px,
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #e0e0e0;
-            background-color: #1e1e1e;
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
         }
-
-        /* Header styling */
-        h1, h2, h3, h4, h5, h6 {
-            color: #EE7624;
-            margin-bottom: 1em;
-        }
-
-        /* Paragraph and text styling */
-        p, label {
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 0.5em;
-            color: #e0e0e0;
-        }
-
-        /* Button styling */
-        .stButton > button {
-            background-color: #3A8EBA;
-            color: white;
-            padding: 0.75em 1.5em;
-            font-size: 1;
-            border: none;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .stButton > button:hover {
-            background-color: #45a049;
-        }
-
-        /* Radio button styling */
-        .stRadio > label {
-            font-size: 1;
-        }
-        .stRadio > div > div > label {
-            font-size: 1;
-            padding: 0.25em 0.75em;
-            cursor: pointer;
-            color: #e0e0e0;
-        }
-        .stRadio > div > div {
-            margin-bottom: 0.5em;
-        }
-
-        /* Input field styling */
-        input[type="text"], input[type="date"] select {
-            width: 100%;
-            padding: 0.75em;
-            margin: 0.5em 0 1em 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 16px;
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-        }
-
-        /* Checkbox styling */
-        .stCheckbox > label {
-            font-size: 16px;
-        }
-
-        /* Container styling */
-        .main {
-            font-size: 16px;
-            padding: 2em;
-            background: #2c2c2c;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 2em;
-        }
-
-        /* Sidebar styling */
-        .css-1d391kg {
-            background-color: #1e1e1e;
-        }
-        .css-1d391kg .css-1v3fvcr, .css-1d391kg .css-1l5dyp6 {
-            color: #e0e0e0;
+        div.stButton > button:hover, div.stButton > button:focus  {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
         }
         </style>
-    """,
+        """,
         unsafe_allow_html=True,
     )
 
+    # Load Inter font from Google Fonts and apply globally
+    streamlit.markdown(
+        """
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
-def get_blue_button_style() -> str:
-    """Get the CSS style for a blue button."""
-    return """
-        button {
-            background-color: #2C3E50;
-            color: white;
-            padding: 0.75em 1.5em;
-            font-size: 1;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }"""
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )

@@ -1,12 +1,6 @@
-# current_dir = os.path.dirname(os.path.abspath('..'))
-# kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
-# repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
-
-# sys.path.append(kit_dir)
-# sys.path.append(repo_dir)
-
 import io
 import json
+import os
 import warnings
 import zipfile
 from typing import Any, Dict
@@ -27,13 +21,20 @@ from benchmarking.streamlit.streamlit_utils import (
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
+    render_logo,
+    render_title_icon,
     set_api_variables,
+    set_font,
     setup_credentials,
     update_progress_bar,
 )
 from benchmarking.utils import CONFIG_PATH
 
 warnings.filterwarnings('ignore')
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 with open(CONFIG_PATH) as file:
     st.session_state.config = yaml.safe_load(file)
@@ -177,12 +178,14 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 def main() -> None:
     hide_pages([APP_PAGES['main']['page_label']])
 
+    set_font()
     if st.session_state.prod_mode:
         pages_to_hide = find_pages_to_hide()
         pages_to_hide.append(APP_PAGES['main']['page_label'])
         hide_pages(pages_to_hide)
 
-    st.title(':orange[SambaNova] Synthetic Performance Evaluation')
+    render_title_icon('Synthetic Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
+
     st.markdown(
         """This performance evaluation assesses the following LLM's performance metrics using concurrent processes.
         _client represents the metrics computed from the client-side (includes queue and round-trip time 
@@ -203,6 +206,7 @@ def main() -> None:
         # Set up credentials and API variables
         setup_credentials()
 
+        render_logo()
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
 
@@ -353,7 +357,7 @@ def main() -> None:
         if not pd.isnull(generated_output_tokens):
             st.markdown(
                 f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
-                tokens ({generated_output_tokens}) is {abs(expected_output_tokens-generated_output_tokens)}
+                tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
                     token(s)"""
             )
 
@@ -409,7 +413,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     # Defining styles

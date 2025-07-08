@@ -1,2 +1,10 @@
 [client]
 showErrorDetails = true
+
+[theme]
+base = "light"
+primaryColor = "#250E36"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F2F2"
+textColor = "#000000"
+font = "sans serif"

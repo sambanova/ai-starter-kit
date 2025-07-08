@@ -14,11 +14,15 @@ import streamlit as st
 from dotenv import load_dotenv
 from st_pages import Page, show_pages
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, render_logo, set_font
 from benchmarking.utils import CONFIG_PATH
 from utils.events.mixpanel import MixpanelEvents
 
 warnings.filterwarnings('ignore')
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
+repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 
 @st.cache_data
@@ -48,6 +52,8 @@ def _initialize_session_variables() -> None:
 
 
 def main() -> None:
+    render_logo()
+    set_font()
     show_pages(
         [
             Page(APP_PAGES['main']['file_path'], APP_PAGES['main']['page_label']),
@@ -64,7 +70,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
 
     _init()
