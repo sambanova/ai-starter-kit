@@ -1,5 +1,5 @@
 show_results_in_terminal: True # available values: True or False
 
-prod_mode: True # available values: True or False
+prod_mode: False # available values: True or False
 pages_to_show: # available when prod_mode is True. Possible values: synthetic_eval, real_workload_eval, custom_eval, chat_eval
   - synthetic_eval
