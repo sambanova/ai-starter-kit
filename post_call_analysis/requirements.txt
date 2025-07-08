@@ -8,7 +8,7 @@ langchain-huggingface==0.1.2
 langchain-milvus==0.1.10
 langchain==0.3.26
 langchain-sambanova==0.1.6
-librosa==0.10.1
+librosa==0.11.0
 mypy==1.11.2
 nbformat==5.9.2
 nltk==3.8.1
