@@ -7,10 +7,8 @@ llm:
 
 rag:
   embedding_model: 
-    "type": "cpu" # Either "sambastudio" or "cpu"
-    "batch_size": 1
-    "bundle": True
-    "select_expert": "e5-mistral-7B-instruct" # Set if using "sambastudio" Bundle embedding expert
+    "type": "sncloud" # Either "sncloud", "sambastudio" or "cpu"
+    "model": "E5-Mistral-7B-Instruct" # Set if using "sncloud" or "sambastudio" Bundle embedding expert
   retrieval:
     "k_retrieved_documents": 5
 

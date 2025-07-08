@@ -1,15 +1,13 @@
 llm: 
-    "api": "sncloud" #  set either sambastudio or sncloud
+    "api": "sncloud" #  set either sncloud or sambastudio
     "temperature": 0.0
     "do_sample": False
     "max_tokens": 1200
     "model": "Meta-Llama-3.3-70B-Instruct" 
 
 embedding_model: 
-    "type": "cpu" # set either sambastudio or cpu
-    "batch_size": 1 #set depending of your endpoint configuration (1 if bundle embedding expert)
-    "bundle": True #set true if using Sambastudio embeddings in a bundle endpoint 
-    "select_expert": "e5-mistral-7b-instruct" #set if using SambaStudio bundle embedding expert
+    "type": "sncloud" # set either sncloud, sambastudio or cpu
+    "model": "E5-Mistral-7B-Instruct" #set if using Cloud, or SambaStudio bundle embedding expert
 
 retrieval:
     "db_type": "chroma"

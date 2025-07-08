@@ -300,10 +300,10 @@ class DocumentRetrieval:
 
     def load_embedding_model(self) -> Embeddings:
         embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info['type'],
-            batch_size=self.embedding_model_info['batch_size'],
-            bundle=self.embedding_model_info['bundle'],
-            select_expert=self.embedding_model_info['select_expert'],
+            type=self.embedding_model_info.get('type'),
+            batch_size=self.embedding_model_info.get('batch_size'),
+            bundle=self.embedding_model_info.get('bundle'),
+            model=self.embedding_model_info.get('model'),
         )
         return embeddings
 
