@@ -4,9 +4,9 @@ import pandas as pd
 
 # Step 1: Read the CSV file
 results_dir = '<AISK_REPOSITORY_PATH>/benchmarking/data/results/grafana/'
-input_filename = results_dir + 'grafana_ril.csv'
-output_filename = results_dir + 'grafana_ril_grouped_interim.csv'
-summary_output_filename = results_dir + 'grafana_ril_grouped_summary.csv'
+input_filename = results_dir + 'grafana.csv'
+output_filename = results_dir + 'grafana_grouped_interim.csv'
+summary_output_filename = results_dir + 'grafana_grouped_summary.csv'
 
 df = pd.read_csv(input_filename)  
 
