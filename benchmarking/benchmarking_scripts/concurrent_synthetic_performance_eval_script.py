@@ -1,9 +1,8 @@
+import concurrent.futures
 import logging
 import os
 import re
 import sys
-import time
-import concurrent.futures
 from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -110,7 +109,7 @@ def run_benchmarking(
 
     #import concurrent.futures
 
-    def run_benchmark_for_row(row):
+    def run_benchmark_for_row(row: pd.Series) -> None:
         model_name = row['model_name']
         input_tokens = row['input_tokens']
         output_tokens = row['output_tokens']
