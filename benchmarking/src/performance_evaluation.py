@@ -844,8 +844,9 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         if self.multimodal_image_size != 'na':
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
+        model_name = self.model_name.replace('_', '-')
         output_file_name = (
-            f'synthetic_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'synthetic_{self.user_metadata["model_idx"]}_{model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         )
 
