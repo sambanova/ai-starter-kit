@@ -4,3 +4,4 @@ output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_track
 consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
 timeout: 3600
 time_delay: 0
+use_multiple_prompts : False # Only available for synthetic performance evaluation
