@@ -3,11 +3,10 @@ import os
 import re
 import sys
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from collections import defaultdict
 import pandas as pd
 import yaml
 from dotenv import load_dotenv
@@ -330,7 +329,7 @@ def run_benchmarking(
                         df_summary.at[key, 'requests_batching'] = requests_batching
                         
                         # Build request_batching_frequencies dictionary
-                        freq_dict = defaultdict(int)
+                        freq_dict: Dict[int,int] = defaultdict(int)
                         for group_count, batch_value in zip(requests_grouping, requests_batching):
                             freq_dict[batch_value] += group_count
 
