@@ -164,6 +164,7 @@ def run_benchmarking(
                 timeout=config['timeout'],
                 user_metadata=user_metadata_local,
                 llm_api=config['llm_api'],
+                use_multiple_prompts=config['use_multiple_prompts'],
             )
 
         elif qps_set:
