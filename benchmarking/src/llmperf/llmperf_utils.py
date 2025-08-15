@@ -75,7 +75,7 @@ def find_family_model_type(model_name: str) -> str:
     return 'llama2'
 
 
-def get_tokenizer(model_name: str) -> AutoTokenizer:
+def get_tokenizer(model_name: str) -> Any:
     """Gets generic tokenizer according to model type
 
     Args:
