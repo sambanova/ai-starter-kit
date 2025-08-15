@@ -7,6 +7,7 @@ from collections import Counter
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from collections import defaultdict
 import pandas as pd
 import yaml
 from dotenv import load_dotenv
@@ -296,6 +297,7 @@ def run_benchmarking(
                 df_summary['model'] = df_summary['model'].str.replace('.', '-')
             df_summary['requests_grouping'] = pd.Series(None, index=df_summary.index, dtype=object)
             df_summary['requests_batching'] = pd.Series(None, index=df_summary.index, dtype=object)
+            df_summary['request_batching_frequencies'] = pd.Series(None, index=df_summary.index, dtype=object)
 
             # Add UUID to summary and set as index
             df_summary['uuid'] = df_summary.apply(lambda x: find_uuid(x['name']), axis=1)
@@ -326,6 +328,14 @@ def run_benchmarking(
                     if key in df_summary.index:
                         df_summary.at[key, 'requests_grouping'] = requests_grouping
                         df_summary.at[key, 'requests_batching'] = requests_batching
+                        
+                        # Build request_batching_frequencies dictionary
+                        freq_dict = defaultdict(int)
+                        for group_count, batch_value in zip(requests_grouping, requests_batching):
+                            freq_dict[batch_value] += group_count
+
+                        # Store the result as a normal dict (not defaultdict)
+                        df_summary.at[key, 'request_batching_frequencies'] = dict(freq_dict)   
                     else:
                         raise KeyError(f'Key {key} not found in dictionary. File: {file}')
             df_summary['representative_batch_size'] = df_summary['requests_batching'].apply(
