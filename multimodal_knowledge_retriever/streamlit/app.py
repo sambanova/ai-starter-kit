@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import shutil
@@ -37,15 +38,12 @@ LVLM_MODELS = [
 ]
 # Available models in dropdown menu
 LLM_MODELS = [
-    'Llama-4-Scout-17B-16E-Instruct',
     'Llama-4-Maverick-17B-128E-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-R1-Distill-Llama-70B',
     'DeepSeek-R1',
     'DeepSeek-V3-0324',
-    'Meta-Llama-3.1-405B-Instruct',
     'Meta-Llama-3.1-8B-Instruct',
-    'QwQ-32B-Preview',
 ]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
@@ -150,7 +148,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
 
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             formatted_ans = ans.replace('$', '\$')
             st.write(f'{formatted_ans}')
@@ -170,7 +168,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
+            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
         ):
             st.write(load_app_description().get('app_overview'))
 
@@ -186,17 +184,60 @@ def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
 
 
 def main() -> None:
+    st.set_page_config(
+        page_title='AI Starter Kit',
+        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+    )
+    
+    # set buttons style
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #250E36;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        div.stButton > button:hover, div.stButton > button:focus  {
+            background-color: #4E22EB;  /* Button background */
+            color: #FFFFFF;             /* Button text color */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # Load Inter font from Google Fonts and apply globally
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+
+        <style>
+            /* Apply Exile font to all elements on the page */
+            * {
+                font-family: 'Inter', sans-serif !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    # add title and icon
+    col1, col2, col3 = st.columns([4, 1, 4])
+    with col2:
+        st.image(os.path.join(repo_dir, 'images', 'multimodal_icon.png'))
+    st.markdown("""
+        <style>
+            .kit-title {
+                text-align: center;
+                color: #250E36 !important;
+                font-size: 3.0em;
+                font-weight: bold;
+                margin-bottom: 0.5em;
+            }
+        </style>
+        <div class="kit-title">Multimodal Assistant</div>
+    """, unsafe_allow_html=True)
+        
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
     llm_type = 'SambaStudio' if config.get('llm', {}).get('type') == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
-
-    st.set_page_config(
-        page_title='AI Starter Kit',
-        page_icon='https://sambanova.ai/hubfs/logotype_sambanova_orange.png',
-    )
 
     if 'multimodal_retriever' not in st.session_state:
         st.session_state.multimodal_retriever = None
@@ -228,13 +269,18 @@ def main() -> None:
         )
         st.session_state.mp_events.demo_launch()
 
-    st.title(':orange[SambaNova] Multimodal Assistant')
-    user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
-    if user_question is not None:
-        st.session_state.mp_events.input_submitted('chat_input')
-    handle_user_input(user_question)
-
     with st.sidebar:
+        
+        # Inject HTML to display the logo in the sidebar at 70% width
+        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        with open(logo_path, "rb") as img_file:
+            encoded = base64.b64encode(img_file.read()).decode()
+        st.sidebar.markdown(f"""
+            <div style="text-align: center;">
+                <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+            </div>
+        """, unsafe_allow_html=True)
+        
         st.title('Setup')
 
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
@@ -323,6 +369,11 @@ def main() -> None:
                     st.session_state.multimodal_retriever.init_memory()
                     st.toast('Conversation reset. The next response will clear the history on the screen')
                     st.rerun()
+    
+    user_question = st.chat_input('Ask questions about your data', disabled=st.session_state.input_disabled)
+    if user_question is not None:
+        st.session_state.mp_events.input_submitted('chat_input')
+    handle_user_input(user_question)
 
 
 if __name__ == '__main__':

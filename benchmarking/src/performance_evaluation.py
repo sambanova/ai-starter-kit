@@ -59,6 +59,7 @@ class BasePerformanceEvaluator(abc.ABC):
         multimodal_image_size: str = 'na',
         user_metadata: Dict[str, Any] = {},
         llm_api: str = 'sncloud',
+        use_debugging_mode: bool = False,
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
@@ -77,6 +78,7 @@ class BasePerformanceEvaluator(abc.ABC):
         self.user_metadata = user_metadata
         self.num_concurrent_requests: Optional[int] = None
         self.llm_api = llm_api
+        self.use_debugging_mode = use_debugging_mode
         self.api_variables = api_variables
         self.is_stream_mode = is_stream_mode
         self.timeout = timeout
@@ -506,7 +508,8 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         if self.is_stream_mode:
             generation_mode = 'stream'
 
-        output_file_name = f'custom_{self.model_name}_{self.file_name}_\
+        model_name = self.model_name.replace('_', '-')
+        output_file_name = f'custom_{model_name}_{self.file_name}_\
             {self.num_concurrent_requests}_{generation_mode}_{self.run_uuid}'
         return self.sanitize_file_prefix(output_file_name)
 
@@ -750,6 +753,7 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 image=image,
                 sampling_params=sampling_params,
                 llm_api=self.llm_api,
+                use_debugging_mode=self.use_debugging_mode,
                 api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
                 num_concurrent_requests=self.num_concurrent_requests,
@@ -766,24 +770,15 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         - raw_prompt (Dict[str, Any]): The raw input prompt dictionary to be used in building a processed input prompt.
 
         Returns:
-        - A tuple containing the processed prompt dictionary and the token length of the prompt.
+        - A tuple containing the raw prompt dictionary and the token length of the prompt.
 
         Description:
         This method builds a prompt for the given raw prompt based on the model type.
-        The method returns a tuple containing the processed prompt and the token length of the prompt.
+        The method returns a tuple containing the raw prompt and the token length of the prompt.
         """
 
-        prefix_prompt = (
-            'You are a helpful assistant that provides concise and '
-            'helpful assistance on a variety of subjects. Ask: '
-        )
-        prompt_text = prefix_prompt + raw_prompt['template']
+        return (raw_prompt, self.get_token_length(raw_prompt['template']))
 
-        # Output prompt
-        custom_prompt = raw_prompt
-        custom_prompt['template'] = prompt_text
-
-        return (custom_prompt, self.get_token_length(prompt_text))
 
 
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
@@ -819,14 +814,18 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         # Validate the structure of the default prompt
         for prompt in data.get('default_prompt', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f'Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.')
+                raise ValueError(
+                    f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.'
+                )
 
         # Validate the structure of the multiple prompts
         for prompt in data.get('multiple_prompts', []):
             if not all(key in prompt for key in valid_prompt_structure):
-                raise ValueError(f'Invalid prompt structure: {prompt}.\
-                    It must include the fields {valid_prompt_structure}.')
+                raise ValueError(
+                    f'Invalid prompt structure: {prompt}.\
+                    It must include the fields {valid_prompt_structure}.'
+                )
 
         return data
 
@@ -926,7 +925,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         if num_input_tokens < 40:
             raise ValueError(
-                'The minimum number of input tokens that will be sent is 40' ' because of the prompting logic right now'
+                'The minimum number of input tokens that will be sent is 40 because of the prompting logic right now'
             )
 
         # Calculate performance metrics individually and summary
@@ -1263,6 +1262,7 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                     image=image,
                     sampling_params=updated_sampling_params,
                     llm_api=self.llm_api,
+                    use_debugging_mode=self.use_debugging_mode,
                     api_variables=self.api_variables,
                     is_stream_mode=self.is_stream_mode,
                     num_concurrent_requests=self.num_concurrent_requests,
@@ -1368,8 +1368,9 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         if self.multimodal_image_size != 'na':
             multimodal_suffix = f'_multimodal_{self.multimodal_image_size}'
 
+        model_name = self.model_name.replace('_', '-')
         output_file_name = (
-            f'realworkload_{self.user_metadata["model_idx"]}_{self.model_name}{multimodal_suffix}_{num_input_tokens}'
+            f'realworkload_{self.user_metadata["model_idx"]}_{model_name}{multimodal_suffix}_{num_input_tokens}'
             f'_{num_output_tokens}_{self.qps}_{self.qps_distribution}_{generation_mode}_{self.run_uuid}'
         )
 
@@ -1384,8 +1385,10 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         elif self.qps_distribution == 'constant':
             wait = mean_wait
         else:
-            raise ValueError(f'Unknown distribution {self.qps_distribution}. \
-                Possible values: constant, uniform, exponential.')
+            raise ValueError(
+                f'Unknown distribution {self.qps_distribution}. \
+                Possible values: constant, uniform, exponential.'
+            )
         return wait
 
     def get_token_throughput_latencies(
@@ -1578,6 +1581,7 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
                 image=image,
                 sampling_params=updated_sampling_params,
                 llm_api=self.llm_api,
+                use_debugging_mode=self.use_debugging_mode,
                 api_variables=self.api_variables,
                 is_stream_mode=self.is_stream_mode,
             )

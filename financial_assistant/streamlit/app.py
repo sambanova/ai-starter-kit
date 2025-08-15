@@ -1,3 +1,4 @@
+import base64
 import datetime
 import os
 import sys
@@ -12,7 +13,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 import streamlit
-from streamlit_extras.stylable_container import stylable_container
 
 from financial_assistant.constants import *
 from financial_assistant.streamlit.utilities_app import (
@@ -20,7 +20,6 @@ from financial_assistant.streamlit.utilities_app import (
     create_temp_dir_with_subdirs,
     delete_all_subdirectories,
     display_directory_contents,
-    get_blue_button_style,
     initialize_session,
     schedule_temp_dir_deletion,
     set_css_styles,
@@ -34,26 +33,16 @@ if not prod_mode:
 # Initialize session
 initialize_session(streamlit.session_state, prod_mode)
 
-# Streamlit app setup
-streamlit.set_page_config(
-    page_title='Finance App',
-    page_icon=SAMBANOVA_LOGO,
-    layout='wide',
-)
 
 # Set CSS styles
 set_css_styles()
 
 # Add SambaNova logo
-streamlit.logo(
-    image=SAMBANOVA_LOGO,
-    link=SAMBANOVA_LOGO,
-    icon_image=SAMBANOVA_LOGO,
-)
+streamlit.logo(image=os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
 
 # Title of the main page
 columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
-columns[0].image(SAMBANOVA_LOGO, width=100)
+columns[0].image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
 columns[1].title('SambaNova Financial Assistant')
 
 # Home page
@@ -63,6 +52,19 @@ if not are_credentials_set():
 
 # Add sidebar
 with streamlit.sidebar:
+    # Inject HTML to display the logo in the sidebar at 70% width
+    logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+    with open(logo_path, 'rb') as img_file:
+        encoded = base64.b64encode(img_file.read()).decode()
+    streamlit.sidebar.markdown(
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
     if not are_credentials_set():
         # Get the SambaNova API Key
         streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
@@ -77,15 +79,11 @@ with streamlit.sidebar:
     else:
         if prod_mode:
             streamlit.success('Credentials are set')
-            with stylable_container(
-                key='blue-button',
-                css_styles=get_blue_button_style(),
-            ):
-                if streamlit.button('Clear Credentials', key='clear_credentials'):
-                    save_credentials(api_key='', prod_mode=prod_mode)
-                    streamlit.success(r':orange[You have been logged out.]')
-                    time.sleep(2)
-                    streamlit.rerun()
+            if streamlit.button('Clear Credentials', key='clear-credentials'):
+                save_credentials(api_key='', prod_mode=prod_mode)
+                streamlit.success(r':orange[You have been logged out.]')
+                time.sleep(2)
+                streamlit.rerun()
 
 
 from financial_assistant.src.utilities import get_logger
@@ -120,35 +118,27 @@ def main() -> None:
                 except:
                     logger.warning('Could not schedule deletion of cache directory.')
 
-            else:
-                # In development mode
-                create_temp_dir_with_subdirs(streamlit.session_state.cache_dir, subdirectories)
-
         # Custom button to exit the app in prod mode
         # This will clear the chat history, delete the cache and clear the SambaNova credentials
         if prod_mode:
-            with stylable_container(
-                key='blue-button',
-                css_styles=get_blue_button_style(),
+            time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
+            if (
+                streamlit.button('Exit App', help='This will delete the cache.')
+                or time_delta.seconds / 30 > EXIT_TIME_DELTA
             ):
-                time_delta = datetime.datetime.now() - streamlit.session_state.launch_time
-                if (
-                    streamlit.button('Exit App', help='This will delete the cache!')
-                    or time_delta.seconds / 30 > EXIT_TIME_DELTA
-                ):
-                    # Crear the chat history
-                    streamlit.session_state.chat_history = list()
-                    # Delete the cache
-                    clear_cache(delete=True)
-                    # Clear the SambaNova credentials
-                    save_credentials(api_key='', prod_mode=prod_mode)
+                # Crear the chat history
+                streamlit.session_state.chat_history = list()
+                # Delete the cache
+                clear_cache(delete=True)
+                # Clear the SambaNova credentials
+                save_credentials(api_key='', prod_mode=prod_mode)
 
-                    streamlit.success(r':green[The chat history has been cleared.]')
-                    streamlit.success(r':green[The cache has been deleted.]')
-                    streamlit.success(r':orange[You have been logged out.]')
-                    time.sleep(2)
-                    streamlit.rerun()
-                    return
+                streamlit.success(r':green[The chat history has been cleared.]')
+                streamlit.success(r':green[The cache has been deleted.]')
+                streamlit.success(r':orange[You have been logged out.]')
+                time.sleep(2)
+                streamlit.rerun()
+                return
 
         if are_credentials_set():
             # Navigation menu
@@ -170,29 +160,25 @@ def main() -> None:
             streamlit.title('Saved Files')
 
             # Custom button to clear all files
-            with stylable_container(
-                key='blue-button',
-                css_styles=get_blue_button_style(),
+            if streamlit.button(
+                label='Clear All Files',
+                key='clear-files',
+                help='This will delete all saved files.',
             ):
-                if streamlit.button(
-                    label='Clear All Files',
-                    key='clear-button',
-                    help='This will delete all saved files',
-                ):
-                    try:
-                        clear_cache(delete=False)
-                        # List the main cache subdirectories
-                        subdirectories = [
-                            streamlit.session_state.sources_dir,
-                            streamlit.session_state.pdf_sources_dir,
-                            streamlit.session_state.pdf_generation_dir,
-                        ]
-                        delete_all_subdirectories(directory=streamlit.session_state.cache_dir, exclude=subdirectories)
-                        # Clear chat history
-                        streamlit.session_state.chat_history = list()
-                        streamlit.sidebar.success('All files have been deleted.')
-                    except:
-                        pass
+                try:
+                    clear_cache(delete=False)
+                    # List the main cache subdirectories
+                    subdirectories = [
+                        streamlit.session_state.sources_dir,
+                        streamlit.session_state.pdf_sources_dir,
+                        streamlit.session_state.pdf_generation_dir,
+                    ]
+                    delete_all_subdirectories(directory=streamlit.session_state.cache_dir, exclude=subdirectories)
+                    # Clear chat history
+                    streamlit.session_state.chat_history = list()
+                    streamlit.sidebar.success('All files have been deleted.')
+                except:
+                    pass
 
             # Use Streamlit's session state to persist the current path
             if 'current_path' not in streamlit.session_state:
@@ -244,14 +230,10 @@ def main() -> None:
         # Print Chat History page
         elif menu == 'Print Chat History':
             # Custom button to clear chat history
-            with stylable_container(
-                key='blue-button',
-                css_styles=get_blue_button_style(),
-            ):
-                if streamlit.button('Clear Chat History'):
-                    streamlit.session_state.chat_history = list()
-                    # Log message
-                    streamlit.success(f'Cleared chat history.')
+            if streamlit.button('Clear Chat History', help='This will delete the chat history.'):
+                streamlit.session_state.chat_history = list()
+                # Log message
+                streamlit.success(f'Cleared chat history.')
 
             # Add button to stream chat history
             if streamlit.button('Print Chat History'):

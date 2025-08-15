@@ -49,7 +49,7 @@ model = APIGateway.load_llm(
     do_sample=llm_info['do_sample'],
     max_tokens_to_generate=llm_info['max_tokens_to_generate'],
     temperature=llm_info['temperature'],
-    select_expert=llm_info['select_expert'],
+    model=llm_info['model'],
     process_prompt=False,
 )
 
@@ -288,10 +288,10 @@ def set_retriever(documents_path: str, urls: List[str]) -> Any:
         load_txt=True,
         load_pdf=True,
         urls=urls,
-        embedding_type=embedding_model_info['type'],
-        batch_size=embedding_model_info['batch_size'],
-        bundle=embedding_model_info['bundle'],
-        select_expert=embedding_model_info['select_expert'],
+        embedding_type=embedding_model_info.get('type'),
+        batch_size=embedding_model_info.get('batch_size'),
+        bundle=embedding_model_info.get('bundle'),
+        model=embedding_model_info.get('model'),
     ).as_retriever()
 
     print('retriever set')

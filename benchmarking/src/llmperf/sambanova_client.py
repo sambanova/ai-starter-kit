@@ -247,8 +247,10 @@ class SambaStudioAPI(BaseAPIEndpoint):
             if 'stream' in self.base_url:
                 stream_url = self.base_url
                 if self.request_config.image:
-                    raise ValueError(f'Image support not available for url: {self.base_url}.\
-                        Try with OpenAI compatible endpoint.')
+                    raise ValueError(
+                        f'Image support not available for url: {self.base_url}.\
+                        Try with OpenAI compatible endpoint.'
+                    )
             else:
                 if 'generic' in self.base_url:
                     stream_url = 'generic/stream'.join(self.base_url.split('generic'))
@@ -427,7 +429,7 @@ class SambaStudioAPI(BaseAPIEndpoint):
                     # performance metrics
                     if data.get('usage') is None:
                         # if streams still don't hit a finish reason
-                        if data['choices'][0]['finish_reason'] is None:
+                        if data['choices'][0].get('finish_reason') is None:
                             if data['choices'][0]['delta'].get('content') is not None:
                                 # log s timings
                                 events_timings.append(time.monotonic() - event_start_time)
@@ -511,11 +513,16 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
-        return {
+
+        header = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
-            # 'ss-sn-options': 'accuracy_debug',
         }
+
+        if self.request_config.use_debugging_mode:
+            header['ss-sn-options'] = 'accuracy_debug'
+
+        return header
 
     def _get_json_data(self) -> Dict[str, Any]:
         """Gets json body for API call
@@ -592,7 +599,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # performance metrics
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
-                            if data['choices'][0]['finish_reason'] is None:
+                            if data['choices'][0].get('finish_reason') is None:
                                 if data['choices'][0]['delta'].get('content') is not None:
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)

@@ -4,3 +4,4 @@ output_files_dir: '../benchmarking/data/results/qwen_llama_switching_time/comple
 consolidated_results_dir: '../benchmarking/data/results/qwen_llama_switching_time/complete_fixed_version/consolidated_results'
 timeout: 7200
 time_delay: 0
+use_multiple_prompts : False # Only available for synthetic performance evaluation

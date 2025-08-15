@@ -1,12 +1,13 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="60">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="60">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
+  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
 </picture>
 </a>
 
-# Function Calling kit
+Function Calling kit
+====================
 
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 <!-- TOC -->
@@ -69,9 +70,11 @@ The next step is to set up your environment variables to use one of the inferenc
 
 You have the following options to set up your embedding model:
 
-* **CPU embedding model (Option 1)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
+* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
 
-* **SambaStudio embedding model (Option 2)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-2) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `select_expert` according to your sambastudio endpoint
+* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
+
+* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
 
 ## Install dependencies
 

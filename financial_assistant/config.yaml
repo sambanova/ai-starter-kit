@@ -2,15 +2,13 @@ prod_mode: False
 
 llm: 
   temperature: 0.0
-  max_tokens_to_generate: 1024
+  max_tokens_to_generate: 2048
   select_expert: "Meta-Llama-3.3-70B-Instruct"
 
 rag:
   embedding_model: 
-    "type": "cpu" # Either "sambastudio" or "cpu"
-    "batch_size": 1
-    "bundle": True
-    "select_expert": "e5-mistral-7B-instruct" # Set if using "sambastudio" Bundle embedding expert
+    "type": "sncloud" # Either "sncloud", "sambastudio" or "cpu"
+    "model": "E5-Mistral-7B-Instruct" # Set if using "sncloud" or "sambastudio" Bundle embedding expert
   retrieval:
     "k_retrieved_documents": 5
 

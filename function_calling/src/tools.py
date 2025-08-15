@@ -405,10 +405,10 @@ class Rag(ToolClass):
 
         # load embedding model
         embeddings = APIGateway.load_embedding_model(
-            type=rag_info['embedding_model']['type'],
-            batch_size=rag_info['embedding_model']['batch_size'],
-            bundle=rag_info['embedding_model']['bundle'],
-            select_expert=rag_info['embedding_model']['select_expert'],
+            type=rag_info['embedding_model'].get('type'),
+            batch_size=rag_info['embedding_model'].get('batch_size'),
+            bundle=rag_info['embedding_model'].get('bundle'),
+            model=rag_info['embedding_model'].get('model'),
         )
 
         # set vectorstore and retriever
