@@ -8,7 +8,7 @@ langchain-huggingface==0.1.2
 langchain-sambanova==0.1.6
 langchain-milvus==0.1.10
 langchain-experimental==0.3.2
-matplotlib==3.8.0
+matplotlib==3.9.4
 mypy==1.11.2
 pre-commit==4.0.1
 pydantic-core==2.23.4
