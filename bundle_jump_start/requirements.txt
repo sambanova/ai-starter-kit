@@ -1,7 +1,7 @@
 
 
 chromadb==0.5.3
-faiss-cpu==1.7.4
+faiss-cpu==1.11.0
 instructorembedding==1.0.1
 ipython==8.26.0
 langchain-community==0.3.27
