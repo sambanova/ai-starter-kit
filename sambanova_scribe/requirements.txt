@@ -1,4 +1,4 @@
-Jinja2==3.1.4
+Jinja2==3.1.6
 langchain-community==0.3.27
 langchain-sambanova==0.1.6
 mypy==1.11.2
