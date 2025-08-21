@@ -220,12 +220,12 @@ def run_benchmarking(
 # output_files_dir = os.path.join(config['output_files_dir'], run_time)
 
 
-# Consolidate results
-if config['consolidated_results_dir']:
-    logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
-    try:
-        # Read summary files
-        df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
+    # Consolidate results
+    if config['consolidated_results_dir']:
+        logging.info(f"Writing consolidated results to {config['consolidated_results_dir']}")
+        try:
+            # Read summary files
+            df_summary = read_perf_eval_json_files(output_files_dir, type='summary')
 
             # Fill missing values
 
