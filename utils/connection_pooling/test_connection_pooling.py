@@ -12,22 +12,16 @@ Optional arguments:
 --sleep-duration: Sleep duration between requests in seconds (default: 10)
 --max-tokens: Maximum tokens to generate (default: 500)
 --prompt: Custom prompt to use for testing
-
-Example:
-python3 ./test_connection_pooling.py --api-url https://api.example.com --api-key your-key --model llama-3-8b --test-duration 100 --sleep-duration 20
-
 """
 
 import requests
 import time
 import json
 import logging
-import os
 import statistics
 import argparse
 
 # DEBUG
-from http.client import HTTPConnection
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s',
@@ -47,20 +41,29 @@ _MAX_TOKENS_TO_GENERATE = 500
 
 
 def parse_arguments():
-    """Parse command line arguments and return args structure"""
+    """Parse command line arguments and return args structure
+       Returns:
+           Parsed arguments
+"""
     parser = argparse.ArgumentParser(description='Test connection pooling for API endpoints')
     parser.add_argument("--api-url", required=True, help="API URL to test against")
     parser.add_argument("--api-key", required=True, help="API key for authentication")
     parser.add_argument("--model", required=True, help="Model name to use for testing")
-    parser.add_argument("--test-duration", type=int, default=50, help="Test duration in seconds (default: 50)")
-    parser.add_argument("--sleep-duration", type=int, default=10, help="Sleep duration between requests in seconds (default: 10)")
-    parser.add_argument("--max-tokens", type=int, default=500, help="Maximum tokens to generate (default: 500)")
+    parser.add_argument("--test-duration", type=int, default=50,
+                        help="Test duration in seconds (default: 50)")
+    parser.add_argument("--sleep-duration", type=int, default=10,
+                        help="Sleep duration between requests in seconds (default: 10)")
+    parser.add_argument("--max-tokens", type=int, default=500,
+                        help="Maximum tokens to generate (default: 500)")
     parser.add_argument("--prompt", default=_PROMPT, help="Prompt to use for testing")
     return parser.parse_args()
 
 
 def create_session():
-    """Create and configure a requests session for connection pooling"""
+    """Create and configure a requests session for connection pooling
+       Returns:
+           instance of a session
+    """
     session = requests.Session()
     adapter = requests.adapters.HTTPAdapter(pool_maxsize=10)
     session.mount('http://', adapter)
@@ -69,7 +72,15 @@ def create_session():
 
 
 def create_payload(prompt, max_tokens, model):
-    """Create the request payload"""
+    """Create the request payload
+       Args:
+           prompt: Input prompt
+           max_tokens: Maximum tokens to generate
+           model: Model to be queried
+
+       Returns:
+           json structured payload
+    """
     return {
         "messages": [
             {
@@ -259,5 +270,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
