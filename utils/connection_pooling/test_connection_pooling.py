@@ -19,6 +19,7 @@ import json
 import logging
 import statistics
 import time
+from typing import Any
 
 import requests
 
@@ -41,7 +42,7 @@ _PROMPT = "Tell me a short story. The story should have two main characters: A p
 _MAX_TOKENS_TO_GENERATE = 500
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     """Parse command line arguments and return args structure
        Returns:
            Parsed arguments
@@ -60,7 +61,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def create_session():
+def create_session() -> requests.Session:
     """Create and configure a requests session for connection pooling
        Returns:
            instance of a session
@@ -72,7 +73,7 @@ def create_session():
     return session
 
 
-def create_payload(prompt, max_tokens, model):
+def create_payload(prompt: str, max_tokens: int, model: Any) -> dict:
     """Create the request payload
        Args:
            prompt: Input prompt
@@ -98,7 +99,15 @@ def create_payload(prompt, max_tokens, model):
     }
 
 
-def run_connection_pooling_test(api_url, api_key, model, test_duration, sleep_duration, max_tokens, prompt):
+def run_connection_pooling_test(
+    api_url: str, 
+    api_key: str, 
+    model: str, 
+    test_duration: int, 
+    sleep_duration: int, 
+    max_tokens: int, 
+    prompt: str
+) -> dict:
     """
     Run the connection pooling test
 
@@ -149,7 +158,8 @@ def run_connection_pooling_test(api_url, api_key, model, test_duration, sleep_du
                         line_to_process = line.decode('utf-8')
                         if line_to_process.startswith(end_sequence):
                             # Termination of string according to OpenAI Spec
-                            # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream for details
+                            # See https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
+                            # for details
                             continue
                         if line_to_process:
                             # Line is of the format: data: <JSON formatted output>. We extract the JSON format part out.
@@ -223,7 +233,7 @@ def run_connection_pooling_test(api_url, api_key, model, test_duration, sleep_du
     return results
 
 
-def print_results(results):
+def print_results(results: dict) -> None:
     """Print the test results"""
     print(f"\n====Test Results====")
     print(f"Model: {results['model']}")
@@ -250,7 +260,7 @@ def print_results(results):
         print(f"Mean Response Time: {results['mean_total_time']*1000:.4f} ms")
 
 
-def main():
+def main() -> None:
     """Main function to run the connection pooling test"""
     args = parse_arguments()
 
