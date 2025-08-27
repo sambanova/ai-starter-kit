@@ -18,16 +18,15 @@ python3 ./test_connection_pooling.py --api-url https://api.example.com --api-key
 
 """
 
-import requests
-import time
+import argparse
 import json
 import logging
-import os
 import statistics
-import argparse
+import time
+
+import requests
 
 # DEBUG
-from http.client import HTTPConnection
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s',
