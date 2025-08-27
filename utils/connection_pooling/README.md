@@ -33,9 +33,9 @@ python3 test_connection_pooling.py --api-url <URL> --api-key <KEY> --model <MODE
 #### Example
 ```bash
 python3 test_connection_pooling.py \
-  --api-url https://api.example.com/v1/chat/completions \
+  --api-url https://api.sambanova.ai/v1/chat/completions \
   --api-key your-api-key-here \
-  --model llama-3-8b \
+  --model Llama-4-Maverick-17B-128E-Instruct \
   --test-duration 100 \
   --sleep-duration 20 \
   --max-tokens 100
@@ -49,14 +49,6 @@ The test provides detailed statistics including:
 - **Queuing Time Statistics**: Median and mean queuing times
 - **Total Response Time Statistics**: Median and mean total response times
 
-## Key Changes from Original
-
-1. **Removed Environment Variables**: No longer requires `API_URL`, `API_KEY`, and `MODEL` environment variables
-2. **Command Line Arguments**: All parameters are now configurable via command line arguments
-3. **Modular Design**: Main logic is now a reusable function
-4. **Enhanced Error Handling**: Better handling of missing metrics and failed requests
-5. **Comprehensive Statistics**: More detailed statistical analysis of results
-6. **Flexible Configuration**: Customizable test duration, sleep duration, and other parameters
 
 ## Files
 
