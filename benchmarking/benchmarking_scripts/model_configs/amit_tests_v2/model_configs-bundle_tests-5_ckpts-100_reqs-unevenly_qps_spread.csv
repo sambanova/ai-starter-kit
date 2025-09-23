@@ -1,0 +1,6 @@
+model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size
+Meta-Llama-3.1-8B-Instruct,3900,100,20,,20,constant,
+Hermes-3-Llama-3.1-8B,3900,100,20,,5,constant,
+LLaMa3.1-8B-Legal-ThaiCCL-Combine,3900,100,20,,5,constant,
+naps-llama-3_1_instruct-v0.6.0,3900,100,20,,5,constant,
+Llama-3.1-EIRAI-8B,3900,100,20,,5,constant,
