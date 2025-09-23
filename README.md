@@ -214,7 +214,7 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 Currently, you can set your embedding models on SambaCloud, SambaStudio, or CPU.
 
-### Use SambaNovaCloud embeddings (Option 1)
+### Use SambaCloud embeddings (Option 1)
 
 To integrate your embedding model deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
@@ -304,7 +304,7 @@ See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
 ### Using SambaCloud LLMs
 
-1. Import our **SambaNovaCloud** langchain integration in your project and define your **SambaNovaCloud* ChatModel:
+1. Import our **SambaCloud** langchain integration in your project and define your **SambaCloud** ChatModel:
 
 
 ``` bash
