@@ -11,7 +11,7 @@
 
 SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, you can obtain a free API key using [SambaNova Cloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
+To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Community" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -21,7 +21,7 @@ The table below lists the available kits, which are grouped into four categories
 
 For functionalities related to third-party integrations, find a list in our [Integrations Repository](https://github.com/sambanova/integrations) and [Integrations Docs](https://docs.sambanova.ai/cloud/docs/integrations).
 
-**Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
+**Note**: For each kit, we specify whether it is compatible with SambaCloud, SambaStudio, or both.
 
 <table style="width: 100%;">
 <thead>
@@ -39,7 +39,7 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="40%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Data Ingestion & Preparation </td>  
 </tr>
 
@@ -68,14 +68,14 @@ For functionalities related to third-party integrations, find a list in our [Int
 <td width="20%"><a href="prompt_engineering/README.md">Prompt Engineering</a></td>
 </td>
 <td width="40%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Model Development & Optimization </td> 
 </tr>
 
 <tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
 </tr>
 
@@ -89,14 +89,14 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="40%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
 <td width="40%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
+<td width="20%">SambaCloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
@@ -110,28 +110,28 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="40%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
+<td width="20%">SambaCloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a></td>
 <td width="40%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
+<td width="20%">SambaCloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>    
 </tr>
 
 <tr>
 <td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
 <td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Integrations </td>  
 </tr>
 
@@ -145,28 +145,28 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="financial_assistant/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="40%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
+<td width="20%"> SambaCloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="sambanova_scribe/README.md"> SambaNova Scribe</a></td>
 <td width="40%">Example implementation of a transcription and summarization workflow.</td>
-<td width="20%"> SambaNova Cloud</td>
+<td width="20%"> SambaCloud</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="google_integration/README.md"> SambaCloud - Google Integration</a></td>
 <td width="40%">App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces.</td>
-<td width="20%"> SambaNova Cloud</td>
+<td width="20%"> SambaCloud</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
@@ -175,20 +175,20 @@ For functionalities related to third-party integrations, find a list in our [Int
 
 # Getting Started 
 
-Go to [SambaNova Cloud Quickstart Guide](./quickstart/README.md) If is your first time using the AI State Kits and you want to try out simple examples. Follow the next steps to read more detailed instructions or if you ar a SambaStudio user. 
+Go to [SambaCloud Quickstart Guide](./quickstart/README.md) If is your first time using the AI State Kits and you want to try out simple examples. Follow the next steps to read more detailed instructions or if you ar a SambaStudio user. 
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
 
-### Use SambaNova Cloud (Option 1)
+### Use SambaCloud (Option 1)
 
-For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
+For more information and to obtain your API key, visit the [SambaCloud webpage](https://cloud.sambanova.ai).
 
-To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate SambaCloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaNova Cloud API key in the `.env` file, for example:
+- Enter the SambaCloud API key in the `.env` file, for example:
   
 ```bash
 SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
