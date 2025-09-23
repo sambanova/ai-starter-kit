@@ -212,14 +212,14 @@ SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
 
 ## Setting your embedding models
 
-Currently, you can set your embedding models on SambaNova Cloud, SambaStudio, or CPU.
+Currently, you can set your embedding models on SambaCloud, SambaStudio, or CPU.
 
 ### Use SambaNovaCloud embeddings (Option 1)
 
 To integrate your embedding model deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
 - Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Set your SambaNova Cloud variables in `.env` file as:
+- Set your SambaCloud variables in `.env` file as:
 
 ``` bash
 SAMBANOVA_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
@@ -302,7 +302,7 @@ llm.invoke("your prompt")
 
 See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
 
-### Using SambaNova Cloud LLMs
+### Using SambaCloud LLMs
 
 1. Import our **SambaNovaCloud** langchain integration in your project and define your **SambaNovaCloud* ChatModel:
 
@@ -629,7 +629,7 @@ If you continue to experience issues, please [open an issue](https://github.com/
 
 ### API Reference
 
-- Find more information about SambaNova Cloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
+- Find more information about SambaCloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
 
 - Find more information about SambaStudio [here](https://docs.sambanova.ai/sambastudio/latest/index.html)
 
