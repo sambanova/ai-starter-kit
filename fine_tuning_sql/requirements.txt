@@ -10,6 +10,6 @@ langchain-core==0.3.68
 langchain-sambanova==0.1.6
 mypy==1.11.2
 pre-commit==4.0.1
-python-dotenv==1.0.1
+python-dotenv==1.1.1
 ruff==0.6.9
 transformers==4.41.2
