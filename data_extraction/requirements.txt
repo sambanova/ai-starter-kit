@@ -40,7 +40,7 @@ future==0.18.3
 h11==0.14.0
 html2text==2020.1.16
 httplib2==0.22.0
-huggingface-hub==0.25.2
+huggingface-hub==0.33.2
 idna==3.4
 ipykernel==6.25.2
 ipython==8.16.1
@@ -103,7 +103,7 @@ pyzmq==25.1.1
 rdflib==7.0.0
 requests==2.31.0
 ruff==0.6.9
-scikit-learn==1.4.0 
+scikit-learn==1.6.1 
 scipy==1.11.3
 sentence_transformers==3.3.1 
 sentencepiece==0.1.99 
