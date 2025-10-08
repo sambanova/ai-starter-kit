@@ -1,0 +1,2 @@
+model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size
+Meta-Llama-3.1-8B-Instruct,3900,100,5000,,25,exponential,
