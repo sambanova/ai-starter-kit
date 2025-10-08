@@ -1,7 +1,7 @@
-model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv'
+model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/logs/output_files'
-consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
+output_files_dir: '../benchmarking/data/bundle_tests/5_node_samsung/1_ckpts-5000_reqs-12.5_qps_exponential'
+consolidated_results_dir: '../benchmarking/data/bundle_tests/5_node_samsung/1_ckpts-5000_reqs-12.5_qps_exponential/consolidated_results'
 timeout: 3600
 time_delay: 0
 use_multiple_prompts : False # Only available for synthetic performance evaluation
