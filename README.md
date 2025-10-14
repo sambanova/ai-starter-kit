@@ -51,28 +51,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="fine_tuning_embeddings/README.md"> Fine tuning embeddings</a></td>
-<td width="40%">Example workflow for fine-tuning embeddings from unstructured data, leveraging Large Language Models (LLMs) and open-source embedding models to enhance NLP task performance.</td>
-<td width="20%">SambaStudio</td>
-<td width="20%"> Model Development & Optimization </td>  
-</tr>
-
-<tr>
-<td width="20%"><a href="fine_tuning_sql/README.md"> Fine tuning SQL</a></td>
-<td width="40%">Example workflow for fine-tuning an SQL model for Question-Answering purposes, leveraging Large Language Models (LLMs) and open-source embedding models to enhance SQL generation task performance.</td>
-<td width="20%">SambaStudio</td>
-<td width="20%"> Model Development & Optimization </td>
-</tr>
-
-<tr>
-<td width="20%"><a href="prompt_engineering/README.md">Prompt Engineering</a></td>
-</td>
-<td width="40%">Starting point demo for prompt engineering using SambaNova's API to experiment with different use case templates. Provides useful resources to improve prompt crafting, making it an ideal entry point for those new to this AISK.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Model Development & Optimization </td> 
-</tr>
-
-<tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
@@ -80,23 +58,9 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="image_search/README.md">Image Search</a></td>
-<td width="40%">This example workflow shows a simple approach to image search by image description or image similarity. All workflows are built using the SambaNova platform. </td>
-<td width="20%"> SambaStudio </td>
-<td width="20%"> Intelligent Information Retrieval </td>   
-</tr>
-
-<tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="40%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Intelligent Information Retrieval </td>   
-</tr>
-
-<tr>
-<td width="20%"><a href="post_call_analysis/README.md">Post Call Analysis</a></td>
-<td width="40%">Example workflow that shows a systematic approach to post-call analysis including Automatic Speech Recognition (ASR), diarization, large language model analysis, and retrieval augmented generation (RAG) workflows. All workflows are built using the SambaNova platform. </td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
@@ -110,13 +74,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="40%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Intelligent Information Retrieval </td>   
-</tr>
-
-<tr>
-<td width="20%"><a href="web_crawled_data_retriever/README.md">Web Crawled Data Retrieval</a></td>
-<td width="40%">Sample implementation of a semantic search workflow built using the SambaNova platform to get answers to your questions using website crawled information as the source. Includes a runnable demo.</td>
 <td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
@@ -136,13 +93,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="bundle_jump_start/README.md">Bundle jump start</a></td>
-<td width="40%">This kit demonstrates how to call <a href=https://coe-1.Cloud.snova.ai/>SambaNova Bundle</a> models using the Langchain framework. The script offers different approaches for calling Bundle models, including using SambaStudio with a named expert, and using SambaStudio with routing.</td>
-<td width="20%">SambaStudio</td>
-<td width="20%"> Advanced AI Capabilities </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="financial_assistant/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
@@ -153,20 +103,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="40%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
 <td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Advanced AI Capabilities </td>
-</tr>
-
-<tr>
-<td width="20%"><a href="sambanova_scribe/README.md"> SambaNova Scribe</a></td>
-<td width="40%">Example implementation of a transcription and summarization workflow.</td>
-<td width="20%"> SambaNova Cloud</td>
-<td width="20%"> Advanced AI Capabilities </td>
-</tr>
-
-<tr>
-<td width="20%"><a href="google_integration/README.md"> SambaCloud - Google Integration</a></td>
-<td width="40%">App Scripts intended for those with SambaCloud API keys to integrate LLMs into Google Workspaces.</td>
-<td width="20%"> SambaNova Cloud</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
