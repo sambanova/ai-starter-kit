@@ -1,6 +1,0 @@
-api: "sambastudio"
-
-llm: 
-    "temperature": 0.1
-    "max_tokens_to_generate": 1024
-    "select_expert": "Mistral-7B-Instruct-v0.2"
