@@ -93,7 +93,7 @@ This code snippet demonstrates how to set up a Langchain `ChatSambaNova` instanc
 
 ## Get Help
 
-- Check out the [SambaNova support documentation](https://sambanova.ai/developer-resources) and [SambaNova Cloud documentation](https://docs.sambanova.ai/cloud/docs/get-started/overview) for additional help
+- Check out the [SambaNova Developer Guide](https://docs.sambanova.ai/cloud/docs/get-started/overview) for additional help
 - Find answers and post questions in the [SambaNova Community](https://community.sambanova.ai/latest)
 - Let us know your most wanted features and challenges via the channels above
 - More inference models, longer context lengths, and embeddings models are coming soon!
