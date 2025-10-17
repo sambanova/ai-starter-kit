@@ -18,6 +18,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,7 +27,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
@@ -95,8 +95,8 @@ class RetrievalQAChain(Chain):
     conversational: bool = False
     # wether or not to use memory and answer over reformulated query with history summary
     # instead of answer over raw user query with our using history
-    summary_prompt: Optional[ChatPromptTemplate]
-    condensed_query_prompt: Optional[ChatPromptTemplate]
+    summary_prompt: Optional[ChatPromptTemplate] = None
+    condensed_query_prompt: Optional[ChatPromptTemplate] = None
 
     @property
     def input_keys(self) -> List[str]:
@@ -259,21 +259,18 @@ class DocumentRetrieval:
 
     def set_llm(self, model: Optional[str] = None) -> None:
         """
-        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
+        Sets the sambanova LLM
 
         Parameters:
-        Model (str): The name of the model to use for the LVLM (overwrites the param set in config).
+        Model (str): The name of the model to use for the LLM (overwrites the param set in config).
         """
         if model is None:
             model = self.llm_info['model']
-        llm = APIGateway.load_chat(
-            type=self.llm_info['api'],
-            do_sample=self.llm_info['do_sample'],
-            max_tokens=self.llm_info['max_tokens'],
-            temperature=self.llm_info['temperature'],
+        llm_info = {k: v for k, v in self.llm_info.items() if k != "model"}
+        llm = ChatSambaNova(
+            api_key=self.sambanova_api_key,
+            **llm_info,
             model=model,
-            process_prompt=False,
-            sambanova_api_key=self.sambanova_api_key,
         )
         self.llm = llm
 
@@ -299,11 +296,9 @@ class DocumentRetrieval:
         return langchain_docs
 
     def load_embedding_model(self) -> Embeddings:
-        embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info.get('type'),
-            batch_size=self.embedding_model_info.get('batch_size'),
-            bundle=self.embedding_model_info.get('bundle'),
-            model=self.embedding_model_info.get('model'),
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key,
+            **self.embedding_model_info
         )
         return embeddings
 

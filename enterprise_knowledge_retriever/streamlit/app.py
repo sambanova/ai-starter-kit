@@ -31,13 +31,16 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 # Available models in dropdown menu
 LLM_MODELS = [
+    'gpt-oss-120b',
     'Llama-4-Maverick-17B-128E-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-R1-Distill-Llama-70B',
     'DeepSeek-R1',
     'DeepSeek-V3-0324',
+    'DeepSeek-V3.1',
+    'DeepSeek-V3.1-Terminus',
     'Meta-Llama-3.1-8B-Instruct',
-    'QwQ-32B-Preview',
+    'Qwen-32B',
 ]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
@@ -157,7 +160,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
             'ai',
             avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')
         ):
-            formatted_ans = ans.replace('$', '\$')
+            formatted_ans = ans.replace('$', r'\$')
             st.write(f'{formatted_ans}')
             if st.session_state.show_sources:
                 with st.expander('Sources'):
@@ -222,7 +225,7 @@ def main() -> None:
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
@@ -248,7 +251,6 @@ def main() -> None:
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
     conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
 
@@ -299,7 +301,7 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set():
-            api_key, additional_vars = env_input_fields(mode=llm_type)
+            api_key, additional_vars = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
@@ -324,7 +326,7 @@ def main() -> None:
             if not prod_mode:
                 datasource_options.append('Use existing vector db')
 
-            datasource = st.selectbox('', datasource_options)
+            datasource = st.selectbox('Datasource', datasource_options)
 
             if isinstance(datasource, str) and 'Upload' in datasource:
                 hide_label = """
