@@ -81,7 +81,7 @@ def main() -> None:
         type=str,
         required=True,
         default='sncloud',
-        help="The LLM API type. It could be either 'sambastudio' or 'sncloud'. (default: %(default)s)",
+        help="The LLM API type. Currently only supporting 'sncloud'. (default: %(default)s)",
     )
 
     # Optional Common Arguments
