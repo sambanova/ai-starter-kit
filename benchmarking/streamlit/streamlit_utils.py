@@ -16,7 +16,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
-LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
+LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud'}
 MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
@@ -141,11 +141,9 @@ def setup_credentials() -> None:
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-    st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
+    st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud'])
     if st.session_state.mode == 'SambaNova Cloud':
         st.session_state.llm_api = 'sncloud'
-    else:  # SambaStudio
-        st.session_state.llm_api = 'sambastudio'
 
     additional_env_vars: Dict[str, Any] = {}
     additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
@@ -156,9 +154,6 @@ def setup_credentials() -> None:
         api_key, additional_vars = env_input_fields(additional_env_vars, mode=st.session_state.mode)
         if st.button('Save Credentials', key='save_credentials_sidebar'):
             if st.session_state.mode == 'SambaNova Cloud':
-                message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
-            else:  # SambaStudio
-                additional_vars['SAMBASTUDIO_API_KEY'] = api_key
                 message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             st.session_state.mp_events.api_key_saved()
@@ -213,14 +208,8 @@ def set_api_variables() -> Dict[str, Any]:
                 'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL,
                 'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY,
             }
-        # SambaStudio
-        elif st.session_state.llm_api == 'sambastudio':
-            api_variables = {
-                'SAMBASTUDIO_URL': st.session_state.SAMBASTUDIO_URL,
-                'SAMBASTUDIO_API_KEY': st.session_state.SAMBASTUDIO_API_KEY,
-            }
         else:
-            raise Exception('Only sncloud and sambastudio supported.')
+            raise Exception('Only sncloud supported.')
     else:
         api_variables = {}
 
