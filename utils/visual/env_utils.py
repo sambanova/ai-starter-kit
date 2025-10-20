@@ -16,12 +16,7 @@ def initialize_env_variables(
         st.session_state.SAMBANOVA_API_KEY = os.environ.get(
             'SAMBANOVA_API_KEY', st.session_state.get('SAMBANOVA_API_KEY', '')
         )
-        st.session_state.SAMBASTUDIO_URL = os.environ.get(
-            'SAMBASTUDIO_URL', st.session_state.get('SAMBASTUDIO_URL', '')
-        )
-        st.session_state.SAMBASTUDIO_API_KEY = os.environ.get(
-            'SAMBASTUDIO_API_KEY', st.session_state.get('SAMBASTUDIO_API_KEY', '')
-        )
+        
         if isinstance(additional_env_vars, List):
             for var in additional_env_vars:
                 st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
@@ -34,10 +29,6 @@ def initialize_env_variables(
         # In prod mode, only use session state
         if 'SAMBANOVA_API_KEY' not in st.session_state:
             st.session_state.SAMBANOVA_API_KEY = ''
-        if 'SAMBASTUDIO_URL' not in st.session_state:
-            st.session_state.SAMBASTUDIO_URL = ''
-        if 'SAMBASTUDIO_API_KEY' not in st.session_state:
-            st.session_state.SAMBASTUDIO_API_KEY = ''
 
         if isinstance(additional_env_vars, List):
             for var in additional_env_vars:

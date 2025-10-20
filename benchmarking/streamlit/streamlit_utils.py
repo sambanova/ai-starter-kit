@@ -141,9 +141,8 @@ def setup_credentials() -> None:
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-    st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud'])
-    if st.session_state.mode == 'SambaNova Cloud':
-        st.session_state.llm_api = 'sncloud'
+    # Set the llm_api to sncloud (only option for now)
+    st.session_state.llm_api = 'sncloud'
 
     additional_env_vars: Dict[str, Any] = {}
     additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
@@ -151,10 +150,8 @@ def setup_credentials() -> None:
     initialize_env_variables(st.session_state.prod_mode, additional_env_vars)
 
     if not are_credentials_set():
-        api_key, additional_vars = env_input_fields(additional_env_vars, mode=st.session_state.mode)
+        api_key, additional_vars = env_input_fields(additional_env_vars)
         if st.button('Save Credentials', key='save_credentials_sidebar'):
-            if st.session_state.mode == 'SambaNova Cloud':
-                message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             st.session_state.mp_events.api_key_saved()
             st.success(message)
