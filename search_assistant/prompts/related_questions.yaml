@@ -1,0 +1,15 @@
+_type: chat
+input_types: {}
+input_variables:
+  - question
+  - format_instructions
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+    -   role: system
+        content: "Given the following question from a user that will be answered searching in google search create between 2 an 4 related search questions that could be interesting for the user"
+    -   role: user
+        content: "{question}.\n\n{format_instructions}\n"
+template_format: f-string
+validate_template: false
