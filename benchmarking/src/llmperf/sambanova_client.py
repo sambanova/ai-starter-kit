@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 import sseclient
-from requests import Response
 
 sys.path.append('./src')
 sys.path.append('./src/llmperf')
