@@ -23,12 +23,12 @@ from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from langchain.memory import ConversationSummaryMemory
+from langchain.prompts import ChatPromptTemplate, load_prompt
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
 from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import load_prompt
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from unstructured.partition.pdf import partition_pdf
 
@@ -55,6 +55,31 @@ logging.basicConfig(
 
 # Create a logger object
 logger = logging.getLogger(__name__)
+
+
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
 
 
 class MultimodalRetrieval:
@@ -188,7 +213,7 @@ class MultimodalRetrieval:
         """
         Initialize conversation summary memory for the conversation
         """
-        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-conversation-summary.yaml'))
+        summary_prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/conversation-summary.yaml'))
 
         self.memory = ConversationSummaryMemory(
             llm=self.llm,
@@ -211,8 +236,8 @@ class MultimodalRetrieval:
         """
         if self.memory is None:
             self.init_memory()
-        custom_condensed_question_prompt = load_prompt(
-            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_query.yaml')
+        custom_condensed_question_prompt = load_chat_prompt(
+            os.path.join(kit_dir, 'prompts', 'multiturn-custom_condensed_query.yaml')
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
@@ -262,7 +287,7 @@ class MultimodalRetrieval:
         Returns:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
-        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-text_summary.yaml'))
+        text_prompt_template = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'text_summary.yaml'))
         text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
@@ -279,7 +304,7 @@ class MultimodalRetrieval:
         Returns:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
-        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-table_summary.yaml'))
+        table_prompt_template = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'table_summary.yaml'))
         table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
@@ -505,7 +530,7 @@ class MultimodalRetrieval:
 
         """
 
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
+        prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
