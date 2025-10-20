@@ -266,7 +266,7 @@ class DocumentRetrieval:
         """
         if model is None:
             model = self.llm_info['model']
-        llm_info = {k: v for k, v in self.llm_info.items() if k != "model"}
+        llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
             **llm_info,
@@ -296,10 +296,7 @@ class DocumentRetrieval:
         return langchain_docs
 
     def load_embedding_model(self) -> Embeddings:
-        embeddings = SambaNovaEmbeddings(
-            api_key=self.sambanova_api_key,
-            **self.embedding_model_info
-        )
+        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
         return embeddings
 
     def create_vector_store(
@@ -358,9 +355,9 @@ class DocumentRetrieval:
         Returns:
         RetrievalQA: A chain ready for QA without memory
         """
-        assert isinstance(
-            self.retriever, VectorStoreRetriever
-        ), f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
+        assert isinstance(self.retriever, VectorStoreRetriever), (
+            f'The Retriever must be VectorStoreRetriever. Got type {type(self.retriever)}'
+        )
         retrievalQAChain = RetrievalQAChain(
             retriever=self.retriever,
             llm=self.llm,

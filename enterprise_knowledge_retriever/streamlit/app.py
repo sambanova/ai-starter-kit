@@ -156,10 +156,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
         with st.chat_message('user'):
             st.write(f'{ques}')
 
-        with st.chat_message(
-            'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')
-        ):
+        with st.chat_message('ai', avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')):
             formatted_ans = ans.replace('$', r'\$')
             st.write(f'{formatted_ans}')
             if st.session_state.show_sources:
@@ -197,16 +194,16 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
 
 
 def main() -> None:
-    
-    #Style and page config
-    
+    # Style and page config
+
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-    
+
     # set buttons style
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         div.stButton > button {
             background-color: #250E36;  /* Button background */
@@ -217,10 +214,13 @@ def main() -> None:
             color: #FFFFFF;             /* Button text color */
         }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Load Inter font from Google Fonts and apply globally
-    st.markdown("""
+    st.markdown(
+        """
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
         <style>
@@ -229,13 +229,16 @@ def main() -> None:
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # add title and icon
     col1, col2, col3 = st.columns([4, 1, 4])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .kit-title {
                 text-align: center;
@@ -246,8 +249,10 @@ def main() -> None:
             }
         </style>
         <div class="kit-title">Enterprise Knowledge Retriever</div>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
@@ -255,7 +260,7 @@ def main() -> None:
     default_collection = 'ekr_default_collection'
 
     initialize_env_variables(prod_mode)
-    
+
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if 'chat_history' not in st.session_state:
@@ -284,17 +289,19 @@ def main() -> None:
         st.session_state.mp_events.demo_launch()
 
     with st.sidebar:
-        
         # Inject HTML to display the logo in the sidebar at 70% width
         logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
-        with open(logo_path, "rb") as img_file:
+        with open(logo_path, 'rb') as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
-        st.sidebar.markdown(f"""
+        st.sidebar.markdown(
+            f"""
             <div style="text-align: center;">
                 <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         st.title('Setup')
 
         # Callout to get SambaNova API Key
@@ -479,8 +486,9 @@ def main() -> None:
                                         db_path, embeddings, collection_name=collection_name
                                     )
                                     st.toast(
-                                        f"""Database loaded{'with collection '
-                                         + default_collection if not prod_mode else ''}"""
+                                        f"""Database loaded{
+                                            'with collection ' + default_collection if not prod_mode else ''
+                                        }"""
                                     )
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)

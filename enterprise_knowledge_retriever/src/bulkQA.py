@@ -54,7 +54,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, load_chat_prompt, RetrievalQAChain
+from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain, load_chat_prompt
 
 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
@@ -130,7 +130,7 @@ def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
     if os.path.exists(vectordb_path):
         # load the vectorstore
         embeddings = documentRetrieval.load_embedding_model()
-        vectorstore = documentRetrieval.load_vdb(vectordb_path, embeddings, collection_name="ekr_default_collection")
+        vectorstore = documentRetrieval.load_vdb(vectordb_path, embeddings, collection_name='ekr_default_collection')
         print('Database loaded')
         documentRetrieval.init_retriever(vectorstore)
         print('retriever initialized')
