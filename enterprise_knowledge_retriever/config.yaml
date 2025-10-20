@@ -1,9 +1,9 @@
-llm: 
+llm:
+    "model": "gpt-oss-120b" 
     "temperature": 0.0
     "top_p": null
     "top_k": null
     "max_tokens": 8192
-    "model": "gpt-oss-120b" 
 
 embedding_model: 
     "model": "E5-Mistral-7B-Instruct"
