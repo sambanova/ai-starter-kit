@@ -21,7 +21,7 @@ from transformers import AutoTokenizer
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
-from benchmarking.utils import SAMBANOVA_URL
+from benchmarking.utils import SAMBANOVA_BASE_URL
 
 warnings.filterwarnings('ignore')
 
@@ -224,13 +224,13 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
             self.base_url = (
-                self.request_config.api_variables['SAMBANOVA_URL']
-                if self.request_config.api_variables['SAMBANOVA_URL']
-                else SAMBANOVA_URL
+                self.request_config.api_variables['SAMBANOVA_BASE_URL']
+                if self.request_config.api_variables['SAMBANOVA_BASE_URL']
+                else SAMBANOVA_BASE_URL
             )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
+            self.base_url = os.environ.get('SAMBANOVA_BASE_URL', SAMBANOVA_BASE_URL)
             self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:

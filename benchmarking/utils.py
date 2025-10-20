@@ -5,7 +5,7 @@ import pandas as pd
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), './'))
 
-SAMBANOVA_URL = 'https://api.sambanova.ai/v1'
+SAMBANOVA_BASE_URL = 'https://api.sambanova.ai/v1'
 CONFIG_PATH = os.path.join(project_root, 'config.yaml')
 
 
