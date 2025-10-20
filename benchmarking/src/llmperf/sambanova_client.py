@@ -240,6 +240,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         Returns:
             str: url needed for API
         """
+        # if chat/completions included then use that endpoint
+        if 'chat/completions' in self.base_url:
+            return self.base_url
+        # else build the url using base url
+        else:
+            self.base_url = self.base_url.rstrip('/') + '/chat/completions'
         return self.base_url
 
     def _get_headers(self) -> Dict[str, str]:
