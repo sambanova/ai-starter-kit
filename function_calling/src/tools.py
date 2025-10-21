@@ -16,6 +16,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool, ToolException, tool
 from langchain_experimental.utilities import PythonREPL
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from pydantic import BaseModel, Field
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,12 +25,38 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
+RAG_PROMPT = os.path.join(kit_dir, 'prompts', 'rag_tool.yaml')
+QUERY_DB_PROMPT = os.path.join(kit_dir, 'prompts', 'query_db_tool.yaml')
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+
+
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
 
 
 def get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, Any]:
@@ -176,11 +203,7 @@ calculator = StructuredTool.from_function(
 
 # tool schema
 class ReplSchema(BaseModel):
-    (
-        'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. '
-        'If you want to see the output of a value, you should print it out with `print(...)`, '
-        'if you need a specific module you should import it.'
-    )
+    'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it.'
 
     command: str = Field(..., description='python code to evaluate')
 
@@ -204,10 +227,7 @@ python_repl = Tool(
 class QueryDb(ToolClass):
     # tool schema
     class QueryDBSchema(BaseModel):
-        (
-            'A query generation tool. Use this to generate sql queries and retrieve the results from a database. '
-            'Do not pass sql queries directly. Input must be a natural language question or instruction.'
-        )
+        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction.'
 
         query: str = Field(..., description='natural language question or instruction.')
 
@@ -246,14 +266,7 @@ class QueryDb(ToolClass):
         # get tool configs
         query_db_info = self.config['query_db']
 
-        llm = APIGateway.load_chat(
-            type=query_db_info['llm']['api'],
-            do_sample=query_db_info['llm']['do_sample'],
-            max_tokens=query_db_info['llm']['max_tokens'],
-            temperature=query_db_info['llm']['temperature'],
-            model=query_db_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
-        )
+        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **query_db_info['llm'])
 
         if self.kwargs.get('session_temp_db') is not None:  # TODO pass this param
             db_path = self.kwargs.get('session_temp_db')
@@ -262,32 +275,7 @@ class QueryDb(ToolClass):
         db_uri = f'sqlite:///{db_path}'
         db = SQLDatabase.from_uri(db_uri)
 
-        prompt = ChatPromptTemplate(
-            [
-                (
-                    'system',
-                    """
-                {table_info}
-                
-                Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.
-                Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.
-                Do not assume ids in tables when inserting new values let them null or use the max id + 1
-                The queries must be formatted including backticks code symbols as follows:
-                do not include comments in the query
-                    
-                ```sql
-                query
-                ```
-                
-                Example format:
-                
-                ```sql
-                SELECT * FROM mainTable;
-                ```""",  # noqa: E501
-                ),
-                ('human', """{input}"""),
-            ]
-        )
+        prompt = load_chat_prompt(QUERY_DB_PROMPT)
 
         # Chain that receives the natural language input and the table schema,
         # then pass the teh formatted prompt to the llm
@@ -351,14 +339,7 @@ class Translate(ToolClass):
         translate_info = self.config['translate']
 
         # set the llm based in tool configs
-        llm = APIGateway.load_chat(
-            type=translate_info['llm']['api'],
-            do_sample=translate_info['llm']['do_sample'],
-            max_tokens=translate_info['llm']['max_tokens'],
-            temperature=translate_info['llm']['temperature'],
-            model=translate_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
-        )
+        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **translate_info['llm'])
         chain = llm | StrOutputParser()
 
         return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
@@ -392,27 +373,20 @@ class Rag(ToolClass):
         rag_info = self.config['rag']
 
         # set the llm based in tool configs
-        llm = APIGateway.load_chat(
-            type=rag_info['llm']['api'],
-            do_sample=rag_info['llm']['do_sample'],
-            max_tokens=rag_info['llm']['max_tokens'],
-            temperature=rag_info['llm']['temperature'],
-            model=rag_info['llm']['model'],
-            sambanova_api_key=self.kwargs.get('sambanova_api_key'),
-        )
+        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **rag_info['llm'])
 
         vdb = VectorDb()
 
         # load embedding model
-        embeddings = APIGateway.load_embedding_model(
-            type=rag_info['embedding_model'].get('type'),
-            batch_size=rag_info['embedding_model'].get('batch_size'),
-            bundle=rag_info['embedding_model'].get('bundle'),
-            model=rag_info['embedding_model'].get('model'),
-        )
+        embeddings = SambaNovaEmbeddings(api_key=self.kwargs.get('sambanova_api_key'), **rag_info['embedding_model'])
 
         # set vectorstore and retriever
-        vectorstore = vdb.load_vdb(os.path.join(kit_dir, rag_info['vector_db']['path']), embeddings, db_type='chroma')
+        vectorstore = vdb.load_vdb(
+            os.path.join(kit_dir, rag_info['vector_db']['path']),
+            embeddings,
+            db_type='chroma',
+            collection_name=rag_info['vector_db']['collection_name'],
+        )
         retriever = vectorstore.as_retriever(
             search_type='similarity_score_threshold',
             search_kwargs={
@@ -421,19 +395,7 @@ class Rag(ToolClass):
             },
         )
         #  qa_chain definition
-        prompt = [
-            (
-                'system',
-                'You are an assistant for question-answering tasks.\n'
-                'Use the following pieces of retrieved contexts to answer the question. '
-                'If the information that is relevant to answering the question does not '
-                'appear in the retrieved contexts, '
-                'say "Could not find information.". Provide a concise answer to the question. '
-                'Do not provide any information that is not asked for in the question. ',
-            ),
-            ('human', 'Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'),
-        ]
-        retrieval_qa_prompt = ChatPromptTemplate(prompt)
+        retrieval_qa_prompt = load_chat_prompt(RAG_PROMPT)
         qa_chain = RetrievalQA.from_llm(
             llm=llm,
             retriever=retriever,

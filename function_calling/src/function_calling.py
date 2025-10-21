@@ -15,6 +15,7 @@ from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
+from langchain_sambanova import ChatSambaNova
 from pydantic import BaseModel, Field
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,32 +25,14 @@ sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
 from function_calling.src.tools import QueryDb, Rag, ToolClass, Translate, calculator, get_time, python_repl
-from utils.model_wrappers.api_gateway import APIGateway
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 
-FUNCTION_CALLING_SYSTEM_PROMPT = """you are an helpful assistant and you have access to the following tools:
-
-{tools}
-
-You must always select one or more of the above tools and answer with only a list of JSON objects matching the following schema:
-
-```json
-[{{
-  "tool": <name of the selected tool>,
-  "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
-}}]
-```
-
-Think step by step
-Do not call a tool if the input depends on another tool output that you do not have yet.
-Do not try to answer until you get all the tools output, if you do not have an answer yet, you can continue calling tools until you do.
-Your answer should be in the same language as the initial query.
-
-"""  # noqa E501
+FUNCTION_CALLING_SYSTEM_PROMPT = os.path.join(kit_dir, 'prompts', 'function_calling.yaml')
+JSON_CORRECTION_PROMPT = os.path.join(kit_dir, 'prompts', 'json_correction.yaml')
 
 # tool mapping of default tools
 TOOLS = {
@@ -66,12 +49,34 @@ ToolType = Union[str, StructuredTool, Tool, ToolClass]
 ToolListType = List[ToolType]
 
 
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
+
+
 # tool schema
 class ConversationalResponse(BaseModel):
-    (
-        'Respond conversationally only if no other tools should be called for a given query, '
-        'or if you have a final answer. response must be in the same language as the user query'
-    )
+    'Respond conversationally only if no other tools should be called for a given query, or if you have a final answer. response must be in the same language as the user query'
 
     response: str = Field(
         ..., description='Conversational response to the user. must be in the same language as the user query'
@@ -88,6 +93,7 @@ class FunctionCallingLlm:
         tools: Optional[Union[ToolType, ToolListType]] = None,
         default_tool: Optional[Union[StructuredTool, Tool, Type[BaseModel]]] = None,
         system_prompt: Optional[str] = None,
+        json_correction_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
         sambanova_api_key: Optional[str] = None,
         **kwargs: Any,
@@ -115,7 +121,9 @@ class FunctionCallingLlm:
             langchain_tools.append(self._set_tool(tool))
         self.tools = langchain_tools
         if system_prompt is None:
-            self.system_prompt = FUNCTION_CALLING_SYSTEM_PROMPT
+            self.system_prompt = load_chat_prompt(FUNCTION_CALLING_SYSTEM_PROMPT)
+        if json_correction_prompt is None:
+            self.json_correction_prompt = load_chat_prompt(JSON_CORRECTION_PROMPT)
         if default_tool is None:
             default_tool = ConversationalResponse
         tools_schemas = self.get_tools_schemas(self.tools, default=default_tool)
@@ -166,18 +174,20 @@ class FunctionCallingLlm:
 
         return (llm_info, prod_mode)
 
-    def set_llm(self) -> BaseChatModel:
+    def set_llm(self, model: Optional[str] = None) -> BaseChatModel:
         """
-        Set the LLM to use.
-        sambastudio and sncloud endpoints implemented.
-        """
+        Sets the sambanova LLM
 
-        llm = APIGateway.load_chat(
-            type=self.llm_info['api'],
-            max_tokens=self.llm_info['max_tokens'],
-            temperature=self.llm_info['temperature'],
-            model=self.llm_info['model'],
-            sambanova_api_key=self.sambanova_api_key,
+        Parameters:
+        Model (str): The name of the model to use for the LLM (overwrites the param set in config).
+        """
+        if model is None:
+            model = self.llm_info['model']
+        llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
+        llm = ChatSambaNova(
+            api_key=self.sambanova_api_key,
+            **llm_info,
+            model=model,
         )
         return llm
 
@@ -251,7 +261,7 @@ class FunctionCallingLlm:
         for tool in invoked_tools:
             final_answer = False
             if tool['tool'].lower() != 'conversationalresponse':
-                print(f"\n\n---\nTool {tool['tool'].lower()} invoked with input {tool['tool_input']}\n")
+                print(f'\n\n---\nTool {tool["tool"].lower()} invoked with input {tool["tool_input"]}\n')
                 response = tools_map[tool['tool'].lower()].invoke(tool['tool_input'])
                 print(f'Tool response: {str(response)}\n---\n\n')
                 tools_msgs.append(tool_msg.format(name=tool['tool'], response=str(response)))
@@ -273,16 +283,8 @@ class FunctionCallingLlm:
             try:
                 json.loads(json_str)
             except:
-                json_correction_prompt = [
-                    ('system', """You are a json format corrector tool"""),
-                    (
-                        'human',
-                        """fix the following json file: {json}
-                     do not provide any explanation only return the fixed json""",
-                    ),
-                ]
-                json_correction_prompt_template = ChatPromptTemplate(json_correction_prompt)
-                json_correction_chain = json_correction_prompt_template | self.llm | StrOutputParser()
+                json_correction_prompt = load_chat_prompt(self.json_correction_prompt)
+                json_correction_chain = json_correction_prompt | self.llm | StrOutputParser()
                 json_str = json_correction_chain.invoke({'json': json_str})
                 print(f'Corrected json: {json_str}')
         else:
@@ -294,16 +296,16 @@ class FunctionCallingLlm:
             json_str = json.dumps(dummy_json_response)
         return json_str
 
-    def function_call_llm(self, query: str, max_it: int = 5) -> str:
+    def function_call_llm(self, query: str, max_it: int = 10) -> str:
         """
         invocation method for function calling workflow
 
         Args:
             query (str): The query to execute.
-            max_it (int, optional): The maximum number of iterations. Defaults to 5.
+            max_it (int, optional): The maximum number of iterations. Defaults to 10.
         """
-        function_calling_chat_template = ChatPromptTemplate.from_messages([('system', self.system_prompt)])
-        history = function_calling_chat_template.format_prompt(tools=self.tools_schemas).to_messages()
+        function_calling_chat_template = self.system_prompt.format(tools=self.tools_schemas)
+        history = [function_calling_chat_template]
         history.append(HumanMessage(query))
         tool_call_id = 0  # identification for each tool calling required to create ToolMessages
 
