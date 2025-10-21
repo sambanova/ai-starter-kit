@@ -6,10 +6,13 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
-from langchain.prompts import load_prompt
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_experimental.text_splitter import SemanticChunker
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from pydantic import BaseModel, Field
 
 logging.basicConfig(
@@ -24,13 +27,32 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from langchain_core.embeddings import Embeddings
-from langchain_core.language_models.chat_models import BaseChatModel
-
-from utils.model_wrappers.api_gateway import APIGateway
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
 
 class SyntheticDatum(BaseModel):
     """Model of a synthetic generated datum"""
@@ -98,23 +120,15 @@ class SyntheticDataGen:
         Returns:
         SambaStudio, or SambaNovaCloud instance
         """
-        llm = APIGateway.load_chat(
-            type=self.llm_info['api'],
+        llm = ChatSambaNova(
+            **self.llm_info,
             streaming=True,
-            do_sample=self.llm_info['do_sample'],
-            max_tokens=self.llm_info['max_tokens'],
-            temperature=self.llm_info['temperature'],
-            model=self.llm_info['model'],
-            process_prompt=False,
         )
         return llm
 
     def set_embedding_model(self) -> Embeddings:
-        embedding_model = APIGateway.load_embedding_model(
-            type=self.embedding_model_info.get('type'),
-            batch_size=self.embedding_model_info.get('batch_size'),
-            bundle=self.embedding_model_info.get('bundle'),
-            model=self.embedding_model_info.get('model'),
+        embedding_model = SambaNovaEmbeddings(
+            **self.embedding_model_info,
         )
         return embedding_model
 
@@ -239,7 +253,7 @@ class SyntheticDataGen:
         Returns:
         dict: A dictionary containing the generated question answer pairs.
         """
-        prompt = load_prompt(os.path.join(utils_dir, 'synthetic_data_gen', self.prompts['generate_qa_prompt']))
+        prompt = load_chat_prompt(os.path.join(utils_dir, 'synthetic_data_gen', self.prompts['generate_qa_prompt']))
         synthetic_datum_parser = JsonOutputParser(pydantic_object=SyntheticData)
         qa_generate_chain = prompt | self.llm | synthetic_datum_parser
         qa_pairs = []
