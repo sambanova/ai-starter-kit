@@ -252,9 +252,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
     # Iterate over the JSON data to extract ticker symbols
     for company in company_names_list:
         # The prompt template
-        prompt_template_symbol = (
-            'What is the ticker symbol for {company}?\n' 'Format instructions: {format_instructions}'
-        )
+        prompt_template_symbol = 'What is the ticker symbol for {company}?\nFormat instructions: {format_instructions}'
 
         # The parser
         parser_symbol = PydanticOutputParser(pydantic_object=TickerSymbol)

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 import yaml
@@ -8,11 +8,11 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_sambanova import SambaNovaEmbeddings
 
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
 from financial_assistant.streamlit.llm_model import sambanova_llm
-from utils.model_wrappers.api_gateway import APIGateway
 
 logger = get_logger()
 
@@ -36,11 +36,13 @@ Answer any use questions based solely on the context below:
 <|eot_id|>
 
 <|start_header_id|>assistant<|end_header_id|>
-"""
+"""  # TODO update to chat template
 
 
 @time_llm
-def get_qa_response(user_request: str, documents: List[Document]) -> Dict[str, str | List[Document]]:
+def get_qa_response(
+    user_request: str, documents: List[Document], sambanova_api_key: Optional[str] = None
+) -> Dict[str, str | List[Document]]:
     """
     Elaborate an answer to user request using RetrievalQA chain.
 
@@ -62,7 +64,7 @@ def get_qa_response(user_request: str, documents: List[Document]) -> Dict[str, s
         raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
 
     # Get the vectostore registry
-    vectorstore = get_vectorstore(documents=documents)
+    vectorstore = get_vectorstore(documents=documents, sambanova_api_key=sambanova_api_key)
 
     # Retrieve the most relevant docs
     retrieved_docs = vectorstore.similarity_search(query=user_request, k=TOP_K)
@@ -104,28 +106,21 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     return embedding_model_info, retrieval_info
 
 
-def load_embedding_model(embedding_model_info: Dict[str, Any]) -> HuggingFaceEmbeddings | Embeddings:
+def load_embedding_model(
+    embedding_model_info: Dict[str, Any], sambanova_api_key: Optional[str] = None
+) -> SambaNovaEmbeddings:
     """Load the embedding model following the config information."""
+    # Get the Sambanova API key
+    if sambanova_api_key is None:
+        sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
 
-    if embedding_model_info['type'] == 'cpu':
-        embeddings_cpu = HuggingFaceEmbeddings(model_name='paraphrase-mpnet-base-v2')
-        return embeddings_cpu
-    elif embedding_model_info['type'] == 'sambastudio' or embedding_model_info['type'] == 'sncloud':
-        embeddings_sambastudio = APIGateway.load_embedding_model(
-            type=embedding_model_info.get('type'),
-            batch_size=embedding_model_info.get('batch_size'),
-            bundle=embedding_model_info.get('bundle'),
-            model=embedding_model_info.get('model'),
-        )
-        return embeddings_sambastudio
-    else:
-        raise ValueError(
-            f'`config.rag["embedding_model"]["type"]` can only be `cpu` , `sncloud `or `sambastudio. '
-            f'Got {embedding_model_info["type"]}.'
-        )
+    # Instantiate the embeddings
+    embeddings = SambaNovaEmbeddings(api_key=sambanova_api_key, **embedding_model_info)
+
+    return embeddings
 
 
-def get_vectorstore(documents: List[Document]) -> Chroma:
+def get_vectorstore(documents: List[Document], sambanova_api_key: Optional[str] = None) -> Chroma:
     """
     Get the retriever for a given session id and documents.
 
@@ -145,7 +140,7 @@ def get_vectorstore(documents: List[Document]) -> Chroma:
     embedding_model_info, retrieval_info = get_retrieval_config_info()
 
     # Instantiate the embedding model
-    embedding_model = load_embedding_model(embedding_model_info)
+    embedding_model = load_embedding_model(embedding_model_info, sambanova_api_key)
 
     # Instantiate the vectorstore with an explicit in-memory configuration
     try:

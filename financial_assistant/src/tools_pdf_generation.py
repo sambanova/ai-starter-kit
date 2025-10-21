@@ -520,7 +520,7 @@ def pdf_rag(user_query: str, pdf_files_names: List[str] | str) -> Any:
     chunked_documents = text_splitter.split_documents(documents)
 
     # Retrieve the QA response
-    response = get_qa_response(user_query, chunked_documents)['answer']
+    response = get_qa_response(user_query, chunked_documents)['answer']  # TODO pass sambanova_api_key
 
     return response
 

@@ -581,7 +581,7 @@ def set_css_styles() -> None:
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>

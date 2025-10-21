@@ -278,7 +278,7 @@ def get_qa_response_from_news(web_scraping_path: str, user_query: str) -> Tuple[
         documents.append(document)
 
     # Get the QA response
-    response = get_qa_response(user_query, documents)
+    response = get_qa_response(user_query, documents)  # TODO pass sambanova_api_key
 
     # Ensure that response is indexable
     if not isinstance(response, dict):
