@@ -133,17 +133,21 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().__init__(*args, **kwargs)
         self.test_results: List[Dict[str, Any]] = []
 
+    def _get_test_name(self, test: unittest.TestCase) -> str:
+        """Handle both TestCase and _ErrorHolder objects."""
+        return getattr(test, '_testMethodName', str(test))
+
     def addSuccess(self, test: unittest.TestCase) -> None:
         super().addSuccess(test)
-        self.test_results.append({'name': test._testMethodName, 'status': 'PASSED'})
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'PASSED'})
 
     def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
-        self.test_results.append({'name': test._testMethodName, 'status': 'FAILED', 'message': str(err[1])})
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'FAILED', 'message': str(err[1])})
 
     def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
-        self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'ERROR', 'message': str(err[1])})
 
 
 def main() -> int:
