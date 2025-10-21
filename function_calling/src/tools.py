@@ -203,7 +203,7 @@ calculator = StructuredTool.from_function(
 
 # tool schema
 class ReplSchema(BaseModel):
-    'A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it.'
+    "A Python shell. Use this to execute python commands. Input should be a valid python commands and expressions. If you want to see the output of a value, you should print it out with `print(...)`, if you need a specific module you should import it."  # noqa: E501
 
     command: str = Field(..., description='python code to evaluate')
 
@@ -227,7 +227,7 @@ python_repl = Tool(
 class QueryDb(ToolClass):
     # tool schema
     class QueryDBSchema(BaseModel):
-        'A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction.'
+        "A query generation tool. Use this to generate sql queries and retrieve the results from a database. Do not pass sql queries directly. Input must be a natural language question or instruction."  # noqa: E501
 
         query: str = Field(..., description='natural language question or instruction.')
 

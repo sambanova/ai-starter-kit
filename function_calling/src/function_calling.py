@@ -76,7 +76,7 @@ def load_chat_prompt(path: str) -> ChatPromptTemplate:
 
 # tool schema
 class ConversationalResponse(BaseModel):
-    'Respond conversationally only if no other tools should be called for a given query, or if you have a final answer. response must be in the same language as the user query'
+    "Respond conversationally only if no other tools should be called for a given query, or if you have a final answer. response must be in the same language as the user query"  # noqa: E501
 
     response: str = Field(
         ..., description='Conversational response to the user. must be in the same language as the user query'
