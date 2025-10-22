@@ -4,10 +4,8 @@ import chromadb
 import yaml
 from langchain.schema import Document
 from langchain_chroma import Chroma
-from langchain_core.embeddings import Embeddings
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_sambanova import SambaNovaEmbeddings
 
 from financial_assistant.constants import *
