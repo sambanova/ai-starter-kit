@@ -108,7 +108,7 @@ class FunctionCallingLlm:
             config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
         if sambanova_api_key is not None:
-            self.sambanova_api_key = SecretStr(sambanova_api_key)
+            self.sambanova_api_key: Union[None, SecretStr] = SecretStr(sambanova_api_key)
         else:
             self.sambanova_api_key = sambanova_api_key
         configs = self.get_config_info(config_path)
