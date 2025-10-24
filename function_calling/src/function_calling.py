@@ -308,7 +308,7 @@ class FunctionCallingLlm:
         if isinstance(function_calling_chat_template, str):
             history: list[BaseMessage] = [SystemMessage(function_calling_chat_template)]
         else:
-            history: list[BaseMessage] = function_calling_chat_template.to_messages()
+            history = function_calling_chat_template.to_messages()
         history.append(HumanMessage(query))
         tool_call_id = 0  # identification for each tool calling required to create ToolMessages
 

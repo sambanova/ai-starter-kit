@@ -402,8 +402,8 @@ class SearchAssistant:
         if do_analysis:
             prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
-            answer = self.llm.invoke(str(formatted_prompt)).content
-            return self.parse_serp_analysis_output(answer, links), links
+            answer = self.llm.invoke(formatted_prompt).content
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
