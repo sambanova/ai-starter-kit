@@ -1,7 +1,7 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/bundle_tests/amit_tests_v2/test_1'
-consolidated_results_dir: '../benchmarking/data/bundle_tests/amit_tests_v2/test_1/consolidated_results'
+output_files_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle'
+consolidated_results_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/consolidated_results'
 timeout: 3600
 time_delay: 0
 use_multiple_prompts : False # Only available for synthetic performance evaluation
