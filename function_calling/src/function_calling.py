@@ -107,7 +107,10 @@ class FunctionCallingLlm:
             system_prompt (Optional[str]): The system prompt to use. defaults to FUNCTION_CALLING_SYSTEM_PROMPT
             config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
-        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        if sambanova_api_key is not None:
+            self.sambanova_api_key = SecretStr(sambanova_api_key)
+        else:
+            self.sambanova_api_key = sambanova_api_key
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
         self.prod_mode = configs[1]

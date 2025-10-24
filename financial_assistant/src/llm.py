@@ -145,7 +145,7 @@ class SambaNovaLLM:
         # Get the Sambanova API key
         if sambanova_api_key is None:
             sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
-
+        assert sambanova_api_key is not None
         # Instantiate the LLM
         llm = ChatSambaNova(
             **self.llm_info,
