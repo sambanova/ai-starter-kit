@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
@@ -7,6 +8,7 @@ from langchain_chroma import Chroma
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_sambanova import SambaNovaEmbeddings
+from pydantic import SecretStr
 
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
@@ -110,7 +112,7 @@ def load_embedding_model(
     """Load the embedding model following the config information."""
     # Get the Sambanova API key
     if sambanova_api_key is None:
-        sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+        sambanova_api_key = SecretStr(os.getenv('SAMBANOVA_API_KEY'))
 
     # Instantiate the embeddings
     embeddings = SambaNovaEmbeddings(api_key=sambanova_api_key, **embedding_model_info)

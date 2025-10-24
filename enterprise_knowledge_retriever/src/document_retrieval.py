@@ -19,6 +19,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from pydantic import SecretStr
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -238,7 +239,7 @@ class DocumentRetrieval:
         self.prod_mode: bool = config_info[4]
         self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:

@@ -18,6 +18,7 @@ from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredUR
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from pydantic import SecretStr
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -89,7 +90,7 @@ class SearchAssistant:
         else:
             self.config = config
         config_info = self._get_config_info(CONFIG_PATH)
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.serpapi_api_key = serpapi_api_key
         self.embedding_model_info = config_info[0]
         self.llm_info = config_info[1]
@@ -186,7 +187,7 @@ class SearchAssistant:
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         ).content
-        return reformulated_query
+        return str(reformulated_query)
 
     def remove_links(self, text: str) -> Any:
         """
@@ -282,7 +283,7 @@ class SearchAssistant:
             prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt).content
-            return self.parse_serp_analysis_output(answer, links), links
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
@@ -345,7 +346,7 @@ class SearchAssistant:
             prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
             answer = self.llm.invoke(formatted_prompt).content
-            return self.parse_serp_analysis_output(answer, links), links
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
@@ -401,7 +402,7 @@ class SearchAssistant:
         if do_analysis:
             prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
-            answer = self.llm.invoke(formatted_prompt).content
+            answer = self.llm.invoke(str(formatted_prompt)).content
             return self.parse_serp_analysis_output(answer, links), links
         else:
             return context, links

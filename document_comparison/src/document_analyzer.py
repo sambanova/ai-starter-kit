@@ -8,6 +8,7 @@ from typing import List, Tuple
 import tiktoken
 import yaml
 from langchain_sambanova import ChatSambaNova
+from pydantic import SecretStr
 
 from utils.parsing.sambaparse import parse_doc_universal
 
@@ -21,7 +22,7 @@ tokenizer = tiktoken.get_encoding('cl100k_base')
 class DocumentAnalyzer:
     def __init__(self, sambanova_api_key: str) -> None:
         self.get_config_info()
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.set_llm()
 
     def get_config_info(self) -> None:
@@ -39,7 +40,7 @@ class DocumentAnalyzer:
             self.templates = json.load(ifile)
 
     def set_llm(self) -> None:
-        self.llm = ChatSambaNova(sambanova_api_key=self.sambanova_api_key, **self.llm_info)
+        self.llm = ChatSambaNova(api_key=self.sambanova_api_key, **self.llm_info)
 
     def delete_temp_dir(self, temp_dir: str) -> None:
         """Delete the temporary directory and its contents."""

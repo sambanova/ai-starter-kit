@@ -16,7 +16,7 @@ def initialize_env_variables(
         st.session_state.SAMBANOVA_API_KEY = os.environ.get(
             'SAMBANOVA_API_KEY', st.session_state.get('SAMBANOVA_API_KEY', '')
         )
-        
+
         if isinstance(additional_env_vars, List):
             for var in additional_env_vars:
                 st.session_state[var] = os.environ.get(var, st.session_state.get(var, ''))
@@ -55,16 +55,14 @@ def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = 
                 os.environ[key] = value
 
 
-def env_input_fields(
-    additional_env_vars: Union[List[str], Dict[str, Any]] = None
-) -> Tuple[str, Any]:
+def env_input_fields(additional_env_vars: Union[List[str], Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:
     if additional_env_vars is None:
         additional_env_vars = []
     additional_vars = {}
 
     if isinstance(additional_env_vars, List):
         # If SAMBANOVA_BASE_URL in additional env vars, show it first and then api key
-        if 'SAMBANOVA_BASE_URL' in additional_env_vars: 
+        if 'SAMBANOVA_BASE_URL' in additional_env_vars:
             additional_vars['SAMBANOVA_BASE_URL'] = st.text_input(
                 'SAMBANOVA BASE URL', value=st.session_state.get('SAMBANOVA_BASE_URL', ''), type='password'
             )

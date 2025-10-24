@@ -37,7 +37,7 @@ try:
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context
+    ssl._create_default_https_context = _create_unverified_https_context  # type: ignore[assignment]
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
@@ -245,7 +245,7 @@ class MultimodalRetrieval:
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
         ).content
-        return reformulated_query
+        return str(reformulated_query)
 
     def summarize_images(self, image_paths: List[str]) -> List[str]:
         """
@@ -274,7 +274,7 @@ class MultimodalRetrieval:
                 ]
             )
             summary = result.content
-            image_summaries.append(summary)
+            image_summaries.append(str(summary))
         return image_summaries
 
     def summarize_texts(self, text_docs: List[Document]) -> Any:

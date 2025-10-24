@@ -10,13 +10,14 @@ from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 from langchain_core.messages.human import HumanMessage
+from langchain_core.messages.system import SystemMessage
 from langchain_core.messages.tool import ToolMessage
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool, Tool
 from langchain_sambanova import ChatSambaNova
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -106,7 +107,7 @@ class FunctionCallingLlm:
             system_prompt (Optional[str]): The system prompt to use. defaults to FUNCTION_CALLING_SYSTEM_PROMPT
             config_path (str): The path to the config file. defaults to CONFIG_PATH
         """
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
         self.prod_mode = configs[1]
@@ -149,8 +150,8 @@ class FunctionCallingLlm:
         # if is a ToolClass
         elif isinstance(tool, type):
             if issubclass(tool, ToolClass):
-                tool = tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()  # type: ignore
-                return tool  # type: ignore
+                tool = tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                return tool
             else:
                 raise TypeError(
                     f'Tool {type(tool)}  not supported allowed types: StructuredTool, Tool, '
@@ -283,8 +284,7 @@ class FunctionCallingLlm:
             try:
                 json.loads(json_str)
             except:
-                json_correction_prompt = load_chat_prompt(self.json_correction_prompt)
-                json_correction_chain = json_correction_prompt | self.llm | StrOutputParser()
+                json_correction_chain = self.json_correction_prompt | self.llm | StrOutputParser()
                 json_str = json_correction_chain.invoke({'json': json_str})
                 print(f'Corrected json: {json_str}')
         else:
@@ -305,7 +305,10 @@ class FunctionCallingLlm:
             max_it (int, optional): The maximum number of iterations. Defaults to 10.
         """
         function_calling_chat_template = self.system_prompt.format(tools=self.tools_schemas)
-        history = [function_calling_chat_template]
+        if isinstance(function_calling_chat_template, str):
+            history: list[BaseMessage] = [SystemMessage(function_calling_chat_template)]
+        else:
+            history: list[BaseMessage] = function_calling_chat_template.to_messages()
         history.append(HumanMessage(query))
         tool_call_id = 0  # identification for each tool calling required to create ToolMessages
 

@@ -7,7 +7,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool, StructuredTool, Tool
 from langchain_sambanova import ChatSambaNova
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.utilities import get_logger, time_llm
@@ -144,12 +144,12 @@ class SambaNovaLLM:
         """
         # Get the Sambanova API key
         if sambanova_api_key is None:
-            sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
+            sambanova_api_key = SecretStr(os.getenv('SAMBANOVA_API_KEY'))
 
         # Instantiate the LLM
         llm = ChatSambaNova(
             **self.llm_info,
-            sambanova_api_key=sambanova_api_key,
+            api_key=sambanova_api_key,
         )
         return llm
 

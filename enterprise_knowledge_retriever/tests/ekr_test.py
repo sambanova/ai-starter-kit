@@ -160,7 +160,7 @@ class CustomTextTestResult(unittest.TextTestResult):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.test_results: List[Dict[str, Any]] = []
-        
+
     def _get_test_name(self, test: unittest.TestCase) -> str:
         """Handle both TestCase and _ErrorHolder objects."""
         return getattr(test, '_testMethodName', str(test))
