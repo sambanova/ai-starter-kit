@@ -30,7 +30,6 @@ class CorrectnessLLMJudge(Scorer):
     configuration parameters needed to initialize the model.
 
     Attributes:
-        model_type (str): The type of the model (e.g., 'sncloud').
         model_name (str): The specific name of the model to be used.
         temperature (float): Sampling temperature for the model.
         max_tokens (int): Maximum number of tokens to generate.
@@ -40,7 +39,6 @@ class CorrectnessLLMJudge(Scorer):
         model_kwargs (Optional[Dict[str, Any]]): Additional model-specific parameters.
     """
 
-    model_type: str
     model_name: str
     temperature: float
     max_tokens: int
@@ -117,7 +115,6 @@ class WeaveChatModel(Model):
     retrieve generated outputs.
 
     Attributes:
-        model_type (str): The type of the model (e.g., 'sncloud').
         model_name (str): The specific name of the model to be used.
         temperature (float): Sampling temperature for the model.
         max_tokens (int): Maximum number of tokens to generate.
@@ -127,7 +124,6 @@ class WeaveChatModel(Model):
         model_kwargs (Optional[Dict[str, Any]]): Additional model-specific parameters.
     """
 
-    model_type: str
     model_name: str
     temperature: float
     max_tokens: int

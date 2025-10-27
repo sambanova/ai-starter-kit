@@ -27,7 +27,6 @@ class RAGChain:
     A class representing a Retrieval-Augmented Generation (RAG) chain.
 
     Attributes:
-        model_type (str): The type of model to use.
         model_name (str): The name of the model to use.
         temperature (float): The temperature for the model.
         max_tokens (int): The maximum number of tokens for the model.
