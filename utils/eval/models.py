@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import weave
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_sambanova import ChatSambaNova
 from weave import Model
 from weave.flow.scorer import Scorer
 
@@ -18,7 +19,6 @@ from utils.eval.prompts.judge_prompt import JUDGE_PROMPT
 from utils.eval.prompts.system_prompt import SYSTEM_PROMPT
 from utils.eval.rag import RAGChain
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
-from utils.model_wrappers.api_gateway import APIGateway
 
 
 class CorrectnessLLMJudge(Scorer):
@@ -84,8 +84,7 @@ class CorrectnessLLMJudge(Scorer):
             query=query, generated_answer=generated_answer, context=context, expected_answer=expected_answer
         )
 
-        llm = APIGateway.load_chat(
-            type=self.model_type,
+        llm = ChatSambaNova(
             model=self.model_name,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
@@ -157,8 +156,7 @@ class WeaveChatModel(Model):
         Raises:
             Exception: If there is an error during the invocation of the model.
         """
-        client = APIGateway.load_chat(
-            type=self.model_type,
+        client = ChatSambaNova(
             model=self.model_name,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
