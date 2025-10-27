@@ -11,9 +11,6 @@ class SNCloudSchema(BaseModel):
 
 
 class EmbeddingsSchema(BaseModel):
-    type: Literal['sncloud', 'cpu', 'sambastudio'] = 'sncloud'
-    batch_size: int = 1
-    bundle: bool = True
     model: str
 
 
