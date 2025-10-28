@@ -44,7 +44,7 @@ Table of Contents:
 
 This AI Starter Kit allows users to compare text documents and run custom analyses on them. You send two PDF files or blobs of text to the SambaNova server, and get analyses based on your instructions. The Kit includes:
 
-- A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable SambaCloud or SambaStack connector. The connector generates answers from a deployed model.
 - Templates for 
   - Generic document comparison
   - Compliance assessment
@@ -52,7 +52,7 @@ This AI Starter Kit allows users to compare text documents and run custom analys
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaNova Cloud or SambaStudio.
+- Instructions for setup with SambaCloud or SambaStack.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
 
@@ -72,13 +72,11 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the generative model
 
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
-- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
-- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sambastudio"`, and set the `bundle` and `select_expert` configs if you are using a bundle endpoint.
+Then, in the [config file](./config.yaml), set the `model` config depending on the model you want to use.
 
 ## Windows requirements
 
