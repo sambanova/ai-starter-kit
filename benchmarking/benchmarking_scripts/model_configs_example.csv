@@ -1,5 +1,2 @@
 model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size
-Meta-Llama-3.3-70B-Instruct,1000,100,540,,9,constant,
-Meta-Llama-3.3-70B-Instruct,1000,100,600,,10,constant,
-Meta-Llama-3.3-70B-Instruct,1000,100,1200,,20,constant,
-Meta-Llama-3.3-70B-Instruct,1000,100,12000,,20,constant,
+DeepSeek-V3-0324-batch,1000,100,99999,,10,constant,
