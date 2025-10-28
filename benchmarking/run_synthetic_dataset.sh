@@ -4,16 +4,16 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results/llmperf" \
+--model-names "gpt-oss-120b DeepSeek-R1-0528 DeepSeek-R1-Distill-Llama-70B DeepSeek-V3.1 DeepSeek-V3.1-Terminus Qwen3-32B" \
+--results-dir "./data/results/resoning_support" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
+--num-input-tokens 500 \
+--num-output-tokens 300 \
 --multimodal-image-size na \
---num-requests 16 \
+--num-requests 1 \
 --use-multiple-prompts False \
---save-llm-responses False \
+--save-llm-responses True \
 --use-debugging-mode False \
 --llm-api sncloud
 
