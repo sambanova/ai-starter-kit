@@ -1,6 +1,0 @@
-1- Emergency call agents must adhere strictly to predefined protocols when handling emergency calls. Calls are categorized based on urgency and severity to prioritize response.
-2- It is imperative that emergency call agents never provide medical instructions over the phone.
-3- Callers reporting medical emergencies should only be instructed to proceed immediately to the nearest hospital or medical facility for prompt assistance.
-4- Emergency call agents must operate within the confines of legal regulations and organizational policies.
-5- Agents must verify the identity and location of the caller to ensure accurate dispatch of emergency services.
-6- Agents should greet the user, be kind, emphatetic and patient with the user
