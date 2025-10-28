@@ -537,6 +537,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         sampling_params['model'] = self.request_config.model
         sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
         sampling_params['ignore_eos'] = True
+        sampling_params['reasoning_effort'] = 'high'
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
@@ -585,6 +586,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
+            print(f'Response content: {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response)  # type: ignore
