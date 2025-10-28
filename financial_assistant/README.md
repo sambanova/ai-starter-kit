@@ -18,7 +18,7 @@ Table of Contents:
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
+    - [Set up the inference endpoint, configs and environment variables](#set-up-the-generative-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
 - [Environment variables](#environment-variables)

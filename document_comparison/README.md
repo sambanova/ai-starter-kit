@@ -43,7 +43,7 @@ Table of Contents:
 
 This AI Starter Kit allows users to compare text documents and run custom analyses on them. You send two PDF files or blobs of text to the SambaNova server, and get analyses based on your instructions. The Kit includes:
 
-- A configurable SambaCloud or SambaStack connector. The connector generates answers from a deployed model.
+- A configurable SambaNova connector. The connector generates answers from a deployed model.
 - Templates for 
   - Generic document comparison
   - Compliance assessment
@@ -51,7 +51,6 @@ This AI Starter Kit allows users to compare text documents and run custom analys
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaCloud or SambaStack.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
 
