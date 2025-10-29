@@ -167,8 +167,8 @@ def main() -> None:
         llm_model = st.text_input(
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
-            help='If using SambaStudio, look at your model card and introduce the same name \
-                of the model/expert here following the Readme.',
+            help='Look at your model card and introduce the same name \
+                of the model/expert',
             disabled=st.session_state.running,
         )
         st.session_state.llm = f'{llm_model}'
@@ -179,14 +179,6 @@ def main() -> None:
                 options=list(LLM_API_OPTIONS.keys()),
                 format_func=lambda x: LLM_API_OPTIONS[x],
                 index=0,
-                disabled=True,
-            )
-        elif st.session_state.llm_api == 'sambastudio':
-            st.selectbox(
-                'API type',
-                options=list(LLM_API_OPTIONS.keys()),
-                format_func=lambda x: LLM_API_OPTIONS[x],
-                index=1,
                 disabled=True,
             )
 

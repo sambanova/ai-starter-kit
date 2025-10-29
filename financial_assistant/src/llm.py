@@ -6,8 +6,8 @@ from langchain_core.language_models import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool, StructuredTool, Tool
-from langchain_sambanova import ChatSambaNovaCloud
-from pydantic import BaseModel
+from langchain_sambanova import ChatSambaNova
+from pydantic import BaseModel, SecretStr
 
 from financial_assistant.prompts.function_calling_prompts import FUNCTION_CALLING_PROMPT_TEMPLATE
 from financial_assistant.src.utilities import get_logger, time_llm
@@ -125,14 +125,14 @@ class SambaNovaLLM:
         if not all(isinstance(key, str) for key in self.llm_info):
             raise TypeError('LLM information keys must be strings')
 
-        if not isinstance(self.llm_info['select_expert'], str):
-            raise TypeError('LLM `select_expert` must be a string.')
-        if not isinstance(self.llm_info['max_tokens_to_generate'], int):
-            raise TypeError('LLM `max_tokens_to_generate` must be an integer.')
+        if not isinstance(self.llm_info['model'], str):
+            raise TypeError('LLM `model` must be a string.')
+        if not isinstance(self.llm_info['max_tokens'], int):
+            raise TypeError('LLM `max_tokens` must be an integer.')
         if not isinstance(self.llm_info['temperature'], float):
             raise TypeError('LLM `temperature` must be a float.')
 
-    def set_llm(self, sambanova_api_key: Optional[str] = None) -> ChatSambaNovaCloud:
+    def set_llm(self, sambanova_api_key: Optional[str] = None) -> ChatSambaNova:
         """
         Set the LLM to use.
 
@@ -140,19 +140,16 @@ class SambaNovaLLM:
             The LLM to use.
 
         Raises:
-            ValueError: If the LLM API is not one of `sncloud` or `sambastudio`.
             TypeError: If the LLM API parameters are not of the expected type.
         """
         # Get the Sambanova API key
         if sambanova_api_key is None:
             sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
-
+        assert sambanova_api_key is not None
         # Instantiate the LLM
-        llm = ChatSambaNovaCloud(
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
-            temperature=self.llm_info['temperature'],
-            model=self.llm_info['select_expert'],
-            sambanova_api_key=sambanova_api_key,
+        llm = ChatSambaNova(
+            **self.llm_info,
+            api_key=SecretStr(sambanova_api_key),
         )
         return llm
 
@@ -166,7 +163,7 @@ class SambaNovaLLM:
             query: The query to execute.
 
         Returns:
-            The LLM response, resulting from the exeecution of the relevant tool.
+            The LLM response, resulting from the execution of the relevant tool.
 
         Raises:
             TypeError: If `query` is not of type `str`.

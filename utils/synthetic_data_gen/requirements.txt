@@ -2,13 +2,13 @@ ipykernel == 6.29.5
 ipython == 8.26.0
 jupyter_client == 8.6.0
 jupyter_core == 5.7.1
-langchain-sambanova==0.1.6
-langchain-experimental==0.3.2
-pydantic == 2.9.2 
-pydantic-core == 2.23.4
-python-dotenv == 1.0.1
+langchain-sambanova>=0.2.0,<1.0.0
+langchain-experimental>=0.3.2,<1.0.0
+langchain-huggingface>=0.1.2,<1.0.0
+pydantic>=2.9.2,<3.0.0
+pydantic_core>=2.23.4,<3.0.0
+python-dotenv == 1.1.1
 huggingface-hub==0.26.0
 sentence_transformers==3.3.1
 instructorembedding==1.0.1
-langchain-huggingface==0.1.2
 numpy==1.26.4

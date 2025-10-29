@@ -1,0 +1,20 @@
+_type: chat
+input_types: {}
+input_variables:
+- context
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template:
+  - role: system
+    content: "You are a helpful assistant for question-answering tasks.
+      \ Use the following pieces of retrieved context and partial answers to give a final answer to the question.\n
+      \ the answer is not in the context, say that you don't know. Cross check if the
+      \ answer is contained in any of the provided context or any of partial answers. If not than say \"I do not have information
+      \ regarding this.\n Do not use emojis in your answer. Keep the answer
+      \ conversational and professional"
+  - role: user
+    content: "\nContexts / Partial answers:\n   {context}\n\n   Question: {question} \n    Helpful answer:"
+template_format: f-string
+validate_template: false

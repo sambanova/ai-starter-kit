@@ -137,9 +137,9 @@ def main() -> int:
     logger.info('\nTest Results:')
     assert hasattr(test_result, 'test_results')
     for result in test_result.test_results:
-        logger.info(f"{result['name']}: {result['status']}")
+        logger.info(f'{result["name"]}: {result["status"]}')
         if 'message' in result:
-            logger.info(f"  Message: {result['message']}")
+            logger.info(f'  Message: {result["message"]}')
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
     logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
