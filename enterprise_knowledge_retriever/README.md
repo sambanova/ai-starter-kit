@@ -15,24 +15,25 @@ Table of Contents:
 
 <!-- TOC -->
 
+- [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
 - [1. Overview](#1-overview)
 - [2. Before you begin](#2-before-you-begin)
-    - [2.1. Clone this repository](#21-clone-this-repository)
-    - [2.2. Set up the models, environment variables and config file](#22-set-up-the-models-environment-variables-and-config-file)
-        - [2.2.1. Set up the generative model](#221-set-up-the-generative-model)
-        - [2.2.2. Set up the vector database](#222-set-up-the-vector-database)
-    - [2.2. Windows requirements](#22-windows-requirements)
+  - [2.1. Clone this repository](#21-clone-this-repository)
+  - [2.2. Set up the models, environment variables and config file](#22-set-up-the-models-environment-variables-and-config-file)
+    - [2.2.1. Set up the generative model](#221-set-up-the-generative-model)
+    - [2.2.2. Set up the vector database](#222-set-up-the-vector-database)
+  - [2.2. Windows requirements](#22-windows-requirements)
 - [2. Deploy the starter kit GUI](#2-deploy-the-starter-kit-gui)
-    - [2.1. Option 1: Use a virtual environment](#21-option-1-use-a-virtual-environment)
-    - [2.2. Option 2: Deploy the starter kit in a Docker container](#22-option-2-deploy-the-starter-kit-in-a-docker-container)
+  - [2.1. Option 1: Use a virtual environment](#21-option-1-use-a-virtual-environment)
+  - [2.2. Option 2: Deploy the starter kit in a Docker container](#22-option-2-deploy-the-starter-kit-in-a-docker-container)
 - [2. Use the starter kit](#2-use-the-starter-kit)
 - [3. Customizing the starter kit](#3-customizing-the-starter-kit)
-    - [3.1. Import Data](#31-import-data)
-    - [3.2. Split Data](#32-split-data)
-    - [3.3. Store embeddings](#33-store-embeddings)
-    - [3.4. Retrieval and Reranking](#34-retrieval-and-reranking)
-    - [3.5. Customize the LLM](#35-customize-the-llm)
-    - [3.6. Experiment with prompt engineering](#36-experiment-with-prompt-engineering)
+  - [3.1. Import Data](#31-import-data)
+  - [3.2. Split Data](#32-split-data)
+  - [3.3. Store embeddings](#33-store-embeddings)
+  - [3.4. Retrieval and Reranking](#34-retrieval-and-reranking)
+  - [3.5. Customize the LLM](#35-customize-the-llm)
+  - [3.6. Experiment with prompt engineering](#36-experiment-with-prompt-engineering)
 - [2. Third-party tools and data sources](#2-third-party-tools-and-data-sources)
 
 <!-- /TOC -->
@@ -41,14 +42,13 @@ Table of Contents:
 
 This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
 
-- A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable SambaNova connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
 - An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/).
 - Prompt construction strategies.
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaNova Cloud or SambaStudio.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
 
@@ -68,7 +68,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### 2.2.1. Set up the generative model
 
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
 Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
