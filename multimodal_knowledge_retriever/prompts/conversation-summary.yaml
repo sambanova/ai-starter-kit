@@ -1,0 +1,20 @@
+_type: chat
+input_types: {}
+input_variables:
+- summary
+- new_lines
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+    - role: system
+      content: "Progressively summarize the lines of conversation provided, adding onto the previous summary returning a new summary.\n\n\
+        \ EXAMPLE\nCurrent summary:\nThe human asks what the AI thinks of artificial intelligence. The AI thinks artificial intelligence is a force for good.\n\n\
+        \ New lines of conversation:\nHuman: Why do you think artificial intelligence is a force for good?\n\
+        \ AI: Because artificial intelligence will help humans reach their full potential.\n\n\
+        \ New summary:\nThe human asks what the AI thinks of artificial intelligence.\
+        \ The AI thinks artificial intelligence is a force for good because it will help humans reach their full potential.\nEND OF EXAMPLE\n"
+    - role: user
+      content: "Current summary: {summary} \n\n New Lines of conversation: {new_lines} \n\n New summary: "
+template_format: f-string
+validate_template: false

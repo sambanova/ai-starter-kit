@@ -1,0 +1,22 @@
+_type: chat
+input_types: {}
+input_variables:
+- table_info
+- input
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+    -   role: system
+        content: "{table_info}\n
+            \ Generate a query using valid SQLite to answer the following questions for the summarized tables schemas provided above.\n
+            \ Do not assume the values on the database tables before generating the SQL query, always generate a SQL that query what is asked.\n
+            \ Do not assume ids in tables when inserting new values let them null or use the max id + 1\n
+            \ The queries must be formatted including backticks code symbols as follows:\n
+            \ do not include comments in the query\n\n
+            \ ```sql\nquery\n```\n\nExample format:\n\n```sql\nSELECT * FROM mainTable;\n```"
+    -   role: user
+        content: "{input}"
+
+template_format: f-string
+validate_template: false

@@ -1,0 +1,17 @@
+_type: chat
+input_types: {}
+input_variables:
+- chat_history
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template:
+    -   role: system
+        content: "You're a reformulation model that reformulates questions to be search in a web browser\n
+          \ Given the following chat history summary and the follow up question, rephrase the follow up question using the
+          \ context of chat history. Only output the reformulated question.\n the reformulated question should be as short and self explanatory as possible"
+    - role: user
+      content: "Chat history summary:\n {chat_history}\n\n Follow up question: {question}\n\nRephrased question:"
+template_format: f-string
+validate_template: false
