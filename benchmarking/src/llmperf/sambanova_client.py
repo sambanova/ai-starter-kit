@@ -618,7 +618,8 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                                 #     events_received.append(stream_content)
                                 #     generated_text += stream_content
                                 
-                                if (data['choices'][0]['delta'].get('content') is not None) or (data['choices'][0]['delta'].get('reasoning') is not None):
+                                if (data['choices'][0]['delta'].get('content') is not None) \
+                                    or (data['choices'][0]['delta'].get('reasoning') is not None):
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)
                                     event_start_time = time.monotonic()
