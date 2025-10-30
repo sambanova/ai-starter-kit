@@ -565,9 +565,7 @@ If you continue to experience issues, please [open an issue](https://github.com/
 
 ### API Reference
 
-- Find more information about SambaNova Cloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
-
-- Find more information about SambaStudio [here](https://docs.sambanova.ai/sambastudio/latest/index.html)
+- Find more information about SambaCloud and SambaStack [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
 
