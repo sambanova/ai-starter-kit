@@ -1,10 +1,6 @@
 #!/bin/bash
 # run_synthetic_dataset.sh
 
-#--model-names "gpt-oss-120b DeepSeek-R1-0528 DeepSeek-R1-Distill-Llama-70B DeepSeek-V3.1 DeepSeek-V3.1-Terminus Qwen3-32B" \
-#--model-names "gpt-oss-120b" \
-#--model-names "DeepSeek-V3.1" \
-
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
