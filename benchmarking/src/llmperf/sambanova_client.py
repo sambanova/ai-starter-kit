@@ -102,7 +102,6 @@ class BaseAPIEndpoint(abc.ABC):
         if number_chunks_recieved <= 1:
             ttft = total_request_time
         else:
-            # ttft = chunks_timings[0]
             if len(chunks_received) <= 1:
                 ttft = chunks_timings[0]
             else:
@@ -593,7 +592,6 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
-            # print(f'Response content: {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response)  # type: ignore
@@ -639,10 +637,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
-        # for event_received, event_timing in zip(events_received, events_timings):
-        #     print(f'took time: {event_timing} - received event: {event_received}')
-        # print(f'Total request time: {total_request_time}')
-        # print(f'server response dict: {response_dict}')
+
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
         # Populate server and client metrics
