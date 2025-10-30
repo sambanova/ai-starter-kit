@@ -8,16 +8,16 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "gpt-oss-120b" \
---results-dir "./data/results/resoning_support" \
---num-concurrent-requests 6 \
+--model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct" \
+--results-dir "./data/results/llmperf" \
+--num-concurrent-requests 1 \
 --timeout 600 \
 --num-input-tokens 1000 \
---num-output-tokens 500 \
+--num-output-tokens 1000 \
 --multimodal-image-size na \
---num-requests 6 \
+--num-requests 16 \
 --use-multiple-prompts False \
---save-llm-responses True \
+--save-llm-responses False \
 --use-debugging-mode False \
 --llm-api sncloud
 
