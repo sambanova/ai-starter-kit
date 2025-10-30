@@ -42,7 +42,6 @@ import time
 from typing import Any, Dict, Optional, Set, Tuple
 
 import pandas as pd
-from langchain.prompts import load_prompt
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
@@ -55,7 +54,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain
+from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain, load_chat_prompt
 
 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
@@ -127,11 +126,11 @@ def generate(
 
 def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
     documentRetrieval = DocumentRetrieval(sambanova_api_key=sambanova_api_key)
-    tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
+    tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')
     if os.path.exists(vectordb_path):
         # load the vectorstore
         embeddings = documentRetrieval.load_embedding_model()
-        vectorstore = documentRetrieval.load_vdb(vectordb_path, embeddings)
+        vectorstore = documentRetrieval.load_vdb(vectordb_path, embeddings, collection_name='ekr_default_collection')
         print('Database loaded')
         documentRetrieval.init_retriever(vectorstore)
         print('retriever initialized')
@@ -140,7 +139,7 @@ def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
         qa_chain = TimedRetrievalQAChain(
             retriever=documentRetrieval.retriever,
             llm=documentRetrieval.llm,
-            qa_prompt=load_prompt(os.path.join(kit_dir, documentRetrieval.prompts['qa_prompt'])),
+            qa_prompt=load_chat_prompt(os.path.join(repo_dir, documentRetrieval.prompts['qa_prompt'])),
             rerank=documentRetrieval.retrieval_info['rerank'],
             final_k_retrieved_documents=documentRetrieval.retrieval_info['final_k_retrieved_documents'],
             conversational=False,

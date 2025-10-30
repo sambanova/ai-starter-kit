@@ -1,0 +1,21 @@
+_type: chat
+input_types: {}
+input_variables:
+- question
+- context
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+    -   role: system
+        content: "You are an assistant for question-answering tasks.\n
+            \ Use the following pieces of retrieved contexts to answer the question. \n
+            \ If the information that is relevant to answering the question does not \n
+            \ appear in the retrieved contexts, \n
+            \ say \"Could not find information.\". Provide a concise answer to the question. \n
+            \ Do not provide any information that is not asked for in the question."
+    -   role: user
+        content: "Question: {question} \n' 'Context: {context} \n' '\n ------- \n' 'Answer:'"
+
+template_format: f-string
+validate_template: false

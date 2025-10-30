@@ -677,16 +677,16 @@ def main(suite: Optional[unittest.TestSuite] = None) -> int:
 
     # Log results for each test
     for result in test_results.results_list:
-        logger.info(f"{result['name']}: {result['status']}")
+        logger.info(f'{result["name"]}: {result["status"]}')
         if 'message' in result:
-            logger.warning(f"  Message: {result['message']}")
+            logger.warning(f'  Message: {result["message"]}')
 
     # Log the number of tests that passed and failed: successes, failures, and errors
     failed_tests = len(test_results.failures) + len(test_results.errors)
     logger.info(
         'Number of tests passed: '
         f'{test_results.testsRun - test_results.global_retry_count - failed_tests}/'  # type: ignore
-        f'{test_results.testsRun- test_results.global_retry_count}'  # type: ignore
+        f'{test_results.testsRun - test_results.global_retry_count}'  # type: ignore
     )
     logger.info(f'Number of successful tests: {len(test_results.successes)}')  # type: ignore
     logger.info(f'Number of failed tests: {len(test_results.failures)}')

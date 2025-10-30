@@ -16,50 +16,47 @@ Table of Contents:
 <!-- TOC -->
 
 - [Enterprise Knowledge Retrieval](#enterprise-knowledge-retrieval)
-- [Overview](#overview)
-- [Before you begin](#before-you-begin)
-    - [Clone this repository](#clone-this-repository)
-    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
-        - [Set up the generative model](#set-up-the-generative-model)
-        - [Set up the embedding model](#set-up-the-embedding-model)
-        - [Set up the vector database](#set-up-the-vector-database)
-    - [Windows requirements](#windows-requirements)
-- [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-    - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
-    - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
-- [Use the starter kit](#use-the-starter-kit)
-- [Customizing the starter kit](#customizing-the-starter-kit)
-    - [Import Data](#import-data)
-    - [Split Data](#split-data)
-    - [Embed data](#embed-data)
-    - [Store embeddings](#store-embeddings)
-    - [Retrieval and Reranking](#retrieval-and-reranking)
-    - [Customize the LLM](#customize-the-llm)
-    - [Experiment with prompt engineering](#experiment-with-prompt-engineering)
-- [Third-party tools and data sources](#third-party-tools-and-data-sources)
+- [1. Overview](#1-overview)
+- [2. Before you begin](#2-before-you-begin)
+  - [2.1. Clone this repository](#21-clone-this-repository)
+  - [2.2. Set up the models, environment variables and config file](#22-set-up-the-models-environment-variables-and-config-file)
+    - [2.2.1. Set up the generative model](#221-set-up-the-generative-model)
+    - [2.2.2. Set up the vector database](#222-set-up-the-vector-database)
+  - [2.2. Windows requirements](#22-windows-requirements)
+- [2. Deploy the starter kit GUI](#2-deploy-the-starter-kit-gui)
+  - [2.1. Option 1: Use a virtual environment](#21-option-1-use-a-virtual-environment)
+  - [2.2. Option 2: Deploy the starter kit in a Docker container](#22-option-2-deploy-the-starter-kit-in-a-docker-container)
+- [2. Use the starter kit](#2-use-the-starter-kit)
+- [3. Customizing the starter kit](#3-customizing-the-starter-kit)
+  - [3.1. Import Data](#31-import-data)
+  - [3.2. Split Data](#32-split-data)
+  - [3.3. Store embeddings](#33-store-embeddings)
+  - [3.4. Retrieval and Reranking](#34-retrieval-and-reranking)
+  - [3.5. Customize the LLM](#35-customize-the-llm)
+  - [3.6. Experiment with prompt engineering](#36-experiment-with-prompt-engineering)
+- [2. Third-party tools and data sources](#2-third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
-# Overview
+# 1. Overview
 
 This AI Starter Kit is an example of a semantic search workflow. You send your PDF or TXT file to the SambaNova platform, and get answers to questions about the documents content. The Kit includes:
 
-- A configurable SambaNova Cloud or SambaStudio connector. The connector generates answers from a deployed model.
+- A configurable SambaNova connector. The connector generates answers from a deployed model.
 - A configurable integration with a third-party vector database.
 - An implementation of a semantic search workflow using [Langchain LCEL](https://python.langchain.com/v0.1/docs/expression_language/).
 - Prompt construction strategies.
 
 This sample is ready-to-use. We provide:
 
-- Instructions for setup with SambaNova Cloud or SambaStudio.
 - Instructions for running the model as is.
 - Instructions for customizing the model.
 
-# Before you begin
+# 2. Before you begin
 
 You have to set up your environment before you can run or customize the starter kit.
 
-## Clone this repository
+## 2.1. Clone this repository
 
 Clone the starter kit repo.
 
@@ -67,27 +64,17 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the models, environment variables and config file
+## 2.2. Set up the models, environment variables and config file
 
-### Set up the generative model
+### 2.2.1. Set up the generative model
 
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
-- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sncloud"` and set the `model` config depending on the model you want to use.
+Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
-- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sambastudio"`, and set the `bundle` and `model` configs if you are using a bundle endpoint.
+Then, in the [config file](./config.yaml), set the `model` config depending on the model you want to use.
 
-### Set up the embedding model
-
-* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
-
-* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
-
-* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
-
-### Set up the vector database
+### 2.2.2. Set up the vector database
 
 Choose your vector database from the accessible integrations to power your RAG performance. Simply access the [config file](./config.yaml), and under the `retrieval` section, set the value of the variable `db_type` with your choice. You have the following supported open-source options:
 
@@ -95,15 +82,15 @@ Choose your vector database from the accessible integrations to power your RAG p
 
 * **Milvus by Zilliz**: Specifiy this option by setting it to `"db_type": "milvus"`.
 
-## Windows requirements
+## 2.2. Windows requirements
 
 - If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
-# Deploy the starter kit GUI
+# 2. Deploy the starter kit GUI
 
 We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
-## Option 1: Use a virtual environment
+## 2.1. Option 1: Use a virtual environment
 
 If you want to use virtualenv or conda environment:
 
@@ -128,7 +115,7 @@ After deploying the starter kit you see the following user interface:
 
 ![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
 
-## Option 2: Deploy the starter kit in a Docker container 
+## 2.2. Option 2: Deploy the starter kit in a Docker container 
 
 NOTE: If you are deploying the docker container in Windows be sure to open the docker desktop application. 
 
@@ -139,7 +126,7 @@ To run the starter kit  with docker, run the following command:
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 
-# Use the starter kit 
+# 2. Use the starter kit 
 
 After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
@@ -197,11 +184,11 @@ Before being sent to the LLM, the user's query is combined with the retrieved co
 
 </details>
 
-# Customizing the starter kit
+# 3. Customizing the starter kit
 
 You can further customize the starter kit based on the use case.
 
-## Import Data
+## 3.1. Import Data
 
 Different packages are available to extract text from different file documents. They can be broadly categorized as:
 - OCR-based: [pytesseract](https://pypi.org/project/pytesseract/), [paddleOCR](https://pypi.org/project/paddleocr/), [unstructured](https://unstructured.io/)
@@ -224,7 +211,7 @@ This enterprise knowledge retriever kit uses either PyMuPDF or a custom implemen
 
 *You can also modify several parameters in the loading strategies by changing the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) file, see more [here](../utils/parsing/README.md)*.
 
-## Split Data
+## 3.2. Split Data
 
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting; see more [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
@@ -232,21 +219,13 @@ The `chunking` inside the parser utils config, which is used in this starter kit
 
 You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml); see more [here](../utils/parsing/README.md).
 
-## Embed data
-
-Several open-source embedding models are available on Hugging Face. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models, such as [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) and [e5-mistral-7b-instruct](https://huggingface.co/intfloat/e5-mistral-7b-instruct), are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
-
-To change the embedding model, do the following:
-* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), e5-large-v2 from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
-* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `bundle` and `select_expert` in the config file. 
-
-## Store embeddings
+## 3.3. Store embeddings
 
 The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/v0.1/docs/modules/data_connection/vectorstores/) provides a broad collection of vector stores that can be easily integrated.
 
 By default, we use Chroma. You can change the vector store by setting `db_type` in the `create_vector_store()` function in [document_retrieval.py](./src/document_retrieval.py). 
 
-## Retrieval and Reranking
+## 3.4. Retrieval and Reranking
 
 A wide collection of retriever options is available. In this starter kit, the vector store is used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
 
@@ -266,11 +245,11 @@ There, you will be able to select the final number of retrieved documents and de
 
 The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file.
 
-## Customize the LLM
+## 3.5. Customize the LLM
 
 Certain customizations to the LLM itself can affect the starter kit performance. To modify the parameters for calling the model, make changes to the [config file](./config.yaml). You can also set the values of `temperature` and `max_tokens_to_generate` in that file. 
 
-## Experiment with prompt engineering
+## 3.6. Experiment with prompt engineering
 
 Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt template was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
 
@@ -293,6 +272,6 @@ You can make modifications to the prompt template in the following file:
 file: prompts/qa_prompt.yaml
 ```
 
-# Third-party tools and data sources
+# 2. Third-party tools and data sources
 
 All the packages/tools are listed in the `requirements.txt` file in the project directory.

@@ -1,0 +1,15 @@
+_type: chat
+input_types: {}
+input_variables:
+- context
+- question
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+  - role: system
+    content: "You are a helpful assistant tasked with summarizing tables. Give a concise summary of the table chunk"
+  - role: user
+    content: "\n {element}\nSummary:\n"
+template_format: f-string
+validate_template: false

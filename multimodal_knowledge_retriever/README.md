@@ -16,9 +16,7 @@ Multimodal Knowledge Retrieval
     - [Capabilities and Limitations of Image Analysis](#capabilities-and-limitations-of-image-analysis)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the LVLM](#set-up-the-lvlm)
-    - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-    - [Update the Embeddings API information](#update-the-embeddings-api-information)
+    - [Set up the LVLM and LLM inference endpoints, configs and environment variables](#set-up-the-lvlm-and-llm-inference-endpoints-configs-and-environment-variables)
     - [Install system dependencies](#install-system-dependencies)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
@@ -45,7 +43,7 @@ Multimodal Knowledge Retrieval
 # Overview
 
 This AI Starter Kit is an example of a multimodal retrieval workflow. You load your images or PDF files, and get answers to questions about the documents content. The Kit includes:
- -   A configurable SambaStudio connector. The connector generates answers from a deployed multimodal model, and a deployed LLM.
+ -   A configurable SambaNova connector. The connector generates answers from a deployed multimodal model, and a deployed LLM.
  -   An integration with a third-party vector database.
  -   An implementation of a semantic search workflow.
  -   An implementation of a multi-vector database for searching over document summaries
@@ -85,10 +83,8 @@ This overview should help users understand the strengths and limitations of the 
 # Before you begin
 
 This starter kit, you need both a LVLM and a LLM. 
-* We use the Llama4 Maverick as LVLM, which is currently available in SambaNovaCloud.
-* You can use a LLM of your choice, from SambaStudio or SambaNovaCloud. 
-
-It might make sense to use two SambaNovaCloud models.
+* We use the Llama4 Maverick as LVLM.
+* You can use a LLM of your choice from SambaNova.
 
 ## Clone this repository
 
@@ -97,31 +93,13 @@ Clone the starter kit repo.
 git clone https://github.com/sambanova/ai-starter-kit.git
 ```
 
-## Set up the LVLM
+## Set up the LVLM and LLM inference endpoints, configs and environment variables
 
-1. Deploy LVLM of choice (e.g. Llava 1.5) to an endpoint for inference in SambaStudio, either through the GUI or CLI. See the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/llava-7b.html#_deploy_a_llava_v1_5_7b_endpoint).
+The next step is to set up your environment variables to use the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
-## Set up the inference endpoint, configs and environment variables
+Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
-
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
-    Then in the [config file](./config.yaml) set the llm and lvlm `type` variable to `"sncloud"` and set the `select_expert` config depending on the models you want to use.
-
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables.
-    Then in the [config file](./config.yaml) set the llm and lvlm `type` variable to `"sambastudio"`, set the `bundle` and `select_expert` configs if using bundle endpoints.
-
-## Update the Embeddings API information
-
-You have the following options to set up your embedding model:
-
-* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
-
-* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
-
-* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
-
-    > NOTE: Using different embedding models (cpu or sncloud/sambastudio) may change the results, and change How the embedding model is set and what the parameters are. 
+Then, in the [config file](./config.yaml), set the `model` config for `llm` and `lvlm` depending on the models you want to use.
 
 ##  Install system dependencies
 

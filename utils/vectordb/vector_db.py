@@ -28,6 +28,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.vectorstores import FAISS, Qdrant
 from langchain_milvus import Milvus
+from langchain_sambanova import SambaNovaEmbeddings
 
 vectordb_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(vectordb_dir, '..'))
@@ -37,8 +38,6 @@ sys.path.append(repo_dir)
 sys.path.append(utils_dir)
 
 import uuid
-
-from utils.model_wrappers.api_gateway import APIGateway
 
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True
@@ -340,11 +339,7 @@ class VectorDb:
         load_txt: bool = True,
         load_pdf: bool = False,
         urls: Optional[List[str]] = None,
-        embedding_type: str = 'cpu',
-        batch_size: Optional[int] = None,
-        bundle: Optional[bool] = None,
-        model: Optional[str] = None,
-        select_expert: Optional[str] = None,
+        model: Optional[str] = 'E5-Mistral-7B-Instruct',
     ) -> Any:
         docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
 
@@ -353,9 +348,7 @@ class VectorDb:
         else:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
-        embeddings = APIGateway.load_embedding_model(
-            type=embedding_type, batch_size=batch_size, bundle=bundle, model=model or select_expert
-        )
+        embeddings = SambaNovaEmbeddings(model=model)
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
 

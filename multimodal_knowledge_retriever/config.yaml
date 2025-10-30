@@ -1,22 +1,19 @@
 llm: 
-    "type": "sncloud" # set either sncloud or sambastudio
     "temperature": 0.0
-    "do_sample": False
-    "max_tokens_to_generate": 1200
-    "bundle": True #set as true if using Sambastudio bundle endpoint
-    "select_expert": "Meta-Llama-3.3-70B-Instruct"  #set if using SambaNovaCloud or SambaStudio bundle llm expert
+    "top_p": null
+    "top_k": null
+    "max_tokens": 8912
+    "model": "gpt-oss-120b"
 
 lvlm:
     "model": "Llama-4-Maverick-17B-128E-Instruct"
-    "do_sample": false
-    "max_tokens_to_generate": 512 
+    "max_tokens": 8912 
     "temperature": 1
     "top_k": 50
     "top_p": 1
 
 embedding_model: 
-    "type": "sncloud" # set either sncloud, sambastudio or cpu
-    "model": "E5-Mistral-7B-Instruct" #set if using Cloud or SambaStudio bundle embedding expert
+    "model": "E5-Mistral-7B-Instruct"
 
 retrieval:
     "max_characters": 800
