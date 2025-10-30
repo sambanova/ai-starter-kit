@@ -102,7 +102,15 @@ class BaseAPIEndpoint(abc.ABC):
         if number_chunks_recieved <= 1:
             ttft = total_request_time
         else:
-            ttft = chunks_timings[0]
+            # ttft = chunks_timings[0]
+            if len(chunks_received) <= 1:
+                ttft = chunks_timings[0]
+            else:
+                # calculate tpot
+                tpot = self._calculate_tpot_from_streams_after_first(chunks_received, chunks_timings)
+                # calculate ttft
+                total_tokens_in_first_chunk = self._get_token_length(chunks_received[0])
+                ttft = chunks_timings[0] - (total_tokens_in_first_chunk - 1) * tpot
         return ttft
 
     def _populate_client_metrics(
@@ -585,7 +593,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
-            print(f'Response content: {response.content}')
+            # print(f'Response content: {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response)  # type: ignore
@@ -601,12 +609,24 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
                             if data['choices'][0].get('finish_reason') is None:
-                                if data['choices'][0]['delta'].get('content') is not None:
+                                # if data['choices'][0]['delta'].get('content') is not None:
+                                #     # log s timings
+                                #     events_timings.append(time.monotonic() - event_start_time)
+                                #     event_start_time = time.monotonic()
+                                #     # concatenate streaming text pieces
+                                #     stream_content = data['choices'][0]['delta']['content']
+                                #     events_received.append(stream_content)
+                                #     generated_text += stream_content
+                                
+                                if (data['choices'][0]['delta'].get('content') is not None) or (data['choices'][0]['delta'].get('reasoning') is not None):
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)
                                     event_start_time = time.monotonic()
                                     # concatenate streaming text pieces
-                                    stream_content = data['choices'][0]['delta']['content']
+                                    if data['choices'][0]['delta'].get('content') is not None:
+                                        stream_content = data['choices'][0]['delta']['content']
+                                    elif data['choices'][0]['delta'].get('reasoning') is not None:
+                                        stream_content = data['choices'][0]['delta']['reasoning']
                                     events_received.append(stream_content)
                                     generated_text += stream_content
                         # process streaming chunk when performance usage is provided
@@ -618,6 +638,10 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
+        # for event_received, event_timing in zip(events_received, events_timings):
+        #     print(f'took time: {event_timing} - received event: {event_received}')
+        # print(f'Total request time: {total_request_time}')
+        # print(f'server response dict: {response_dict}')
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
         # Populate server and client metrics
