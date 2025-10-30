@@ -108,7 +108,7 @@ Currently, there are two ways to obtain an API key from SambaNova. You can get a
 
 To generate an API key, go to the [API section of the SambaCloud portal](https://cloud.sambanova.ai/apis).
 
-To integrate SambaCloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate SambaCloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file, use [.env-example](.env-example) as template:
 
 - Enter the SambaCloud API key in the `ai-starter-kit/.env` file, for example:
   
@@ -120,7 +120,7 @@ SAMBANOVA_API_KEY = "your-sambanova-api-key"
 
 Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack. 
 
-To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
 
 - Set your SambaStack variables, for example:
 
