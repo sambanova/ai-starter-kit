@@ -15,6 +15,7 @@ FAMILY_MODEL_TYPE_IDENTIFIER = {
     'qwen': ['qwen', 'qwq'],
     'solar': ['solar'],
     'eeve': ['eeve'],
+    'gpt-oss': ['gptoss'],
 }
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
@@ -134,6 +135,8 @@ def get_tokenizer(model_name: str) -> Any:
         tokenizer = AutoTokenizer.from_pretrained('upstage/SOLAR-10.7B-Instruct-v1.0')
     elif family_model_type == 'eeve':
         tokenizer = AutoTokenizer.from_pretrained('yanolja/EEVE-Korean-10.8B-v1.0')
+    elif family_model_type == 'gpt-oss':
+        tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')        
     else:
         tokenizer = AutoTokenizer.from_pretrained('NousResearch/Llama-2-7b-chat-hf')
     return tokenizer
