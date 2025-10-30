@@ -110,8 +110,7 @@ To generate an API key, go to the [API section of the SambaCloud portal](https:/
 
 To integrate SambaCloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaCloud API key in the `.env` file, for example:
+- Enter the SambaCloud API key in the `ai-starter-kit/.env` file, for example:
   
 ```bash
 SAMBANOVA_API_KEY = "your-sambanova-api-key"
@@ -123,7 +122,6 @@ Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for i
 
 To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
 
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
 - Set your SambaStack variables, for example:
 
 ``` bash
@@ -514,9 +512,7 @@ If you continue to experience issues, please [open an issue](https://github.com/
 
 ### API Reference
 
-- Find more information about SambaNova Cloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
-
-- Find more information about SambaStudio [here](https://docs.sambanova.ai/sambastudio/latest/index.html)
+- Find more information about SambaCloud and SambaStack [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
 
