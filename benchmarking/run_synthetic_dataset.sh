@@ -1,17 +1,21 @@
 #!/bin/bash
 # run_synthetic_dataset.sh
 
+#--model-names "gpt-oss-120b DeepSeek-R1-0528 DeepSeek-R1-Distill-Llama-70B DeepSeek-V3.1 DeepSeek-V3.1-Terminus Qwen3-32B" \
+#--model-names "gpt-oss-120b" \
+#--model-names "DeepSeek-V3.1" \
+
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "gpt-oss-120b DeepSeek-R1-0528 DeepSeek-R1-Distill-Llama-70B DeepSeek-V3.1 DeepSeek-V3.1-Terminus Qwen3-32B" \
+--model-names "gpt-oss-120b" \
 --results-dir "./data/results/resoning_support" \
---num-concurrent-requests 1 \
+--num-concurrent-requests 6 \
 --timeout 600 \
---num-input-tokens 500 \
---num-output-tokens 300 \
+--num-input-tokens 1000 \
+--num-output-tokens 500 \
 --multimodal-image-size na \
---num-requests 1 \
+--num-requests 6 \
 --use-multiple-prompts False \
 --save-llm-responses True \
 --use-debugging-mode False \
