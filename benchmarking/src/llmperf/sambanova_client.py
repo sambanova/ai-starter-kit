@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 import sseclient
-from requests import Response
 
 sys.path.append('./src')
 sys.path.append('./src/llmperf')
@@ -22,7 +21,7 @@ from transformers import AutoTokenizer
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
-from benchmarking.utils import SAMBANOVA_URL
+from benchmarking.utils import SAMBANOVA_BASE_URL
 
 warnings.filterwarnings('ignore')
 
@@ -226,288 +225,19 @@ class BaseAPIEndpoint(abc.ABC):
 
         return metrics
 
-
-class SambaStudioAPI(BaseAPIEndpoint):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        # Load sambastudio env variables
-        if self.request_config.api_variables:
-            self.base_url = self.request_config.api_variables['SAMBASTUDIO_URL']
-            self.api_key = self.request_config.api_variables['SAMBASTUDIO_API_KEY']
-        else:
-            self.base_url = os.environ.get('SAMBASTUDIO_URL', '')
-            self.api_key = os.environ.get('SAMBASTUDIO_API_KEY', '')
-
-    def _get_url(self) -> str:
-        """
-        Get streaming and non streaming URLs from the given URL
-
-        Args:
-            url: string with sambastudio base or streaming endpoint url
-
-        Returns:
-            streaming_url: string with url to do streaming calls
-        """
-        if 'chat/completions' in self.base_url:
-            stream_url = self.base_url
-        else:
-            if 'stream' in self.base_url:
-                stream_url = self.base_url
-                if self.request_config.image:
-                    raise ValueError(
-                        f'Image support not available for url: {self.base_url}.\
-                        Try with OpenAI compatible endpoint.'
-                    )
-            else:
-                if 'generic' in self.base_url:
-                    stream_url = 'generic/stream'.join(self.base_url.split('generic'))
-                else:
-                    raise ValueError('Unsupported URL')
-        return stream_url
-
-    def _get_headers(self) -> Dict[str, str]:
-        """Gets headers for API call"""
-        assert isinstance(self.api_key, str), 'No API KEY provided'
-
-        if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI request
-            return {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
-        else:  # Regular SambaStudio request
-            return {'key': self.api_key}
-
-    def _get_json_data(self, url: str) -> Dict[str, Any]:
-        """Gets json body for API call
-
-        Args:
-            url: URL being used for the API call
-
-        Returns:
-            dict: API call body according to Bundle and streaming conditions
-        """
-        prompt = self.request_config.prompt_tuple[0]['template']
-        sampling_params = self.request_config.sampling_params
-
-        assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
-
-        if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI data payload
-            data = self._get_json_data_for_sambastudio_openai_compatible(prompt, sampling_params)
-        else:  # Regular SambaStudio data payload
-            data = self._get_json_data_for_regular_sambastudio(url, prompt, sampling_params)
-
-        return data
-
-    def _get_json_data_for_sambastudio_openai_compatible(
-        self, prompt: str, sampling_params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        sampling_params['model'] = self.request_config.model
-        sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
-
-        if self.request_config.is_stream_mode:
-            sampling_params['stream'] = True
-            sampling_params['stream_options'] = {'include_usage': True}
-        else:
-            # TODO: support not streaming mode
-            raise ValueError('Streaming mode required')
-
-        # If an image is provided, add it to the content
-        content: Any = None
-        if self.request_config.image:
-            content = [
-                {'type': 'text', 'text': prompt},
-                {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{self.request_config.image}'}},
-            ]
-        else:
-            content = prompt
-
-        data = {'messages': [{'role': 'user', 'content': content}]}
-        data.update(sampling_params)
-
-        return data
-
-    def _get_json_data_for_regular_sambastudio(
-        self, url: str, prompt: str, sampling_params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        # Change params whether model is Bundle or not
-        if 'Bundle' in self.request_config.model:
-            sampling_params['select_expert'] = self.request_config.model.split('/')[-1]
-            sampling_params['process_prompt'] = False
-            sampling_params['top_k'] = 1
-
-        # build payload for api v2
-        if '/api/v2' in url.lower().strip():
-            # if an image is provided, add it to the payload
-            tuning_params = json.loads(json.dumps(sampling_params))
-            data = {'items': [{'id': 'item1', 'value': prompt}], 'params': tuning_params}
-        # support to build payload for api v1
-        else:
-            extended_sampling_params = {
-                k: {'type': type(v).__name__, 'value': str(v)} for k, v in (sampling_params.items())
-            }
-            extended_sampling_params_str = json.dumps(extended_sampling_params)
-
-            # Change request body whether API call is streaming or not
-            if self.request_config.is_stream_mode:
-                data = {'instance': prompt, 'params': json.loads(extended_sampling_params_str)}
-            else:
-                data = {'instances': [prompt], 'params': json.loads(extended_sampling_params_str)}
-
-        return data
-
-    def compute_metrics(self, metrics: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        """Computes metrics for SambaStudio API endpoint
-
-        Args:
-            metrics (dict): basic metrics dictionary
-
-        Raises:
-            ValueError: raises when streaming is not selected
-
-        Returns:
-            tuple[dict, str]: tuple containing the metrics structure with server and client side values, and the
-            complete generated text
-        """
-
-        # Get API request components
-        url = self._get_url()
-        headers = self._get_headers()
-        json_data = self._get_json_data(url)
-
-        # Start measuring time
-        metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
-        start_time = time.monotonic()
-
-        if self.request_config.is_stream_mode:
-            with requests.post(
-                url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode
-            ) as response:
-                if response.status_code != 200:
-                    error_details = response.json().get('error', 'No additional error details provided.')
-                    raise Exception(f'Error: {response.status_code}, Details: {error_details}')
-
-                if 'chat/completions' in self.base_url:  # SambaStudio compatible with OpenAI data payload
-                    chunks_received, chunks_timings, response_dict, generated_text = (
-                        self._parse_sambastudio_openai_compatible_response(response, start_time)
-                    )
-                else:  # Regular SambaStudio data payload
-                    chunks_received, chunks_timings, response_dict, generated_text = (
-                        self._parse_regular_sambastudio_response(response, start_time, url)
-                    )
-        else:
-            # TODO: support non-streaming mode
-            raise ValueError('Streaming mode required')
-
-        # End measuring time
-        metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
-        total_request_time = time.monotonic() - start_time
-        ttft = self._calculate_ttft_from_streams(chunks_received, chunks_timings, total_request_time)
-
-        # Populate server and client metrics
-        prompt_len = self.request_config.prompt_tuple[1]
-        number_chunks_recieved = len(chunks_received)
-
-        num_output_tokens = self._get_token_length(generated_text)
-        server_metrics = self._populate_server_metrics(response_dict, metrics)
-        metrics = self._populate_client_metrics(
-            prompt_len,
-            num_output_tokens,
-            ttft,
-            total_request_time,
-            server_metrics,
-            number_chunks_recieved,
-        )
-
-        return metrics, generated_text
-
-    def _parse_sambastudio_openai_compatible_response(
-        self, response: Response, event_start_time: float
-    ) -> Tuple[List[Any], List[Any], Dict[str, Any], str]:
-        # Set variables
-        generated_text = ''
-        events_received = []
-        events_timings = []
-
-        client = sseclient.SSEClient(response)  # type: ignore
-
-        for event in client.events():
-            try:
-                # check streaming events before last stream returns DONE
-                if event.data != '[DONE]':
-                    data = json.loads(event.data)
-                    # if events don't contain "usage" key, which only shows up in stream returning
-                    # performance metrics
-                    if data.get('usage') is None:
-                        # if streams still don't hit a finish reason
-                        if data['choices'][0].get('finish_reason') is None:
-                            if data['choices'][0]['delta'].get('content') is not None:
-                                # log s timings
-                                events_timings.append(time.monotonic() - event_start_time)
-                                event_start_time = time.monotonic()
-                                # concatenate streaming text pieces
-                                stream_content = data['choices'][0]['delta']['content']
-                                events_received.append(stream_content)
-                                generated_text += stream_content
-                    # process streaming chunk when performance usage is provided
-                    else:
-                        response_dict = data['usage']
-            except Exception as e:
-                raise Exception(f'Error: {e} at streamed event: {event.data}')
-        return events_received, events_timings, response_dict, generated_text
-
-    def _parse_regular_sambastudio_response(
-        self, response: Response, chunk_start_time: float, url: str
-    ) -> Tuple[List[Any], List[Any], Dict[str, Any], str]:
-        # Set variables
-        generated_text = ''
-        chunks_received = []
-        chunks_timings = []
-
-        # fetch generated text and metrics for api v2
-        if '/api/v2' in url.lower().strip():
-            for chunk_orig in response.iter_lines(chunk_size=None):
-                chunk = chunk_orig.strip()
-                data = json.loads(chunk)
-
-                completion = data['result']['items'][0]['value']['is_last_response']
-                chunks_timings.append(time.monotonic() - chunk_start_time)
-                chunk_start_time = time.monotonic()
-                if completion is False:
-                    chunks_received.append(data['result']['items'][0]['value']['stream_token'])
-                    continue
-                else:
-                    generated_text = data['result']['items'][0]['value']['completion']
-                    response_dict = data['result']['items'][0]['value']
-                break
-        # support to fetch generated text and metrics for api v1
-        else:
-            for chunk_orig in response.iter_lines(chunk_size=None):
-                chunk = chunk_orig.strip()
-                data = json.loads(chunk)
-
-                completion = data['result']['responses'][0]['is_last_response']
-                chunks_timings.append(time.monotonic() - chunk_start_time)
-                chunk_start_time = time.monotonic()
-                if completion is False:
-                    chunks_received.append(data['result']['responses'][0]['stream_token'])
-                    continue
-                else:
-                    generated_text = data['result']['responses'][0]['completion']
-                    response_dict = data['result']['responses'][0]
-                    break
-        return chunks_received, chunks_timings, response_dict, generated_text
-
-
 class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
             self.base_url = (
-                self.request_config.api_variables['SAMBANOVA_URL']
-                if self.request_config.api_variables['SAMBANOVA_URL']
-                else SAMBANOVA_URL
+                self.request_config.api_variables['SAMBANOVA_BASE_URL']
+                if self.request_config.api_variables['SAMBANOVA_BASE_URL']
+                else SAMBANOVA_BASE_URL
             )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBANOVA_URL', SAMBANOVA_URL)
+            self.base_url = os.environ.get('SAMBANOVA_BASE_URL', SAMBANOVA_BASE_URL)
             self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:
@@ -516,6 +246,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         Returns:
             str: url needed for API
         """
+        # if chat/completions included then use that endpoint
+        if 'chat/completions' in self.base_url:
+            return self.base_url
+        # else build the url using base url
+        else:
+            self.base_url = self.base_url.rstrip('/') + '/chat/completions'
         return self.base_url
 
     def _get_headers(self) -> Dict[str, str]:
@@ -672,10 +408,6 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
         if request_config.llm_api == 'sncloud':
             sncloud_client = SambaNovaCloudAPI(request_config, tokenizer)
             metrics, generated_text = sncloud_client.compute_metrics(metrics)
-
-        elif request_config.llm_api == 'sambastudio':
-            sambastudio_client = SambaStudioAPI(request_config, tokenizer)
-            metrics, generated_text = sambastudio_client.compute_metrics(metrics)
 
         else:
             raise ValueError(f'llm_api parameter with value {request_config.llm_api} is not valid.')

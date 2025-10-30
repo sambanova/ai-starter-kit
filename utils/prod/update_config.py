@@ -14,7 +14,6 @@ PROD_KITS: List[str] = [
     'function_calling',
     'search_assistant',
     'multimodal_knowledge_retriever',
-    'sambanova_scribe',
 ]
 
 # List of starter kits for test updates
@@ -24,11 +23,7 @@ TEST_KITS: List[str] = [
     'financial_assistant',
     'function_calling',
     'search_assistant',
-    'image_search',
     'multimodal_knowledge_retriever',
-    'post_call_analysis',
-    'prompt_engineering',
-    'web_crawled_data_retriever',
 ]
 
 

@@ -1,44 +1,43 @@
 llm: 
-  "api": "sncloud" #  set either sambastudio or sncloud
-  "do_sample": False
+  "model": "DeepSeek-V3.1"
   "temperature": 0.01
-  "max_tokens": 1024
-  "model": "DeepSeek-V3-0324"
+  "max_tokens": 8192
+  "top_p": null
+  "top_k": null
 
 tools:
     query_db:
       llm: 
-        "api": "sncloud" #  set either sambastudio or sncloud
-        "do_sample": False
+        "model": "DeepSeek-V3.1" 
         "temperature": 0.01 
         "max_tokens": 1024
-        "model": "DeepSeek-V3-0324" 
+        "top_p": null
+        "top_k": null
       db:
         "path": "data/chinook.db" 
 
     translate:
       llm: 
-        "api": "sncloud" #  set either sambastudio or sncloud
-        "do_sample": False
+        "model": "DeepSeek-V3.1" 
         "temperature": 0.0
-        "max_tokens": 1024
-        "model": "DeepSeek-V3-0324" 
-
+        "max_tokens": 8192
+        "top_p": null
+        "top_k": null
     rag:
       llm:
-        "api": "sncloud" #  set either sambastudio or sncloud
-        "do_sample": False
+        "model": "DeepSeek-V3.1"
         "temperature": 0.0 
-        "max_tokens": 1024
-        "model": "DeepSeek-V3-0324"
+        "max_tokens": 8192
+        "top_p": null
+        "top_k": null
       embedding_model: 
-        "type": "sncloud" # set either sncloud, sambastudio or cpu
-        "model": "E5-Mistral-7B-Instruct" #set if using Cloud or SambaStudio bundle embedding expert
+        "model": "E5-Mistral-7B-Instruct"
       vector_db:
         "path": "data/my-vector-db" # path to your previously created chroma vdb
+        "collection_name": "ekr_default_collection" # chroma collection name if set
       retrieval:
         "k_retrieved_documents": 3
-        "score_treshold": 0.3
+        "score_treshold": 0.2
 
 prod_mode: False
 

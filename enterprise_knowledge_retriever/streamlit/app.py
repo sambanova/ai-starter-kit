@@ -31,13 +31,16 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 # Available models in dropdown menu
 LLM_MODELS = [
+    'gpt-oss-120b',
     'Llama-4-Maverick-17B-128E-Instruct',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-R1-Distill-Llama-70B',
     'DeepSeek-R1',
     'DeepSeek-V3-0324',
+    'DeepSeek-V3.1',
+    'DeepSeek-V3.1-Terminus',
     'Meta-Llama-3.1-8B-Instruct',
-    'QwQ-32B-Preview',
+    'Qwen-32B',
 ]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
@@ -153,11 +156,8 @@ def handle_userinput(user_question: Optional[str]) -> None:
         with st.chat_message('user'):
             st.write(f'{ques}')
 
-        with st.chat_message(
-            'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')
-        ):
-            formatted_ans = ans.replace('$', '\$')
+        with st.chat_message('ai', avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')):
+            formatted_ans = ans.replace('$', r'\$')
             st.write(f'{formatted_ans}')
             if st.session_state.show_sources:
                 with st.expander('Sources'):
@@ -194,16 +194,16 @@ def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval
 
 
 def main() -> None:
-    
-    #Style and page config
-    
+    # Style and page config
+
     st.set_page_config(
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-    
+
     # set buttons style
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         div.stButton > button {
             background-color: #250E36;  /* Button background */
@@ -214,25 +214,31 @@ def main() -> None:
             color: #FFFFFF;             /* Button text color */
         }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Load Inter font from Google Fonts and apply globally
-    st.markdown("""
+    st.markdown(
+        """
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # add title and icon
     col1, col2, col3 = st.columns([4, 1, 4])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'ekr_icon.png'))
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .kit-title {
                 text-align: center;
@@ -243,17 +249,18 @@ def main() -> None:
             }
         </style>
         <div class="kit-title">Enterprise Knowledge Retriever</div>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
     conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
 
     initialize_env_variables(prod_mode)
-    
+
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
     if 'chat_history' not in st.session_state:
@@ -282,24 +289,26 @@ def main() -> None:
         st.session_state.mp_events.demo_launch()
 
     with st.sidebar:
-        
         # Inject HTML to display the logo in the sidebar at 70% width
         logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
-        with open(logo_path, "rb") as img_file:
+        with open(logo_path, 'rb') as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
-        st.sidebar.markdown(f"""
+        st.sidebar.markdown(
+            f"""
             <div style="text-align: center;">
                 <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         st.title('Setup')
 
         # Callout to get SambaNova API Key
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set():
-            api_key, additional_vars = env_input_fields(mode=llm_type)
+            api_key, additional_vars = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
@@ -324,7 +333,7 @@ def main() -> None:
             if not prod_mode:
                 datasource_options.append('Use existing vector db')
 
-            datasource = st.selectbox('', datasource_options)
+            datasource = st.selectbox('Datasource', datasource_options)
 
             if isinstance(datasource, str) and 'Upload' in datasource:
                 hide_label = """
@@ -477,8 +486,9 @@ def main() -> None:
                                         db_path, embeddings, collection_name=collection_name
                                     )
                                     st.toast(
-                                        f"""Database loaded{'with collection '
-                                         + default_collection if not prod_mode else ''}"""
+                                        f"""Database loaded{
+                                            'with collection ' + default_collection if not prod_mode else ''
+                                        }"""
                                     )
                                     st.session_state.vectorstore = vectorstore
                                     st.session_state.document_retrieval.init_retriever(vectorstore)

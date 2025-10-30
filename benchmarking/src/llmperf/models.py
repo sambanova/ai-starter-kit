@@ -36,7 +36,7 @@ class RequestConfig(BaseModel):
 
 
 class LLMResponse(BaseModel):
-    """The response object created from a response from one of the SambaStudio LLM APIs
+    """The response object created from a response from one of the LLM APIs
 
     Args:
         metrics: Dictionary containing the throughput metrics from the endpoint

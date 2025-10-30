@@ -12,11 +12,13 @@ from langchain.chains import ConversationalRetrievalChain, RetrievalQA
 from langchain.docstore.document import Document
 from langchain.memory import ConversationSummaryMemory
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-from langchain.prompts import load_prompt
+from langchain.prompts import ChatPromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
-from langchain_core.language_models.llms import LLM
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from pydantic import SecretStr
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -28,13 +30,37 @@ from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from serpapi import GoogleSearch
 
-from utils.model_wrappers.api_gateway import APIGateway
 from utils.vectordb.vector_db import VectorDb
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 PERSIST_DIRECTORY = os.path.join(kit_dir, 'data/my-vector-db')
 
 load_dotenv(os.path.join(repo_dir, '.env'), override=True)
+
+
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
 
 
 class SearchAssistant:
@@ -64,7 +90,7 @@ class SearchAssistant:
         else:
             self.config = config
         config_info = self._get_config_info(CONFIG_PATH)
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.serpapi_api_key = serpapi_api_key
         self.embedding_model_info = config_info[0]
         self.llm_info = config_info[1]
@@ -74,7 +100,7 @@ class SearchAssistant:
         self.prod_mode = config_info[5]
         self.documents: Sequence[Document]
         self.urls: List[Any] = []
-        self.llm = self.init_llm_model()
+        self.llm = self.set_llm()
         self.vectordb = VectorDb()
         self.qa_chain: Optional[ConversationalRetrievalChain] = None
         self.memory: Optional[ConversationSummaryMemory] = None
@@ -89,7 +115,7 @@ class SearchAssistant:
         config_path (str): Path to the YAML configuration file.
 
         Returns:
-        embedding_model_info (string): String containing embedding model type to use, SambaStudio or CPU.
+        embedding_model_info (string): String containing embedding model
         llm_info (dict): Dictionary containing LLM parameters.
         retrieval_info (dict): Dictionary containing retrieval parameters
         web_crawling_params (dict): Dictionary containing web crawling parameters
@@ -112,7 +138,7 @@ class SearchAssistant:
         """
         Initialize conversation summary memory for the conversation
         """
-        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-summary.yaml'))
+        summary_prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/summary.yaml'))
 
         self.memory = ConversationSummaryMemory(
             llm=self.llm,
@@ -123,24 +149,21 @@ class SearchAssistant:
             prompt=summary_prompt,
         )
 
-    def init_llm_model(self) -> LLM:
+    def set_llm(self, model: Optional[str] = None) -> BaseChatModel:
         """
-        Initializes the LLM endpoint
+        Sets the sambanova LLM
 
-        Returns:
-        llm (SambaStudio or SambaNovaCloud): Langchain LLM to use
+        Parameters:
+        Model (str): The name of the model to use for the LLM (overwrites the param set in config).
         """
+        if model is None:
+            model = self.llm_info['model']
+        llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
 
-        llm = APIGateway.load_llm(
-            type=self.llm_info['type'],
-            streaming=True,
-            bundle=self.llm_info['bundle'],
-            do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
-            temperature=self.llm_info['temperature'],
-            select_expert=self.llm_info['select_expert'],
-            process_prompt=False,
-            sambanova_api_key=self.sambanova_api_key,
+        llm = ChatSambaNova(
+            api_key=self.sambanova_api_key,
+            **llm_info,
+            model=model,
         )
         return llm
 
@@ -156,15 +179,15 @@ class SearchAssistant:
         """
         if self.memory is None:
             self.init_memory()
-        custom_condensed_question_prompt = load_prompt(
-            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_question.yaml')
+        custom_condensed_question_prompt = load_chat_prompt(
+            os.path.join(kit_dir, 'prompts', 'multiturn-custom_condensed_question.yaml')
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
-        )
-        return reformulated_query
+        ).content
+        return str(reformulated_query)
 
     def remove_links(self, text: str) -> Any:
         """
@@ -191,10 +214,10 @@ class SearchAssistant:
         str: The parsed output with HTML links instead of reference numbers.
         """
         for i, link in enumerate(links):
-            answer = answer.replace(f'[reference:{i+1}]', f'[<sup>{i+1}</sup>]({link})')
-            answer = answer.replace(f'[reference: {i+1}]', f'[<sup>{i+1}</sup>]({link})')
-            answer = answer.replace(f'[Reference:{i+1}]', f'[<sup>{i+1}</sup>]({link})')
-            answer = answer.replace(f'[Reference: {i+1}]', f'[<sup>{i+1}</sup>]({link})')
+            answer = answer.replace(f'[reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
+            answer = answer.replace(f'[reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
+            answer = answer.replace(f'[Reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
+            answer = answer.replace(f'[Reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
         return answer
 
     def querySerper(
@@ -231,7 +254,9 @@ class SearchAssistant:
                     links = [r['link'] for r in results]
                     context_list = []
                     for i, result in enumerate(results):
-                        context_list.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                        context_list.append(
+                            f'[reference:{i + 1}] {result.get("title", "")}: {result.get("snippet", "")}'
+                        )
                     context = '\n\n'.join(context_list)
                     self.logger.info(f'Context found: {context}')
                     if include_site_links:
@@ -255,10 +280,10 @@ class SearchAssistant:
             self.logger.error(f'Error message: {e}')
 
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
+            prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
-            answer = self.llm.invoke(formatted_prompt)
-            return self.parse_serp_analysis_output(answer, links), links
+            answer = self.llm.invoke(formatted_prompt).content
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
@@ -299,7 +324,7 @@ class SearchAssistant:
                     context_list = []
                     for i, result in enumerate(results):
                         context_list.append(
-                            f'[reference:{i+1}] {result.get("title", "")}: {result.get("description", "")}'
+                            f'[reference:{i + 1}] {result.get("title", "")}: {result.get("description", "")}'
                         )
                     context = '\n\n'.join(context_list)
                     self.logger.info(f'Context found: {context}')
@@ -318,10 +343,10 @@ class SearchAssistant:
             self.logger.error(f'Error message: {e}')
 
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
+            prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
-            answer = self.llm.invoke(formatted_prompt)
-            return self.parse_serp_analysis_output(answer, links), links
+            answer = self.llm.invoke(formatted_prompt).content
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
@@ -362,7 +387,7 @@ class SearchAssistant:
                 links = [r['link'] for r in results]
                 context_list = []
                 for i, result in enumerate(results):
-                    context_list.append(f'[reference:{i+1}] {result.get("title", "")}: {result.get("snippet", "")}')
+                    context_list.append(f'[reference:{i + 1}] {result.get("title", "")}: {result.get("snippet", "")}')
                 context = '\n\n'.join(context_list)
                 self.logger.info(f'Context found: {context}')
             else:
@@ -375,10 +400,10 @@ class SearchAssistant:
             self.logger.error(f'Error message: {e}')
 
         if do_analysis:
-            prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-serp_analysis.yaml'))
+            prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/serp_analysis.yaml'))
             formatted_prompt = prompt.format(question=query, context=context)
-            answer = self.llm.invoke(formatted_prompt)
-            return self.parse_serp_analysis_output(answer, links), links
+            answer = self.llm.invoke(formatted_prompt).content
+            return self.parse_serp_analysis_output(str(answer), links), links
         else:
             return context, links
 
@@ -527,12 +552,7 @@ class SearchAssistant:
         chunks = self.get_text_chunks_with_references(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info.get('type'),
-            batch_size=self.embedding_model_info.get('batch_size'),
-            bundle=self.embedding_model_info.get('bundle'),
-            model=self.embedding_model_info.get('model'),
-        )
+        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(
@@ -586,7 +606,7 @@ class SearchAssistant:
         """
         Set a retrieval chain for queries that use as retriever a previously created vectorstore
         """
-        retrieval_qa_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-web_scraped_data_retriever.yaml'))
+        retrieval_qa_prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/web_scraped_data_retriever.yaml'))
         retriever = self.vector_store.as_retriever(
             search_type='similarity_score_threshold',
             search_kwargs={
@@ -597,8 +617,8 @@ class SearchAssistant:
         if conversational:
             self.init_memory()
 
-            custom_condensed_question_prompt = load_prompt(
-                os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_question.yaml')
+            custom_condensed_question_prompt = load_chat_prompt(
+                os.path.join(kit_dir, 'prompts', 'multiturn-custom_condensed_question.yaml')
             )
 
             self.qa_chain = ConversationalRetrievalChain.from_llm(
@@ -666,7 +686,7 @@ class SearchAssistant:
         Returns:
         list: A list of related queries based on the input query.
         """
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-related_questions.yaml'))
+        prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/related_questions.yaml'))
         response_schemas = [ResponseSchema(name='related_queries', description=f'related search queries', type='list')]
         list_output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
         list_format_instructions = list_output_parser.get_format_instructions()
@@ -690,9 +710,13 @@ class SearchAssistant:
         question_sources_map = {source: i + 1 for i, source in enumerate(question_sources)}
         for i, link in enumerate(self.urls):
             if link in parsed_answer:
-                parsed_answer = parsed_answer.replace(
-                    f'[<sup>{i+1}</sup>]({link})', f'[<sup>{question_sources_map[link]}</sup>]({link})'
-                )
+                ref_index = question_sources_map.get(link)
+                if ref_index:
+                    parsed_answer = parsed_answer.replace(
+                        f'[<sup>{i + 1}</sup>]({link})', f'[<sup>{ref_index}</sup>]({link})'
+                    )
+                else:
+                    self.logger.warning(f'Link {link} not in question_sources_map, skipping remap.')
         return parsed_answer
 
     def retrieval_call(self, query: str) -> Any:
