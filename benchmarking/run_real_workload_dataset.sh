@@ -9,10 +9,10 @@ python src/evaluator.py \
 --qps 1 \
 --qps-distribution "constant" \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
+--num-input-tokens 100 \
+--num-output-tokens 100 \
 --multimodal-image-size na \
---num-requests 10 \
+--num-requests 1 \
 --use-debugging-mode False \
 --llm-api sncloud
 
