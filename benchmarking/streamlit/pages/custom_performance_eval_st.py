@@ -206,9 +206,18 @@ def main() -> None:
 
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
-        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button', type='primary', width="stretch")
+        job_submitted = st.sidebar.button(
+            'Run!', 
+            disabled=st.session_state.running, 
+            key='run_button', 
+            type='primary', 
+            width="stretch")
 
-        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary', width="stretch")
+        sidebar_stop = st.sidebar.button(
+            'Stop', 
+            disabled=not st.session_state.running, 
+            type='secondary', 
+            width="stretch")
 
     if sidebar_stop:
         st.session_state.running = False

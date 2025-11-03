@@ -144,13 +144,17 @@ def save_uploaded_file(internal_save_path: str) -> str:
     return temp_file_path
 
 
-def find_pages_to_show() -> List[str]:
+def find_pages_to_show() -> List[Any]:
     pages = st.session_state.pages_to_show
     pages_to_show = []
 
     for page_k, _ in APP_PAGES.items():
         if page_k in pages:
-            pages_to_show.append(st.Page(APP_PAGES[page_k]['file_path'], title=APP_PAGES[page_k]['page_label'], icon=APP_PAGES[page_k]['page_icon']))
+            pages_to_show.append(
+                st.Page(
+                    APP_PAGES[page_k]['file_path'], 
+                    title=APP_PAGES[page_k]['page_label'], 
+                    icon=APP_PAGES[page_k]['page_icon']))
     return pages_to_show
 
 
