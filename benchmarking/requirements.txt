@@ -18,12 +18,11 @@ ruff==0.6.9
 seaborn==0.12.2
 sentencepiece==0.2.0
 sseclient-py==1.8.0
-st-pages==0.5.0
 stqdm==0.0.5
-streamlit==1.37.0
 tensorflow==2.16.1
 torch==2.2.2
 tqdm>=4.66.3
 transformers==4.50.1
 joblib==1.4.2
 openpyxl==3.1.5
+streamlit>=1.40.2,<2.0.0
