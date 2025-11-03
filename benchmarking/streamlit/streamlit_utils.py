@@ -21,62 +21,20 @@ MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Mediu
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
     'synthetic_eval': {
-        'file_path': 'streamlit/pages/synthetic_performance_eval_st.py',
+        'file_path': 'pages/synthetic_performance_eval_st.py',
         'page_label': 'Synthetic Performance Evaluation',
     },
     'real_workload_eval': {
-        'file_path': 'streamlit/pages/real_workload_eval_st.py',
+        'file_path': 'pages/real_workload_eval_st.py',
         'page_label': 'Real Workload Evaluation',
     },
     'custom_eval': {
-        'file_path': 'streamlit/pages/custom_performance_eval_st.py',
+        'file_path': 'pages/custom_performance_eval_st.py',
         'page_label': 'Custom Performance Evaluation',
     },
-    'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
+    'chat_eval': {'file_path': 'pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
     'main': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
 }
-PRIMARY_ST_STYLE = """
-    <style>
-    /* Targeting the button inside the sidebar with a specific key */
-    button[kind="primary"] {
-        width: 100%; /* Match input width */
-        height: 50px; /* Adjust for size */
-        background-color: #250E36 !important; /* Streamlit red */
-        color: white !important;
-        font-size: 18px;
-        font-weight: bold;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-    }
-
-    button[kind="primary"]:hover {
-        background-color: #4E22EB !important; /* Darker red on hover */
-    }
-    
-    button[kind="primary"]:disabled {
-        background-color: #bfbfbf !important; /* Greyed out */
-        color: #7a7a7a !important; /* Dimmed text */
-        cursor: not-allowed !important;
-    }
-    </style>
-    """
-SECONDARY_ST_STYLE = """
-    <style>
-    /* Targeting the button inside the sidebar with a specific key */
-    button[kind="secondary"] {
-        width: 100%; /* Match input width */
-        height: 50px; /* Adjust for size */
-    }
-    
-    button[kind="secondary"]:disabled {
-        background-color: #d3d3d3 !important; /* Light grey */
-        color: #9e9e9e !important; /* Dimmed text */
-        cursor: not-allowed !important;
-    }
-    </style>
-    """
-
 
 def render_logo() -> None:
     # Inject HTML to display the logo in the sidebar at 70% width
@@ -101,7 +59,7 @@ def set_font() -> None:
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
