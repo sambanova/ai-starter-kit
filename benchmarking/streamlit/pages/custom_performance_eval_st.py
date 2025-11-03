@@ -5,15 +5,10 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 import yaml
-from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
-    APP_PAGES,
     LLM_API_OPTIONS,
-    PRIMARY_ST_STYLE,
-    SECONDARY_ST_STYLE,
-    find_pages_to_hide,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
@@ -125,13 +120,9 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['main']['page_label']])
 
     set_font()
-    if st.session_state.prod_mode:
-        pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['main']['page_label'])
-        hide_pages(pages_to_hide)
+
     render_title_icon('Custom Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         'Here you can select a custom dataset that you want to benchmark performance with. Note that with models that \
@@ -215,9 +206,9 @@ def main() -> None:
 
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
-        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button', type='primary')
+        job_submitted = st.sidebar.button('Run!', disabled=st.session_state.running, key='run_button', type='primary', width="stretch")
 
-        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary')
+        sidebar_stop = st.sidebar.button('Stop', disabled=not st.session_state.running, type='secondary', width="stretch")
 
     if sidebar_stop:
         st.session_state.running = False
@@ -301,10 +292,6 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-
-    # Defining styles
-    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
-    st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 

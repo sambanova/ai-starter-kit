@@ -13,7 +13,7 @@ import warnings
 import streamlit as st
 from dotenv import load_dotenv
 
-from benchmarking.streamlit.streamlit_utils import APP_PAGES, render_logo, set_font
+from benchmarking.streamlit.streamlit_utils import APP_PAGES, render_logo, set_font, find_pages_to_show
 from benchmarking.utils import CONFIG_PATH
 from utils.events.mixpanel import MixpanelEvents
 
@@ -45,7 +45,6 @@ def _get_mixpanel_client(token: str, st_session_id: str, prod_mode: bool | None)
         track=prod_mode,
     )
     mp.demo_launch()
-    print("Mixpanel client initialized.")
     return mp
 
 def _initialize_session_variables() -> None:
@@ -66,13 +65,15 @@ def main() -> None:
     set_font()
 
 if __name__ == '__main__':
-    synthetic_page = st.Page(APP_PAGES['synthetic_eval']['file_path'], title=APP_PAGES['synthetic_eval']['page_label'], icon=":material/analytics:")
-    real_page = st.Page(APP_PAGES['real_workload_eval']['file_path'], title=APP_PAGES['real_workload_eval']['page_label'], icon=":material/speed:")
-    custom_page = st.Page(APP_PAGES['custom_eval']['file_path'], title=APP_PAGES['custom_eval']['page_label'], icon=":material/instant_mix:")
-    chat_page = st.Page(APP_PAGES['chat_eval']['file_path'], title=APP_PAGES['chat_eval']['page_label'], icon=":material/chat:")
-    
-    # pg = st.navigation([main_page, synthetic_page, real_page, custom_page, chat_page], home_page=main_page)
-    pg = st.navigation([synthetic_page,real_page,custom_page,chat_page])
+    synthetic_page = st.Page(APP_PAGES['synthetic_eval']['file_path'], title=APP_PAGES['synthetic_eval']['page_label'], icon=APP_PAGES['synthetic_eval']['page_icon'])
+    real_page = st.Page(APP_PAGES['real_workload_eval']['file_path'], title=APP_PAGES['real_workload_eval']['page_label'], icon=APP_PAGES['real_workload_eval']['page_icon'])
+    custom_page = st.Page(APP_PAGES['custom_eval']['file_path'], title=APP_PAGES['custom_eval']['page_label'], icon=APP_PAGES['custom_eval']['page_icon'])
+    chat_page = st.Page(APP_PAGES['chat_eval']['file_path'], title=APP_PAGES['chat_eval']['page_label'], icon=APP_PAGES['chat_eval']['page_icon'])
+
+    if st.session_state.prod_mode:
+        pg = st.navigation(find_pages_to_show())
+    else: 
+        pg = st.navigation([synthetic_page,real_page,custom_page,chat_page])
     
     st.set_page_config(
         page_title='AI Starter Kit',

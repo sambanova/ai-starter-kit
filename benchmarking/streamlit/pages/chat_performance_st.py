@@ -9,15 +9,10 @@ sys.path.append('../')
 import warnings
 from typing import Any, Dict
 
-from st_pages import hide_pages
-
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.streamlit.streamlit_utils import (
-    APP_PAGES,
     LLM_API_OPTIONS,
-    PRIMARY_ST_STYLE,
-    find_pages_to_hide,
     render_logo,
     render_title_icon,
     save_uploaded_file,
@@ -114,14 +109,9 @@ def _initialize_sesion_variables() -> None:
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['main']['page_label']])
 
     set_font()
-    if st.session_state.prod_mode:
-        pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['main']['page_label'])
-        hide_pages(pages_to_hide)
-
+    
     render_title_icon('Chat Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         """With this option, users have a way to know performance metrics per response. Set your LLM first on the left
@@ -180,7 +170,7 @@ def main() -> None:
         # format="%.2f")
 
         # Sets LLM
-        sidebar_run_option = st.sidebar.button('Set up!', type='primary')
+        sidebar_run_option = st.sidebar.button('Set up!', type='primary', width="stretch")
 
         # Additional settings
         with st.expander('Additional settings', expanded=True):
@@ -267,9 +257,6 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-
-    # Defining styles
-    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
 
     _initialize_sesion_variables()
 

@@ -23,17 +23,23 @@ APP_PAGES = {
     'synthetic_eval': {
         'file_path': 'pages/synthetic_performance_eval_st.py',
         'page_label': 'Synthetic Performance Evaluation',
+        'page_icon': ":material/analytics:"
     },
     'real_workload_eval': {
         'file_path': 'pages/real_workload_eval_st.py',
         'page_label': 'Real Workload Evaluation',
+        'page_icon': ":material/speed:"
     },
     'custom_eval': {
         'file_path': 'pages/custom_performance_eval_st.py',
         'page_label': 'Custom Performance Evaluation',
+        'page_icon': ":material/instant_mix:"
     },
-    'chat_eval': {'file_path': 'pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
-    'main': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
+    'chat_eval': {
+        'file_path': 'pages/chat_performance_st.py', 
+        'page_label': 'Performance on Chat',
+        'page_icon': ":material/chat:"
+    },
 }
 
 def render_logo() -> None:
@@ -138,16 +144,14 @@ def save_uploaded_file(internal_save_path: str) -> str:
     return temp_file_path
 
 
-def find_pages_to_hide() -> List[str]:
-    pages_to_show = st.session_state.pages_to_show
-    pages_to_hide = []
+def find_pages_to_show() -> List[str]:
+    pages = st.session_state.pages_to_show
+    pages_to_show = []
 
-    for page_k, page_v in APP_PAGES.items():
-        if page_k != 'setup':
-            if page_k not in pages_to_show:
-                pages_to_hide.append(page_v['page_label'])
-
-    return pages_to_hide
+    for page_k, _ in APP_PAGES.items():
+        if page_k in pages:
+            pages_to_show.append(st.Page(APP_PAGES[page_k]['file_path'], title=APP_PAGES[page_k]['page_label'], icon=APP_PAGES[page_k]['page_icon']))
+    return pages_to_show
 
 
 def update_progress_bar(step: int, total_steps: int) -> None:
