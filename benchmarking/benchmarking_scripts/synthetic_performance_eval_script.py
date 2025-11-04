@@ -102,120 +102,122 @@ def run_benchmarking(
     sampling_params: Dict[str, Any] = {}
     user_metadata: Dict[str, Any] = {}
 
-    # Set fields to int values
-    model_configs_df[['input_tokens', 'output_tokens', 'num_requests']] = model_configs_df[
-        ['input_tokens', 'output_tokens', 'num_requests']
-    ].astype('Int64')
+    # # Set fields to int values
+    # model_configs_df[['input_tokens', 'output_tokens', 'num_requests']] = model_configs_df[
+    #     ['input_tokens', 'output_tokens', 'num_requests']
+    # ].astype('Int64')
 
-    # Loop over models and configs to run performance evaluation
-    for idx, row in model_configs_df.iterrows():
-        model_name = row['model_name']
-        input_tokens = row['input_tokens']
-        output_tokens = row['output_tokens']
-        num_requests = row['num_requests']
+    # # Loop over models and configs to run performance evaluation
+    # for idx, row in model_configs_df.iterrows():
+    #     model_name = row['model_name']
+    #     input_tokens = row['input_tokens']
+    #     output_tokens = row['output_tokens']
+    #     num_requests = row['num_requests']
 
-        concurrent_requests = 0
-        qps = 0.0
-        qps_distribution = 'constant'
-        multimodal_img_size = 'na'
+    #     concurrent_requests = 0
+    #     qps = 0.0
+    #     qps_distribution = 'constant'
+    #     multimodal_img_size = 'na'
 
-        if 'concurrent_requests' in row:
-            concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
+    #     if 'concurrent_requests' in row:
+    #         concurrent_requests = int(row['concurrent_requests']) if pd.notna(row['concurrent_requests']) else 0
 
-        if 'qps' in row:
-            qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
+    #     if 'qps' in row:
+    #         qps = float(row['qps']) if pd.notna(row['qps']) else 0.0
 
-        if 'qps_distribution' in row:
-            qps_distribution = row['qps_distribution']
+    #     if 'qps_distribution' in row:
+    #         qps_distribution = row['qps_distribution']
 
-        if 'multimodal_img_size' in row:
-            multimodal_img_size = row['multimodal_img_size']
-            multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
+    #     if 'multimodal_img_size' in row:
+    #         multimodal_img_size = row['multimodal_img_size']
+    #         multimodal_img_size = multimodal_img_size if pd.notna(multimodal_img_size) else 'na'
 
-        cr_set = pd.notna(concurrent_requests) and concurrent_requests != 0
-        qps_set = pd.notna(qps) and qps != 0
+    #     cr_set = pd.notna(concurrent_requests) and concurrent_requests != 0
+    #     qps_set = pd.notna(qps) and qps != 0
 
-        if cr_set and qps_set:
-            print(
-                f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-\
-                {concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set.\
-                Set only one of them, skipping run."
-            )
-            continue
+    #     if cr_set and qps_set:
+    #         print(
+    #             f"Row {idx}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-\
+    #             {concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set.\
+    #             Set only one of them, skipping run."
+    #         )
+    #         continue
 
-        evaluator: SyntheticPerformanceEvaluator | RealWorkLoadPerformanceEvaluator
+    #     evaluator: SyntheticPerformanceEvaluator | RealWorkLoadPerformanceEvaluator
 
-        if cr_set:
-            logging.info(
-                f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, '
-                f'concurrent_requests {concurrent_requests}, num_requests {num_requests}, '
-                f'multimodal_img_size {multimodal_img_size}'
-            )
+    #     if cr_set:
+    #         logging.info(
+    #             f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens}, '
+    #             f'concurrent_requests {concurrent_requests}, num_requests {num_requests}, '
+    #             f'multimodal_img_size {multimodal_img_size}'
+    #         )
 
-            # Instantiate evaluator
-            user_metadata['model_idx'] = 0  # no need to change
-            evaluator = SyntheticPerformanceEvaluator(
-                multimodal_image_size=multimodal_img_size,
-                model_name=model_name,
-                results_dir=os.path.expanduser(output_files_dir),
-                num_concurrent_requests=concurrent_requests,
-                timeout=config['timeout'],
-                user_metadata=user_metadata,
-                llm_api=config['llm_api'],
-                use_multiple_prompts=config['use_multiple_prompts'],
-            )
+    #         # Instantiate evaluator
+    #         user_metadata['model_idx'] = 0  # no need to change
+    #         evaluator = SyntheticPerformanceEvaluator(
+    #             multimodal_image_size=multimodal_img_size,
+    #             model_name=model_name,
+    #             results_dir=os.path.expanduser(output_files_dir),
+    #             num_concurrent_requests=concurrent_requests,
+    #             timeout=config['timeout'],
+    #             user_metadata=user_metadata,
+    #             llm_api=config['llm_api'],
+    #             use_multiple_prompts=config['use_multiple_prompts'],
+    #         )
 
-        elif qps_set:
-            logging.info(
-                f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens},'
-                f'qps {qps}, qps_distribution {qps_distribution}, multimodal_img_size {multimodal_img_size}'
-            )
+    #     elif qps_set:
+    #         logging.info(
+    #             f'Running model_name {model_name}, input_tokens {input_tokens}, output_tokens {output_tokens},'
+    #             f'qps {qps}, qps_distribution {qps_distribution}, multimodal_img_size {multimodal_img_size}'
+    #         )
 
-            # Instantiate evaluator
-            user_metadata['model_idx'] = 0  # no need to change
-            evaluator = RealWorkLoadPerformanceEvaluator(
-                multimodal_image_size=multimodal_img_size,
-                model_name=model_name,
-                results_dir=os.path.expanduser(output_files_dir),
-                qps=qps,
-                qps_distribution=qps_distribution,
-                timeout=config['timeout'],
-                user_metadata=user_metadata,
-                llm_api=config['llm_api'],
-            )
+    #         # Instantiate evaluator
+    #         user_metadata['model_idx'] = 0  # no need to change
+    #         evaluator = RealWorkLoadPerformanceEvaluator(
+    #             multimodal_image_size=multimodal_img_size,
+    #             model_name=model_name,
+    #             results_dir=os.path.expanduser(output_files_dir),
+    #             qps=qps,
+    #             qps_distribution=qps_distribution,
+    #             timeout=config['timeout'],
+    #             user_metadata=user_metadata,
+    #             llm_api=config['llm_api'],
+    #         )
 
-        else:
-            logging.error(
-                f'Set either concurrent_requests or qps for model_name {model_name}, \
-                input_tokens {input_tokens}, output_tokens {output_tokens}. Skipping run.'
-            )
-            continue
+    #     else:
+    #         logging.error(
+    #             f'Set either concurrent_requests or qps for model_name {model_name}, \
+    #             input_tokens {input_tokens}, output_tokens {output_tokens}. Skipping run.'
+    #         )
+    #         continue
 
-        try:
-            # Run performance evaluation
-            model_results_summary, model_results_per_request = evaluator.run_benchmark(
-                num_input_tokens=input_tokens,
-                num_output_tokens=output_tokens,
-                num_requests=num_requests,
-                sampling_params=sampling_params,
-            )
-        except Exception as e:
-            logging.error(
-                f'Error while running model_name {model_name}, \
-                input_tokens {input_tokens}, \
-                output_tokens {output_tokens}, \
-                num_requests {num_requests}, \
-                concurrent_requests {concurrent_requests}, \
-                qps {qps}, \
-                qps_distribution {qps_distribution} \
-                multimodal_img_size {multimodal_img_size}'
-            )
-            logging.error(e)
+    #     try:
+    #         # Run performance evaluation
+    #         model_results_summary, model_results_per_request = evaluator.run_benchmark(
+    #             num_input_tokens=input_tokens,
+    #             num_output_tokens=output_tokens,
+    #             num_requests=num_requests,
+    #             sampling_params=sampling_params,
+    #         )
+    #     except Exception as e:
+    #         logging.error(
+    #             f'Error while running model_name {model_name}, \
+    #             input_tokens {input_tokens}, \
+    #             output_tokens {output_tokens}, \
+    #             num_requests {num_requests}, \
+    #             concurrent_requests {concurrent_requests}, \
+    #             qps {qps}, \
+    #             qps_distribution {qps_distribution} \
+    #             multimodal_img_size {multimodal_img_size}'
+    #         )
+    #         logging.error(e)
 
-        logging.info(f'Time delay: {config["time_delay"]} seconds')
-        time.sleep(config['time_delay'])
+    #     logging.info(f'Time delay: {config["time_delay"]} seconds')
+    #     time.sleep(config['time_delay'])
 
     # Consolidate results
+    run_name = '20251031-180601.530151'
+    output_files_dir = os.path.join(config['output_files_dir'], run_name)
     if config['consolidated_results_dir']:
         logging.info(f'Writing consolidated results to {config["consolidated_results_dir"]}')
         try:
