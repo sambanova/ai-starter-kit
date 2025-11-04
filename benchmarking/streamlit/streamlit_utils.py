@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
-from benchmarking.utils import SAMBANOVA_BASE_URL
+from benchmarking.utils import SAMBANOVA_API_BASE
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -109,7 +109,7 @@ def setup_credentials() -> None:
     st.session_state.llm_api = 'sncloud'
 
     additional_env_vars: Dict[str, Any] = {}
-    additional_env_vars = {'SAMBANOVA_BASE_URL': SAMBANOVA_BASE_URL}
+    additional_env_vars = {'SAMBANOVA_API_BASE': SAMBANOVA_API_BASE}
 
     initialize_env_variables(st.session_state.prod_mode, additional_env_vars)
 
@@ -168,7 +168,7 @@ def set_api_variables() -> Dict[str, Any]:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
             api_variables = {
-                'SAMBANOVA_BASE_URL': st.session_state.SAMBANOVA_BASE_URL,
+                'SAMBANOVA_API_BASE': st.session_state.SAMBANOVA_API_BASE,
                 'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY,
             }
         else:
