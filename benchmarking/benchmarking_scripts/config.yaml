@@ -1,6 +1,6 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/switching_time'
+output_files_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/switching_time/'
 consolidated_results_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/switching_time/consolidated_results'
 timeout: 3600
 time_delay: 0
