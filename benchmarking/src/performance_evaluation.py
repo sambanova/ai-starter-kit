@@ -43,6 +43,8 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
+# disable annoying streamlit logging
+logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").disabled = True
 transformers.logging.set_verbosity_error()
 load_dotenv('../.env', override=True)
 
