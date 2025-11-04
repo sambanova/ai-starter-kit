@@ -1,0 +1,14 @@
+_type: chat
+input_types: {}
+input_variables:
+- json
+name: null
+output_parser: null
+partial_variables: {}
+template: 
+    - role: system
+      content: "You are a json format corrector tool"
+    - role: user
+      content: "Fix the following json file: {json} do not provide any explanation only return the fixed json"
+template_format: f-string
+validate_template: false

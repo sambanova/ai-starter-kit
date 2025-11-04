@@ -2,6 +2,7 @@ import os
 import sys
 
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -19,7 +20,6 @@ from langchain_core.embeddings import Embeddings
 from utils.eval.eval_utils import custom_parser
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
 from utils.eval.vector_store import VectorStoreManager
-from utils.model_wrappers.api_gateway import APIGateway
 
 
 class RAGChain:
@@ -27,7 +27,6 @@ class RAGChain:
     A class representing a Retrieval-Augmented Generation (RAG) chain.
 
     Attributes:
-        model_type (str): The type of model to use.
         model_name (str): The name of the model to use.
         temperature (float): The temperature for the model.
         max_tokens (int): The maximum number of tokens for the model.
@@ -92,7 +91,7 @@ class RAGChain:
             Tuple: A tuple containing the embeddings model and the vector database.
         """
         try:
-            embeddings = APIGateway.load_embedding_model(**self.embeddings_params.model_dump())
+            embeddings = SambaNovaEmbeddings(**self.embeddings_params.model_dump())
             vectordb = VectorStoreManager.load_vectordb(embeddings=embeddings, **self.vectordb_params.model_dump())
             return embeddings, vectordb
         except Exception as e:
@@ -109,7 +108,7 @@ class RAGChain:
         try:
             prompt = hub.pull('rlm/rag-prompt')
             retriever = self.vectordb.as_retriever()
-            llm = APIGateway.load_chat(**self.llm_params.model_dump())
+            llm = ChatSambaNova(**self.llm_params.model_dump())
 
             rag_chain = prompt | llm | custom_parser
 

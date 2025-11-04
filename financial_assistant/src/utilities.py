@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, TypeVar
 
 import streamlit
 import yaml
+from langchain.prompts import ChatPromptTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +23,8 @@ def _get_config_info(config_path: str) -> Dict[str, str]:
         Defaults to CONFIG_PATH.
     Returns:
         A dictionary with the config information:
-            - api_info: string containing API to use:
-                `sncloud` or `sambastudio`.
             - embedding_model_info:
-                String containing embedding model type to use,
-                `cpu` or `sambastudio`.
+                String containing embedding model
             - llm_info: Dictionary containing LLM parameters.
             - retrieval_info:
                 Dictionary containing retrieval parameters.
@@ -131,3 +129,28 @@ def time_llm(func: F) -> Any:
         return result
 
     return wrapper
+
+
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)

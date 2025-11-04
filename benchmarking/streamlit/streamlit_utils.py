@@ -9,74 +9,38 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.graph_objs import Figure
 
-from benchmarking.utils import SAMBANOVA_URL
+from benchmarking.utils import SAMBANOVA_BASE_URL
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
-LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud', 'sambastudio': 'SambaStudio'}
+LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud'}
 MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
 QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
 APP_PAGES = {
     'synthetic_eval': {
-        'file_path': 'streamlit/pages/synthetic_performance_eval_st.py',
+        'file_path': 'pages/synthetic_performance_eval_st.py',
         'page_label': 'Synthetic Performance Evaluation',
+        'page_icon': ":material/analytics:"
     },
     'real_workload_eval': {
-        'file_path': 'streamlit/pages/real_workload_eval_st.py',
+        'file_path': 'pages/real_workload_eval_st.py',
         'page_label': 'Real Workload Evaluation',
+        'page_icon': ":material/speed:"
     },
     'custom_eval': {
-        'file_path': 'streamlit/pages/custom_performance_eval_st.py',
+        'file_path': 'pages/custom_performance_eval_st.py',
         'page_label': 'Custom Performance Evaluation',
+        'page_icon': ":material/instant_mix:"
     },
-    'chat_eval': {'file_path': 'streamlit/pages/chat_performance_st.py', 'page_label': 'Performance on Chat'},
-    'main': {'file_path': 'streamlit/app.py', 'page_label': 'MainPage'},
+    'chat_eval': {
+        'file_path': 'pages/chat_performance_st.py', 
+        'page_label': 'Performance on Chat',
+        'page_icon': ":material/chat:"
+    },
 }
-PRIMARY_ST_STYLE = """
-    <style>
-    /* Targeting the button inside the sidebar with a specific key */
-    button[kind="primary"] {
-        width: 100%; /* Match input width */
-        height: 50px; /* Adjust for size */
-        background-color: #250E36 !important; /* Streamlit red */
-        color: white !important;
-        font-size: 18px;
-        font-weight: bold;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-    }
-
-    button[kind="primary"]:hover {
-        background-color: #4E22EB !important; /* Darker red on hover */
-    }
-    
-    button[kind="primary"]:disabled {
-        background-color: #bfbfbf !important; /* Greyed out */
-        color: #7a7a7a !important; /* Dimmed text */
-        cursor: not-allowed !important;
-    }
-    </style>
-    """
-SECONDARY_ST_STYLE = """
-    <style>
-    /* Targeting the button inside the sidebar with a specific key */
-    button[kind="secondary"] {
-        width: 100%; /* Match input width */
-        height: 50px; /* Adjust for size */
-    }
-    
-    button[kind="secondary"]:disabled {
-        background-color: #d3d3d3 !important; /* Light grey */
-        color: #9e9e9e !important; /* Dimmed text */
-        cursor: not-allowed !important;
-    }
-    </style>
-    """
-
 
 def render_logo() -> None:
     # Inject HTML to display the logo in the sidebar at 70% width
@@ -101,7 +65,7 @@ def set_font() -> None:
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
@@ -141,25 +105,17 @@ def setup_credentials() -> None:
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-    st.session_state.mode = st.radio('Select Mode', ['SambaNova Cloud', 'SambaStudio'])
-    if st.session_state.mode == 'SambaNova Cloud':
-        st.session_state.llm_api = 'sncloud'
-    else:  # SambaStudio
-        st.session_state.llm_api = 'sambastudio'
+    # Set the llm_api to sncloud (only option for now)
+    st.session_state.llm_api = 'sncloud'
 
     additional_env_vars: Dict[str, Any] = {}
-    additional_env_vars = {'SAMBANOVA_URL': SAMBANOVA_URL}
+    additional_env_vars = {'SAMBANOVA_BASE_URL': SAMBANOVA_BASE_URL}
 
     initialize_env_variables(st.session_state.prod_mode, additional_env_vars)
 
     if not are_credentials_set():
-        api_key, additional_vars = env_input_fields(additional_env_vars, mode=st.session_state.mode)
+        api_key, additional_vars = env_input_fields(additional_env_vars)
         if st.button('Save Credentials', key='save_credentials_sidebar'):
-            if st.session_state.mode == 'SambaNova Cloud':
-                message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
-            else:  # SambaStudio
-                additional_vars['SAMBASTUDIO_API_KEY'] = api_key
-                message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             message = save_credentials(api_key, additional_vars, st.session_state.prod_mode)
             st.session_state.mp_events.api_key_saved()
             st.success(message)
@@ -188,16 +144,18 @@ def save_uploaded_file(internal_save_path: str) -> str:
     return temp_file_path
 
 
-def find_pages_to_hide() -> List[str]:
-    pages_to_show = st.session_state.pages_to_show
-    pages_to_hide = []
+def find_pages_to_show() -> List[Any]:
+    pages = st.session_state.pages_to_show
+    pages_to_show = []
 
-    for page_k, page_v in APP_PAGES.items():
-        if page_k != 'setup':
-            if page_k not in pages_to_show:
-                pages_to_hide.append(page_v['page_label'])
-
-    return pages_to_hide
+    for page_k, _ in APP_PAGES.items():
+        if page_k in pages:
+            pages_to_show.append(
+                st.Page(
+                    APP_PAGES[page_k]['file_path'], 
+                    title=APP_PAGES[page_k]['page_label'], 
+                    icon=APP_PAGES[page_k]['page_icon']))
+    return pages_to_show
 
 
 def update_progress_bar(step: int, total_steps: int) -> None:
@@ -210,17 +168,11 @@ def set_api_variables() -> Dict[str, Any]:
         # SambaNova Cloud
         if st.session_state.llm_api == 'sncloud':
             api_variables = {
-                'SAMBANOVA_URL': st.session_state.SAMBANOVA_URL,
+                'SAMBANOVA_BASE_URL': st.session_state.SAMBANOVA_BASE_URL,
                 'SAMBANOVA_API_KEY': st.session_state.SAMBANOVA_API_KEY,
             }
-        # SambaStudio
-        elif st.session_state.llm_api == 'sambastudio':
-            api_variables = {
-                'SAMBASTUDIO_URL': st.session_state.SAMBASTUDIO_URL,
-                'SAMBASTUDIO_API_KEY': st.session_state.SAMBASTUDIO_API_KEY,
-            }
         else:
-            raise Exception('Only sncloud and sambastudio supported.')
+            raise Exception('Only sncloud supported.')
     else:
         api_variables = {}
 

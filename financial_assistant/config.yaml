@@ -1,14 +1,14 @@
-prod_mode: False
-
 llm: 
+  model: "DeepSeek-V3.1"
   temperature: 0.0
-  max_tokens_to_generate: 2048
-  select_expert: "Meta-Llama-3.3-70B-Instruct"
+  max_tokens: 2048
+  top_p: null
+  top_k: null
 
 rag:
   embedding_model: 
-    "type": "sncloud" # Either "sncloud", "sambastudio" or "cpu"
-    "model": "E5-Mistral-7B-Instruct" # Set if using "sncloud" or "sambastudio" Bundle embedding expert
+    "model": "E5-Mistral-7B-Instruct" 
   retrieval:
     "k_retrieved_documents": 5
 
+prod_mode: False

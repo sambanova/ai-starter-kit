@@ -155,13 +155,12 @@ def initialize_application_template() -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title='AI Starter Kit', 
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'), 
-        layout='wide'
+        page_title='AI Starter Kit', page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'), layout='wide'
     )
-    
-     # set buttons style
-    st.markdown("""
+
+    # set buttons style
+    st.markdown(
+        """
         <style>
         div.stButton > button {
             background-color: #250E36;  /* Button background */
@@ -172,25 +171,31 @@ def main() -> None:
             color: #FFFFFF;             /* Button text color */
         }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Load Inter font from Google Fonts and apply globally
-    st.markdown("""
+    st.markdown(
+        """
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # add title and icon
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .kit-title {
                 text-align: center;
@@ -201,12 +206,13 @@ def main() -> None:
             }
         </style>
         <div class="kit-title">Document Comparison</div>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
-    llm_type = 'SambaStudio' if config['llm']['api'] == 'sambastudio' else 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode)
 
@@ -245,7 +251,7 @@ def main() -> None:
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
     if not are_credentials_set():
-        api_key, additional_vars = env_input_fields(mode=llm_type)
+        api_key, additional_vars = env_input_fields()
         if st.button('Save Credentials', key='save_credentials_sidebar'):
             message = save_credentials(api_key, additional_vars, prod_mode)
             st.session_state.mp_events.api_key_saved()

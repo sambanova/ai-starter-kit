@@ -1,15 +1,12 @@
 llm:
-    "type": "sncloud" #  set either sambastudio or sncloud
+    "model": "gpt-oss-120b"
     "temperature": 0.01
-    "max_tokens_to_generate": 500
-    "top_p": 1
-    "do_sample": false
-    "bundle": True #set as true if using Sambastudio bundle endpoint
-    "select_expert": "Meta-Llama-3.3-70B-Instruct"
+    "top_p": null
+    "top_k" : null
+    "max_tokens": 500
 
 embedding_model: 
-    "type": "sncloud" # set either sncloud, sambastudio or cpu
-    "model": "E5-Mistral-7B-Instruct" #set if using Cloud or SambaStudio bundle embedding expert
+    "model": "E5-Mistral-7B-Instruct"
 
 retrieval:
     "chunk_size": 1200

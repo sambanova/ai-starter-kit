@@ -7,7 +7,8 @@ from typing import List, Tuple
 
 import tiktoken
 import yaml
-from langchain_sambanova import ChatSambaNovaCloud
+from langchain_sambanova import ChatSambaNova
+from pydantic import SecretStr
 
 from utils.parsing.sambaparse import parse_doc_universal
 
@@ -21,7 +22,7 @@ tokenizer = tiktoken.get_encoding('cl100k_base')
 class DocumentAnalyzer:
     def __init__(self, sambanova_api_key: str) -> None:
         self.get_config_info()
-        self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.set_llm()
 
     def get_config_info(self) -> None:
@@ -39,15 +40,7 @@ class DocumentAnalyzer:
             self.templates = json.load(ifile)
 
     def set_llm(self) -> None:
-        self.llm = ChatSambaNovaCloud(
-            sambanova_api_key=self.sambanova_api_key,
-            model=self.llm_info['model'],
-            max_tokens=self.llm_info['max_tokens'],
-            temperature=self.llm_info['temperature'],
-            top_p=self.llm_info['top_p'],
-            streaming=self.llm_info['streaming'],
-            stream_options={'include_usage': True},
-        )
+        self.llm = ChatSambaNova(api_key=self.sambanova_api_key, **self.llm_info)
 
     def delete_temp_dir(self, temp_dir: str) -> None:
         """Delete the temporary directory and its contents."""
@@ -114,7 +107,7 @@ class DocumentAnalyzer:
             try:
                 response = self.llm.invoke(messages)
                 completion = str(response.content).strip()
-                usage = response.response_metadata['usage']
+                usage = response.response_metadata['token_usage']
                 break
             except Exception as e:
                 retries += 1

@@ -1,13 +1,13 @@
 llm: 
-  "api": "sncloud"  # set either sambastudio, sncloud
-  "do_sample": False
-  "temperature": 0.01
-  "max_tokens": 2048
   "model": "Meta-Llama-3.3-70B-Instruct" 
+  "max_tokens": 2048
+  "temperature": 0.01
+  "top_p": null
+  "top_k": null
+
 
 embedding_model: 
-    "type": "sncloud" # set either sncloud sambastudio or cpu
-    "model": "e5-mistral-7b-instruct" #set if using sncloud or SambaStudio Bundle embedding expert
+    "model": "E5-Mistral-7B-Instruct" 
 
 prompts: 
     "generate_qa_prompt": "prompts/generate_Q&A.yaml"

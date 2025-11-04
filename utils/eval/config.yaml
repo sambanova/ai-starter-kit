@@ -5,40 +5,12 @@ eval_dataset:
 # Note: LLM costs are per million tokens, please consider it if you require a change
 llms:
   - name: sncloud-llama3.3-70
-    model_type: "sncloud"
     model_name: "Meta-Llama-3.3-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
     model_kwargs:
       input_token_cost: 0.60 # per million tokens
       ouput_token_cost: 1.20 # per million tokens
-
-  - name: sncloud-llama3.2-1
-    model_type: "sncloud"
-    model_name: "Meta-Llama-3.2-1B-Instruct"
-    max_tokens: 1024
-    temperature: 0.0
-    model_kwargs:
-      input_token_cost: 0.04
-      ouput_token_cost: 0.08
-
-  - name: sncloud-llama3.3-70
-    model_type: "sncloud"
-    model_name: "Meta-Llama-3.3-70B-Instruct"
-    max_tokens: 1024
-    temperature: 0.0
-    model_kwargs:
-      input_token_cost: 0.60
-      ouput_token_cost: 1.20
-
-  - name: sncloud-llama3.2-3
-    model_type: "sncloud"
-    model_name: "Meta-Llama-3.2-3B-Instruct"
-    max_tokens: 1024
-    temperature: 0.0
-    model_kwargs:
-      input_token_cost: 0.08
-      ouput_token_cost: 0.16
 
 rag:
   name: sncloud-llama3.3-70-chroma-rag
@@ -48,11 +20,9 @@ rag:
     collection_name: "demo"
   
   embeddings:
-    type: "sncloud"
     model: "E5-Mistral-7B-Instruct"
 
   llm:
-    type: "sncloud"
     model: "Meta-Llama-3.3-70B-Instruct"
     max_tokens: 1024
     temperature: 0.0
@@ -62,7 +32,6 @@ rag:
     ouput_token_cost: 1.20 # per million tokens
 
 eval_llm:
-  model_type: "sncloud"
   model_name: "Meta-Llama-3.3-70B-Instruct"
   max_tokens: 1024
   temperature: 0.0
