@@ -305,7 +305,6 @@ class ResultsConsolidator:
 
         # Remove missing columns safely
         selected_columns = [c for c in selected_columns if c not in missing_columns and c in df_summary.columns]
-        print(selected_columns)
         # Keep only selected columns for export
         df_summary[selected_columns].to_excel(out_path)
         logger.info(f'✅ Wrote consolidated results with switching time to {out_path}')
