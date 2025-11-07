@@ -343,52 +343,50 @@ class BenchmarkRunner:
             concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
             qps = float(row.get('qps', 0.0) or 0.0)
             multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
-            # print(f'row {row}')
-            # print(f'multimodal_img_size {multimodal_img_size}')
+            
+            evaluator = None
+            try:
+                if concurrent_requests:
+                    evaluator = SyntheticPerformanceEvaluator(
+                        multimodal_image_size=multimodal_img_size,
+                        model_name=model_name,
+                        results_dir=os.path.expanduser(output_files_dir),
+                        num_concurrent_requests=concurrent_requests,
+                        timeout=self.config['timeout'],
+                        user_metadata={'model_idx': 0},
+                        llm_api=self.config['llm_api'],
+                        use_multiple_prompts=self.config['use_multiple_prompts'],
+                    )
+                elif qps:
+                    evaluator = RealWorkLoadPerformanceEvaluator(
+                        multimodal_image_size=multimodal_img_size,
+                        model_name=model_name,
+                        results_dir=os.path.expanduser(output_files_dir),
+                        qps=qps,
+                        qps_distribution=row.get('qps_distribution', 'constant'),
+                        timeout=self.config['timeout'],
+                        user_metadata={'model_idx': 0},
+                        llm_api=self.config['llm_api'],
+                    )
+                else:
+                    logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
+                    continue
 
-            # evaluator = None
-            # try:
-            #     if concurrent_requests:
-            #         evaluator = SyntheticPerformanceEvaluator(
-            #             multimodal_image_size=multimodal_img_size,
-            #             model_name=model_name,
-            #             results_dir=os.path.expanduser(output_files_dir),
-            #             num_concurrent_requests=concurrent_requests,
-            #             timeout=self.config['timeout'],
-            #             user_metadata={'model_idx': 0},
-            #             llm_api=self.config['llm_api'],
-            #             use_multiple_prompts=self.config['use_multiple_prompts'],
-            #         )
-            #     elif qps:
-            #         evaluator = RealWorkLoadPerformanceEvaluator(
-            #             multimodal_image_size=multimodal_img_size,
-            #             model_name=model_name,
-            #             results_dir=os.path.expanduser(output_files_dir),
-            #             qps=qps,
-            #             qps_distribution=row.get('qps_distribution', 'constant'),
-            #             timeout=self.config['timeout'],
-            #             user_metadata={'model_idx': 0},
-            #             llm_api=self.config['llm_api'],
-            #         )
-            #     else:
-            #         logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
-            #         continue
+                evaluator.run_benchmark(
+                    num_input_tokens=input_tokens,
+                    num_output_tokens=output_tokens,
+                    num_requests=num_requests,
+                    sampling_params={},
+                )
 
-            #     evaluator.run_benchmark(
-            #         num_input_tokens=input_tokens,
-            #         num_output_tokens=output_tokens,
-            #         num_requests=num_requests,
-            #         sampling_params={},
-            #     )
+            except Exception as e:
+                logger.exception(f"Error running evaluator for model {model_name}: {e}")
 
-            # except Exception as e:
-            #     logger.exception(f"Error running evaluator for model {model_name}: {e}")
-
-            # time.sleep(self.config.get('time_delay', 0))
+            time.sleep(self.config.get('time_delay', 0))
 
         # Consolidation phase
-        run_name = '20251031-180601.530151'
-        output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
+        # run_name = '20251031-180601.530151'
+        # output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
         consolidator = ResultsConsolidator(
             self.read_perf_eval_json_files,
             self.file_parser,
