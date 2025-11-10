@@ -10,8 +10,8 @@ import os
 import re
 import uuid
 from json import JSONDecodeError
+from typing import Any, Callable, Optional
 
-import requests
 from dotenv import load_dotenv
 from jinja2 import Environment, Template, TemplateSyntaxError
 from pydantic import BaseModel
@@ -35,7 +35,7 @@ class ToolCallModel(BaseModel):
     """Schema validator for a tool-call output."""
 
     name: str
-    arguments: dict
+    arguments: dict[str, Any]
 
 
 class ChatTemplateManager:
@@ -56,13 +56,13 @@ class ChatTemplateManager:
 
         self.tokenizers: dict[str, AutoTokenizer] = {}
         self.chat_templates: dict[str, str | None] = {}
-        self.additional_chat_templates_context: dict[str, str | None] = {}
-        self.parsers: dict[str, callable] = {}
+        self.additional_chat_templates_context: dict[str, Any] = {}
+        self.parsers: dict[str, Callable[..., Any]] = {}
         self.register_parser('llama_json_parser', self.llama3_parser)
         self.register_parser('deepseek_xml_parser', self.deepseek_v3_parser)
 
     # Tokenizer and chat-template handlers
-    def load_tokenizer(self, model_name: str):
+    def load_tokenizer(self, model_name: str) -> Any:
         """
         Load a Hugging Face tokenizer for the given model.
 
@@ -77,9 +77,9 @@ class ChatTemplateManager:
 
         tokenizer_path = os.path.join(self.cache_dir, model_name.replace('/', '_'))
         if os.path.exists(tokenizer_path):
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)  # type: ignore[no-untyped-call]
         else:
-            tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
                 model_name, use_auth_token=self.hf_token, cache_dir=self.cache_dir
             )
         self.tokenizers[model_name] = tokenizer
@@ -129,7 +129,9 @@ class ChatTemplateManager:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-    def set_chat_template(self, model_name: str, template: str, additional_context: dict[str, str] = None) -> None:
+    def set_chat_template(
+        self, model_name: str, template: str, additional_context: Optional[dict[str, Any]] = None
+    ) -> None:
         """Validate a chat template and add it to chat templates dict"""
         self._validate_jinja_template(template)
         self.chat_templates[model_name] = template
@@ -137,7 +139,7 @@ class ChatTemplateManager:
             self.additional_chat_templates_context[model_name] = additional_context
         logger.info(f'Chat template set for {model_name}')
 
-    def _extract_tokenizer_context(self, tokenizer) -> dict:
+    def _extract_tokenizer_context(self, tokenizer: Any) -> dict[str, Any]:
         """
         Collect all simple (JSON-serializable) attributes from the tokenizer
         that may be referenced by the Jinja chat template.
@@ -154,10 +156,10 @@ class ChatTemplateManager:
     def apply_chat_template(
         self,
         model_name: str,
-        messages: list,
-        tools: list | None = None,
+        messages: list[dict[str, Any]],
+        tools: Optional[list[dict[str, Any]]] = None,
         add_generation_prompt: bool = True,
-        extra_context: dict | None = None,
+        extra_context: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Render a Jinja2 chat template with given messages and optional tools.
@@ -195,7 +197,7 @@ class ChatTemplateManager:
             context.update(extra_context)
 
         try:
-            template = Template(template_str)
+            template = Template(str(template_str))
             rendered = template.render(**context)
             return rendered.strip()
         except Exception as e:
@@ -204,7 +206,7 @@ class ChatTemplateManager:
             raise ValueError(error_msg)
 
     # Completions API invocation
-    def completions_invoke(self, prompt: str, model: str, **kwargs: dict[str, any] | None):
+    def completions_invoke(self, prompt: str, model: str, **kwargs: Any) -> Any:
         """
         Send a raw prompt to the SambaNova Completions API.
 
@@ -226,11 +228,11 @@ class ChatTemplateManager:
             raise ValueError(error_msg)
 
     #  Tool-call models
-    def _generate_random_id(self, length=18):
+    def _generate_random_id(self, length: int = 18) -> str:
         """Generate random ID prefix 'call_' of given length."""
         return 'call_' + str(uuid.uuid4()).replace('-', '')[:length]
 
-    def instantiate_function_calling_model(self, model_name: str, parameters: dict):
+    def instantiate_function_calling_model(self, model_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """
         Validate and format a function-call into OpenAI tool-call schema.
         """
@@ -241,12 +243,12 @@ class ChatTemplateManager:
             'function': {'name': model_name, 'arguments': json.dumps(parameters)},
         }
 
-    def register_parser(self, name: str, func):
+    def register_parser(self, name: str, func: Callable[..., Any]) -> None:
         """Register a new parser in the global registry."""
         self.parsers[name] = func
 
     ### Llama
-    def _extract_llama_json_strings(self, response: str):
+    def _extract_llama_json_strings(self, response: str) -> list[str]:
         """Extract every top-level {...} JSON object from text."""
         fc_strings, brace_count, start = [], 0, None
         for i, ch in enumerate(response):
@@ -261,7 +263,7 @@ class ChatTemplateManager:
                     start = None
         return fc_strings
 
-    def llama3_parser(self, response: str):
+    def llama3_parser(self, response: str) -> list[Any]:
         """Parse JSON-style tool calls (Llama3)."""
         calls = []
         for js in self._extract_llama_json_strings(response):
@@ -276,7 +278,7 @@ class ChatTemplateManager:
         return calls
 
     ### deepseek
-    def _extract_deepseek_v3_xml_strings(self, response: str):
+    def _extract_deepseek_v3_xml_strings(self, response: str) -> list[dict[str, Any]]:
         """Extract tool-call pairs from DeepSeek XML markers."""
         fc_strings = []
         pattern = r'<｜tool▁call▁begin｜>(.*?)<｜tool▁sep｜>(.*?)<｜tool▁call▁end｜>'
@@ -291,14 +293,14 @@ class ChatTemplateManager:
                 raise ValueError(error_msg)
         return fc_strings
 
-    def deepseek_v3_parser(self, response: str):
+    def deepseek_v3_parser(self, response: str) -> list[Any]:
         """Parse DeepSeek XML-style tool calls into OpenAI format."""
         calls = []
         for fc in self._extract_deepseek_v3_xml_strings(response):
             calls.append(self.instantiate_function_calling_model(fc['name'], fc['parameters']))
         return calls
 
-    def add_custom_tool_parser(self, name: str, code_str: str):
+    def add_custom_tool_parser(self, name: str, code_str: str) -> None:
         """
         Dynamically register a parser from user code.
 
@@ -317,7 +319,7 @@ class ChatTemplateManager:
             return [{"id": "call_custom", "type": "function", "function": {"name": "hello", "arguments": "{}"}}]
         """
 
-        local_env = {}
+        local_env: dict[str, Any] = {}
         try:
             compiled = compile(code_str, '<custom_parser>', 'exec')
             exec(compiled, {}, local_env)
@@ -329,7 +331,7 @@ class ChatTemplateManager:
             if user_fn.__code__.co_argcount != 1:
                 raise ValueError('Custom code `parse` method must accept exactly one argument: response.')
 
-            def validated_parser(response: str):
+            def validated_parser(response: str) -> list[dict[str, Any]]:
                 """Wrapper to enforce output schema validation."""
                 raw_output = user_fn(response)
                 if not isinstance(raw_output, list):
@@ -377,7 +379,7 @@ class ChatTemplateManager:
             raise ValueError(msg)
 
     ## parse to message structure
-    def parse_to_message(self, response: str, parser_name: str):
+    def parse_to_message(self, response: str, parser_name: str) -> dict[str, Any]:
         """
         Convert a raw model response to an assistant message object.
 
