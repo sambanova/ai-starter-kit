@@ -18,41 +18,43 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from src.chat_template import ChatTemplateManager
+from chat_templates.src.chat_template import ChatTemplateManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 class ChatTemplateManagerTestCase(unittest.TestCase):
+    manager: ChatTemplateManager
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         cls.manager = ChatTemplateManager()
 
-    def test_initial_state(self):
+    def test_initial_state(self) -> None:
         self.assertIn('llama_json_parser', self.manager.parsers)
         self.assertIn('deepseek_xml_parser', self.manager.parsers)
 
-    def test_jinja_validation_pass_and_fail(self):
+    def test_jinja_validation_pass_and_fail(self) -> None:
         valid = '{% for msg in messages %}{{ msg.role }}: {{ msg.content }}{% endfor %}'
         self.assertTrue(self.manager._validate_jinja_template(valid))
         with self.assertRaises(ValueError):
             self.manager._validate_jinja_template('{% for msg in messages %}{{ msg.role }}')
 
-    def test_set_and_get_custom_template(self):
+    def test_set_and_get_custom_template(self) -> None:
         dummy_template = 'Hello {{ messages[0].content }}'
         model = 'dummy-model'
         self.manager.set_chat_template(model, dummy_template)
         self.assertEqual(self.manager.chat_templates[model], dummy_template)
 
-    def test_apply_custom_jinja_template(self):
+    def test_apply_custom_jinja_template(self) -> None:
         model = 'dummy-model'
         self.manager.set_chat_template(model, 'User: {{ messages[0].content }}')
         rendered = self.manager.apply_chat_template(model, [{'role': 'user', 'content': 'Hi'}])
         self.assertEqual('User: Hi', rendered)
 
     @patch('src.chat_template.SambaNova')
-    def test_completions_invoke_mocked(self, mock_client):
+    def test_completions_invoke_mocked(self, mock_client: MagicMock) -> None:
         # Mock API response
         mock_instance = MagicMock()
         mock_instance.completions.create.return_value.choices = [MagicMock(text='mocked result')]
@@ -61,7 +63,7 @@ class ChatTemplateManagerTestCase(unittest.TestCase):
         output = self.manager.completions_invoke('prompt text', 'model')
         self.assertEqual(output, 'mocked result')
 
-    def test_llama_parser(self):
+    def test_llama_parser(self) -> None:
         text = """
         {"name": "get_population", "parameters": {"city": "Paris"}}
         {"name": "get_attractions", "parameters": {"city": "Paris", "limit": 3}}
@@ -71,7 +73,7 @@ class ChatTemplateManagerTestCase(unittest.TestCase):
         self.assertEqual(result[0]['function']['name'], 'get_population')
         self.assertEqual(json.loads(result[0]['function']['arguments']), {'city': 'Paris'})
 
-    def test_deepseek_parser(self):
+    def test_deepseek_parser(self) -> None:
         text = """
         <｜tool▁calls▁begin｜>
         <｜tool▁call▁begin｜>get_population<｜tool▁sep｜>{"city": "Paris"}<｜tool▁call▁end｜>
@@ -83,7 +85,7 @@ class ChatTemplateManagerTestCase(unittest.TestCase):
         self.assertEqual(result[0]['function']['name'], 'get_population')
         self.assertEqual(json.loads(result[0]['function']['arguments']), {'city': 'Paris'})
 
-    def test_add_custom_parser_and_parse(self):
+    def test_add_custom_parser_and_parse(self) -> None:
         code = """
 def parse(response: str):
     return [{
@@ -98,7 +100,7 @@ def parse(response: str):
         self.assertEqual(msg['tool_calls'][0]['function']['name'], 'dummy')
         self.assertEqual(msg['tool_calls'][0]['function']['arguments'], '{"key": "value"}')
 
-    def test_parse_to_message_no_tool(self):
+    def test_parse_to_message_no_tool(self) -> None:
         text = 'plain text only'
         msg = self.manager.parse_to_message(text, 'nonexistent')
         self.assertEqual(msg['content'], 'plain text only')
