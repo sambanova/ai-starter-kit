@@ -1,0 +1,311 @@
+app_overview: | 
+    
+    This example application demonstrates how chat templates work under the hood in large language models.
+    It allows users to inspect, edit, and experiment with model-specific Jinja-based chat templates, 
+    seeing exactly how structured message inputs are serialized into the raw text prompts sent to the Completions API.
+
+    Users can dynamically define message sequences, optionally include tool schemas, 
+    and render the complete prompt using either a model’s built-in template or a custom one.
+
+    The rendered prompt can then be sent directly to the SambaNova Completions API, 
+    showing the raw text output produced by the model. 
+    Finally, users can apply predefined or custom post-processing parsers to transform the model’s raw text output 
+    back into structured message and tool-call formats illustrating how high-level chat and tool-calling 
+    abstractions are built from simple text inputs and outputs.
+
+sample_chat_template: |
+  {{- bos_token }}
+  {%- if custom_tools is defined %}
+      {%- set tools = custom_tools %}
+  {%- endif %}
+  {%- if not tools_in_user_message is defined %}
+      {%- set tools_in_user_message = true %}
+  {%- endif %}
+  {%- if not date_string is defined %}
+      {%- set date_string = "26 Jul 2024" %}
+  {%- endif %}
+  {%- if not tools is defined %}
+      {%- set tools = none %}
+  {%- endif %}
+
+  {#- This block extracts the system message, so we can slot it into the right place. #}
+  {%- if messages[0]['role'] == 'system' %}
+      {%- set system_message = messages[0]['content']|trim %}
+      {%- set messages = messages[1:] %}
+  {%- else %}
+      {%- set system_message = "" %}
+  {%- endif %}
+
+  {#- System message + builtin tools #}
+  {{- "<|start_header_id|>system<|end_header_id|>\n\n" }}
+  {%- if builtin_tools is defined or tools is not none %}
+      {{- "Environment: ipython\n" }}
+  {%- endif %}
+  {%- if builtin_tools is defined %}
+      {{- "Tools: " + builtin_tools | reject('equalto', 'code_interpreter') | join(", ") + "\n\n"}}
+  {%- endif %}
+  {{- "Cutting Knowledge Date: December 2023\n" }}
+  {{- "Today Date: " + date_string + "\n\n" }}
+  {%- if tools is not none and not tools_in_user_message %}
+      {{- "You have access to the following functions. To call a function, please respond with JSON for a function call." }}
+      {{- 'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}.' }}
+      {{- "Do not use variables.\n\n" }}
+      {%- for t in tools %}
+          {{- t | tojson(indent=4) }}
+          {{- "\n\n" }}
+      {%- endfor %}
+  {%- endif %}
+  {{- system_message }}
+  {{- "<|eot_id|>" }}
+
+  {#- Custom tools are passed in a user message with some extra guidance #}
+  {%- if tools_in_user_message and not tools is none %}
+      {#- Extract the first user message so we can plug it in here #}
+      {%- if messages | length != 0 %}
+          {%- set first_user_message = messages[0]['content']|trim %}
+          {%- set messages = messages[1:] %}
+      {%- else %}
+          {{- raise_exception("Cannot put tools in the first user message when there's no first user message!") }}
+  {%- endif %}
+      {{- '<|start_header_id|>user<|end_header_id|>\n\n' -}}
+      {{- "Given the following functions, please respond with a JSON for a function call " }}
+      {{- "with its proper arguments that best answers the given prompt.\n\n" }}
+      {{- 'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}.' }}
+      {{- "Do not use variables.\n\n" }}
+      {%- for t in tools %}
+          {{- t | tojson(indent=4) }}
+          {{- "\n\n" }}
+      {%- endfor %}
+       {{- "do not use that format if to answer you do not require to use a tool or if the tool response is already available\n\n" }}
+      {{- first_user_message + "<|eot_id|>"}}
+  {%- endif %}
+
+  {%- for message in messages %}
+      {%- if not (message.role == 'ipython' or message.role == 'tool' or 'tool_calls' in message) %}
+          {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\n\n'+ message['content'] | trim + '<|eot_id|>' }}
+      {%- elif 'tool_calls' in message %}
+          {%- if not message.tool_calls|length == 1 %}
+              {{- raise_exception("This model only supports single tool-calls at once!") }}
+          {%- endif %}
+          {%- set tool_call = message.tool_calls[0].function %}
+          {%- if builtin_tools is defined and tool_call.name in builtin_tools %}
+              {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' -}}
+              {{- "<|python_tag|>" + tool_call.name + ".call(" }}
+              {%- for arg_name, arg_val in tool_call.arguments | items %}
+                  {{- arg_name + '="' + arg_val + '"' }}
+                  {%- if not loop.last %}
+                      {{- ", " }}
+                  {%- endif %}
+                  {%- endfor %}
+              {{- ")" }}
+          {%- else  %}
+              {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' -}}
+              {{- '{"name": "' + tool_call.name + '", ' }}
+              {{- '"parameters": ' }}
+              {{- tool_call.arguments | tojson }}
+              {{- "}" }}
+          {%- endif %}
+          {%- if builtin_tools is defined %}
+              {#- This means we're in ipython mode #}
+              {{- "<|eom_id|>" }}
+          {%- else %}
+              {{- "<|eot_id|>" }}
+          {%- endif %}
+      {%- elif message.role == "tool" or message.role == "ipython" %}
+          {{- "<|start_header_id|>ipython<|end_header_id|>\n\n" }}
+          {%- if message.content is mapping or message.content is iterable %}
+              {{- message.content | tojson }}
+          {%- else %}
+              {{- message.content }}
+          {%- endif %}
+          {{- "<|eot_id|>" }}
+      {%- endif %}
+  {%- endfor %}
+  {%- if add_generation_prompt %}
+      {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' }}
+  {%- endif %}
+
+sample_extra_variables: 
+    bos_token: "<|begin_of_text|>"
+    eos_token: "<|eot_id|>"
+    date_string: "{datetime.now().strftime('%d %b %Y')}"
+
+sample_messages:
+    -  role: system
+       content: "You are a helpful assistant."
+    -  role: user
+       content: "Hi, what is the population of Bogota?"
+
+sample_tools:
+    -  type: "function"
+       function:
+            name: "get_population"
+            description: "Returns the population of a city."
+            parameters:
+                type: "object"
+                properties:
+                    city: 
+                        type: "string"
+                        description: "Name of the city"
+                required": 
+                    -   "city"
+    -   type: "function"
+        function:
+            name: "get_attractions"
+            description: "Lists main tourist attractions for a city."
+            parameters:
+                type: "object"
+                properties:
+                    city: 
+                        type: "string"
+                        description: "City name"
+                    limit: 
+                        type: "integer" 
+                        description: "Maximum number of attractions"
+                required: 
+                    - city
+
+sample_parser_ref_code: |
+    def parse(response: str):
+        """Extract tools from response and parse them to list of tools format"""
+
+        import json
+        from pydantic import BaseModel
+
+        class ToolCallModel(BaseModel):
+            """Schema validator for a tool-call output."""
+            name: str
+            arguments: dict
+
+        json_strings = []
+        brace_count = 0
+        start = None
+        for i, ch in enumerate(response):
+            if ch == "{":
+                if brace_count == 0:
+                    start = i
+                brace_count += 1
+            elif ch == "}" and start is not None:
+                brace_count -= 1
+                if brace_count == 0:
+                    json_strings.append(response[start : i + 1])
+                    start = None
+
+        tool_calls = []
+        for json_string in json_strings:
+            try:
+                obj = json.loads(json_string)
+                name, params = obj["name"], obj["parameters"]
+                ToolCallModel(name=name, arguments=params)
+                tool_calls.append({
+                    "id": "dummy_random_id",
+                    "type": "function",
+                    "function": {"name": name, "arguments": json.dumps(params)},
+                })
+            except Exception as e:
+                error_msg = f"Invalid tool call in block {json_string[:120]}...: {e}"
+                raise ValueError(error_msg)
+
+        return tool_calls
+
+llama_json_parser_ref_code: |
+    import json
+    import uuid
+    from pydantic import BaseModel
+
+    class ToolCallModel(BaseModel):
+        """Schema validator for a tool-call output."""
+        name: str
+        arguments: dict
+
+    def generate_random_id(length=18):
+        """Generate random ID prefix 'call_' of given length."""
+        return "call_" + str(uuid.uuid4()).replace("-", "")[:length] 
+
+    def instantiate_function_calling_model(model_name: str, parameters: dict):
+        """
+        Validate and format a function-call into OpenAI tool-call schema.
+        """
+        ToolCallModel(name=model_name, arguments=parameters)
+        return {
+            "id": generate_random_id(),
+            "type": "function",
+            "function": {"name": model_name, "arguments": json.dumps(parameters)},
+        } 
+
+    def extract_json_strings(response: str):
+        """Extract every top-level {...} JSON object from text."""
+        fc_strings, brace_count, start = [], 0, None
+        for i, ch in enumerate(response):
+            if ch == "{":
+                if brace_count == 0:
+                    start = i
+                brace_count += 1
+            elif ch == "}" and start is not None:
+                brace_count -= 1
+                if brace_count == 0:
+                    fc_strings.append(response[start : i + 1])
+                    start = None
+        return fc_strings
+    
+    def parse(response: str):
+        """Parse JSON-style tool calls into OpenAI format (Llama3)."""
+        calls = []
+        for js in extract_json_strings(response):
+            try:
+                obj = json.loads(js)
+                name, params = obj["name"], obj["parameters"]
+                calls.append(instantiate_function_calling_model(name, params))
+            except Exception as e:
+                error_msg = f"Invalid tool call in block {js[:120]}...: {e}"
+                raise ValueError(error_msg)
+        return calls
+
+deepseek_xml_parser_ref_code: |
+    import json
+    import re
+    import uuid
+    from pydantic import BaseModel
+
+    class ToolCallModel(BaseModel):
+        """Schema validator for a tool-call output."""
+        name: str
+        arguments: dict
+
+    def generate_random_id(length=18):
+        """Generate random ID prefix 'call_' of given length."""
+        return "call_" + str(uuid.uuid4()).replace("-", "")[:length]
+
+    def instantiate_function_calling_model(model_name: str, parameters: dict):
+        """
+        Validate and format a function-call into OpenAI tool-call schema.
+        """
+        ToolCallModel(name=model_name, arguments=parameters)
+        return {
+            "id": generate_random_id(),
+            "type": "function",
+            "function": {"name": model_name, "arguments": json.dumps(parameters)},
+        }
+
+    def extract_xml_strings(response: str):
+        """Extract tool-call pairs from XML markers. (DeepSeek style)"""
+        fc_strings = []
+        pattern = r"<｜tool▁call▁begin｜>(.*?)<｜tool▁sep｜>(.*?)<｜tool▁call▁end｜>"
+        for match in re.findall(pattern, response, re.DOTALL):
+            name, args = match
+            try:
+                args = json.loads(args)
+                fc_strings.append({"name": name.strip(), "parameters": args})
+            except JSONDecodeError as e:
+                error_msg = (
+                    f"Invalid JSON in DeepSeek tool-call arguments for '{name.strip()}': {e.msg}"
+                )
+                raise ValueError(error_msg)
+        return fc_strings
+
+    def parse(response: str):
+        """Parse XML-style tool calls into OpenAI format (DeepSeek)"""
+        calls = []
+        for fc in extract_xml_strings(response):
+            calls.append(instantiate_function_calling_model(fc["name"], fc["parameters"]))
+        return calls
