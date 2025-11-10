@@ -76,12 +76,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
-<td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
-<td width="20%"> Integrations </td>  
-</tr>
-
-<tr>
 <td width="20%"><a href="financial_assistant/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
 <td width="20%"> Advanced AI Capabilities </td>
@@ -91,6 +85,12 @@ For functionalities related to third-party integrations, find a list in our [Int
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="40%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
 <td width="20%"> Advanced AI Capabilities </td>
+</tr>
+
+<tr>
+<td width="20%"><a href="chat_templates/README.md">Custom Chat Templates</a></td>
+<td width="40%"> complete workflow of how modern chat models format, send, and interpret conversations. From Jinja chat templates to Completions API invocation and tool-call parsing.</td>
+<td width="20%"> Advanced AI Capabilitie </td>
 </tr>
 
 </tbody>
