@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Protocol
 
 import pandas
 import yfinance
-from langchain.prompts import PromptTemplate
+from langchain_classic.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field

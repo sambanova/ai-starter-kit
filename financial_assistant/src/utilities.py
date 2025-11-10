@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, TypeVar
 
 import streamlit
 import yaml
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.prompts import ChatPromptTemplate
 
 logger = logging.getLogger(__name__)
 

@@ -38,7 +38,7 @@ logger.info(f'repo_dir: {repo_dir}')
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
 from langchain_core.embeddings import Embeddings
 
 from enterprise_knowledge_retriever.src.document_retrieval import DocumentRetrieval, RetrievalQAChain

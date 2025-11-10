@@ -37,7 +37,7 @@ os.path.join(repo_dir, 'utils', 'tests', 'config.yaml')
 
 import openai
 from dotenv import load_dotenv
-from langchain_community.chat_models import ChatSambaNovaCloud
+from langchain_community.chat_models import ChatSambaNova
 from langchain_core.messages import HumanMessage
 from openai import OpenAI
 
@@ -213,7 +213,7 @@ class TestAPIModel(unittest.TestCase):
             if model == 'Meta-Llama-Guard-3-8B':
                 continue
 
-            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+            llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
             response = llm_model.invoke(messages)
 
             self.assertTrue(hasattr(response, 'content'))
@@ -235,7 +235,7 @@ class TestAPIModel(unittest.TestCase):
             )
         ]
         for model in image_models:
-            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+            llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
             response = llm_model.invoke(message)
 
             self.assertTrue(hasattr(response, 'content'))
@@ -254,7 +254,7 @@ class TestAPIModel(unittest.TestCase):
     #         HumanMessage(audio_prompt),
     #     ]
     #     for model in audio_models:
-    #         llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+    #         llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
     #         response = llm_model.invoke(messages)
 
     #         self.assertTrue(hasattr(response, 'content'))

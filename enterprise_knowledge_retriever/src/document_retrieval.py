@@ -8,10 +8,10 @@ import nltk
 import torch
 import yaml
 from dotenv import load_dotenv
-from langchain.chains.base import Chain
-from langchain.docstore.document import Document
-from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.chains.base import Chain
+from langchain_classic.docstore.document import Document
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
