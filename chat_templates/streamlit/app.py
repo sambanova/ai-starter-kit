@@ -9,8 +9,7 @@ import logging
 import os
 import sys
 import uuid
-from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import streamlit as st
 import yaml
@@ -21,8 +20,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
-from src.chat_template import ChatTemplateManager
-
+from chat_templates.src.chat_template import ChatTemplateManager
 from utils.events.mixpanel import MixpanelEvents
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -111,7 +109,7 @@ def setup_ui_style(repo_dir: str) -> None:
 
 
 # chat template manager initialization
-def initialize_manager():
+def initialize_manager() -> ChatTemplateManager:
     manager = ChatTemplateManager(
         hf_token=st.session_state['HUGGINGFACE_TOKEN'],
         sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
@@ -121,7 +119,9 @@ def initialize_manager():
 
 
 # Sidebar Setup
-def sidebar_setup(prod_mode: bool, additional_variables: dict[str, str], app_description: dict[str, str]):
+def sidebar_setup(
+    prod_mode: bool, additional_variables: dict[str, Optional[str]], app_description: dict[str, Optional[str]]
+) -> None:
     with st.sidebar:
         logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
         with open(logo_path, 'rb') as img_file:
@@ -214,7 +214,7 @@ def sidebar_setup(prod_mode: bool, additional_variables: dict[str, str], app_des
                             '**Use the prefilled one as reference**'
                         ),
                     )
-                    sample_variables = app_description.get('sample_extra_variables', {})
+                    sample_variables = cast(dict[str, Any], app_description.get('sample_extra_variables', {}))
                     sample_variables = {
                         k: (eval(v.strip('{}')) if isinstance(v, str) and v.startswith('{') and v.endswith('}') else v)
                         for k, v in sample_variables.items()
@@ -363,7 +363,7 @@ def sidebar_setup(prod_mode: bool, additional_variables: dict[str, str], app_des
                                 )
 
 
-def main_interaction_area(app_description: dict[str, str]):
+def main_interaction_area(app_description: dict[str, str]) -> None:
     # Messages and Tools Input
     st.divider()
     st.subheader('Define Messages and Tools')
@@ -470,7 +470,7 @@ def main_interaction_area(app_description: dict[str, str]):
                         try:
                             tools = json.loads(st.session_state.tools)
                         except Exception as e:
-                            raise f'Error parsing tools, must be valid list of json tools: {e}'
+                            raise ValueError(f'Error parsing tools, must be valid list of json tools: {e}')
                     else:
                         tools = None
                     rendered = st.session_state.manager.apply_chat_template(
@@ -540,7 +540,7 @@ def main_interaction_area(app_description: dict[str, str]):
             st.code(st.session_state.parsed_output, height=100)
 
 
-def main():
+def main() -> None:
     setup_ui_style(repo_dir)
 
     config = load_config()
@@ -589,6 +589,8 @@ def main():
 
     else:
         st.divider()
+        overview = app_description.get('app_overview', '')
+        overview_html = overview.replace('\n', '<br>')
         st.markdown(
             f"""
                 <style>
@@ -599,7 +601,7 @@ def main():
                         display: inline;
                     }}
                 </style>
-                <div class="kit-description">{app_description.get('app_overview').replace('\n', '<br>')} </div>
+                <div class="kit-description">{overview_html} </div>
             """,
             unsafe_allow_html=True,
         )
