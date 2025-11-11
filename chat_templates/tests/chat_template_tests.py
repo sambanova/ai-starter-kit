@@ -53,7 +53,7 @@ class ChatTemplateManagerTestCase(unittest.TestCase):
         rendered = self.manager.apply_chat_template(model, [{'role': 'user', 'content': 'Hi'}])
         self.assertEqual('User: Hi', rendered)
 
-    @patch('src.chat_template.SambaNova')
+    @patch('chat_templates.src.chat_template.SambaNova')
     def test_completions_invoke_mocked(self, mock_client: MagicMock) -> None:
         # Mock API response
         mock_instance = MagicMock()
