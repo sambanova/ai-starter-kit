@@ -47,7 +47,7 @@ class ChatTemplateManager:
         sambanova_api_key: str | None = None,
         sambanova_api_base: str | None = None,
         cache_dir: str | None = None,
-    ):
+    ) -> None:
         self.hf_token = hf_token
         self.sambanova_api_key = sambanova_api_key or os.environ.get('SAMBANOVA_API_KEY')
         self.sambanova_api_base = sambanova_api_base or os.environ.get('SAMBANOVA_API_BASE', BASE_URL)
@@ -353,13 +353,15 @@ class ChatTemplateManager:
                         )
                     if not isinstance(args, str):
                         raise ValueError(
-                            f'Function arguments must be a dumped json in str, got {type(args)} in item {i} of custom code parser output.'
+                            f'Function arguments must be a dumped json in str, got {type(args)} in item {i} '
+                            'of custom code parser output.'
                         )
                     try:
                         args_dict = json.loads(args)
                     except Exception as e:
                         raise ValueError(
-                            f"Function arguments couldn't be loaded as json {type(args)} in item {i} of custom code parser output. \n{e}"
+                            f"Function arguments couldn't be loaded as json {type(args)} in item {i} "
+                            f"of custom code parser output. \n{e}"
                         )
 
                     # Enforce proper OpenAI tool-call schema via Pydantic

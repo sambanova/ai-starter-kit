@@ -9,7 +9,8 @@ import logging
 import os
 import sys
 import uuid
-from typing import Any, List, Optional, cast
+from datetime import datetime # noqa
+from typing import Any, Optional, cast
 
 import streamlit as st
 import yaml
@@ -169,16 +170,16 @@ def sidebar_setup(
                     'Chat template source',
                     ['Hugging Face model', 'Custom chat template'],
                     help="""Select whether to **load the chat template directly from a Hugging Face model’s tokenizer** 
-                    *(which includes the model’s default Jinja chat formatting)* or to define **your own custom Jinja-based 
-                    template** manually. \n\n**The chosen template determines how your messages and tools are converted 
-                    into the final text prompt sent to the Completions API**""",
+                    *(which includes the model’s default Jinja chat formatting)* or to define **your own custom 
+                    Jinja-based template** manually. \n\n**The chosen template determines how your messages and tools 
+                    are converted into the final text prompt sent to the Completions API**""",
                 )
                 if 'hugging' in chat_template_source.lower():
                     hf_model = st.text_input(
                         'Hugging face model name',
                         placeholder='meta-llama/Llama-3.3-70B-Instruct',
-                        help="""Enter the **Full Hugging Face model identifier** whose tokenizer defines the chat template
-                        you want to load (for example: 'meta-llama/Llama-3.3-70B-Instruct').
+                        help="""Enter the **Full Hugging Face model identifier** whose tokenizer defines the chat 
+                        template you want to load (for example: 'meta-llama/Llama-3.3-70B-Instruct').
                         The app will automatically download the tokenizer and display its built-in Jinja chat template.
                         \n\n**Find the models identifier in** https://huggingface.co/models""",
                     )
@@ -208,10 +209,12 @@ def sidebar_setup(
                         value=app_description.get('sample_chat_template'),
                         placeholder=app_description.get('sample_chat_template'),
                         help=(
-                            'Paste or write your **Jinja2** chat template here. \n'
-                            "You can use variables like 'bos_token', 'eos_token', 'date_string', or any you define bellow.\n"
-                            'Your chat template must contain and handle `messages`, `tools` and `add_generation_prompt` variables.\n\n'
-                            '**Use the prefilled one as reference**'
+                            """Paste or write your **Jinja2** chat template here.
+                            You can use variables like 'bos_token', 'eos_token', 'date_string', or any you define bellow.
+                            'Your chat template must contain and handle `messages`, `tools` and `add_generation_prompt` 
+                            variables.\n
+                            **Use the prefilled one as reference**
+                            """
                         ),
                     )
                     sample_variables = cast(dict[str, Any], app_description.get('sample_extra_variables', {}))
@@ -225,7 +228,9 @@ def sidebar_setup(
                         height=140,
                         value=sample_variables_str,
                         placeholder=sample_variables_str,
-                        help='Define variables to inject into the Jinja template in valid json format.\n\n**Use the prefilled one as reference**',
+                        help="""Define variables to inject into the Jinja template in valid json format.\n
+                        **Use the prefilled one as reference**
+                        """,
                     )
                     try:
                         custom_variables = json.loads(raw_custom_variables)
@@ -256,7 +261,8 @@ def sidebar_setup(
                 api_model_name = st.text_input(
                     'API model name',
                     'Meta-Llama-3.3-70B-Instruct',
-                    help="""Enter the name of the model to use for generating completions through the **SambaNova API**, this can be any model available in your SambaNova account that supports the Completions endpoint.""",
+                    help="""Enter the name of the model to use for generating completions through the **SambaNova API**,
+                    this can be any model available in your SambaNova account that supports the Completions endpoint""",
                 )
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -279,7 +285,8 @@ def sidebar_setup(
                         value=0.0,
                         step=0.05,
                         help=(
-                            'Applies nucleus sampling. The model considers only the smallest set of tokens whose cumulative probability'
+                            """Applies nucleus sampling. 
+                            The model considers only the smallest set of tokens whose cumulative probability"""
                         ),
                     )
                 with col3:
@@ -328,8 +335,8 @@ def sidebar_setup(
                         height=200,
                         value=app_description.get('sample_parser_ref_code'),
                         placeholder=app_description.get('sample_parser_ref_code'),
-                        help="""Write valid Python code defining an auto contained function named `parse(response: str) -> list`.  
-                            The function should return a list of tool call dicts or an empty list. "**Use the prefilled one as reference**""",
+                        help="""Write valid Python code defining an auto contained function named `parse(response: str) -> list`.
+                            The function should return a list of tool call dicts or an empty list. "**Use the prefilled one as reference**""", # noqa
                     )
 
                     if st.button('Add parser', key='add_parser_button'):
@@ -457,7 +464,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     with apply_col:
         add_prompt = st.checkbox('Add assistant generation prompt', value=True)
         apply_button = st.button(
-            f'Apply {("ˋ" + st.session_state.model_name + "ˋ") if st.session_state.model_name is not None else ""} chat template',
+            f'Apply {("ˋ" + st.session_state.model_name + "ˋ") if st.session_state.model_name is not None else ""} chat template', # noqa
             key='apply_chat_template_button',
             type='primary',
         )
@@ -495,7 +502,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     invoke_col, raw_result_col = st.columns([1, 3])
     with invoke_col:
         if st.button(
-            f'Invoke {("ˋ" + st.session_state.api_model_name + "ˋ") if st.session_state.api_model_name is not None else ""}',
+            f'Invoke {("ˋ" + st.session_state.api_model_name + "ˋ") if st.session_state.api_model_name is not None else ""}', # noqa
             key='invoke_model_btn',
             type='primary',
         ):
@@ -521,7 +528,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     parse_col, parsed_out_col = st.columns([1, 3])
     with parse_col:
         if st.button(
-            f'Parse raw output {("with ˋ" + st.session_state.parser_name + "ˋ parser") if st.session_state.parser_name is not None else ""}'
+            f'Parse raw output {("with ˋ" + st.session_state.parser_name + "ˋ parser") if st.session_state.parser_name is not None else ""}' # noqa
         ):
             if st.session_state.parser_name:
                 if st.session_state.raw_response:
