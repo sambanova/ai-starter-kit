@@ -8,16 +8,11 @@ from typing import Any, Dict
 import pandas as pd
 import streamlit as st
 import yaml
-from st_pages import hide_pages
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
-    APP_PAGES,
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,
-    PRIMARY_ST_STYLE,
-    SECONDARY_ST_STYLE,
-    find_pages_to_hide,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
@@ -176,13 +171,8 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
-    hide_pages([APP_PAGES['main']['page_label']])
 
     set_font()
-    if st.session_state.prod_mode:
-        pages_to_hide = find_pages_to_hide()
-        pages_to_hide.append(APP_PAGES['main']['page_label'])
-        hide_pages(pages_to_hide)
 
     render_title_icon('Synthetic Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
 
@@ -213,8 +203,8 @@ def main() -> None:
         llm_model = st.text_input(
             'Model Name',
             value='Meta-Llama-3.3-70B-Instruct',
-            help='If using SambaStudio, look at your model card and introduce the same name \
-                of the model/expert here following the Readme.',
+            help='Look at your model card and introduce the same name \
+                of the model/expert',
             disabled=st.session_state.running or st.session_state.optional_download,
         )
         st.session_state.llm = f'{llm_model}'
@@ -225,14 +215,6 @@ def main() -> None:
                 options=list(LLM_API_OPTIONS.keys()),
                 format_func=lambda x: LLM_API_OPTIONS[x],
                 index=0,
-                disabled=True,
-            )
-        elif st.session_state.llm_api == 'sambastudio':
-            st.selectbox(
-                'API type',
-                options=list(LLM_API_OPTIONS.keys()),
-                format_func=lambda x: LLM_API_OPTIONS[x],
-                index=1,
                 disabled=True,
             )
 
@@ -296,6 +278,7 @@ def main() -> None:
             disabled=st.session_state.running or st.session_state.optional_download,
             key='run_button',
             type='primary',
+            width="stretch"
         )
 
         if st.session_state.optional_download:
@@ -304,12 +287,14 @@ def main() -> None:
                 data=st.session_state.zip_buffer,
                 file_name='output_files.zip',
                 mime='application/zip',
+                width="stretch"
             )
         else:
             st.sidebar.download_button(
                 label='Download Results',
                 data='',
                 disabled=not st.session_state.running or not st.session_state.optional_download,
+                width="stretch"
             )
 
         # Disable stop button if app is not running and download button is not available
@@ -317,6 +302,7 @@ def main() -> None:
             'Stop',
             disabled=(not st.session_state.running) and (not st.session_state.optional_download),
             type='secondary',
+            width="stretch"
         )
 
     if sidebar_stop:
@@ -415,11 +401,7 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-
-    # Defining styles
-    st.markdown(PRIMARY_ST_STYLE, unsafe_allow_html=True)
-    st.markdown(SECONDARY_ST_STYLE, unsafe_allow_html=True)
-
+    
     _initialize_session_variables()
 
     main()

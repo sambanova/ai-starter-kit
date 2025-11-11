@@ -190,7 +190,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
                 'ai',
                 avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
             ):
-                formatted_ans = st.session_state.chat_history[i].replace('$', '\$')
+                formatted_ans = st.session_state.chat_history[i].replace('$', r'\$')
                 st.write(f'{formatted_ans}')
 
     # generate response
@@ -235,7 +235,7 @@ def set_fc_session_state_variables() -> None:
     if 'tools' not in st.session_state:
         st.session_state.tools = [k for k, v in st_tools.items() if v['default'] and v['enabled']]
     if 'max_iterations' not in st.session_state:
-        st.session_state.max_iterations = 5
+        st.session_state.max_iterations = 10
     if 'session_temp_db' not in st.session_state:
         if prod_mode:
             st.session_state.session_temp_db = os.path.join(
@@ -253,9 +253,10 @@ def main() -> None:
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-    
-     # set buttons style
-    st.markdown("""
+
+    # set buttons style
+    st.markdown(
+        """
         <style>
         div.stButton > button {
             background-color: #250E36;  /* Button background */
@@ -266,25 +267,31 @@ def main() -> None:
             color: #FFFFFF;             /* Button text color */
         }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Load Inter font from Google Fonts and apply globally
-    st.markdown("""
+    st.markdown(
+        """
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
 
         <style>
             /* Apply Exile font to all elements on the page */
-            * {
+            html, body, [class^="css"] :not(.material-icons) {
                 font-family: 'Inter', sans-serif !important;
             }
         </style>
-        """, unsafe_allow_html=True)
-    
+        """,
+        unsafe_allow_html=True,
+    )
+
     # add title and icon
     col1, col2, col3 = st.columns([4, 1, 4])
     with col2:
         st.image(os.path.join(repo_dir, 'images', 'fc_icon.png'))
-    st.markdown("""
+    st.markdown(
+        """
         <style>
             .kit-title {
                 text-align: center;
@@ -295,7 +302,9 @@ def main() -> None:
             }
         </style>
         <div class="kit-title">Function Calling Assistant</div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     initialize_env_variables(prod_mode, additional_env_vars)
 
@@ -317,24 +326,26 @@ def main() -> None:
         st.session_state.execution_scratchpad_history = []
 
     with st.sidebar:
-        
         # Inject HTML to display the logo in the sidebar at 70% width
         logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
-        with open(logo_path, "rb") as img_file:
+        with open(logo_path, 'rb') as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
-        st.sidebar.markdown(f"""
+        st.sidebar.markdown(
+            f"""
             <div style="text-align: center;">
                 <img src="data:image/png;base64,{encoded}" style="width:60%; display: block; max-width:100%;">
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         st.title('Setup')
 
         # Callout to get SambaNova API Key
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(additional_env_vars):
-            api_key, additional_vars = env_input_fields(additional_env_vars, mode=llm_type)
+            api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)
@@ -363,7 +374,7 @@ def main() -> None:
                 st.session_state.input_disabled = False
 
             st.markdown('**2. Set the maximum number of iterations your want the model to run**')
-            st.session_state.max_iterations = st.number_input('Max iterations', value=5, max_value=20)
+            st.session_state.max_iterations = st.number_input('Max iterations', value=10, max_value=25)
             st.markdown('**Note:** The response cannot completed if the max number of iterations is too low')
 
             st.markdown('**3. Ask the model**')

@@ -145,7 +145,7 @@ def retrieve_filings(
             documents.append(document)
 
         # Return the QA response
-        response = get_qa_response(user_question, documents)
+        response = get_qa_response(user_question, documents)  # TODO pass sambanova_api_key
 
         # Ensure that response is indexable
         if not isinstance(response, dict):
@@ -242,7 +242,7 @@ def parse_filings(
                 # Save chunks to csv
                 df = pandas.DataFrame(chunks, columns=['text'])
                 filename = (
-                    f"filing_id_{filing_type.replace('-', '')}_{filing_quarter}_"
+                    f'filing_id_{filing_type.replace("-", "")}_{filing_quarter}_'
                     + f'{ticker_symbol}_{report_date.date().year}'
                 )
                 df.to_csv(os.path.join(streamlit.session_state.sources_dir, f'{filename}.csv'), index=False)

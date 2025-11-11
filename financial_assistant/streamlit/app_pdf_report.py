@@ -204,7 +204,7 @@ def include_pdf_report() -> None:
                             args=(file,),
                         ):
                             pass
-                streamlit.write(f"Selected files: :green[{', '.join(streamlit.session_state.selected_files)}]")
+                streamlit.write(f'Selected files: :green[{", ".join(streamlit.session_state.selected_files)}]')
 
         elif upload_your_pdf and not use_generated_pdf:
             # Add a PDF document for RAG

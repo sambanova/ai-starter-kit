@@ -43,8 +43,6 @@ STARTER_KITS: List[str] = [
     'function_calling',
     'search_assistant',
     'multimodal_knowledge_retriever',
-    'post_call_analysis',
-    'prompt_engineering',
     'document_comparison',
     'utils',
 ]
@@ -54,7 +52,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'benchmarking': (
         'python src/evaluator.py '
         '--mode synthetic '
-        "--model-names 'Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct Meta-Llama-3.1-405B-Instruct' "
+        "--model-names 'Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct' "
         "--results-dir './data/results/llmperf' "
         '--num-concurrent-requests 1 '
         '--timeout 600 '
@@ -70,8 +68,6 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'financial_assistant': 'python tests/financial_assistant_test.py',
     'function_calling': 'python tests/fc_test.py',
     'multimodal_knowledge_retriever': ('python tests/multimodal_knowledge_retriever_test.py'),
-    'post_call_analysis': 'python tests/pca_test.py',
-    'prompt_engineering': 'python tests/prompt_engineering_test.py',
     'search_assistant': 'python tests/search_assistant_test.py',
     'document_comparison': 'python tests/dc_test.py',
     'utils': 'python tests/api_testing.py',

@@ -16,7 +16,6 @@ Search Assistant
     - [Clone this repository](#clone-this-repository)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the generative model](#set-up-the-generative-model)
-        - [Set up the embedding model](#set-up-the-embedding-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Option 1: Use a virtual environment](#option-1-use-a-virtual-environment)
     - [Option 2: Deploy the starter kit in a Docker container](#option-2-deploy-the-starter-kit-in-a-docker-container)
@@ -40,7 +39,7 @@ Search Assistant
 
 This AI Starter Kit is an example of a semantic search workflow that can be built using the SambaNova platform to get answers to your questions using Google search information as the source. This kit includes:
 
- -   A configurable SambaNova Cloud or SambaStudio connector to run inference off a model deployed and trained on SambaNova hardware. 
+ -   A configurable SambaNova connector to run inference off a model deployed and trained on SambaNova hardware. 
  -   A configurable integration with a third-party vector database.
  -   An implementation of the semantic search workflow and prompt construction strategies.
  -   Configurable integrations with multiple SERP APIs
@@ -67,23 +66,11 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the generative model
 
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
-- **SambaNova Cloud (Option 1)**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
-    Then, in the [config file](./config.yaml), set the `type` variable in `llm_info` to `"sncloud"` and set the `select_expert` config depending on the model you want to use.
+Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
-- **SambaStudio (Option 2)**: Follow the instructions [here](../README.md#use-sambastudio-option-2) to set up your endpoint and environment variables.
-    Then in the [config file](./config.yaml) set the `type` variable in `llm_info` to `"sambastudio"`, and set the `bundle` and `select_expert` configs if you are using a bundle endpoint.
-
-### Set up the embedding model
-
-You have the following options to set up your embedding model:
-
-* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
-
-* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
-
-* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
+Then, in the [config file](./config.yaml), set the `model` config depending on the model you want to use.
 
 # Deploy the starter kit GUI
 

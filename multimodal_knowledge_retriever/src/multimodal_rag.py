@@ -9,6 +9,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
 
+import base64
 import glob
 import ssl
 import time
@@ -22,23 +23,21 @@ from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from langchain.memory import ConversationSummaryMemory
+from langchain.prompts import ChatPromptTemplate, load_prompt
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.schema import Document
 from langchain.storage import InMemoryByteStore
 from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import load_prompt
+from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from unstructured.partition.pdf import partition_pdf
-
-from utils.model_wrappers.api_gateway import APIGateway
-from utils.model_wrappers.multimodal_models import SambastudioMultimodal
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
-    ssl._create_default_https_context = _create_unverified_https_context
+    ssl._create_default_https_context = _create_unverified_https_context  # type: ignore[assignment]
 
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
@@ -56,6 +55,31 @@ logging.basicConfig(
 
 # Create a logger object
 logger = logging.getLogger(__name__)
+
+
+def load_chat_prompt(path: str) -> ChatPromptTemplate:
+    """Load chat prompt from yaml file"""
+
+    with open(path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    config.pop('_type')
+
+    template = config.pop('template')
+
+    if not template:
+        msg = "Can't load chat prompt without template"
+        raise ValueError(msg)
+
+    messages = []
+    if isinstance(template, str):
+        messages.append(('human', template))
+
+    elif isinstance(template, list):
+        for item in template:
+            messages.append((item['role'], item['content']))
+
+    return ChatPromptTemplate(messages=messages, **config)
 
 
 class MultimodalRetrieval:
@@ -102,10 +126,10 @@ class MultimodalRetrieval:
 
     def set_llm(self, model: Optional[str] = None) -> None:
         """
-        Sets the sncloud, or sambastudio LLM based on the llm type attribute.
+        Sets the sambanova LLM
 
         Parameters:
-        Model (str): The name of the model to use for the LVLM (overwrites the param set in config).
+        Model (str): The name of the model to use for the LLM (overwrites the param set in config).
         """
 
         if self.prod_mode:
@@ -117,47 +141,52 @@ class MultimodalRetrieval:
                 sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         if model is None:
-            model = self.llm_info['select_expert']
-
-        self.llm = APIGateway.load_llm(
-            type=self.llm_info['type'],
-            streaming=True,
-            bundle=self.llm_info['bundle'],
-            do_sample=self.llm_info['do_sample'],
-            max_tokens_to_generate=self.llm_info['max_tokens_to_generate'],
-            temperature=self.llm_info['temperature'],
-            select_expert=model,
-            process_prompt=False,
-            sambanova_api_key=sambanova_api_key,
+            model = self.llm_info['model']
+        llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
+        llm = ChatSambaNova(
+            api_key=sambanova_api_key,
+            **llm_info,
+            model=model,
         )
+        self.llm = llm
 
     def set_lvlm(self, model: Optional[str] = None) -> None:
         """
-        Sets the sncloud, or sambastudio LVLM based on the config attributes.
+        Sets the LVLM based on the config attributes.
 
         Parameters:
         model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
         if self.prod_mode:
-            lvlm_api_key = st.session_state.SAMBANOVA_API_KEY
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
         else:
             if 'SAMBANOVA_API_KEY' in st.session_state:
-                lvlm_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
             else:
-                lvlm_api_key = os.environ.get('SAMBANOVA_API_KEY')
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         if model is None:
             model = self.lvlm_info['model']
-
-        self.lvlm = SambastudioMultimodal(
-            api_key=lvlm_api_key,
+        lvlm_info = {k: v for k, v in self.lvlm_info.items() if k != 'model'}
+        lvlm = ChatSambaNova(
+            api_key=sambanova_api_key,
+            **lvlm_info,
             model=model,
-            temperature=self.lvlm_info['temperature'],
-            max_tokens_to_generate=self.lvlm_info['max_tokens_to_generate'],
-            top_p=self.lvlm_info['top_p'],
-            top_k=self.lvlm_info['top_k'],
-            do_sample=self.lvlm_info['do_sample'],
         )
+        self.lvlm = lvlm
+
+    def image_to_base64(self, image_path: str) -> str:
+        """
+        Converts an image file to a base64 encoded string.
+
+        :param: str image_path: The path to the image file.
+        :return: The base64 encoded string representation of the image.
+        rtype: str
+        """
+        with open(image_path, 'rb') as image_file:
+            image_binary = image_file.read()
+            base64_image = base64.b64encode(image_binary).decode()
+            return f'data:image/jpeg;base64,{base64_image}'
 
     def extract_pdf(self, file_path: str) -> Tuple[List[Any], str]:
         # Path to save images
@@ -184,7 +213,7 @@ class MultimodalRetrieval:
         """
         Initialize conversation summary memory for the conversation
         """
-        summary_prompt = load_prompt(os.path.join(kit_dir, 'prompts/llama3-conversation-summary.yaml'))
+        summary_prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts/conversation-summary.yaml'))
 
         self.memory = ConversationSummaryMemory(
             llm=self.llm,
@@ -207,16 +236,16 @@ class MultimodalRetrieval:
         """
         if self.memory is None:
             self.init_memory()
-        custom_condensed_question_prompt = load_prompt(
-            os.path.join(kit_dir, 'prompts', 'llama3-multiturn-custom_condensed_query.yaml')
+        custom_condensed_question_prompt = load_chat_prompt(
+            os.path.join(kit_dir, 'prompts', 'multiturn-custom_condensed_query.yaml')
         )
         assert self.memory is not None
         history = self.memory.load_memory_variables({})
         logger.info(f'HISTORY: {history}')
         reformulated_query = self.llm.invoke(
             custom_condensed_question_prompt.format(chat_history=history, question=query)
-        )
-        return reformulated_query
+        ).content
+        return str(reformulated_query)
 
     def summarize_images(self, image_paths: List[str]) -> List[str]:
         """
@@ -233,8 +262,19 @@ class MultimodalRetrieval:
 
         image_summaries = []
         for image_path in image_paths:
-            summary = self.lvlm.invoke(instruction, image_path)
-            image_summaries.append(summary)
+            result = self.lvlm.invoke(
+                [
+                    {
+                        'role': 'user',
+                        'content': [
+                            {'type': 'image_url', 'image_url': {'url': self.image_to_base64(image_path)}},
+                            {'type': 'text', 'text': instruction},
+                        ],
+                    }
+                ]
+            )
+            summary = result.content
+            image_summaries.append(str(summary))
         return image_summaries
 
     def summarize_texts(self, text_docs: List[Document]) -> Any:
@@ -247,7 +287,7 @@ class MultimodalRetrieval:
         Returns:
         text_summaries (list[str]): A list of summaries of the input text documents.
         """
-        text_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-text_summary.yaml'))
+        text_prompt_template = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'text_summary.yaml'))
         text_summarize_chain: Any = {'element': lambda x: x} | text_prompt_template | self.llm | StrOutputParser()
         texts = [i.page_content for i in text_docs if i.page_content != '']
         if texts:
@@ -264,7 +304,7 @@ class MultimodalRetrieval:
         Returns:
         table_summaries (list[str]): A list of summaries of the input table documents.
         """
-        table_prompt_template = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-table_summary.yaml'))
+        table_prompt_template = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'table_summary.yaml'))
         table_summarize_chain: Any = {'element': lambda x: x} | table_prompt_template | self.llm | StrOutputParser()
         tables = [i.page_content for i in table_docs]
         if tables:
@@ -321,12 +361,15 @@ class MultimodalRetrieval:
         Returns:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
-        self.embeddings = APIGateway.load_embedding_model(
-            type=self.embedding_model_info.get('type'),
-            batch_size=self.embedding_model_info.get('batch_size'),
-            bundle=self.embedding_model_info.get('bundle'),
-            model=self.embedding_model_info.get('model'),
-        )
+        if self.prod_mode:
+            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            if 'SAMBANOVA_API_KEY' in st.session_state:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
+            else:
+                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
+
+        self.embeddings = SambaNovaEmbeddings(api_key=sambanova_api_key, **self.embedding_model_info)
 
         collection_name = f'collection_{self.collection_id}'
         logger.info(f'This is the collection name: {collection_name}')
@@ -458,7 +501,19 @@ class MultimodalRetrieval:
         answers = []
         for doc in retrieved_image_docs:
             image_path = os.path.join(doc.metadata['file_directory'], doc.metadata['filename'])
-            answers.append(self.lvlm.invoke(image_answer_prompt, image_path))
+            answers.append(
+                self.lvlm.invoke(
+                    [
+                        {
+                            'role': 'user',
+                            'content': [
+                                {'type': 'image_url', 'image_url': {'url': self.image_to_base64(image_path)}},
+                                {'type': 'text', 'text': image_answer_prompt},
+                            ],
+                        }
+                    ]
+                ).content
+            )
         logger.info(f'PARTIAL ANSWERS FROM IMAGES: {answers}')
         return answers
 
@@ -475,7 +530,7 @@ class MultimodalRetrieval:
 
         """
 
-        prompt = load_prompt(os.path.join(kit_dir, 'prompts', 'llama3-knowledge_retriever_custom_qa_prompt.yaml'))
+        prompt = load_chat_prompt(os.path.join(kit_dir, 'prompts', 'knowledge_retriever_custom_qa_prompt.yaml'))
         if retriever is None:
             retriever = self.retriever
 
@@ -499,7 +554,7 @@ class MultimodalRetrieval:
                 text_contexts = [doc.page_content for doc in context_docs]
                 full_context = '\n\n'.join(image_answers) + '\n\n' + '\n\n'.join(text_contexts)
                 formatted_prompt = prompt.format(context=full_context, question=query)
-                answer = self.llm.invoke(formatted_prompt)
+                answer = self.llm.invoke(formatted_prompt).content
                 result = {'question': query, 'answer': answer, 'source_documents': image_docs + context_docs}
                 return result
 
@@ -520,7 +575,7 @@ class MultimodalRetrieval:
             logger.info(f'REFORMULATED QUERY: {reformulated_query}')
             generation = self.qa_chain(reformulated_query)
             self.memory.save_context(inputs={'input': query}, outputs={'answer': generation['answer']})
-            logger.info(f"FINAL ANSWER: {generation['answer']}")
+            logger.info(f'FINAL ANSWER: {generation["answer"]}')
         else:
             generation = self.qa_chain(query)
         return generation
@@ -587,7 +642,7 @@ class MultimodalRetrieval:
                 'ingest tables in provided documents\n\n'
             )
         print(
-            f'* **In total {len(image_paths)+len(text_docs)+len(table_docs)} '
+            f'* **In total {len(image_paths) + len(text_docs) + len(table_docs)} '
             'chunks will be sent to the embeddings model to ingest**\n'
         )
         self.retriever = self.create_vectorstore()

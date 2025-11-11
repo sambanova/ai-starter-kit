@@ -115,7 +115,6 @@ st_description = load_app_description()
 
 def main() -> None:
     prod_mode = False
-    llm_type = 'SambaNova Cloud'
 
     initialize_env_variables(prod_mode)
 
@@ -149,7 +148,7 @@ def main() -> None:
         st.markdown('Get your WANDB API key [here](https://wandb.ai/authorize)')
 
         if not are_credentials_set():
-            api_key, additional_vars = env_input_fields(mode=llm_type)
+            api_key, additional_vars = env_input_fields()
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)
