@@ -349,7 +349,7 @@ class ChatTemplateManager:
                     args = fn.get('arguments')
                     if not isinstance(name, str):
                         raise ValueError(
-                            f'Function name must be a string, got {type(name)} in item {i} of custom code parser output.'
+                            f'Function name must be a string, got {type(name)} in item {i} of custom code parser output'
                         )
                     if not isinstance(args, str):
                         raise ValueError(

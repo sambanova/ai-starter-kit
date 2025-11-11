@@ -214,7 +214,7 @@ def sidebar_setup(
                             'Your chat template must contain and handle `messages`, `tools` and `add_generation_prompt` 
                             variables.\n
                             **Use the prefilled one as reference**
-                            """
+                            """  # noqa
                         ),
                     )
                     sample_variables = cast(dict[str, Any], app_description.get('sample_extra_variables', {}))
