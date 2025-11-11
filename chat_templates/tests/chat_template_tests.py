@@ -9,8 +9,8 @@ import logging
 import os
 import sys
 import unittest
+from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
-from typing import Any, Dict, List, Type
 
 # Paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -130,6 +130,7 @@ class CustomTextTestResult(unittest.TextTestResult):
     def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
         self.test_results.append({'name': self._get_test_name(test), 'status': 'ERROR', 'message': str(err[1])})
+
 
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(ChatTemplateManagerTestCase)
